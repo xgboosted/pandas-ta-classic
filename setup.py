@@ -19,7 +19,7 @@ setup(
         "pandas_ta_classic.volatility",
         "pandas_ta_classic.volume"
     ],
-    version=".".join(("0", "3", "14b")),
+    version=".".join(("0", "3", "14b1")),
     description=long_description,
     long_description=long_description,
     author="xgboosted",
