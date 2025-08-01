@@ -19,8 +19,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "pandas-ta-classic"
-copyright = "2019, Kevin Johnson"
-author = "Kevin Johnson"
+copyright = "2025, xgboosted"
+author = "xgboosted"
 
 # The short X.Y version
 version = "0.0.1"
@@ -127,7 +127,7 @@ latex_documents = [
         master_doc,
         "pandas_ta_classic.tex",
         "pandas\\_ta\\_classic Documentation",
-        "Kevin Johnson",
+        "xgboosted",
         "manual",
     ),
 ]
