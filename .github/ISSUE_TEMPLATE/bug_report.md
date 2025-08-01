@@ -3,7 +3,7 @@ name: Bug report
 about: Create a report to help us improve.
 title: ''
 labels: bug
-assignees: twopirllc
+assignees: ''
 
 ---
 
@@ -20,7 +20,7 @@ $ pip list
 
 **Have you tried the _development_ version? Did it resolve the issue?**
 ```sh
-$ pip install -U git+https://github.com/twopirllc/pandas-ta.git@development
+$ pip install -U git+https://github.com/xgboosted/pandas-ta-classic.git@development
 ```
 
 **Describe the bug**
@@ -38,4 +38,4 @@ If applicable, add screenshots to help explain your problem.
 **Additional context**
 Add any other context about the problem here.
 
-Thanks for using Pandas TA!
+Thanks for using Pandas TA Classic!

@@ -18,7 +18,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "pandas_ta"
+project = "pandas-ta-classic"
 copyright = "2019, Kevin Johnson"
 author = "Kevin Johnson"
 
@@ -100,7 +100,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "pandas_tadoc"
+htmlhelp_basename = "pandas_ta_classicdoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -125,8 +125,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "pandas_ta.tex",
-        "pandas\\_ta Documentation",
+        "pandas_ta_classic.tex",
+        "pandas\\_ta\\_classic Documentation",
         "Kevin Johnson",
         "manual",
     ),
@@ -136,7 +136,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "pandas_ta", "pandas_ta Documentation", [author], 1)]
+man_pages = [(master_doc, "pandas_ta_classic", "pandas_ta_classic Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -146,11 +146,11 @@ man_pages = [(master_doc, "pandas_ta", "pandas_ta Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "pandas_ta",
-        "pandas_ta Documentation",
+        "pandas_ta_classic",
+        "pandas_ta_classic Documentation",
         author,
-        "pandas_ta",
-        "One line description of project.",
+        "pandas_ta_classic",
+        "Technical Analysis Library in Python 3 using Pandas - Classic/Community Version",
         "Miscellaneous",
     ),
 ]
