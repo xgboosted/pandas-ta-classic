@@ -1,23 +1,23 @@
 <p align="center">
-  <a href="https://github.com/twopirllc/pandas_ta">
-    <img src="images/logo.png" alt="Pandas TA">
+  <a href="https://github.com/xgboosted/pandas-ta-classic">
+    <img src="images/logo.png" alt="Pandas TA Classic">
   </a>
 </p>
 
-Pandas TA - A Technical Analysis Library in Python 3
+Pandas TA Classic - A Technical Analysis Library in Python 3
 =================
 
-[![license](https://img.shields.io/github/license/twopirllc/pandas-ta)](#license)
-[![Python Version](https://img.shields.io/pypi/pyversions/pandas-ta?style=flat)](https://pypi.org/project/pandas_ta/)
-[![PyPi Version](https://img.shields.io/pypi/v/pandas-ta?style=flat)](https://pypi.org/project/pandas_ta/)
-[![Package Status](https://img.shields.io/pypi/status/pandas-ta?style=flat)](https://pypi.org/project/pandas_ta/)
-[![Downloads](https://img.shields.io/pypi/dm/pandas_ta?style=flat)](https://pypistats.org/packages/pandas_ta)
-[![Stars](https://img.shields.io/github/stars/twopirllc/pandas-ta?style=flat)](#stars)
-[![Forks](https://img.shields.io/github/forks/twopirllc/pandas-ta?style=flat)](#forks)
+[![license](https://img.shields.io/github/license/xgboosted/pandas-ta-classic)](#license)
+[![Python Version](https://img.shields.io/pypi/pyversions/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
+[![PyPi Version](https://img.shields.io/pypi/v/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
+[![Package Status](https://img.shields.io/pypi/status/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
+[![Downloads](https://img.shields.io/pypi/dm/pandas-ta-classic?style=flat)](https://pypistats.org/packages/pandas-ta-classic)
+[![Stars](https://img.shields.io/github/stars/xgboosted/pandas-ta-classic?style=flat)](#stars)
+[![Forks](https://img.shields.io/github/forks/xgboosted/pandas-ta-classic?style=flat)](#forks)
 [![Used By](https://img.shields.io/badge/used_by-170-orange.svg?style=flat)](#usedby)
-[![Contributors](https://img.shields.io/github/contributors/twopirllc/pandas-ta?style=flat)](#contributors)
-[![Issues](https://img.shields.io/github/issues-raw/twopirllc/pandas-ta?style=flat)](#issues)
-[![Closed Issues](https://img.shields.io/github/issues-closed-raw/twopirllc/pandas-ta?style=flat)](#closed-issues)
+[![Contributors](https://img.shields.io/github/contributors/xgboosted/pandas-ta-classic?style=flat)](#contributors)
+[![Issues](https://img.shields.io/github/issues-raw/xgboosted/pandas-ta-classic?style=flat)](#issues)
+[![Closed Issues](https://img.shields.io/github/issues-closed-raw/xgboosted/pandas-ta-classic?style=flat)](#closed-issues)
 [![Buy Me a Coffee](https://img.shields.io/badge/buy_me_a_coffee-orange.svg?style=flat)](https://www.buymeacoffee.com/twopirllc)
 
 
@@ -25,7 +25,9 @@ Pandas TA - A Technical Analysis Library in Python 3
 ![Example Chart](/images/TA_Chart.png)
 
 
-_Pandas Technical Analysis_ (**Pandas TA**) is an easy to use library that leverages the Pandas package with more than 130 Indicators and Utility functions and more than 60 TA Lib Candlestick Patterns. Many commonly used indicators are included, such as: _Candle Pattern_(**cdl_pattern**), _Simple Moving Average_ (**sma**) _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **_many more_**.
+_Pandas Technical Analysis_ (**Pandas TA Classic**) is an easy to use library that leverages the Pandas package with more than 130 Indicators and Utility functions and more than 60 TA Lib Candlestick Patterns. Many commonly used indicators are included, such as: _Candle Pattern_(**cdl_pattern**), _Simple Moving Average_ (**sma**) _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **_many more_**.
+
+This is the **classic/community maintained version** of the popular pandas-ta library.
 
 
 **Note:** _TA Lib_ must be installed to use **all** the Candlestick Patterns. ```pip install TA-Lib```. If _TA Lib_ is not installed, then only the builtin Candlestick Patterns will be available.
@@ -45,9 +47,9 @@ _Pandas Technical Analysis_ (**Pandas TA**) is an easy to use library that lever
 * [Issues and Contributions](#issues-and-contributions)
 * [Programming Conventions](#programming-conventions)
     * [Standard](#standard)
-    * [Pandas TA DataFrame Extension](#pandas-ta-dataframe-extension)
-    * [Pandas TA Strategy](#pandas-ta-strategy)
-* [Pandas TA Strategies](#pandas-ta-strategies)
+    * [Pandas TA Classic DataFrame Extension](#pandas-ta-classic-dataframe-extension)
+    * [Pandas TA Classic Strategy](#pandas-ta-classic-strategy)
+* [Pandas TA Classic Strategies](#pandas-ta-classic-strategies)
     * [Types of Strategies](#types-of-strategies)
     * [Multiprocessing](#multiprocessing)
 * [DataFrame Properties](#dataframe-properties)
@@ -79,22 +81,22 @@ _Pandas Technical Analysis_ (**Pandas TA**) is an easy to use library that lever
 # **Features**
 
 * Has 130+ indicators and utility functions.
-    * **BETA** Also Pandas TA will run TA Lib's version, this includes TA Lib's 63 Chart Patterns.
+    * **BETA** Also Pandas TA Classic will run TA Lib's version, this includes TA Lib's 63 Chart Patterns.
 * Indicators in Python are tightly correlated with the _de facto_ [TA Lib](https://github.com/mrjbq7/ta-lib) if they share common indicators.
 * If TA Lib is also installed, TA Lib computations are enabled by default but can be disabled disabled per indicator by using the argument ```talib=False```.
     * For instance to disable TA Lib calculation for **stdev**: ```ta.stdev(df["close"], length=30, talib=False)```.
-* **NEW**! Include External Custom Indicators independent of the builtin Pandas TA indicators. For more information, see ```import_dir``` documentation under ```/pandas_ta/custom.py```.
-* Example Jupyter Notebook with **vectorbt** Portfolio Backtesting with Pandas TA's ```ta.tsignals``` method.
+* **NEW**! Include External Custom Indicators independent of the builtin Pandas TA Classic indicators. For more information, see ```import_dir``` documentation under ```/pandas_ta/custom.py```.
+* Example Jupyter Notebook with **vectorbt** Portfolio Backtesting with Pandas TA Classic's ```ta.tsignals``` method.
 * Have the need for speed? By using the DataFrame _strategy_ method, you get **multiprocessing** for free! __Conditions permitting__.
 * Easily add _prefixes_ or _suffixes_ or _both_ to columns names. Useful for Custom Chained Strategies.
-* Example Jupyter Notebooks under the [examples](https://github.com/twopirllc/pandas-ta/tree/main/examples) directory, including how to create Custom Strategies using the new [__Strategy__ Class](https://github.com/twopirllc/pandas-ta/tree/main/examples/PandaTA_Strategy_Examples.ipynb)
+* Example Jupyter Notebooks under the [examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) directory, including how to create Custom Strategies using the new [__Strategy__ Class](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples/PandaTA_Strategy_Examples.ipynb)
 * Potential Data Leaks: **dpo** and **ichimoku**. See indicator list below for details. Set ```lookahead=False``` to disable.
 
 <br/>
 
 **Under Development**
 ===================
-**Pandas TA** checks if the user has some common trading packages installed including but not limited to: [**TA Lib**](https://mrjbq7.github.io/ta-lib/), [**Vector BT**](https://github.com/polakowo/vectorbt), [**YFinance**](https://github.com/ranaroussi/yfinance) ... Much of which is _experimental_ and likely to break until it stabilizes more.
+**Pandas TA Classic** checks if the user has some common trading packages installed including but not limited to: [**TA Lib**](https://mrjbq7.github.io/ta-lib/), [**Vector BT**](https://github.com/polakowo/vectorbt), [**YFinance**](https://github.com/ranaroussi/yfinance) ... Much of which is _experimental_ and likely to break until it stabilizes more.
 * If **TA Lib** installed, existing indicators will _eventually_ get a **TA Lib** version.
 * Easy Downloading of _ohlcv_ data using [yfinance](https://github.com/ranaroussi/yfinance). See ```help(ta.ticker)``` and ```help(ta.yf)``` and examples below.
 * Some Common Performance Metrics
@@ -108,7 +110,7 @@ Stable
 ------
 The ```pip``` version is the last stable release. Version: *0.3.14b*
 ```sh
-$ pip install pandas_ta
+$ pip install pandas-ta-classic
 ```
 
 Latest Version
@@ -116,14 +118,14 @@ Latest Version
 Best choice! Version: *0.3.14b*
 * Includes all fixes and updates between **pypi** and what is covered in this README.
 ```sh
-$ pip install -U git+https://github.com/twopirllc/pandas-ta
+$ pip install -U git+https://github.com/xgboosted/pandas-ta-classic
 ```
 
 Cutting Edge
 ------------
 This is the _Development Version_ which could have bugs and other undesireable side effects. Use at own risk!
 ```sh
-$ pip install -U git+https://github.com/twopirllc/pandas-ta.git@development
+$ pip install -U git+https://github.com/xgboosted/pandas-ta-classic.git@development
 ```
 
 <br/>
@@ -131,7 +133,7 @@ $ pip install -U git+https://github.com/twopirllc/pandas-ta.git@development
  # **Quick Start**
 ```python
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 
 df = pd.DataFrame() # Empty DataFrame
 
@@ -164,7 +166,7 @@ df.tail()
 
 ```python
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 
 # Create a DataFrame so 'ta' can be used.
 df = pd.DataFrame()
@@ -182,21 +184,21 @@ help(ta.bbands)
 
 # **Issues and Contributions**
 
-Thanks for using **Pandas TA**!
+Thanks for using **Pandas TA Classic**!
 <br/>
 
-* ### [Comments and Feedback](https://github.com/twopirllc/pandas-ta/issues)
+* ### [Comments and Feedback](https://github.com/xgboosted/pandas-ta-classic/issues)
     * Have you read **_this_** document?
     * Are you running the latest version?
-        * ```$ pip install -U git+https://github.com/twopirllc/pandas-ta```
-    * Have you tried the [Examples](https://github.com/twopirllc/pandas-ta/tree/main/examples/)?
+        * ```$ pip install -U git+https://github.com/xgboosted/pandas-ta-classic```
+    * Have you tried the [Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples/)?
         * Did they help?
         * What is missing?
         * Could you help improve them?
-    * Did you know you can easily build _Custom Strategies_ with the **[Strategy](https://github.com/twopirllc/pandas-ta/blob/main/examples/PandasTA_Strategy_Examples.ipynb) Class**?
+    * Did you know you can easily build _Custom Strategies_ with the **[Strategy](https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/PandasTA_Strategy_Examples.ipynb) Class**?
     * Documentation could _always_ be improved. Can you help contribute?
 
-* ### [Bugs, Indicators or Feature Requests](https://github.com/twopirllc/pandas-ta/issues)
+* ### [Bugs, Indicators or Feature Requests](https://github.com/xgboosted/pandas-ta-classic/issues)
     * First, search the _Closed_ Issues **before** you _Open_ a new Issue; it may have already been solved.
     * Please be as **detailed** as possible _with_ reproducible code, links if any, applicable screenshots, errors, logs, and data samples. You **will** be asked again if you provide nothing.
         * You want a new indicator not currently listed.
@@ -221,7 +223,7 @@ _Thank you for your contributions!_
 **Programming Conventions**
 ===========================
 
-**Pandas TA** has three primary "styles" of processing Technical Indicators for your use case and/or requirements. They are: _Standard_, _DataFrame Extension_, and the _Pandas TA Strategy_. Each with increasing levels of abstraction for ease of use. As you become more familiar with **Pandas TA**, the simplicity and speed of using a _Pandas TA Strategy_ may become more apparent. Furthermore, you can create your own indicators through Chaining or Composition. Lastly, each indicator either returns a _Series_ or a _DataFrame_ in Uppercase Underscore format regardless of style.
+**Pandas TA Classic** has three primary "styles" of processing Technical Indicators for your use case and/or requirements. They are: _Standard_, _DataFrame Extension_, and the _Pandas TA Classic Strategy_. Each with increasing levels of abstraction for ease of use. As you become more familiar with **Pandas TA Classic**, the simplicity and speed of using a _Pandas TA Classic Strategy_ may become more apparent. Furthermore, you can create your own indicators through Chaining or Composition. Lastly, each indicator either returns a _Series_ or a _DataFrame_ in Uppercase Underscore format regardless of style.
 
 <br/>
 
@@ -239,7 +241,7 @@ You explicitly define the input columns and take care of the output.
 
 <br/>
 
-_Pandas TA DataFrame Extension_
+_Pandas TA Classic DataFrame Extension_
 ====================
 
 Calling ```df.ta``` will automatically lowercase _OHLCVA_ to _ohlcva_: _open, high, low, close, volume_, _adj_close_. By default, ```df.ta``` will use the _ohlcva_ for the indicator arguments removing the need to specify input columns directly.
@@ -261,10 +263,10 @@ Same as the last three examples, but appending the results directly to the DataF
 
 <br/>
 
-_Pandas TA Strategy_
+_Pandas TA Classic Strategy_
 ====================
 
-A **Pandas TA** Strategy is a named group of indicators to be run by the _strategy_ method. All Strategies use **mulitprocessing** _except_ when using the ```col_names``` parameter (see [below](#multiprocessing)). There are different types of _Strategies_ listed in the following section.
+A **Pandas TA Classic** Strategy is a named group of indicators to be run by the _strategy_ method. All Strategies use **mulitprocessing** _except_ when using the ```col_names``` parameter (see [below](#multiprocessing)). There are different types of _Strategies_ listed in the following section.
 
 <br/>
 
@@ -287,7 +289,7 @@ df.ta.strategy(MyStrategy, **kwargs)
 
 <br/><br/>
 
-# **Pandas TA** _Strategies_
+# **Pandas TA Classic** _Strategies_
 
 The _Strategy_ Class is a simple way to name and group your favorite TA Indicators by using a _Data Class_. **Pandas TA** comes with two prebuilt basic Strategies to help you get started: __AllStrategy__ and __CommonStrategy__. A _Strategy_ can be as simple as the __CommonStrategy__ or as complex as needed using Composition/Chaining.
 
@@ -295,7 +297,7 @@ The _Strategy_ Class is a simple way to name and group your favorite TA Indicato
 * You are using a Chained Strategy when you have the output of one indicator as input into one or more indicators in the same _Strategy_.
 * **Note:** Use the 'prefix' and/or 'suffix' keywords to distinguish the composed indicator from it's default Series.
 
-See the [Pandas TA Strategy Examples Notebook](https://github.com/twopirllc/pandas-ta/blob/main/examples/PandasTA_Strategy_Examples.ipynb) for examples including _Indicator Composition/Chaining_.
+See the [Pandas TA Strategy Examples Notebook](https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/PandasTA_Strategy_Examples.ipynb) for examples including _Indicator Composition/Chaining_.
 
 Strategy Requirements
 ---------------------
@@ -358,7 +360,7 @@ df.ta.strategy(CustomStrategy)
 **Multiprocessing**
 =======================
 
-The **Pandas TA** _strategy_ method utilizes **multiprocessing** for bulk indicator processing of all Strategy types with **ONE EXCEPTION!** When using the ```col_names``` parameter to rename resultant column(s), the indicators in ```ta``` array will be ran in order.
+The **Pandas TA Classic** _strategy_ method utilizes **multiprocessing** for bulk indicator processing of all Strategy types with **ONE EXCEPTION!** When using the ```col_names``` parameter to rename resultant column(s), the indicators in ```ta``` array will be ran in order.
 
 ```python
 # VWAP requires the DataFrame index to be a DatetimeIndex.
@@ -891,7 +893,7 @@ Use parameter: cumulative=**True** for cumulative results.
 _Performance Metrics_ are a **new** addition to the package and consequentially are likely unreliable. **Use at your own risk.** These metrics return a _float_ and are _not_ part of the _DataFrame_ Extension. They are called the Standard way. For Example:
 
 ```python
-import pandas_ta as ta
+import pandas_ta_classic as ta
 result = ta.cagr(df.close)
 ```
 
@@ -910,7 +912,7 @@ result = ta.cagr(df.close)
 <br/>
 
 ## Backtesting with **vectorbt**
-For **easier** integration with **vectorbt**'s Portfolio ```from_signals``` method, the ```ta.trend_return``` method has been replaced with ```ta.tsignals``` method to simplify the generation of trading signals. For a comprehensive example, see the example Jupyter Notebook [VectorBT Backtest with Pandas TA](https://github.com/twopirllc/pandas-ta/blob/main/examples/VectorBT_Backtest_with_Pandas_TA.ipynb) in the examples directory.
+For **easier** integration with **vectorbt**'s Portfolio ```from_signals``` method, the ```ta.trend_return``` method has been replaced with ```ta.tsignals``` method to simplify the generation of trading signals. For a comprehensive example, see the example Jupyter Notebook [VectorBT Backtest with Pandas TA](https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/VectorBT_Backtest_with_Pandas_TA.ipynb) in the examples directory.
 
 <br/>
 
@@ -918,7 +920,7 @@ For **easier** integration with **vectorbt**'s Portfolio ```from_signals``` meth
 * See the [**vectorbt**](https://polakowo.io/vectorbt/) website more options and examples.
 ```python
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 import vectorbt as vbt
 
 df = pd.DataFrame().ta.ticker("AAPL") # requires 'yfinance' installed
@@ -949,7 +951,7 @@ print(pf.returns_stats())
 * If a **TA Lib** is already installed, Pandas TA will run TA Lib's version. (**BETA**)
 * Some indicators have had their ```mamode``` _kwarg_ updated with more _moving average_ choices with the **Moving Average Utility** function ```ta.ma()```. For simplicity, all _choices_ are single source _moving averages_. This is primarily an internal utility used by indicators that have a ```mamode``` _kwarg_. This includes indicators: _accbands_, _amat_, _aobv_, _atr_, _bbands_, _bias_, _efi_, _hilo_, _kc_, _natr_, _qqe_, _rvi_, and _thermo_; the default ```mamode``` parameters have not changed. However, ```ta.ma()``` can be used by the user as well if needed. For more information: ```help(ta.ma)```
     * **Moving Average Choices**: dema, ema, fwma, hma, linreg, midpoint, pwma, rma, sinwma, sma, swma, t3, tema, trima, vidya, wma, zlma.
-* An _experimental_ and independent __Watchlist__ Class located in the [Examples](https://github.com/twopirllc/pandas-ta/tree/main/examples/watchlist.py) Directory that can be used in conjunction with the new __Strategy__ Class.
+* An _experimental_ and independent __Watchlist__ Class located in the [Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples/watchlist.py) Directory that can be used in conjunction with the new __Strategy__ Class.
 * _Linear Regression_ (**linear_regression**) is a new utility method for Simple Linear Regression using _Numpy_ or _Scikit Learn_'s implementation.
 * Added utility/convience function, ```to_utc```, to convert the DataFrame index to UTC. See: ```help(ta.to_utc)``` **Now** as a Pandas TA DataFrame Property to easily convert the DataFrame index to UTC.
 

@@ -8,7 +8,7 @@ assignees: ''
 ---
 **Which version are you running? The lastest version is on Github. Pip is for major releases.**
 ```python
-import pandas_ta as ta
+import pandas_ta_classic as ta
 print(ta.version)
 ```
 
@@ -19,7 +19,7 @@ $ pip list
 
 **Upgrade.**
 ```sh
-$ pip install -U git+https://github.com/twopirllc/pandas-ta
+$ pip install -U git+https://github.com/xgboosted/pandas-ta-classic
 ```
 
 **Is your feature request related to a problem? Please describe.**
@@ -34,4 +34,4 @@ A clear and concise description of any alternative solutions or features you've 
 **Additional context**
 Add any other context or screenshots about the feature request here.
 
-Thanks for using Pandas TA!
+Thanks for using Pandas TA Classic!

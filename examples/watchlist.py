@@ -16,7 +16,7 @@ from numpy import append as npAppend
 from numpy import array as npArray
 
 import alphaVantageAPI as AV # pip install alphaVantage-api
-import pandas_ta as ta # pip install pandas_ta
+import pandas_ta_classic as ta # pip install pandas-ta-classic
 
 
 def colors(colors: str = None, default: str = "GrRd"):

@@ -1,33 +1,33 @@
 # -*- coding: utf-8 -*-
 from distutils.core import setup
 
-long_description = "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib."
+long_description = "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib. This is the classic/community maintained version."
 
 setup(
-    name="pandas_ta",
+    name="pandas-ta-classic",
     packages=[
-        "pandas_ta",
-        "pandas_ta.candles",
-        "pandas_ta.cycles",
-        "pandas_ta.momentum",
-        "pandas_ta.overlap",
-        "pandas_ta.performance",
-        "pandas_ta.statistics",
-        "pandas_ta.trend",
-        "pandas_ta.utils",
-        "pandas_ta.utils.data",
-        "pandas_ta.volatility",
-        "pandas_ta.volume"
+        "pandas_ta_classic",
+        "pandas_ta_classic.candles",
+        "pandas_ta_classic.cycles",
+        "pandas_ta_classic.momentum",
+        "pandas_ta_classic.overlap",
+        "pandas_ta_classic.performance",
+        "pandas_ta_classic.statistics",
+        "pandas_ta_classic.trend",
+        "pandas_ta_classic.utils",
+        "pandas_ta_classic.utils.data",
+        "pandas_ta_classic.volatility",
+        "pandas_ta_classic.volume"
     ],
     version=".".join(("0", "3", "14b")),
     description=long_description,
     long_description=long_description,
     author="Kevin Johnson",
     author_email="appliedmathkj@gmail.com",
-    url="https://github.com/twopirllc/pandas-ta",
+    url="https://github.com/xgboosted/pandas-ta-classic",
     maintainer="Kevin Johnson",
     maintainer_email="appliedmathkj@gmail.com",
-    download_url="https://github.com/twopirllc/pandas-ta.git",
+    download_url="https://github.com/xgboosted/pandas-ta-classic.git",
     keywords=["technical analysis", "trading", "python3", "pandas"],
     license="The MIT License (MIT)",
     classifiers=[
