@@ -7,6 +7,22 @@ on:
     branches: [ main ]
 
 jobs:
+  # Basic structure validation that doesn't require dependencies
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Validate package structure
+      run: |
+        python validate_structure.py
+
+  # Full test suite with dependencies  
   test:
     runs-on: ubuntu-latest
     strategy:

@@ -144,3 +144,9 @@ data/tulip.csv
 examples/*.csv
 jnb/*.ipynb
 jnb/*.txt
+
+# GitHub Pages build artifacts
+_site/
+
+# Validation artifacts (temp files from our validation script)
+validate_structure.py.tmp
