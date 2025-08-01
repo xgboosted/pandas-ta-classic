@@ -133,7 +133,7 @@ $ pip install -U git+https://github.com/xgboosted/pandas-ta-classic.git@developm
  # **Quick Start**
 ```python
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 
 df = pd.DataFrame() # Empty DataFrame
 
@@ -166,7 +166,7 @@ df.tail()
 
 ```python
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 
 # Create a DataFrame so 'ta' can be used.
 df = pd.DataFrame()
@@ -893,7 +893,7 @@ Use parameter: cumulative=**True** for cumulative results.
 _Performance Metrics_ are a **new** addition to the package and consequentially are likely unreliable. **Use at your own risk.** These metrics return a _float_ and are _not_ part of the _DataFrame_ Extension. They are called the Standard way. For Example:
 
 ```python
-import pandas_ta as ta
+import pandas_ta_classic as ta
 result = ta.cagr(df.close)
 ```
 
@@ -920,7 +920,7 @@ For **easier** integration with **vectorbt**'s Portfolio ```from_signals``` meth
 * See the [**vectorbt**](https://polakowo.io/vectorbt/) website more options and examples.
 ```python
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 import vectorbt as vbt
 
 df = pd.DataFrame().ta.ticker("AAPL") # requires 'yfinance' installed

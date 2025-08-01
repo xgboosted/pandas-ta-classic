@@ -1,5 +1,5 @@
 from .config import sample_data
-from .context import pandas_ta
+from .context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import Series

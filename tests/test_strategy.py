@@ -4,7 +4,7 @@ from multiprocessing import cpu_count
 from time import perf_counter
 
 from .config import sample_data
-from .context import pandas_ta
+from .context import pandas_ta_classic as pandas_ta
 
 from unittest import skip, skipUnless, TestCase
 from pandas import DataFrame

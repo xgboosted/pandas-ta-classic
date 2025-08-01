@@ -1,5 +1,5 @@
 from .config import CORRELATION, CORRELATION_THRESHOLD, error_analysis, sample_data, VERBOSE
-from .context import pandas_ta
+from .context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 import pandas.testing as pdt
