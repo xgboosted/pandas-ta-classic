@@ -5,6 +5,7 @@ on:
     branches: [ main, development ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   # Basic structure validation that doesn't require dependencies
