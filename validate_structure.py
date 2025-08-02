@@ -68,9 +68,7 @@ def test_workflows():
     
     workflow_files = [
         '.github/workflows/ci.yml',
-        '.github/workflows/pages.yml', 
-        '.github/workflows/pypi.yml',
-        '.github/workflows/quality.yml'
+        '.github/workflows/pypi.yml'
     ]
     
     for workflow_file in workflow_files:

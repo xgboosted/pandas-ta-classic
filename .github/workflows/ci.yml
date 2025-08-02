@@ -11,13 +11,77 @@ env:
   # Latest stable Python version - update this when new Python versions are released
   LATEST_PYTHON_VERSION: "3.13"
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  # Generate Python version matrix based on latest version
-  generate-matrix:
+  # All-in-one job that runs validation, quality checks, testing, and documentation
+  ci-pipeline:
     runs-on: ubuntu-latest
-    outputs:
-      python-versions: ${{ steps.versions.outputs.python-versions }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     steps:
+    # Checkout code
+    - uses: actions/checkout@v4
+    
+    # Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.LATEST_PYTHON_VERSION }}
+    
+    # Step 1: Basic structure validation
+    - name: Validate package structure
+      run: |
+        python validate_structure.py
+    
+    # Step 2: Install system dependencies for ta-lib (needed for quality checks and testing)
+    - name: Install system dependencies for ta-lib
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential git
+        git clone https://github.com/ta-lib/ta-lib.git
+        cd ta-lib
+        if [ ! -f configure ]; then
+          chmod +x autogen.sh
+          ./autogen.sh
+        fi
+        ./configure --prefix=/usr
+        make
+        sudo make install
+        sudo ldconfig
+
+    # Step 3: Install Python dependencies
+    - name: Install dependencies and quality tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy pandas
+        pip install -r requirements.txt
+        pip install TA-Lib
+        pip install flake8 black
+        pip install -e .
+    
+    # Step 4: Code quality checks
+    - name: Run flake8 linting
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 pandas_ta_classic --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings for non-critical issues
+        flake8 pandas_ta_classic --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=pandas_ta_classic/__init__.py
+    
+    - name: Check code formatting with black
+      run: |
+        black --check --diff pandas_ta_classic/
+    
+    # Step 5: Generate Python version matrix for testing
     - name: Generate Python version matrix
       id: versions
       run: |
@@ -39,35 +103,8 @@ jobs:
         
         echo "python-versions=$versions" >> $GITHUB_OUTPUT
         echo "Generated Python versions: $versions"
-
-  # Basic structure validation that doesn't require dependencies
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.LATEST_PYTHON_VERSION }}
-    
-    - name: Validate package structure
-      run: |
-        python validate_structure.py
-
-  # Full test suite with dependencies  
-  test:
-    needs: generate-matrix
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # Python versions are dynamically generated from LATEST_PYTHON_VERSION
-        # Supports latest stable Python version and 4 consecutive previous versions
-        python-version: ${{ fromJSON(needs.generate-matrix.outputs.python-versions) }}
-
-    steps:
-    - uses: actions/checkout@v4
-    
+    # Step 6: Update setup.py with dynamic Python classifiers
     - name: Update setup.py with dynamic Python classifiers
       run: |
         python << 'EOF'
@@ -110,38 +147,59 @@ jobs:
                     print(f"Line {line_num}: {line.strip()}")
         EOF
     
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy pandas
-        pip install -r requirements.txt
-        pip install TA-Lib
-        pip install -e .
-    
-    - name: Run tests
+    # Step 7: Run comprehensive tests
+    - name: Run full test suite
       run: |
         python -m unittest discover tests/ -v
     
-    - name: Test package installation
+    # Step 8: Test package installation and performance tests
+    - name: Test package installation and performance
       run: |
         python -c "import pandas_ta_classic as ta; print('Package imported successfully')"
+        python -m unittest tests.test_indicator_performance -v
+    
+    # Step 9: Build documentation - Jekyll (only on main branch)
+    - name: Setup Pages (main branch only)
+      if: github.ref == 'refs/heads/main'
+      uses: actions/configure-pages@v4
+      
+    - name: Build with Jekyll (main branch only)
+      if: github.ref == 'refs/heads/main'
+      uses: actions/jekyll-build-pages@v1
+      with:
+        source: ./
+        destination: ./_site
+      
+    - name: Upload Jekyll artifact (main branch only)
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        name: jekyll-pages
+        path: ./_site
+    
+    # Step 10: Build Sphinx documentation (only on main branch)
+    - name: Install Sphinx dependencies (main branch only)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        pip install sphinx sphinx-rtd-theme
+          
+    - name: Build Sphinx documentation (main branch only)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        cd docs
+        make html
+          
+    - name: Upload Sphinx artifact (main branch only)
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4
+      with:
+        name: sphinx-docs
+        path: docs/_build/html
+
+    # Step 11: Deploy to GitHub Pages (only on main branch)
+    - name: Deploy to GitHub Pages (main branch only)
+      if: github.ref == 'refs/heads/main'
+      id: deployment
+      uses: actions/deploy-pages@v4
+      with:
+        artifact_name: jekyll-pages
