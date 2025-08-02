@@ -60,7 +60,7 @@ jobs:
           make html
           
       - name: Upload Sphinx artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sphinx-docs
           path: docs/_build/html
