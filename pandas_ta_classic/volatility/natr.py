@@ -35,7 +35,15 @@ def natr(high, low, close, length=None, scalar=None, mamode=None, talib=None, dr
     if "fillna" in kwargs:
         natr.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        natr.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                natr.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                natr.bfill(inplace=True)
 
     # Name and Categorize it
     natr.name = f"NATR_{length}"

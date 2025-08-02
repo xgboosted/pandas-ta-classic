@@ -45,7 +45,15 @@ def kama(close, length=None, fast=None, slow=None, drift=None, offset=None, **kw
     if "fillna" in kwargs:
         kama.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        kama.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                kama.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                kama.bfill(inplace=True)
 
     # Name & Category
     kama.name = f"KAMA_{length}_{fast}_{slow}"

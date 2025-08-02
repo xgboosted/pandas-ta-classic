@@ -23,7 +23,15 @@ def skew(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         skew.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        skew.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                skew.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                skew.bfill(inplace=True)
 
     # Name & Category
     skew.name = f"SKEW_{length}"

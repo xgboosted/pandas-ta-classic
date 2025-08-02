@@ -23,7 +23,15 @@ def median(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         median.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        median.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                median.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                median.bfill(inplace=True)
 
     # Name & Category
     median.name = f"MEDIAN_{length}"

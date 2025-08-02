@@ -30,7 +30,15 @@ def variance(close, length=None, ddof=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         variance.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        variance.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                variance.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                variance.bfill(inplace=True)
 
     # Name & Category
     variance.name = f"VAR_{length}"

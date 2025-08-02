@@ -25,7 +25,15 @@ def entropy(close, length=None, base=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         entropy.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        entropy.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                entropy.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                entropy.bfill(inplace=True)
 
     # Name & Category
     entropy.name = f"ENTP_{length}"

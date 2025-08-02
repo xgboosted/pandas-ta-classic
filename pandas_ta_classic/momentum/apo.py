@@ -35,7 +35,15 @@ def apo(close, fast=None, slow=None, mamode=None, talib=None, offset=None, **kwa
     if "fillna" in kwargs:
         apo.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        apo.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                apo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                apo.bfill(inplace=True)
 
     # Name and Categorize it
     apo.name = f"APO_{fast}_{slow}"

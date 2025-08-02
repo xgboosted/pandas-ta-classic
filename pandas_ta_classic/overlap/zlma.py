@@ -39,7 +39,15 @@ def zlma(close, length=None, mamode=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         zlma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        zlma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                zlma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                zlma.bfill(inplace=True)
 
     # Name & Category
     zlma.name = f"ZL_{zlma.name}"

@@ -33,7 +33,15 @@ def midprice(high, low, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         midprice.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        midprice.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                midprice.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                midprice.bfill(inplace=True)
 
     # Name and Categorize it
     midprice.name = f"MIDPRICE_{length}"

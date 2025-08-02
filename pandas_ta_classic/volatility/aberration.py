@@ -41,10 +41,42 @@ def aberration(high, low, close, length=None, atr_length=None, offset=None, **kw
         xg.fillna(kwargs["fillna"], inplace=True)
         atr_.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        zg.fillna(method=kwargs["fill_method"], inplace=True)
-        sg.fillna(method=kwargs["fill_method"], inplace=True)
-        xg.fillna(method=kwargs["fill_method"], inplace=True)
-        atr_.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                zg.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                zg.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                sg.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                sg.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                xg.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                xg.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                atr_.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                atr_.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{length}_{atr_length}"

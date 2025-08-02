@@ -41,7 +41,15 @@ def t3(close, length=None, a=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         t3.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        t3.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                t3.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                t3.bfill(inplace=True)
 
     # Name & Category
     t3.name = f"T3_{length}_{a}"

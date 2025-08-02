@@ -27,7 +27,15 @@ def long_run(fast, slow, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         long_run.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        long_run.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                long_run.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                long_run.bfill(inplace=True)
 
     # Name and Categorize it
     long_run.name = f"LR_{length}"

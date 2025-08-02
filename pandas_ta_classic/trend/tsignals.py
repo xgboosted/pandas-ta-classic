@@ -41,7 +41,15 @@ def tsignals(trend, asbool=None, trend_reset=0, trade_offset=None, drift=None, o
     if "fillna" in kwargs:
         df.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        df.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                df.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                df.bfill(inplace=True)
 
     # Name & Category
     df.name = f"TS"

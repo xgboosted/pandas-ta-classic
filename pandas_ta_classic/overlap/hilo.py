@@ -49,9 +49,33 @@ def hilo(high, low, close, high_length=None, low_length=None, mamode=None, offse
         long.fillna(kwargs["fillna"], inplace=True)
         short.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        hilo.fillna(method=kwargs["fill_method"], inplace=True)
-        long.fillna(method=kwargs["fill_method"], inplace=True)
-        short.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                hilo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                hilo.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                long.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                long.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                short.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                short.bfill(inplace=True)
 
     # Name & Category
     _props = f"_{high_length}_{low_length}"

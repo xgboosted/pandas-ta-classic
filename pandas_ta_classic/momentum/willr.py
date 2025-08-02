@@ -35,7 +35,15 @@ def willr(high, low, close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         willr.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        willr.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                willr.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                willr.bfill(inplace=True)
 
     # Name and Categorize it
     willr.name = f"WILLR_{length}"

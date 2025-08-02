@@ -42,7 +42,15 @@ def cmo(close, length=None, scalar=None, talib=None, drift=None, offset=None, **
     if "fillna" in kwargs:
         cmo.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        cmo.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                cmo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                cmo.bfill(inplace=True)
 
     # Name and Categorize it
     cmo.name = f"CMO_{length}"

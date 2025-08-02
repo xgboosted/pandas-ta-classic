@@ -51,9 +51,33 @@ def adx(high, low, close, length=None, lensig=None, scalar=None, mamode=None, dr
         dmp.fillna(kwargs["fillna"], inplace=True)
         dmn.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        adx.fillna(method=kwargs["fill_method"], inplace=True)
-        dmp.fillna(method=kwargs["fill_method"], inplace=True)
-        dmn.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                adx.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                adx.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dmp.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dmp.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dmn.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dmn.bfill(inplace=True)
 
     # Name and Categorize it
     adx.name = f"ADX_{lensig}"

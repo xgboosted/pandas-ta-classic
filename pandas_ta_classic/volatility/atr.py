@@ -39,7 +39,15 @@ def atr(high, low, close, length=None, mamode=None, talib=None, drift=None, offs
     if "fillna" in kwargs:
         atr.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        atr.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                atr.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                atr.bfill(inplace=True)
 
     # Name and Categorize it
     atr.name = f"ATR{mamode[0]}_{length}{'p' if percentage else ''}"

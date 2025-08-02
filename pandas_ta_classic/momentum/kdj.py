@@ -39,9 +39,33 @@ def kdj(high=None, low=None, close=None, length=None, signal=None, offset=None, 
         d.fillna(kwargs["fillna"], inplace=True)
         j.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        k.fillna(method=kwargs["fill_method"], inplace=True)
-        d.fillna(method=kwargs["fill_method"], inplace=True)
-        j.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                k.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                k.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                d.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                d.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                j.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                j.bfill(inplace=True)
 
     # Name and Categorize it
     _params = f"_{length}_{signal}"

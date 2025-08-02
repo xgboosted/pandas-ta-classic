@@ -49,8 +49,24 @@ def fisher(high, low, length=None, signal=None, offset=None, **kwargs):
         fisher.fillna(kwargs["fillna"], inplace=True)
         signalma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        fisher.fillna(method=kwargs["fill_method"], inplace=True)
-        signalma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                fisher.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                fisher.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                signalma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                signalma.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{length}_{signal}"

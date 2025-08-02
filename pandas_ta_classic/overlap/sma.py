@@ -29,7 +29,15 @@ def sma(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         sma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        sma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                sma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                sma.bfill(inplace=True)
 
     # Name & Category
     sma.name = f"SMA_{length}"

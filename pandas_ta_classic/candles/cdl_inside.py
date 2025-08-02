@@ -26,7 +26,15 @@ def cdl_inside(open_, high, low, close, asbool=False, offset=None, **kwargs):
     if "fillna" in kwargs:
         inside.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        inside.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                inside.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                inside.bfill(inplace=True)
 
     # Name and Categorize it
     inside.name = f"CDL_INSIDE"

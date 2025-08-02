@@ -37,9 +37,33 @@ def aroon(high, low, length=None, scalar=None, talib=None, offset=None, **kwargs
         aroon_down.fillna(kwargs["fillna"], inplace=True)
         aroon_osc.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        aroon_up.fillna(method=kwargs["fill_method"], inplace=True)
-        aroon_down.fillna(method=kwargs["fill_method"], inplace=True)
-        aroon_osc.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                aroon_up.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                aroon_up.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                aroon_down.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                aroon_down.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                aroon_osc.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                aroon_osc.bfill(inplace=True)
 
     # Offset
     if offset != 0:

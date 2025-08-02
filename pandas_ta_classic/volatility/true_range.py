@@ -35,7 +35,15 @@ def true_range(high, low, close, talib=None, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         true_range.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        true_range.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                true_range.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                true_range.bfill(inplace=True)
 
     # Name and Categorize it
     true_range.name = f"TRUERANGE_{drift}"

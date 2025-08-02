@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pandas as pd
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -21,7 +22,7 @@ def mcgd(close, length=None, offset=None, c=None, **kwargs):
         return series.iloc[1]
 
     mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
-    mcg_ds = close[:1].append(mcg_cell[1:])
+    mcg_ds = pd.concat([close[:1], mcg_cell[1:]])
 
     # Offset
     if offset != 0:
@@ -31,7 +32,10 @@ def mcgd(close, length=None, offset=None, c=None, **kwargs):
     if "fillna" in kwargs:
         mcg_ds.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        mcg_ds.fillna(method=kwargs["fill_method"], inplace=True)
+        if kwargs["fill_method"] == "ffill":
+            mcg_ds.ffill(inplace=True)
+        elif kwargs["fill_method"] == "bfill":
+            mcg_ds.bfill(inplace=True)
 
     # Name & Category
     mcg_ds.name = f"MCGD_{length}"
@@ -65,7 +69,7 @@ Calculation:
         series.iloc[1] = (series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom))
         return series.iloc[1]
     mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
-    mcg_ds = close[:1].append(mcg_cell[1:])
+    mcg_ds = pd.concat([close[:1], mcg_cell[1:]])
 
 Args:
     close (pd.Series): Series of 'close's

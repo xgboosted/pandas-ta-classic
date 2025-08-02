@@ -52,10 +52,42 @@ def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=Non
         thermo_long.fillna(kwargs["fillna"], inplace=True)
         thermo_short.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        thermo.fillna(method=kwargs["fill_method"], inplace=True)
-        thermo_ma.fillna(method=kwargs["fill_method"], inplace=True)
-        thermo_long.fillna(method=kwargs["fill_method"], inplace=True)
-        thermo_short.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                thermo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                thermo.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                thermo_ma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                thermo_ma.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                thermo_long.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                thermo_long.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                thermo_short.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                thermo_short.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{length}_{long}_{short}"

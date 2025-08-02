@@ -33,7 +33,15 @@ def ttm_trend(high, low, close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         tm_trend.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        tm_trend.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                tm_trend.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                tm_trend.bfill(inplace=True)
 
     # Name and Categorize it
     tm_trend.name = f"TTM_TRND_{length}"

@@ -30,7 +30,15 @@ def slope( close, length=None, as_angle=None, to_degrees=None, vertical=None, of
     if "fillna" in kwargs:
         slope.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        slope.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                slope.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                slope.bfill(inplace=True)
 
     # Name and Categorize it
     slope.name = f"SLOPE_{length}" if not as_angle else f"ANGLE{'d' if to_degrees else 'r'}_{length}"

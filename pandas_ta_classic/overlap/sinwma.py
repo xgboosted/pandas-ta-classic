@@ -28,7 +28,15 @@ def sinwma(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         sinwma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        sinwma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                sinwma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                sinwma.bfill(inplace=True)
 
     # Name & Category
     sinwma.name = f"SINWMA_{length}"

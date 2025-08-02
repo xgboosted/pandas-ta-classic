@@ -44,8 +44,24 @@ def kst(close, roc1=None, roc2=None, roc3=None, roc4=None, sma1=None, sma2=None,
         kst.fillna(kwargs["fillna"], inplace=True)
         kst_signal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        kst.fillna(method=kwargs["fill_method"], inplace=True)
-        kst_signal.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                kst.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                kst.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                kst_signal.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                kst_signal.bfill(inplace=True)
 
     # Name and Categorize it
     kst.name = f"KST_{roc1}_{roc2}_{roc3}_{roc4}_{sma1}_{sma2}_{sma3}_{sma4}"

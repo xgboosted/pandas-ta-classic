@@ -36,7 +36,15 @@ def ema(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         ema.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ema.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ema.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ema.bfill(inplace=True)
 
     # Name & Category
     ema.name = f"EMA_{length}"

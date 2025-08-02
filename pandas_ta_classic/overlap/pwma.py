@@ -24,7 +24,15 @@ def pwma(close, length=None, asc=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         pwma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        pwma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                pwma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                pwma.bfill(inplace=True)
 
     # Name & Category
     pwma.name = f"PWMA_{length}"

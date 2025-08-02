@@ -37,8 +37,24 @@ def amat(close=None, fast=None, slow=None, lookback=None, mamode=None, offset=No
         mas_short.fillna(kwargs["fillna"], inplace=True)
 
     if "fill_method" in kwargs:
-        mas_long.fillna(method=kwargs["fill_method"], inplace=True)
-        mas_short.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mas_long.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mas_long.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mas_short.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mas_short.bfill(inplace=True)
 
     # Prepare DataFrame to return
     amatdf = DataFrame({

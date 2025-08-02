@@ -41,8 +41,24 @@ def cksp(high, low, close, p=None, x=None, q=None, tvmode=None, offset=None, **k
         long_stop.fillna(kwargs["fillna"], inplace=True)
         short_stop.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        long_stop.fillna(method=kwargs["fill_method"], inplace=True)
-        short_stop.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                long_stop.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                long_stop.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                short_stop.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                short_stop.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{p}_{x}_{q}"

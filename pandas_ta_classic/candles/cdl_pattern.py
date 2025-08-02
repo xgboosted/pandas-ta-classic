@@ -72,7 +72,15 @@ def cdl_pattern(open_, high, low, close, name: Union[str, Sequence[str]]="all", 
             if "fillna" in kwargs:
                 pattern_result.fillna(kwargs["fillna"], inplace=True)
             if "fill_method" in kwargs:
-                pattern_result.fillna(method=kwargs["fill_method"], inplace=True)
+                if "fill_method" in kwargs:
+
+                    if kwargs["fill_method"] == "ffill":
+
+                        pattern_result.ffill(inplace=True)
+
+                    elif kwargs["fill_method"] == "bfill":
+
+                        pattern_result.bfill(inplace=True)
 
             result[f"CDL_{n.upper()}"] = pattern_result
 

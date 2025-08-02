@@ -31,7 +31,15 @@ def nvi(close, volume, length=None, initial=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         nvi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        nvi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                nvi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                nvi.bfill(inplace=True)
 
     # Name and Categorize it
     nvi.name = f"NVI_{length}"

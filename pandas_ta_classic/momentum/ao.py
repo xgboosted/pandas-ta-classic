@@ -31,7 +31,15 @@ def ao(high, low, fast=None, slow=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         ao.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ao.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ao.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ao.bfill(inplace=True)
 
     # Name and Categorize it
     ao.name = f"AO_{fast}_{slow}"

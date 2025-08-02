@@ -38,7 +38,15 @@ def cci(high, low, close, length=None, c=None, talib=None, offset=None, **kwargs
     if "fillna" in kwargs:
         cci.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        cci.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                cci.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                cci.bfill(inplace=True)
 
     # Name and Categorize it
     cci.name = f"CCI_{length}_{c}"

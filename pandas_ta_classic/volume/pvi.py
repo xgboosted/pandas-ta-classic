@@ -30,7 +30,15 @@ def pvi(close, volume, length=None, initial=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         pvi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        pvi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                pvi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                pvi.bfill(inplace=True)
 
     # Name and Categorize it
     pvi.name = f"PVI_{length}"

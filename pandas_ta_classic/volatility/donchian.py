@@ -28,9 +28,33 @@ def donchian(high, low, lower_length=None, upper_length=None, offset=None, **kwa
         mid.fillna(kwargs["fillna"], inplace=True)
         upper.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        lower.fillna(method=kwargs["fill_method"], inplace=True)
-        mid.fillna(method=kwargs["fill_method"], inplace=True)
-        upper.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                lower.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                lower.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mid.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mid.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                upper.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                upper.bfill(inplace=True)
 
     # Offset
     if offset != 0:

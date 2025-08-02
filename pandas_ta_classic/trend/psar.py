@@ -97,10 +97,42 @@ def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **k
         short.fillna(kwargs["fillna"], inplace=True)
         reversal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        _af.fillna(method=kwargs["fill_method"], inplace=True)
-        long.fillna(method=kwargs["fill_method"], inplace=True)
-        short.fillna(method=kwargs["fill_method"], inplace=True)
-        reversal.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                _af.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                _af.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                long.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                long.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                short.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                short.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                reversal.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                reversal.bfill(inplace=True)
 
     # Prepare DataFrame to return
     _params = f"_{af0}_{max_af}"

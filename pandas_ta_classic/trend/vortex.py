@@ -38,8 +38,24 @@ def vortex(high, low, close, length=None, drift=None, offset=None, **kwargs):
         vip.fillna(kwargs["fillna"], inplace=True)
         vim.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        vip.fillna(method=kwargs["fill_method"], inplace=True)
-        vim.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                vip.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                vip.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                vim.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                vim.bfill(inplace=True)
 
     # Name and Categorize it
     vip.name = f"VTXP_{length}"

@@ -27,7 +27,15 @@ def vhf(close, length=None, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         vhf.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        vhf.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                vhf.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                vhf.bfill(inplace=True)
 
     # Name and Categorize it
     vhf.name = f"VHF_{length}"

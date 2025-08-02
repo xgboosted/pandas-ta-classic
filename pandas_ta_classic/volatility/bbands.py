@@ -52,11 +52,51 @@ def bbands(close, length=None, std=None, ddof=0, mamode=None, talib=None, offset
         bandwidth.fillna(kwargs["fillna"], inplace=True)
         percent.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        lower.fillna(method=kwargs["fill_method"], inplace=True)
-        mid.fillna(method=kwargs["fill_method"], inplace=True)
-        upper.fillna(method=kwargs["fill_method"], inplace=True)
-        bandwidth.fillna(method=kwargs["fill_method"], inplace=True)
-        percent.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                lower.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                lower.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mid.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mid.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                upper.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                upper.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                bandwidth.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                bandwidth.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                percent.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                percent.bfill(inplace=True)
 
     # Name and Categorize it
     lower.name = f"BBL_{length}_{std}"

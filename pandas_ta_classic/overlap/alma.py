@@ -46,7 +46,15 @@ def alma(close, length=None, sigma=None, distribution_offset=None, offset=None, 
     if "fillna" in kwargs:
         alma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        alma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                alma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                alma.bfill(inplace=True)
 
     # Name & Category
     alma.name = f"ALMA_{length}_{sigma}_{distribution_offset}"

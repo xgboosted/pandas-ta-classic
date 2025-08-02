@@ -77,7 +77,15 @@ def linreg(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         linreg.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        linreg.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                linreg.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                linreg.bfill(inplace=True)
 
     # Name and Categorize it
     linreg.name = f"LR"

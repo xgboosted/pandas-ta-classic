@@ -35,7 +35,15 @@ def hwma(close, na=None, nb=None, nc=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         hwma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        hwma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                hwma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                hwma.bfill(inplace=True)
 
     # Name & Category
     suffix = f"{na}_{nb}_{nc}"

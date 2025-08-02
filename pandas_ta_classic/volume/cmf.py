@@ -35,7 +35,15 @@ def cmf(high, low, close, volume, open_=None, length=None, offset=None, **kwargs
     if "fillna" in kwargs:
         cmf.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        cmf.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                cmf.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                cmf.bfill(inplace=True)
 
     # Name and Categorize it
     cmf.name = f"CMF_{length}"

@@ -49,7 +49,15 @@ def mfi(high, low, close, volume, length=None, talib=None, drift=None, offset=No
     if "fillna" in kwargs:
         mfi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        mfi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mfi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mfi.bfill(inplace=True)
 
     # Name and Categorize it
     mfi.name = f"MFI_{length}"

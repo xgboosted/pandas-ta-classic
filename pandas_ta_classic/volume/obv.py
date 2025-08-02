@@ -27,7 +27,15 @@ def obv(close, volume, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         obv.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        obv.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                obv.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                obv.bfill(inplace=True)
 
     # Name and Categorize it
     obv.name = f"OBV"

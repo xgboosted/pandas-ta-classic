@@ -25,7 +25,15 @@ def bias(close, length=None, mamode=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         bias.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        bias.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                bias.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                bias.bfill(inplace=True)
 
     # Name and Categorize it
     bias.name = f"BIAS_{bma.name}"

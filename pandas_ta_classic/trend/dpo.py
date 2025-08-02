@@ -30,7 +30,15 @@ def dpo(close, length=None, centered=True, offset=None, **kwargs):
     if "fillna" in kwargs:
         dpo.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        dpo.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dpo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dpo.bfill(inplace=True)
 
     # Name and Categorize it
     dpo.name = f"DPO_{length}"

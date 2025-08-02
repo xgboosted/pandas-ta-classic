@@ -39,8 +39,24 @@ def stoch(high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=N
         stoch_k.fillna(kwargs["fillna"], inplace=True)
         stoch_d.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        stoch_k.fillna(method=kwargs["fill_method"], inplace=True)
-        stoch_d.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stoch_k.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stoch_k.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stoch_d.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stoch_d.bfill(inplace=True)
 
     # Name and Categorize it
     _name = "STOCH"

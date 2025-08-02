@@ -31,7 +31,15 @@ def bop(open_, high, low, close, scalar=None, talib=None, offset=None, **kwargs)
     if "fillna" in kwargs:
         bop.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        bop.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                bop.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                bop.bfill(inplace=True)
 
     # Name and Categorize it
     bop.name = f"BOP"
