@@ -52,6 +52,9 @@ class TestStrategyMethods(TestCase):
         del cls.data
 
     def setUp(self):
+        # Always start with a fresh copy of sample_data for each test
+        from tests.config import sample_data
+        self.data = sample_data.copy(deep=True)
         self.added_cols = 0
         self.category = ""
         self.init_cols = len(self.data.columns)
