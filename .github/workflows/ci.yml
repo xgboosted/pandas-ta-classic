@@ -41,12 +41,11 @@ jobs:
     - name: Install system dependencies for ta-lib
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential wget
-        wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-        tar -xzf ta-lib-0.4.0-src.tar.gz
-        cd ta-lib/
-        sudo ./configure --prefix=/usr
-        sudo make
+        sudo apt-get install -y build-essential git
+        git clone https://github.com/ta-lib/ta-lib.git
+        cd ta-lib
+        ./configure --prefix=/usr
+        make
         sudo make install
         sudo ldconfig
 
