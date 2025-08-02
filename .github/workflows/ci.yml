@@ -12,6 +12,34 @@ env:
   LATEST_PYTHON_VERSION: "3.13"
 
 jobs:
+  # Generate Python version matrix based on latest version
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      python-versions: ${{ steps.versions.outputs.python-versions }}
+    steps:
+    - name: Generate Python version matrix
+      id: versions
+      run: |
+        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> "13")
+        latest="${{ env.LATEST_PYTHON_VERSION }}"
+        minor_version=$(echo "$latest" | cut -d'.' -f2)
+        
+        # Generate 5 versions: latest and 4 previous minor versions
+        versions="["
+        for i in {4..0}; do
+          version_num=$((minor_version - i))
+          if [ $i -eq 0 ]; then
+            versions="${versions}\"3.${version_num}\""
+          else
+            versions="${versions}\"3.${version_num}\", "
+          fi
+        done
+        versions="${versions}]"
+        
+        echo "python-versions=$versions" >> $GITHUB_OUTPUT
+        echo "Generated Python versions: $versions"
+
   # Basic structure validation that doesn't require dependencies
   validate:
     runs-on: ubuntu-latest
@@ -29,12 +57,13 @@ jobs:
 
   # Full test suite with dependencies  
   test:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Support latest stable Python version and 4 consecutive previous versions
-        # Update LATEST_PYTHON_VERSION env var when new Python versions are released
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        # Python versions are dynamically generated from LATEST_PYTHON_VERSION
+        # Supports latest stable Python version and 4 consecutive previous versions
+        python-version: ${{ fromJSON(needs.generate-matrix.outputs.python-versions) }}
 
     steps:
     - uses: actions/checkout@v4
