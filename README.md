@@ -29,6 +29,14 @@ _Pandas Technical Analysis_ (**Pandas TA Classic**) is an easy to use library th
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
+## Python Version Support Policy
+
+**Pandas TA Classic** supports the latest stable Python version plus the 4 immediate preceding minor versions. Currently, this includes Python versions **3.9 through 3.13** (5 versions total). When new Python versions are released, support follows this rolling policy:
+
+- ✅ **Latest stable version** (currently 3.13)
+- ✅ **Previous 4 minor versions** (currently 3.12, 3.11, 3.10, 3.9)
+
+This ensures compatibility with recent Python features while maintaining broad ecosystem support.
 
 **Note:** _TA Lib_ must be installed to use **all** the Candlestick Patterns. ```pip install TA-Lib```. If _TA Lib_ is not installed, then only the builtin Candlestick Patterns will be available.
 
