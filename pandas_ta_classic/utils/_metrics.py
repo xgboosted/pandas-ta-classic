@@ -41,6 +41,7 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
     if years <= 0:
         # Guard: years must be positive and nonzero
         from numpy import nan as npNaN
+
         return npNaN
     close = verify_series(close)
 
