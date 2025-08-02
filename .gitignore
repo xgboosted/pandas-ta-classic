@@ -150,3 +150,6 @@ _site/
 
 # Validation artifacts (temp files from our validation script)
 validate_structure.py.tmp
+
+# Backup files
+*.backup
