@@ -24,9 +24,6 @@ jobs:
   # All-in-one job that runs validation, quality checks, testing, and documentation
   ci-pipeline:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
     # Checkout code
@@ -170,11 +167,20 @@ jobs:
         source: ./
         destination: ./_site
       
+    - name: Debug Jekyll build output (main branch only)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "Jekyll build completed. Checking _site directory:"
+        ls -la ./_site/ || echo "No _site directory found"
+        if [ -d "./_site" ]; then
+          echo "Files in _site:"
+          find ./_site -type f | head -10
+        fi
+        
     - name: Upload Jekyll artifact (main branch only)
       if: github.ref == 'refs/heads/main'
       uses: actions/upload-pages-artifact@v3
       with:
-        name: jekyll-pages
         path: ./_site
     
     # Step 10: Build Sphinx documentation (only on main branch)
@@ -201,5 +207,11 @@ jobs:
       if: github.ref == 'refs/heads/main'
       id: deployment
       uses: actions/deploy-pages@v4
-      with:
-        artifact_name: jekyll-pages
+      environment:
+        name: github-pages
+        
+    - name: Output deployment URL (main branch only)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "Deployment completed successfully"
+        echo "Page URL: ${{ steps.deployment.outputs.page_url }}"
