@@ -72,9 +72,33 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
         macd.fillna(kwargs["fillna"], inplace=True)
         stoch.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        stc.fillna(method=kwargs["fill_method"], inplace=True)
-        macd.fillna(method=kwargs["fill_method"], inplace=True)
-        stoch.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stc.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stc.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                macd.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                macd.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stoch.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stoch.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{tclength}_{fast}_{slow}_{factor}"

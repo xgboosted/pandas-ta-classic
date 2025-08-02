@@ -27,7 +27,15 @@ def zscore(close, length=None, std=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         zscore.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        zscore.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                zscore.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                zscore.bfill(inplace=True)
 
     # Name & Category
     zscore.name = f"ZS_{length}"

@@ -32,10 +32,9 @@ setup(
     license="The MIT License (MIT)",
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
@@ -51,8 +50,8 @@ setup(
         "data": ["data/*.csv"],
     },
     install_requires=[
-        "numpy>=1.21.0",
-        "pandas>=1.3.0"
+        "numpy>=2.0.0",
+        "pandas>=2.0.0"
     ],
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:

@@ -68,7 +68,15 @@ def ebsw(close, length=None, bars=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         ebsw.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ebsw.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ebsw.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ebsw.bfill(inplace=True)
 
     # Name and Categorize it
     ebsw.name = f"EBSW_{length}_{bars}"

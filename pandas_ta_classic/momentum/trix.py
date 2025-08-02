@@ -34,8 +34,24 @@ def trix(close, length=None, signal=None, scalar=None, drift=None, offset=None, 
         trix.fillna(kwargs["fillna"], inplace=True)
         trix_signal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        trix.fillna(method=kwargs["fill_method"], inplace=True)
-        trix_signal.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                trix.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                trix.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                trix_signal.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                trix_signal.bfill(inplace=True)
 
     # Name & Category
     trix.name = f"TRIX_{length}_{signal}"

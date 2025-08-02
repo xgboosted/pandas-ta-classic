@@ -26,7 +26,15 @@ def percent_return(close, length=None, cumulative=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         pct_return.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        pct_return.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                pct_return.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                pct_return.bfill(inplace=True)
 
     # Name & Category
     pct_return.name = f"{'CUM' if cumulative else ''}PCTRET_{length}"

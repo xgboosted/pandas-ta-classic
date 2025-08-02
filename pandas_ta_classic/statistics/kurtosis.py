@@ -23,7 +23,15 @@ def kurtosis(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         kurtosis.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        kurtosis.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                kurtosis.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                kurtosis.bfill(inplace=True)
 
     # Name & Category
     kurtosis.name = f"KURT_{length}"

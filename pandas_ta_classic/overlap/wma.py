@@ -43,7 +43,15 @@ def wma(close, length=None, asc=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         wma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        wma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                wma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                wma.bfill(inplace=True)
 
     # Name & Category
     wma.name = f"WMA_{length}"

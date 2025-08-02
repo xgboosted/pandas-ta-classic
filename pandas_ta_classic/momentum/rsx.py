@@ -87,7 +87,15 @@ def rsx(close, length=None, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         rsx.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        rsx.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                rsx.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                rsx.bfill(inplace=True)
 
     # Name and Categorize it
     rsx.name = f"RSX_{length}"

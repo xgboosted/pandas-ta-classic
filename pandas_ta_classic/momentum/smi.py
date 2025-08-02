@@ -37,9 +37,33 @@ def smi(close, fast=None, slow=None, signal=None, scalar=None, offset=None, **kw
         signalma.fillna(kwargs["fillna"], inplace=True)
         osc.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        smi.fillna(method=kwargs["fill_method"], inplace=True)
-        signalma.fillna(method=kwargs["fill_method"], inplace=True)
-        osc.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                smi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                smi.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                signalma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                signalma.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                osc.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                osc.bfill(inplace=True)
 
     # Name and Categorize it
     _scalar = f"_{scalar}" if scalar != 1 else ""

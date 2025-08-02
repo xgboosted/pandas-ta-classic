@@ -42,8 +42,24 @@ def brar(open_, high, low, close, length=None, scalar=None, drift=None, offset=N
         ar.fillna(kwargs["fillna"], inplace=True)
         br.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ar.fillna(method=kwargs["fill_method"], inplace=True)
-        br.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ar.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ar.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                br.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                br.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{length}"

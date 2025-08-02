@@ -32,7 +32,15 @@ def tema(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         tema.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        tema.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                tema.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                tema.bfill(inplace=True)
 
     # Name & Category
     tema.name = f"TEMA_{length}"

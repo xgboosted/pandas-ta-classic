@@ -28,7 +28,15 @@ def mom(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         mom.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        mom.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mom.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mom.bfill(inplace=True)
 
     # Name and Categorize it
     mom.name = f"MOM_{length}"

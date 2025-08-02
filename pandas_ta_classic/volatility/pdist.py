@@ -25,7 +25,15 @@ def pdist(open_, high, low, close, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         pdist.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        pdist.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                pdist.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                pdist.bfill(inplace=True)
 
     # Name & Category
     pdist.name = "PDIST"

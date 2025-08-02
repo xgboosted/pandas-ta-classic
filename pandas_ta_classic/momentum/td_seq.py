@@ -57,8 +57,24 @@ def td_seq(close, asint=None, offset=None, **kwargs):
         down_seq.fillna(kwargs["fillna"], inplace=True)
 
     if "fill_method" in kwargs:
-        up_seq.fillna(method=kwargs["fill_method"], inplace=True)
-        down_seq.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                up_seq.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                up_seq.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                down_seq.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                down_seq.bfill(inplace=True)
 
     # Name & Category
     up_seq.name = f"TD_SEQ_UPa" if show_all else f"TD_SEQ_UP"

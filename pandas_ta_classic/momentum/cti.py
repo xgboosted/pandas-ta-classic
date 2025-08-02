@@ -22,7 +22,15 @@ def cti(close, length=None, offset=None, **kwargs) -> Series:
     if "fillna" in kwargs:
         cti.fillna(method=kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        cti.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                cti.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                cti.bfill(inplace=True)
 
     cti.name = f"CTI_{length}"
     cti.category = "momentum"

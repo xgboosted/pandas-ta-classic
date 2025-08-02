@@ -62,7 +62,15 @@ def rvi(close, high=None, low=None, length=None, scalar=None, refined=None, thir
     if "fillna" in kwargs:
         rvi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        rvi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                rvi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                rvi.bfill(inplace=True)
 
     # Name and Categorize it
     rvi.name = f"RVI{_mode}_{length}"

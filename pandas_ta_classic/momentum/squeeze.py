@@ -77,10 +77,42 @@ def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_sc
         squeeze_off.fillna(kwargs["fillna"], inplace=True)
         no_squeeze.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        squeeze.fillna(method=kwargs["fill_method"], inplace=True)
-        squeeze_on.fillna(method=kwargs["fill_method"], inplace=True)
-        squeeze_off.fillna(method=kwargs["fill_method"], inplace=True)
-        no_squeeze.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                squeeze.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                squeeze.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                squeeze_on.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                squeeze_on.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                squeeze_off.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                squeeze_off.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                no_squeeze.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                no_squeeze.bfill(inplace=True)
 
     # Name and Categorize it
     _props = "" if use_tr else "hlr"
@@ -130,12 +162,60 @@ def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_sc
             neg_dec.fillna(kwargs["fillna"], inplace=True)
             neg_inc.fillna(kwargs["fillna"], inplace=True)
         if "fill_method" in kwargs:
-            sqz_inc.fillna(method=kwargs["fill_method"], inplace=True)
-            sqz_dec.fillna(method=kwargs["fill_method"], inplace=True)
-            pos_inc.fillna(method=kwargs["fill_method"], inplace=True)
-            pos_dec.fillna(method=kwargs["fill_method"], inplace=True)
-            neg_dec.fillna(method=kwargs["fill_method"], inplace=True)
-            neg_inc.fillna(method=kwargs["fill_method"], inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    sqz_inc.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    sqz_inc.bfill(inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    sqz_dec.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    sqz_dec.bfill(inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    pos_inc.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    pos_inc.bfill(inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    pos_dec.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    pos_dec.bfill(inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    neg_dec.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    neg_dec.bfill(inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    neg_inc.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    neg_inc.bfill(inplace=True)
 
         df[f"SQZ_INC"] = sqz_inc
         df[f"SQZ_DEC"] = sqz_dec

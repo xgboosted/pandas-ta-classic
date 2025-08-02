@@ -27,7 +27,15 @@ def short_run(fast, slow, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         short_run.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        short_run.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                short_run.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                short_run.bfill(inplace=True)
 
     # Name and Categorize it
     short_run.name = f"SR_{length}"

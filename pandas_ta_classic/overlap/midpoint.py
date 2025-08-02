@@ -31,7 +31,15 @@ def midpoint(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         midpoint.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        midpoint.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                midpoint.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                midpoint.bfill(inplace=True)
 
     # Name and Categorize it
     midpoint.name = f"MIDPOINT_{length}"

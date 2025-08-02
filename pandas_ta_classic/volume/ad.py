@@ -36,7 +36,15 @@ def ad(high, low, close, volume, open_=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         ad.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ad.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ad.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ad.bfill(inplace=True)
 
     # Name and Categorize it
     ad.name = "AD" if open_ is None else "ADo"

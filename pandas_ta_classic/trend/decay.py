@@ -33,7 +33,15 @@ def decay(close, kind=None, length=None, mode=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         ld.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ld.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ld.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ld.bfill(inplace=True)
 
     # Name and Categorize it
     ld.name = f"{_mode}DECAY_{length}"

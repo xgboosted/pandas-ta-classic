@@ -47,9 +47,33 @@ def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, include_chi
         span_b.fillna(kwargs["fillna"], inplace=True)
         chikou_span.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        span_a.fillna(method=kwargs["fill_method"], inplace=True)
-        span_b.fillna(method=kwargs["fill_method"], inplace=True)
-        chikou_span.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                span_a.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                span_a.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                span_b.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                span_b.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                chikou_span.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                chikou_span.bfill(inplace=True)
 
     # Name and Categorize it
     span_a.name = f"ISA_{tenkan}"

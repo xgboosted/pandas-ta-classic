@@ -27,7 +27,15 @@ def coppock(close, length=None, fast=None, slow=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         coppock.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        coppock.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                coppock.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                coppock.bfill(inplace=True)
 
     # Name and Categorize it
     coppock.name = f"COPC_{fast}_{slow}_{length}"

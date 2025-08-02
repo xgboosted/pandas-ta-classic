@@ -34,7 +34,15 @@ def eom(high, low, close, volume, length=None, divisor=None, drift=None, offset=
     if "fillna" in kwargs:
         eom.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        eom.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                eom.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                eom.bfill(inplace=True)
 
     # Name and Categorize it
     eom.name = f"EOM_{length}_{divisor}"

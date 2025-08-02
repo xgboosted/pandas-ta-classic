@@ -43,9 +43,33 @@ def kc(high, low, close, length=None, scalar=None, mamode=None, offset=None, **k
         basis.fillna(kwargs["fillna"], inplace=True)
         upper.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        lower.fillna(method=kwargs["fill_method"], inplace=True)
-        basis.fillna(method=kwargs["fill_method"], inplace=True)
-        upper.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                lower.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                lower.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                basis.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                basis.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                upper.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                upper.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"{mamode.lower()[0] if len(mamode) else ''}_{length}_{scalar}"

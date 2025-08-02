@@ -43,7 +43,15 @@ def inertia(close=None, high=None, low=None, length=None, rvi_length=None, scala
     if "fillna" in kwargs:
         inertia.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        inertia.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                inertia.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                inertia.bfill(inplace=True)
 
     # Name & Category
     _props = f"_{length}_{rvi_length}"

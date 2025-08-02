@@ -37,8 +37,24 @@ def kvo(high, low, close, volume, fast=None, slow=None, signal=None, mamode=None
         kvo.fillna(kwargs["fillna"], inplace=True)
         kvo_signal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        kvo.fillna(method=kwargs["fill_method"], inplace=True)
-        kvo_signal.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                kvo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                kvo.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                kvo_signal.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                kvo_signal.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{fast}_{slow}_{signal}"

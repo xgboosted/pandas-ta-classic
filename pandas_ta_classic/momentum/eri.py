@@ -30,8 +30,24 @@ def eri(high, low, close, length=None, offset=None, **kwargs):
         bull.fillna(kwargs["fillna"], inplace=True)
         bear.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        bull.fillna(method=kwargs["fill_method"], inplace=True)
-        bear.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                bull.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                bull.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                bear.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                bear.bfill(inplace=True)
 
     # Name and Categorize it
     bull.name = f"BULLP_{length}"

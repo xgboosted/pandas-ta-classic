@@ -23,7 +23,15 @@ def rma(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         rma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        rma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                rma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                rma.bfill(inplace=True)
 
     # Name & Category
     rma.name = f"RMA_{length}"

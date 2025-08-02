@@ -23,7 +23,15 @@ def pvt(close, volume, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         pvt.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        pvt.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                pvt.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                pvt.bfill(inplace=True)
 
     # Name and Categorize it
     pvt.name = f"PVT"

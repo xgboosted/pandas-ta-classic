@@ -56,7 +56,15 @@ def uo(high, low, close, fast=None, medium=None, slow=None, fast_w=None, medium_
     if "fillna" in kwargs:
         uo.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        uo.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                uo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                uo.bfill(inplace=True)
 
     # Name and Categorize it
     uo.name = f"UO_{fast}_{medium}_{slow}"

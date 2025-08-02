@@ -27,7 +27,15 @@ def pgo(high, low, close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         pgo.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        pgo.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                pgo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                pgo.bfill(inplace=True)
 
     # Name and Categorize it
     pgo.name = f"PGO_{length}"

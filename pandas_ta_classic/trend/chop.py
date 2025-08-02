@@ -40,7 +40,15 @@ def chop(high, low, close, length=None, atr_length=None, ln=None, scalar=None, d
     if "fillna" in kwargs:
         chop.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        chop.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                chop.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                chop.bfill(inplace=True)
 
     # Name and Categorize it
     chop.name = f"CHOP{'ln' if ln else ''}_{length}_{atr_length}_{scalar}"

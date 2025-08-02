@@ -38,7 +38,15 @@ def decreasing(close, length=None, strict=None, asint=None, percent=None, drift=
     if "fillna" in kwargs:
         decreasing.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        decreasing.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                decreasing.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                decreasing.bfill(inplace=True)
 
     # Name and Categorize it
     _percent = f"_{0.01 * percent}" if percent else ''

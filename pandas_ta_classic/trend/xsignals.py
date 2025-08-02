@@ -49,7 +49,15 @@ def xsignals(signal, xa, xb, above:bool=True, long:bool=True, asbool:bool=None, 
     if "fillna" in kwargs:
         df.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        df.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                df.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                df.bfill(inplace=True)
 
     # Name & Category
     df.name = f"XS"

@@ -37,8 +37,24 @@ def rvgi(open_, high, low, close, length=None, swma_length=None, offset=None, **
         rvgi.fillna(kwargs["fillna"], inplace=True)
         signal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        rvgi.fillna(method=kwargs["fill_method"], inplace=True)
-        signal.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                rvgi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                rvgi.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                signal.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                signal.bfill(inplace=True)
 
     # Name & Category
     rvgi.name = f"RVGI_{length}_{swma_length}"

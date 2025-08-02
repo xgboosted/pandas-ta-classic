@@ -28,7 +28,15 @@ def er(close, length=None, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         er.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        er.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                er.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                er.bfill(inplace=True)
 
     # Name and Categorize it
     er.name = f"ER_{length}"

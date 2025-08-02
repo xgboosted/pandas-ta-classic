@@ -45,7 +45,15 @@ def vidya(close, length=None, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         vidya.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        vidya.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                vidya.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                vidya.bfill(inplace=True)
 
     # Name & Category
     vidya.name = f"VIDYA_{length}"

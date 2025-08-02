@@ -35,7 +35,15 @@ def psl(close, open_=None, length=None, scalar=None, drift=None, offset=None, **
     if "fillna" in kwargs:
         psl.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        psl.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                psl.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                psl.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"_{length}"

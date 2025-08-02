@@ -28,7 +28,10 @@ def log_return(close, length=None, cumulative=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         log_return.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        log_return.fillna(method=kwargs["fill_method"], inplace=True)
+        if kwargs["fill_method"] == "ffill":
+            log_return.ffill(inplace=True)
+        elif kwargs["fill_method"] == "bfill":
+            log_return.bfill(inplace=True)
 
     # Name & Category
     log_return.name = f"{'CUM' if cumulative else ''}LOGRET_{length}"

@@ -84,7 +84,15 @@ def jma(close, length=None, phase=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         jma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        jma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                jma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                jma.bfill(inplace=True)
 
     # Name & Category
     jma.name = f"JMA_{_length}_{phase}"

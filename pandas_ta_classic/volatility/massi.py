@@ -34,7 +34,15 @@ def massi(high, low, fast=None, slow=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         massi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        massi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                massi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                massi.bfill(inplace=True)
 
     # Name and Categorize it
     massi.name = f"MASSI_{fast}_{slow}"

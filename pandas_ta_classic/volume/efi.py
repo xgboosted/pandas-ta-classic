@@ -27,7 +27,15 @@ def efi(close, volume, length=None, mamode=None, drift=None, offset=None, **kwar
     if "fillna" in kwargs:
         efi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        efi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                efi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                efi.bfill(inplace=True)
 
     # Name and Categorize it
     efi.name = f"EFI_{length}"

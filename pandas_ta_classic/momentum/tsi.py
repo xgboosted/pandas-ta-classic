@@ -43,8 +43,24 @@ def tsi(close, fast=None, slow=None, signal=None, scalar=None, mamode=None, drif
         tsi.fillna(kwargs["fillna"], inplace=True)
         tsi_signal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        tsi.fillna(method=kwargs["fill_method"], inplace=True)
-        tsi_signal.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                tsi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                tsi.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                tsi_signal.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                tsi_signal.bfill(inplace=True)
 
     # Name and Categorize it
     tsi.name = f"TSI_{fast}_{slow}_{signal}"

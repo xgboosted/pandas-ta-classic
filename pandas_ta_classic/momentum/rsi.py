@@ -41,7 +41,15 @@ def rsi(close, length=None, scalar=None, talib=None, drift=None, offset=None, **
     if "fillna" in kwargs:
         rsi.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        rsi.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                rsi.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                rsi.bfill(inplace=True)
 
     # Name and Categorize it
     rsi.name = f"RSI_{length}"

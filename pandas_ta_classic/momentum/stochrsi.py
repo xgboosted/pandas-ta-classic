@@ -39,8 +39,24 @@ def stochrsi(close, length=None, rsi_length=None, k=None, d=None, mamode=None, o
         stochrsi_k.fillna(kwargs["fillna"], inplace=True)
         stochrsi_d.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        stochrsi_k.fillna(method=kwargs["fill_method"], inplace=True)
-        stochrsi_d.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stochrsi_k.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stochrsi_k.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stochrsi_d.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stochrsi_d.bfill(inplace=True)
 
     # Name and Categorize it
     _name = "STOCHRSI"

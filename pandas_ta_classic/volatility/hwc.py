@@ -76,12 +76,52 @@ def hwc(close, na=None, nb=None, nc=None, nd=None, scalar=None, channel_eval=Non
             hwc_pctwidth.fillna(kwargs["fillna"], inplace=True)
 
     if "fill_method" in kwargs:
-        hwc.fillna(method=kwargs["fill_method"], inplace=True)
-        hwc_upper.fillna(method=kwargs["fill_method"], inplace=True)
-        hwc_lower.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                hwc.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                hwc.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                hwc_upper.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                hwc_upper.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                hwc_lower.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                hwc_lower.bfill(inplace=True)
         if channel_eval:
-            hwc_width.fillna(method=kwargs["fill_method"], inplace=True)
-            hwc_pctwidth.fillna(method=kwargs["fill_method"], inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    hwc_width.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    hwc_width.bfill(inplace=True)
+            if "fill_method" in kwargs:
+
+                if kwargs["fill_method"] == "ffill":
+
+                    hwc_pctwidth.ffill(inplace=True)
+
+                elif kwargs["fill_method"] == "bfill":
+
+                    hwc_pctwidth.bfill(inplace=True)
 
     # Name and Categorize it
     # suffix = f'{str(na).replace(".", "")}-{str(nb).replace(".", "")}-{str(nc).replace(".", "")}'

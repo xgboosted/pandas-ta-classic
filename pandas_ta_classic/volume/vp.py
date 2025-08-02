@@ -64,7 +64,15 @@ def vp(close, volume, width=None, **kwargs):
     if "fillna" in kwargs:
         vpdf.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        vpdf.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                vpdf.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                vpdf.bfill(inplace=True)
 
     # Name and Categorize it
     vpdf.name = f"VP_{width}"

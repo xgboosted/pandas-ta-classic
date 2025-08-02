@@ -26,7 +26,15 @@ def cfo(close, length=None, scalar=None, drift=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         cfo.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        cfo.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                cfo.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                cfo.bfill(inplace=True)
 
     # Name and Categorize it
     cfo.name = f"CFO_{length}"

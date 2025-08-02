@@ -50,11 +50,51 @@ def aobv(close, volume, fast=None, slow=None, max_lookback=None, min_lookback=No
         obv_long.fillna(kwargs["fillna"], inplace=True)
         obv_short.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        obv_.fillna(method=kwargs["fill_method"], inplace=True)
-        maf.fillna(method=kwargs["fill_method"], inplace=True)
-        mas.fillna(method=kwargs["fill_method"], inplace=True)
-        obv_long.fillna(method=kwargs["fill_method"], inplace=True)
-        obv_short.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                obv_.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                obv_.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                maf.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                maf.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                mas.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                mas.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                obv_long.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                obv_long.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                obv_short.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                obv_short.bfill(inplace=True)
 
     # Prepare DataFrame to return
     _mode = mamode.lower()[0] if len(mamode) else ""

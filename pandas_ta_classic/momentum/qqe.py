@@ -95,10 +95,42 @@ def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, o
         qqe_long.fillna(kwargs["fillna"], inplace=True)
         qqe_short.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        rsi_ma.fillna(method=kwargs["fill_method"], inplace=True)
-        qqe.fillna(method=kwargs["fill_method"], inplace=True)
-        qqe_long.fillna(method=kwargs["fill_method"], inplace=True)
-        qqe_short.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                rsi_ma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                rsi_ma.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                qqe.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                qqe.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                qqe_long.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                qqe_long.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                qqe_short.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                qqe_short.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"{_mode}_{length}_{smooth}_{factor}"

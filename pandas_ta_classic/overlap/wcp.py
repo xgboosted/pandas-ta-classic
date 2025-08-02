@@ -27,7 +27,15 @@ def wcp(high, low, close, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         wcp.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        wcp.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                wcp.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                wcp.bfill(inplace=True)
 
     # Name & Category
     wcp.name = "WCP"

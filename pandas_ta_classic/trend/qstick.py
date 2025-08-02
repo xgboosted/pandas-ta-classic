@@ -36,7 +36,15 @@ def qstick(open_, close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         qstick.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        qstick.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                qstick.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                qstick.bfill(inplace=True)
 
     # Name and Categorize it
     qstick.name = f"QS_{length}"

@@ -31,7 +31,15 @@ def stdev(close, length=None, ddof=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         stdev.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        stdev.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                stdev.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                stdev.bfill(inplace=True)
 
     # Name & Category
     stdev.name = f"STDEV_{length}"

@@ -31,7 +31,15 @@ def trima(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         trima.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        trima.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                trima.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                trima.bfill(inplace=True)
 
     # Name & Category
     trima.name = f"TRIMA_{length}"

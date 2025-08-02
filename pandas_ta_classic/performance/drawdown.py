@@ -33,9 +33,33 @@ def drawdown(close, offset=None, **kwargs) -> DataFrame:
         dd_pct.fillna(kwargs["fillna"], inplace=True)
         dd_log.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        dd.fillna(method=kwargs["fill_method"], inplace=True)
-        dd_pct.fillna(method=kwargs["fill_method"], inplace=True)
-        dd_log.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dd.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dd.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dd_pct.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dd_pct.bfill(inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dd_log.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dd_log.bfill(inplace=True)
 
     # Name and Categorize it
     dd.name = "DD"

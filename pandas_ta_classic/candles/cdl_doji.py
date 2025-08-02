@@ -38,7 +38,15 @@ def cdl_doji(open_, high, low, close, length=None, factor=None, scalar=None, asi
     if "fillna" in kwargs:
         doji.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        doji.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                doji.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                doji.bfill(inplace=True)
 
     # Name and Categorize it
     doji.name = f"CDL_DOJI_{length}_{0.01 * factor}"

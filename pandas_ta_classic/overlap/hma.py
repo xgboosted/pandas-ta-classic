@@ -29,7 +29,15 @@ def hma(close, length=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         hma.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        hma.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                hma.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                hma.bfill(inplace=True)
 
     # Name & Category
     hma.name = f"HMA_{length}"

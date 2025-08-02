@@ -52,7 +52,15 @@ def ssf(close, length=None, poles=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         ssf.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        ssf.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                ssf.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                ssf.bfill(inplace=True)
 
     # Name & Category
     ssf.name = f"SSF_{length}_{poles}"

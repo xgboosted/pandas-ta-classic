@@ -31,7 +31,15 @@ def dema(close, length=None, talib=None, offset=None, **kwargs):
     if "fillna" in kwargs:
         dema.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        dema.fillna(method=kwargs["fill_method"], inplace=True)
+        if "fill_method" in kwargs:
+
+            if kwargs["fill_method"] == "ffill":
+
+                dema.ffill(inplace=True)
+
+            elif kwargs["fill_method"] == "bfill":
+
+                dema.bfill(inplace=True)
 
     # Name & Category
     dema.name = f"DEMA_{length}"
