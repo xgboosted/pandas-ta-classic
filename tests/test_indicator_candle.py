@@ -1,4 +1,4 @@
-from tests.config import error_analysis, sample_data, CORRELATION, CORRELATION_THRESHOLD, VERBOSE
+from tests.config import error_analysis, get_sample_data, CORRELATION, CORRELATION_THRESHOLD, VERBOSE
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
@@ -16,7 +16,7 @@ except ImportError:
 class TestCandle(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
+        cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
         cls.high = cls.data["high"]

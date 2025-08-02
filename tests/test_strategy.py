@@ -3,7 +3,7 @@
 from multiprocessing import cpu_count
 from time import perf_counter
 
-from tests.config import sample_data
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import skip, skipUnless, TestCase
@@ -22,9 +22,8 @@ class TestStrategyMethods(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
-        cls.data.ta.cores = cores
         cls.speed_test = DataFrame()
+        cls.data = get_sample_data()
 
     @classmethod
     def tearDownClass(cls):
@@ -52,9 +51,8 @@ class TestStrategyMethods(TestCase):
         del cls.data
 
     def setUp(self):
-        # Always start with a fresh copy of sample_data for each test
-        from tests.config import sample_data
-        self.data = sample_data.copy(deep=True)
+        # Always start with a fresh DataFrame for each test
+        self.data = get_sample_data()
         self.added_cols = 0
         self.category = ""
         self.init_cols = len(self.data.columns)
@@ -199,7 +197,7 @@ class TestStrategyMethods(TestCase):
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed, ordered=True)
         self.data.ta.tsignals(trend=self.data["AMATe_LR_20_50_2"], append=True)
-        self.assertEqual(len(self.data.columns), 15)
+        self.assertEqual(len(self.data.columns), 13)
 
     # @skip
     def test_momentum_category(self):

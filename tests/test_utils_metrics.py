@@ -1,15 +1,15 @@
-from unittest import skip, TestCase
+from unittest import TestCase
 
 from pandas import DataFrame
 
-from tests.config import sample_data
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 
 class TestUtilityMetrics(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
+        cls.data = get_sample_data()
         cls.close = cls.data["close"]
         cls.pctret = pandas_ta.percent_return(cls.close, cumulative=False)
         cls.logret = pandas_ta.percent_return(cls.close, cumulative=False)
@@ -34,11 +34,12 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
+        import numpy as np
         result = pandas_ta.calmar_ratio(self.close, years=0)
-        self.assertIsNone(result)
+        self.assertTrue(np.isnan(result))
 
         result = pandas_ta.calmar_ratio(self.close, years=-2)
-        self.assertIsNone(result)
+        self.assertTrue(np.isnan(result))
 
     def test_downside_deviation(self):
         result = pandas_ta.downside_deviation(self.pctret)

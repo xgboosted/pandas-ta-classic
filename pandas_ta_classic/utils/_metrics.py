@@ -39,8 +39,9 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
     >>> result = ta.calmar_ratio(close, method="percent", years=3)
     """
     if years <= 0:
-        print(f"[!] calmar_ratio 'years' argument must be greater than zero.")
-        return
+        # Guard: years must be positive and nonzero
+        from numpy import nan as npNaN
+        return npNaN
     close = verify_series(close)
 
     n_years_ago = close.index[-1] - Timedelta(days=365.25 * years)

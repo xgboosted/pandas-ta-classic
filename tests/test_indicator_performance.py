@@ -1,4 +1,4 @@
-from tests.config import sample_data
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
@@ -8,7 +8,7 @@ from pandas import Series
 class TestPerformace(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
+        cls.data = get_sample_data()
         cls.close = cls.data["close"]
         cls.islong = (cls.close > pandas_ta.sma(cls.close, length=8)).astype(int)
         cls.pctret = pandas_ta.percent_return(cls.close, cumulative=False)
