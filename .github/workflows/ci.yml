@@ -7,6 +7,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  # Latest stable Python version - update this when new Python versions are released
+  LATEST_PYTHON_VERSION: "3.13"
+
 jobs:
   # Basic structure validation that doesn't require dependencies
   validate:
@@ -17,7 +21,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
     - name: Validate package structure
       run: |
@@ -28,7 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        # Support latest stable Python version and 4 consecutive previous versions
+        # Update LATEST_PYTHON_VERSION env var when new Python versions are released
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
     - uses: actions/checkout@v4

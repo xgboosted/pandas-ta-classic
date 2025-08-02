@@ -32,9 +32,11 @@ setup(
     license="The MIT License (MIT)",
     classifiers=[
         "Development Status :: 4 - Beta",
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
