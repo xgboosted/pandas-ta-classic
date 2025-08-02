@@ -7,18 +7,24 @@ def midprice(high, low, length=None, talib=None, offset=None, **kwargs):
     """Indicator: Midprice"""
     # Validate arguments
     length = int(length) if length and length > 0 else 2
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = (
+        int(kwargs["min_periods"])
+        if "min_periods" in kwargs and kwargs["min_periods"] is not None
+        else length
+    )
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None: return
+    if high is None or low is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import MIDPRICE
+
         midprice = MIDPRICE(high, low, length)
     else:
         lowest_low = low.rolling(length, min_periods=min_periods).min()

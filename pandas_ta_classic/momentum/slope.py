@@ -4,7 +4,15 @@ from numpy import pi as npPi
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def slope( close, length=None, as_angle=None, to_degrees=None, vertical=None, offset=None, **kwargs):
+def slope(
+    close,
+    length=None,
+    as_angle=None,
+    to_degrees=None,
+    vertical=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Slope"""
     # Validate arguments
     length = int(length) if length and length > 0 else 1
@@ -13,7 +21,8 @@ def slope( close, length=None, as_angle=None, to_degrees=None, vertical=None, of
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     slope = close.diff(length) / length
@@ -41,14 +50,17 @@ def slope( close, length=None, as_angle=None, to_degrees=None, vertical=None, of
                 slope.bfill(inplace=True)
 
     # Name and Categorize it
-    slope.name = f"SLOPE_{length}" if not as_angle else f"ANGLE{'d' if to_degrees else 'r'}_{length}"
+    slope.name = (
+        f"SLOPE_{length}"
+        if not as_angle
+        else f"ANGLE{'d' if to_degrees else 'r'}_{length}"
+    )
     slope.category = "momentum"
 
     return slope
 
 
-slope.__doc__ = \
-"""Slope
+slope.__doc__ = """Slope
 
 Returns the slope of a series of length n. Can convert the slope to angle.
 Default: slope.

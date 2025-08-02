@@ -11,13 +11,14 @@ def vhf(close, length=None, drift=None, offset=None, **kwargs):
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     hcp = close.rolling(length).max()
     lcp = close.rolling(length).min()
     diff = npFabs(close.diff(drift))
-    vhf  = npFabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
+    vhf = npFabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
 
     # Offset
     if offset != 0:
@@ -44,8 +45,7 @@ def vhf(close, length=None, drift=None, offset=None, **kwargs):
     return vhf
 
 
-vhf.__doc__ = \
-"""Vertical Horizontal Filter (VHF)
+vhf.__doc__ = """Vertical Horizontal Filter (VHF)
 
 VHF was created by Adam White to identify trending and ranging markets.
 

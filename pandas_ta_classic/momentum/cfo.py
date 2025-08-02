@@ -12,7 +12,8 @@ def cfo(close, length=None, scalar=None, drift=None, offset=None, **kwargs):
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Finding linear regression of Series
     cfo = scalar * (close - linreg(close, length=length, tsf=True))
@@ -43,8 +44,7 @@ def cfo(close, length=None, scalar=None, drift=None, offset=None, **kwargs):
     return cfo
 
 
-cfo.__doc__ = \
-"""Chande Forcast Oscillator (CFO)
+cfo.__doc__ = """Chande Forcast Oscillator (CFO)
 
 The Forecast Oscillator calculates the percentage difference between the actual
 price and the Time Series Forecast (the endpoint of a linear regression line).

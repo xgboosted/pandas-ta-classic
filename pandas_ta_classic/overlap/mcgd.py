@@ -11,14 +11,15 @@ def mcgd(close, length=None, offset=None, c=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     close = close.copy()
 
     def mcg_(series):
-        denom = (c * length * (series.iloc[1] / series.iloc[0]) ** 4)
-        series.iloc[1] = (series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom))
+        denom = c * length * (series.iloc[1] / series.iloc[0]) ** 4
+        series.iloc[1] = series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom)
         return series.iloc[1]
 
     mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
@@ -44,8 +45,7 @@ def mcgd(close, length=None, offset=None, c=None, **kwargs):
     return mcg_ds
 
 
-mcgd.__doc__ = \
-"""McGinley Dynamic Indicator
+mcgd.__doc__ = """McGinley Dynamic Indicator
 
 The McGinley Dynamic looks like a moving average line, yet it is actually a
 smoothing mechanism for prices that minimizes price separation, price whipsaws,

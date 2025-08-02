@@ -14,11 +14,13 @@ def cmo(close, length=None, scalar=None, talib=None, drift=None, offset=None, **
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import CMO
+
         cmo = CMO(close, length)
     else:
         mom = close.diff(drift)
@@ -59,8 +61,7 @@ def cmo(close, length=None, scalar=None, talib=None, drift=None, offset=None, **
     return cmo
 
 
-cmo.__doc__ = \
-"""Chande Momentum Oscillator (CMO)
+cmo.__doc__ = """Chande Momentum Oscillator (CMO)
 
 Attempts to capture the momentum of an asset with overbought at 50 and
 oversold at -50.

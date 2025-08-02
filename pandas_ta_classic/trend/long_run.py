@@ -12,11 +12,16 @@ def long_run(fast, slow, length=None, offset=None, **kwargs):
     slow = verify_series(slow, length)
     offset = get_offset(offset)
 
-    if fast is None or slow is None: return
+    if fast is None or slow is None:
+        return
 
     # Calculate Result
-    pb = increasing(fast, length) & decreasing(slow, length)  # potential bottom or bottom
-    bi = increasing(fast, length) & increasing(slow, length)  # fast and slow are increasing
+    pb = increasing(fast, length) & decreasing(
+        slow, length
+    )  # potential bottom or bottom
+    bi = increasing(fast, length) & increasing(
+        slow, length
+    )  # fast and slow are increasing
     long_run = pb | bi
 
     # Offset

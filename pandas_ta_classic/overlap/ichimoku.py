@@ -4,7 +4,17 @@ from .midprice import midprice
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, include_chikou=True, offset=None, **kwargs):
+def ichimoku(
+    high,
+    low,
+    close,
+    tenkan=None,
+    kijun=None,
+    senkou=None,
+    include_chikou=True,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
     tenkan = int(tenkan) if tenkan and tenkan > 0 else 9
     kijun = int(kijun) if kijun and kijun > 0 else 26
@@ -17,7 +27,8 @@ def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, include_chi
     if not kwargs.get("lookahead", True):
         include_chikou = False
 
-    if high is None or low is None or close is None: return None, None
+    if high is None or low is None or close is None:
+        return None, None
 
     # Calculate Result
     tenkan_sen = midprice(high=high, low=low, length=tenkan)
@@ -120,8 +131,7 @@ def ichimoku(high, low, close, tenkan=None, kijun=None, senkou=None, include_chi
     return ichimokudf, spandf
 
 
-ichimoku.__doc__ = \
-"""Ichimoku Kinkō Hyō (ichimoku)
+ichimoku.__doc__ = """Ichimoku Kinkō Hyō (ichimoku)
 
 Developed Pre WWII as a forecasting model for financial markets.
 

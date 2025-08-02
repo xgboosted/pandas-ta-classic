@@ -12,9 +12,10 @@ def vidya(close, length=None, drift=None, offset=None, **kwargs):
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
-    def _cmo(source: Series, n:int , d: int):
+    def _cmo(source: Series, n: int, d: int):
         """Chande Momentum Oscillator (CMO) Patch
         For some reason: from pandas_ta_classic.momentum import cmo causes
         pandas_ta.momentum.coppock to not be able to import it's
@@ -34,7 +35,9 @@ def vidya(close, length=None, drift=None, offset=None, **kwargs):
     abs_cmo = _cmo(close, length, drift).abs()
     vidya = Series(0, index=close.index)
     for i in range(length, m):
-        vidya.iloc[i] = alpha * abs_cmo.iloc[i] * close.iloc[i] + vidya.iloc[i - 1] * (1 - alpha * abs_cmo.iloc[i])
+        vidya.iloc[i] = alpha * abs_cmo.iloc[i] * close.iloc[i] + vidya.iloc[i - 1] * (
+            1 - alpha * abs_cmo.iloc[i]
+        )
     vidya.replace({0: npNaN}, inplace=True)
 
     # Offset
@@ -62,8 +65,7 @@ def vidya(close, length=None, drift=None, offset=None, **kwargs):
     return vidya
 
 
-vidya.__doc__ = \
-"""Variable Index Dynamic Average (VIDYA)
+vidya.__doc__ = """Variable Index Dynamic Average (VIDYA)
 
 Variable Index Dynamic Average (VIDYA) was developed by Tushar Chande. It is
 similar to an Exponential Moving Average but it has a dynamically adjusted

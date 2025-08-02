@@ -14,7 +14,7 @@ def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **k
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
 
-    def _falling(high, low, drift:int=1):
+    def _falling(high, low, drift: int = 1):
         """Returns the last -DM value"""
         # Not to be confused with ta.falling()
         up = high - high.shift(drift)
@@ -69,10 +69,10 @@ def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **k
         if reverse:
             _sar = ep
             af = af0
-            falling = not falling # Must come before next line
+            falling = not falling  # Must come before next line
             ep = low_ if falling else high_
 
-        sar = _sar # Update SAR
+        sar = _sar  # Update SAR
 
         # Seperate long/short sar based on falling
         if falling:
@@ -149,8 +149,7 @@ def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **k
     return psardf
 
 
-psar.__doc__ = \
-"""Parabolic Stop and Reverse (psar)
+psar.__doc__ = """Parabolic Stop and Reverse (psar)
 
 Parabolic Stop and Reverse (PSAR) was developed by J. Wells Wilder, that is used
 to determine trend direction and it's potential reversals in price. PSAR uses a

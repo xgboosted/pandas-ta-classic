@@ -10,7 +10,8 @@ def fwma(close, length=None, asc=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     fibs = fibonacci(n=length, weighted=True)
@@ -41,8 +42,7 @@ def fwma(close, length=None, asc=None, offset=None, **kwargs):
     return fwma
 
 
-fwma.__doc__ = \
-"""Fibonacci's Weighted Moving Average (FWMA)
+fwma.__doc__ = """Fibonacci's Weighted Moving Average (FWMA)
 
 Fibonacci's Weighted Moving Average is similar to a Weighted Moving Average
 (WMA) where the weights are based on the Fibonacci Sequence.

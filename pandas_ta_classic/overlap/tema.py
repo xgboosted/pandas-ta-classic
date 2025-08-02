@@ -12,11 +12,13 @@ def tema(close, length=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import TEMA
+
         tema = TEMA(close, length)
     else:
         ema1 = ema(close=close, length=length, **kwargs)
@@ -49,8 +51,7 @@ def tema(close, length=None, talib=None, offset=None, **kwargs):
     return tema
 
 
-tema.__doc__ = \
-"""Triple Exponential Moving Average (TEMA)
+tema.__doc__ = """Triple Exponential Moving Average (TEMA)
 
 A less laggy Exponential Moving Average.
 

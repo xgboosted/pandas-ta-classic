@@ -12,7 +12,8 @@ def sinwma(close, length=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     sines = Series([npSin((i + 1) * npPi / (length + 1)) for i in range(0, length)])
@@ -45,8 +46,7 @@ def sinwma(close, length=None, offset=None, **kwargs):
     return sinwma
 
 
-sinwma.__doc__ = \
-"""Sine Weighted Moving Average (SWMA)
+sinwma.__doc__ = """Sine Weighted Moving Average (SWMA)
 
 A weighted average using sine cycles. The middle term(s) of the average have the
 highest weight(s).

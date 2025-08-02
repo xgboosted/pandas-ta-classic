@@ -11,7 +11,8 @@ def bias(close, length=None, mamode=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     bma = ma(mamode, close, length=length, **kwargs)
@@ -42,8 +43,7 @@ def bias(close, length=None, mamode=None, offset=None, **kwargs):
     return bias
 
 
-bias.__doc__ = \
-"""Bias (BIAS)
+bias.__doc__ = """Bias (BIAS)
 
 Rate of change between the source and a moving average.
 

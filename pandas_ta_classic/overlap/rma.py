@@ -10,7 +10,8 @@ def rma(close, length=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     rma = close.ewm(alpha=alpha, min_periods=length).mean()
@@ -40,8 +41,7 @@ def rma(close, length=None, offset=None, **kwargs):
     return rma
 
 
-rma.__doc__ = \
-"""wildeR's Moving Average (RMA)
+rma.__doc__ = """wildeR's Moving Average (RMA)
 
 The WildeR's Moving Average is simply an Exponential Moving Average (EMA) with
 a modified alpha = 1 / length.

@@ -13,7 +13,8 @@ def coppock(close, length=None, fast=None, slow=None, offset=None, **kwargs):
     close = verify_series(close, max(length, fast, slow))
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     total_roc = roc(close, fast) + roc(close, slow)
@@ -44,8 +45,7 @@ def coppock(close, length=None, fast=None, slow=None, offset=None, **kwargs):
     return coppock
 
 
-coppock.__doc__ = \
-"""Coppock Curve (COPC)
+coppock.__doc__ = """Coppock Curve (COPC)
 
 Coppock Curve (originally called the "Trendex Model") is a momentum indicator
 is designed for use on a monthly time scale.  Although designed for monthly

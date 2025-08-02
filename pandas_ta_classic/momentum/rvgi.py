@@ -18,7 +18,8 @@ def rvgi(open_, high, low, close, length=None, swma_length=None, offset=None, **
     close = verify_series(close, _length)
     offset = get_offset(offset)
 
-    if open_ is None or high is None or low is None or close is None: return
+    if open_ is None or high is None or low is None or close is None:
+        return
 
     # Calculate Result
     numerator = swma(close_open_range, length=swma_length).rolling(length).sum()
@@ -69,8 +70,7 @@ def rvgi(open_, high, low, close, length=None, swma_length=None, offset=None, **
     return df
 
 
-rvgi.__doc__ = \
-"""Relative Vigor Index (RVGI)
+rvgi.__doc__ = """Relative Vigor Index (RVGI)
 
 The Relative Vigor Index attempts to measure the strength of a trend relative to
 its closing price to its trading range.  It is based on the belief that it tends

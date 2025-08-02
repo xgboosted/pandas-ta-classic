@@ -9,7 +9,16 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, offset=None, **kwargs):
+def qqe(
+    close,
+    length=None,
+    smooth=None,
+    factor=None,
+    mamode=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Quantitative Qualitative Estimation (QQE)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
@@ -21,7 +30,8 @@ def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, o
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     rsi_ = rsi(close, length)
@@ -68,10 +78,14 @@ def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, o
         # Trend & QQE Calculation
         # Long: Current RSI_MA value Crosses the Prior Short Line Value
         # Short: Current RSI_MA Crosses the Prior Long Line Value
-        if (c_rsi > c_short and p_rsi < p_short) or (c_rsi <= c_short and p_rsi >= p_short):
+        if (c_rsi > c_short and p_rsi < p_short) or (
+            c_rsi <= c_short and p_rsi >= p_short
+        ):
             trend.iloc[i] = 1
             qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
-        elif (c_rsi > c_long and p_rsi < p_long) or (c_rsi <= c_long and p_rsi >= p_long):
+        elif (c_rsi > c_long and p_rsi < p_long) or (
+            c_rsi <= c_long and p_rsi >= p_long
+        ):
             trend.iloc[i] = -1
             qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
         else:
@@ -79,7 +93,7 @@ def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, o
             if trend.iloc[i] == 1:
                 qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
             else:
-                qqe.iloc[i] = qqe_short.iloc[i]  = short.iloc[i]
+                qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
 
     # Offset
     if offset != 0:
@@ -143,9 +157,11 @@ def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, o
 
     # Prepare DataFrame to return
     data = {
-        qqe.name: qqe, rsi_ma.name: rsi_ma,
+        qqe.name: qqe,
+        rsi_ma.name: rsi_ma,
         # long.name: long, short.name: short
-        qqe_long.name: qqe_long, qqe_short.name: qqe_short
+        qqe_long.name: qqe_long,
+        qqe_short.name: qqe_short,
     }
     df = DataFrame(data)
     df.name = f"QQE{_props}"
@@ -154,8 +170,7 @@ def qqe(close, length=None, smooth=None, factor=None, mamode=None, drift=None, o
     return df
 
 
-qqe.__doc__ = \
-"""Quantitative Qualitative Estimation (QQE)
+qqe.__doc__ = """Quantitative Qualitative Estimation (QQE)
 
 The Quantitative Qualitative Estimation (QQE) is similar to SuperTrend but uses a Smoothed RSI with an upper and lower bands. The band width is a combination of a one period True Range of the Smoothed RSI which is double smoothed using Wilder's smoothing length (2 * rsiLength - 1) and multiplied by the default factor of 4.236. A Long trend is determined when the Smoothed RSI crosses the previous upperband and a Short trend when the Smoothed RSI crosses the previous lowerband.
 

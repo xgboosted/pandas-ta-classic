@@ -17,6 +17,7 @@ def bop(open_, high, low, close, scalar=None, talib=None, offset=None, **kwargs)
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import BOP
+
         bop = BOP(open_, high, low, close)
     else:
         high_low_range = non_zero_range(high, low)
@@ -48,8 +49,7 @@ def bop(open_, high, low, close, scalar=None, talib=None, offset=None, **kwargs)
     return bop
 
 
-bop.__doc__ = \
-"""Balance of Power (BOP)
+bop.__doc__ = """Balance of Power (BOP)
 
 Balance of Power measure the market strength of buyers against sellers.
 

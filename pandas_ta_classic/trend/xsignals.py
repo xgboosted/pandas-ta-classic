@@ -6,7 +6,18 @@ from pandas_ta_classic.utils._signals import cross_value
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def xsignals(signal, xa, xb, above:bool=True, long:bool=True, asbool:bool=None, trend_reset:int=0, trade_offset:int=None, offset:int=None, **kwargs):
+def xsignals(
+    signal,
+    xa,
+    xb,
+    above: bool = True,
+    long: bool = True,
+    asbool: bool = None,
+    trend_reset: int = 0,
+    trade_offset: int = None,
+    offset: int = None,
+    **kwargs,
+):
     """Indicator: Cross Signals"""
     # Validate Arguments
     signal = verify_series(signal)
@@ -31,19 +42,15 @@ def xsignals(signal, xa, xb, above:bool=True, long:bool=True, asbool:bool=None, 
         trends = 1 - trends
 
     tskwargs = {
-        "asbool":asbool,
-        "trade_offset":trade_offset,
-        "trend_reset":trend_reset,
-        "offset":offset
+        "asbool": asbool,
+        "trade_offset": trade_offset,
+        "trend_reset": trend_reset,
+        "offset": offset,
     }
     df = tsignals(trends, **tskwargs)
 
     # Offset handled by tsignals
-    DataFrame({
-        f"XS_LONG": df.TS_Trends,
-        f"XS_SHORT": 1 - df.TS_Trends
-    })
-
+    DataFrame({f"XS_LONG": df.TS_Trends, f"XS_SHORT": 1 - df.TS_Trends})
 
     # Handle fills
     if "fillna" in kwargs:
@@ -66,8 +73,7 @@ def xsignals(signal, xa, xb, above:bool=True, long:bool=True, asbool:bool=None, 
     return df
 
 
-xsignals.__doc__ = \
-"""Cross Signals (XSIGNALS)
+xsignals.__doc__ = """Cross Signals (XSIGNALS)
 
 Cross Signals returns Trend Signal (TSIGNALS) results for Signal Crossings. This
 is useful for indicators like RSI, ZSCORE, et al where one wants trade Entries

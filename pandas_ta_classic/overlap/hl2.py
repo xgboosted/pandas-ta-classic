@@ -3,7 +3,7 @@ from pandas_ta_classic.utils import get_offset, verify_series
 
 
 def hl2(high, low, offset=None, **kwargs):
-    """Indicator: HL2 """
+    """Indicator: HL2"""
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)

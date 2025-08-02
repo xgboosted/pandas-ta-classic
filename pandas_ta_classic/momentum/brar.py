@@ -3,7 +3,9 @@ from pandas import DataFrame
 from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
 
 
-def brar(open_, high, low, close, length=None, scalar=None, drift=None, offset=None, **kwargs):
+def brar(
+    open_, high, low, close, length=None, scalar=None, drift=None, offset=None, **kwargs
+):
     """Indicator: BRAR (BRAR)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 26
@@ -17,7 +19,8 @@ def brar(open_, high, low, close, length=None, scalar=None, drift=None, offset=N
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if open_ is None or high is None or low is None or close is None: return
+    if open_ is None or high is None or low is None or close is None:
+        return
 
     # Calculate Result
     hcy = non_zero_range(high, close.shift(drift))
@@ -75,8 +78,7 @@ def brar(open_, high, low, close, length=None, scalar=None, drift=None, offset=N
     return brardf
 
 
-brar.__doc__ = \
-"""BRAR (BRAR)
+brar.__doc__ = """BRAR (BRAR)
 
 BR and AR
 

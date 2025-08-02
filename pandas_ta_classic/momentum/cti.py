@@ -10,7 +10,8 @@ def cti(close, length=None, offset=None, **kwargs) -> Series:
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     cti = linreg(close, length=length, r=True)
 
@@ -37,8 +38,7 @@ def cti(close, length=None, offset=None, **kwargs) -> Series:
     return cti
 
 
-cti.__doc__ = \
-"""Correlation Trend Indicator (CTI)
+cti.__doc__ = """Correlation Trend Indicator (CTI)
 
 The Correlation Trend Indicator is an oscillator created by John Ehler in 2020.
 It assigns a value depending on how close prices in that range are to following

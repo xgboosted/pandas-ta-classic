@@ -2,6 +2,7 @@
 from .hlc3 import hlc3
 from pandas_ta_classic.utils import get_offset, is_datetime_ordered, verify_series
 
+
 def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     """Indicator: Volume Weighted Average Price (VWAP)"""
     # Validate Arguments
@@ -9,18 +10,26 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
-    anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
+    anchor = (
+        anchor.upper()
+        if anchor and isinstance(anchor, str) and len(anchor) >= 1
+        else "D"
+    )
     offset = get_offset(offset)
 
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
-        print(f"[!] VWAP volume series is not datetime ordered. Results may not be as expected.")
+        print(
+            f"[!] VWAP volume series is not datetime ordered. Results may not be as expected."
+        )
     if not is_datetime_ordered(typical_price):
-        print(f"[!] VWAP price series is not datetime ordered. Results may not be as expected.")
+        print(
+            f"[!] VWAP price series is not datetime ordered. Results may not be as expected."
+        )
 
     # Calculate Result
     wp = typical_price * volume
-    vwap  = wp.groupby(wp.index.to_period(anchor)).cumsum()
+    vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
     vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
 
     # Offset
@@ -48,8 +57,7 @@ def vwap(high, low, close, volume, anchor=None, offset=None, **kwargs):
     return vwap
 
 
-vwap.__doc__ = \
-"""Volume Weighted Average Price (VWAP)
+vwap.__doc__ = """Volume Weighted Average Price (VWAP)
 
 The Volume Weighted Average Price that measures the average typical price
 by volume.  It is typically used with intraday charts to identify general

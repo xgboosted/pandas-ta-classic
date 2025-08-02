@@ -6,7 +6,9 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def amat(close=None, fast=None, slow=None, lookback=None, mamode=None, offset=None, **kwargs):
+def amat(
+    close=None, fast=None, slow=None, lookback=None, mamode=None, offset=None, **kwargs
+):
     """Indicator: Archer Moving Averages Trends (AMAT)"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 8
@@ -15,9 +17,11 @@ def amat(close=None, fast=None, slow=None, lookback=None, mamode=None, offset=No
     mamode = mamode.lower() if isinstance(mamode, str) else "ema"
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
-    if "length" in kwargs: kwargs.pop("length")
+    if "length" in kwargs:
+        kwargs.pop("length")
 
-    if close is None: return
+    if close is None:
+        return
 
     # # Calculate Result
     fast_ma = ma(mamode, close, length=fast, **kwargs)
@@ -57,10 +61,12 @@ def amat(close=None, fast=None, slow=None, lookback=None, mamode=None, offset=No
                 mas_short.bfill(inplace=True)
 
     # Prepare DataFrame to return
-    amatdf = DataFrame({
-        f"AMAT{mamode[0]}_LR_{fast}_{slow}_{lookback}": mas_long,
-        f"AMAT{mamode[0]}_SR_{fast}_{slow}_{lookback}": mas_short
-    })
+    amatdf = DataFrame(
+        {
+            f"AMAT{mamode[0]}_LR_{fast}_{slow}_{lookback}": mas_long,
+            f"AMAT{mamode[0]}_SR_{fast}_{slow}_{lookback}": mas_short,
+        }
+    )
 
     # Name and Categorize it
     amatdf.name = f"AMAT{mamode[0]}_{fast}_{slow}_{lookback}"

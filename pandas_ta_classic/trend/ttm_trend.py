@@ -13,7 +13,8 @@ def ttm_trend(high, low, close, length=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     trend_avg = hl2(high, low)
@@ -56,8 +57,7 @@ def ttm_trend(high, low, close, length=None, offset=None, **kwargs):
     return df
 
 
-ttm_trend.__doc__ = \
-"""TTM Trend (TTM_TRND)
+ttm_trend.__doc__ = """TTM Trend (TTM_TRND)
 
 This indicator is from John Carters book “Mastering the Trade” and plots the
 bars green or red. It checks if the price is above or under the average price of

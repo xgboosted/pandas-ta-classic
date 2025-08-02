@@ -4,7 +4,17 @@ from pandas_ta_classic.overlap import ema, ma
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def tsi(close, fast=None, slow=None, signal=None, scalar=None, mamode=None, drift=None, offset=None, **kwargs):
+def tsi(
+    close,
+    fast=None,
+    slow=None,
+    signal=None,
+    scalar=None,
+    mamode=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: True Strength Index (TSI)"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 13
@@ -17,9 +27,11 @@ def tsi(close, fast=None, slow=None, signal=None, scalar=None, mamode=None, drif
     drift = get_drift(drift)
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "ema"
-    if "length" in kwargs: kwargs.pop("length")
+    if "length" in kwargs:
+        kwargs.pop("length")
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     diff = close.diff(drift)
@@ -65,7 +77,7 @@ def tsi(close, fast=None, slow=None, signal=None, scalar=None, mamode=None, drif
     # Name and Categorize it
     tsi.name = f"TSI_{fast}_{slow}_{signal}"
     tsi_signal.name = f"TSIs_{fast}_{slow}_{signal}"
-    tsi.category = tsi_signal.category =  "momentum"
+    tsi.category = tsi_signal.category = "momentum"
 
     # Prepare DataFrame to return
     df = DataFrame({tsi.name: tsi, tsi_signal.name: tsi_signal})
@@ -75,8 +87,7 @@ def tsi(close, fast=None, slow=None, signal=None, scalar=None, mamode=None, drif
     return df
 
 
-tsi.__doc__ = \
-"""True Strength Index (TSI)
+tsi.__doc__ = """True Strength Index (TSI)
 
 The True Strength Index is a momentum indicator used to identify short-term
 swings while in the direction of the trend as well as determining overbought

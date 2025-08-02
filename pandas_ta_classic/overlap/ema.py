@@ -14,17 +14,19 @@ def ema(close, length=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import EMA
+
         ema = EMA(close, length)
     else:
         if sma:
             close = close.copy()
             sma_nth = close[0:length].mean()
-            close[:length - 1] = npNaN
+            close[: length - 1] = npNaN
             close.iloc[length - 1] = sma_nth
         ema = close.ewm(span=length, adjust=adjust).mean()
 
@@ -53,8 +55,7 @@ def ema(close, length=None, talib=None, offset=None, **kwargs):
     return ema
 
 
-ema.__doc__ = \
-"""Exponential Moving Average (EMA)
+ema.__doc__ = """Exponential Moving Average (EMA)
 
 The Exponential Moving Average is more responsive moving average compared to the
 Simple Moving Average (SMA).  The weights are determined by alpha which is

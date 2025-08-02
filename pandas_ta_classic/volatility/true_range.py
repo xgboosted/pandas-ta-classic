@@ -18,6 +18,7 @@ def true_range(high, low, close, talib=None, drift=None, offset=None, **kwargs):
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import TRANGE
+
         true_range = TRANGE(high, low, close)
     else:
         high_low_range = non_zero_range(high, low)
@@ -52,8 +53,7 @@ def true_range(high, low, close, talib=None, drift=None, offset=None, **kwargs):
     return true_range
 
 
-true_range.__doc__ = \
-"""True Range
+true_range.__doc__ = """True Range
 
 An method to expand a classical range (high minus low) to include
 possible gap scenarios.

@@ -5,7 +5,19 @@ from pandas_ta_classic.utils import get_drift, get_offset
 from pandas_ta_classic.utils import unsigned_differences, verify_series
 
 
-def rvi(close, high=None, low=None, length=None, scalar=None, refined=None, thirds=None, mamode=None, drift=None, offset=None, **kwargs):
+def rvi(
+    close,
+    high=None,
+    low=None,
+    length=None,
+    scalar=None,
+    refined=None,
+    thirds=None,
+    mamode=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Relative Volatility Index (RVI)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
@@ -17,7 +29,8 @@ def rvi(close, high=None, low=None, length=None, scalar=None, refined=None, thir
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     if refined or thirds:
         high = verify_series(high)
@@ -79,8 +92,7 @@ def rvi(close, high=None, low=None, length=None, scalar=None, refined=None, thir
     return rvi
 
 
-rvi.__doc__ = \
-"""Relative Volatility Index (RVI)
+rvi.__doc__ = """Relative Volatility Index (RVI)
 
 The Relative Volatility Index (RVI) was created in 1993 and revised in 1995.
 Instead of adding up price changes like RSI based on price direction, the RVI

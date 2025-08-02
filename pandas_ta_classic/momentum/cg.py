@@ -9,7 +9,8 @@ def cg(close, length=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     coefficients = [length - i for i in range(0, length)]
@@ -41,8 +42,7 @@ def cg(close, length=None, offset=None, **kwargs):
     return cg
 
 
-cg.__doc__ = \
-"""Center of Gravity (CG)
+cg.__doc__ = """Center of Gravity (CG)
 
 The Center of Gravity Indicator by John Ehlers attempts to identify turning
 points while exhibiting zero lag and smoothing.

@@ -5,7 +5,17 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def atr(high, low, close, length=None, mamode=None, talib=None, drift=None, offset=None, **kwargs):
+def atr(
+    high,
+    low,
+    close,
+    length=None,
+    mamode=None,
+    talib=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Average True Range (ATR)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
@@ -17,11 +27,13 @@ def atr(high, low, close, length=None, mamode=None, talib=None, drift=None, offs
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import ATR
+
         atr = ATR(high, low, close, length)
     else:
         tr = true_range(high=high, low=low, close=close, drift=drift)
@@ -56,8 +68,7 @@ def atr(high, low, close, length=None, mamode=None, talib=None, drift=None, offs
     return atr
 
 
-atr.__doc__ = \
-"""Average True Range (ATR)
+atr.__doc__ = """Average True Range (ATR)
 
 Averge True Range is used to measure volatility, especially volatility caused by
 gaps or limit moves.

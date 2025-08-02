@@ -6,7 +6,9 @@ from pandas_ta_classic.statistics import stdev
 from pandas_ta_classic.utils import get_offset, non_zero_range, tal_ma, verify_series
 
 
-def bbands(close, length=None, std=None, ddof=0, mamode=None, talib=None, offset=None, **kwargs):
+def bbands(
+    close, length=None, std=None, ddof=0, mamode=None, talib=None, offset=None, **kwargs
+):
     """Indicator: Bollinger Bands (BBANDS)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 5
@@ -17,11 +19,13 @@ def bbands(close, length=None, std=None, ddof=0, mamode=None, talib=None, offset
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import BBANDS
+
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))
     else:
         standard_deviation = stdev(close=close, length=length, ddof=ddof)
@@ -109,8 +113,11 @@ def bbands(close, length=None, std=None, ddof=0, mamode=None, talib=None, offset
 
     # Prepare DataFrame to return
     data = {
-        lower.name: lower, mid.name: mid, upper.name: upper,
-        bandwidth.name: bandwidth, percent.name: percent
+        lower.name: lower,
+        mid.name: mid,
+        upper.name: upper,
+        bandwidth.name: bandwidth,
+        percent.name: percent,
     }
     bbandsdf = DataFrame(data)
     bbandsdf.name = f"BBANDS_{length}_{std}"
@@ -119,8 +126,7 @@ def bbands(close, length=None, std=None, ddof=0, mamode=None, talib=None, offset
     return bbandsdf
 
 
-bbands.__doc__ = \
-"""Bollinger Bands (BBANDS)
+bbands.__doc__ = """Bollinger Bands (BBANDS)
 
 A popular volatility indicator by John Bollinger.
 

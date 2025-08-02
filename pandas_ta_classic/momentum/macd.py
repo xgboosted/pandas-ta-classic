@@ -17,25 +17,27 @@ def macd(close, fast=None, slow=None, signal=None, talib=None, offset=None, **kw
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     as_mode = kwargs.setdefault("asmode", False)
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import MACD
+
         macd, signalma, histogram = MACD(close, fast, slow, signal)
     else:
         fastma = ema(close, length=fast)
         slowma = ema(close, length=slow)
 
         macd = fastma - slowma
-        signalma = ema(close=macd.loc[macd.first_valid_index():,], length=signal)
+        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
     if as_mode:
         macd = macd - signalma
-        signalma = ema(close=macd.loc[macd.first_valid_index():,], length=signal)
+        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
     # Offset
@@ -128,8 +130,7 @@ def macd(close, fast=None, slow=None, signal=None, talib=None, offset=None, **kw
         return df
 
 
-macd.__doc__ = \
-"""Moving Average Convergence Divergence (MACD)
+macd.__doc__ = """Moving Average Convergence Divergence (MACD)
 
 The MACD is a popular indicator to that is used to identify a security's trend.
 While APO and MACD are the same calculation, MACD also returns two more series

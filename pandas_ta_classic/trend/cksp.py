@@ -16,7 +16,8 @@ def cksp(high, low, close, p=None, x=None, q=None, tvmode=None, offset=None, **k
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     offset = get_offset(offset)
     tvmode = tvmode if isinstance(tvmode, bool) else True
@@ -74,8 +75,7 @@ def cksp(high, low, close, p=None, x=None, q=None, tvmode=None, offset=None, **k
     return ckspdf
 
 
-cksp.__doc__ = \
-"""Chande Kroll Stop (CKSP)
+cksp.__doc__ = """Chande Kroll Stop (CKSP)
 
 The Tushar Chande and Stanley Kroll in their book
 “The New Technical Trader”. It is a trend-following indicator,

@@ -16,11 +16,13 @@ def apo(close, fast=None, slow=None, mamode=None, talib=None, offset=None, **kwa
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import APO
+
         apo = APO(close, fast, slow, tal_ma(mamode))
     else:
         fastma = ma(mamode, close, length=fast)
@@ -52,8 +54,7 @@ def apo(close, fast=None, slow=None, mamode=None, talib=None, offset=None, **kwa
     return apo
 
 
-apo.__doc__ = \
-"""Absolute Price Oscillator (APO)
+apo.__doc__ = """Absolute Price Oscillator (APO)
 
 The Absolute Price Oscillator is an indicator used to measure a security's
 momentum.  It is simply the difference of two Exponential Moving Averages

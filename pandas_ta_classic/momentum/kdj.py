@@ -4,7 +4,9 @@ from pandas_ta_classic.overlap import rma
 from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
 
 
-def kdj(high=None, low=None, close=None, length=None, signal=None, offset=None, **kwargs):
+def kdj(
+    high=None, low=None, close=None, length=None, signal=None, offset=None, **kwargs
+):
     """Indicator: KDJ (KDJ)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 9
@@ -15,7 +17,8 @@ def kdj(high=None, low=None, close=None, length=None, signal=None, offset=None, 
     close = verify_series(close, _length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     highest_high = high.rolling(length).max()
@@ -82,8 +85,7 @@ def kdj(high=None, low=None, close=None, length=None, signal=None, offset=None, 
     return kdjdf
 
 
-kdj.__doc__ = \
-"""KDJ (KDJ)
+kdj.__doc__ = """KDJ (KDJ)
 
 The KDJ indicator is actually a derived form of the Slow
 Stochastic with the only difference being an extra line

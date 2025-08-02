@@ -15,11 +15,13 @@ def aroon(high, low, length=None, scalar=None, talib=None, offset=None, **kwargs
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None: return
+    if high is None or low is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import AROON, AROONOSC
+
         aroon_down, aroon_up = AROON(high, low, length)
         aroon_osc = AROONOSC(high, low, length)
     else:
@@ -91,8 +93,7 @@ def aroon(high, low, length=None, scalar=None, talib=None, offset=None, **kwargs
     return aroondf
 
 
-aroon.__doc__ = \
-"""Aroon & Aroon Oscillator (AROON)
+aroon.__doc__ = """Aroon & Aroon Oscillator (AROON)
 
 Aroon attempts to identify if a security is trending and how strong.
 

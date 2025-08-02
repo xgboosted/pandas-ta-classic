@@ -12,11 +12,13 @@ def trima(close, length=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import TRIMA
+
         trima = TRIMA(close, length)
     else:
         half_length = round(0.5 * (length + 1))
@@ -48,8 +50,7 @@ def trima(close, length=None, talib=None, offset=None, **kwargs):
     return trima
 
 
-trima.__doc__ = \
-"""Triangular Moving Average (TRIMA)
+trima.__doc__ = """Triangular Moving Average (TRIMA)
 
 A weighted moving average where the shape of the weights are triangular and the
 greatest weight is in the middle of the period.

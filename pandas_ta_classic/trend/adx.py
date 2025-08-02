@@ -5,7 +5,18 @@ from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series, zero
 
 
-def adx(high, low, close, length=None, lensig=None, scalar=None, mamode=None, drift=None, offset=None, **kwargs):
+def adx(
+    high,
+    low,
+    close,
+    length=None,
+    lensig=None,
+    scalar=None,
+    mamode=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: ADX"""
     # Validate Arguments
     length = length if length and length > 0 else 14
@@ -18,13 +29,14 @@ def adx(high, low, close, length=None, lensig=None, scalar=None, mamode=None, dr
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=length)
 
     up = high - high.shift(drift)  # high.diff(drift)
-    dn = low.shift(drift) - low    # low.diff(-drift).shift(drift)
+    dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
 
     pos = ((up > dn) & (up > 0)) * up
     neg = ((dn > up) & (dn > 0)) * dn
@@ -95,8 +107,7 @@ def adx(high, low, close, length=None, lensig=None, scalar=None, mamode=None, dr
     return adxdf
 
 
-adx.__doc__ = \
-"""Average Directional Movement (ADX)
+adx.__doc__ = """Average Directional Movement (ADX)
 
 Average Directional Movement is meant to quantify trend strength by measuring
 the amount of movement in a single direction.

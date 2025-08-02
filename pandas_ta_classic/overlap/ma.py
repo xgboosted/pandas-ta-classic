@@ -20,7 +20,7 @@ from .wma import wma
 from .zlma import zlma
 
 
-def ma(name:str = None, source:Series = None, **kwargs) -> Series:
+def ma(name: str = None, source: Series = None, **kwargs) -> Series:
     """Simple MA Utility for easier MA selection
 
     Available MAs:
@@ -44,30 +44,62 @@ def ma(name:str = None, source:Series = None, **kwargs) -> Series:
     """
 
     _mas = [
-        "dema", "ema", "fwma", "hma", "linreg", "midpoint", "pwma", "rma",
-        "sinwma", "sma", "swma", "t3", "tema", "trima", "vidya", "wma", "zlma"
+        "dema",
+        "ema",
+        "fwma",
+        "hma",
+        "linreg",
+        "midpoint",
+        "pwma",
+        "rma",
+        "sinwma",
+        "sma",
+        "swma",
+        "t3",
+        "tema",
+        "trima",
+        "vidya",
+        "wma",
+        "zlma",
     ]
     if name is None and source is None:
         return _mas
     elif isinstance(name, str) and name.lower() in _mas:
         name = name.lower()
-    else: # "ema"
+    else:  # "ema"
         name = _mas[1]
 
-    if   name == "dema": return dema(source, **kwargs)
-    elif name == "fwma": return fwma(source, **kwargs)
-    elif name == "hma": return hma(source, **kwargs)
-    elif name == "linreg": return linreg(source, **kwargs)
-    elif name == "midpoint": return midpoint(source, **kwargs)
-    elif name == "pwma": return pwma(source, **kwargs)
-    elif name == "rma": return rma(source, **kwargs)
-    elif name == "sinwma": return sinwma(source, **kwargs)
-    elif name == "sma": return sma(source, **kwargs)
-    elif name == "swma": return swma(source, **kwargs)
-    elif name == "t3": return t3(source, **kwargs)
-    elif name == "tema": return tema(source, **kwargs)
-    elif name == "trima": return trima(source, **kwargs)
-    elif name == "vidya": return vidya(source, **kwargs)
-    elif name == "wma": return wma(source, **kwargs)
-    elif name == "zlma": return zlma(source, **kwargs)
-    else: return ema(source, **kwargs)
+    if name == "dema":
+        return dema(source, **kwargs)
+    elif name == "fwma":
+        return fwma(source, **kwargs)
+    elif name == "hma":
+        return hma(source, **kwargs)
+    elif name == "linreg":
+        return linreg(source, **kwargs)
+    elif name == "midpoint":
+        return midpoint(source, **kwargs)
+    elif name == "pwma":
+        return pwma(source, **kwargs)
+    elif name == "rma":
+        return rma(source, **kwargs)
+    elif name == "sinwma":
+        return sinwma(source, **kwargs)
+    elif name == "sma":
+        return sma(source, **kwargs)
+    elif name == "swma":
+        return swma(source, **kwargs)
+    elif name == "t3":
+        return t3(source, **kwargs)
+    elif name == "tema":
+        return tema(source, **kwargs)
+    elif name == "trima":
+        return trima(source, **kwargs)
+    elif name == "vidya":
+        return vidya(source, **kwargs)
+    elif name == "wma":
+        return wma(source, **kwargs)
+    elif name == "zlma":
+        return zlma(source, **kwargs)
+    else:
+        return ema(source, **kwargs)

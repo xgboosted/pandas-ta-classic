@@ -23,7 +23,7 @@ def hwma(close, na=None, nb=None, nc=None, offset=None, **kwargs):
         V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
         A = (1.0 - nc) * last_a + nc * (V - last_v)
         result.append((F + V + 0.5 * A))
-        last_a, last_f, last_v = A, F, V # update values
+        last_a, last_f, last_v = A, F, V  # update values
 
     hwma = Series(result, index=close.index)
 
@@ -53,9 +53,7 @@ def hwma(close, na=None, nb=None, nc=None, offset=None, **kwargs):
     return hwma
 
 
-
-hwma.__doc__ = \
-"""HWMA (Holt-Winter Moving Average)
+hwma.__doc__ = """HWMA (Holt-Winter Moving Average)
 
 Indicator HWMA (Holt-Winter Moving Average) is a three-parameter moving average
 by the Holt-Winter method; the three parameters should be selected to obtain a

@@ -17,7 +17,8 @@ def smi(close, fast=None, slow=None, signal=None, scalar=None, offset=None, **kw
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     tsi_df = tsi(close, fast=fast, slow=slow, signal=signal, scalar=scalar)
@@ -82,8 +83,7 @@ def smi(close, fast=None, slow=None, signal=None, scalar=None, offset=None, **kw
     return df
 
 
-smi.__doc__ = \
-"""SMI Ergodic Indicator (SMI)
+smi.__doc__ = """SMI Ergodic Indicator (SMI)
 
 The SMI Ergodic Indicator is the same as the True Strength Index (TSI) developed
 by William Blau, except the SMI includes a signal line. The SMI uses double

@@ -16,7 +16,8 @@ def pvo(volume, fast=None, slow=None, signal=None, scalar=None, offset=None, **k
     volume = verify_series(volume, max(fast, slow, signal))
     offset = get_offset(offset)
 
-    if volume is None: return
+    if volume is None:
+        return
 
     # Calculate Result
     fastma = ema(volume, length=fast)
@@ -83,8 +84,7 @@ def pvo(volume, fast=None, slow=None, signal=None, scalar=None, offset=None, **k
     return df
 
 
-pvo.__doc__ = \
-"""Percentage Volume Oscillator (PVO)
+pvo.__doc__ = """Percentage Volume Oscillator (PVO)
 
 Percentage Volume Oscillator is a Momentum Oscillator for Volume.
 

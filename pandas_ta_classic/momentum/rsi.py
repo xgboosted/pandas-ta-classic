@@ -15,11 +15,13 @@ def rsi(close, length=None, scalar=None, talib=None, drift=None, offset=None, **
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import RSI
+
         rsi = RSI(close, length)
     else:
         negative = close.diff(drift)
@@ -80,8 +82,7 @@ def rsi(close, length=None, scalar=None, talib=None, drift=None, offset=None, **
         return rsi
 
 
-rsi.__doc__ = \
-"""Relative Strength Index (RSI)
+rsi.__doc__ = """Relative Strength Index (RSI)
 
 The Relative Strength Index is popular momentum oscillator used to measure the
 velocity as well as the magnitude of directional price movements.
