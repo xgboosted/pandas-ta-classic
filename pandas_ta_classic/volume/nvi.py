@@ -13,7 +13,8 @@ def nvi(close, volume, length=None, initial=None, offset=None, **kwargs):
     volume = verify_series(volume, length)
     offset = get_offset(offset)
 
-    if close is None or volume is None: return
+    if close is None or volume is None:
+        return
 
     # Calculate Result
     roc_ = roc(close=close, length=length)
@@ -48,8 +49,7 @@ def nvi(close, volume, length=None, initial=None, offset=None, **kwargs):
     return nvi
 
 
-nvi.__doc__ = \
-"""Negative Volume Index (NVI)
+nvi.__doc__ = """Negative Volume Index (NVI)
 
 The Negative Volume Index is a cumulative indicator that uses volume change in
 an attempt to identify where smart money is active.

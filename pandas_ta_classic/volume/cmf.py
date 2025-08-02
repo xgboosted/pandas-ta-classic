@@ -6,7 +6,11 @@ def cmf(high, low, close, volume, open_=None, length=None, offset=None, **kwargs
     """Indicator: Chaikin Money Flow (CMF)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 20
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = (
+        int(kwargs["min_periods"])
+        if "min_periods" in kwargs and kwargs["min_periods"] is not None
+        else length
+    )
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -14,7 +18,8 @@ def cmf(high, low, close, volume, open_=None, length=None, offset=None, **kwargs
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None or volume is None: return
+    if high is None or low is None or close is None or volume is None:
+        return
 
     # Calculate Result
     if open_ is not None:
@@ -52,8 +57,7 @@ def cmf(high, low, close, volume, open_=None, length=None, offset=None, **kwargs
     return cmf
 
 
-cmf.__doc__ = \
-"""Chaikin Money Flow (CMF)
+cmf.__doc__ = """Chaikin Money Flow (CMF)
 
 Chailin Money Flow measures the amount of money flow volume over a specific
 period in conjunction with Accumulation/Distribution.

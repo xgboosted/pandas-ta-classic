@@ -14,6 +14,7 @@ def obv(close, volume, talib=None, offset=None, **kwargs):
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import OBV
+
         obv = OBV(close, volume)
     else:
         signed_volume = signed_series(close, initial=1) * volume
@@ -44,8 +45,7 @@ def obv(close, volume, talib=None, offset=None, **kwargs):
     return obv
 
 
-obv.__doc__ = \
-"""On Balance Volume (OBV)
+obv.__doc__ = """On Balance Volume (OBV)
 
 On Balance Volume is a cumulative indicator to measure buying and selling
 pressure.

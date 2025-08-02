@@ -6,7 +6,17 @@ from pandas_ta_classic.trend import long_run, short_run
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def aobv(close, volume, fast=None, slow=None, max_lookback=None, min_lookback=None, mamode=None, offset=None, **kwargs):
+def aobv(
+    close,
+    volume,
+    fast=None,
+    slow=None,
+    max_lookback=None,
+    min_lookback=None,
+    mamode=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Archer On Balance Volume (AOBV)"""
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 4
@@ -20,10 +30,12 @@ def aobv(close, volume, fast=None, slow=None, max_lookback=None, min_lookback=No
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    if "length" in kwargs: kwargs.pop("length")
+    if "length" in kwargs:
+        kwargs.pop("length")
     run_length = kwargs.pop("run_length", 2)
 
-    if close is None or volume is None: return
+    if close is None or volume is None:
+        return
 
     # Calculate Result
     obv_ = obv(close=close, volume=volume, **kwargs)
@@ -110,7 +122,9 @@ def aobv(close, volume, fast=None, slow=None, max_lookback=None, min_lookback=No
     aobvdf = DataFrame(data)
 
     # Name and Categorize it
-    aobvdf.name = f"AOBV{_mode}_{fast}_{slow}_{min_lookback}_{max_lookback}_{run_length}"
+    aobvdf.name = (
+        f"AOBV{_mode}_{fast}_{slow}_{min_lookback}_{max_lookback}_{run_length}"
+    )
     aobvdf.category = "volume"
 
     return aobvdf

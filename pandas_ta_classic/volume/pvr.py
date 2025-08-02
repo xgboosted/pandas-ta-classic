@@ -5,7 +5,7 @@ from pandas import Series
 
 
 def pvr(close, volume):
-    """ Indicator: Price Volume Rank"""
+    """Indicator: Price Volume Rank"""
     # Validate arguments
     close = verify_series(close)
     volume = verify_series(volume)
@@ -15,9 +15,9 @@ def pvr(close, volume):
     volume_diff = volume.diff().fillna(0)
     pvr_ = Series(npNaN, index=close.index)
     pvr_.loc[(close_diff >= 0) & (volume_diff >= 0)] = 1
-    pvr_.loc[(close_diff >= 0) & (volume_diff < 0)]  = 2
-    pvr_.loc[(close_diff < 0) & (volume_diff >= 0)]  = 3
-    pvr_.loc[(close_diff < 0) & (volume_diff < 0)]   = 4
+    pvr_.loc[(close_diff >= 0) & (volume_diff < 0)] = 2
+    pvr_.loc[(close_diff < 0) & (volume_diff >= 0)] = 3
+    pvr_.loc[(close_diff < 0) & (volume_diff < 0)] = 4
 
     # Name and Categorize it
     pvr_.name = f"PVR"
@@ -26,8 +26,7 @@ def pvr(close, volume):
     return pvr_
 
 
-pvr.__doc__ = \
-"""Price Volume Rank
+pvr.__doc__ = """Price Volume Rank
 
 The Price Volume Rank was developed by Anthony J. Macek and is described in his
 article in the June, 1994 issue of Technical Analysis of Stocks & Commodities

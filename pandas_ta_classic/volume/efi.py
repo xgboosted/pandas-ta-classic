@@ -13,7 +13,8 @@ def efi(close, volume, length=None, mamode=None, drift=None, offset=None, **kwar
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None or volume is None: return
+    if close is None or volume is None:
+        return
 
     # Calculate Result
     pv_diff = close.diff(drift) * volume
@@ -44,8 +45,7 @@ def efi(close, volume, length=None, mamode=None, drift=None, offset=None, **kwar
     return efi
 
 
-efi.__doc__ = \
-"""Elder's Force Index (EFI)
+efi.__doc__ = """Elder's Force Index (EFI)
 
 Elder's Force Index measures the power behind a price movement using price
 and volume as well as potential reversals and price corrections.

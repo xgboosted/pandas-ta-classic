@@ -5,7 +5,12 @@ from unittest import skip, TestCase
 import pandas.testing as pdt
 from pandas import DataFrame, Series
 
-import talib as tal
+try:
+    import talib as tal
+    HAS_TALIB = True
+except ImportError:
+    HAS_TALIB = False
+    tal = None
 
 
 class TestStatistics(TestCase):
