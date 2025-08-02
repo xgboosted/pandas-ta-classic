@@ -7,7 +7,39 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  # Latest stable Python version - update this when new Python versions are released
+  LATEST_PYTHON_VERSION: "3.13"
+
 jobs:
+  # Generate Python version matrix based on latest version
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      python-versions: ${{ steps.versions.outputs.python-versions }}
+    steps:
+    - name: Generate Python version matrix
+      id: versions
+      run: |
+        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> "13")
+        latest="${{ env.LATEST_PYTHON_VERSION }}"
+        minor_version=$(echo "$latest" | cut -d'.' -f2)
+        
+        # Generate 5 versions: latest and 4 previous minor versions
+        versions="["
+        for i in {4..0}; do
+          version_num=$((minor_version - i))
+          if [ $i -eq 0 ]; then
+            versions="${versions}\"3.${version_num}\""
+          else
+            versions="${versions}\"3.${version_num}\", "
+          fi
+        done
+        versions="${versions}]"
+        
+        echo "python-versions=$versions" >> $GITHUB_OUTPUT
+        echo "Generated Python versions: $versions"
+
   # Basic structure validation that doesn't require dependencies
   validate:
     runs-on: ubuntu-latest
@@ -17,7 +49,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
     - name: Validate package structure
       run: |
@@ -25,13 +57,58 @@ jobs:
 
   # Full test suite with dependencies  
   test:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        # Python versions are dynamically generated from LATEST_PYTHON_VERSION
+        # Supports latest stable Python version and 4 consecutive previous versions
+        python-version: ${{ fromJSON(needs.generate-matrix.outputs.python-versions) }}
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Update setup.py with dynamic Python classifiers
+      run: |
+        python << 'EOF'
+        # Simple approach: read setup.py, find Python classifier lines, and replace them
+        latest_version = "${{ env.LATEST_PYTHON_VERSION }}"
+        minor_version = int(latest_version.split('.')[1])
+        
+        # Generate the 5 versions we want
+        target_versions = []
+        for i in range(4, -1, -1):  # 4, 3, 2, 1, 0
+            version_num = minor_version - i
+            target_versions.append(f"3.{version_num}")
+        
+        # Read setup.py
+        with open('setup.py', 'r') as f:
+            content = f.read()
+        
+        # Find and replace each Python classifier line
+        lines = content.split('\n')
+        version_index = 0
+        
+        for i, line in enumerate(lines):
+            if '"Programming Language :: Python :: 3.' in line and version_index < len(target_versions):
+                # Replace the version number in this line
+                import re
+                new_line = re.sub(r'3\.\d+', target_versions[version_index], line)
+                lines[i] = new_line
+                version_index += 1
+        
+        # Write back to setup.py
+        with open('setup.py', 'w') as f:
+            f.write('\n'.join(lines))
+        
+        print(f"Updated setup.py with Python versions: {', '.join(target_versions)}")
+        
+        # Verify the changes
+        with open('setup.py', 'r') as f:
+            for line_num, line in enumerate(f, 1):
+                if '"Programming Language :: Python :: 3.' in line:
+                    print(f"Line {line_num}: {line.strip()}")
+        EOF
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
