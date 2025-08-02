@@ -1,6 +1,22 @@
 # -*- coding: utf-8 -*-
 from distutils.core import setup
 
+# Latest stable Python version - update this when new Python versions are released
+LATEST_PYTHON_VERSION = "3.13"
+
+def generate_python_classifiers():
+    """Generate Python version classifiers based on latest version constant."""
+    # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> 13)
+    minor_version = int(LATEST_PYTHON_VERSION.split('.')[1])
+    
+    # Generate classifiers for latest and 4 previous minor versions
+    classifiers = []
+    for i in range(4, -1, -1):  # 4, 3, 2, 1, 0
+        version_num = minor_version - i
+        classifiers.append(f"Programming Language :: Python :: 3.{version_num}")
+    
+    return classifiers
+
 long_description = "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib. This is the classic/community maintained version."
 
 setup(
@@ -32,11 +48,7 @@ setup(
     license="The MIT License (MIT)",
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
+    ] + generate_python_classifiers() + [
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
