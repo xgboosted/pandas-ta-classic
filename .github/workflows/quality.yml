@@ -24,6 +24,10 @@ jobs:
         sudo apt-get install -y build-essential git
         git clone https://github.com/ta-lib/ta-lib.git
         cd ta-lib
+        if [ ! -f configure ]; then
+          chmod +x autogen.sh
+          ./autogen.sh
+        fi
         ./configure --prefix=/usr
         make
         sudo make install
