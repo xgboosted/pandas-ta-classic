@@ -96,7 +96,9 @@ def import_dir(path, verbose=True):
         # only look in directories which are valid pandas_ta_classic categories
         if dirname not in [*pandas_ta_classic.Category]:
             if verbose:
-                print(f"[i] Skipping the sub-directory '{dirname}' since it's not a valid pandas_ta_classic category.")
+                print(
+                    f"[i] Skipping the sub-directory '{dirname}' since it's not a valid pandas_ta_classic category."
+                )
             continue
 
         # for each module found in that category (directory)...
@@ -115,11 +117,15 @@ def import_dir(path, verbose=True):
             fcn_method_callable = module_functions.get(f"{module_name}_method", None)
 
             if fcn_callable == None:
-                print(f"[X] Unable to find a function named '{module_name}' in the module '{module_name}.py'.")
+                print(
+                    f"[X] Unable to find a function named '{module_name}' in the module '{module_name}.py'."
+                )
                 continue
             if fcn_method_callable == None:
                 missing_method = f"{module_name}_method"
-                print(f"[X] Unable to find a method function named '{missing_method}' in the module '{module_name}.py'.")
+                print(
+                    f"[X] Unable to find a method function named '{missing_method}' in the module '{module_name}.py'."
+                )
                 continue
 
             # add it to the correct category if it's not there yet
@@ -128,11 +134,12 @@ def import_dir(path, verbose=True):
 
             bind(module_name, fcn_callable, fcn_method_callable)
             if verbose:
-                print(f"[i] Successfully imported the custom indicator '{module}' into category '{dirname}'.")
+                print(
+                    f"[i] Successfully imported the custom indicator '{module}' into category '{dirname}'."
+                )
 
 
-import_dir.__doc__ = \
-"""
+import_dir.__doc__ = """
 Import a directory of custom indicators into pandas_ta_classic
 
 Args:

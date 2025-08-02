@@ -11,13 +11,14 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     factor = float(factor) if factor and factor > 0 else 0.5
-    if slow < fast:                # mandatory condition, but might be confusing
+    if slow < fast:  # mandatory condition, but might be confusing
         fast, slow = slow, fast
     _length = max(tclength, fast, slow)
     close = verify_series(close, _length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # kwargs allows for three more series (ma1, ma2 and osc) which can be passed
     # here ma1 and ma2 input negate internal ema calculations, osc substitutes
@@ -31,7 +32,8 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
         ma1 = verify_series(ma1, _length)
         ma2 = verify_series(ma2, _length)
 
-        if ma1 is None or ma2 is None: return
+        if ma1 is None or ma2 is None:
+            return
         # Calculate Result based on external feeded series
         xmacd = ma1 - ma2
         # invoke shared calculation
@@ -39,7 +41,8 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
 
     elif isinstance(osc, Series):
         osc = verify_series(osc, _length)
-        if osc is None: return
+        if osc is None:
+            return
         # Calculate Result based on feeded oscillator
         # (should be ranging around 0 x-axis)
         xmacd = osc
@@ -105,7 +108,7 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
     stc.name = f"STC{_props}"
     macd.name = f"STCmacd{_props}"
     stoch.name = f"STCstoch{_props}"
-    stc.category = macd.category = stoch.category ="momentum"
+    stc.category = macd.category = stoch.category = "momentum"
 
     # Prepare DataFrame to return
     data = {stc.name: stc, macd.name: macd, stoch.name: stoch}
@@ -116,8 +119,7 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
     return df
 
 
-stc.__doc__ = \
-"""Schaff Trend Cycle (STC)
+stc.__doc__ = """Schaff Trend Cycle (STC)
 
 The Schaff Trend Cycle is an evolution of the popular MACD incorportating two
 cascaded stochastic calculations with additional smoothing.

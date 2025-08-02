@@ -54,17 +54,17 @@ def erf(x):
     x = abs(x)
 
     # constants
-    a1 =  0.254829592
+    a1 = 0.254829592
     a2 = -0.284496736
-    a3 =  1.421413741
+    a3 = 1.421413741
     a4 = -1.453152027
-    a5 =  1.061405429
-    p  =  0.3275911
+    a5 = 1.061405429
+    p = 0.3275911
 
     # A&S formula 7.1.26
     t = 1.0 / (1.0 + p * x)
     y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * npExp(-x * x)
-    return sign * y # erf(-x) = -erf(x)
+    return sign * y  # erf(-x) = -erf(x)
 
 
 def fibonacci(n: int = 2, **kwargs: dict) -> npNdArray:
@@ -115,7 +115,9 @@ def linear_regression(x: Series, y: Series) -> dict:
     m, n = x.size, y.size
 
     if m != n:
-        print(f"[X] Linear Regression X and y have unequal total observations: {m} != {n}")
+        print(
+            f"[X] Linear Regression X and y have unequal total observations: {m} != {n}"
+        )
         return {}
 
     if Imports["sklearn"]:
@@ -127,7 +129,8 @@ def linear_regression(x: Series, y: Series) -> dict:
 def log_geometric_mean(series: Series) -> float:
     """Returns the Logarithmic Geometric Mean"""
     n = series.size
-    if n < 2: return 0
+    if n < 2:
+        return 0
     else:
         series = series.fillna(0) + 1
         if npAll(series > 0):
@@ -196,8 +199,10 @@ def symmetric_triangle(n: int = None, **kwargs: dict) -> Optional[List[int]]:
 
 def weights(w: npNdArray):
     """Calculates the dot product of weights with values x"""
+
     def _dot(x):
         return npDot(w, x)
+
     return _dot
 
 
@@ -249,13 +254,16 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
         _np_err = seterr()
         seterr(divide="ignore", invalid="ignore")
         result = {
-            "a": a, "b": b, "r": r,
+            "a": a,
+            "b": b,
+            "r": r,
             "t": r / npSqrt((1 - r * r) / (m - 2)),
             "line": line,
         }
         seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
 
     return result
+
 
 def _linear_regression_sklearn(x: Series, y: Series) -> dict:
     """Simple Linear Regression in Scikit Learn for two 1d arrays for
@@ -268,8 +276,10 @@ def _linear_regression_sklearn(x: Series, y: Series) -> dict:
     a, b = lr.intercept_, lr.coef_[0]
 
     result = {
-        "a": a, "b": b, "r": r,
+        "a": a,
+        "b": b,
+        "r": r,
         "t": r / npSqrt((1 - r * r) / (x.size - 2)),
-        "line": a + b * x
+        "line": a + b * x,
     }
     return result

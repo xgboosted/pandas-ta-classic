@@ -9,7 +9,21 @@ from pandas_ta_classic.utils import get_offset
 from pandas_ta_classic.utils import unsigned_differences, verify_series
 
 
-def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_scalar=None, mom_length=None, mom_smooth=None, use_tr=None, mamode=None, offset=None, **kwargs):
+def squeeze(
+    high,
+    low,
+    close,
+    bb_length=None,
+    bb_std=None,
+    kc_length=None,
+    kc_scalar=None,
+    mom_length=None,
+    mom_smooth=None,
+    use_tr=None,
+    mamode=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Squeeze Momentum (SQZ)"""
     # Validate arguments
     bb_length = int(bb_length) if bb_length and bb_length > 0 else 20
@@ -24,7 +38,8 @@ def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_sc
     close = verify_series(close, _length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     use_tr = kwargs.setdefault("tr", True)
     asint = kwargs.pop("asint", True)
@@ -34,11 +49,13 @@ def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_sc
 
     def simplify_columns(df, n=3):
         df.columns = df.columns.str.lower()
-        return [c.split("_")[0][n - 1:n] for c in df.columns]
+        return [c.split("_")[0][n - 1 : n] for c in df.columns]
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
-    kch = kc(high, low, close, length=kc_length, scalar=kc_scalar, mamode=mamode, tr=use_tr)
+    kch = kc(
+        high, low, close, length=kc_length, scalar=kc_scalar, mamode=mamode, tr=use_tr
+    )
 
     # Simplify KC and BBAND column names for dynamic access
     bbd.columns = simplify_columns(bbd)
@@ -55,7 +72,7 @@ def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_sc
         momo = mom(close, length=mom_length)
         if mamode.lower() == "ema":
             squeeze = ema(momo, length=mom_smooth)
-        else: # "sma"
+        else:  # "sma"
             squeeze = sma(momo, length=mom_smooth)
 
     # Classify Squeezes
@@ -227,8 +244,7 @@ def squeeze(high, low, close, bb_length=None, bb_std=None, kc_length=None, kc_sc
     return df
 
 
-squeeze.__doc__ = \
-"""Squeeze (SQZ)
+squeeze.__doc__ = """Squeeze (SQZ)
 
 The default is based on John Carter's "TTM Squeeze" indicator, as discussed
 in his book "Mastering the Trade" (chapter 11). The Squeeze indicator attempts

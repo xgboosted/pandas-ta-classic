@@ -8,16 +8,22 @@ def variance(close, length=None, ddof=None, talib=None, offset=None, **kwargs):
     # Validate Arguments
     length = int(length) if length and length > 1 else 30
     ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 1
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = (
+        int(kwargs["min_periods"])
+        if "min_periods" in kwargs and kwargs["min_periods"] is not None
+        else length
+    )
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import VAR
+
         variance = VAR(close, length)
     else:
         variance = close.rolling(length, min_periods=min_periods).var(ddof)
@@ -47,8 +53,7 @@ def variance(close, length=None, ddof=None, talib=None, offset=None, **kwargs):
     return variance
 
 
-variance.__doc__ = \
-"""Rolling Variance
+variance.__doc__ = """Rolling Variance
 
 Sources:
 

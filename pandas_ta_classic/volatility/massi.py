@@ -14,9 +14,11 @@ def massi(high, low, fast=None, slow=None, offset=None, **kwargs):
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
-    if "length" in kwargs: kwargs.pop("length")
+    if "length" in kwargs:
+        kwargs.pop("length")
 
-    if high is None or low is None: return
+    if high is None or low is None:
+        return
 
     # Calculate Result
     high_low_range = non_zero_range(high, low)
@@ -51,8 +53,7 @@ def massi(high, low, fast=None, slow=None, offset=None, **kwargs):
     return massi
 
 
-massi.__doc__ = \
-"""Mass Index (MASSI)
+massi.__doc__ = """Mass Index (MASSI)
 
 The Mass Index is a non-directional volatility indicator that utilitizes the
 High-Low Range to identify trend reversals based on range expansions.

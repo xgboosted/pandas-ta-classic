@@ -40,8 +40,7 @@ def pvt(close, volume, drift=None, offset=None, **kwargs):
     return pvt
 
 
-pvt.__doc__ = \
-"""Price-Volume Trend (PVT)
+pvt.__doc__ = """Price-Volume Trend (PVT)
 
 The Price-Volume Trend utilizes the Rate of Change with volume to
 and it's cumulative values to determine money flow.

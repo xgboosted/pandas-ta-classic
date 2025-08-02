@@ -15,6 +15,7 @@ def hlc3(high, low, close, talib=None, offset=None, **kwargs):
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import TYPPRICE
+
         hlc3 = TYPPRICE(high, low, close)
     else:
         hlc3 = (high + low + close) / 3.0

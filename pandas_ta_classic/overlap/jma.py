@@ -16,7 +16,8 @@ def jma(close, length=None, phase=None, offset=None, **kwargs):
     phase = float(phase) if phase and phase != 0 else 0
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    if close is None: return
+    if close is None:
+        return
 
     # Define base variables
     jma = npZeroslike(close)
@@ -43,12 +44,14 @@ def jma(close, length=None, phase=None, offset=None, **kwargs):
         # Price volatility
         del1 = price - uBand
         del2 = price - lBand
-        volty[i] = max(abs(del1),abs(del2)) if abs(del1)!=abs(del2) else 0
+        volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0
 
         # Relative price volatility factor
-        v_sum[i] = v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
-        avg_volty = npAverage(v_sum[max(i - 65, 0):i + 1])
-        d_volty = 0 if avg_volty ==0 else volty[i] / avg_volty
+        v_sum[i] = (
+            v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
+        )
+        avg_volty = npAverage(v_sum[max(i - 65, 0) : i + 1])
+        d_volty = 0 if avg_volty == 0 else volty[i] / avg_volty
         r_volty = max(1.0, min(npPower(length1, 1 / pow1), d_volty))
 
         # Jurik volatility bands
@@ -70,10 +73,10 @@ def jma(close, length=None, phase=None, offset=None, **kwargs):
 
         # 3rd stage - final smoothing by unique Jurik adaptive filter
         det1 = ((ma2 - jma[i - 1]) * (1 - alpha) * (1 - alpha)) + (alpha * alpha * det1)
-        jma[i] = jma[i-1] + det1
+        jma[i] = jma[i - 1] + det1
 
     # Remove initial lookback data and convert to pandas frame
-    jma[0:_length - 1] = npNaN
+    jma[0 : _length - 1] = npNaN
     jma = Series(jma, index=close.index)
 
     # Offset
@@ -101,8 +104,7 @@ def jma(close, length=None, phase=None, offset=None, **kwargs):
     return jma
 
 
-jma.__doc__ = \
-"""Jurik Moving Average Average (JMA)
+jma.__doc__ = """Jurik Moving Average Average (JMA)
 
 Mark Jurik's Moving Average (JMA) attempts to eliminate noise to see the "true"
 underlying activity. It has extremely low lag, is very smooth and is responsive

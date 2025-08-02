@@ -16,6 +16,7 @@ def ad(high, low, close, volume, open_=None, talib=None, offset=None, **kwargs):
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import AD
+
         ad = AD(high, low, close, volume)
     else:
         if open_ is not None:
@@ -53,8 +54,7 @@ def ad(high, low, close, volume, open_=None, talib=None, offset=None, **kwargs):
     return ad
 
 
-ad.__doc__ = \
-"""Accumulation/Distribution (AD)
+ad.__doc__ = """Accumulation/Distribution (AD)
 
 Accumulation/Distribution indicator utilizes the relative position
 of the close to it's High-Low range with volume.  Then it is cumulated.

@@ -11,14 +11,15 @@ def log_return(close, length=None, cumulative=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if cumulative:
         # log_return = nplog(close).diff(length).cumsum()
         log_return = nplog(close / close.iloc[0])
     else:
-        log_return = nplog(close / close.shift(length)) # nplog(close).diff(length)
+        log_return = nplog(close / close.shift(length))  # nplog(close).diff(length)
 
     # Offset
     if offset != 0:
@@ -40,8 +41,7 @@ def log_return(close, length=None, cumulative=None, offset=None, **kwargs):
     return log_return
 
 
-log_return.__doc__ = \
-"""Log Return
+log_return.__doc__ = """Log Return
 
 Calculates the logarithmic return of a Series.
 See also: help(df.ta.log_return) for additional **kwargs a valid 'df'.

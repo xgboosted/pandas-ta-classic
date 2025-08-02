@@ -4,7 +4,17 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def hwc(close, na=None, nb=None, nc=None, nd=None, scalar=None, channel_eval=None, offset=None, **kwargs):
+def hwc(
+    close,
+    na=None,
+    nb=None,
+    nc=None,
+    nd=None,
+    scalar=None,
+    channel_eval=None,
+    offset=None,
+    **kwargs
+):
     """Indicator: Holt-Winter Channel"""
     # Validate Arguments
     na = float(na) if na and na > 0 else 0.2
@@ -29,7 +39,9 @@ def hwc(close, na=None, nb=None, nc=None, nd=None, scalar=None, channel_eval=Non
         A = (1.0 - nc) * last_a + nc * (V - last_v)
         result.append((F + V + 0.5 * A))
 
-        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (last_price - last_result)
+        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
+            last_price - last_result
+        )
         stddev = npSqrt(last_var)
         upper.append(result[i] + scalar * stddev)
         lower.append(result[i] - scalar * stddev)
@@ -135,8 +147,13 @@ def hwc(close, na=None, nb=None, nc=None, nd=None, scalar=None, channel_eval=Non
 
     # Prepare DataFrame to return
     if channel_eval:
-        data = {hwc.name: hwc, hwc_upper.name: hwc_upper, hwc_lower.name: hwc_lower,
-                hwc_width.name: hwc_width, hwc_pctwidth.name: hwc_pctwidth}
+        data = {
+            hwc.name: hwc,
+            hwc_upper.name: hwc_upper,
+            hwc_lower.name: hwc_lower,
+            hwc_width.name: hwc_width,
+            hwc_pctwidth.name: hwc_pctwidth,
+        }
         df = DataFrame(data)
         df.name = "HWC"
         df.category = hwc.category
@@ -149,9 +166,7 @@ def hwc(close, na=None, nb=None, nc=None, nd=None, scalar=None, channel_eval=Non
     return df
 
 
-
-hwc.__doc__ = \
-"""HWC (Holt-Winter Channel)
+hwc.__doc__ = """HWC (Holt-Winter Channel)
 
 Channel indicator HWC (Holt-Winters Channel) based on HWMA - a three-parameter
 moving average calculated by the method of Holt-Winters.

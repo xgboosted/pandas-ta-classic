@@ -17,7 +17,8 @@ def aberration(high, low, close, length=None, atr_length=None, offset=None, **kw
     close = verify_series(close, _length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=atr_length)
@@ -96,8 +97,7 @@ def aberration(high, low, close, length=None, atr_length=None, offset=None, **kw
     return aberdf
 
 
-aberration.__doc__ = \
-"""Aberration
+aberration.__doc__ = """Aberration
 
 A volatility indicator similar to Keltner Channels.
 

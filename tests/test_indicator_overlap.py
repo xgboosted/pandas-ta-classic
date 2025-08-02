@@ -1,17 +1,22 @@
-from tests.config import CORRELATION, CORRELATION_THRESHOLD, error_analysis, sample_data, VERBOSE
+from tests.config import CORRELATION, CORRELATION_THRESHOLD, error_analysis, get_sample_data, VERBOSE
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 import pandas.testing as pdt
 from pandas import DataFrame, Series
 
-import talib as tal
+try:
+    import talib as tal
+    HAS_TALIB = True
+except ImportError:
+    HAS_TALIB = False
+    tal = None
 
 
 class TestOverlap(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
+        cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
         cls.high = cls.data["high"]

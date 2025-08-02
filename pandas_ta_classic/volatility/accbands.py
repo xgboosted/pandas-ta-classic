@@ -4,7 +4,17 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
 
 
-def accbands(high, low, close, length=None, c=None, drift=None, mamode=None, offset=None, **kwargs):
+def accbands(
+    high,
+    low,
+    close,
+    length=None,
+    c=None,
+    drift=None,
+    mamode=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Acceleration Bands (ACCBANDS)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 20
@@ -16,7 +26,8 @@ def accbands(high, low, close, length=None, c=None, drift=None, mamode=None, off
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     high_low_range = non_zero_range(high, low)
@@ -84,8 +95,7 @@ def accbands(high, low, close, length=None, c=None, drift=None, mamode=None, off
     return accbandsdf
 
 
-accbands.__doc__ = \
-"""Acceleration Bands (ACCBANDS)
+accbands.__doc__ = """Acceleration Bands (ACCBANDS)
 
 Acceleration Bands created by Price Headley plots upper and lower envelope
 bands around a simple moving average.

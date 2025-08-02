@@ -4,7 +4,9 @@ from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def trix(close, length=None, signal=None, scalar=None, drift=None, offset=None, **kwargs):
+def trix(
+    close, length=None, signal=None, scalar=None, drift=None, offset=None, **kwargs
+):
     """Indicator: Trix (TRIX)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
@@ -14,7 +16,8 @@ def trix(close, length=None, signal=None, scalar=None, drift=None, offset=None, 
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     ema1 = ema(close=close, length=length, **kwargs)
@@ -66,8 +69,7 @@ def trix(close, length=None, signal=None, scalar=None, drift=None, offset=None, 
     return df
 
 
-trix.__doc__ = \
-"""Trix (TRIX)
+trix.__doc__ = """Trix (TRIX)
 
 TRIX is a momentum oscillator to identify divergences.
 

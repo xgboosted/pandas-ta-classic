@@ -14,35 +14,43 @@ def ssf(close, length=None, poles=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     m = close.size
     ssf = close.copy()
 
     if poles == 3:
-        x = npPi / length # x = PI / n
-        a0 = npExp(-x) # e^(-x)
-        b0 = 2 * a0 * npCos(npSqrt(3) * x) # 2e^(-x)*cos(3^(.5) * x)
-        c0 = a0 * a0 # e^(-2x)
+        x = npPi / length  # x = PI / n
+        a0 = npExp(-x)  # e^(-x)
+        b0 = 2 * a0 * npCos(npSqrt(3) * x)  # 2e^(-x)*cos(3^(.5) * x)
+        c0 = a0 * a0  # e^(-2x)
 
-        c4 = c0 * c0 # e^(-4x)
-        c3 = -c0 * (1 + b0) # -e^(-2x) * (1 + 2e^(-x)*cos(3^(.5) * x))
-        c2 = c0 + b0 # e^(-2x) + 2e^(-x)*cos(3^(.5) * x)
+        c4 = c0 * c0  # e^(-4x)
+        c3 = -c0 * (1 + b0)  # -e^(-2x) * (1 + 2e^(-x)*cos(3^(.5) * x))
+        c2 = c0 + b0  # e^(-2x) + 2e^(-x)*cos(3^(.5) * x)
         c1 = 1 - c2 - c3 - c4
 
         for i in range(0, m):
-            ssf.iloc[i] = c1 * close.iloc[i] + c2 * ssf.iloc[i - 1] + c3 * ssf.iloc[i - 2] + c4 * ssf.iloc[i - 3]
+            ssf.iloc[i] = (
+                c1 * close.iloc[i]
+                + c2 * ssf.iloc[i - 1]
+                + c3 * ssf.iloc[i - 2]
+                + c4 * ssf.iloc[i - 3]
+            )
 
-    else: # poles == 2
-        x = npPi * npSqrt(2) / length # x = PI * 2^(.5) / n
-        a0 = npExp(-x) # e^(-x)
-        a1 = -a0 * a0 # -e^(-2x)
-        b1 = 2 * a0 * npCos(x) # 2e^(-x)*cos(x)
-        c1 = 1 - a1 - b1 # e^(-2x) - 2e^(-x)*cos(x) + 1
+    else:  # poles == 2
+        x = npPi * npSqrt(2) / length  # x = PI * 2^(.5) / n
+        a0 = npExp(-x)  # e^(-x)
+        a1 = -a0 * a0  # -e^(-2x)
+        b1 = 2 * a0 * npCos(x)  # 2e^(-x)*cos(x)
+        c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
 
         for i in range(0, m):
-            ssf.iloc[i] = c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
+            ssf.iloc[i] = (
+                c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
+            )
 
     # Offset
     if offset != 0:
@@ -69,8 +77,7 @@ def ssf(close, length=None, poles=None, offset=None, **kwargs):
     return ssf
 
 
-ssf.__doc__ = \
-"""Ehler's Super Smoother Filter (SSF) © 2013
+ssf.__doc__ = """Ehler's Super Smoother Filter (SSF) © 2013
 
 John F. Ehlers's solution to reduce lag and remove aliasing noise with his
 research in aerospace analog filter design. This indicator comes with two

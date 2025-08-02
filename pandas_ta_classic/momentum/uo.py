@@ -4,7 +4,21 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def uo(high, low, close, fast=None, medium=None, slow=None, fast_w=None, medium_w=None, slow_w=None, talib=None, drift=None, offset=None, **kwargs):
+def uo(
+    high,
+    low,
+    close,
+    fast=None,
+    medium=None,
+    slow=None,
+    fast_w=None,
+    medium_w=None,
+    slow_w=None,
+    talib=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Ultimate Oscillator (UO)"""
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 7
@@ -21,18 +35,18 @@ def uo(high, low, close, fast=None, medium=None, slow=None, fast_w=None, medium_
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import ULTOSC
+
         uo = ULTOSC(high, low, close, fast, medium, slow)
     else:
-        tdf = DataFrame({
-            "high": high,
-            "low": low,
-            f"close_{drift}": close.shift(drift)
-        })
+        tdf = DataFrame(
+            {"high": high, "low": low, f"close_{drift}": close.shift(drift)}
+        )
         max_h_or_pc = tdf.loc[:, ["high", f"close_{drift}"]].max(axis=1)
         min_l_or_pc = tdf.loc[:, ["low", f"close_{drift}"]].min(axis=1)
         del tdf
@@ -73,8 +87,7 @@ def uo(high, low, close, fast=None, medium=None, slow=None, fast_w=None, medium_
     return uo
 
 
-uo.__doc__ = \
-"""Ultimate Oscillator (UO)
+uo.__doc__ = """Ultimate Oscillator (UO)
 
 The Ultimate Oscillator is a momentum indicator over three different
 periods.  It attempts to correct false divergence trading signals.

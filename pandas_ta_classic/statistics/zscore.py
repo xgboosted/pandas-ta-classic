@@ -12,7 +12,8 @@ def zscore(close, length=None, std=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     std *= stdev(close=close, length=length, **kwargs)
@@ -44,8 +45,7 @@ def zscore(close, length=None, std=None, offset=None, **kwargs):
     return zscore
 
 
-zscore.__doc__ = \
-"""Rolling Z Score
+zscore.__doc__ = """Rolling Z Score
 
 Sources:
 

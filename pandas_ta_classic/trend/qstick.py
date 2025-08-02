@@ -12,7 +12,8 @@ def qstick(open_, close, length=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if open_ is None or close is None: return
+    if open_ is None or close is None:
+        return
 
     # Calculate Result
     diff = non_zero_range(close, open_)
@@ -25,7 +26,7 @@ def qstick(open_, close, length=None, offset=None, **kwargs):
         qstick = hma(diff, length=length)
     elif ma == "rma":
         qstick = rma(diff, length=length)
-    else: # "sma"
+    else:  # "sma"
         qstick = sma(diff, length=length)
 
     # Offset
@@ -53,8 +54,7 @@ def qstick(open_, close, length=None, offset=None, **kwargs):
     return qstick
 
 
-qstick.__doc__ = \
-"""Q Stick
+qstick.__doc__ = """Q Stick
 
 The Q Stick indicator, developed by Tushar Chande, attempts to quantify and
 identify trends in candlestick charts.

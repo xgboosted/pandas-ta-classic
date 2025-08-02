@@ -13,11 +13,13 @@ def wma(close, length=None, asc=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import WMA
+
         wma = WMA(close, length)
     else:
         from numpy import arange as npArange
@@ -30,6 +32,7 @@ def wma(close, length=None, asc=None, talib=None, offset=None, **kwargs):
         def linear(w):
             def _compute(x):
                 return npDot(x, w) / total_weight
+
             return _compute
 
         close_ = close.rolling(length, min_periods=length)
@@ -60,8 +63,7 @@ def wma(close, length=None, asc=None, talib=None, offset=None, **kwargs):
     return wma
 
 
-wma.__doc__ = \
-"""Weighted Moving Average (WMA)
+wma.__doc__ = """Weighted Moving Average (WMA)
 
 The Weighted Moving Average where the weights are linearly increasing and
 the most recent data has the heaviest weight.

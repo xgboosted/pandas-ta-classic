@@ -12,11 +12,13 @@ def dema(close, length=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import DEMA
+
         dema = DEMA(close, length)
     else:
         ema1 = ema(close=close, length=length)
@@ -48,8 +50,7 @@ def dema(close, length=None, talib=None, offset=None, **kwargs):
     return dema
 
 
-dema.__doc__ = \
-"""Double Exponential Moving Average (DEMA)
+dema.__doc__ = """Double Exponential Moving Average (DEMA)
 
 The Double Exponential Moving Average attempts to a smoother average with less
 lag than the normal Exponential Moving Average (EMA).

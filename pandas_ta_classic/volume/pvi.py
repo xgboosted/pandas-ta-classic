@@ -13,7 +13,8 @@ def pvi(close, volume, length=None, initial=None, offset=None, **kwargs):
     volume = verify_series(volume, length)
     offset = get_offset(offset)
 
-    if close is None or volume is None: return
+    if close is None or volume is None:
+        return
 
     # Calculate Result
     signed_volume = signed_series(volume, 1)
@@ -47,8 +48,7 @@ def pvi(close, volume, length=None, initial=None, offset=None, **kwargs):
     return pvi
 
 
-pvi.__doc__ = \
-"""Positive Volume Index (PVI)
+pvi.__doc__ = """Positive Volume Index (PVI)
 
 The Positive Volume Index is a cumulative indicator that uses volume change in
 an attempt to identify where smart money is active.

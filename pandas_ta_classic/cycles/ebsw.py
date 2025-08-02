@@ -17,15 +17,16 @@ def ebsw(close, length=None, bars=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # variables
-    alpha1 = HP = 0 # alpha and HighPass
+    alpha1 = HP = 0  # alpha and HighPass
     a1 = b1 = c1 = c2 = c3 = 0
     Filt = Pwr = Wave = 0
 
     lastClose = lastHP = 0
-    FilterHist = [0, 0]   # Filter history
+    FilterHist = [0, 0]  # Filter history
 
     # Calculate Result
     m = close.size
@@ -46,7 +47,9 @@ def ebsw(close, length=None, bars=None, offset=None, **kwargs):
 
         # 3 Bar average of Wave amplitude and power
         Wave = (Filt + FilterHist[1] + FilterHist[0]) / 3
-        Pwr = (Filt * Filt + FilterHist[1] * FilterHist[1] + FilterHist[0] * FilterHist[0]) / 3
+        Pwr = (
+            Filt * Filt + FilterHist[1] * FilterHist[1] + FilterHist[0] * FilterHist[0]
+        ) / 3
 
         # Normalize the Average Wave to Square Root of the Average Power
         Wave = Wave / npSqrt(Pwr)
@@ -85,8 +88,7 @@ def ebsw(close, length=None, bars=None, offset=None, **kwargs):
     return ebsw
 
 
-ebsw.__doc__ = \
-"""Even Better SineWave (EBSW) *beta*
+ebsw.__doc__ = """Even Better SineWave (EBSW) *beta*
 
 This indicator measures market cycles and uses a low pass filter to remove noise.
 Its output is bound signal between -1 and 1 and the maximum length of a detected

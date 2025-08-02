@@ -16,7 +16,8 @@ def supertrend(high, low, close, length=None, multiplier=None, offset=None, **kw
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Results
     m = close.size
@@ -47,12 +48,15 @@ def supertrend(high, low, close, length=None, multiplier=None, offset=None, **kw
 
     # Prepare DataFrame to return
     _props = f"_{length}_{multiplier}"
-    df = DataFrame({
+    df = DataFrame(
+        {
             f"SUPERT{_props}": trend,
             f"SUPERTd{_props}": dir_,
             f"SUPERTl{_props}": long,
             f"SUPERTs{_props}": short,
-        }, index=close.index)
+        },
+        index=close.index,
+    )
 
     df.name = f"SUPERT{_props}"
     df.category = "overlap"
@@ -79,8 +83,7 @@ def supertrend(high, low, close, length=None, multiplier=None, offset=None, **kw
     return df
 
 
-supertrend.__doc__ = \
-"""Supertrend (supertrend)
+supertrend.__doc__ = """Supertrend (supertrend)
 
 Supertrend is an overlap indicator. It is used to help identify trend
 direction, setting stop loss, identify support and resistance, and/or

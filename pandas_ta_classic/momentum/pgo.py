@@ -13,7 +13,8 @@ def pgo(high, low, close, length=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     pgo = close - sma(close, length)
@@ -44,8 +45,7 @@ def pgo(high, low, close, length=None, offset=None, **kwargs):
     return pgo
 
 
-pgo.__doc__ = \
-"""Pretty Good Oscillator (PGO)
+pgo.__doc__ = """Pretty Good Oscillator (PGO)
 
 The Pretty Good Oscillator indicator was created by Mark Johnson to measure the distance of the current close from its N-day Simple Moving Average, expressed in terms of an average true range over a similar period. Johnson's approach was to
 use it as a breakout system for longer term trades. Long if greater than 3.0 and

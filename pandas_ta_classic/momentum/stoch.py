@@ -4,7 +4,9 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
 
 
-def stoch(high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=None, **kwargs):
+def stoch(
+    high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=None, **kwargs
+):
     """Indicator: Stochastic Oscillator (STOCH)"""
     # Validate arguments
     k = k if k and k > 0 else 14
@@ -17,7 +19,8 @@ def stoch(high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=N
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "sma"
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     lowest_low = low.rolling(k).min()
@@ -26,8 +29,8 @@ def stoch(high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=N
     stoch = 100 * (close - lowest_low)
     stoch /= non_zero_range(highest_high, lowest_low)
 
-    stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index():,], length=smooth_k)
-    stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index():,], length=d)
+    stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index() :,], length=smooth_k)
+    stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index() :,], length=d)
 
     # Offset
     if offset != 0:
@@ -73,8 +76,7 @@ def stoch(high, low, close, k=None, d=None, smooth_k=None, mamode=None, offset=N
     return df
 
 
-stoch.__doc__ = \
-"""Stochastic (STOCH)
+stoch.__doc__ = """Stochastic (STOCH)
 
 The Stochastic Oscillator (STOCH) was developed by George Lane in the 1950's.
 He believed this indicator was a good way to measure momentum because changes in

@@ -10,13 +10,14 @@ def percent_return(close, length=None, cumulative=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if cumulative:
         pct_return = (close / close.iloc[0]) - 1
     else:
-        pct_return = close.pct_change(length) # (close / close.shift(length)) - 1
+        pct_return = close.pct_change(length)  # (close / close.shift(length)) - 1
 
     # Offset
     if offset != 0:
@@ -43,8 +44,7 @@ def percent_return(close, length=None, cumulative=None, offset=None, **kwargs):
     return pct_return
 
 
-percent_return.__doc__ = \
-"""Percent Return
+percent_return.__doc__ = """Percent Return
 
 Calculates the percent return of a Series.
 See also: help(df.ta.percent_return) for additional **kwargs a valid 'df'.

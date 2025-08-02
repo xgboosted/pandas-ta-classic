@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from pandas_ta_classic.utils import get_offset, symmetric_triangle, verify_series, weights
+from pandas_ta_classic.utils import (
+    get_offset,
+    symmetric_triangle,
+    verify_series,
+    weights,
+)
 
 
 def swma(close, length=None, asc=None, offset=None, **kwargs):
@@ -11,7 +16,8 @@ def swma(close, length=None, asc=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     triangle = symmetric_triangle(length, weighted=True)
@@ -43,8 +49,7 @@ def swma(close, length=None, asc=None, offset=None, **kwargs):
     return swma
 
 
-swma.__doc__ = \
-"""Symmetric Weighted Moving Average (SWMA)
+swma.__doc__ = """Symmetric Weighted Moving Average (SWMA)
 
 Symmetric Weighted Moving Average where weights are based on a symmetric
 triangle.  For example: n=3 -> [1, 2, 1], n=4 -> [1, 2, 2, 1], etc...

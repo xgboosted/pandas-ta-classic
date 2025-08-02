@@ -12,7 +12,8 @@ def psl(close, open_=None, length=None, scalar=None, drift=None, offset=None, **
     drift = get_drift(drift)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if open_ is not None:
@@ -53,8 +54,7 @@ def psl(close, open_=None, length=None, scalar=None, drift=None, offset=None, **
     return psl
 
 
-psl.__doc__ = \
-"""Psychological Line (PSL)
+psl.__doc__ = """Psychological Line (PSL)
 
 The Psychological Line is an oscillator-type indicator that compares the
 number of the rising periods to the total number of periods. In other

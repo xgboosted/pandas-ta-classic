@@ -4,7 +4,9 @@ from pandas_ta_classic.statistics import zscore
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def cdl_z(open_, high, low, close, length=None, full=None, ddof=None, offset=None, **kwargs):
+def cdl_z(
+    open_, high, low, close, length=None, full=None, ddof=None, offset=None, **kwargs
+):
     """Candle Type: Z Score"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
@@ -16,7 +18,8 @@ def cdl_z(open_, high, low, close, length=None, full=None, ddof=None, offset=Non
     offset = get_offset(offset)
     full = bool(full) if full is not None and full else False
 
-    if open_ is None or high is None or low is None or close is None: return
+    if open_ is None or high is None or low is None or close is None:
+        return
 
     # Calculate Result
     if full:
@@ -29,12 +32,14 @@ def cdl_z(open_, high, low, close, length=None, full=None, ddof=None, offset=Non
 
     _full = "a" if full else ""
     _props = _full if full else f"_{length}_{ddof}"
-    df = DataFrame({
-        f"open_Z{_props}": z_open,
-        f"high_Z{_props}": z_high,
-        f"low_Z{_props}": z_low,
-        f"close_Z{_props}": z_close,
-    })
+    df = DataFrame(
+        {
+            f"open_Z{_props}": z_open,
+            f"high_Z{_props}": z_high,
+            f"low_Z{_props}": z_low,
+            f"close_Z{_props}": z_close,
+        }
+    )
 
     if full:
         df.fillna(method="backfill", axis=0, inplace=True)
@@ -64,8 +69,7 @@ def cdl_z(open_, high, low, close, length=None, full=None, ddof=None, offset=Non
     return df
 
 
-cdl_z.__doc__ = \
-"""Candle Type: Z
+cdl_z.__doc__ = """Candle Type: Z
 
 Normalizes OHLC Candles with a rolling Z Score.
 

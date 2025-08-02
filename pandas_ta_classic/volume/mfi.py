@@ -5,7 +5,9 @@ from pandas_ta_classic.overlap import hlc3
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def mfi(high, low, close, volume, length=None, talib=None, drift=None, offset=None, **kwargs):
+def mfi(
+    high, low, close, volume, length=None, talib=None, drift=None, offset=None, **kwargs
+):
     """Indicator: Money Flow Index (MFI)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
@@ -17,11 +19,13 @@ def mfi(high, low, close, volume, length=None, talib=None, drift=None, offset=No
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None or close is None or volume is None: return
+    if high is None or low is None or close is None or volume is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import MFI
+
         mfi = MFI(high, low, close, volume, length)
     else:
         typical_price = hlc3(high=high, low=low, close=close)
@@ -66,8 +70,7 @@ def mfi(high, low, close, volume, length=None, talib=None, drift=None, offset=No
     return mfi
 
 
-mfi.__doc__ = \
-"""Money Flow Index (MFI)
+mfi.__doc__ = """Money Flow Index (MFI)
 
 Money Flow Index is an oscillator indicator that is used to measure buying and
 selling pressure by utilizing both price and volume.

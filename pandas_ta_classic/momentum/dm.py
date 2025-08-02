@@ -5,7 +5,9 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_offset, verify_series, get_drift, zero
 
 
-def dm(high, low, length=None, mamode=None, talib=None, drift=None, offset=None, **kwargs):
+def dm(
+    high, low, length=None, mamode=None, talib=None, drift=None, offset=None, **kwargs
+):
     """Indicator: DM"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 14
@@ -21,6 +23,7 @@ def dm(high, low, length=None, mamode=None, talib=None, drift=None, offset=None,
 
     if Imports["talib"] and mode_tal:
         from talib import MINUS_DM, PLUS_DM
+
         pos = PLUS_DM(high, low, length)
         neg = MINUS_DM(high, low, length)
     else:
@@ -57,8 +60,7 @@ def dm(high, low, length=None, mamode=None, talib=None, drift=None, offset=None,
     return dmdf
 
 
-dm.__doc__ = \
-"""Directional Movement (DM)
+dm.__doc__ = """Directional Movement (DM)
 
 The Directional Movement was developed by J. Welles Wilder in 1978 attempts to
 determine which direction the price of an asset is moving. It compares prior

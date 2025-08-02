@@ -5,7 +5,18 @@ from pandas_ta_classic.overlap import ema
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def adosc(high, low, close, volume, open_=None, fast=None, slow=None, talib=None, offset=None, **kwargs):
+def adosc(
+    high,
+    low,
+    close,
+    volume,
+    open_=None,
+    fast=None,
+    slow=None,
+    talib=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Accumulation/Distribution Oscillator"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 3
@@ -16,14 +27,17 @@ def adosc(high, low, close, volume, open_=None, fast=None, slow=None, talib=None
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    if "length" in kwargs: kwargs.pop("length")
+    if "length" in kwargs:
+        kwargs.pop("length")
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None or close is None or volume is None: return
+    if high is None or low is None or close is None or volume is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import ADOSC
+
         adosc = ADOSC(high, low, close, volume, fast, slow)
     else:
         ad_ = ad(high=high, low=low, close=close, volume=volume, open_=open_)
@@ -56,8 +70,7 @@ def adosc(high, low, close, volume, open_=None, fast=None, slow=None, talib=None
     return adosc
 
 
-adosc.__doc__ = \
-"""Accumulation/Distribution Oscillator or Chaikin Oscillator
+adosc.__doc__ = """Accumulation/Distribution Oscillator or Chaikin Oscillator
 
 Accumulation/Distribution Oscillator indicator utilizes
 Accumulation/Distribution and treats it similarily to MACD

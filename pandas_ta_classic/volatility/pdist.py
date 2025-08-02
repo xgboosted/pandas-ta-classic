@@ -42,8 +42,7 @@ def pdist(open_, high, low, close, drift=None, offset=None, **kwargs):
     return pdist
 
 
-pdist.__doc__ = \
-"""Price Distance (PDIST)
+pdist.__doc__ = """Price Distance (PDIST)
 
 Measures the "distance" covered by price movements.
 

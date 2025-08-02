@@ -13,7 +13,7 @@ def pvol(close, volume, offset=None, **kwargs):
     # Calculate Result
     pvol = close * volume
     if signed:
-         pvol *= signed_series(close, 1)
+        pvol *= signed_series(close, 1)
 
     # Offset
     if offset != 0:
@@ -40,8 +40,7 @@ def pvol(close, volume, offset=None, **kwargs):
     return pvol
 
 
-pvol.__doc__ = \
-"""Price-Volume (PVOL)
+pvol.__doc__ = """Price-Volume (PVOL)
 
 Returns a series of the product of price and volume.
 

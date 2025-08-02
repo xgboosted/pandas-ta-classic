@@ -1,5 +1,5 @@
 from pandas.core.series import Series
-from tests.config import sample_data
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
@@ -9,7 +9,7 @@ from pandas import DataFrame
 class TestCylesExtension(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
+        cls.data = get_sample_data()
 
     @classmethod
     def tearDownClass(cls):

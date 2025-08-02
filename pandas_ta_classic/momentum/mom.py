@@ -11,11 +11,13 @@ def mom(close, length=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import MOM
+
         mom = MOM(close, length)
     else:
         mom = close.diff(length)
@@ -45,8 +47,7 @@ def mom(close, length=None, talib=None, offset=None, **kwargs):
     return mom
 
 
-mom.__doc__ = \
-"""Momentum (MOM)
+mom.__doc__ = """Momentum (MOM)
 
 Momentum is an indicator used to measure a security's speed (or strength) of
 movement.  Or simply the change in price.

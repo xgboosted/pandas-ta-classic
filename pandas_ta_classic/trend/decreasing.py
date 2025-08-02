@@ -1,7 +1,17 @@
 # -*- coding: utf-8 -*-
 from pandas_ta_classic.utils import get_drift, get_offset, is_percent, verify_series
 
-def decreasing(close, length=None, strict=None, asint=None, percent=None, drift=None, offset=None, **kwargs):
+
+def decreasing(
+    close,
+    length=None,
+    strict=None,
+    asint=None,
+    percent=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Decreasing"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 1
@@ -12,7 +22,8 @@ def decreasing(close, length=None, strict=None, asint=None, percent=None, drift=
     offset = get_offset(offset)
     percent = float(percent) if is_percent(percent) else False
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     close_ = (1 - 0.01 * percent) * close if percent else close
@@ -20,7 +31,9 @@ def decreasing(close, length=None, strict=None, asint=None, percent=None, drift=
         # Returns value as float64? Have to cast to bool
         decreasing = close < close_.shift(drift)
         for x in range(3, length + 1):
-            decreasing = decreasing & (close.shift(x - (drift + 1)) < close_.shift(x - drift))
+            decreasing = decreasing & (
+                close.shift(x - (drift + 1)) < close_.shift(x - drift)
+            )
 
         decreasing.fillna(0, inplace=True)
         decreasing = decreasing.astype(bool)
@@ -49,7 +62,7 @@ def decreasing(close, length=None, strict=None, asint=None, percent=None, drift=
                 decreasing.bfill(inplace=True)
 
     # Name and Categorize it
-    _percent = f"_{0.01 * percent}" if percent else ''
+    _percent = f"_{0.01 * percent}" if percent else ""
     _props = f"{'S' if strict else ''}DEC{'p' if percent else ''}"
     decreasing.name = f"{_props}_{length}{_percent}"
     decreasing.category = "trend"
@@ -57,8 +70,7 @@ def decreasing(close, length=None, strict=None, asint=None, percent=None, drift=
     return decreasing
 
 
-decreasing.__doc__ = \
-"""Decreasing
+decreasing.__doc__ = """Decreasing
 
 Returns True if the series is decreasing over a period, False otherwise.
 If the kwarg 'strict' is True, it returns True if it is continuously decreasing

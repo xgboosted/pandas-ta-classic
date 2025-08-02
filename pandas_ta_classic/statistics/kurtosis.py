@@ -6,11 +6,16 @@ def kurtosis(close, length=None, offset=None, **kwargs):
     """Indicator: Kurtosis"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = (
+        int(kwargs["min_periods"])
+        if "min_periods" in kwargs and kwargs["min_periods"] is not None
+        else length
+    )
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     kurtosis = close.rolling(length, min_periods=min_periods).kurt()
@@ -40,8 +45,7 @@ def kurtosis(close, length=None, offset=None, **kwargs):
     return kurtosis
 
 
-kurtosis.__doc__ = \
-"""Rolling Kurtosis
+kurtosis.__doc__ = """Rolling Kurtosis
 
 Sources:
 

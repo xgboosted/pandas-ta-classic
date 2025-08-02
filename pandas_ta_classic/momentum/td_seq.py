@@ -23,7 +23,7 @@ def td_seq(close, asint=None, offset=None, **kwargs):
             return s.count()
 
     def calc_td(series: Series, direction: str, show_all: bool):
-        td_bool = series.diff(4) > 0 if direction=="up" else series.diff(4) < 0
+        td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
         td_num = npWhere(
             td_bool, td_bool.rolling(13, min_periods=0).apply(true_sequence_count), 0
         )
@@ -32,7 +32,7 @@ def td_seq(close, asint=None, offset=None, **kwargs):
         if show_all:
             td_num = td_num.mask(td_num == 0)
         else:
-            td_num = td_num.mask(~td_num.between(6,9))
+            td_num = td_num.mask(~td_num.between(6, 9))
 
         return td_num
 
@@ -46,7 +46,7 @@ def td_seq(close, asint=None, offset=None, **kwargs):
         up_seq = up_seq.astype(int)
         down_seq = down_seq.astype(int)
 
-     # Offset
+    # Offset
     if offset != 0:
         up_seq = up_seq.shift(offset)
         down_seq = down_seq.shift(offset)
@@ -89,8 +89,7 @@ def td_seq(close, asint=None, offset=None, **kwargs):
     return df
 
 
-td_seq.__doc__ = \
-"""TD Sequential (TD_SEQ)
+td_seq.__doc__ = """TD Sequential (TD_SEQ)
 
 Tom DeMark's Sequential indicator attempts to identify a price point where an
 uptrend or a downtrend exhausts itself and reverses.

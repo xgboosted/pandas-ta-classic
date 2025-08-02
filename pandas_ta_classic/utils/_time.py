@@ -10,7 +10,8 @@ from pandas_ta_classic import EXCHANGE_TZ, RATE
 
 def df_dates(df: DataFrame, dates: Tuple[str, list] = None) -> DataFrame:
     """Yields the DataFrame with the given dates"""
-    if dates is None: return None
+    if dates is None:
+        return None
     if not isinstance(dates, list):
         dates = [dates]
     return df[df.index.isin(dates)]
@@ -19,7 +20,8 @@ def df_dates(df: DataFrame, dates: Tuple[str, list] = None) -> DataFrame:
 def df_month_to_date(df: DataFrame) -> DataFrame:
     """Yields the Month-to-Date (MTD) DataFrame"""
     in_mtd = df.index >= Timestamp.now().strftime("%Y-%m-01")
-    if any(in_mtd): return df[in_mtd]
+    if any(in_mtd):
+        return df[in_mtd]
     return df
 
 
@@ -28,15 +30,17 @@ def df_quarter_to_date(df: DataFrame) -> DataFrame:
     now = Timestamp.now()
     for m in [1, 4, 7, 10]:
         if now.month <= m:
-                in_qtr = df.index >= datetime(now.year, m, 1).strftime("%Y-%m-01")
-                if any(in_qtr): return df[in_qtr]
+            in_qtr = df.index >= datetime(now.year, m, 1).strftime("%Y-%m-01")
+            if any(in_qtr):
+                return df[in_qtr]
     return df[df.index >= now.strftime("%Y-%m-01")]
 
 
 def df_year_to_date(df: DataFrame) -> DataFrame:
     """Yields the Year-to-Date (YTD) DataFrame"""
     in_ytd = df.index >= Timestamp.now().strftime("%Y-01-01")
-    if any(in_ytd): return df[in_ytd]
+    if any(in_ytd):
+        return df[in_ytd]
     return df
 
 
@@ -47,10 +51,12 @@ def final_time(stime: float) -> str:
     return f"{time_diff * 1000:2.4f} ms ({time_diff:2.4f} s)"
 
 
-def get_time(exchange: str = "NYSE", full:bool = True, to_string:bool = False) -> Tuple[None, str]:
+def get_time(
+    exchange: str = "NYSE", full: bool = True, to_string: bool = False
+) -> Tuple[None, str]:
     """Returns Current Time, Day of the Year and Percentage, and the current
     time of the selected Exchange."""
-    tz = EXCHANGE_TZ["NYSE"] # Default is NYSE (Eastern Time Zone)
+    tz = EXCHANGE_TZ["NYSE"]  # Default is NYSE (Eastern Time Zone)
     if isinstance(exchange, str):
         exchange = exchange.upper()
         tz = EXCHANGE_TZ[exchange]
@@ -60,7 +66,9 @@ def get_time(exchange: str = "NYSE", full:bool = True, to_string:bool = False) -
     date = f"{today.day_name()} {today.month_name()} {today.day}, {today.year}"
 
     _today = today.timetuple()
-    exchange_time = f"{(_today.tm_hour + tz) % 24}:{_today.tm_min:02d}:{_today.tm_sec:02d}"
+    exchange_time = (
+        f"{(_today.tm_hour + tz) % 24}:{_today.tm_min:02d}:{_today.tm_sec:02d}"
+    )
 
     if full:
         lt = localtime()
@@ -88,7 +96,7 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
         "days": time_diff.days,
         "hours": time_diff.days * 24,
         "minutes": time_diff.total_seconds() / 60,
-        "seconds": time_diff.total_seconds()
+        "seconds": time_diff.total_seconds(),
     }
 
     if isinstance(tf, str) and tf in TimeFrame.keys():

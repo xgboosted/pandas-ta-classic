@@ -10,7 +10,8 @@ def pwma(close, length=None, asc=None, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     triangle = pascals_triangle(n=length - 1, weighted=True)
@@ -41,8 +42,7 @@ def pwma(close, length=None, asc=None, offset=None, **kwargs):
     return pwma
 
 
-pwma.__doc__ = \
-"""Pascal's Weighted Moving Average (PWMA)
+pwma.__doc__ = """Pascal's Weighted Moving Average (PWMA)
 
 Pascal's Weighted Moving Average is similar to a symmetric triangular window
 except PWMA's weights are based on Pascal's Triangle.

@@ -7,16 +7,22 @@ def sma(close, length=None, talib=None, offset=None, **kwargs):
     """Indicator: Simple Moving Average (SMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = (
+        int(kwargs["min_periods"])
+        if "min_periods" in kwargs and kwargs["min_periods"] is not None
+        else length
+    )
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import SMA
+
         sma = SMA(close, length)
     else:
         sma = close.rolling(length, min_periods=min_periods).mean()
@@ -46,8 +52,7 @@ def sma(close, length=None, talib=None, offset=None, **kwargs):
     return sma
 
 
-sma.__doc__ = \
-"""Simple Moving Average (SMA)
+sma.__doc__ = """Simple Moving Average (SMA)
 
 The Simple Moving Average is the classic moving average that is the equally
 weighted average over n periods.

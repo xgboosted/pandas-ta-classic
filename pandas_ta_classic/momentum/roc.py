@@ -13,11 +13,13 @@ def roc(close, length=None, scalar=None, talib=None, offset=None, **kwargs):
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import ROC
+
         roc = ROC(close, length)
     else:
         roc = scalar * mom(close=close, length=length) / close.shift(length)
@@ -47,8 +49,7 @@ def roc(close, length=None, scalar=None, talib=None, offset=None, **kwargs):
     return roc
 
 
-roc.__doc__ = \
-"""Rate of Change (ROC)
+roc.__doc__ = """Rate of Change (ROC)
 
 Rate of Change is an indicator is also referred to as Momentum (yeah, confusingly).
 It is a pure momentum oscillator that measures the percent change in price with the

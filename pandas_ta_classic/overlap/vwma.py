@@ -11,7 +11,8 @@ def vwma(close, volume, length=None, offset=None, **kwargs):
     volume = verify_series(volume, length)
     offset = get_offset(offset)
 
-    if close is None or volume is None: return
+    if close is None or volume is None:
+        return
 
     # Calculate Result
     pv = close * volume
@@ -42,8 +43,7 @@ def vwma(close, volume, length=None, offset=None, **kwargs):
     return vwma
 
 
-vwma.__doc__ = \
-"""Volume Weighted Moving Average (VWMA)
+vwma.__doc__ = """Volume Weighted Moving Average (VWMA)
 
 Volume Weighted Moving Average.
 

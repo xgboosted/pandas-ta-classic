@@ -15,6 +15,7 @@ def wcp(high, low, close, talib=None, offset=None, **kwargs):
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import WCLPRICE
+
         wcp = WCLPRICE(high, low, close)
     else:
         wcp = (high + low + 2 * close) / 4
@@ -44,8 +45,7 @@ def wcp(high, low, close, talib=None, offset=None, **kwargs):
     return wcp
 
 
-wcp.__doc__ = \
-"""Weighted Closing Price (WCP)
+wcp.__doc__ = """Weighted Closing Price (WCP)
 
 Weighted Closing Price is the weighted price given: high, low
 and double the close.

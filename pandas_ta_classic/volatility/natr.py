@@ -4,7 +4,18 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
-def natr(high, low, close, length=None, scalar=None, mamode=None, talib=None, drift=None, offset=None, **kwargs):
+def natr(
+    high,
+    low,
+    close,
+    length=None,
+    scalar=None,
+    mamode=None,
+    talib=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Normalized Average True Range (NATR)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
@@ -17,15 +28,26 @@ def natr(high, low, close, length=None, scalar=None, mamode=None, talib=None, dr
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
-    if high is None or low is None or close is None: return
+    if high is None or low is None or close is None:
+        return
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import NATR
+
         natr = NATR(high, low, close, length)
     else:
         natr = scalar / close
-        natr *= atr(high=high, low=low, close=close, length=length, mamode=mamode, drift=drift, offset=offset, **kwargs)
+        natr *= atr(
+            high=high,
+            low=low,
+            close=close,
+            length=length,
+            mamode=mamode,
+            drift=drift,
+            offset=offset,
+            **kwargs,
+        )
 
     # Offset
     if offset != 0:
@@ -52,8 +74,7 @@ def natr(high, low, close, length=None, scalar=None, mamode=None, talib=None, dr
     return natr
 
 
-natr.__doc__ = \
-"""Normalized Average True Range (NATR)
+natr.__doc__ = """Normalized Average True Range (NATR)
 
 Normalized Average True Range attempt to normalize the average true range.
 

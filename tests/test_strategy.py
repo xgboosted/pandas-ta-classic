@@ -3,7 +3,7 @@
 from multiprocessing import cpu_count
 from time import perf_counter
 
-from tests.config import sample_data
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import skip, skipUnless, TestCase
@@ -22,9 +22,8 @@ class TestStrategyMethods(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.data = sample_data
-        cls.data.ta.cores = cores
         cls.speed_test = DataFrame()
+        cls.data = get_sample_data()
 
     @classmethod
     def tearDownClass(cls):
@@ -52,6 +51,8 @@ class TestStrategyMethods(TestCase):
         del cls.data
 
     def setUp(self):
+        # Always start with a fresh DataFrame for each test
+        self.data = get_sample_data()
         self.added_cols = 0
         self.category = ""
         self.init_cols = len(self.data.columns)

@@ -11,7 +11,8 @@ def er(close, length=None, drift=None, offset=None, **kwargs):
     offset = get_offset(offset)
     drift = get_drift(drift)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     abs_diff = close.diff(length).abs()
@@ -67,8 +68,7 @@ def er(close, length=None, drift=None, offset=None, **kwargs):
         return er
 
 
-er.__doc__ = \
-"""Efficiency Ratio (ER)
+er.__doc__ = """Efficiency Ratio (ER)
 
 The Efficiency Ratio was invented by Perry J. Kaufman and presented in his book "New Trading Systems and Methods". It is designed to account for market noise or volatility.
 

@@ -21,7 +21,8 @@ def linreg(close, length=None, offset=None, **kwargs):
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     x = range(1, length + 1)  # [1, 2, ..., n] from 1 to n keeps Sum(xy) low
@@ -62,9 +63,13 @@ def linreg(close, length=None, offset=None, **kwargs):
 
     if npVersion >= "1.20.0":
         from numpy.lib.stride_tricks import sliding_window_view
-        linreg_ = [linear_regression(_) for _ in sliding_window_view(npArray(close), length)]
+
+        linreg_ = [
+            linear_regression(_) for _ in sliding_window_view(npArray(close), length)
+        ]
     else:
         from numpy.lib.stride_tricks import as_strided
+
         linreg_ = [linear_regression(_) for _ in rolling_window(npArray(close), length)]
 
     linreg = Series([npNaN] * (length - 1) + linreg_, index=close.index)
@@ -89,10 +94,14 @@ def linreg(close, length=None, offset=None, **kwargs):
 
     # Name and Categorize it
     linreg.name = f"LR"
-    if slope: linreg.name += "m"
-    if intercept: linreg.name += "b"
-    if angle: linreg.name += "a"
-    if r: linreg.name += "r"
+    if slope:
+        linreg.name += "m"
+    if intercept:
+        linreg.name += "b"
+    if angle:
+        linreg.name += "a"
+    if r:
+        linreg.name += "r"
 
     linreg.name += f"_{length}"
     linreg.category = "overlap"
@@ -100,8 +109,7 @@ def linreg(close, length=None, offset=None, **kwargs):
     return linreg
 
 
-linreg.__doc__ = \
-"""Linear Regression Moving Average (linreg)
+linreg.__doc__ = """Linear Regression Moving Average (linreg)
 
 Linear Regression Moving Average (LINREG). This is a simplified version of a
 Standard Linear Regression. LINREG is a rolling regression of one variable. A

@@ -4,7 +4,17 @@ from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_offset, verify_series, get_drift
 
 
-def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=None, offset=None, **kwargs):
+def thermo(
+    high,
+    low,
+    length=None,
+    long=None,
+    short=None,
+    mamode=None,
+    drift=None,
+    offset=None,
+    **kwargs,
+):
     """Indicator: Elders Thermometer (THERMO)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 20
@@ -17,7 +27,8 @@ def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=Non
     offset = get_offset(offset)
     asint = kwargs.pop("asint", True)
 
-    if high is None or low is None: return
+    if high is None or low is None:
+        return
 
     # Calculate Result
     thermoL = (low.shift(drift) - low).abs()
@@ -96,14 +107,16 @@ def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=Non
     thermo_long.name = f"THERMOl{_props}"
     thermo_short.name = f"THERMOs{_props}"
 
-    thermo.category = thermo_ma.category = thermo_long.category = thermo_short.category = "volatility"
+    thermo.category = thermo_ma.category = thermo_long.category = (
+        thermo_short.category
+    ) = "volatility"
 
     # Prepare Dataframe to return
     data = {
         thermo.name: thermo,
         thermo_ma.name: thermo_ma,
         thermo_long.name: thermo_long,
-        thermo_short.name: thermo_short
+        thermo_short.name: thermo_short,
     }
     df = DataFrame(data)
     df.name = f"THERMO{_props}"
@@ -112,9 +125,7 @@ def thermo(high, low, length=None, long=None, short=None, mamode=None, drift=Non
     return df
 
 
-
-thermo.__doc__ = \
-"""Elders Thermometer (THERMO)
+thermo.__doc__ = """Elders Thermometer (THERMO)
 
 Elder's Thermometer measures price volatility.
 
