@@ -273,16 +273,87 @@ jobs:
   # Job 6: PyPI Publishing - Build and publish to PyPI (only on releases)
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [test-matrix, documentation]
+    needs: [generate-matrix, test-matrix, documentation]
     if: github.event_name == 'release' && github.event.action == 'published'
     
     steps:
     - uses: actions/checkout@v4
     
+    - name: Show Python versions from generate-matrix
+      run: |
+        echo "PYTHON_VERSIONS from generate-matrix: $PYTHON_VERSIONS"
+      env:
+        PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
+    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
+    
+    - name: Update setup.py with dynamic Python classifiers
+      run: |
+        python << 'EOF'
+        import json
+        import os
+        
+        # Get the Python versions from environment variable
+        python_versions_str = os.environ.get('PYTHON_VERSIONS', '[]')
+        python_versions = json.loads(python_versions_str)
+        
+        print(f"Updating setup.py with Python versions: {python_versions}")
+        
+        # Read setup.py
+        with open('setup.py', 'r') as f:
+            content = f.read()
+        
+        # Split into lines
+        lines = content.split('\n')
+        
+        # Find the classifiers section and replace Python version classifiers
+        new_lines = []
+        in_classifiers = False
+        python_classifier_added = False
+        
+        for line in lines:
+            if 'classifiers=[' in line:
+                in_classifiers = True
+                new_lines.append(line)
+            elif in_classifiers and '],' in line and not '"' in line:
+                # End of classifiers section
+                if not python_classifier_added:
+                    # Add Python version classifiers before closing
+                    for version in python_versions:
+                        new_lines.append(f'        "Programming Language :: Python :: {version}",')
+                    python_classifier_added = True
+                new_lines.append(line)
+                in_classifiers = False
+            elif in_classifiers and '"Programming Language :: Python :: 3.' in line:
+                # Skip existing Python version classifiers - they will be replaced
+                if not python_classifier_added:
+                    # Add all dynamic Python version classifiers
+                    for version in python_versions:
+                        new_lines.append(f'        "Programming Language :: Python :: {version}",')
+                    python_classifier_added = True
+                # Skip the current line (old Python classifier)
+                continue
+            else:
+                new_lines.append(line)
+        
+        # Write back to setup.py
+        with open('setup.py', 'w') as f:
+            f.write('\n'.join(new_lines))
+        
+        print("Setup.py updated successfully!")
+        
+        # Verify the changes
+        print("\nPython classifiers in setup.py:")
+        with open('setup.py', 'r') as f:
+            for line_num, line in enumerate(f, 1):
+                if '"Programming Language :: Python :: 3.' in line:
+                    print(f"Line {line_num}: {line.strip()}")
+        EOF
+      env:
+        PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Validate package structure
       run: |
