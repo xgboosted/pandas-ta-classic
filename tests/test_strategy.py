@@ -35,8 +35,8 @@ class TestStrategyMethods(TestCase):
         if speed_table:
             cls.speed_test.to_csv("tests/speed_test.csv")
         if timed:
-            tca = cls.speed_test['Columns'].sum()
-            tcs = cls.speed_test['Seconds'].sum()
+            tca = cls.speed_test["Columns"].sum()
+            tcs = cls.speed_test["Seconds"].sum()
             cps = f"[i] Total Columns / Second for All Tests: { tca / tcs:.5f} "
             print("=" * len(cps))
             print(cls.speed_test)
@@ -58,8 +58,10 @@ class TestStrategyMethods(TestCase):
         self.init_cols = len(self.data.columns)
         self.time_diff = 0
         self.result = None
-        if verbose: print()
-        if timed: self.stime = perf_counter()
+        if verbose:
+            print()
+        if timed:
+            self.stime = perf_counter()
 
     def tearDown(self):
         if timed:
@@ -67,7 +69,7 @@ class TestStrategyMethods(TestCase):
         self.added_cols = len(self.data.columns) - self.init_cols
         self.assertGreaterEqual(self.added_cols, 1)
 
-        self.result = self.data[self.data.columns[-self.added_cols:]]
+        self.result = self.data[self.data.columns[-self.added_cols :]]
         self.assertIsInstance(self.result, DataFrame)
         self.data.drop(columns=self.result.columns, axis=1, inplace=True)
 
@@ -81,11 +83,13 @@ class TestStrategyMethods(TestCase):
     def test_all_ordered(self):
         self.category = "All"
         self.data.ta.strategy(ordered=True, verbose=verbose, timed=strategy_timed)
-        self.category = "All Ordered" # Rename for Speed Table
+        self.category = "All Ordered"  # Rename for Speed Table
 
     @skipUnless(verbose, "verbose mode only")
     def test_all_strategy(self):
-        self.data.ta.strategy(pandas_ta.AllStrategy, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(
+            pandas_ta.AllStrategy, verbose=verbose, timed=strategy_timed
+        )
 
     @skipUnless(verbose, "verbose mode only")
     def test_all_name_strategy(self):
@@ -95,10 +99,16 @@ class TestStrategyMethods(TestCase):
     # @skipUnless(verbose, "verbose mode only")
     def test_all_multiparams_strategy(self):
         self.category = "All"
-        self.data.ta.strategy(self.category, length=10, verbose=verbose, timed=strategy_timed)
-        self.data.ta.strategy(self.category, length=50, verbose=verbose, timed=strategy_timed)
-        self.data.ta.strategy(self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed)
-        self.category = "All Multiruns with diff Args" # Rename for Speed Table
+        self.data.ta.strategy(
+            self.category, length=10, verbose=verbose, timed=strategy_timed
+        )
+        self.data.ta.strategy(
+            self.category, length=50, verbose=verbose, timed=strategy_timed
+        )
+        self.data.ta.strategy(
+            self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed
+        )
+        self.category = "All Multiruns with diff Args"  # Rename for Speed Table
 
     # @skip
     def test_candles_category(self):
@@ -108,7 +118,9 @@ class TestStrategyMethods(TestCase):
     # @skip
     def test_common(self):
         self.category = "Common"
-        self.data.ta.strategy(pandas_ta.CommonStrategy, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(
+            pandas_ta.CommonStrategy, verbose=verbose, timed=strategy_timed
+        )
 
     def test_cycles_category(self):
         self.category = "Cycles"
@@ -125,10 +137,10 @@ class TestStrategyMethods(TestCase):
             {"kind": "rsi"},  # 1
             {"kind": "macd"},  # 3
             {"kind": "sma", "length": 50},  # 1
-            {"kind": "sma", "length": 200 },  # 1
+            {"kind": "sma", "length": 200},  # 1
             {"kind": "bbands", "length": 20},  # 3
             {"kind": "log_return", "cumulative": True},  # 1
-            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"} # 1
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},  # 1
         ]
 
         custom = pandas_ta.Strategy(
@@ -145,20 +157,22 @@ class TestStrategyMethods(TestCase):
 
         custom_args_ta = [
             {"kind": "ema", "params": (5,)},
-            {"kind": "fisher", "params": (13, 7)}
+            {"kind": "fisher", "params": (13, 7)},
         ]
 
         custom = pandas_ta.Strategy(
             "Custom Args Tuple",
             custom_args_ta,
-            "Allow for easy filling in indicator arguments by argument placement."
+            "Allow for easy filling in indicator arguments by argument placement.",
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
 
     def test_custom_col_names_tuple(self):
         self.category = "Custom C"
 
-        custom_args_ta = [{"kind": "bbands", "col_names": ("LB", "MB", "UB", "BW", "BP")}]
+        custom_args_ta = [
+            {"kind": "bbands", "col_names": ("LB", "MB", "UB", "BW", "BP")}
+        ]
 
         custom = pandas_ta.Strategy(
             "Custom Col Numbers Tuple",
@@ -185,9 +199,9 @@ class TestStrategyMethods(TestCase):
         self.category = "Custom E"
 
         amat_logret_ta = [
-            {"kind": "amat", "fast": 20, "slow": 50 },  # 2
+            {"kind": "amat", "fast": 20, "slow": 50},  # 2
             {"kind": "log_return", "cumulative": True},  # 1
-            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5} # 1
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5},  # 1
         ]
 
         custom = pandas_ta.Strategy(
@@ -195,7 +209,9 @@ class TestStrategyMethods(TestCase):
             amat_logret_ta,  # ta
             "AMAT Log Returns",  # description
         )
-        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed, ordered=True)
+        self.data.ta.strategy(
+            custom, verbose=verbose, timed=strategy_timed, ordered=True
+        )
         self.data.ta.tsignals(trend=self.data["AMATe_LR_20_50_2"], append=True)
         self.assertEqual(len(self.data.columns), 13)
 
@@ -255,10 +271,10 @@ class TestStrategyMethods(TestCase):
             {"kind": "macd"},  # 3
             {"kind": "sma", "length": 50},  # 1
             {"kind": "sma", "length": 100, "col_names": "sma100"},  # 1
-            {"kind": "sma", "length": 200 },  # 1
+            {"kind": "sma", "length": 200},  # 1
             {"kind": "bbands", "length": 20},  # 3
             {"kind": "log_return", "cumulative": True},  # 1
-            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"}
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},
         ]
 
         custom = pandas_ta.Strategy(

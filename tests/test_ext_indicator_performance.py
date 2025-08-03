@@ -16,9 +16,11 @@ class TestPerformaceExtension(TestCase):
         del cls.data
         del cls.islong
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_log_return_ext(self):
         self.data.ta.log_return(append=True)

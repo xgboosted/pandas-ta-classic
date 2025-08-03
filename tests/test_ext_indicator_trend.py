@@ -14,9 +14,11 @@ class TestTrendExtension(TestCase):
     def tearDownClass(cls):
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_adx_ext(self):
         self.data.ta.adx(append=True)
@@ -26,12 +28,16 @@ class TestTrendExtension(TestCase):
     def test_amat_ext(self):
         self.data.ta.amat(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"])
+        self.assertEqual(
+            list(self.data.columns[-2:]), ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"]
+        )
 
     def test_aroon_ext(self):
         self.data.ta.aroon(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-3:]), ["AROOND_14", "AROONU_14", "AROONOSC_14"])
+        self.assertEqual(
+            list(self.data.columns[-3:]), ["AROOND_14", "AROONU_14", "AROONOSC_14"]
+        )
 
     def test_chop_ext(self):
         self.data.ta.chop(append=True, ln=False)
@@ -45,7 +51,9 @@ class TestTrendExtension(TestCase):
     def test_cksp_ext(self):
         self.data.ta.cksp(tvmode=False, append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_3_20", "CKSPs_10_3_20"])
+        self.assertEqual(
+            list(self.data.columns[-2:]), ["CKSPl_10_3_20", "CKSPs_10_3_20"]
+        )
 
     def test_cksp_tv_ext(self):
         self.data.ta.cksp(tvmode=True, append=True)
@@ -98,7 +106,9 @@ class TestTrendExtension(TestCase):
         self.data.ta.psar(append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(
-            list(self.data.columns[-4:]), ["PSARl_0.02_0.2", "PSARs_0.02_0.2", "PSARaf_0.02_0.2", "PSARr_0.02_0.2"])
+            list(self.data.columns[-4:]),
+            ["PSARl_0.02_0.2", "PSARs_0.02_0.2", "PSARaf_0.02_0.2", "PSARr_0.02_0.2"],
+        )
 
     def test_qstick_ext(self):
         self.data.ta.qstick(append=True)
@@ -107,8 +117,7 @@ class TestTrendExtension(TestCase):
 
     def test_short_run_ext(self):
         # Nothing passed, return self
-        self.assertEqual(
-            self.data.ta.short_run(append=True).shape, self.data.shape)
+        self.assertEqual(self.data.ta.short_run(append=True).shape, self.data.shape)
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)

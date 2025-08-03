@@ -4,6 +4,7 @@ from pandas_ta_classic.utils import get_offset, verify_series
 
 # - Standard definition of your custom indicator function (including docs)-
 
+
 def ni(close, length=None, centered=False, offset=None, **kwargs):
     """
     Example indicator ni
@@ -13,7 +14,8 @@ def ni(close, length=None, centered=False, offset=None, **kwargs):
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if close is None: return
+    if close is None:
+        return
 
     # Calculate Result
     t = int(0.5 * length) + 1
@@ -39,8 +41,8 @@ def ni(close, length=None, centered=False, offset=None, **kwargs):
 
     return ni
 
-ni.__doc__ = \
-"""Example indicator (NI)
+
+ni.__doc__ = """Example indicator (NI)
 
 Is an indicator provided solely as an example
 
@@ -73,6 +75,7 @@ Returns:
 
 # - Define a matching class method --------------------------------------------
 
+
 def ni_method(self, length=None, offset=None, **kwargs):
     close = self._get_column(kwargs.pop("close", "close"))
     result = ni(close=close, length=length, offset=offset, **kwargs)
@@ -83,21 +86,19 @@ def ni_method(self, length=None, offset=None, **kwargs):
 if __name__ == "__main__":
     import pandas as pd
     import numpy as np
-    
+
     print("Testing custom NI (Example Indicator) function...")
-    
+
     # Create sample data
     np.random.seed(42)
-    dates = pd.date_range('2023-01-01', periods=50, freq='D')
+    dates = pd.date_range("2023-01-01", periods=50, freq="D")
     close_prices = pd.Series(
-        100 + np.cumsum(np.random.randn(50) * 0.5), 
-        index=dates, 
-        name='close'
+        100 + np.cumsum(np.random.randn(50) * 0.5), index=dates, name="close"
     )
-    
+
     # Calculate the NI indicator
     result = ni(close_prices, length=20)
-    
+
     print(f"Sample data shape: {close_prices.shape}")
     print(f"NI indicator shape: {result.shape}")
     print(f"NI indicator name: {result.name}")

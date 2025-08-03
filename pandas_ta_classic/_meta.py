@@ -9,6 +9,7 @@ from pathlib import Path
 # Version information
 try:
     from importlib.metadata import version, PackageNotFoundError
+
     try:
         __version__ = version("pandas-ta-classic")
     except PackageNotFoundError:
@@ -17,6 +18,7 @@ except ImportError:
     # Fallback for when importlib.metadata is not available (Python < 3.8)
     try:
         from pkg_resources import get_distribution, DistributionNotFound
+
         try:
             _dist = get_distribution("pandas-ta-classic")
             __version__ = _dist.version

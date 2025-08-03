@@ -14,7 +14,6 @@ class TestPerformace(TestCase):
         cls.pctret = pandas_ta.percent_return(cls.close, cumulative=False)
         cls.logret = pandas_ta.percent_return(cls.close, cumulative=False)
 
-
     @classmethod
     def tearDownClass(cls):
         del cls.data
@@ -23,9 +22,11 @@ class TestPerformace(TestCase):
         del cls.pctret
         del cls.logret
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_log_return(self):
         result = pandas_ta.log_return(self.close)

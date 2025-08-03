@@ -10,13 +10,17 @@ import pandas as pd  # pip install pandas
 # Optional imports for data sources - will gracefully handle missing dependencies
 try:
     from pandas_datareader import data as pdr
+
     PANDAS_DATAREADER_AVAILABLE = True
 except ImportError:
     PANDAS_DATAREADER_AVAILABLE = False
-    print("[!] pandas_datareader not available. Install with: pip install pandas-datareader")
+    print(
+        "[!] pandas_datareader not available. Install with: pip install pandas-datareader"
+    )
 
 try:
     import yfinance as yf
+
     # yfinance.pdr_override() is deprecated and removed in recent versions.
     # Use yfinance's own API or pandas_datareader directly.
     YFINANCE_AVAILABLE = True
@@ -29,13 +33,16 @@ from numpy import append as npAppend
 from numpy import array as npArray
 
 try:
-    import alphaVantageAPI as AV # pip install alphaVantage-api
+    import alphaVantageAPI as AV  # pip install alphaVantage-api
+
     ALPHAVANTAGE_AVAILABLE = True
 except ImportError:
     ALPHAVANTAGE_AVAILABLE = False
-    print("[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api")
+    print(
+        "[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api"
+    )
 
-import pandas_ta_classic as ta # pip install pandas-ta-classic
+import pandas_ta_classic as ta  # pip install pandas-ta-classic
 
 
 def colors(colors: str = None, default: str = "GrRd"):
@@ -94,9 +101,14 @@ class Watchlist(object):
     - tickers: A list of strings containing tickers. Example: ["SPY", "AAPL"]
     """
 
-    def __init__(self,
-        tickers: list, tf: str = None, name: str = None,
-        strategy: ta.Strategy = None, ds_name: str = "av", **kwargs,
+    def __init__(
+        self,
+        tickers: list,
+        tf: str = None,
+        name: str = None,
+        strategy: ta.Strategy = None,
+        ds_name: str = "av",
+        **kwargs,
     ):
         self.verbose = kwargs.pop("verbose", False)
         self.debug = kwargs.pop("debug", False)
@@ -111,28 +123,45 @@ class Watchlist(object):
 
         self._init_data_source(ds_name)
 
-
     def _init_data_source(self, ds: str) -> None:
         self.ds_name = ds.lower() if isinstance(ds, str) else "av"
 
         # Default: AlphaVantage
         if self.ds_name == "av":
             if not ALPHAVANTAGE_AVAILABLE:
-                raise ImportError("alphaVantageAPI not available. Please install with: pip install alphaVantage-api")
-            AVkwargs = {"api_key": "YOUR API KEY", "clean": True, "export": True, "output_size": "full", "premium": False}
+                raise ImportError(
+                    "alphaVantageAPI not available. Please install with: pip install alphaVantage-api"
+                )
+            AVkwargs = {
+                "api_key": "YOUR API KEY",
+                "clean": True,
+                "export": True,
+                "output_size": "full",
+                "premium": False,
+            }
             self.av_kwargs = self.kwargs.pop("av_kwargs", AVkwargs)
             self.ds = AV.AlphaVantage(**self.av_kwargs)
             self.file_path = self.ds.export_path
 
         if self.ds_name == "yahoo":
             if not YFINANCE_AVAILABLE:
-                raise ImportError("yfinance not available. Please install with: pip install yfinance")
+                raise ImportError(
+                    "yfinance not available. Please install with: pip install yfinance"
+                )
             self.ds = yf
 
     def _drop_columns(self, df: pd.DataFrame, cols: list = None) -> pd.DataFrame:
         if cols is None or not isinstance(cols, list):
-            cols = ["Unnamed: 0", "date", "split", "split_coefficient", "dividend", "dividends"]
-        else: cols
+            cols = [
+                "Unnamed: 0",
+                "date",
+                "split",
+                "split_coefficient",
+                "dividend",
+                "dividends",
+            ]
+        else:
+            cols
         """Helper methods to drop columns silently."""
         df_columns = list(df.columns)
         if any(_ in df_columns for _ in cols):
@@ -144,25 +173,33 @@ class Watchlist(object):
     def _load_all(self, **kwargs) -> dict:
         """Updates the Watchlist's data property with a dictionary of DataFrames
         keyed by ticker."""
-        if (self.tickers is not None and isinstance(self.tickers, list) and
-                len(self.tickers)):
+        if (
+            self.tickers is not None
+            and isinstance(self.tickers, list)
+            and len(self.tickers)
+        ):
             self.data = {ticker: self.load(ticker, **kwargs) for ticker in self.tickers}
             return self.data
 
-    def _plot(self, df, mas:bool = True, constants:bool = False, **kwargs) -> None:
+    def _plot(self, df, mas: bool = True, constants: bool = False, **kwargs) -> None:
 
         if constants:
             chart_lines = npAppend(npArange(-5, 6, 1), npArange(-100, 110, 10))
-            df.ta.constants(True, chart_lines) # Adding the constants for the charts
-            df.ta.constants(False, npArray([-60, -40, 40, 60])) # Removing some constants from the DataFrame
-            if self.verbose: print(f"[i] {df.ticker} constants added.")
+            df.ta.constants(True, chart_lines)  # Adding the constants for the charts
+            df.ta.constants(
+                False, npArray([-60, -40, 40, 60])
+            )  # Removing some constants from the DataFrame
+            if self.verbose:
+                print(f"[i] {df.ticker} constants added.")
 
         if ta.Imports["matplotlib"]:
             _exchange = kwargs.pop("exchange", "NYSE")
             _time = ta.get_time(_exchange, to_string=True)
             _kind = kwargs.pop("plot_kind", None)
             _figsize = kwargs.pop("figsize", (16, 10))
-            _colors = kwargs.pop("figsize", ["black", "green", "orange", "red", "maroon"])
+            _colors = kwargs.pop(
+                "figsize", ["black", "green", "orange", "red", "maroon"]
+            )
             _grid = kwargs.pop("grid", True)
             _alpha = kwargs.pop("alpha", 1)
             _last = kwargs.pop("last", 252)
@@ -176,15 +213,26 @@ class Watchlist(object):
                 price = df[col]
 
             if _kind is None:
-                price.tail(_last).plot(figsize=_figsize, color=_colors, linewidth=2, title=_title, grid=_grid, alpha=_alpha)
+                price.tail(_last).plot(
+                    figsize=_figsize,
+                    color=_colors,
+                    linewidth=2,
+                    title=_title,
+                    grid=_grid,
+                    alpha=_alpha,
+                )
             else:
                 print(f"[X] Plot kind not implemented")
                 return
 
-
-    def load(self,
-        ticker: str = None, tf: str = None, index: str = "date",
-        drop: list = [], plot: bool = False, **kwargs
+    def load(
+        self,
+        ticker: str = None,
+        tf: str = None,
+        index: str = "date",
+        drop: list = [],
+        plot: bool = False,
+        **kwargs,
     ) -> pd.DataFrame:
         """Loads or Downloads (if a local csv does not exist) the data from the
         Data Source. When successful, it returns a Data Frame for the requested
@@ -230,13 +278,15 @@ class Watchlist(object):
         df = self._drop_columns(df, drop)
 
         if kwargs.pop("analyze", True):
-            if self.debug: print(f"[+] TA[{len(self.strategy.ta)}]: {self.strategy.name}")
+            if self.debug:
+                print(f"[+] TA[{len(self.strategy.ta)}]: {self.strategy.name}")
             df.ta.strategy(self.strategy, timed=self.timed, **kwargs)
 
-        df.ticker = ticker # Attach ticker to the DataFrame
+        df.ticker = ticker  # Attach ticker to the DataFrame
         df.tf = tf
 
-        if plot: self._plot(df, **kwargs)
+        if plot:
+            self._plot(df, **kwargs)
         return df
 
     @property
@@ -339,41 +389,48 @@ class Watchlist(object):
 # Demonstration of the Watchlist class with sample data
 if __name__ == "__main__":
     print("Testing Watchlist class with local sample data...")
-    
+
     # Check if local sample data exists
     from pathlib import Path
+
     sample_data_path = Path("data/SPY_D.csv")
-    
+
     if sample_data_path.exists():
         print(f"Using local sample data: {sample_data_path}")
-        
+
         # Load the sample data directly
         import pandas as pd
+
         df = pd.read_csv(sample_data_path)
         print(f"Loaded sample data shape: {df.shape}")
         print(f"Columns: {list(df.columns)}")
         print("Sample data loaded successfully!")
-        
+
         # If pandas_ta_classic is available, add some indicators
         try:
             import pandas_ta_classic as ta
+
             # Convert to proper DataFrame format for TA
-            if 'date' in df.columns:
-                df['date'] = pd.to_datetime(df['date'])
-                df.set_index('date', inplace=True)
-            
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"])
+                df.set_index("date", inplace=True)
+
             # Add a simple moving average
-            df['SMA_20'] = ta.sma(df['close'], length=20)
+            df["SMA_20"] = ta.sma(df["close"], length=20)
             print("Added SMA_20 indicator to sample data")
             print(f"Updated data shape: {df.shape}")
         except Exception as e:
             print(f"Note: Could not add TA indicators: {e}")
-            
+
     else:
-        print("Sample data not found. Watchlist class is ready for use with external data sources.")
+        print(
+            "Sample data not found. Watchlist class is ready for use with external data sources."
+        )
         print("To use the Watchlist class with external APIs:")
-        print("1. Install optional dependencies: pip install yfinance pandas-datareader alphaVantage-api")
+        print(
+            "1. Install optional dependencies: pip install yfinance pandas-datareader alphaVantage-api"
+        )
         print("2. Get API keys for data sources like AlphaVantage")
         print("3. Create a watchlist: watch = Watchlist(['SPY', 'AAPL'])")
-        
+
     print("Watchlist demonstration completed!")
