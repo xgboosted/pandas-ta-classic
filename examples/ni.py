@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from pandas_ta.overlap import sma
-from pandas_ta.utils import get_offset, verify_series
+from pandas_ta_classic.overlap import sma
+from pandas_ta_classic.utils import get_offset, verify_series
 
 # - Standard definition of your custom indicator function (including docs)-
 
@@ -45,7 +45,7 @@ ni.__doc__ = \
 Is an indicator provided solely as an example
 
 Sources:
-    https://github.com/twopirllc/pandas-ta/issues/264
+    https://github.com/xgboosted/pandas-ta-classic/issues/264
 
 Calculation:
     Default Inputs:

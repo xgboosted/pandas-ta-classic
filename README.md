@@ -8,6 +8,8 @@ Pandas TA Classic - A Technical Analysis Library in Python 3
 =================
 
 [![license](https://img.shields.io/github/license/xgboosted/pandas-ta-classic)](#license)
+[![Build Status](https://github.com/xgboosted/pandas-ta-classic/workflows/CI/badge.svg)](https://github.com/xgboosted/pandas-ta-classic/actions)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://xgboosted.github.io/pandas-ta-classic/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
 [![PyPi Version](https://img.shields.io/pypi/v/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
 [![Package Status](https://img.shields.io/pypi/status/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
@@ -32,6 +34,8 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 ## Python Version Support Policy
 
 **Pandas TA Classic** supports the latest stable Python version plus the 4 immediate preceding minor versions. Currently, this includes Python versions **3.9 through 3.13** (5 versions total). When new Python versions are released, support follows this rolling policy:
+
+For more information about Python version support and lifecycle, see the [Python Developer's Guide](https://devguide.python.org/versions).
 
 - ✅ **Latest stable version** (currently 3.13)
 - ✅ **Previous 4 minor versions** (currently 3.12, 3.11, 3.10, 3.9)

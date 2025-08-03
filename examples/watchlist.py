@@ -60,7 +60,7 @@ class Watchlist(object):
     A simple Class to load/download financial market data and automatically
     apply Technical Analysis indicators with a Pandas TA Strategy.
 
-    Default Strategy: pandas_ta.CommonStrategy
+    Default Strategy: pandas_ta_classic.CommonStrategy
 
     ## Package Support:
     ### Data Source (Default: AlphaVantage)
@@ -69,7 +69,7 @@ class Watchlist(object):
     - Yahoo Finance (pip install yfinance). # Almost Supported
 
     # Technical Analysis:
-    - Pandas TA (pip install pandas_ta)
+    - Pandas TA Classic (pip install pandas-ta-classic)
 
     ## Required Arguments:
     - tickers: A list of strings containing tickers. Example: ["SPY", "AAPL"]
@@ -244,7 +244,7 @@ class Watchlist(object):
 
     @property
     def strategy(self) -> ta.Strategy:
-        """Sets a valid Strategy. Default: pandas_ta.CommonStrategy"""
+        """Sets a valid Strategy. Default: pandas_ta_classic.CommonStrategy"""
         return self._strategy
 
     @strategy.setter
