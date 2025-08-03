@@ -42,7 +42,7 @@ jobs:
   # Job 2: Generate Python version matrix dynamically
   generate-matrix:
     runs-on: ubuntu-latest
-    needs: validate-structure
+    needs: code-quality
     outputs:
       python-versions: ${{ steps.versions.outputs.python-versions }}
     
