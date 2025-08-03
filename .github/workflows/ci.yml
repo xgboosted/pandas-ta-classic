@@ -290,6 +290,48 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
+    - name: Update setup.py with release version
+      run: |
+        python << 'EOF'
+        import os
+        import re
+        
+        # Get version from release tag
+        release_tag = os.environ.get('GITHUB_REF_NAME', '')
+        print(f"Release tag: {release_tag}")
+        
+        # Extract version from tag (remove 'v' prefix if present)
+        if release_tag.startswith('v'):
+            version = release_tag[1:]
+        else:
+            version = release_tag
+        
+        print(f"Extracted version: {version}")
+        
+        # Read setup.py
+        with open('setup.py', 'r') as f:
+            content = f.read()
+        
+        # Replace the hardcoded version with the release version
+        # Pattern matches: version=".".join(("0", "3", "14b1"))
+        version_pattern = r'version=".".join\(\([^)]+\)\)'
+        new_version_line = f'version="{version}"'
+        
+        updated_content = re.sub(version_pattern, new_version_line, content)
+        
+        # Write back to setup.py
+        with open('setup.py', 'w') as f:
+            f.write(updated_content)
+        
+        print(f"Setup.py version updated to: {version}")
+        
+        # Verify the change
+        with open('setup.py', 'r') as f:
+            for line_num, line in enumerate(f, 1):
+                if 'version=' in line and not line.strip().startswith('#'):
+                    print(f"Line {line_num}: {line.strip()}")
+        EOF
+    
     - name: Update setup.py with dynamic Python classifiers
       run: |
         python << 'EOF'
