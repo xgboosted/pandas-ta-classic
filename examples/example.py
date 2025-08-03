@@ -19,7 +19,12 @@ import pandas as pd
 import matplotlib.ticker as ticker
 import mplfinance as mpf
 
-from alphaVantageAPI.alphavantage import AlphaVantage
+# Optional import for AlphaVantage API
+try:
+    from alphaVantageAPI.alphavantage import AlphaVantage
+except ImportError:
+    print("[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api")
+    AlphaVantage = None
 import pandas_ta_classic as ta
 
 from watchlist import colors # Is this failing? If so, copy it locally. See above.
@@ -94,10 +99,15 @@ ind_size = (16, 3.25)
 # In[7]:
 
 
-# Recent Data
-ticker = "BTC-USD"
+# Load sample data from local CSV file instead of external API
 ticker = "SPY"
-df = e.ta.ticker(ticker, kind="info", lc_cols=True)
+import os
+# Load sample data (go up one directory to find data folder)
+data_path = os.path.join('..', 'data', 'SPY_D.csv')
+df = pd.read_csv(data_path, index_col='date', parse_dates=True)
+df.name = ticker
+# Ensure column names are lowercase for consistency
+df.columns = df.columns.str.lower()
 recent_startdate = df.tail(recent_bars(df)).index[0]
 recent_enddate = df.tail(recent_bars(df)).index[-1]
 print(f"{df.name}{df.tail(recent_bars(df)).shape} from {recent_startdate} to {recent_enddate}")

@@ -6,16 +6,34 @@ from random import random
 from typing import Tuple
 
 import pandas as pd  # pip install pandas
-from pandas_datareader import data as pdr
-import yfinance as yf
 
-yf.pdr_override() # <== that's all it takes :-)
+# Optional imports for data sources - will gracefully handle missing dependencies
+try:
+    from pandas_datareader import data as pdr
+    PANDAS_DATAREADER_AVAILABLE = True
+except ImportError:
+    PANDAS_DATAREADER_AVAILABLE = False
+    print("[!] pandas_datareader not available. Install with: pip install pandas-datareader")
+
+try:
+    import yfinance as yf
+    yf.pdr_override() # <== that's all it takes :-)
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+    print("[!] yfinance not available. Install with: pip install yfinance")
 
 from numpy import arange as npArange
 from numpy import append as npAppend
 from numpy import array as npArray
 
-import alphaVantageAPI as AV # pip install alphaVantage-api
+try:
+    import alphaVantageAPI as AV # pip install alphaVantage-api
+    ALPHAVANTAGE_AVAILABLE = True
+except ImportError:
+    ALPHAVANTAGE_AVAILABLE = False
+    print("[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api")
+
 import pandas_ta_classic as ta # pip install pandas-ta-classic
 
 
@@ -97,12 +115,17 @@ class Watchlist(object):
         self.ds_name = ds.lower() if isinstance(ds, str) else "av"
 
         # Default: AlphaVantage
-        AVkwargs = {"api_key": "YOUR API KEY", "clean": True, "export": True, "output_size": "full", "premium": False}
-        self.av_kwargs = self.kwargs.pop("av_kwargs", AVkwargs)
-        self.ds = AV.AlphaVantage(**self.av_kwargs)
-        self.file_path = self.ds.export_path
+        if self.ds_name == "av":
+            if not ALPHAVANTAGE_AVAILABLE:
+                raise ImportError("alphaVantageAPI not available. Please install with: pip install alphaVantage-api")
+            AVkwargs = {"api_key": "YOUR API KEY", "clean": True, "export": True, "output_size": "full", "premium": False}
+            self.av_kwargs = self.kwargs.pop("av_kwargs", AVkwargs)
+            self.ds = AV.AlphaVantage(**self.av_kwargs)
+            self.file_path = self.ds.export_path
 
         if self.ds_name == "yahoo":
+            if not YFINANCE_AVAILABLE:
+                raise ImportError("yfinance not available. Please install with: pip install yfinance")
             self.ds = yf
 
     def _drop_columns(self, df: pd.DataFrame, cols: list = None) -> pd.DataFrame:
