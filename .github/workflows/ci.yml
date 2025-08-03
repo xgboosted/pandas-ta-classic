@@ -79,16 +79,10 @@ jobs:
   # Job 3: Code quality checks (linting and formatting)
   code-quality:
     runs-on: ubuntu-latest
-    needs: generate-matrix
+    needs: validate-structure
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Show Python versions from generate-matrix
-      run: |
-        echo "PYTHON_VERSIONS from generate-matrix: $PYTHON_VERSIONS"
-      env:
-        PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
