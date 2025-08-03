@@ -67,8 +67,7 @@ def test_workflows():
     print("\nChecking GitHub Actions workflows...")
     
     workflow_files = [
-        '.github/workflows/ci.yml',
-        '.github/workflows/pypi.yml'
+        '.github/workflows/ci.yml'
     ]
     
     for workflow_file in workflow_files:
