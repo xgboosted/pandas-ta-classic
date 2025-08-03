@@ -75,48 +75,6 @@ jobs:
         
         echo "python-versions=$versions" >> $GITHUB_OUTPUT
         echo "Generated Python versions: $versions"
-    
-    - name: Update setup.py with dynamic Python classifiers
-      run: |
-        python << 'EOF'
-        # Simple approach: read setup.py, find Python classifier lines, and replace them
-        latest_version = "${{ env.LATEST_PYTHON_VERSION }}"
-        minor_version = int(latest_version.split('.')[1])
-        
-        # Generate the 5 versions we want
-        target_versions = []
-        for i in range(4, -1, -1):  # 4, 3, 2, 1, 0
-            version_num = minor_version - i
-            target_versions.append(f"3.{version_num}")
-        
-        # Read setup.py
-        with open('setup.py', 'r') as f:
-            content = f.read()
-        
-        # Find and replace each Python classifier line
-        lines = content.split('\n')
-        version_index = 0
-        
-        for i, line in enumerate(lines):
-            if '"Programming Language :: Python :: 3.' in line and version_index < len(target_versions):
-                # Replace the version number in this line
-                import re
-                new_line = re.sub(r'3\.\d+', target_versions[version_index], line)
-                lines[i] = new_line
-                version_index += 1
-        
-        # Write back to setup.py
-        with open('setup.py', 'w') as f:
-            f.write('\n'.join(lines))
-        
-        print(f"Updated setup.py with Python versions: {', '.join(target_versions)}")
-        
-        # Verify the changes
-        with open('setup.py', 'r') as f:
-            for line_num, line in enumerate(f, 1):
-                if '"Programming Language :: Python :: 3.' in line:
-                    print(f"Line {line_num}: {line.strip()}")
-        EOF
 
   # Job 3: Code quality checks (linting and formatting)
   code-quality:
@@ -315,17 +273,11 @@ jobs:
   # Job 6: PyPI Publishing - Build and publish to PyPI (only on releases)
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [generate-matrix, test-matrix, documentation]
+    needs: [test-matrix, documentation]
     if: github.event_name == 'release' && github.event.action == 'published'
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Show Python versions from generate-matrix
-      run: |
-        echo "PYTHON_VERSIONS from generate-matrix: $PYTHON_VERSIONS"
-      env:
-        PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
