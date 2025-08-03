@@ -39,44 +39,8 @@ jobs:
       run: |
         python validate_structure.py
 
-  # Job 2: Generate Python version matrix dynamically
-  generate-matrix:
-    runs-on: ubuntu-latest
-    needs: code-quality
-    outputs:
-      python-versions: ${{ steps.versions.outputs.python-versions }}
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.LATEST_PYTHON_VERSION }}
-    
-    - name: Generate Python version matrix
-      id: versions
-      run: |
-        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> "13")
-        latest="${{ env.LATEST_PYTHON_VERSION }}"
-        minor_version=$(echo "$latest" | cut -d'.' -f2)
-        
-        # Generate 5 versions: latest and 4 previous minor versions
-        versions="["
-        for i in {4..0}; do
-          version_num=$((minor_version - i))
-          if [ $i -eq 0 ]; then
-            versions="${versions}\"3.${version_num}\""
-          else
-            versions="${versions}\"3.${version_num}\", "
-          fi
-        done
-        versions="${versions}]"
-        
-        echo "python-versions=$versions" >> $GITHUB_OUTPUT
-        echo "Generated Python versions: $versions"
 
-  # Job 3: Code quality checks (linting and formatting)
+  # Job 2: Code quality checks (linting and formatting)
   code-quality:
     runs-on: ubuntu-latest
     needs: validate-structure
@@ -123,6 +87,44 @@ jobs:
     - name: Check code formatting with black
       run: |
         black --check --diff pandas_ta_classic/
+
+  # Job 3: Generate Python version matrix dynamically
+  generate-matrix:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    outputs:
+      python-versions: ${{ steps.versions.outputs.python-versions }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.LATEST_PYTHON_VERSION }}
+    
+    - name: Generate Python version matrix
+      id: versions
+      run: |
+        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> "13")
+        latest="${{ env.LATEST_PYTHON_VERSION }}"
+        minor_version=$(echo "$latest" | cut -d'.' -f2)
+        
+        # Generate 5 versions: latest and 4 previous minor versions
+        versions="["
+        for i in {4..0}; do
+          version_num=$((minor_version - i))
+          if [ $i -eq 0 ]; then
+            versions="${versions}\"3.${version_num}\""
+          else
+            versions="${versions}\"3.${version_num}\", "
+          fi
+        done
+        versions="${versions}]"
+        
+        echo "python-versions=$versions" >> $GITHUB_OUTPUT
+        echo "Generated Python versions: $versions"
+
 
   # Job 4: Test matrix - Run tests on all dynamically generated Python versions
   test-matrix:
@@ -267,7 +269,7 @@ jobs:
   # Job 6: PyPI Publishing - Build and publish to PyPI (only on releases)
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [generate-matrix, test-matrix]
+    needs: [generate-matrix, documentation]
     if: github.event_name == 'release' && github.event.action == 'published'
     
     steps:
