@@ -17,7 +17,8 @@ except ImportError:
 
 try:
     import yfinance as yf
-    yf.pdr_override() # <== that's all it takes :-)
+    # yfinance.pdr_override() is deprecated and removed in recent versions.
+    # Use yfinance's own API or pandas_datareader directly.
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
