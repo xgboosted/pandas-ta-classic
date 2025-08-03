@@ -1,4 +1,10 @@
-from tests.config import error_analysis, get_sample_data, CORRELATION, CORRELATION_THRESHOLD, VERBOSE
+from tests.config import (
+    error_analysis,
+    get_sample_data,
+    CORRELATION,
+    CORRELATION_THRESHOLD,
+    VERBOSE,
+)
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
@@ -7,6 +13,7 @@ from pandas import DataFrame, Series
 
 try:
     import talib as tal
+
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
@@ -35,12 +42,16 @@ class TestVolume(TestCase):
             del cls.volume_
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_ad(self):
-        result = pandas_ta.ad(self.high, self.low, self.close, self.volume_, talib=False)
+        result = pandas_ta.ad(
+            self.high, self.low, self.close, self.volume_, talib=False
+        )
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "AD")
 
@@ -49,7 +60,9 @@ class TestVolume(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
@@ -64,7 +77,9 @@ class TestVolume(TestCase):
         self.assertEqual(result.name, "ADo")
 
     def test_adosc(self):
-        result = pandas_ta.adosc(self.high, self.low, self.close, self.volume_, talib=False)
+        result = pandas_ta.adosc(
+            self.high, self.low, self.close, self.volume_, talib=False
+        )
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ADOSC_3_10")
 
@@ -73,7 +88,9 @@ class TestVolume(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
@@ -108,7 +125,9 @@ class TestVolume(TestCase):
         self.assertEqual(result.name, "KVO_34_55_13")
 
     def test_mfi(self):
-        result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_, talib=False)
+        result = pandas_ta.mfi(
+            self.high, self.low, self.close, self.volume_, talib=False
+        )
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MFI_14")
 
@@ -117,7 +136,9 @@ class TestVolume(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
@@ -141,7 +162,9 @@ class TestVolume(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)

@@ -14,8 +14,11 @@ class TestCandleExtension(TestCase):
     def tearDownClass(cls):
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
 
     def test_cdl_doji_ext(self):
         self.data.ta.cdl_pattern("doji", append=True)
@@ -30,9 +33,14 @@ class TestCandleExtension(TestCase):
     def test_cdl_z_ext(self):
         self.data.ta.cdl_z(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-4:]), ["open_Z_30_1", "high_Z_30_1", "low_Z_30_1", "close_Z_30_1"])
+        self.assertEqual(
+            list(self.data.columns[-4:]),
+            ["open_Z_30_1", "high_Z_30_1", "low_Z_30_1", "close_Z_30_1"],
+        )
 
     def test_ha_ext(self):
         self.data.ta.ha(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-4:]), ["HA_open", "HA_high", "HA_low", "HA_close"])
+        self.assertEqual(
+            list(self.data.columns[-4:]), ["HA_open", "HA_high", "HA_low", "HA_close"]
+        )

@@ -1,4 +1,10 @@
-from tests.config import error_analysis, get_sample_data, CORRELATION, CORRELATION_THRESHOLD, VERBOSE
+from tests.config import (
+    error_analysis,
+    get_sample_data,
+    CORRELATION,
+    CORRELATION_THRESHOLD,
+    VERBOSE,
+)
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
@@ -7,6 +13,7 @@ from pandas import DataFrame, Series
 
 try:
     import talib as tal
+
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
@@ -35,9 +42,11 @@ class TestCycles(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_ebsw(self):
         result = pandas_ta.ebsw(self.close)

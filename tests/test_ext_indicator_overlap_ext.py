@@ -14,9 +14,11 @@ class TestOverlapExtension(TestCase):
     def tearDownClass(cls):
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_alma_ext(self):
         self.data.ta.alma(append=True)
@@ -41,7 +43,9 @@ class TestOverlapExtension(TestCase):
     def test_hilo_ext(self):
         self.data.ta.hilo(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-3:]), ["HILO_13_21", "HILOl_13_21", "HILOs_13_21"])
+        self.assertEqual(
+            list(self.data.columns[-3:]), ["HILO_13_21", "HILOl_13_21", "HILOs_13_21"]
+        )
 
     def test_hl2_ext(self):
         self.data.ta.hl2(append=True)
@@ -76,7 +80,10 @@ class TestOverlapExtension(TestCase):
     def test_ichimoku_ext(self):
         self.data.ta.ichimoku(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-5:]), ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"])
+        self.assertEqual(
+            list(self.data.columns[-5:]),
+            ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"],
+        )
 
     def test_linreg_ext(self):
         self.data.ta.linreg(append=True)
@@ -140,7 +147,10 @@ class TestOverlapExtension(TestCase):
     def test_supertrend_ext(self):
         self.data.ta.supertrend(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-4:]), ["SUPERT_7_3.0", "SUPERTd_7_3.0", "SUPERTl_7_3.0", "SUPERTs_7_3.0"])
+        self.assertEqual(
+            list(self.data.columns[-4:]),
+            ["SUPERT_7_3.0", "SUPERTd_7_3.0", "SUPERTl_7_3.0", "SUPERTs_7_3.0"],
+        )
 
     def test_t3_ext(self):
         self.data.ta.t3(append=True)

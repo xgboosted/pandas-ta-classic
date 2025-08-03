@@ -1,4 +1,10 @@
-from tests.config import error_analysis, get_sample_data, CORRELATION, CORRELATION_THRESHOLD, VERBOSE
+from tests.config import (
+    error_analysis,
+    get_sample_data,
+    CORRELATION,
+    CORRELATION_THRESHOLD,
+    VERBOSE,
+)
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import skip, TestCase
@@ -7,6 +13,7 @@ from pandas import DataFrame, Series
 
 try:
     import talib as tal
+
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
@@ -35,9 +42,11 @@ class TestStatistics(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_entropy(self):
         result = pandas_ta.entropy(self.close)
@@ -79,7 +88,9 @@ class TestStatistics(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
@@ -114,7 +125,9 @@ class TestStatistics(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)

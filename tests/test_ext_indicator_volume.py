@@ -16,9 +16,11 @@ class TestVolumeExtension(TestCase):
         del cls.data
         del cls.open
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_ad_ext(self):
         self.data.ta.ad(append=True)
@@ -40,7 +42,15 @@ class TestVolumeExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(
             list(self.data.columns[-7:]),
-            ["OBV", "OBV_min_2", "OBV_max_2", "OBVe_4", "OBVe_12", "AOBV_LR_2", "AOBV_SR_2"],
+            [
+                "OBV",
+                "OBV_min_2",
+                "OBV_max_2",
+                "OBVe_4",
+                "OBVe_12",
+                "AOBV_LR_2",
+                "AOBV_SR_2",
+            ],
         )
         # Remove "OBV" so it does not interfere with test_obv_ext()
         self.data.drop("OBV", axis=1, inplace=True)
@@ -63,7 +73,9 @@ class TestVolumeExtension(TestCase):
     def test_kvo_ext(self):
         self.data.ta.kvo(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["KVO_34_55_13", "KVOs_34_55_13"])
+        self.assertEqual(
+            list(self.data.columns[-2:]), ["KVO_34_55_13", "KVOs_34_55_13"]
+        )
 
     def test_mfi_ext(self):
         self.data.ta.mfi(append=True)

@@ -20,9 +20,11 @@ class TestUtilityMetrics(TestCase):
         del cls.pctret
         del cls.logret
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_cagr(self):
         result = pandas_ta.utils.cagr(self.data.close)
@@ -35,6 +37,7 @@ class TestUtilityMetrics(TestCase):
         self.assertGreaterEqual(result, 0)
 
         import numpy as np
+
         result = pandas_ta.calmar_ratio(self.close, years=0)
         self.assertTrue(np.isnan(result))
 

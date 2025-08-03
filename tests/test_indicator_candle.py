@@ -1,4 +1,10 @@
-from tests.config import error_analysis, get_sample_data, CORRELATION, CORRELATION_THRESHOLD, VERBOSE
+from tests.config import (
+    error_analysis,
+    get_sample_data,
+    CORRELATION,
+    CORRELATION_THRESHOLD,
+    VERBOSE,
+)
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
@@ -7,6 +13,7 @@ from pandas import DataFrame, Series
 
 try:
     import talib as tal
+
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
@@ -35,9 +42,11 @@ class TestCandle(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self): pass
-    def tearDown(self): pass
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
 
     def test_ha(self):
         result = pandas_ta.ha(self.open, self.high, self.low, self.close)
@@ -45,14 +54,20 @@ class TestCandle(TestCase):
         self.assertEqual(result.name, "Heikin-Ashi")
 
     def test_cdl_pattern(self):
-        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
+        result = pandas_ta.cdl_pattern(
+            self.open, self.high, self.low, self.close, name="all"
+        )
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(len(result.columns), len(pandas_ta.CDL_PATTERN_NAMES))
 
-        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="doji")
+        result = pandas_ta.cdl_pattern(
+            self.open, self.high, self.low, self.close, name="doji"
+        )
         self.assertIsInstance(result, DataFrame)
 
-        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=["doji", "inside"])
+        result = pandas_ta.cdl_pattern(
+            self.open, self.high, self.low, self.close, name=["doji", "inside"]
+        )
         self.assertIsInstance(result, DataFrame)
 
     def test_cdl_doji(self):
@@ -65,7 +80,9 @@ class TestCandle(TestCase):
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
             try:
-                corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
@@ -75,7 +92,9 @@ class TestCandle(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_INSIDE")
 
-        result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close, asbool=True)
+        result = pandas_ta.cdl_inside(
+            self.open, self.high, self.low, self.close, asbool=True
+        )
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_INSIDE")
 
