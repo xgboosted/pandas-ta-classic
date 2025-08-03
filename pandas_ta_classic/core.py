@@ -11,7 +11,7 @@ from numpy import log10 as npLog10
 from numpy import ndarray as npNdarray
 from pandas.core.base import PandasObject
 
-from pandas_ta_classic import Category, Imports, version
+from pandas_ta_classic._meta import Category, Imports, version
 from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 from pandas_ta_classic.candles import *
 from pandas_ta_classic.cycles import *
