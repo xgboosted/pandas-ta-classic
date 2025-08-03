@@ -333,3 +333,46 @@ class Watchlist(object):
             s += f", data[{len(self.data.keys())}])"
             return s
         return s + ")"
+
+
+# Demonstration of the Watchlist class with sample data
+if __name__ == "__main__":
+    print("Testing Watchlist class with local sample data...")
+    
+    # Check if local sample data exists
+    from pathlib import Path
+    sample_data_path = Path("data/SPY_D.csv")
+    
+    if sample_data_path.exists():
+        print(f"Using local sample data: {sample_data_path}")
+        
+        # Load the sample data directly
+        import pandas as pd
+        df = pd.read_csv(sample_data_path)
+        print(f"Loaded sample data shape: {df.shape}")
+        print(f"Columns: {list(df.columns)}")
+        print("Sample data loaded successfully!")
+        
+        # If pandas_ta_classic is available, add some indicators
+        try:
+            import pandas_ta_classic as ta
+            # Convert to proper DataFrame format for TA
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'])
+                df.set_index('date', inplace=True)
+            
+            # Add a simple moving average
+            df['SMA_20'] = ta.sma(df['close'], length=20)
+            print("Added SMA_20 indicator to sample data")
+            print(f"Updated data shape: {df.shape}")
+        except Exception as e:
+            print(f"Note: Could not add TA indicators: {e}")
+            
+    else:
+        print("Sample data not found. Watchlist class is ready for use with external data sources.")
+        print("To use the Watchlist class with external APIs:")
+        print("1. Install optional dependencies: pip install yfinance pandas-datareader alphaVantage-api")
+        print("2. Get API keys for data sources like AlphaVantage")
+        print("3. Create a watchlist: watch = Watchlist(['SPY', 'AAPL'])")
+        
+    print("Watchlist demonstration completed!")

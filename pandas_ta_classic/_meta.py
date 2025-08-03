@@ -8,25 +8,22 @@ from pathlib import Path
 
 # Version information
 try:
-    from pkg_resources import get_distribution, DistributionNotFound
-
+    from importlib.metadata import version, PackageNotFoundError
     try:
-        _dist = get_distribution("pandas-ta-classic")
-        try:
-            # Normalize case for Windows systems
-            here = Path(_dist.location) / __file__
-            if not here.exists():
-                # not installed, but there is another version that *is*
-                raise DistributionNotFound
-        except DistributionNotFound:
-            __version__ = "0.3.14b1"
-        else:
-            __version__ = _dist.version
-    except DistributionNotFound:
+        __version__ = version("pandas-ta-classic")
+    except PackageNotFoundError:
         __version__ = "0.3.14b1"
 except ImportError:
-    # Fallback for when pkg_resources is not available
-    __version__ = "0.3.14b1"
+    # Fallback for when importlib.metadata is not available (Python < 3.8)
+    try:
+        from pkg_resources import get_distribution, DistributionNotFound
+        try:
+            _dist = get_distribution("pandas-ta-classic")
+            __version__ = _dist.version
+        except DistributionNotFound:
+            __version__ = "0.3.14b1"
+    except ImportError:
+        __version__ = "0.3.14b1"
 
 version = __version__
 

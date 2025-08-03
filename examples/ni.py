@@ -77,3 +77,32 @@ def ni_method(self, length=None, offset=None, **kwargs):
     close = self._get_column(kwargs.pop("close", "close"))
     result = ni(close=close, length=length, offset=offset, **kwargs)
     return self._post_process(result, **kwargs)
+
+
+# Demonstration of the custom indicator
+if __name__ == "__main__":
+    import pandas as pd
+    import numpy as np
+    
+    print("Testing custom NI (Example Indicator) function...")
+    
+    # Create sample data
+    np.random.seed(42)
+    dates = pd.date_range('2023-01-01', periods=50, freq='D')
+    close_prices = pd.Series(
+        100 + np.cumsum(np.random.randn(50) * 0.5), 
+        index=dates, 
+        name='close'
+    )
+    
+    # Calculate the NI indicator
+    result = ni(close_prices, length=20)
+    
+    print(f"Sample data shape: {close_prices.shape}")
+    print(f"NI indicator shape: {result.shape}")
+    print(f"NI indicator name: {result.name}")
+    print(f"First 5 values:")
+    print(result.head())
+    print(f"Last 5 values:")
+    print(result.tail())
+    print("Custom NI indicator test completed successfully!")
