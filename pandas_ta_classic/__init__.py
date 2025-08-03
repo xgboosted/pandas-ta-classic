@@ -4,7 +4,14 @@ name = "pandas-ta-classic"
 .. moduleauthor:: Kevin Johnson
 """
 # Import metadata from _meta module to avoid circular imports
-from pandas_ta_classic._meta import Category, Imports, version, CANGLE_AGG, EXCHANGE_TZ, RATE
+from pandas_ta_classic._meta import (
+    Category,
+    Imports,
+    version,
+    CANGLE_AGG,
+    EXCHANGE_TZ,
+    RATE,
+)
 
 # Import core functionality
 from pandas_ta_classic.core import *
