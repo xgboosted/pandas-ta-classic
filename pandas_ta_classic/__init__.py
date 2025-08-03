@@ -1,23 +1,39 @@
 name = "pandas-ta-classic"
+
 """
 .. moduleauthor:: Kevin Johnson
 """
 from importlib.util import find_spec
 from pathlib import Path
-from pkg_resources import get_distribution, DistributionNotFound
+from pandas_ta_classic.core import *
 
-
-_dist = get_distribution("pandas-ta-classic")
 try:
-    # Normalize case for Windows systems
-    here = Path(_dist.location) / __file__
-    if not here.exists():
-        # not installed, but there is another version that *is*
-        raise DistributionNotFound
-except DistributionNotFound:
-    __version__ = "Please install this project with setup.py"
+    from pkg_resources import get_distribution, DistributionNotFound
 
-version = __version__ = _dist.version
+    try:
+        _dist = get_distribution("pandas-ta-classic")
+        try:
+            # Normalize case for Windows systems
+            here = Path(_dist.location) / __file__
+            if not here.exists():
+                # not installed, but there is another version that *is*
+                raise DistributionNotFound
+        except DistributionNotFound:
+            __version__ = "0.3.14b1"
+        else:
+            __version__ = _dist.version
+    except DistributionNotFound:
+        __version__ = "0.3.14b1"
+except ImportError:
+    # Fallback for when pkg_resources is not available
+    __version__ = "0.3.14b1"
+
+version = __version__
+__description__ = (
+    "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. "
+    "Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib. "
+    "This is the classic/community maintained version."
+)
 
 Imports = {
     "alphaVantage-api": find_spec("alphaVantageAPI") is not None,
@@ -229,5 +245,3 @@ RATE = {
     "WEEKS_PER_YEAR": 52,
     "YEARLY": 1,
 }
-
-from pandas_ta_classic.core import *

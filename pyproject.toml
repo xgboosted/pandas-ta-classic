@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pandas-ta-classic"
+version = "0.3.14b1"
+description = "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib. This is the classic/community maintained version."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "xgboosted"}
+]
+maintainers = [
+    {name = "xgboosted"}
+]
+keywords = ["technical analysis", "trading", "python3", "pandas"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=2.0.0",
+    "pandas>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "alphaVantage-api",
+    "matplotlib", 
+    "mplfinance",
+    "scipy",
+    "sklearn",
+    "statsmodels",
+    "stochastic",
+    "talib",
+    "tqdm",
+    "vectorbt",
+    "yfinance",
+]
+test = ["ta-lib"]
+
+[project.urls]
+Homepage = "https://github.com/xgboosted/pandas-ta-classic"
+Repository = "https://github.com/xgboosted/pandas-ta-classic.git"
+Documentation = "https://xgboosted.github.io/pandas-ta-classic/"
+"Bug Tracker" = "https://github.com/xgboosted/pandas-ta-classic/issues"
+
+[tool.setuptools]
+packages = [
+    "pandas_ta_classic",
+    "pandas_ta_classic.candles",
+    "pandas_ta_classic.cycles",
+    "pandas_ta_classic.momentum",
+    "pandas_ta_classic.overlap",
+    "pandas_ta_classic.performance",
+    "pandas_ta_classic.statistics",
+    "pandas_ta_classic.trend",
+    "pandas_ta_classic.utils",
+    "pandas_ta_classic.utils.data",
+    "pandas_ta_classic.volatility",
+    "pandas_ta_classic.volume"
+]
+
+[tool.setuptools.package-data]
+"*" = ["data/*.csv"]
+
+# Remove the setuptools.dynamic section since we're not using dynamic version anymore

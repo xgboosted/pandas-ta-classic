@@ -39,44 +39,8 @@ jobs:
       run: |
         python validate_structure.py
 
-  # Job 2: Generate Python version matrix dynamically
-  generate-matrix:
-    runs-on: ubuntu-latest
-    needs: code-quality
-    outputs:
-      python-versions: ${{ steps.versions.outputs.python-versions }}
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.LATEST_PYTHON_VERSION }}
-    
-    - name: Generate Python version matrix
-      id: versions
-      run: |
-        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> "13")
-        latest="${{ env.LATEST_PYTHON_VERSION }}"
-        minor_version=$(echo "$latest" | cut -d'.' -f2)
-        
-        # Generate 5 versions: latest and 4 previous minor versions
-        versions="["
-        for i in {4..0}; do
-          version_num=$((minor_version - i))
-          if [ $i -eq 0 ]; then
-            versions="${versions}\"3.${version_num}\""
-          else
-            versions="${versions}\"3.${version_num}\", "
-          fi
-        done
-        versions="${versions}]"
-        
-        echo "python-versions=$versions" >> $GITHUB_OUTPUT
-        echo "Generated Python versions: $versions"
 
-  # Job 3: Code quality checks (linting and formatting)
+  # Job 2: Code quality checks (linting and formatting)
   code-quality:
     runs-on: ubuntu-latest
     needs: validate-structure
@@ -123,6 +87,44 @@ jobs:
     - name: Check code formatting with black
       run: |
         black --check --diff pandas_ta_classic/
+
+  # Job 3: Generate Python version matrix dynamically
+  generate-matrix:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    outputs:
+      python-versions: ${{ steps.versions.outputs.python-versions }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.LATEST_PYTHON_VERSION }}
+    
+    - name: Generate Python version matrix
+      id: versions
+      run: |
+        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.13" -> "13")
+        latest="${{ env.LATEST_PYTHON_VERSION }}"
+        minor_version=$(echo "$latest" | cut -d'.' -f2)
+        
+        # Generate 5 versions: latest and 4 previous minor versions
+        versions="["
+        for i in {4..0}; do
+          version_num=$((minor_version - i))
+          if [ $i -eq 0 ]; then
+            versions="${versions}\"3.${version_num}\""
+          else
+            versions="${versions}\"3.${version_num}\", "
+          fi
+        done
+        versions="${versions}]"
+        
+        echo "python-versions=$versions" >> $GITHUB_OUTPUT
+        echo "Generated Python versions: $versions"
+
 
   # Job 4: Test matrix - Run tests on all dynamically generated Python versions
   test-matrix:
@@ -180,11 +182,11 @@ jobs:
         python -c "import pandas_ta_classic as ta; print('Package imported successfully on Python ${{ matrix.python-version }}')"
         python -m unittest tests.test_indicator_performance -v
 
-  # Job 5: Documentation - Build and deploy documentation (only on main branch)
+  # Job 5: Documentation - Build and deploy documentation (only on main branch or releases)
   documentation:
     runs-on: ubuntu-latest
     needs: test-matrix
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     
     steps:
     - uses: actions/checkout@v4
@@ -267,7 +269,7 @@ jobs:
   # Job 6: PyPI Publishing - Build and publish to PyPI (only on releases)
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [generate-matrix, test-matrix, documentation]
+    needs: [generate-matrix, documentation]
     if: github.event_name == 'release' && github.event.action == 'published'
     
     steps:
@@ -284,7 +286,7 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
-    - name: Update setup.py with release version
+    - name: Update pyproject.toml with release version
       run: |
         python << 'EOF'
         import os
@@ -302,91 +304,97 @@ jobs:
         
         print(f"Extracted version: {version}")
         
-        # Read setup.py
-        with open('setup.py', 'r') as f:
+        # Read pyproject.toml
+        with open('pyproject.toml', 'r') as f:
             content = f.read()
         
-        # Replace the hardcoded version with the release version
-        # Pattern matches: version=".".join(("0", "3", "14b1"))
-        version_pattern = r'version=".".join\(\([^)]+\)\)'
-        new_version_line = f'version="{version}"'
+        # Replace the version in pyproject.toml
+        # Pattern matches: version = "0.3.14b1"
+        version_pattern = r'version = "[^"]+"'
+        new_version_line = f'version = "{version}"'
         
         updated_content = re.sub(version_pattern, new_version_line, content)
         
-        # Write back to setup.py
-        with open('setup.py', 'w') as f:
+        # Write back to pyproject.toml
+        with open('pyproject.toml', 'w') as f:
             f.write(updated_content)
         
-        print(f"Setup.py version updated to: {version}")
+        print(f"pyproject.toml version updated to: {version}")
         
         # Verify the change
-        with open('setup.py', 'r') as f:
+        with open('pyproject.toml', 'r') as f:
             for line_num, line in enumerate(f, 1):
-                if 'version=' in line and not line.strip().startswith('#'):
+                if 'version =' in line and not line.strip().startswith('#'):
                     print(f"Line {line_num}: {line.strip()}")
         EOF
     
-    - name: Update setup.py with dynamic Python classifiers
+    - name: Update pyproject.toml with dynamic Python classifiers
       run: |
         python << 'EOF'
         import json
         import os
+        import re
         
         # Get the Python versions from environment variable
         python_versions_str = os.environ.get('PYTHON_VERSIONS', '[]')
         python_versions = json.loads(python_versions_str)
         
-        print(f"Updating setup.py with Python versions: {python_versions}")
+        print(f"Updating pyproject.toml with Python versions: {python_versions}")
         
-        # Read setup.py
-        with open('setup.py', 'r') as f:
+        # Read pyproject.toml
+        with open('pyproject.toml', 'r') as f:
             content = f.read()
         
-        # Split into lines
-        lines = content.split('\n')
+        # Build the new classifiers section
+        new_classifiers = []
         
-        # Find the classifiers section and replace Python version classifiers
-        new_lines = []
-        in_classifiers = False
-        python_classifier_added = False
+        # Add base classifiers (non-Python version ones)
+        base_classifiers = [
+            '"Development Status :: 4 - Beta"',
+            '"Operating System :: OS Independent"',
+            '"Natural Language :: English"',
+            '"Intended Audience :: Developers"',
+            '"Intended Audience :: Financial and Insurance Industry"',
+            '"Intended Audience :: Science/Research"',
+            '"Topic :: Office/Business :: Financial"',
+            '"Topic :: Office/Business :: Financial :: Investment"',
+            '"Topic :: Scientific/Engineering"',
+            '"Topic :: Scientific/Engineering :: Information Analysis"',
+        ]
         
-        for line in lines:
-            if 'classifiers=[' in line:
-                in_classifiers = True
-                new_lines.append(line)
-            elif in_classifiers and '],' in line and not '"' in line:
-                # End of classifiers section
-                if not python_classifier_added:
-                    # Add Python version classifiers before closing
-                    for version in python_versions:
-                        new_lines.append(f'        "Programming Language :: Python :: {version}",')
-                    python_classifier_added = True
-                new_lines.append(line)
-                in_classifiers = False
-            elif in_classifiers and '"Programming Language :: Python :: 3.' in line:
-                # Skip existing Python version classifiers - they will be replaced
-                if not python_classifier_added:
-                    # Add all dynamic Python version classifiers
-                    for version in python_versions:
-                        new_lines.append(f'        "Programming Language :: Python :: {version}",')
-                    python_classifier_added = True
-                # Skip the current line (old Python classifier)
-                continue
-            else:
-                new_lines.append(line)
+        # Add Python version classifiers
+        for version in python_versions:
+            base_classifiers.append(f'"Programming Language :: Python :: {version}"')
         
-        # Write back to setup.py
-        with open('setup.py', 'w') as f:
-            f.write('\n'.join(new_lines))
+        # Create the new classifiers block
+        classifiers_block = "classifiers = [\n"
+        for classifier in base_classifiers:
+            classifiers_block += f"    {classifier},\n"
+        classifiers_block += "]"
         
-        print("Setup.py updated successfully!")
+        # Replace the classifiers section in pyproject.toml
+        # Pattern to match the entire classifiers block
+        classifiers_pattern = r'classifiers = \[[^\]]*\]'
+        
+        updated_content = re.sub(classifiers_pattern, classifiers_block, content, flags=re.DOTALL)
+        
+        # Write back to pyproject.toml
+        with open('pyproject.toml', 'w') as f:
+            f.write(updated_content)
+        
+        print("pyproject.toml updated successfully!")
         
         # Verify the changes
-        print("\nPython classifiers in setup.py:")
-        with open('setup.py', 'r') as f:
+        print("\nPython classifiers in pyproject.toml:")
+        with open('pyproject.toml', 'r') as f:
+            in_classifiers = False
             for line_num, line in enumerate(f, 1):
-                if '"Programming Language :: Python :: 3.' in line:
-                    print(f"Line {line_num}: {line.strip()}")
+                if 'classifiers = [' in line:
+                    in_classifiers = True
+                if in_classifiers:
+                    print(f"Line {line_num}: {line.rstrip()}")
+                    if ']' in line and 'classifiers = [' not in line:
+                        break
         EOF
       env:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
@@ -401,7 +409,7 @@ jobs:
         pip install build twine
     
     - name: Build package
-      run: python -m build
+      run: python -m build --wheel
     
     - name: Check package
       run: twine check dist/*

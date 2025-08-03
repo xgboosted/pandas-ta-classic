@@ -13,7 +13,7 @@ def hwc(
     scalar=None,
     channel_eval=None,
     offset=None,
-    **kwargs
+    **kwargs,
 ):
     """Indicator: Holt-Winter Channel"""
     # Validate Arguments
