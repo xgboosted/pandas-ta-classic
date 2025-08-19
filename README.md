@@ -20,7 +20,6 @@ Pandas TA Classic - A Technical Analysis Library in Python 3
 [![Contributors](https://img.shields.io/github/contributors/xgboosted/pandas-ta-classic?style=flat)](#contributors)
 [![Issues](https://img.shields.io/github/issues-raw/xgboosted/pandas-ta-classic?style=flat)](#issues)
 [![Closed Issues](https://img.shields.io/github/issues-closed-raw/xgboosted/pandas-ta-classic?style=flat)](#closed-issues)
-[![Buy Me a Coffee](https://img.shields.io/badge/buy_me_a_coffee-orange.svg?style=flat)](https://www.buymeacoffee.com/twopirllc)
 
 
 
@@ -1059,5 +1058,5 @@ of the last bars defined by the length parameter. See ```help(ta.tos_stdevall)``
 Feeling generous, like the package or want to see it become more a mature package?
 
 ### Consider
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/twopirllc)
+[![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/xgboosted)
 
