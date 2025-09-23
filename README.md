@@ -34,7 +34,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 **Pandas TA Classic** supports the latest stable Python version plus the 4 immediate preceding minor versions. Currently, this includes Python versions **3.9 through 3.13** (5 versions total). When new Python versions are released, support follows this rolling policy:
 
-For more information about Python version support and lifecycle, see the [Python Developer's Guide](https://devguide.python.org/versions).
+For more information about Python version support and lifecycle, see the [Python Developer's Guide](https://devguide.python.org/versions) or [endoflife.date/python](https://endoflife.date/python).
 
 - ✅ **Latest stable version** (currently 3.13)
 - ✅ **Previous 4 minor versions** (currently 3.12, 3.11, 3.10, 3.9)
