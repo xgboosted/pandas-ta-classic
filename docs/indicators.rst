@@ -1,23 +1,23 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 130+ indicators and utility functions organized into the following categories:
+**Pandas TA Classic** includes 143 indicators and utility functions plus 62 TA-Lib candlestick patterns (205 total) organized into the following categories:
 
-* **Candles** (64) - Candlestick patterns for market sentiment analysis
+* **Candles** (65) - Candlestick patterns for market sentiment analysis (3 native + 62 TA-Lib patterns)  
 * **Cycles** (1) - Cycle-based technical indicators  
 * **Momentum** (41) - Momentum and oscillator indicators
-* **Overlap** (33) - Moving averages and trend-following indicators
+* **Overlap** (34) - Moving averages and trend-following indicators
 * **Performance** (3) - Performance and return metrics
-* **Statistics** (11) - Statistical analysis functions
+* **Statistics** (10) - Statistical analysis functions
 * **Trend** (18) - Trend identification and direction indicators
-* **Utility** (5) - Helper and utility functions
+* **Utility** (10) - Helper and utility functions
 * **Volatility** (14) - Volatility and range-based indicators
 * **Volume** (15) - Volume analysis indicators
 
-Candles (64)
+Candles (65)
 ------------
 
-Candlestick patterns for identifying market sentiment and potential reversals. Patterns that are **not bold** require TA-Lib to be installed: ``pip install TA-Lib``
+Candlestick patterns for identifying market sentiment and potential reversals. This includes 3 native patterns (**cdl_pattern**, **cdl_z**, **ha**) plus 62 TA-Lib patterns. Patterns that are **not bold** require TA-Lib to be installed: ``pip install TA-Lib``
 
 .. code-block:: python
 
@@ -96,7 +96,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Ultimate Oscillator*: **uo**
 * *Williams %R*: **willr**
 
-Overlap (33)
+Overlap (34)
 ------------
 
 Moving averages and trend-following indicators:
@@ -144,7 +144,7 @@ Performance and return metrics. Use parameter ``cumulative=True`` for cumulative
 * *Log Return*: **log_return**
 * *Percent Return*: **percent_return**
 
-Statistics (11)
+Statistics (10)
 ---------------
 
 Statistical analysis functions:

@@ -52,16 +52,16 @@ For detailed documentation, examples, and the complete list of indicators, pleas
 
 ## Categories of Indicators
 
-- **Candles** (64): Pattern recognition indicators
+- **Candles** (65): Pattern recognition indicators (3 native + 62 TA-Lib patterns)
 - **Momentum** (41): RSI, MACD, Stochastic, etc.
-- **Overlap** (33): Moving averages, Bollinger Bands, etc.
+- **Overlap** (34): Moving averages, Bollinger Bands, etc.
 - **Trend** (18): ADX, Aroon, Parabolic SAR, etc.
 - **Volume** (15): OBV, Money Flow, etc.
 - **Volatility** (14): ATR, Bollinger Bands, etc.
-- **Statistics** (11): Z-Score, Standard Deviation, etc.
+- **Statistics** (10): Z-Score, Standard Deviation, etc.
 - **Performance** (3): Returns, Drawdown analysis
 - **Cycles** (1): Even Better Sinewave
-- **Utility** (5): Helper functions
+- **Utility** (10): Helper functions
 
 ## Support
 
