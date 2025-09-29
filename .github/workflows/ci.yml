@@ -185,7 +185,7 @@ jobs:
   # Job 5: Documentation - Build and deploy documentation (independent deployment)
   documentation:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix]
+    needs: [code-quality, generate-matrix, test-matrix]
     if: github.event_name == 'push'
     environment: 
       name: docs-production
@@ -260,7 +260,7 @@ jobs:
   # Job 6: PyPI Publishing - Build and publish to PyPI (on release published with unique version)
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix]
+    needs: [code-quality, generate-matrix, test-matrix]
     if: github.event_name == 'release' && github.event.action == 'published'
     environment:
       name: pypi-production
