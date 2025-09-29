@@ -182,12 +182,14 @@ jobs:
         python -c "import pandas_ta_classic as ta; print('Package imported successfully on Python ${{ matrix.python-version }}')"
         python -m unittest tests.test_indicator_performance -v
 
-  # Job 5: Documentation - Build and deploy documentation (only on main branch or releases)
+  # Job 5: Documentation - Build and deploy documentation (independent deployment)
   documentation:
     runs-on: ubuntu-latest
-    needs: test-matrix
+    needs: [code-quality, generate-matrix]
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
-    environment: docs-production
+    environment: 
+      name: docs-production
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
     - uses: actions/checkout@v4
@@ -222,26 +224,6 @@ jobs:
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
-      
-    - name: Build with Jekyll
-      uses: actions/jekyll-build-pages@v1
-      with:
-        source: ./
-        destination: ./_site
-      
-    - name: Debug Jekyll build output
-      run: |
-        echo "Jekyll build completed. Checking _site directory:"
-        ls -la ./_site/ || echo "No _site directory found"
-        if [ -d "./_site" ]; then
-          echo "Files in _site:"
-          find ./_site -type f | head -10
-        fi
-        
-    - name: Upload Jekyll artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: ./_site
     
     - name: Install Sphinx dependencies
       run: |
@@ -251,11 +233,19 @@ jobs:
       run: |
         cd docs
         make html
+        
+    - name: Debug Sphinx build output
+      run: |
+        echo "Sphinx build completed. Checking docs/_build/html directory:"
+        ls -la docs/_build/html/ || echo "No docs/_build/html directory found"
+        if [ -d "docs/_build/html" ]; then
+          echo "Files in docs/_build/html:"
+          find docs/_build/html -type f | head -10
+        fi
           
-    - name: Upload Sphinx artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload Pages artifact (Sphinx)
+      uses: actions/upload-pages-artifact@v3
       with:
-        name: sphinx-docs
         path: docs/_build/html
 
     - name: Deploy to GitHub Pages
@@ -267,12 +257,14 @@ jobs:
         echo "Deployment completed successfully"
         echo "Page URL: ${{ steps.deployment.outputs.page_url }}"
 
-  # Job 6: PyPI Publishing - Build and publish to PyPI (only on releases)
+  # Job 6: PyPI Publishing - Build and publish to PyPI (independent deployment)
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [generate-matrix, documentation]
+    needs: [code-quality, generate-matrix]
     if: github.event_name == 'release' && github.event.action == 'published'
-    environment: pypi-production
+    environment:
+      name: pypi-production
+      url: https://pypi.org/project/pandas-ta-classic/
     
     steps:
     - uses: actions/checkout@v4

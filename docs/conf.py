@@ -3,8 +3,61 @@
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# full list# The unique identifier of the text. This can be a ISBN number
+# or the project homepage.
+#
+# epub_identifier = ''
+
+# A unique identification for the text.
+#
+# epub_uid = ''
+
+# A list of files that should not be packed into the epub file.
+epub_exclude_files = ['search.html']
+
+# -- Additional HTML configuration -------------------------------------------
+
+html_title = "Pandas TA Classic Documentation"
+html_short_title = "Pandas TA Classic"
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+# html_logo = None
+
+# The name of an image file (within the static path) to use as favicon of the
+# docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+# html_favicon = None
+
+# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
+# using the given strftime format.
+html_last_updated_fmt = '%b %d, %Y'
+
+# If true, SmartyPants will be used to convert quotes and dashes to
+# typographically correct entities.
+html_use_smartypants = True
+
+# Additional templates that should be rendered to pages, maps page names to
+# template names.
+html_additional_pages = {}
+
+# If false, no module index is generated.
+html_domain_indices = True
+
+# If false, no index is generated.
+html_use_index = True
+
+# If true, the index is split into individual pages for each letter.
+html_split_index = False
+
+# If true, links to the reST sources are added to the pages.
+html_show_sourcelink = False
+
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+html_show_sphinx = True
+
+# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+html_show_copyright = True
 
 # -- Path setup --------------------------------------------------------------
 
@@ -18,14 +71,14 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "pandas-ta-classic"
+project = "Pandas TA Classic"
 copyright = "2025, xgboosted"
 author = "xgboosted"
 
 # The short X.Y version
-version = "0.0.1"
+version = "0.3.14b"
 # The full version, including alpha/beta/rc tags
-release = "alpha"
+release = "0.3.14b"
 
 # -- General configuration ---------------------------------------------------
 
@@ -38,8 +91,9 @@ release = "alpha"
 # ones.
 extensions = [
     "sphinx.ext.todo",
-    "sphinx.ext.mathjax",
+    "sphinx.ext.mathjax", 
     "sphinx.ext.viewcode",
+    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -74,13 +128,27 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'canonical_url': '',
+    'analytics_id': '',
+    'logo_only': False,
+    'display_version': True,
+    'prev_next_buttons_location': 'bottom',
+    'style_external_links': False,
+    'vcs_pageview_mode': '',
+    # Toc options
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
