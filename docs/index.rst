@@ -1,7 +1,7 @@
 Pandas TA Classic Documentation
 ===============================
 
-**Pandas TA Classic** is an easy to use library that leverages the Pandas package with more than 130 Indicators and Utility functions and more than 60 TA Lib Candlestick Patterns. This is the **classic/community maintained version** of the popular pandas-ta library.
+**Pandas TA Classic** is an easy to use library that leverages the Pandas package with more than 140 Indicators and Utility functions and more than 60 TA Lib Candlestick Patterns. This is the **community maintained version** of the popular pandas-ta library.
 
 .. image:: https://img.shields.io/github/license/xgboosted/pandas-ta-classic
    :target: #license
