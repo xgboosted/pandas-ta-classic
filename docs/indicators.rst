@@ -184,8 +184,8 @@ Trend identification and direction indicators:
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**
 
-Utility (5)
------------
+Utility (10)
+------------
 
 Helper and utility functions:
 
@@ -194,6 +194,11 @@ Helper and utility functions:
 * *Below*: **below**
 * *Below Value*: **below_value**
 * *Cross*: **cross**
+* *Cross Value*: **cross_value**
+* *Decreasing*: **decreasing**
+* *Increasing*: **increasing**
+* *Long Run*: **long_run**
+* *Short Run*: **short_run**
 
 Volatility (14)
 ---------------
