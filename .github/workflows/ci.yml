@@ -186,7 +186,7 @@ jobs:
   documentation:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    if: github.event_name == 'push'
     environment: 
       name: docs-production
       url: ${{ steps.deployment.outputs.page_url }}
@@ -257,7 +257,7 @@ jobs:
         echo "Deployment completed successfully"
         echo "Page URL: ${{ steps.deployment.outputs.page_url }}"
 
-  # Job 6: PyPI Publishing - Build and publish to PyPI (independent deployment)
+  # Job 6: PyPI Publishing - Build and publish to PyPI (on release published with unique version)
   pypi-publish:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix]
@@ -268,6 +268,48 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Validate release version uniqueness
+      run: |
+        # Get the new release version
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
+        NEW_VERSION="${RELEASE_TAG#v}"  # Remove 'v' prefix if present
+        
+        echo "New release version: $NEW_VERSION"
+        
+        # Get all existing releases
+        EXISTING_RELEASES=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases" | \
+          jq -r '.[].tag_name')
+        
+        echo "Existing releases:"
+        echo "$EXISTING_RELEASES"
+        
+        # Check if this version already exists (excluding the current release)
+        CURRENT_RELEASE_ID="${{ github.event.release.id }}"
+        DUPLICATE_VERSION=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases" | \
+          jq -r --arg version "$RELEASE_TAG" --arg current_id "$CURRENT_RELEASE_ID" \
+          '.[] | select(.tag_name == $version and (.id | tostring) != $current_id) | .tag_name')
+        
+        if [ -n "$DUPLICATE_VERSION" ]; then
+          echo "❌ Error: Version $RELEASE_TAG already exists in another release!"
+          echo "Please use a unique version number."
+          exit 1
+        fi
+        
+        # Also check PyPI for existing versions
+        echo "Checking PyPI for existing versions..."
+        PYPI_VERSIONS=$(curl -s "https://pypi.org/pypi/pandas-ta-classic/json" | \
+          jq -r '.releases | keys[]' 2>/dev/null || echo "")
+        
+        if echo "$PYPI_VERSIONS" | grep -q "^$NEW_VERSION$"; then
+          echo "❌ Error: Version $NEW_VERSION already exists on PyPI!"
+          echo "Please use a unique version number."
+          exit 1
+        fi
+        
+        echo "✅ Version $NEW_VERSION is unique and ready for release!"
     
     - name: Show Python versions from generate-matrix
       run: |
@@ -303,7 +345,6 @@ jobs:
             content = f.read()
         
         # Replace the version in pyproject.toml
-        # Pattern matches: version = "0.3.14b1"
         version_pattern = r'version = "[^"]+"'
         new_version_line = f'version = "{version}"'
         
