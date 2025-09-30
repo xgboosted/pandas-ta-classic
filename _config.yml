@@ -1,3 +1,12 @@
-# Jekyll theme disabled - using Sphinx for documentation
-# Documentation is built from docs/ directory and served via GitHub Pages
-# theme: jekyll-theme-slate
+# GitHub Pages Configuration for Sphinx-based documentation
+# This file explicitly disables Jekyll processing since this project uses Sphinx.
+# Documentation is built via GitHub Actions (.github/workflows/ci.yml) and deployed to Pages.
+
+# Disable Jekyll processing (required for non-Jekyll static site generators)
+# Without this, GitHub Pages may try to process Sphinx-generated HTML with Jekyll
+theme: null
+
+# Project metadata (for reference only - not used by Sphinx)
+title: "Pandas TA Classic"
+description: "Technical Analysis Library with 140+ indicators for Python"
+url: "https://xgboosted.github.io/pandas-ta-classic"

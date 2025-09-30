@@ -11,6 +11,9 @@ name: CI
 
 env:
   # Latest stable Python version - update this when new Python versions are released
+  # This value controls the rolling 5-version support policy (LATEST-4 through LATEST)
+  # Used by generate-matrix job to compute supported Python versions dynamically
+  # Also used for pyproject.toml placeholder replacement: {{LATEST-N}} → actual versions
   LATEST_PYTHON_VERSION: "3.13"
 
 permissions:
@@ -29,6 +32,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -47,6 +52,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -71,11 +78,16 @@ jobs:
     - name: Install dependencies and quality tools
       run: |
         python -m pip install --upgrade pip
-        pip install numpy pandas
-        pip install -r requirements.txt
-        pip install TA-Lib
-        pip install flake8 black
+        # Install package with dependencies from pyproject.toml
         pip install -e .
+        # Install TA-Lib for candlestick patterns
+        pip install TA-Lib
+        # Install code quality tools
+        pip install flake8 black
+    
+    - name: Check code formatting with black
+      run: |
+        black --check --diff pandas_ta_classic/
     
     - name: Run flake8 linting
       run: |
@@ -83,12 +95,12 @@ jobs:
         flake8 pandas_ta_classic --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings for non-critical issues
         flake8 pandas_ta_classic --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=pandas_ta_classic/__init__.py
-    
-    - name: Check code formatting with black
-      run: |
-        black --check --diff pandas_ta_classic/
 
   # Job 3: Generate Python version matrix dynamically
+  # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
+  # These versions are used for:
+  #   - test-matrix job: testing across all supported Python versions
+  #   - pypi-publish job: replacing {{LATEST-N}} placeholders in pyproject.toml
   generate-matrix:
     runs-on: ubuntu-latest
     needs: code-quality
@@ -97,6 +109,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -137,6 +151,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Show Python versions from generate-matrix
       run: |
@@ -168,10 +184,10 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy pandas
-        pip install -r requirements.txt
-        pip install TA-Lib
+        # Install package with dependencies from pyproject.toml
         pip install -e .
+        # Install TA-Lib for candlestick patterns
+        pip install TA-Lib
     
     - name: Run comprehensive tests
       run: |
@@ -193,6 +209,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -217,10 +235,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy pandas
-        pip install -r requirements.txt
-        pip install TA-Lib
+        # Install package with dependencies from pyproject.toml
         pip install -e .
+        # Install TA-Lib for candlestick patterns
+        pip install TA-Lib
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
@@ -258,6 +276,11 @@ jobs:
         echo "Page URL: ${{ steps.deployment.outputs.page_url }}"
 
   # Job 6: PyPI Publishing - Build and publish to PyPI (on release published with unique version)
+  # This job handles placeholder replacement in pyproject.toml:
+  #   1. Version is automatically determined by setuptools-scm from git tags (no manual replacement needed)
+  #   2. Replaces {{LATEST-N}} placeholders with actual Python versions from matrix
+  #   3. Replaces requires-python = ">=3.{{LATEST-4}}" with actual minimum version
+  #   4. Preserves Development Status :: 5 - Production/Stable and all other classifiers
   pypi-publish:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix, test-matrix]
@@ -268,6 +291,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Validate release version uniqueness
       run: |
@@ -322,48 +347,25 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
-    - name: Update pyproject.toml with release version
+    - name: Install setuptools-scm for version management
       run: |
-        python << 'EOF'
-        import os
-        import re
+        python -m pip install --upgrade pip
+        pip install setuptools-scm
         
-        # Get version from release tag
-        release_tag = os.environ.get('GITHUB_REF_NAME', '')
-        print(f"Release tag: {release_tag}")
-        
-        # Extract version from tag (remove 'v' prefix if present)
-        if release_tag.startswith('v'):
-            version = release_tag[1:]
-        else:
-            version = release_tag
-        
-        print(f"Extracted version: {version}")
-        
-        # Read pyproject.toml
-        with open('pyproject.toml', 'r') as f:
-            content = f.read()
-        
-        # Replace the version in pyproject.toml
-        version_pattern = r'version = "[^"]+"'
-        new_version_line = f'version = "{version}"'
-        
-        updated_content = re.sub(version_pattern, new_version_line, content)
-        
-        # Write back to pyproject.toml
-        with open('pyproject.toml', 'w') as f:
-            f.write(updated_content)
-        
-        print(f"pyproject.toml version updated to: {version}")
-        
-        # Verify the change
-        with open('pyproject.toml', 'r') as f:
-            for line_num, line in enumerate(f, 1):
-                if 'version =' in line and not line.strip().startswith('#'):
-                    print(f"Line {line_num}: {line.strip()}")
-        EOF
+        # Verify the version that will be used (from git tag)
+        echo "Version from setuptools-scm:"
+        python -c "from setuptools_scm import get_version; print(get_version())"
     
     - name: Update pyproject.toml with dynamic Python classifiers
+      # Replaces all {{LATEST-N}} placeholders in pyproject.toml with actual Python versions
+      # This includes:
+      #   - Programming Language :: Python :: {{LATEST-4}} → 3.9
+      #   - Programming Language :: Python :: {{LATEST-3}} → 3.10
+      #   - Programming Language :: Python :: {{LATEST-2}} → 3.11
+      #   - Programming Language :: Python :: {{LATEST-1}} → 3.12
+      #   - Programming Language :: Python :: {{LATEST}} → 3.13
+      #   - requires-python: Updates minimum version if it changes (currently >=3.9)
+      # Preserves all other classifiers including Development Status :: 5 - Production/Stable
       run: |
         python << 'EOF'
         import json
@@ -375,61 +377,64 @@ jobs:
         python_versions = json.loads(python_versions_str)
         
         print(f"Updating pyproject.toml with Python versions: {python_versions}")
+        print(f"Minimum Python version: {python_versions[0]}")
         
         # Read pyproject.toml
         with open('pyproject.toml', 'r') as f:
-            content = f.read()
+            lines = f.readlines()
         
-        # Build the new classifiers section
-        new_classifiers = []
+        # Replace {{LATEST-N}} placeholders with actual versions
+        # Build mapping: {{LATEST-4}} → oldest, {{LATEST}} → newest
+        replacements = {}
+        for i, version in enumerate(python_versions):
+            placeholder_index = len(python_versions) - 1 - i
+            replacements[f'{{{{LATEST-{placeholder_index}}}}}'] = version
+        replacements['{{LATEST}}'] = python_versions[-1]
         
-        # Add base classifiers (non-Python version ones)
-        base_classifiers = [
-            '"Development Status :: 4 - Beta"',
-            '"Operating System :: OS Independent"',
-            '"Natural Language :: English"',
-            '"Intended Audience :: Developers"',
-            '"Intended Audience :: Financial and Insurance Industry"',
-            '"Intended Audience :: Science/Research"',
-            '"Topic :: Office/Business :: Financial"',
-            '"Topic :: Office/Business :: Financial :: Investment"',
-            '"Topic :: Scientific/Engineering"',
-            '"Topic :: Scientific/Engineering :: Information Analysis"',
-        ]
+        print(f"Placeholder mappings: {replacements}")
         
-        # Add Python version classifiers
-        for version in python_versions:
-            base_classifiers.append(f'"Programming Language :: Python :: {version}"')
+        # Get minimum version for requires-python
+        min_version = python_versions[0]
         
-        # Create the new classifiers block
-        classifiers_block = "classifiers = [\n"
-        for classifier in base_classifiers:
-            classifiers_block += f"    {classifier},\n"
-        classifiers_block += "]"
-        
-        # Replace the classifiers section in pyproject.toml
-        # Pattern to match the entire classifiers block
-        classifiers_pattern = r'classifiers = \[[^\]]*\]'
-        
-        updated_content = re.sub(classifiers_pattern, classifiers_block, content, flags=re.DOTALL)
+        # Process each line and replace placeholders
+        updated_lines = []
+        for line in lines:
+            updated_line = line
+            
+            # Replace Python version placeholders in classifiers
+            for placeholder, version in replacements.items():
+                if placeholder in line:
+                    updated_line = updated_line.replace(placeholder, version)
+                    print(f"  Replaced: {placeholder} → {version}")
+            
+            # Update requires-python to use minimum version (if it's still at default)
+            if 'requires-python' in line and '>=3.9' in line:
+                # Only update if we're changing to a different minimum version
+                if min_version != '3.9':
+                    updated_line = line.replace('>=3.9', f'>={min_version}')
+                    print(f"  Updated requires-python: >=3.9 → >={min_version}")
+            
+            updated_lines.append(updated_line)
         
         # Write back to pyproject.toml
         with open('pyproject.toml', 'w') as f:
-            f.write(updated_content)
+            f.writelines(updated_lines)
         
-        print("pyproject.toml updated successfully!")
+        print("✅ pyproject.toml Python version placeholders replaced successfully!")
         
-        # Verify the changes
-        print("\nPython classifiers in pyproject.toml:")
+        # Verify the changes - show Python-related lines
+        print("\nVerifying Python classifiers and requires-python:")
         with open('pyproject.toml', 'r') as f:
             in_classifiers = False
             for line_num, line in enumerate(f, 1):
                 if 'classifiers = [' in line:
                     in_classifiers = True
-                if in_classifiers:
-                    print(f"Line {line_num}: {line.rstrip()}")
-                    if ']' in line and 'classifiers = [' not in line:
-                        break
+                if in_classifiers and 'Programming Language :: Python ::' in line:
+                    print(f"  Line {line_num}: {line.rstrip()}")
+                if 'requires-python' in line:
+                    print(f"  Line {line_num}: {line.rstrip()}")
+                if in_classifiers and ']' in line and 'classifiers = [' not in line:
+                    in_classifiers = False
         EOF
       env:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
@@ -441,7 +446,7 @@ jobs:
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build twine setuptools-scm
     
     - name: Build package
       run: python -m build --wheel

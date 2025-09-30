@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## **[Unreleased]**
+
+### Added
+* **UV Package Manager Support**: All documentation now includes installation instructions for both `uv` (recommended for faster installs) and traditional `pip`. This includes README.md, CONTRIBUTING.md, docs/installation.rst, docs/index.rst, index.md, and docs/indicators.rst.
+* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.post` suffix (e.g., `0.3.15.post12`), while tagged releases use the tag version (e.g., `0.4.0`). See the Version Management section in CONTRIBUTING.md for comprehensive documentation.
+* **Native Candlestick Patterns**: Added native implementations of `cdl_doji` and `cdl_inside` patterns that don't require TA-Lib installation. These can be accessed directly via `df.ta.cdl_doji()` and `df.ta.cdl_inside()`, or through the unified `df.ta.cdl_pattern()` interface. Native patterns join `cdl_z` and `ha` to provide 5 total TA-Lib-free candlestick indicators.
+
+### Changed
+* **Dynamic Category Discovery**: The `Category` dictionary in `_meta.py` is now built dynamically by scanning the filesystem structure. This eliminates manual maintenance, ensures it stays in sync with available indicators, and automatically discovered several previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
+* **Updated Indicator Counts**: Corrected total indicator count from 143 to 141 indicators, and total count from 205 to 203 (141 indicators + 62 TA-Lib patterns) to reflect actual available indicators. Candle patterns now show: 5 native + 62 TA-Lib = 67 total.
+* **Documentation Updates**: Updated README.md, docs/indicators.rst, and CONTRIBUTING.md to reflect dynamic discovery and correct indicator counts.
+* **Python Version Support**: Updated to Python (the latest stable plus the prior 4 versions) following a rolling 5-version support policy. Version requirements are now dynamically managed via CI/CD workflows (`LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`).
+* **Development Status**: Changed from Beta to Production/Stable in `pyproject.toml` to reflect library maturity.
+
+### Fixed
+* **CI/CD Shallow Clone Issue**: Added `fetch-depth: 0` to all GitHub Actions checkout steps to ensure full git history is available for setuptools-scm. This prevents version detection failures in CI/CD pipelines.
+* **Version Fallback Compatibility**: Changed fallback version from `0.0.0.dev0` to `0.0.0` in both `pyproject.toml` and `_meta.py` to prevent invalid version strings (e.g., `0.0.0.dev0.post1`) that violate PEP 440 when combined with post-release versioning scheme.
+
+<br />
+
 ## **General**
 * A __Strategy__ Class to help name and group your favorite indicators.
 * If a **TA Lib** is already installed, Pandas TA will run TA Lib's version. (**BETA**)

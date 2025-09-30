@@ -5,13 +5,16 @@ title: Pandas TA Classic - Technical Analysis Library
 
 # Pandas TA Classic
 
-**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with more than 140 Indicators and Utility functions. This is the **community maintained version** of the popular pandas-ta library.
+**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **141 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (**203 total**). This is the **community maintained version** of the popular pandas-ta library.
 
 ![Example Chart](images/TA_Chart.png)
 
 ## Features
 
-* 140+ indicators and utility functions
+* **141 indicators and utility functions** across 9 categories
+* **62 TA-Lib candlestick patterns** for comprehensive pattern recognition
+* **203 total indicators and patterns**
+* Dynamic category discovery - automatically detects available indicators
 * Tightly correlated with TA-Lib indicators
 * Supports both standalone and DataFrame extension usage
 * Multiprocessing support via Strategy method
@@ -20,11 +23,24 @@ title: Pandas TA Classic - Technical Analysis Library
 
 ## Quick Installation
 
-```bash
-# Stable version
-pip install pandas-ta-classic
+Supports both modern `uv` and traditional `pip`:
 
-# Latest version from GitHub
+Using `uv` (recommended):
+```bash
+uv pip install pandas-ta-classic
+```
+
+Using `pip`:
+```bash
+pip install pandas-ta-classic
+```
+
+Latest version:
+```bash
+# Using uv
+uv pip install git+https://github.com/xgboosted/pandas-ta-classic
+
+# Using pip
 pip install -U git+https://github.com/xgboosted/pandas-ta-classic
 ```
 
@@ -52,7 +68,7 @@ For detailed documentation, examples, and the complete list of indicators, pleas
 
 ## Categories of Indicators
 
-- **Candles** (65): Pattern recognition indicators (3 native + 62 TA-Lib patterns)
+- **Candles** (67): Pattern recognition indicators (5 native + 62 TA-Lib patterns)
 - **Momentum** (41): RSI, MACD, Stochastic, etc.
 - **Overlap** (34): Moving averages, Bollinger Bands, etc.
 - **Trend** (18): ADX, Aroon, Parabolic SAR, etc.

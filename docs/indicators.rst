@@ -1,9 +1,9 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 143 indicators and utility functions plus 62 TA-Lib candlestick patterns (205 total) organized into the following categories:
+**Pandas TA Classic** includes 141 indicators and utility functions plus 62 TA-Lib candlestick patterns (203 total) organized into the following categories:
 
-* **Candles** (65) - Candlestick patterns for market sentiment analysis (3 native + 62 TA-Lib patterns)  
+* **Candles** (67) - Candlestick patterns for market sentiment analysis (5 native + 62 TA-Lib patterns)  
 * **Cycles** (1) - Cycle-based technical indicators  
 * **Momentum** (41) - Momentum and oscillator indicators
 * **Overlap** (34) - Moving averages and trend-following indicators
@@ -14,10 +14,16 @@ Indicators Reference
 * **Volatility** (14) - Volatility and range-based indicators
 * **Volume** (15) - Volume analysis indicators
 
-Candles (65)
+.. note::
+   The category system now uses **dynamic discovery** - indicators are automatically detected from the package structure, ensuring the list is always up-to-date with available indicators.
+
+Candles (67)
 ------------
 
-Candlestick patterns for identifying market sentiment and potential reversals. This includes 3 native patterns (**cdl_pattern**, **cdl_z**, **ha**) plus 62 TA-Lib patterns. Patterns that are **not bold** require TA-Lib to be installed: ``pip install TA-Lib``
+Candlestick patterns for identifying market sentiment and potential reversals. This includes 5 native patterns (**cdl_doji**, **cdl_inside**, **cdl_pattern**, **cdl_z**, **ha**) plus 62 TA-Lib patterns. Patterns that are **not bold** require TA-Lib to be installed:
+
+- Using ``uv``: ``uv pip install TA-Lib``
+- Using ``pip``: ``pip install TA-Lib``
 
 .. code-block:: python
 
@@ -36,13 +42,16 @@ Available patterns:
 * abandonedbaby, advanceblock, belthold, breakaway, closingmarubozu, concealbabyswall, counterattack
 * darkcloudcover, **doji**, dojistar, dragonflydoji, engulfing, eveningdojistar, eveningstar
 * gapsidesidewhite, gravestonedoji, hammer, hangingman, harami, haramicross, highwave
-* hikkake, hikkakemod, homingpigeon, identical3crows, inneck, **inside**, invertedhammer
+* hikkake, hikkakemod, homingpigeon, identical3crows, **inside**, inneck, invertedhammer
 * kicking, kickingbylength, ladderbottom, longleggeddoji, longline, marubozu, matchinglow
 * mathold, morningdojistar, morningstar, onneck, piercing, rickshawman, risefall3methods
 * separatinglines, shootingstar, shortline, spinningtop, stalledpattern, sticksandwich
 * takuri, tasukigap, thrusting, tristar, unique3river, upsidegap2crows, xsidegap3methods
 * *Heikin-Ashi*: **ha**
 * *Z Score*: **cdl_z**
+
+.. note::
+   **Bold patterns** are native implementations. Use ``df.ta.cdl_doji()`` or ``df.ta.cdl_inside()`` to access the native doji and inside bar patterns directly.
 
 Cycles (1)
 ----------
@@ -114,6 +123,7 @@ Moving averages and trend-following indicators:
 * *Jurik Moving Average*: **jma**
 * *Kaufman's Adaptive Moving Average*: **kama**
 * *Linear Regression*: **linreg**
+* *Moving Average*: **ma** (Generic moving average selector)
 * *McGinley Dynamic*: **mcgd**
 * *Midpoint*: **midpoint**
 * *Midprice*: **midprice**

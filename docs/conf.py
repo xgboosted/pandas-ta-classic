@@ -65,9 +65,9 @@ html_show_copyright = True
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -75,10 +75,15 @@ project = "Pandas TA Classic"
 copyright = "2025, xgboosted"
 author = "xgboosted"
 
-# The short X.Y version
-version = "0.3.14b"
-# The full version, including alpha/beta/rc tags
-release = "0.3.14b"
+# Get version dynamically from the package
+try:
+    from pandas_ta_classic._meta import __version__
+    version = __version__
+    release = __version__
+except ImportError:
+    # Fallback if package not installed
+    version = "0.0.0"
+    release = "0.0.0"
 
 # -- General configuration ---------------------------------------------------
 
