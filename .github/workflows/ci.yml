@@ -81,16 +81,16 @@ jobs:
         # Install code quality tools
         pip install flake8 black
     
+    - name: Check code formatting with black
+      run: |
+        black --check --diff pandas_ta_classic/
+    
     - name: Run flake8 linting
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 pandas_ta_classic --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings for non-critical issues
         flake8 pandas_ta_classic --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=pandas_ta_classic/__init__.py
-    
-    - name: Check code formatting with black
-      run: |
-        black --check --diff pandas_ta_classic/
 
   # Job 3: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
