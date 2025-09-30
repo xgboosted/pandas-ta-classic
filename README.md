@@ -131,7 +131,7 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 ## 🐍 Python Version Support
 
-**Pandas TA Classic** supports Python **3.9 through 3.13** (current as of October 2025) following a **rolling support policy** for the latest stable Python version plus 4 preceding minor versions.
+**Pandas TA Classic** follows a **rolling support policy** for the latest stable Python version plus 4 preceding minor versions.
 
 > **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
 

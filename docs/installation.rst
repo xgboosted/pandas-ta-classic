@@ -6,12 +6,12 @@ Requirements
 
 **Pandas TA Classic** requires:
 
-- Python 3.9 or higher
+- Python (the latest stable version plus the prior 4 minor versions)
 - pandas
 - numpy
 
 .. note::
-   Python version support follows a **rolling policy**: the latest stable Python version plus 4 preceding minor versions. As of October 2025, this means Python 3.9 through 3.13. When new Python versions are released, support is automatically updated via CI/CD workflows.
+   Python version support follows a **rolling policy**: the latest stable Python version plus 4 preceding minor versions. When new Python versions are released, support is automatically updated via CI/CD workflows. Check the `CI workflow <https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml>`_ for the current supported versions.
 
 Optional Dependencies
 ---------------------

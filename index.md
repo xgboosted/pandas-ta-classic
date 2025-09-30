@@ -5,14 +5,15 @@ title: Pandas TA Classic - Technical Analysis Library
 
 # Pandas TA Classic
 
-**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with more than 141 Indicators and Utility functions plus 62 TA-Lib candlestick patterns (203 total). This is the **community maintained version** of the popular pandas-ta library.
+**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **141 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (**203 total**). This is the **community maintained version** of the popular pandas-ta library.
 
 ![Example Chart](images/TA_Chart.png)
 
 ## Features
 
-* 141 indicators and utility functions across 9 categories
-* 62 TA-Lib candlestick patterns for comprehensive pattern recognition
+* **141 indicators and utility functions** across 9 categories
+* **62 TA-Lib candlestick patterns** for comprehensive pattern recognition
+* **203 total indicators and patterns**
 * Dynamic category discovery - automatically detects available indicators
 * Tightly correlated with TA-Lib indicators
 * Supports both standalone and DataFrame extension usage
@@ -67,7 +68,7 @@ For detailed documentation, examples, and the complete list of indicators, pleas
 
 ## Categories of Indicators
 
-- **Candles** (65): Pattern recognition indicators (3 native + 62 TA-Lib patterns)
+- **Candles** (67): Pattern recognition indicators (5 native + 62 TA-Lib patterns)
 - **Momentum** (41): RSI, MACD, Stochastic, etc.
 - **Overlap** (34): Moving averages, Bollinger Bands, etc.
 - **Trend** (18): ADX, Aroon, Parabolic SAR, etc.

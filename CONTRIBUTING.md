@@ -6,7 +6,7 @@ We welcome contributions to pandas-ta-classic! This document provides guidelines
 
 ### Prerequisites
 
-- Python 3.9+
+- Python (latest stable plus prior 4 minor versions - see CI workflows for current supported versions)
 - Git
 - GitHub account
 
