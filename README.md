@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/xgboosted/pandas-ta-classic">
-    <img src="images/logo.svg" width="150" height="150" alt="Pandas TA Classic">
+    <img src="images/logo.png" width="150" height="150" alt="Pandas TA Classic">
   </a>
 </p>
 
