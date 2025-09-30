@@ -145,4 +145,4 @@ packages = [
 write_to = "pandas_ta_classic/_version.py"
 version_scheme = "post-release"  # Keeps current version with .post.dev suffix
 local_scheme = "no-local-version"  # Omit local version for clean releases
-fallback_version = "0.0.0.dev0"  # Fallback if not in a git repository
+fallback_version = "0.0.0"  # Fallback if not in a git repository

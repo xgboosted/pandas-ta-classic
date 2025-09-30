@@ -32,6 +32,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -50,6 +52,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -105,6 +109,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -145,6 +151,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Show Python versions from generate-matrix
       run: |
@@ -201,6 +209,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -281,6 +291,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Validate release version uniqueness
       run: |

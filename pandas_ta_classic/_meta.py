@@ -18,7 +18,7 @@ except ImportError:
         try:
             __version__ = version("pandas-ta-classic")
         except PackageNotFoundError:
-            __version__ = "0.0.0.dev0"  # Fallback if package not installed
+            __version__ = "0.0.0"  # Fallback if package not installed
     except ImportError:
         # Fallback for Python < 3.8
         try:
@@ -28,9 +28,9 @@ except ImportError:
                 _dist = get_distribution("pandas-ta-classic")
                 __version__ = _dist.version
             except DistributionNotFound:
-                __version__ = "0.0.0.dev0"  # Fallback if package not installed
+                __version__ = "0.0.0"  # Fallback if package not installed
         except ImportError:
-            __version__ = "0.0.0.dev0"  # Final fallback
+            __version__ = "0.0.0"  # Final fallback
 
 version = __version__
 
