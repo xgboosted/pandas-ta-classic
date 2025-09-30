@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 * **Dynamic Category Discovery**: The `Category` dictionary in `_meta.py` is now built dynamically by scanning the filesystem structure. This eliminates manual maintenance, ensures it stays in sync with available indicators, and automatically discovered several previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
 * **Updated Indicator Counts**: Corrected total indicator count from 143 to 141 indicators, and total count from 205 to 203 (141 indicators + 62 TA-Lib patterns) to reflect actual available indicators.
 * **Documentation Updates**: Updated README.md, docs/indicators.rst, and CONTRIBUTING.md to reflect dynamic discovery and correct indicator counts.
-* **Python Version Support**: Updated to Python 3.9-3.13 following a rolling 5-version support policy. Version requirements are now dynamically managed via CI/CD workflows (`LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`).
+* **Python Version Support**: Updated to Python (the latest stable plus the prior 4 versions) following a rolling 5-version support policy. Version requirements are now dynamically managed via CI/CD workflows (`LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`).
 * **Development Status**: Changed from Beta to Production/Stable in `pyproject.toml` to reflect library maturity.
 
 <br />

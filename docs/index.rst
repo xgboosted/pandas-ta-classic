@@ -7,7 +7,7 @@ Pandas TA Classic Documentation
    The library features **dynamic configuration management**:
    
    - **Category Discovery**: Indicators are automatically detected from the package structure
-   - **Version Management**: Python version support (3.9-3.13) is dynamically managed via CI/CD workflows
+   - **Version Management**: Python version support (the latest stable plus the prior 4 versions) is dynamically managed via CI/CD workflows
    - Both ensure the library metadata stays in sync with actual capabilities
 
 .. image:: https://img.shields.io/github/license/xgboosted/pandas-ta-classic

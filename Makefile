@@ -1,7 +1,7 @@
 # Pandas TA Classic - Makefile
 # ============================
 # Quick reference for common development tasks
-# Python version: 3.9-3.13 (dynamically managed via CI/CD)
+# Python version: the latest stable plus the prior 4 versions (dynamically managed via CI/CD)
 
 # Package manager detection (prefer uv if available, fallback to pip)
 PIP := $(shell command -v uv pip 2> /dev/null || echo pip)
