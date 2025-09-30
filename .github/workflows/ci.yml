@@ -42,8 +42,8 @@ jobs:
     
     - name: Display package version from git
       run: |
-        pip install setuptools-scm
-        VERSION=$(python -c "from setuptools_scm import get_version; print(get_version())")
+        pip install -e . --no-deps
+        VERSION=$(python -c "import pandas_ta_classic as ta; print(ta.version)")
         echo "📦 Package Version: $VERSION"
         echo "### 📦 Package Version" >> $GITHUB_STEP_SUMMARY
         echo "**$VERSION**" >> $GITHUB_STEP_SUMMARY
