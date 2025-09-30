@@ -13,7 +13,9 @@ try:
     try:
         __version__ = version("pandas-ta-classic")
     except PackageNotFoundError:
-        __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
+        __version__ = (
+            "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
+        )
 except ImportError:
     # Fallback for when importlib.metadata is not available (Python < 3.8)
     try:
@@ -25,7 +27,9 @@ except ImportError:
         except DistributionNotFound:
             __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
     except ImportError:
-        __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
+        __version__ = (
+            "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
+        )
 
 version = __version__
 
@@ -53,35 +57,42 @@ Imports = {
 def _build_category_dict():
     """
     Dynamically build the Category dictionary by scanning the package directory structure.
-    
+
     This function automatically discovers all indicator modules by:
     1. Finding all subdirectories in pandas_ta_classic (except special ones like __pycache__)
     2. For each subdirectory, listing all .py files (except __init__.py)
     3. Building a dictionary mapping category names to lists of indicator names
-    
+
     Returns:
         dict: Category dictionary mapping category names to lists of indicator function names
     """
     categories = {}
-    
+
     # Get the directory containing this file (pandas_ta_classic/)
     package_dir = Path(__file__).parent
-    
+
     # Define categories that should be included (subdirectories with indicators)
     # This excludes utility directories that don't contain indicators
     valid_categories = {
-        "candles", "cycles", "momentum", "overlap", "performance",
-        "statistics", "trend", "volatility", "volume"
+        "candles",
+        "cycles",
+        "momentum",
+        "overlap",
+        "performance",
+        "statistics",
+        "trend",
+        "volatility",
+        "volume",
     }
-    
+
     # Scan each subdirectory
     for category_path in package_dir.iterdir():
         # Skip if not a directory or not a valid category
         if not category_path.is_dir():
             continue
-        
+
         category_name = category_path.name
-        
+
         # Skip special directories and non-indicator directories
         if category_name.startswith("_") or category_name.startswith("."):
             continue
@@ -89,18 +100,18 @@ def _build_category_dict():
             continue
         if category_name not in valid_categories:
             continue
-        
+
         # Find all .py files in this category (excluding __init__.py)
         indicators = []
         for file_path in category_path.glob("*.py"):
             if file_path.name != "__init__.py":
                 # Remove .py extension to get the indicator name
                 indicators.append(file_path.stem)
-        
+
         # Sort indicators alphabetically for consistency
         if indicators:
             categories[category_name] = sorted(indicators)
-    
+
     return categories
 
 
