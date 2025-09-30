@@ -40,6 +40,15 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
+    - name: Display package version from git
+      run: |
+        pip install setuptools-scm
+        VERSION=$(python -c "from setuptools_scm import get_version; print(get_version())")
+        echo "📦 Package Version: $VERSION"
+        echo "### 📦 Package Version" >> $GITHUB_STEP_SUMMARY
+        echo "**$VERSION**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+    
     - name: Validate package structure
       run: |
         python validate_structure.py
