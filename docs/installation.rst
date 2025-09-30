@@ -10,6 +10,9 @@ Requirements
 - pandas
 - numpy
 
+.. note::
+   Python version support follows a **rolling policy**: the latest stable Python version plus 4 preceding minor versions. As of October 2025, this means Python 3.9 through 3.13. When new Python versions are released, support is automatically updated via CI/CD workflows.
+
 Optional Dependencies
 ---------------------
 
@@ -22,10 +25,20 @@ For enhanced functionality, consider installing:
 Installation Methods
 --------------------
 
+**Pandas TA Classic** supports both modern **uv** and traditional **pip** package managers.
+
 Stable Release (Recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install the latest stable release from PyPI:
+
+Using ``uv`` (recommended - faster):
+
+.. code-block:: bash
+
+    uv pip install pandas-ta-classic
+
+Using ``pip``:
 
 .. code-block:: bash
 
@@ -36,18 +49,17 @@ Latest Development Version
 
 Install the most recent version with all latest features and bug fixes:
 
+Using ``uv``:
+
+.. code-block:: bash
+
+    uv pip install git+https://github.com/xgboosted/pandas-ta-classic
+
+Using ``pip``:
+
 .. code-block:: bash
 
     pip install -U git+https://github.com/xgboosted/pandas-ta-classic
-
-Cutting Edge (Development Branch)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Warning**: This version may contain bugs and breaking changes. Use at your own risk!
-
-.. code-block:: bash
-
-    pip install -U git+https://github.com/xgboosted/pandas-ta-classic.git@development
 
 Installing TA-Lib
 ------------------
@@ -55,6 +67,14 @@ Installing TA-Lib
 To use all candlestick patterns, install TA-Lib:
 
 **Windows/macOS/Linux**:
+
+Using ``uv``:
+
+.. code-block:: bash
+
+    uv pip install TA-Lib
+
+Using ``pip``:
 
 .. code-block:: bash
 
@@ -67,6 +87,24 @@ Installing Optional Dependencies
 
 For complete functionality:
 
+Using ``uv``:
+
+.. code-block:: bash
+
+    # For stock data download
+    uv pip install yfinance
+    
+    # For backtesting
+    uv pip install vectorbt
+    
+    # For enhanced performance (if available for your system)
+    uv pip install numba
+    
+    # Install all optional dependencies at once
+    uv pip install pandas-ta-classic[optional]
+
+Using ``pip``:
+
 .. code-block:: bash
 
     # For stock data download
@@ -77,6 +115,9 @@ For complete functionality:
     
     # For enhanced performance (if available for your system)
     pip install numba
+    
+    # Install all optional dependencies at once
+    pip install pandas-ta-classic[optional]
 
 Verification
 ------------

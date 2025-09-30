@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pandas-ta-classic"
-version = "0.3.14b1"
-description = "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib. This is the classic/community maintained version."
+version = "UPDATEME!"  # Placeholder - replaced by CI/CD during release
+description = "Technical Analysis Indicators - Pandas TA Classic is an easy to use Python 3 Pandas Extension with 200+ Indicators and Candlestick Patterns"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -16,7 +16,7 @@ maintainers = [
 ]
 keywords = ["technical analysis", "trading", "python3", "pandas"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Operating System :: OS Independent",
     "Natural Language :: English",
     "Intended Audience :: Developers",
@@ -26,33 +26,92 @@ classifiers = [
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    # Python version classifiers below are PLACEHOLDERS
+    # Replaced dynamically by CI/CD during release based on generate-matrix job
+    # Format: LATEST_PYTHON_VERSION and 4 preceding minor versions
+    "Programming Language :: Python :: {{LATEST-4}}",
+    "Programming Language :: Python :: {{LATEST-3}}",
+    "Programming Language :: Python :: {{LATEST-2}}",
+    "Programming Language :: Python :: {{LATEST-1}}",
+    "Programming Language :: Python :: {{LATEST}}",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.{{LATEST-4}}"  # Minimum Python version - must match oldest in classifiers
 dependencies = [
     "numpy>=2.0.0",
-    "pandas>=2.0.0"
+    "pandas>=2.0.0",
+    "python-dateutil>=2.8.1",
+    "pytz>=2021.1",
+    "six>=1.16.0"
 ]
 
 [project.optional-dependencies]
-dev = [
-    "alphaVantage-api",
-    "matplotlib", 
-    "mplfinance",
+# Core optional runtime dependencies
+optional = [
     "scipy",
-    "sklearn",
+    "sklearn", 
     "statsmodels",
     "stochastic",
     "talib",
     "tqdm",
-    "vectorbt",
-    "yfinance",
 ]
-test = ["ta-lib"]
+
+# Development tools (code quality, linting, building)
+dev = [
+    # Include testing dependencies
+    "pandas-ta-classic[test]",
+    
+    # Include documentation dependencies  
+    "pandas-ta-classic[docs]",
+    
+    # Type checking and linting
+    "mypy>=1.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0", 
+    "isort>=5.0.0",
+    
+    # Build tools
+    "build>=0.10.0",
+    "twine>=4.0.0",
+    
+    # Pre-commit hooks
+    "pre-commit>=3.0.0",
+]
+
+# Testing framework
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0", 
+    "pytest-benchmark>=4.0.0",
+    "hypothesis>=6.0.0"
+]
+
+# Documentation building
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=2.0.0",
+    "matplotlib",
+    "mplfinance"
+]
+
+# Performance optimization
+performance = [
+    "numba>=0.58.0",
+    "cython>=3.0.0"
+]
+
+# Data sources and external integrations
+integration = [
+    "vectorbt",
+    "backtrader", 
+    "yfinance",
+    "alphaVantage-api"
+]
+
+# Complete environment with all features
+all = [
+    "pandas-ta-classic[optional,dev,test,docs,performance,integration]"
+]
 
 [project.urls]
 Homepage = "https://github.com/xgboosted/pandas-ta-classic"
@@ -78,5 +137,3 @@ packages = [
 
 [tool.setuptools.package-data]
 "*" = ["data/*.csv"]
-
-# Remove the setuptools.dynamic section since we're not using dynamic version anymore

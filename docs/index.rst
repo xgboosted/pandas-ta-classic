@@ -1,7 +1,14 @@
 Pandas TA Classic Documentation
 ===============================
 
-**Pandas TA Classic** is an easy to use library that leverages the Pandas package with more than 140 Indicators and Utility functions and more than 60 TA Lib Candlestick Patterns. This is the **community maintained version** of the popular pandas-ta library.
+**Pandas TA Classic** is an easy to use library that leverages the Pandas package with **141 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (203 total). This is the **community maintained version** of the popular pandas-ta library.
+
+.. note::
+   The library features **dynamic configuration management**:
+   
+   - **Category Discovery**: Indicators are automatically detected from the package structure
+   - **Version Management**: Python version support (3.9-3.13) is dynamically managed via CI/CD workflows
+   - Both ensure the library metadata stays in sync with actual capabilities
 
 .. image:: https://img.shields.io/github/license/xgboosted/pandas-ta-classic
    :target: #license
@@ -18,9 +25,21 @@ Pandas TA Classic Documentation
 Quick Start
 -----------
 
+**Pandas TA Classic** supports both modern ``uv`` and traditional ``pip`` package managers.
+
+Using ``uv`` (recommended - faster):
+
+.. code-block:: bash
+
+   uv pip install pandas-ta-classic
+
+Using ``pip``:
+
 .. code-block:: bash
 
    pip install pandas-ta-classic
+
+Basic usage:
 
 .. code-block:: python
 

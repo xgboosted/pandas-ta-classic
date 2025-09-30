@@ -20,7 +20,7 @@
 
 ![Example Chart](/images/TA_Chart.png)
 
-**Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **143 indicators and utility functions** and **62 TA Lib candlestick patterns** (**205 total**). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
+**Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **141 indicators and utility functions** and **62 TA Lib candlestick patterns** (**203 total**). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
@@ -28,14 +28,60 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 ### Installation
 
+The library supports both modern **uv** and traditional **pip** package managers.
+
 **Stable Release**
+
+Using `uv` (recommended - faster):
+```bash
+uv pip install pandas-ta-classic
+```
+
+Using `pip`:
 ```bash
 pip install pandas-ta-classic
 ```
 
 **Latest Version**
+
+Using `uv`:
+```bash
+uv pip install git+https://github.com/xgboosted/pandas-ta-classic
+```
+
+Using `pip`:
 ```bash
 pip install -U git+https://github.com/xgboosted/pandas-ta-classic
+```
+
+**Development Installation**
+
+Using `uv`:
+```bash
+# Clone the repository
+git clone https://github.com/xgboosted/pandas-ta-classic.git
+cd pandas-ta-classic
+
+# Install with all dependencies
+uv pip install -e ".[all]"
+
+# Or install specific dependency groups:
+uv pip install -e ".[dev]"      # Development tools
+uv pip install -e ".[optional]" # Optional features like TA-Lib
+```
+
+Using `pip`:
+```bash
+# Clone the repository
+git clone https://github.com/xgboosted/pandas-ta-classic.git
+cd pandas-ta-classic
+
+# Install with all dependencies
+pip install -e ".[all]"
+
+# Or install specific dependency groups:
+pip install -e ".[dev]"      # Development tools
+pip install -e ".[optional]" # Optional features like TA-Lib
 ```
 
 ### Basic Usage
@@ -61,9 +107,10 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 ## 📊 Features
 
-- **143 Technical Indicators & Utilities** across 9 categories (Candles, Momentum, Overlap, Trend, Volume, etc.)
+- **141 Technical Indicators & Utilities** across 9 categories (Candles, Momentum, Overlap, Trend, Volume, etc.)
 - **62 TA Lib Candlestick Patterns** for comprehensive pattern recognition
-- **205 Total Indicators & Patterns** - the most comprehensive Python TA library
+- **203 Total Indicators & Patterns** - the most comprehensive Python TA library
+- **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Strategy System** with multiprocessing support for bulk indicator processing
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
 - **TA Lib Integration** - automatically uses TA Lib versions when available
@@ -77,16 +124,20 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 ### Quick Links
 - 📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
 - 🏗️ [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing  
-- 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 143 indicators & 62 patterns
+- 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 141 indicators & 62 patterns
 - 🔧 [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - 📈 [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis
 - 💡 [**Examples**](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) - Jupyter notebooks and code examples
 
 ## 🐍 Python Version Support
 
-**Pandas TA Classic** supports Python **3.9 through 3.13** following a rolling support policy for the latest stable version plus 4 preceding minor versions.
+**Pandas TA Classic** supports Python **3.9 through 3.13** (current as of October 2025) following a **rolling support policy** for the latest stable Python version plus 4 preceding minor versions.
 
-**Note:** _TA Lib_ installation enables all candlestick patterns: `pip install TA-Lib`
+> **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
+
+**Note:** _TA Lib_ installation enables all candlestick patterns:
+- Using `uv`: `uv pip install TA-Lib`
+- Using `pip`: `pip install TA-Lib`
 
 ## 🤝 Contributing
 
