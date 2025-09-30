@@ -24,6 +24,15 @@
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
+### 🎯 Key Features
+
+- **203 Technical Indicators**: 141 indicators + 62 TA-Lib candlestick patterns
+- **Native Candlestick Patterns**: 5 patterns (cdl_doji, cdl_inside, cdl_z, cdl_pattern, ha) work without TA-Lib
+- **Automatic Versioning**: Version management via git tags using setuptools-scm
+- **Modern Package Management**: Full support for both `uv` and `pip`
+- **Production Ready**: Stable status with comprehensive test coverage
+- **Active Development**: Regular updates with community contributions
+
 ## 🚀 Quick Start
 
 ### Installation

@@ -82,8 +82,8 @@ try:
     release = __version__
 except ImportError:
     # Fallback if package not installed
-    version = "0.0.0.dev0"
-    release = "0.0.0.dev0"
+    version = "0.0.0"
+    release = "0.0.0"
 
 # -- General configuration ---------------------------------------------------
 

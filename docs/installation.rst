@@ -61,6 +61,49 @@ Using ``pip``:
 
     pip install -U git+https://github.com/xgboosted/pandas-ta-classic
 
+Development Installation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+For contributing to the project or testing unreleased features:
+
+Using ``uv``:
+
+.. code-block:: bash
+
+    # Clone the repository
+    git clone https://github.com/xgboosted/pandas-ta-classic.git
+    cd pandas-ta-classic
+    
+    # Install in editable mode with all dependencies
+    uv pip install -e ".[all]"
+    
+    # Or install specific dependency groups:
+    uv pip install -e ".[dev]"      # Development tools
+    uv pip install -e ".[optional]" # Optional features like TA-Lib
+
+Using ``pip``:
+
+.. code-block:: bash
+
+    # Clone the repository
+    git clone https://github.com/xgboosted/pandas-ta-classic.git
+    cd pandas-ta-classic
+    
+    # Install in editable mode with all dependencies
+    pip install -e ".[all]"
+    
+    # Or install specific dependency groups:
+    pip install -e ".[dev]"      # Development tools
+    pip install -e ".[optional]" # Optional features like TA-Lib
+
+.. note::
+   **Development Installation Requirements**:
+   
+   - Full git repository with history and tags (not a shallow clone)
+   - setuptools-scm is automatically installed as a build dependency
+   - Git tags determine the package version (e.g., ``0.3.15.post12``)
+   - See the `Version Management section in CONTRIBUTING.md <https://github.com/xgboosted/pandas-ta-classic/blob/main/CONTRIBUTING.md#version-management>`_ for details
+
 Installing TA-Lib
 ------------------
 
