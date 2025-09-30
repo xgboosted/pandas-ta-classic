@@ -13,7 +13,7 @@ try:
     try:
         __version__ = version("pandas-ta-classic")
     except PackageNotFoundError:
-        __version__ = "UPDATEME!"  # Placeholder - replaced by CI/CD during release
+        __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
 except ImportError:
     # Fallback for when importlib.metadata is not available (Python < 3.8)
     try:
@@ -23,9 +23,9 @@ except ImportError:
             _dist = get_distribution("pandas-ta-classic")
             __version__ = _dist.version
         except DistributionNotFound:
-            __version__ = "UPDATEME!"  # Placeholder - replaced by CI/CD during release
+            __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
     except ImportError:
-        __version__ = "UPDATEME!"  # Placeholder - replaced by CI/CD during release
+        __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
 
 version = __version__
 

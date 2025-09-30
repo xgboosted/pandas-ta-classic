@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pandas-ta-classic"
-version = "UPDATEME!"  # Placeholder - replaced by CI/CD during release
+version = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release with actual version
 description = "Technical Analysis Indicators - Pandas TA Classic is an easy to use Python 3 Pandas Extension with 200+ Indicators and Candlestick Patterns"
 readme = "README.md"
 license = {text = "MIT"}

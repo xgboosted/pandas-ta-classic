@@ -267,7 +267,7 @@ jobs:
 
   # Job 6: PyPI Publishing - Build and publish to PyPI (on release published with unique version)
   # This job handles placeholder replacement in pyproject.toml:
-  #   1. Replaces version = "UPDATEME!" with actual release version
+  #   1. Replaces version = "0.0.0.dev0" with actual release version (PEP 440 compliant)
   #   2. Replaces {{LATEST-N}} placeholders with actual Python versions from matrix
   #   3. Replaces requires-python = ">=3.{{LATEST-4}}" with actual minimum version
   #   4. Preserves Development Status :: 5 - Production/Stable and all other classifiers
@@ -357,15 +357,15 @@ jobs:
         with open('pyproject.toml', 'r') as f:
             content = f.read()
         
-        # Replace the "UPDATEME!" placeholder with actual version
-        # This targets the specific placeholder used in pyproject.toml
-        updated_content = content.replace('version = "UPDATEME!"', f'version = "{version}"')
+        # Replace the development placeholder version with actual release version
+        # The placeholder "0.0.0.dev0" is PEP 440 compliant for development builds
+        updated_content = content.replace('version = "0.0.0.dev0"', f'version = "{version}"')
         
         # Write back to pyproject.toml
         with open('pyproject.toml', 'w') as f:
             f.write(updated_content)
         
-        print(f"✅ pyproject.toml version updated: UPDATEME! → {version}")
+        print(f"✅ pyproject.toml version updated: 0.0.0.dev0 → {version}")
         
         # Verify the change
         with open('pyproject.toml', 'r') as f:
