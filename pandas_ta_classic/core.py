@@ -937,7 +937,9 @@ class AnalysisIndicators(BasePandasObject):
 
     # Public DataFrame Methods: Indicators and Utilities
     # Candles
-    def cdl_doji(self, length=None, factor=None, scalar=None, drift=None, offset=None, **kwargs):
+    def cdl_doji(
+        self, length=None, factor=None, scalar=None, drift=None, offset=None, **kwargs
+    ):
         open_ = self._get_column(kwargs.pop("open", "open"))
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
