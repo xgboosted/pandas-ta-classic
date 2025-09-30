@@ -16,9 +16,11 @@ def test_basic_structure():
 
     required_dirs = ["pandas_ta_classic", "tests", "docs", "examples"]
 
+    # Modern Python packaging uses pyproject.toml (PEP 517/518)
+    # requirements.txt is no longer required with pyproject.toml
     required_files = [
         "setup.py",
-        "requirements.txt",
+        "pyproject.toml",  # Modern dependency management
         "README.md",
         "pandas_ta_classic/__init__.py",
     ]
@@ -74,11 +76,16 @@ def test_workflows():
             print(f"✅ Found workflow: {workflow_file}")
 
             # Check that it has basic YAML structure
-            with open(workflow_file, "r") as f:
-                content = f.read()
-                if "name:" not in content or "on:" not in content:
-                    print(f"❌ Invalid workflow structure in {workflow_file}")
-                    return False
+            # Use UTF-8 encoding to handle special characters on Windows
+            try:
+                with open(workflow_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if "name:" not in content or "on:" not in content:
+                        print(f"❌ Invalid workflow structure in {workflow_file}")
+                        return False
+            except Exception as e:
+                print(f"❌ Error reading workflow file: {e}")
+                return False
 
     return True
 
