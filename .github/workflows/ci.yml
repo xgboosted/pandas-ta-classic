@@ -42,7 +42,7 @@ jobs:
     
     - name: Display package version from git
       run: |
-        pip install -e . --no-deps
+        pip install -e .
         VERSION=$(python -c "import pandas_ta_classic as ta; print(ta.version)")
         echo "📦 Package Version: $VERSION"
         echo "### 📦 Package Version" >> $GITHUB_STEP_SUMMARY
