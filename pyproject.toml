@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pandas-ta-classic"
-version = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release with actual version
+dynamic = ["version"]  # Version is dynamically determined from git tags
 description = "Technical Analysis Indicators - Pandas TA Classic is an easy to use Python 3 Pandas Extension with 141 indicators, 62 TA-Lib patterns (203 total)"
 readme = "README.md"
 license = {text = "MIT"}
@@ -137,3 +137,12 @@ packages = [
 
 [tool.setuptools.package-data]
 "*" = ["data/*.csv"]
+
+[tool.setuptools_scm]
+# Automatically determine version from git tags
+# Development builds get a version like: 0.3.15.post.dev12+g39bdfbc
+# Tagged releases get the tag version: 0.3.15
+write_to = "pandas_ta_classic/_version.py"
+version_scheme = "post-release"  # Keeps current version with .post.dev suffix
+local_scheme = "no-local-version"  # Omit local version for clean releases
+fallback_version = "0.0.0.dev0"  # Fallback if not in a git repository

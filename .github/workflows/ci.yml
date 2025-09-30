@@ -267,7 +267,7 @@ jobs:
 
   # Job 6: PyPI Publishing - Build and publish to PyPI (on release published with unique version)
   # This job handles placeholder replacement in pyproject.toml:
-  #   1. Replaces version = "0.0.0.dev0" with actual release version (PEP 440 compliant)
+  #   1. Version is automatically determined by setuptools-scm from git tags (no manual replacement needed)
   #   2. Replaces {{LATEST-N}} placeholders with actual Python versions from matrix
   #   3. Replaces requires-python = ">=3.{{LATEST-4}}" with actual minimum version
   #   4. Preserves Development Status :: 5 - Production/Stable and all other classifiers
@@ -335,44 +335,14 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
-    - name: Update pyproject.toml with release version
+    - name: Install setuptools-scm for version management
       run: |
-        python << 'EOF'
-        import os
-        import re
+        python -m pip install --upgrade pip
+        pip install setuptools-scm
         
-        # Get version from release tag
-        release_tag = os.environ.get('GITHUB_REF_NAME', '')
-        print(f"Release tag: {release_tag}")
-        
-        # Extract version from tag (remove 'v' prefix if present)
-        if release_tag.startswith('v'):
-            version = release_tag[1:]
-        else:
-            version = release_tag
-        
-        print(f"Extracted version: {version}")
-        
-        # Read pyproject.toml
-        with open('pyproject.toml', 'r') as f:
-            content = f.read()
-        
-        # Replace the development placeholder version with actual release version
-        # The placeholder "0.0.0.dev0" is PEP 440 compliant for development builds
-        updated_content = content.replace('version = "0.0.0.dev0"', f'version = "{version}"')
-        
-        # Write back to pyproject.toml
-        with open('pyproject.toml', 'w') as f:
-            f.write(updated_content)
-        
-        print(f"✅ pyproject.toml version updated: 0.0.0.dev0 → {version}")
-        
-        # Verify the change
-        with open('pyproject.toml', 'r') as f:
-            for line_num, line in enumerate(f, 1):
-                if 'version =' in line and not line.strip().startswith('#'):
-                    print(f"Line {line_num}: {line.strip()}")
-        EOF
+        # Verify the version that will be used (from git tag)
+        echo "Version from setuptools-scm:"
+        python -c "from setuptools_scm import get_version; print(get_version())"
     
     - name: Update pyproject.toml with dynamic Python classifiers
       # Replaces all {{LATEST-N}} placeholders in pyproject.toml with actual Python versions
@@ -464,7 +434,7 @@ jobs:
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build twine setuptools-scm
     
     - name: Build package
       run: python -m build --wheel

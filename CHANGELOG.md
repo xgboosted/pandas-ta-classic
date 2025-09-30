@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 * **UV Package Manager Support**: All documentation now includes installation instructions for both `uv` (recommended for faster installs) and traditional `pip`. This includes README.md, CONTRIBUTING.md, docs/installation.rst, docs/index.rst, index.md, and docs/indicators.rst.
-* **Parameterized Package Configuration**: Version and Python classifiers in `pyproject.toml` now use placeholder templates (`0.0.0.dev0` and `{{LATEST-N}}`) that are dynamically replaced during CI/CD release workflows, eliminating hardcoded values and enabling automated version management.
+* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.post` suffix (e.g., `0.3.15.post12`), while tagged releases use the tag version (e.g., `0.4.0`). See VERSIONING.md for details.
 
 ### Changed
 * **Dynamic Category Discovery**: The `Category` dictionary in `_meta.py` is now built dynamically by scanning the filesystem structure. This eliminates manual maintenance, ensures it stays in sync with available indicators, and automatically discovered several previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).

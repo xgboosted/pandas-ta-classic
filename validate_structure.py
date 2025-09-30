@@ -17,12 +17,16 @@ def test_basic_structure():
     required_dirs = ["pandas_ta_classic", "tests", "docs", "examples"]
 
     # Modern Python packaging uses pyproject.toml (PEP 517/518)
-    # requirements.txt is no longer required with pyproject.toml
+    # setup.py is optional for backward compatibility with older pip versions
     required_files = [
-        "setup.py",
-        "pyproject.toml",  # Modern dependency management
+        "pyproject.toml",  # Modern dependency management (PEP 517/518)
         "README.md",
         "pandas_ta_classic/__init__.py",
+    ]
+
+    # Optional files (for backward compatibility or legacy tooling)
+    optional_files = [
+        "setup.py",  # Optional: minimal shim for editable installs with older pip
     ]
 
     for dir_name in required_dirs:
@@ -38,6 +42,13 @@ def test_basic_structure():
             return False
         else:
             print(f"✅ Found file: {file_name}")
+
+    # Check optional files (just informational, not required)
+    for file_name in optional_files:
+        if os.path.isfile(file_name):
+            print(f"ℹ️  Found optional file: {file_name}")
+        else:
+            print(f"ℹ️  Optional file not present: {file_name}")
 
     return True
 

@@ -6,30 +6,31 @@ Contains Category definitions, version information, and import checks.
 from importlib.util import find_spec
 from pathlib import Path
 
-# Version information
+# Version information - dynamically determined from git tags via setuptools_scm
 try:
-    from importlib.metadata import version, PackageNotFoundError
-
-    try:
-        __version__ = version("pandas-ta-classic")
-    except PackageNotFoundError:
-        __version__ = (
-            "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
-        )
+    # Try to import version from setuptools_scm generated file
+    from pandas_ta_classic._version import version as __version__
 except ImportError:
-    # Fallback for when importlib.metadata is not available (Python < 3.8)
+    # Fallback: try to get version from installed package metadata
     try:
-        from pkg_resources import get_distribution, DistributionNotFound
+        from importlib.metadata import version, PackageNotFoundError
 
         try:
-            _dist = get_distribution("pandas-ta-classic")
-            __version__ = _dist.version
-        except DistributionNotFound:
-            __version__ = "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
+            __version__ = version("pandas-ta-classic")
+        except PackageNotFoundError:
+            __version__ = "0.0.0.dev0"  # Fallback if package not installed
     except ImportError:
-        __version__ = (
-            "0.0.0.dev0"  # Development placeholder - replaced by CI/CD during release
-        )
+        # Fallback for Python < 3.8
+        try:
+            from pkg_resources import get_distribution, DistributionNotFound
+
+            try:
+                _dist = get_distribution("pandas-ta-classic")
+                __version__ = _dist.version
+            except DistributionNotFound:
+                __version__ = "0.0.0.dev0"  # Fallback if package not installed
+        except ImportError:
+            __version__ = "0.0.0.dev0"  # Final fallback
 
 version = __version__
 
