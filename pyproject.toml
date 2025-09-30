@@ -35,7 +35,7 @@ classifiers = [
     "Programming Language :: Python :: {{LATEST-1}}",
     "Programming Language :: Python :: {{LATEST}}",
 ]
-requires-python = ">=3.{{LATEST-4}}"  # Minimum Python version - must match oldest in classifiers
+requires-python = ">=3.9"  # Minimum Python version - dynamically updated by CI/CD during release
 dependencies = [
     "numpy>=2.0.0",
     "pandas>=2.0.0",
