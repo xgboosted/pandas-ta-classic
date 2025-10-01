@@ -448,6 +448,14 @@ jobs:
       env:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
+    - name: Set version environment variable
+      run: |
+        # Extract version from the release tag (remove 'v' prefix if present)
+        RELEASE_TAG="${{ github.event.release.tag_name }}"
+        VERSION="${RELEASE_TAG#v}"
+        echo "SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION" >> $GITHUB_ENV
+        echo "📌 Will build with version: $VERSION"
+    
     - name: Validate package structure
       run: |
         python validate_structure.py

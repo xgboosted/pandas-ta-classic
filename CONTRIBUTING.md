@@ -339,6 +339,23 @@ GitHub Actions by default performs shallow clones (only the latest commit), whic
 
 Without `fetch-depth: 0`, setuptools-scm will fall back to `0.0.0`.
 
+#### Release Builds with Modified Files
+
+When building releases in CI/CD that modify files (like `pyproject.toml`), the working directory becomes "dirty" and setuptools-scm would generate a development version. To prevent this, use the `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable:
+
+```yaml
+- name: Set version environment variable
+  run: |
+    RELEASE_TAG="${{ github.event.release.tag_name }}"
+    VERSION="${RELEASE_TAG#v}"
+    echo "SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION" >> $GITHUB_ENV
+
+- name: Build package
+  run: python -m build --wheel
+```
+
+This ensures the exact release tag version is used, even if files are modified during the build process.
+
 #### Fallback Version
 
 If git is not available (e.g., building from a source tarball), the version falls back to `0.0.0`. This is a valid PEP 440 version that won't conflict with the version scheme.
