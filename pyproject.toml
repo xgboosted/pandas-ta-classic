@@ -140,9 +140,10 @@ packages = [
 
 [tool.setuptools_scm]
 # Automatically determine version from git tags
-# Development builds get a version like: 0.3.15.post.dev12+g39bdfbc
-# Tagged releases get the tag version: 0.3.15
+# Tagged releases (no commits after tag) get clean version: 0.3.34
+# Post-releases (commits after tag) get version like: 0.3.34.post5
+# Development builds get: 0.3.34.post5.dev0+g1234567
 write_to = "pandas_ta_classic/_version.py"
-version_scheme = "post-release"  # Keeps current version with .post.dev suffix
-local_scheme = "no-local-version"  # Omit local version for clean releases
+version_scheme = "_version_scheme:custom_post_release_scheme"  # Custom scheme that omits .post0
+local_scheme = "_version_scheme:custom_local_scheme"  # Custom local version handling
 fallback_version = "0.0.0"  # Fallback if not in a git repository
