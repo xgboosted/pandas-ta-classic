@@ -101,7 +101,7 @@ Using ``pip``:
    
    - Full git repository with history and tags (not a shallow clone)
    - setuptools-scm is automatically installed as a build dependency
-   - Git tags determine the package version (e.g., ``0.3.15.post12``)
+   - Git tags determine the package version (e.g., ``0.3.36.dev1`` for development, ``0.3.35`` for releases)
    - See the `Version Management section in CONTRIBUTING.md <https://github.com/xgboosted/pandas-ta-classic/blob/main/CONTRIBUTING.md#version-management>`_ for details
 
 Installing TA-Lib

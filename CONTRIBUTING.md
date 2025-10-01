@@ -233,29 +233,30 @@ The project uses [setuptools-scm](https://github.com/pypa/setuptools-scm) for au
 Version numbers are automatically determined from git tags and commit history:
 
 - **Tagged releases**: Version matches the git tag exactly (e.g., `0.4.0`)
-- **Development builds**: Version includes `.post` suffix with commit count (e.g., `0.3.15.post12`)
+- **Development builds**: Version includes `.dev` suffix with commit count (e.g., `0.3.36.dev1`)
 
 #### Version Scheme
 
-We use the `post-release` version scheme:
+We use the default `guess-next-dev` version scheme:
 ```
-0.3.15.post12  # 12 commits after tag 0.3.15
-0.4.0          # Clean release from tag 0.4.0
+0.3.35         # Clean release from tag 0.3.35
+0.3.36.dev1    # 1 commit after tag 0.3.35 (developing towards 0.3.36)
+0.3.36.dev2    # 2 commits after tag 0.3.35
 ```
 
-This scheme keeps the base version from the most recent tag and appends a `.post` suffix with the number of commits since that tag.
+This scheme provides clean version numbers on tagged releases (no `.post0` suffix) and uses `.devN` for development builds, clearly indicating work-in-progress towards the next release.
 
 ### For Contributors
 
 When working on the repository:
 
 - **Never manually edit version strings** - versions are automatically determined from git tags
-- Development builds show `.post` suffix (e.g., `0.3.15.post12` = 12 commits after 0.3.15 tag)
+- Development builds show `.dev` suffix (e.g., `0.3.36.dev1` = developing towards 0.3.36)
 - Clone with full history (not shallow): `git clone https://github.com/xgboosted/pandas-ta-classic.git`
 - Check current version:
   ```python
   import pandas_ta_classic as ta
-  print(ta.version)  # Should show something like 0.3.15.post12
+  print(ta.version)  # Should show something like 0.3.36.dev1
   ```
 
 ### For Maintainers
@@ -319,7 +320,7 @@ dynamic = ["version"]
 
 [tool.setuptools_scm]
 write_to = "pandas_ta_classic/_version.py"
-version_scheme = "post-release"
+# Default scheme: clean version on tags, .devN after tags
 local_scheme = "no-local-version"
 fallback_version = "0.0.0"
 ```
@@ -340,7 +341,7 @@ Without `fetch-depth: 0`, setuptools-scm will fall back to `0.0.0`.
 
 #### Fallback Version
 
-If git is not available (e.g., building from a source tarball), the version falls back to `0.0.0`. This is a valid PEP 440 version that won't conflict with the post-release scheme.
+If git is not available (e.g., building from a source tarball), the version falls back to `0.0.0`. This is a valid PEP 440 version that won't conflict with the version scheme.
 
 ### Troubleshooting
 
@@ -348,7 +349,7 @@ If git is not available (e.g., building from a source tarball), the version fall
 
 **Cause**: 
 - Git repository is shallow (missing tags/history)
-- Fallback version uses `.dev0` suffix which conflicts with post-release scheme
+- Fallback version uses `.dev0` suffix which conflicts with version scheme
 
 **Solution**:
 - In CI/CD: Add `fetch-depth: 0` to all checkout actions
@@ -369,13 +370,14 @@ If git is not available (e.g., building from a source tarball), the version fall
 
 **Cause**: Working from a clean tag without additional commits
 
-**Solution**: This is expected behavior. Make commits after the tag to see `.post` suffix increment.
+**Solution**: This is expected behavior. Make commits after the tag to see `.dev` suffix increment.
 
 ### Benefits
 
 - **No manual version updates**: Version is always correct based on git tags
 - **No version conflicts**: Single source of truth (git tags)
-- **Development clarity**: `.post` suffix clearly indicates development builds
+- **Development clarity**: `.dev` suffix clearly indicates pre-release development builds
+- **Clean releases**: Tagged releases get exact version numbers without suffixes
 - **PEP 440 compliant**: All versions follow Python versioning standards
 - **CI/CD friendly**: Works automatically in GitHub Actions with proper configuration
 

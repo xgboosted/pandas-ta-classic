@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## **[Unreleased]**
 
+### Fixed
+* **Version Scheme Optimization**: Changed from `post-release` to default version scheme to avoid `.post0` suffix on tagged releases. Tagged releases now get clean version numbers (e.g., `0.3.35`), while commits after tags get development versions (e.g., `0.3.36.dev1`). This provides clearer distinction between releases and development builds.
+* **PyPI Image Display**: Updated README.md to use absolute GitHub URLs for images instead of relative paths, ensuring logo and example charts display correctly on PyPI package page.
+
 ### Added
 * **UV Package Manager Support**: All documentation now includes installation instructions for both `uv` (recommended for faster installs) and traditional `pip`. This includes README.md, CONTRIBUTING.md, docs/installation.rst, docs/index.rst, index.md, and docs/indicators.rst.
-* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.post` suffix (e.g., `0.3.15.post12`), while tagged releases use the tag version (e.g., `0.4.0`). See the Version Management section in CONTRIBUTING.md for comprehensive documentation.
+* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.dev` suffix (e.g., `0.3.36.dev1`), while tagged releases use the tag version exactly (e.g., `0.4.0`). See the Version Management section in CONTRIBUTING.md for comprehensive documentation.
 * **Native Candlestick Patterns**: Added native implementations of `cdl_doji` and `cdl_inside` patterns that don't require TA-Lib installation. These can be accessed directly via `df.ta.cdl_doji()` and `df.ta.cdl_inside()`, or through the unified `df.ta.cdl_pattern()` interface. Native patterns join `cdl_z` and `ha` to provide 5 total TA-Lib-free candlestick indicators.
 
 ### Changed
@@ -18,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 * **CI/CD Shallow Clone Issue**: Added `fetch-depth: 0` to all GitHub Actions checkout steps to ensure full git history is available for setuptools-scm. This prevents version detection failures in CI/CD pipelines.
-* **Version Fallback Compatibility**: Changed fallback version from `0.0.0.dev0` to `0.0.0` in both `pyproject.toml` and `_meta.py` to prevent invalid version strings (e.g., `0.0.0.dev0.post1`) that violate PEP 440 when combined with post-release versioning scheme.
+* **Version Fallback Compatibility**: Changed fallback version from `0.0.0.dev0` to `0.0.0` in both `pyproject.toml` and `_meta.py` to prevent invalid version strings that violate PEP 440. The clean `0.0.0` fallback is compatible with all version schemes.
 
 <br />
 
