@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## **[Unreleased]**
 
 ### Fixed
+* **Code of Conduct Contact Information**: Updated enforcement contact from original maintainer's email to GitHub Issues link, making it maintainer-agnostic and easier to manage as the project evolves.
 * **PyPI Release Version**: Fixed CI/CD workflow to use exact release tag version by setting `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable. This prevents development versions (`.dev0`) from being published when `pyproject.toml` is modified during the build process. Releases now correctly use the clean tag version (e.g., `0.3.35` instead of `0.3.36.dev0`).
 * **Version Scheme Optimization**: Changed from `post-release` to default version scheme to avoid `.post0` suffix on tagged releases. Tagged releases now get clean version numbers (e.g., `0.3.35`), while commits after tags get development versions (e.g., `0.3.36.dev1`). This provides clearer distinction between releases and development builds.
 * **PyPI Image Display**: Updated README.md to use absolute GitHub URLs for images instead of relative paths, ensuring logo and example charts display correctly on PyPI package page.
