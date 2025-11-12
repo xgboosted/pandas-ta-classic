@@ -54,6 +54,9 @@ Basic usage:
    df.ta.rsi(append=True)
    df.ta.macd(append=True)
 
+.. note::
+   **New to Pandas TA Classic?** Check out our :doc:`quickstart` guide for a comprehensive introduction, or explore the :doc:`usage` guide for detailed programming conventions.
+
 Table of Contents
 -----------------
 
@@ -61,6 +64,7 @@ Table of Contents
    :maxdepth: 2
    :caption: Getting Started:
 
+   quickstart
    installation
    usage
 
