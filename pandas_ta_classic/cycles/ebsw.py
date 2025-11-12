@@ -6,6 +6,7 @@ from numpy import pi as npPi
 from numpy import sin as npSin
 from numpy import sqrt as npSqrt
 from pandas import Series
+
 npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series
 

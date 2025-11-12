@@ -18,6 +18,7 @@ from numpy import log as npLog
 from numpy import ndarray as npNdArray
 from numpy import seterr
 from numpy import sqrt as npSqrt
+
 npNaN = np.nan
 from numpy import sum as npSum
 

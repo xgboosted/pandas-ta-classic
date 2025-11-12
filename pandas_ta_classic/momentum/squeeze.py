@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from pandas import DataFrame
+
 npNaN = np.nan
 from pandas_ta_classic.momentum import mom
 from pandas_ta_classic.overlap import ema, linreg, sma

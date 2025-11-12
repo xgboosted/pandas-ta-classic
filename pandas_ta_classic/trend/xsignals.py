@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from pandas import DataFrame
+
 npNaN = np.nan
 from .tsignals import tsignals
 from pandas_ta_classic.utils._signals import cross_value

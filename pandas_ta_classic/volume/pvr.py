@@ -2,6 +2,7 @@
 from pandas_ta_classic.utils import verify_series
 import numpy as np
 from pandas import Series
+
 npNaN = np.nan
 
 

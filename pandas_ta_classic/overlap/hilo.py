@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from pandas import DataFrame, Series
+
 npNaN = np.nan
 from .ma import ma
 from pandas_ta_classic.utils import get_offset, verify_series
