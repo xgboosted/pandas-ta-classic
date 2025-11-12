@@ -697,69 +697,6 @@ def hilo_numba_core(close_values, high_ma_values, low_ma_values):
 
 
 @jit(nopython=True, cache=True)
-def ebsw_numba_core(close_values, length, bars):
-    """
-    Numba-optimized core calculation for EBSW (Even Better SineWave).
-
-    Args:
-        close_values: Array of close prices
-        length: Duration for highpass filter
-        bars: Smoothing period for super smoother
-
-    Returns:
-        Array of EBSW wave values
-    """
-    m = len(close_values)
-    result = np.empty(m, dtype=np.float64)
-    result[: length - 1] = np.nan
-    result[length - 1] = 0.0  # Match Python version initialization
-
-    # Pre-calculate constants (Python version uses DEGREES not radians!)
-    pi = np.pi
-    alpha1 = (1 - np.sin(pi * 360 / length / 180)) / np.cos(pi * 360 / length / 180)
-
-    a1 = np.exp(-np.sqrt(2) * pi / bars)
-    b1 = 2 * a1 * np.cos(np.sqrt(2) * pi * 180 / bars / 180)
-    c2 = b1
-    c3 = -a1 * a1
-    c1 = 1 - c2 - c3
-
-    # State variables
-    lastHP = 0.0
-    lastClose = close_values[length - 1]
-    FilterHist = np.zeros(2, dtype=np.float64)
-
-    # Calculate EBSW for each position
-    for i in range(length, m):
-        # HighPass filter
-        HP = 0.5 * (1 + alpha1) * (close_values[i] - lastClose) + alpha1 * lastHP
-
-        # Super Smoother Filter
-        Filt = c1 * (HP + lastHP) / 2 + c2 * FilterHist[1] + c3 * FilterHist[0]
-
-        # 3 Bar average of Wave amplitude and power
-        Wave = (Filt + FilterHist[1] + FilterHist[0]) / 3
-        Pwr = (
-            Filt * Filt + FilterHist[1] * FilterHist[1] + FilterHist[0] * FilterHist[0]
-        ) / 3
-
-        # Normalize the Average Wave to Square Root of the Average Power
-        if Pwr > 0:
-            Wave = Wave / np.sqrt(Pwr)
-        else:
-            Wave = 0.0
-
-        # Update storage
-        FilterHist[0] = FilterHist[1]
-        FilterHist[1] = Filt
-        lastHP = HP
-        lastClose = close_values[i]
-        result[i] = Wave
-
-    return result
-
-
-@jit(nopython=True, cache=True)
 def jma_numba_core(close_values, length, phase):
     """
     Numba-optimized core calculation for JMA (Jurik Moving Average).
@@ -863,7 +800,6 @@ __all__ = [
     "alma_numba_core",
     "ssf_numba_core",
     "hilo_numba_core",
-    "ebsw_numba_core",
     "jma_numba_core",
     "get_numba_status",
     "print_numba_info",

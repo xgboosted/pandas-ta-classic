@@ -15,7 +15,6 @@ import pytest
 from pandas import DataFrame, Series
 
 # Import indicators to benchmark
-from pandas_ta_classic.cycles import ebsw
 from pandas_ta_classic.momentum import fisher, qqe, rsx, stc
 from pandas_ta_classic.overlap import alma, hilo, jma, kama, ssf, supertrend, vidya
 from pandas_ta_classic.trend import psar
@@ -510,41 +509,6 @@ class TestHiLoPerformance:
         low = sample_data_large["low"]
         close = sample_data_large["close"]
         result = benchmark(hilo, high, low, close, use_numba=False)
-        assert len(result) == len(close)
-
-
-class TestEBSWPerformance:
-    """Performance tests for EBSW (Even Better SineWave)"""
-
-    def test_ebsw_correctness(self, sample_data_small):
-        """Verify Numba and Python versions produce identical results"""
-        if not NUMBA_AVAILABLE:
-            pytest.skip("Numba not available")
-
-        close = sample_data_small["close"]
-
-        # Calculate with both methods
-        result_numba = ebsw(close, length=40, bars=10, use_numba=True)
-        result_python = ebsw(close, length=40, bars=10, use_numba=False)
-
-        # Compare results (allowing small floating point differences)
-        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-8)
-
-    @pytest.mark.benchmark(group="ebsw")
-    def test_ebsw_benchmark_numba(self, benchmark, sample_data_large):
-        """Benchmark EBSW with Numba optimization"""
-        if not NUMBA_AVAILABLE:
-            pytest.skip("Numba not available")
-
-        close = sample_data_large["close"]
-        result = benchmark(ebsw, close, length=40, bars=10, use_numba=True)
-        assert len(result) == len(close)
-
-    @pytest.mark.benchmark(group="ebsw")
-    def test_ebsw_benchmark_python(self, benchmark, sample_data_large):
-        """Benchmark EBSW with pure Python"""
-        close = sample_data_large["close"]
-        result = benchmark(ebsw, close, length=40, bars=10, use_numba=False)
         assert len(result) == len(close)
 
 
