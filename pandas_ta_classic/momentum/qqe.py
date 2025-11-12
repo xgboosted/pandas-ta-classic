@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 from numpy import maximum as npMaximum
 from numpy import minimum as npMinimum
-from numpy import nan as npNaN
 from pandas import DataFrame, Series
+
+npNaN = np.nan
 
 from .rsi import rsi
 from pandas_ta_classic.overlap import ma

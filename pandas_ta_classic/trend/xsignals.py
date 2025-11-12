@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from numpy import nan as npNaN
+import numpy as np
 from pandas import DataFrame
+
+npNaN = np.nan
 from .tsignals import tsignals
 from pandas_ta_classic.utils._signals import cross_value
 from pandas_ta_classic.utils import get_offset, verify_series
