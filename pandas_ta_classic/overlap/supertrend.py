@@ -6,9 +6,19 @@ npNaN = np.nan
 from pandas_ta_classic.overlap import hl2
 from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, supertrend_numba_core
 
 
-def supertrend(high, low, close, length=None, multiplier=None, offset=None, **kwargs):
+def supertrend(
+    high,
+    low,
+    close,
+    length=None,
+    multiplier=None,
+    offset=None,
+    use_numba=True,
+    **kwargs,
+):
     """Indicator: Supertrend"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 7
@@ -23,30 +33,42 @@ def supertrend(high, low, close, length=None, multiplier=None, offset=None, **kw
 
     # Calculate Results
     m = close.size
-    dir_, trend = [1] * m, [0] * m
-    long, short = [npNaN] * m, [npNaN] * m
-
     hl2_ = hl2(high, low)
     matr = multiplier * atr(high, low, close, length)
     upperband = hl2_ + matr
     lowerband = hl2_ - matr
 
-    for i in range(1, m):
-        if close.iloc[i] > upperband.iloc[i - 1]:
-            dir_[i] = 1
-        elif close.iloc[i] < lowerband.iloc[i - 1]:
-            dir_[i] = -1
-        else:
-            dir_[i] = dir_[i - 1]
-            if dir_[i] > 0 and lowerband.iloc[i] < lowerband.iloc[i - 1]:
-                lowerband.iloc[i] = lowerband.iloc[i - 1]
-            if dir_[i] < 0 and upperband.iloc[i] > upperband.iloc[i - 1]:
-                upperband.iloc[i] = upperband.iloc[i - 1]
+    # Use Numba-optimized calculation if available
+    if NUMBA_AVAILABLE and use_numba:
+        long_arr, short_arr, dir_arr, trend_arr = supertrend_numba_core(
+            close.values, upperband.values, lowerband.values
+        )
+        long = long_arr.tolist()
+        short = short_arr.tolist()
+        dir_ = dir_arr.tolist()
+        trend = trend_arr.tolist()
+    else:
+        # Fallback to pure Python loop
+        dir_, trend = [1] * m, [0] * m
+        long, short = [npNaN] * m, [npNaN] * m
 
-        if dir_[i] > 0:
-            trend[i] = long[i] = lowerband.iloc[i]
-        else:
-            trend[i] = short[i] = upperband.iloc[i]
+        for i in range(1, m):
+            if close.iloc[i] > upperband.iloc[i - 1]:
+                dir_[i] = 1
+            elif close.iloc[i] < lowerband.iloc[i - 1]:
+                dir_[i] = -1
+            else:
+                dir_[i] = dir_[i - 1]
+                if dir_[i] > 0 and lowerband.iloc[i] < lowerband.iloc[i - 1]:
+                    lowerband.iloc[i] = lowerband.iloc[i - 1]
+                if dir_[i] < 0 and upperband.iloc[i] > upperband.iloc[i - 1]:
+                    upperband.iloc[i] = upperband.iloc[i - 1]
+
+            if dir_[i] > 0:
+                trend[i] = long[i] = lowerband.iloc[i]
+            else:
+                trend[i] = short[i] = upperband.iloc[i]
+                trend[i] = short[i] = upperband.iloc[i]
 
     # Prepare DataFrame to return
     _props = f"_{length}_{multiplier}"

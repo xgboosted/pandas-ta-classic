@@ -4,9 +4,20 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, psar_numba_core
 
 
-def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **kwargs):
+def psar(
+    high,
+    low,
+    close=None,
+    af0=None,
+    af=None,
+    max_af=None,
+    offset=None,
+    use_numba=True,
+    **kwargs,
+):
     """Indicator: Parabolic Stop and Reverse (PSAR)"""
     # Validate Arguments
     high = verify_series(high)
@@ -45,45 +56,58 @@ def psar(high, low, close=None, af0=None, af=None, max_af=None, offset=None, **k
 
     # Calculate Result
     m = high.shape[0]
-    for row in range(1, m):
-        high_ = high.iloc[row]
-        low_ = low.iloc[row]
 
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = high_ > _sar
+    # Use Numba-optimized calculation if available
+    if NUMBA_AVAILABLE and use_numba:
+        psar_arr, long_arr, short_arr, af_arr, reversal_arr = psar_numba_core(
+            high.values, low.values, af0, af, max_af
+        )
+        psar_series = Series(psar_arr, index=high.index)
+        long = Series(long_arr, index=high.index)
+        short = Series(short_arr, index=high.index)
+        _af = Series(af_arr, index=high.index)
+        reversal = Series(reversal_arr, index=high.index)
+    else:
+        # Fallback to pure Python loop
+        for row in range(1, m):
+            high_ = high.iloc[row]
+            low_ = low.iloc[row]
 
-            if low_ < ep:
-                ep = low_
-                af = min(af + af0, max_af)
+            if falling:
+                _sar = sar + af * (ep - sar)
+                reverse = high_ > _sar
 
-            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
-        else:
-            _sar = sar + af * (ep - sar)
-            reverse = low_ < _sar
+                if low_ < ep:
+                    ep = low_
+                    af = min(af + af0, max_af)
 
-            if high_ > ep:
-                ep = high_
-                af = min(af + af0, max_af)
+                _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
+            else:
+                _sar = sar + af * (ep - sar)
+                reverse = low_ < _sar
 
-            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
+                if high_ > ep:
+                    ep = high_
+                    af = min(af + af0, max_af)
 
-        if reverse:
-            _sar = ep
-            af = af0
-            falling = not falling  # Must come before next line
-            ep = low_ if falling else high_
+                _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
 
-        sar = _sar  # Update SAR
+            if reverse:
+                _sar = ep
+                af = af0
+                falling = not falling  # Must come before next line
+                ep = low_ if falling else high_
 
-        # Seperate long/short sar based on falling
-        if falling:
-            short.iloc[row] = sar
-        else:
-            long.iloc[row] = sar
+            sar = _sar  # Update SAR
 
-        _af.iloc[row] = af
-        reversal.iloc[row] = int(reverse)
+            # Seperate long/short sar based on falling
+            if falling:
+                short.iloc[row] = sar
+            else:
+                long.iloc[row] = sar
+
+            _af.iloc[row] = af
+            reversal.iloc[row] = int(reverse)
 
     # Offset
     if offset != 0:

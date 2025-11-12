@@ -9,6 +9,7 @@ npNaN = np.nan
 from .rsi import rsi
 from pandas_ta_classic.overlap import ma
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, qqe_numba_core
 
 
 def qqe(
@@ -19,6 +20,7 @@ def qqe(
     mamode=None,
     drift=None,
     offset=None,
+    use_numba=True,
     **kwargs,
 ):
     """Indicator: Quantitative Qualitative Estimation (QQE)"""
@@ -53,49 +55,63 @@ def qqe(
     lowerband = rsi_ma - dar
 
     m = close.size
-    long = Series(0, index=close.index)
-    short = Series(0, index=close.index)
-    trend = Series(1, index=close.index)
-    qqe = Series(rsi_ma.iloc[0], index=close.index)
-    qqe_long = Series(npNaN, index=close.index)
-    qqe_short = Series(npNaN, index=close.index)
 
-    for i in range(1, m):
-        c_rsi, p_rsi = rsi_ma.iloc[i], rsi_ma.iloc[i - 1]
-        c_long, p_long = long.iloc[i - 1], long.iloc[i - 2]
-        c_short, p_short = short.iloc[i - 1], short.iloc[i - 2]
+    # Use Numba-optimized calculation if available
+    if NUMBA_AVAILABLE and use_numba:
+        long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr = (
+            qqe_numba_core(rsi_ma.values, upperband.values, lowerband.values)
+        )
+        long = Series(long_arr, index=close.index)
+        short = Series(short_arr, index=close.index)
+        trend = Series(trend_arr, index=close.index)
+        qqe = Series(qqe_arr, index=close.index)
+        qqe_long = Series(qqe_long_arr, index=close.index)
+        qqe_short = Series(qqe_short_arr, index=close.index)
+    else:
+        # Fallback to pure Python loop
+        long = Series(0, index=close.index)
+        short = Series(0, index=close.index)
+        trend = Series(1, index=close.index)
+        qqe = Series(rsi_ma.iloc[0], index=close.index)
+        qqe_long = Series(npNaN, index=close.index)
+        qqe_short = Series(npNaN, index=close.index)
 
-        # Long Line
-        if p_rsi > c_long and c_rsi > c_long:
-            long.iloc[i] = npMaximum(c_long, lowerband.iloc[i])
-        else:
-            long.iloc[i] = lowerband.iloc[i]
+        for i in range(1, m):
+            c_rsi, p_rsi = rsi_ma.iloc[i], rsi_ma.iloc[i - 1]
+            c_long, p_long = long.iloc[i - 1], long.iloc[i - 2]
+            c_short, p_short = short.iloc[i - 1], short.iloc[i - 2]
 
-        # Short Line
-        if p_rsi < c_short and c_rsi < c_short:
-            short.iloc[i] = npMinimum(c_short, upperband.iloc[i])
-        else:
-            short.iloc[i] = upperband.iloc[i]
-
-        # Trend & QQE Calculation
-        # Long: Current RSI_MA value Crosses the Prior Short Line Value
-        # Short: Current RSI_MA Crosses the Prior Long Line Value
-        if (c_rsi > c_short and p_rsi < p_short) or (
-            c_rsi <= c_short and p_rsi >= p_short
-        ):
-            trend.iloc[i] = 1
-            qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
-        elif (c_rsi > c_long and p_rsi < p_long) or (
-            c_rsi <= c_long and p_rsi >= p_long
-        ):
-            trend.iloc[i] = -1
-            qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
-        else:
-            trend.iloc[i] = trend.iloc[i - 1]
-            if trend.iloc[i] == 1:
-                qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+            # Long Line
+            if p_rsi > c_long and c_rsi > c_long:
+                long.iloc[i] = npMaximum(c_long, lowerband.iloc[i])
             else:
+                long.iloc[i] = lowerband.iloc[i]
+
+            # Short Line
+            if p_rsi < c_short and c_rsi < c_short:
+                short.iloc[i] = npMinimum(c_short, upperband.iloc[i])
+            else:
+                short.iloc[i] = upperband.iloc[i]
+
+            # Trend & QQE Calculation
+            # Long: Current RSI_MA value Crosses the Prior Short Line Value
+            # Short: Current RSI_MA Crosses the Prior Long Line Value
+            if (c_rsi > c_short and p_rsi < p_short) or (
+                c_rsi <= c_short and p_rsi >= p_short
+            ):
+                trend.iloc[i] = 1
+                qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+            elif (c_rsi > c_long and p_rsi < p_long) or (
+                c_rsi <= c_long and p_rsi >= p_long
+            ):
+                trend.iloc[i] = -1
                 qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
+            else:
+                trend.iloc[i] = trend.iloc[i - 1]
+                if trend.iloc[i] == 1:
+                    qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+                else:
+                    qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
 
     # Offset
     if offset != 0:

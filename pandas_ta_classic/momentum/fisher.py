@@ -6,9 +6,10 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from pandas_ta_classic.overlap import hl2
 from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, fisher_numba_core
 
 
-def fisher(high, low, length=None, signal=None, offset=None, **kwargs):
+def fisher(high, low, length=None, signal=None, offset=None, use_numba=True, **kwargs):
     """Indicator: Fisher Transform (FISHT)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 9
@@ -31,17 +32,23 @@ def fisher(high, low, length=None, signal=None, offset=None, **kwargs):
 
     position = ((hl2_ - lowest_hl2) / hlr) - 0.5
 
-    v = 0
-    m = high.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, m):
-        v = 0.66 * position.iloc[i] + 0.67 * v
-        if v < -0.99:
-            v = -0.999
-        if v > 0.99:
-            v = 0.999
-        result.append(0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1]))
-    fisher = Series(result, index=high.index)
+    # Use Numba-optimized calculation if available
+    if NUMBA_AVAILABLE and use_numba:
+        fisher = Series(fisher_numba_core(position.values, length), index=high.index)
+    else:
+        # Fallback to pure Python loop
+        v = 0
+        m = high.size
+        result = [npNaN for _ in range(0, length - 1)] + [0]
+        for i in range(length, m):
+            v = 0.66 * position.iloc[i] + 0.67 * v
+            if v < -0.99:
+                v = -0.999
+            if v > 0.99:
+                v = 0.999
+            result.append(0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1]))
+        fisher = Series(result, index=high.index)
+
     signalma = fisher.shift(signal)
 
     # Offset

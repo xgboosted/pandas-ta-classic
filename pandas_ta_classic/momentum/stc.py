@@ -2,9 +2,19 @@
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap import ema
 from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, stc_numba_core
 
 
-def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **kwargs):
+def stc(
+    close,
+    tclength=None,
+    fast=None,
+    slow=None,
+    factor=None,
+    offset=None,
+    use_numba=True,
+    **kwargs,
+):
     """Indicator: Schaff Trend Cycle (STC)"""
     # Validate arguments
     tclength = int(tclength) if tclength and tclength > 0 else 10
@@ -37,7 +47,7 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
         # Calculate Result based on external feeded series
         xmacd = ma1 - ma2
         # invoke shared calculation
-        pff, pf = schaff_tc(close, xmacd, tclength, factor)
+        pff, pf = schaff_tc(close, xmacd, tclength, factor, use_numba)
 
     elif isinstance(osc, Series):
         osc = verify_series(osc, _length)
@@ -47,7 +57,7 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
         # (should be ranging around 0 x-axis)
         xmacd = osc
         # invoke shared calculation
-        pff, pf = schaff_tc(close, xmacd, tclength, factor)
+        pff, pf = schaff_tc(close, xmacd, tclength, factor, use_numba)
 
     else:
         # Calculate Result .. (traditionel/full)
@@ -56,7 +66,7 @@ def stc(close, tclength=None, fast=None, slow=None, factor=None, offset=None, **
         slowma = ema(close, length=slow)
         xmacd = fastma - slowma
         # invoke shared calculation
-        pff, pf = schaff_tc(close, xmacd, tclength, factor)
+        pff, pf = schaff_tc(close, xmacd, tclength, factor, use_numba)
 
     # Resulting Series
     stc = Series(pff, index=close.index)
@@ -171,39 +181,46 @@ Returns:
 """
 
 
-def schaff_tc(close, xmacd, tclength, factor):
+def schaff_tc(close, xmacd, tclength, factor, use_numba=True):
     # ACTUAL Calculation part, which is shared between operation modes
-    # 1St : Stochastic of MACD
-    lowest_xmacd = xmacd.rolling(tclength).min()  # min value in interval tclen
-    xmacd_range = non_zero_range(xmacd.rolling(tclength).max(), lowest_xmacd)
-    m = len(xmacd)
 
-    # %Fast K of MACD
-    stoch1, pf = list(xmacd), list(xmacd)
-    stoch1[0], pf[0] = 0, 0
-    for i in range(1, m):
-        if lowest_xmacd[i] > 0:
-            stoch1[i] = 100 * ((xmacd[i] - lowest_xmacd[i]) / xmacd_range[i])
-        else:
-            stoch1[i] = stoch1[i - 1]
-        # Smoothed Calculation for % Fast D of MACD
-        pf[i] = round(pf[i - 1] + (factor * (stoch1[i] - pf[i - 1])), 8)
+    # Use Numba-optimized calculation if available
+    if NUMBA_AVAILABLE and use_numba:
+        pff_arr, pf_arr = stc_numba_core(xmacd.values, tclength, factor)
+        return [pff_arr, pf_arr]
+    else:
+        # Fallback to pure Python loop
+        # 1St : Stochastic of MACD
+        lowest_xmacd = xmacd.rolling(tclength).min()  # min value in interval tclen
+        xmacd_range = non_zero_range(xmacd.rolling(tclength).max(), lowest_xmacd)
+        m = len(xmacd)
 
-    pf = Series(pf, index=close.index)
+        # %Fast K of MACD
+        stoch1, pf = list(xmacd), list(xmacd)
+        stoch1[0], pf[0] = 0, 0
+        for i in range(1, m):
+            if lowest_xmacd[i] > 0:
+                stoch1[i] = 100 * ((xmacd[i] - lowest_xmacd[i]) / xmacd_range[i])
+            else:
+                stoch1[i] = stoch1[i - 1]
+            # Smoothed Calculation for % Fast D of MACD
+            pf[i] = round(pf[i - 1] + (factor * (stoch1[i] - pf[i - 1])), 8)
 
-    # 2nd : Stochastic of smoothed Percent Fast D, 'PF', above
-    lowest_pf = pf.rolling(tclength).min()
-    pf_range = non_zero_range(pf.rolling(tclength).max(), lowest_pf)
+        pf = Series(pf, index=close.index)
 
-    # % of Fast K of PF
-    stoch2, pff = list(xmacd), list(xmacd)
-    stoch2[0], pff[0] = 0, 0
-    for i in range(1, m):
-        if pf_range[i] > 0:
-            stoch2[i] = 100 * ((pf[i] - lowest_pf[i]) / pf_range[i])
-        else:
-            stoch2[i] = stoch2[i - 1]
-        # Smoothed Calculation for % Fast D of PF
-        pff[i] = round(pff[i - 1] + (factor * (stoch2[i] - pff[i - 1])), 8)
+        # 2nd : Stochastic of smoothed Percent Fast D, 'PF', above
+        lowest_pf = pf.rolling(tclength).min()
+        pf_range = non_zero_range(pf.rolling(tclength).max(), lowest_pf)
 
-    return [pff, pf]
+        # % of Fast K of PF
+        stoch2, pff = list(xmacd), list(xmacd)
+        stoch2[0], pff[0] = 0, 0
+        for i in range(1, m):
+            if pf_range[i] > 0:
+                stoch2[i] = 100 * ((pf[i] - lowest_pf[i]) / pf_range[i])
+            else:
+                stoch2[i] = stoch2[i - 1]
+            # Smoothed Calculation for % Fast D of PF
+            pff[i] = round(pff[i - 1] + (factor * (stoch2[i] - pff[i - 1])), 8)
+
+        return [pff, pf]
