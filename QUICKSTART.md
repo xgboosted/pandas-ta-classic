@@ -425,10 +425,10 @@ pip install TA_Lib‑0.4.XX‑cpXX‑cpXX‑win_amd64.whl
 Now that you've got the basics, explore more:
 
 1. **[Full Documentation](https://xgboosted.github.io/pandas-ta-classic/)** - Complete API reference
-2. **[Tutorials](TUTORIALS.md)** - Step-by-step guides for common tasks
+2. **[Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/TUTORIALS.md)** - Step-by-step guides for common tasks
 3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - All 203 indicators
 4. **[Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html)** - Advanced strategy system
-5. **[Examples](examples/)** - Jupyter notebooks with real examples
+5. **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
 
 ## 🎯 Quick Reference Card
 
@@ -447,6 +447,6 @@ Now that you've got the basics, explore more:
 
 - **Issues**: [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/xgboosted/pandas-ta-classic/discussions)
-- **Examples**: Check the [examples/](examples/) directory
+- **Examples**: Check the [examples directory](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)
 
 Happy Trading! 📈

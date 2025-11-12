@@ -7,7 +7,7 @@ title: Pandas TA Classic - Technical Analysis Library
 
 **Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **141 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (**203 total**). This is the **community maintained version** of the popular pandas-ta library.
 
-![Example Chart](images/TA_Chart.png)
+![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/images/TA_Chart.png)
 
 ## Features
 

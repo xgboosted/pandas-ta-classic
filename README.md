@@ -28,8 +28,8 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 **Get started quickly with our comprehensive guides:**
 
-- **[🚀 Quickstart Guide](QUICKSTART.md)** - Installation, your first indicators, and common workflows
-- **[📚 Tutorials](TUTORIALS.md)** - Step-by-step tutorials for real-world use cases:
+- **[🚀 Quickstart Guide](https://github.com/xgboosted/pandas-ta-classic/blob/main/QUICKSTART.md)** - Installation, your first indicators, and common workflows
+- **[📚 Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/TUTORIALS.md)** - Step-by-step tutorials for real-world use cases:
   - Moving Average Crossover Strategy
   - Building Custom Indicator Strategies  
   - Backtesting with Performance Metrics
@@ -149,9 +149,9 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 ### 📖 Learning Resources
 
 **Start Here:**
-- 🚀 **[Quickstart Guide](QUICKSTART.md)** - Get up and running in minutes
-- 📚 **[Tutorials](TUTORIALS.md)** - Step-by-step guides for common workflows
-- � **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
+- 🚀 **[Quickstart Guide](https://github.com/xgboosted/pandas-ta-classic/blob/main/QUICKSTART.md)** - Get up and running in minutes
+- 📚 **[Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/TUTORIALS.md)** - Step-by-step guides for common workflows
+- 📓 **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
 
 **Reference Documentation:**
 - �📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
@@ -164,7 +164,7 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 **Pandas TA Classic** follows a **rolling support policy** for the latest stable Python version plus 4 preceding minor versions.
 
-> **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
+> **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
 
 **Note:** _TA Lib_ installation enables all candlestick patterns:
 - Using `uv`: `uv pip install TA-Lib`
@@ -181,7 +181,7 @@ We welcome contributions! Please see our [contributing guidelines](https://githu
 
 ## 📋 Changelog
 
-For detailed information about changes, improvements, and new features, please see the [CHANGELOG.md](CHANGELOG.md) file.
+For detailed information about changes, improvements, and new features, please see the [CHANGELOG.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/CHANGELOG.md) file.
 
 ## 🔗 Sources
 
@@ -195,4 +195,4 @@ If you find this library helpful, please consider:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/xgboosted/pandas-ta-classic/blob/main/LICENSE) file for details.

@@ -783,8 +783,8 @@ You've completed the tutorials! Here's what to explore next:
 
 ## 📚 Additional Resources
 
-- [QUICKSTART.md](QUICKSTART.md) - Quick reference guide
-- [Examples Directory](examples/) - Jupyter notebooks
+- [QUICKSTART.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/QUICKSTART.md) - Quick reference guide
+- [Examples Directory](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) - Jupyter notebooks
 - [Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - All indicators
 - [Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Advanced strategies
 
