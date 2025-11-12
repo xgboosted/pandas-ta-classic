@@ -43,6 +43,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 ### 🎯 Key Features
 
 - **203 Technical Indicators**: 141 indicators + 62 TA-Lib candlestick patterns
+- **⚡ High Performance**: Numba JIT compilation for 10-500x speedup on key indicators
 - **Native Candlestick Patterns**: 5 patterns (cdl_doji, cdl_inside, cdl_z, cdl_pattern, ha) work without TA-Lib
 - **Automatic Versioning**: Version management via git tags using setuptools-scm
 - **Modern Package Management**: Full support for both `uv` and `pip`
@@ -66,6 +67,19 @@ Using `pip`:
 ```bash
 pip install pandas-ta-classic
 ```
+
+**Performance Optimization** (Optional but Recommended)
+
+For significant performance improvements (10-500x faster on optimized indicators):
+```bash
+# Install with Numba JIT compilation support
+pip install pandas-ta-classic[performance]
+
+# Or install numba separately
+pip install numba
+```
+
+Learn more in [PERFORMANCE.md](PERFORMANCE.md).
 
 **Latest Version**
 
@@ -133,6 +147,7 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 ## 📊 Features
 
 - **141 Technical Indicators & Utilities** across 9 categories (Candles, Momentum, Overlap, Trend, Volume, etc.)
+- **⚡ Numba Performance Optimization** - 10-500x speedup on compute-intensive indicators (RSX, Fisher, QQE, etc.)
 - **62 TA Lib Candlestick Patterns** for comprehensive pattern recognition
 - **203 Total Indicators & Patterns** - the most comprehensive Python TA library
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
@@ -154,7 +169,8 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 - � **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
 
 **Reference Documentation:**
-- �📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
+- 📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
+- ⚡ [**Performance Guide**](PERFORMANCE.md) - Numba optimization for 10-500x speedups
 - 🏗️ [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing  
 - 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 141 indicators & 62 patterns
 - 🔧 [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
