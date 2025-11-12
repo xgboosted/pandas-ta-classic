@@ -4,9 +4,10 @@ from numpy import exp as npExp
 from numpy import pi as npPi
 from numpy import sqrt as npSqrt
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, ssf_numba_core
 
 
-def ssf(close, length=None, poles=None, offset=None, **kwargs):
+def ssf(close, length=None, poles=None, offset=None, use_numba=True, **kwargs):
     """Indicator: Ehler's Super Smoother Filter (SSF)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
@@ -19,38 +20,53 @@ def ssf(close, length=None, poles=None, offset=None, **kwargs):
 
     # Calculate Result
     m = close.size
-    ssf = close.copy()
 
     if poles == 3:
-        x = npPi / length  # x = PI / n
-        a0 = npExp(-x)  # e^(-x)
-        b0 = 2 * a0 * npCos(npSqrt(3) * x)  # 2e^(-x)*cos(3^(.5) * x)
-        c0 = a0 * a0  # e^(-2x)
+        x = npPi / length
+        a0 = npExp(-x)
+        b0 = 2 * a0 * npCos(npSqrt(3) * x)
+        c0 = a0 * a0
 
-        c4 = c0 * c0  # e^(-4x)
-        c3 = -c0 * (1 + b0)  # -e^(-2x) * (1 + 2e^(-x)*cos(3^(.5) * x))
-        c2 = c0 + b0  # e^(-2x) + 2e^(-x)*cos(3^(.5) * x)
+        c4 = c0 * c0
+        c3 = -c0 * (1 + b0)
+        c2 = c0 + b0
         c1 = 1 - c2 - c3 - c4
 
-        for i in range(0, m):
-            ssf.iloc[i] = (
-                c1 * close.iloc[i]
-                + c2 * ssf.iloc[i - 1]
-                + c3 * ssf.iloc[i - 2]
-                + c4 * ssf.iloc[i - 3]
-            )
+        # Use Numba-optimized implementation if available and requested
+        if use_numba and NUMBA_AVAILABLE:
+            result_values = ssf_numba_core(close.values, c1, c2, c3, c4, poles)
+            ssf = close.copy()
+            ssf[:] = result_values
+        else:
+            # Fall back to pure Python implementation
+            ssf = close.copy()
+            for i in range(0, m):
+                ssf.iloc[i] = (
+                    c1 * close.iloc[i]
+                    + c2 * ssf.iloc[i - 1]
+                    + c3 * ssf.iloc[i - 2]
+                    + c4 * ssf.iloc[i - 3]
+                )
 
     else:  # poles == 2
-        x = npPi * npSqrt(2) / length  # x = PI * 2^(.5) / n
-        a0 = npExp(-x)  # e^(-x)
-        a1 = -a0 * a0  # -e^(-2x)
-        b1 = 2 * a0 * npCos(x)  # 2e^(-x)*cos(x)
-        c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
+        x = npPi * npSqrt(2) / length
+        a0 = npExp(-x)
+        a1 = -a0 * a0
+        b1 = 2 * a0 * npCos(x)
+        c1 = 1 - a1 - b1
 
-        for i in range(0, m):
-            ssf.iloc[i] = (
-                c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
-            )
+        # Use Numba-optimized implementation if available and requested
+        if use_numba and NUMBA_AVAILABLE:
+            result_values = ssf_numba_core(close.values, c1, b1, a1, 0.0, poles)
+            ssf = close.copy()
+            ssf[:] = result_values
+        else:
+            # Fall back to pure Python implementation
+            ssf = close.copy()
+            for i in range(0, m):
+                ssf.iloc[i] = (
+                    c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
+                )
 
     # Offset
     if offset != 0:

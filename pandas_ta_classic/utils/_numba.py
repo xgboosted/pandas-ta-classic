@@ -500,6 +500,355 @@ def print_numba_info():
     print("=" * 60)
 
 
+@jit(nopython=True, cache=True)
+def kama_numba_core(close_values, sc_values, length):
+    """
+    Numba-optimized core calculation for KAMA (Kaufman Adaptive Moving Average).
+
+    Args:
+        close_values: Array of close prices
+        sc_values: Array of pre-calculated smoothing constants (squared ER * (fr-sr) + sr)
+        length: The lookback period
+
+    Returns:
+        Array of KAMA values
+    """
+    m = len(close_values)
+    result = np.empty(m, dtype=np.float64)
+    result[:length] = np.nan
+
+    # Initialize first KAMA value
+    result[length - 1] = 0.0
+
+    # Calculate KAMA iteratively
+    for i in range(length, m):
+        result[i] = sc_values[i] * close_values[i] + (1 - sc_values[i]) * result[i - 1]
+
+    return result
+
+
+@jit(nopython=True, cache=True)
+def vidya_numba_core(close_values, abs_cmo_values, alpha, length):
+    """
+    Numba-optimized core calculation for VIDYA (Variable Index Dynamic Average).
+
+    Args:
+        close_values: Array of close prices
+        abs_cmo_values: Array of absolute CMO values
+        alpha: Alpha value (2 / (length + 1))
+        length: The lookback period
+
+    Returns:
+        Array of VIDYA values
+    """
+    m = len(close_values)
+    result = np.empty(m, dtype=np.float64)
+    result[:length] = np.nan
+
+    # Initialize first VIDYA value
+    result[length - 1] = 0.0
+
+    # Calculate VIDYA iteratively
+    for i in range(length, m):
+        result[i] = alpha * abs_cmo_values[i] * close_values[i] + result[i - 1] * (
+            1 - alpha * abs_cmo_values[i]
+        )
+
+    return result
+
+
+@jit(nopython=True, cache=True)
+def alma_numba_core(close_values, weights, length):
+    """
+    Numba-optimized core calculation for ALMA (Arnaud Legoux Moving Average).
+
+    Args:
+        close_values: Array of close prices
+        weights: Pre-calculated Gaussian weights array
+        length: Window length
+
+    Returns:
+        Array of ALMA values
+    """
+    m = len(close_values)
+    result = np.empty(m, dtype=np.float64)
+    result[: length - 1] = np.nan
+    result[length - 1] = 0.0  # Match Python version behavior
+    result[length] = np.nan  # Python version appends NaN at position `length`
+
+    # Calculate ALMA for each position (start at length+1)
+    for i in range(length + 1, m):
+        window_sum = 0.0
+        cum_sum = 0.0
+
+        for j in range(length):
+            window_sum += weights[j] * close_values[i - j]
+            cum_sum += weights[j]
+
+        result[i] = window_sum / cum_sum
+
+    return result
+
+
+@jit(nopython=True, cache=True)
+def ssf_numba_core(close_values, c1, c2, c3, c4, poles):
+    """
+    Numba-optimized core calculation for SSF (Super Smoother Filter).
+
+    Args:
+        close_values: Array of close prices
+        c1, c2, c3, c4: Pre-calculated filter coefficients
+        poles: Number of poles (2 or 3)
+
+    Returns:
+        Array of SSF values
+    """
+    m = len(close_values)
+    result = close_values.copy()  # Start with a copy to match Python .copy() behavior
+
+    if poles == 3:
+        # 3-pole filter - Python accesses negative indices which wrap around
+        for i in range(m):
+            if i == 0:
+                # When i=0: ssf.iloc[-1], ssf.iloc[-2], ssf.iloc[-3] access last 3 elements
+                result[i] = (
+                    c1 * close_values[i]
+                    + c2 * result[m - 1]  # result[-1]
+                    + c3 * result[m - 2]  # result[-2]
+                    + c4 * result[m - 3]  # result[-3]
+                )
+            elif i == 1:
+                result[i] = (
+                    c1 * close_values[i]
+                    + c2 * result[0]  # result[i-1]
+                    + c3 * result[m - 1]  # result[-1]
+                    + c4 * result[m - 2]  # result[-2]
+                )
+            elif i == 2:
+                result[i] = (
+                    c1 * close_values[i]
+                    + c2 * result[1]  # result[i-1]
+                    + c3 * result[0]  # result[i-2]
+                    + c4 * result[m - 1]  # result[-1]
+                )
+            else:
+                result[i] = (
+                    c1 * close_values[i]
+                    + c2 * result[i - 1]
+                    + c3 * result[i - 2]
+                    + c4 * result[i - 3]
+                )
+    else:
+        # 2-pole filter
+        for i in range(m):
+            if i == 0:
+                # When i=0: ssf.iloc[-1], ssf.iloc[-2] access last 2 elements
+                result[i] = (
+                    c1 * close_values[i] + c2 * result[m - 1] + c3 * result[m - 2]
+                )
+            elif i == 1:
+                result[i] = c1 * close_values[i] + c2 * result[0] + c3 * result[m - 1]
+            else:
+                result[i] = (
+                    c1 * close_values[i] + c2 * result[i - 1] + c3 * result[i - 2]
+                )
+
+    return result
+
+
+@jit(nopython=True, cache=True)
+def hilo_numba_core(close_values, high_ma_values, low_ma_values):
+    """
+    Numba-optimized core calculation for HiLo (Gann HiLo Activator).
+
+    Args:
+        close_values: Array of close prices
+        high_ma_values: Array of high moving average values
+        low_ma_values: Array of low moving average values
+
+    Returns:
+        Tuple of (hilo, long, short) arrays
+    """
+    m = len(close_values)
+    hilo = np.empty(m, dtype=np.float64)
+    long = np.empty(m, dtype=np.float64)
+    short = np.empty(m, dtype=np.float64)
+
+    hilo[0] = np.nan
+    long[0] = np.nan
+    short[0] = np.nan
+
+    # Calculate HiLo iteratively
+    for i in range(1, m):
+        if close_values[i] > high_ma_values[i - 1]:
+            hilo[i] = low_ma_values[i]
+            long[i] = low_ma_values[i]
+            short[i] = np.nan
+        elif close_values[i] < low_ma_values[i - 1]:
+            hilo[i] = high_ma_values[i]
+            long[i] = np.nan
+            short[i] = high_ma_values[i]
+        else:
+            hilo[i] = hilo[i - 1]
+            long[i] = hilo[i - 1]
+            short[i] = hilo[i - 1]
+
+    return hilo, long, short
+
+
+@jit(nopython=True, cache=True)
+def ebsw_numba_core(close_values, length, bars):
+    """
+    Numba-optimized core calculation for EBSW (Even Better SineWave).
+
+    Args:
+        close_values: Array of close prices
+        length: Duration for highpass filter
+        bars: Smoothing period for super smoother
+
+    Returns:
+        Array of EBSW wave values
+    """
+    m = len(close_values)
+    result = np.empty(m, dtype=np.float64)
+    result[: length - 1] = np.nan
+    result[length - 1] = 0.0  # Match Python version initialization
+
+    # Pre-calculate constants (Python version uses DEGREES not radians!)
+    pi = np.pi
+    alpha1 = (1 - np.sin(pi * 360 / length / 180)) / np.cos(pi * 360 / length / 180)
+
+    a1 = np.exp(-np.sqrt(2) * pi / bars)
+    b1 = 2 * a1 * np.cos(np.sqrt(2) * pi * 180 / bars / 180)
+    c2 = b1
+    c3 = -a1 * a1
+    c1 = 1 - c2 - c3
+
+    # State variables
+    lastHP = 0.0
+    lastClose = close_values[length - 1]
+    FilterHist = np.zeros(2, dtype=np.float64)
+
+    # Calculate EBSW for each position
+    for i in range(length, m):
+        # HighPass filter
+        HP = 0.5 * (1 + alpha1) * (close_values[i] - lastClose) + alpha1 * lastHP
+
+        # Super Smoother Filter
+        Filt = c1 * (HP + lastHP) / 2 + c2 * FilterHist[1] + c3 * FilterHist[0]
+
+        # 3 Bar average of Wave amplitude and power
+        Wave = (Filt + FilterHist[1] + FilterHist[0]) / 3
+        Pwr = (
+            Filt * Filt + FilterHist[1] * FilterHist[1] + FilterHist[0] * FilterHist[0]
+        ) / 3
+
+        # Normalize the Average Wave to Square Root of the Average Power
+        if Pwr > 0:
+            Wave = Wave / np.sqrt(Pwr)
+        else:
+            Wave = 0.0
+
+        # Update storage
+        FilterHist[0] = FilterHist[1]
+        FilterHist[1] = Filt
+        lastHP = HP
+        lastClose = close_values[i]
+        result[i] = Wave
+
+    return result
+
+
+@jit(nopython=True, cache=True)
+def jma_numba_core(close_values, length, phase):
+    """
+    Numba-optimized core calculation for JMA (Jurik Moving Average).
+
+    This is a complex adaptive moving average with multiple smoothing stages
+    and dynamic volatility-based adaptation.
+
+    Args:
+        close_values: Array of close prices
+        length: Smoothing period (internally adjusted)
+        phase: Phase parameter (-100 to 100)
+
+    Returns:
+        Array of JMA values
+    """
+    m = len(close_values)
+    result = np.empty(m, dtype=np.float64)
+    volty = np.zeros(m, dtype=np.float64)
+    v_sum = np.zeros(m, dtype=np.float64)
+
+    # Static variables
+    sum_length = 10
+    _length = 0.5 * (length - 1)
+
+    # Phase calculation
+    if phase < -100:
+        pr = 0.5
+    elif phase > 100:
+        pr = 2.5
+    else:
+        pr = 1.5 + phase * 0.01
+
+    # Length calculations
+    length1 = max(np.log(np.sqrt(_length)) / np.log(2.0) + 2.0, 0.0)
+    pow1 = max(length1 - 2.0, 0.5)
+    length2 = length1 * np.sqrt(_length)
+    bet = length2 / (length2 + 1)
+    beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2.0)
+
+    # Initialize state variables
+    kv = det0 = det1 = ma2 = 0.0
+    result[0] = ma1 = uBand = lBand = close_values[0]
+
+    # Main calculation loop
+    for i in range(1, m):
+        price = close_values[i]
+
+        # Price volatility
+        del1 = price - uBand
+        del2 = price - lBand
+        volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0.0
+
+        # Relative price volatility factor
+        v_sum[i] = (
+            v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
+        )
+
+        # Average volatility calculation
+        start_idx = max(i - 65, 0)
+        avg_volty = np.mean(v_sum[start_idx : i + 1])
+        d_volty = 0.0 if avg_volty == 0.0 else volty[i] / avg_volty
+        r_volty = max(1.0, min(np.power(length1, 1 / pow1), d_volty))
+
+        # Jurik volatility bands
+        pow2 = np.power(r_volty, pow1)
+        kv = np.power(bet, np.sqrt(pow2))
+        uBand = price if (del1 > 0) else price - (kv * del1)
+        lBand = price if (del2 < 0) else price - (kv * del2)
+
+        # Jurik Dynamic Factor
+        power = np.power(r_volty, pow1)
+        alpha = np.power(beta, power)
+
+        # 1st stage - preliminary smoothing by adaptive EMA
+        ma1 = ((1 - alpha) * price) + (alpha * ma1)
+
+        # 2nd stage - one more preliminary smoothing by Kalman filter
+        det0 = ((price - ma1) * (1 - beta)) + (beta * det0)
+        ma2 = ma1 + pr * det0
+
+        # 3rd stage - final smoothing by unique Jurik adaptive filter
+        det1 = ((ma2 - result[i - 1]) * (1 - alpha) * (1 - alpha)) + (
+            alpha * alpha * det1
+        )
+        result[i] = result[i - 1] + det1
+
+    return result
+
+
 # Module-level exports
 __all__ = [
     "NUMBA_AVAILABLE",
@@ -509,6 +858,13 @@ __all__ = [
     "qqe_numba_core",
     "psar_numba_core",
     "stc_numba_core",
+    "kama_numba_core",
+    "vidya_numba_core",
+    "alma_numba_core",
+    "ssf_numba_core",
+    "hilo_numba_core",
+    "ebsw_numba_core",
+    "jma_numba_core",
     "get_numba_status",
     "print_numba_info",
 ]

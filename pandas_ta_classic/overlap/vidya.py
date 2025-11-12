@@ -4,9 +4,10 @@ from pandas import Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, vidya_numba_core
 
 
-def vidya(close, length=None, drift=None, offset=None, **kwargs):
+def vidya(close, length=None, drift=None, offset=None, use_numba=True, **kwargs):
     """Indicator: Variable Index Dynamic Average (VIDYA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 14
@@ -35,12 +36,20 @@ def vidya(close, length=None, drift=None, offset=None, **kwargs):
     m = close.size
     alpha = 2 / (length + 1)
     abs_cmo = _cmo(close, length, drift).abs()
-    vidya = Series(0, index=close.index)
-    for i in range(length, m):
-        vidya.iloc[i] = alpha * abs_cmo.iloc[i] * close.iloc[i] + vidya.iloc[i - 1] * (
-            1 - alpha * abs_cmo.iloc[i]
-        )
-    vidya.replace({0: npNaN}, inplace=True)
+
+    # Use Numba-optimized implementation if available and requested
+    if use_numba and NUMBA_AVAILABLE:
+        result_values = vidya_numba_core(close.values, abs_cmo.values, alpha, length)
+        vidya = Series(result_values, index=close.index)
+        vidya.replace({0: npNaN}, inplace=True)
+    else:
+        # Fall back to pure Python implementation
+        vidya = Series(0, index=close.index)
+        for i in range(length, m):
+            vidya.iloc[i] = alpha * abs_cmo.iloc[i] * close.iloc[i] + vidya.iloc[
+                i - 1
+            ] * (1 - alpha * abs_cmo.iloc[i])
+        vidya.replace({0: npNaN}, inplace=True)
 
     # Offset
     if offset != 0:

@@ -79,7 +79,7 @@ pip install pandas-ta-classic[performance]
 pip install numba
 ```
 
-Learn more in [PERFORMANCE.md](PERFORMANCE.md).
+Learn more in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 **Latest Version**
 
@@ -170,7 +170,7 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 **Reference Documentation:**
 - 📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
-- ⚡ [**Performance Guide**](PERFORMANCE.md) - Numba optimization for 10-500x speedups
+- ⚡ [**Performance Guide**](docs/PERFORMANCE.md) - Numba optimization for 10-500x speedups
 - 🏗️ [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing  
 - 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 141 indicators & 62 patterns
 - 🔧 [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference

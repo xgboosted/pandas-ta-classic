@@ -15,8 +15,9 @@ import pytest
 from pandas import DataFrame, Series
 
 # Import indicators to benchmark
+from pandas_ta_classic.cycles import ebsw
 from pandas_ta_classic.momentum import fisher, qqe, rsx, stc
-from pandas_ta_classic.overlap import supertrend
+from pandas_ta_classic.overlap import alma, hilo, jma, kama, ssf, supertrend, vidya
 from pandas_ta_classic.trend import psar
 from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, get_numba_status
 
@@ -306,6 +307,280 @@ def print_benchmark_info():
         print("Pure Python/NumPy implementations will be tested")
         print("Install numba for performance comparisons: pip install numba")
     print("=" * 60)
+
+
+# ============================================================================
+# PHASE 3: Additional Optimized Indicators Tests
+# ============================================================================
+
+
+class TestKAMAPerformance:
+    """Performance tests for KAMA (Kaufman Adaptive Moving Average)"""
+
+    def test_kama_correctness(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = kama(close, length=10, use_numba=True)
+        result_python = kama(close, length=10, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-10)
+
+    @pytest.mark.benchmark(group="kama")
+    def test_kama_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark KAMA with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_large["close"]
+        result = benchmark(kama, close, length=10, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="kama")
+    def test_kama_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark KAMA with pure Python"""
+        close = sample_data_large["close"]
+        result = benchmark(kama, close, length=10, use_numba=False)
+        assert len(result) == len(close)
+
+
+class TestVIDYAPerformance:
+    """Performance tests for VIDYA (Variable Index Dynamic Average)"""
+
+    def test_vidya_correctness(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = vidya(close, length=14, use_numba=True)
+        result_python = vidya(close, length=14, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-10)
+
+    @pytest.mark.benchmark(group="vidya")
+    def test_vidya_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark VIDYA with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_large["close"]
+        result = benchmark(vidya, close, length=14, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="vidya")
+    def test_vidya_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark VIDYA with pure Python"""
+        close = sample_data_large["close"]
+        result = benchmark(vidya, close, length=14, use_numba=False)
+        assert len(result) == len(close)
+
+
+class TestALMAPerformance:
+    """Performance tests for ALMA (Arnaud Legoux Moving Average)"""
+
+    def test_alma_correctness(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = alma(close, length=10, use_numba=True)
+        result_python = alma(close, length=10, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-10)
+
+    @pytest.mark.benchmark(group="alma")
+    def test_alma_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark ALMA with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_large["close"]
+        result = benchmark(alma, close, length=10, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="alma")
+    def test_alma_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark ALMA with pure Python"""
+        close = sample_data_large["close"]
+        result = benchmark(alma, close, length=10, use_numba=False)
+        assert len(result) == len(close)
+
+
+class TestSSFPerformance:
+    """Performance tests for SSF (Super Smoother Filter)"""
+
+    def test_ssf_correctness_2pole(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results (2-pole)"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = ssf(close, length=10, poles=2, use_numba=True)
+        result_python = ssf(close, length=10, poles=2, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-10)
+
+    def test_ssf_correctness_3pole(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results (3-pole)"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = ssf(close, length=10, poles=3, use_numba=True)
+        result_python = ssf(close, length=10, poles=3, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-10)
+
+    @pytest.mark.benchmark(group="ssf")
+    def test_ssf_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark SSF with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_large["close"]
+        result = benchmark(ssf, close, length=10, poles=2, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="ssf")
+    def test_ssf_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark SSF with pure Python"""
+        close = sample_data_large["close"]
+        result = benchmark(ssf, close, length=10, poles=2, use_numba=False)
+        assert len(result) == len(close)
+
+
+class TestHiLoPerformance:
+    """Performance tests for HiLo (Gann HiLo Activator)"""
+
+    def test_hilo_correctness(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        high = sample_data_small["high"]
+        low = sample_data_small["low"]
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = hilo(
+            high, low, close, high_length=13, low_length=21, use_numba=True
+        )
+        result_python = hilo(
+            high, low, close, high_length=13, low_length=21, use_numba=False
+        )
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_frame_equal(result_numba, result_python, rtol=1e-10)
+
+    @pytest.mark.benchmark(group="hilo")
+    def test_hilo_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark HiLo with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        high = sample_data_large["high"]
+        low = sample_data_large["low"]
+        close = sample_data_large["close"]
+        result = benchmark(hilo, high, low, close, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="hilo")
+    def test_hilo_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark HiLo with pure Python"""
+        high = sample_data_large["high"]
+        low = sample_data_large["low"]
+        close = sample_data_large["close"]
+        result = benchmark(hilo, high, low, close, use_numba=False)
+        assert len(result) == len(close)
+
+
+class TestEBSWPerformance:
+    """Performance tests for EBSW (Even Better SineWave)"""
+
+    def test_ebsw_correctness(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = ebsw(close, length=40, bars=10, use_numba=True)
+        result_python = ebsw(close, length=40, bars=10, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-8)
+
+    @pytest.mark.benchmark(group="ebsw")
+    def test_ebsw_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark EBSW with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_large["close"]
+        result = benchmark(ebsw, close, length=40, bars=10, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="ebsw")
+    def test_ebsw_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark EBSW with pure Python"""
+        close = sample_data_large["close"]
+        result = benchmark(ebsw, close, length=40, bars=10, use_numba=False)
+        assert len(result) == len(close)
+
+
+class TestJMAPerformance:
+    """Performance tests for JMA (Jurik Moving Average)"""
+
+    def test_jma_correctness(self, sample_data_small):
+        """Verify Numba and Python versions produce identical results"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_small["close"]
+
+        # Calculate with both methods
+        result_numba = jma(close, length=7, phase=0, use_numba=True)
+        result_python = jma(close, length=7, phase=0, use_numba=False)
+
+        # Compare results (allowing small floating point differences)
+        pd.testing.assert_series_equal(result_numba, result_python, rtol=1e-10)
+
+    @pytest.mark.benchmark(group="jma")
+    def test_jma_benchmark_numba(self, benchmark, sample_data_large):
+        """Benchmark JMA with Numba optimization"""
+        if not NUMBA_AVAILABLE:
+            pytest.skip("Numba not available")
+
+        close = sample_data_large["close"]
+        result = benchmark(jma, close, length=7, phase=0, use_numba=True)
+        assert len(result) == len(close)
+
+    @pytest.mark.benchmark(group="jma")
+    def test_jma_benchmark_python(self, benchmark, sample_data_large):
+        """Benchmark JMA with pure Python"""
+        close = sample_data_large["close"]
+        result = benchmark(jma, close, length=7, phase=0, use_numba=False)
+        assert len(result) == len(close)
 
 
 if __name__ == "__main__":

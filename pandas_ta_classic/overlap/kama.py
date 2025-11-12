@@ -4,9 +4,19 @@ from pandas import Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, kama_numba_core
 
 
-def kama(close, length=None, fast=None, slow=None, drift=None, offset=None, **kwargs):
+def kama(
+    close,
+    length=None,
+    fast=None,
+    slow=None,
+    drift=None,
+    offset=None,
+    use_numba=True,
+    **kwargs,
+):
     """Indicator: Kaufman's Adaptive Moving Average (KAMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
@@ -34,11 +44,17 @@ def kama(close, length=None, fast=None, slow=None, drift=None, offset=None, **kw
     sc = x * x
 
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, m):
-        result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
 
-    kama = Series(result, index=close.index)
+    # Use Numba-optimized implementation if available and requested
+    if use_numba and NUMBA_AVAILABLE:
+        result_values = kama_numba_core(close.values, sc.values, length)
+        kama = Series(result_values, index=close.index)
+    else:
+        # Fall back to pure Python implementation
+        result = [npNaN for _ in range(0, length - 1)] + [0]
+        for i in range(length, m):
+            result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
+        kama = Series(result, index=close.index)
 
     # Offset
     if offset != 0:

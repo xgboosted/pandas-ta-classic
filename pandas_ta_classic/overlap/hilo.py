@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from .ma import ma
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, hilo_numba_core
 
 
 def hilo(
@@ -15,6 +16,7 @@ def hilo(
     low_length=None,
     mamode=None,
     offset=None,
+    use_numba=True,
     **kwargs,
 ):
     """Indicator: Gann HiLo (HiLo)"""
@@ -33,21 +35,32 @@ def hilo(
 
     # Calculate Result
     m = close.size
-    hilo = Series(npNaN, index=close.index)
-    long = Series(npNaN, index=close.index)
-    short = Series(npNaN, index=close.index)
 
     high_ma = ma(mamode, high, length=high_length)
     low_ma = ma(mamode, low, length=low_length)
 
-    for i in range(1, m):
-        if close.iloc[i] > high_ma.iloc[i - 1]:
-            hilo.iloc[i] = long.iloc[i] = low_ma.iloc[i]
-        elif close.iloc[i] < low_ma.iloc[i - 1]:
-            hilo.iloc[i] = short.iloc[i] = high_ma.iloc[i]
-        else:
-            hilo.iloc[i] = hilo.iloc[i - 1]
-            long.iloc[i] = short.iloc[i] = hilo.iloc[i - 1]
+    # Use Numba-optimized implementation if available and requested
+    if use_numba and NUMBA_AVAILABLE:
+        hilo_values, long_values, short_values = hilo_numba_core(
+            close.values, high_ma.values, low_ma.values
+        )
+        hilo = Series(hilo_values, index=close.index)
+        long = Series(long_values, index=close.index)
+        short = Series(short_values, index=close.index)
+    else:
+        # Fall back to pure Python implementation
+        hilo = Series(npNaN, index=close.index)
+        long = Series(npNaN, index=close.index)
+        short = Series(npNaN, index=close.index)
+
+        for i in range(1, m):
+            if close.iloc[i] > high_ma.iloc[i - 1]:
+                hilo.iloc[i] = long.iloc[i] = low_ma.iloc[i]
+            elif close.iloc[i] < low_ma.iloc[i - 1]:
+                hilo.iloc[i] = short.iloc[i] = high_ma.iloc[i]
+            else:
+                hilo.iloc[i] = hilo.iloc[i - 1]
+                long.iloc[i] = short.iloc[i] = hilo.iloc[i - 1]
 
     # Offset
     if offset != 0:

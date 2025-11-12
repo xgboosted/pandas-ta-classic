@@ -9,9 +9,10 @@ from pandas import Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, ebsw_numba_core
 
 
-def ebsw(close, length=None, bars=None, offset=None, **kwargs):
+def ebsw(close, length=None, bars=None, offset=None, use_numba=True, **kwargs):
     """Indicator: Even Better SineWave (EBSW)"""
     # Validate arguments
     length = int(length) if length and length > 38 else 40
@@ -22,48 +23,55 @@ def ebsw(close, length=None, bars=None, offset=None, **kwargs):
     if close is None:
         return
 
-    # variables
-    alpha1 = HP = 0  # alpha and HighPass
-    a1 = b1 = c1 = c2 = c3 = 0
-    Filt = Pwr = Wave = 0
+    # Use Numba-optimized implementation if available and requested
+    if use_numba and NUMBA_AVAILABLE:
+        result_values = ebsw_numba_core(close.values, length, bars)
+        ebsw = Series(result_values, index=close.index)
+    else:
+        # Fall back to pure Python implementation
+        # variables
+        alpha1 = HP = 0  # alpha and HighPass
+        a1 = b1 = c1 = c2 = c3 = 0
+        Filt = Pwr = Wave = 0
 
-    lastClose = lastHP = 0
-    FilterHist = [0, 0]  # Filter history
+        lastClose = lastHP = 0
+        FilterHist = [0, 0]  # Filter history
 
-    # Calculate Result
-    m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, m):
-        # HighPass filter cyclic components whose periods are shorter than Duration input
-        alpha1 = (1 - npSin(360 / length)) / npCos(360 / length)
-        HP = 0.5 * (1 + alpha1) * (close[i] - lastClose) + alpha1 * lastHP
+        # Calculate Result
+        m = close.size
+        result = [npNaN for _ in range(0, length - 1)] + [0]
+        for i in range(length, m):
+            # HighPass filter cyclic components whose periods are shorter than Duration input
+            alpha1 = (1 - npSin(360 / length)) / npCos(360 / length)
+            HP = 0.5 * (1 + alpha1) * (close[i] - lastClose) + alpha1 * lastHP
 
-        # Smooth with a Super Smoother Filter from equation 3-3
-        a1 = npExp(-npSqrt(2) * npPi / bars)
-        b1 = 2 * a1 * npCos(npSqrt(2) * 180 / bars)
-        c2 = b1
-        c3 = -1 * a1 * a1
-        c1 = 1 - c2 - c3
-        Filt = c1 * (HP + lastHP) / 2 + c2 * FilterHist[1] + c3 * FilterHist[0]
-        # Filt = float("{:.8f}".format(float(Filt))) # to fix for small scientific notations, the big ones fail
+            # Smooth with a Super Smoother Filter from equation 3-3
+            a1 = npExp(-npSqrt(2) * npPi / bars)
+            b1 = 2 * a1 * npCos(npSqrt(2) * 180 / bars)
+            c2 = b1
+            c3 = -1 * a1 * a1
+            c1 = 1 - c2 - c3
+            Filt = c1 * (HP + lastHP) / 2 + c2 * FilterHist[1] + c3 * FilterHist[0]
 
-        # 3 Bar average of Wave amplitude and power
-        Wave = (Filt + FilterHist[1] + FilterHist[0]) / 3
-        Pwr = (
-            Filt * Filt + FilterHist[1] * FilterHist[1] + FilterHist[0] * FilterHist[0]
-        ) / 3
+            # 3 Bar average of Wave amplitude and power
+            Wave = (Filt + FilterHist[1] + FilterHist[0]) / 3
+            Pwr = (
+                Filt * Filt
+                + FilterHist[1] * FilterHist[1]
+                + FilterHist[0] * FilterHist[0]
+            ) / 3
 
-        # Normalize the Average Wave to Square Root of the Average Power
-        Wave = Wave / npSqrt(Pwr)
+            # Normalize the Average Wave to Square Root of the Average Power
+            Wave = Wave / npSqrt(Pwr)
 
-        # update storage, result
-        FilterHist.append(Filt)  # append new Filt value
-        FilterHist.pop(0)  # remove first element of list (left) -> updating/trim
-        lastHP = HP
-        lastClose = close[i]
-        result.append(Wave)
+            # update storage, result
+            FilterHist.append(Filt)
+            FilterHist.pop(0)
+            lastHP = HP
+            lastClose = close[i]
+            result.append(Wave)
 
-    ebsw = Series(result, index=close.index)
+        ebsw = Series(result, index=close.index)
 
     # Offset
     if offset != 0:
