@@ -9,7 +9,7 @@ from pandas_ta_classic.utils._numba import NUMBA_AVAILABLE, rsx_numba_core
 
 def rsx(close, length=None, drift=None, offset=None, **kwargs):
     """Indicator: Relative Strength Xtra (inspired by Jurik RSX)
-    
+
     Performance: This indicator is automatically accelerated with Numba JIT
     compilation when numba is installed, providing significant performance
     improvements especially for large datasets.
