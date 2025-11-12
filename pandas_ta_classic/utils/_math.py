@@ -5,6 +5,7 @@ from operator import mul
 from sys import float_info as sflt
 from typing import List, Optional, Tuple
 
+import numpy as np
 from numpy import ones, triu
 from numpy import all as npAll
 from numpy import append as npAppend
@@ -14,10 +15,10 @@ from numpy import dot as npDot
 from numpy import fabs as npFabs
 from numpy import exp as npExp
 from numpy import log as npLog
-from numpy import nan as npNaN
 from numpy import ndarray as npNdArray
 from numpy import seterr
 from numpy import sqrt as npSqrt
+npNaN = np.nan
 from numpy import sum as npSum
 
 from pandas import DataFrame, Series

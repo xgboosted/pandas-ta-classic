@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from typing import Tuple
 
+import numpy as np
 from numpy import log as npLog
-from numpy import nan as npNaN
 from numpy import sqrt as npSqrt
 from pandas import Series, Timedelta
+npNaN = np.nan
 
 from ._core import verify_series
 from ._time import total_time
@@ -40,8 +41,6 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
     """
     if years <= 0:
         # Guard: years must be positive and nonzero
-        from numpy import nan as npNaN
-
         return npNaN
     close = verify_series(close)
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from numpy import nan as npNaN
+import numpy as np
 from pandas import DataFrame
+npNaN = np.nan
 from pandas_ta_classic.overlap import hl2
 from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import get_offset, verify_series

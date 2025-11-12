@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from numpy import nan as npNaN
+import numpy as np
 from pandas import DataFrame
+npNaN = np.nan
 from pandas_ta_classic.momentum import mom
 from pandas_ta_classic.overlap import ema, sma
 from pandas_ta_classic.trend import decreasing, increasing

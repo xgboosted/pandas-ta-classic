@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from pandas_ta_classic.utils import verify_series
-from numpy import nan as npNaN
+import numpy as np
 from pandas import Series
+npNaN = np.nan
 
 
 def pvr(close, volume):
