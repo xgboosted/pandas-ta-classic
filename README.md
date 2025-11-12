@@ -24,6 +24,22 @@
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
+## 📖 New to Pandas TA Classic?
+
+**Get started quickly with our comprehensive guides:**
+
+- **[🚀 Quickstart Guide](QUICKSTART.md)** - Installation, your first indicators, and common workflows
+- **[📚 Tutorials](TUTORIALS.md)** - Step-by-step tutorials for real-world use cases:
+  - Moving Average Crossover Strategy
+  - Building Custom Indicator Strategies  
+  - Backtesting with Performance Metrics
+  - Integrating with VectorBT
+  - Multi-Timeframe Analysis
+  - Creating Custom Indicators
+  - Candlestick Pattern Recognition
+
+**Complete documentation:** 🔗 **[https://xgboosted.github.io/pandas-ta-classic/](https://xgboosted.github.io/pandas-ta-classic/)**
+
 ### 🎯 Key Features
 
 - **203 Technical Indicators**: 141 indicators + 62 TA-Lib candlestick patterns
@@ -130,13 +146,19 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 **Complete documentation is available at:** 🔗 **[https://xgboosted.github.io/pandas-ta-classic/](https://xgboosted.github.io/pandas-ta-classic/)**
 
-### Quick Links
-- 📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
+### 📖 Learning Resources
+
+**Start Here:**
+- 🚀 **[Quickstart Guide](QUICKSTART.md)** - Get up and running in minutes
+- 📚 **[Tutorials](TUTORIALS.md)** - Step-by-step guides for common workflows
+- � **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
+
+**Reference Documentation:**
+- �📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
 - 🏗️ [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing  
 - 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 141 indicators & 62 patterns
 - 🔧 [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - 📈 [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis
-- 💡 [**Examples**](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) - Jupyter notebooks and code examples
 
 ## 🐍 Python Version Support
 
