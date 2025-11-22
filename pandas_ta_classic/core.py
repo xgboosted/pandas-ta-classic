@@ -2769,9 +2769,13 @@ class AnalysisIndicators(BasePandasObject):
     def vfi(
         self, length=None, coef=None, vcoef=None, mamode=None, offset=None, **kwargs
     ):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
         result = vfi(
+            high=high,
+            low=low,
             close=close,
             volume=volume,
             length=length,
