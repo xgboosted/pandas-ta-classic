@@ -38,6 +38,8 @@ def vfi(
     typical = (high + low + close) / 3.0
 
     # Calculate logarithmic price change
+    # Replace zero or negative values with NaN to avoid log domain errors
+    typical = typical.where(typical > 0, np.nan)
     log_typical = np.log(typical)
     inter = log_typical.diff()
 
