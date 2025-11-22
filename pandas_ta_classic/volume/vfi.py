@@ -61,7 +61,7 @@ def vfi(
 
     # Calculate VFI
     vfi_raw = vcp.rolling(length).sum() / vave
-    
+
     # Smooth VFI
     vfi = ma(mamode, vfi_raw, length=3)
 
@@ -125,7 +125,7 @@ Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
     length (int): The period. Default: 130
-    coef (float): Volatility filter coefficient. Filters out price changes 
+    coef (float): Volatility filter coefficient. Filters out price changes
         below coef * stdev. Use 0.2 for daily, 0.1 for intraday. Default: 0.2
     vcoef (float): Volume coefficient/cutoff multiplier. Default: 2.5
     mamode (str): Moving average mode for smoothing. Default: 'ema'
