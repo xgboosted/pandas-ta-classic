@@ -1,3 +1,5 @@
+import hashlib
+import json
 import os
 from pandas import read_csv
 
@@ -74,3 +76,24 @@ def assert_nan_count(test_case, result, length):
 def assert_columns(test_case, result, expected_columns):
     """Assert DataFrame has exactly these columns."""
     test_case.assertListEqual(list(result.columns), list(expected_columns))
+
+
+def hash_result(result):
+    """Stable SHA-256 hash of a Series or DataFrame (8 decimal precision)."""
+    import pandas as pd
+
+    if isinstance(result, pd.Series):
+        content = [
+            round(float(x), 8) if not pd.isna(x) else None for x in result.values
+        ]
+    elif isinstance(result, pd.DataFrame):
+        content = {
+            col: [
+                round(float(x), 8) if not pd.isna(x) else None
+                for x in result[col].values
+            ]
+            for col in sorted(result.columns)
+        }
+    else:
+        return None
+    return hashlib.sha256(json.dumps(content).encode()).hexdigest()
