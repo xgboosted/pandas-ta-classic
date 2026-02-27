@@ -1,4 +1,6 @@
 from tests.config import (
+    assert_columns,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -77,6 +79,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.ao(self.high, self.low)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "AO_5_34")
+        assert_offset(self, pandas_ta.ao, self.high, self.low)
 
     def test_apo(self):
         result = pandas_ta.apo(self.close, talib=False)
@@ -124,6 +127,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.bop(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "BOP")
+        assert_offset(self, pandas_ta.bop, self.open, self.high, self.low, self.close, talib=False)
 
     def test_brar(self):
         result = pandas_ta.brar(self.open, self.high, self.low, self.close)
@@ -150,6 +154,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.cci(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CCI_14_0.015")
+        assert_offset(self, pandas_ta.cci, self.high, self.low, self.close, talib=False)
 
     def test_cfo(self):
         result = pandas_ta.cfo(self.close)
@@ -227,6 +232,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.dm(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "DM_14")
+        assert_offset(self, pandas_ta.dm, self.high, self.low, talib=False)
+        assert_columns(self, pandas_ta.dm(self.high, self.low, talib=False), ["DMP_14", "DMN_14"])
 
     def test_eri(self):
         result = pandas_ta.eri(self.high, self.low, self.close)
@@ -304,6 +311,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.macd(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "MACD_12_26_9")
+        assert_offset(self, pandas_ta.macd, self.close, talib=False)
+        assert_columns(self, pandas_ta.macd(self.close, talib=False), ["MACD_12_26_9", "MACDh_12_26_9", "MACDs_12_26_9"])
 
     def test_macdas(self):
         result = pandas_ta.macd(self.close, asmode=True)
@@ -330,6 +339,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.mom(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MOM_10")
+        assert_offset(self, pandas_ta.mom, self.close, talib=False)
 
     def test_pgo(self):
         result = pandas_ta.pgo(self.high, self.low, self.close)
@@ -392,6 +402,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.roc(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ROC_10")
+        assert_offset(self, pandas_ta.roc, self.close, talib=False)
 
     def test_rsi(self):
         result = pandas_ta.rsi(self.close, talib=False)
@@ -413,6 +424,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.rsi(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "RSI_14")
+        assert_offset(self, pandas_ta.rsi, self.close, talib=False)
 
     def test_rsx(self):
         result = pandas_ta.rsx(self.close)
@@ -501,6 +513,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.stoch(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "STOCH_14_3_3")
+        assert_offset(self, pandas_ta.stoch, self.high, self.low, self.close)
+        assert_columns(self, result, ["STOCHk_14_3_3", "STOCHd_14_3_3"])
 
         try:
             expected = tal.STOCH(self.high, self.low, self.close, 14, 3, 0, 3, 0)

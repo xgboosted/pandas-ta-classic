@@ -1,4 +1,6 @@
 from tests.config import (
+    assert_columns,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -68,6 +70,8 @@ class TestTrend(TestCase):
         result = pandas_ta.adx(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
+        assert_offset(self, pandas_ta.adx, self.high, self.low, self.close, talib=False)
+        assert_columns(self, pandas_ta.adx(self.high, self.low, self.close, talib=False), ["ADX_14", "DMP_14", "DMN_14"])
 
     def test_amat(self):
         result = pandas_ta.amat(self.close)
@@ -103,6 +107,8 @@ class TestTrend(TestCase):
         result = pandas_ta.aroon(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
+        assert_offset(self, pandas_ta.aroon, self.high, self.low, talib=False)
+        assert_columns(self, pandas_ta.aroon(self.high, self.low, talib=False), ["AROOND_14", "AROONU_14", "AROONOSC_14"])
 
     def test_aroon_osc(self):
         result = pandas_ta.aroon(self.high, self.low)
@@ -129,6 +135,7 @@ class TestTrend(TestCase):
         result = pandas_ta.chop(self.high, self.low, self.close, ln=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CHOPln_14_1_100")
+        assert_offset(self, pandas_ta.chop, self.high, self.low, self.close, ln=False)
 
     def test_cksp(self):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=False)
@@ -148,6 +155,7 @@ class TestTrend(TestCase):
         result = pandas_ta.decay(self.close, mode="exp")
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EXPDECAY_5")
+        assert_offset(self, pandas_ta.decay, self.close)
 
     def test_decreasing(self):
         result = pandas_ta.decreasing(self.close)
@@ -162,6 +170,7 @@ class TestTrend(TestCase):
         result = pandas_ta.dpo(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DPO_20")
+        assert_offset(self, pandas_ta.dpo, self.close)
 
     def test_increasing(self):
         result = pandas_ta.increasing(self.close)
@@ -223,6 +232,8 @@ class TestTrend(TestCase):
         result = pandas_ta.vortex(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "VTX_14")
+        assert_offset(self, pandas_ta.vortex, self.high, self.low, self.close)
+        assert_columns(self, result, ["VTXP_14", "VTXM_14"])
 
     def test_pmax(self):
         result = pandas_ta.pmax(self.high, self.low, self.close)

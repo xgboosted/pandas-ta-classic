@@ -29,9 +29,17 @@ def error_analysis(df, kind, msg, icon=INFO, newline=True):
 
 
 def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
-    """Assert result(offset=1) == result(offset=0).shift(1) for all columns."""
-    result_0 = func(*args, **kwargs)
-    result_1 = func(*args, offset=1, **kwargs)
+    """Assert result(offset=1) == result(offset=0).shift(1) for all columns.
+
+    Also exercises fillna and fill_method code paths present in every indicator.
+    """
+    kwargs_clean = {k: v for k, v in kwargs.items() if k != "offset"}
+    result_0 = func(*args, **kwargs_clean)
+    result_1 = func(*args, offset=1, **kwargs_clean)
+
+    # Exercise fillna / fill_method branches present in all indicators
+    func(*args, **kwargs_clean, fillna=0)
+    func(*args, **kwargs_clean, fill_method="ffill")
 
     import pandas as pd
     if isinstance(result_0, pd.Series):

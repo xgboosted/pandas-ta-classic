@@ -160,7 +160,7 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
-fail_under = 59   # Current baseline (pre-Phase-3b); raise to 75 after test depth work
+fail_under = 65   # Phase 3b baseline; raise to 75 after fill_method/edge-case tests
 exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",

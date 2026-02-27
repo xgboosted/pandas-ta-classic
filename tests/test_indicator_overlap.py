@@ -1,4 +1,7 @@
 from tests.config import (
+    assert_columns,
+    assert_nan_count,
+    assert_offset,
     CORRELATION,
     CORRELATION_THRESHOLD,
     error_analysis,
@@ -8,6 +11,7 @@ from tests.config import (
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
+import pandas as pd
 import pandas.testing as pdt
 from pandas import DataFrame, Series
 
@@ -75,6 +79,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.dema(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DEMA_10")
+        assert_offset(self, pandas_ta.dema, self.close, talib=False)
+        assert_nan_count(self, pandas_ta.dema(self.close, talib=False), 10)
 
     def test_ema(self):
         result = pandas_ta.ema(self.close, presma=False)
@@ -111,6 +117,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.ema(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EMA_10")
+        assert_offset(self, pandas_ta.ema, self.close, talib=False)
+        assert_nan_count(self, pandas_ta.ema(self.close, talib=False), 10)
 
     def test_fwma(self):
         result = pandas_ta.fwma(self.close)
@@ -121,6 +129,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.hilo(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "HILO_13_21")
+        assert_offset(self, pandas_ta.hilo, self.high, self.low, self.close)
+        assert_columns(self, result, ["HILO_13_21", "HILOl_13_21", "HILOs_13_21"])
 
     def test_hl2(self):
         result = pandas_ta.hl2(self.high, self.low)
@@ -152,6 +162,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.hma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HMA_10")
+        assert_offset(self, pandas_ta.hma, self.close)
+        assert_nan_count(self, result, 10)
 
     def test_hwma(self):
         result = pandas_ta.hwma(self.close)
@@ -174,6 +186,8 @@ class TestOverlap(TestCase):
         self.assertIsInstance(span, DataFrame)
         self.assertEqual(ichimoku.name, "ICHIMOKU_9_26_52")
         self.assertEqual(span.name, "ICHISPAN_9_26")
+        assert_columns(self, ichimoku, ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"])
+        assert_columns(self, span, ["ISA_9", "ISB_26"])
 
     def test_linreg(self):
         result = pandas_ta.linreg(self.close, talib=False)
@@ -364,6 +378,10 @@ class TestOverlap(TestCase):
         result = pandas_ta.sma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SMA_10")
+        sma_result = pandas_ta.sma(self.close, talib=False)
+        pd.testing.assert_series_equal(sma_result, self.close.rolling(10).mean(), check_names=False)
+        assert_offset(self, pandas_ta.sma, self.close, talib=False)
+        assert_nan_count(self, sma_result, 10)
 
     def test_ssf(self):
         result = pandas_ta.ssf(self.close, poles=2)
@@ -383,6 +401,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.supertrend(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SUPERT_7_3.0")
+        assert_offset(self, pandas_ta.supertrend, self.high, self.low, self.close)
+        assert_columns(self, result, ["SUPERT_7_3.0", "SUPERTd_7_3.0", "SUPERTl_7_3.0", "SUPERTs_7_3.0"])
 
     def test_t3(self):
         result = pandas_ta.t3(self.close, talib=False)
@@ -425,6 +445,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.tema(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TEMA_10")
+        assert_offset(self, pandas_ta.tema, self.close, talib=False)
+        assert_nan_count(self, pandas_ta.tema(self.close, talib=False), 10)
 
     def test_trima(self):
         result = pandas_ta.trima(self.close, talib=False)
@@ -503,6 +525,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.wma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WMA_10")
+        assert_offset(self, pandas_ta.wma, self.close, talib=False)
+        assert_nan_count(self, pandas_ta.wma(self.close, talib=False), 10)
 
     def test_zlma(self):
         result = pandas_ta.zlma(self.close)

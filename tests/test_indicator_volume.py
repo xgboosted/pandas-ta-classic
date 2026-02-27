@@ -1,4 +1,6 @@
 from tests.config import (
+    assert_columns,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -70,6 +72,7 @@ class TestVolume(TestCase):
         result = pandas_ta.ad(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "AD")
+        assert_offset(self, pandas_ta.ad, self.high, self.low, self.close, self.volume_, talib=False)
 
     def test_ad_open(self):
         result = pandas_ta.ad(self.high, self.low, self.close, self.volume_, self.open)
@@ -108,6 +111,7 @@ class TestVolume(TestCase):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CMF_20")
+        assert_offset(self, pandas_ta.cmf, self.high, self.low, self.close, self.volume_)
 
     def test_efi(self):
         result = pandas_ta.efi(self.close, self.volume_)
@@ -123,6 +127,8 @@ class TestVolume(TestCase):
         result = pandas_ta.kvo(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KVO_34_55_13")
+        assert_offset(self, pandas_ta.kvo, self.high, self.low, self.close, self.volume_)
+        assert_columns(self, result, ["KVO_34_55_13", "KVOs_34_55_13"])
 
     def test_mfi(self):
         result = pandas_ta.mfi(
@@ -146,6 +152,7 @@ class TestVolume(TestCase):
         result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MFI_14")
+        assert_offset(self, pandas_ta.mfi, self.high, self.low, self.close, self.volume_, talib=False)
 
     def test_nvi(self):
         result = pandas_ta.nvi(self.close, self.volume_)
@@ -172,6 +179,7 @@ class TestVolume(TestCase):
         result = pandas_ta.obv(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "OBV")
+        assert_offset(self, pandas_ta.obv, self.close, self.volume_, talib=False)
 
     def test_pvi(self):
         result = pandas_ta.pvi(self.close, self.volume_)
