@@ -99,7 +99,7 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
 
-    def test_tos_sdtevall(self):
+    def test_tos_stdevall(self):
         result = pandas_ta.tos_stdevall(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TOS_STDEVALL")

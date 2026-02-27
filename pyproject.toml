@@ -148,6 +148,25 @@ write_to = "pandas_ta_classic/_version.py"
 local_scheme = "no-local-version"  # Omit local version for clean releases
 fallback_version = "0.0.0"  # Fallback if not in a git repository
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short -q"
+
+[tool.coverage.run]
+source = ["pandas_ta_classic"]
+omit = ["pandas_ta_classic/_version.py"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 59   # Current baseline (pre-Phase-3b); raise to 75 after test depth work
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
 [tool.mypy]
 packages = ["pandas_ta_classic"]
 python_version = "3.9"

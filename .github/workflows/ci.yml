@@ -198,14 +198,22 @@ jobs:
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
     
-    - name: Run comprehensive tests
+    - name: Install test dependencies
+      run: pip install pytest pytest-cov
+
+    - name: Run tests with coverage
       run: |
-        python -m unittest discover tests/ -v
-    
-    - name: Test package installation and performance
-      run: |
-        python -c "import pandas_ta_classic as ta; print('Package imported successfully on Python ${{ matrix.python-version }}')"
-        python -m unittest tests.test_indicator_performance -v
+        pytest --cov=pandas_ta_classic \
+               --cov-report=xml \
+               --cov-report=term-missing \
+               --cov-fail-under=59
+
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v4
+      if: matrix.python-version == '3.13'
+      with:
+        file: coverage.xml
+        fail_ci_if_error: false
 
   # Job 5: Documentation - Build and deploy documentation (independent deployment)
   documentation:
