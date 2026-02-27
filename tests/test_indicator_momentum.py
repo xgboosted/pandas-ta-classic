@@ -136,6 +136,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.brar(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BRAR_26")
+        assert_offset(self, pandas_ta.brar, self.open, self.high, self.low, self.close,
+                      expected_cols=["AR_26", "BR_26"])
 
     def test_cci(self):
         result = pandas_ta.cci(self.high, self.low, self.close, talib=False)
@@ -248,11 +250,15 @@ class TestMomentum(TestCase):
         result = pandas_ta.eri(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ERI_13")
+        assert_offset(self, pandas_ta.eri, self.high, self.low, self.close,
+                      expected_cols=["BULLP_13", "BEARP_13"])
 
     def test_fisher(self):
         result = pandas_ta.fisher(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "FISHERT_9_1")
+        assert_offset(self, pandas_ta.fisher, self.high, self.low,
+                      expected_cols=["FISHERT_9_1", "FISHERTs_9_1"])
 
     def test_inertia(self):
         result = pandas_ta.inertia(self.close)
@@ -271,11 +277,15 @@ class TestMomentum(TestCase):
         result = pandas_ta.kdj(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KDJ_9_3")
+        assert_offset(self, pandas_ta.kdj, self.high, self.low, self.close,
+                      expected_cols=["K_9_3", "D_9_3", "J_9_3"])
 
     def test_kst(self):
         result = pandas_ta.kst(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KST_10_15_20_30_10_10_10_15_9")
+        assert_offset(self, pandas_ta.kst, self.close,
+                      expected_cols=["KST_10_15_20_30_10_10_10_15", "KSTs_9"])
 
     def test_macd(self):
         result = pandas_ta.macd(self.close, talib=False)
@@ -385,11 +395,19 @@ class TestMomentum(TestCase):
         result = pandas_ta.pvo(self.volume)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "PVO_12_26_9")
+        assert_offset(self, pandas_ta.pvo, self.volume,
+                      expected_cols=["PVO_12_26_9", "PVOh_12_26_9", "PVOs_12_26_9"])
 
     def test_qqe(self):
         result = pandas_ta.qqe(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "QQE_14_5_4.236")
+        # QQE is stateful (iterative loop) so skip the offset-shift comparison;
+        # exercise fill branches and None-guard manually instead
+        self.assertIsNone(pandas_ta.qqe(None))
+        pandas_ta.qqe(self.close, fillna=0)
+        pandas_ta.qqe(self.close, fill_method="ffill")
+        pandas_ta.qqe(self.close, fill_method="bfill")
 
     def test_roc(self):
         result = pandas_ta.roc(self.close, talib=False)
@@ -439,11 +457,14 @@ class TestMomentum(TestCase):
         result = pandas_ta.rsx(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "RSX_14")
+        assert_offset(self, pandas_ta.rsx, self.close)
 
     def test_rvgi(self):
         result = pandas_ta.rvgi(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "RVGI_14_4")
+        assert_offset(self, pandas_ta.rvgi, self.open, self.high, self.low, self.close,
+                      expected_cols=["RVGIh_14_4", "RVGI_14_4", "RVGIs_14_4"])
 
     def test_slope(self):
         result = pandas_ta.slope(self.close)
@@ -476,6 +497,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.squeeze(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
+        assert_offset(self, pandas_ta.squeeze, self.high, self.low, self.close,
+                      expected_cols=["SQZ_20_2.0_20_1.5"])
 
         result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
@@ -495,6 +518,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPRO_20_2.0_20_2_1.5_1")
+        assert_offset(self, pandas_ta.squeeze_pro, self.high, self.low, self.close,
+                      expected_cols=["SQZPRO_20_2.0_20_2_1.5_1"])
 
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
@@ -516,6 +541,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.stc(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "STC_10_12_26_0.5")
+        assert_offset(self, pandas_ta.stc, self.close,
+                      expected_cols=["STC_10_12_26_0.5", "STCmacd_10_12_26_0.5",
+                                     "STCstoch_10_12_26_0.5"])
 
     def test_stoch(self):
         # TV Correlation
@@ -602,6 +630,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.tsi(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TSI_13_25_13")
+        assert_offset(self, pandas_ta.tsi, self.close,
+                      expected_cols=["TSI_13_25_13", "TSIs_13_25_13"])
 
     def test_uo(self):
         result = pandas_ta.uo(self.high, self.low, self.close, talib=False)
@@ -645,6 +675,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.lrsi(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRSI_14")
+        assert_offset(self, pandas_ta.lrsi, self.close)
 
     def test_po(self):
         result = pandas_ta.po(self.close)

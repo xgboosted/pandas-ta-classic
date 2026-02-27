@@ -42,6 +42,9 @@ def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
     func(*args, **kwargs_clean, fill_method="ffill")
     func(*args, **kwargs_clean, fill_method="bfill")
 
+    # Exercise None-guard branch (verify_series(None) → None → early return)
+    test_case.assertIsNone(func(None, *args[1:]))
+
     import pandas as pd
     if isinstance(result_0, pd.Series):
         cols = [None]

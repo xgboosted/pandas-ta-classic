@@ -18,6 +18,9 @@ def pvol(
     offset = get_offset(offset)
     signed = kwargs.pop("signed", False)
 
+    if close is None or volume is None:
+        return None
+
     # Calculate Result
     pvol = close * volume
     if signed:

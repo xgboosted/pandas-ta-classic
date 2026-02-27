@@ -28,6 +28,9 @@ def hwc(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if close is None:
+        return None
+
     # Calculate Result
     last_a = last_v = last_var = 0
     last_f = last_price = last_result = close.iloc[0]

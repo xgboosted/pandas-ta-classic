@@ -20,6 +20,9 @@ def obv(
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
+    if close is None or volume is None:
+        return None
+
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import OBV
