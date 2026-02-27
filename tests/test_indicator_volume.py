@@ -117,11 +117,13 @@ class TestVolume(TestCase):
         result = pandas_ta.efi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EFI_13")
+        assert_offset(self, pandas_ta.efi, self.close, self.volume_)
 
     def test_eom(self):
         result = pandas_ta.eom(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EOM_14_100000000")
+        assert_offset(self, pandas_ta.eom, self.high, self.low, self.close, self.volume_)
 
     def test_kvo(self):
         result = pandas_ta.kvo(self.high, self.low, self.close, self.volume_)
@@ -158,6 +160,7 @@ class TestVolume(TestCase):
         result = pandas_ta.nvi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "NVI_1")
+        assert_offset(self, pandas_ta.nvi, self.close, self.volume_)
 
     def test_obv(self):
         result = pandas_ta.obv(self.close, self.volume_, talib=False)
@@ -185,11 +188,13 @@ class TestVolume(TestCase):
         result = pandas_ta.pvi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PVI_1")
+        assert_offset(self, pandas_ta.pvi, self.close, self.volume_)
 
     def test_pvol(self):
         result = pandas_ta.pvol(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PVOL")
+        assert_offset(self, pandas_ta.pvol, self.close, self.volume_)
 
     def test_pvr(self):
         result = pandas_ta.pvr(self.close, self.volume_)
@@ -205,6 +210,7 @@ class TestVolume(TestCase):
         result = pandas_ta.pvt(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PVT")
+        assert_offset(self, pandas_ta.pvt, self.close, self.volume_)
 
     def test_vp(self):
         result = pandas_ta.vp(self.close, self.volume_)
@@ -215,3 +221,4 @@ class TestVolume(TestCase):
         result = pandas_ta.vfi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VFI_130")
+        assert_offset(self, pandas_ta.vfi, self.close, self.volume_)

@@ -40,6 +40,7 @@ def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
     # Exercise fillna / fill_method branches present in all indicators
     func(*args, **kwargs_clean, fillna=0)
     func(*args, **kwargs_clean, fill_method="ffill")
+    func(*args, **kwargs_clean, fill_method="bfill")
 
     import pandas as pd
     if isinstance(result_0, pd.Series):

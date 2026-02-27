@@ -1,5 +1,6 @@
 from tests.config import (
     assert_columns,
+    assert_nan_count,
     assert_offset,
     error_analysis,
     get_sample_data,
@@ -101,11 +102,13 @@ class TestMomentum(TestCase):
         result = pandas_ta.apo(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "APO_12_26")
+        assert_offset(self, pandas_ta.apo, self.close, talib=False)
 
     def test_bias(self):
         result = pandas_ta.bias(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "BIAS_SMA_26")
+        assert_offset(self, pandas_ta.bias, self.close)
 
     def test_bop(self):
         result = pandas_ta.bop(self.open, self.high, self.low, self.close, talib=False)
@@ -160,11 +163,13 @@ class TestMomentum(TestCase):
         result = pandas_ta.cfo(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CFO_9")
+        assert_offset(self, pandas_ta.cfo, self.close)
 
     def test_cg(self):
         result = pandas_ta.cg(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CG_10")
+        assert_offset(self, pandas_ta.cg, self.close)
 
     def test_cmo(self):
         result = pandas_ta.cmo(self.close)
@@ -186,21 +191,25 @@ class TestMomentum(TestCase):
         result = pandas_ta.cmo(self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CMO_14")
+        assert_offset(self, pandas_ta.cmo, self.close, talib=False)
 
     def test_coppock(self):
         result = pandas_ta.coppock(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "COPC_11_14_10")
+        assert_offset(self, pandas_ta.coppock, self.close)
 
     def test_cti(self):
         result = pandas_ta.cti(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CTI_12")
+        assert_offset(self, pandas_ta.cti, self.close)
 
     def test_er(self):
         result = pandas_ta.er(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ER_10")
+        assert_offset(self, pandas_ta.er, self.close)
 
     def test_dm(self):
         result = pandas_ta.dm(self.high, self.low, talib=False)
@@ -570,6 +579,24 @@ class TestMomentum(TestCase):
         result = pandas_ta.trix(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TRIX_30_9")
+
+        result_14 = pandas_ta.trix(self.close, length=14)
+        self.assertIsInstance(result_14, DataFrame)
+        trix_col = result_14["TRIX_14_9"]
+        try:
+            expected = tal.TRIX(self.close, timeperiod=14)
+            pdt.assert_series_equal(trix_col, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    trix_col, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(trix_col, CORRELATION, ex)
+
+        assert_offset(self, pandas_ta.trix, self.close)
+        assert_nan_count(self, trix_col, 3 * 14 - 2)
 
     def test_tsi(self):
         result = pandas_ta.tsi(self.close)

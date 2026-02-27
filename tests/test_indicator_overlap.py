@@ -137,6 +137,21 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HL2")
 
+        try:
+            expected = tal.MEDPRICE(self.high, self.low)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        assert_offset(self, pandas_ta.hl2, self.high, self.low)
+        assert_nan_count(self, result, 1)
+
     def test_hlc3(self):
         result = pandas_ta.hlc3(self.high, self.low, self.close, talib=False)
         self.assertIsInstance(result, Series)
@@ -174,6 +189,21 @@ class TestOverlap(TestCase):
         result = pandas_ta.kama(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "KAMA_10_2_30")
+
+        try:
+            expected = tal.KAMA(self.close, timeperiod=10)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        assert_offset(self, pandas_ta.kama, self.close)
+        assert_nan_count(self, result, 10)
 
     def test_jma(self):
         result = pandas_ta.jma(self.close)
@@ -342,6 +372,21 @@ class TestOverlap(TestCase):
         result = pandas_ta.ohlc4(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "OHLC4")
+
+        try:
+            expected = tal.AVGPRICE(self.open, self.high, self.low, self.close)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        assert_offset(self, pandas_ta.ohlc4, self.open, self.high, self.low, self.close)
+        assert_nan_count(self, result, 1)
 
     def test_pwma(self):
         result = pandas_ta.pwma(self.close)
