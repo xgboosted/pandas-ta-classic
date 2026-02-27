@@ -46,6 +46,7 @@ def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
     test_case.assertIsNone(func(None, *args[1:]))
 
     import pandas as pd
+
     if isinstance(result_0, pd.Series):
         cols = [None]
     else:
@@ -60,11 +61,14 @@ def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
 def assert_nan_count(test_case, result, length):
     """Assert first (length-1) rows are NaN."""
     import pandas as pd
+
     if isinstance(result, pd.Series):
         head = result.iloc[: length - 1]
     else:
         head = result.iloc[: length - 1]
-    test_case.assertTrue(head.isna().all().all() if hasattr(head, "columns") else head.isna().all())
+    test_case.assertTrue(
+        head.isna().all().all() if hasattr(head, "columns") else head.isna().all()
+    )
 
 
 def assert_columns(test_case, result, expected_columns):

@@ -72,7 +72,15 @@ class TestVolume(TestCase):
         result = pandas_ta.ad(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "AD")
-        assert_offset(self, pandas_ta.ad, self.high, self.low, self.close, self.volume_, talib=False)
+        assert_offset(
+            self,
+            pandas_ta.ad,
+            self.high,
+            self.low,
+            self.close,
+            self.volume_,
+            talib=False,
+        )
 
     def test_ad_open(self):
         result = pandas_ta.ad(self.high, self.low, self.close, self.volume_, self.open)
@@ -111,7 +119,9 @@ class TestVolume(TestCase):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CMF_20")
-        assert_offset(self, pandas_ta.cmf, self.high, self.low, self.close, self.volume_)
+        assert_offset(
+            self, pandas_ta.cmf, self.high, self.low, self.close, self.volume_
+        )
 
     def test_efi(self):
         result = pandas_ta.efi(self.close, self.volume_)
@@ -123,13 +133,17 @@ class TestVolume(TestCase):
         result = pandas_ta.eom(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EOM_14_100000000")
-        assert_offset(self, pandas_ta.eom, self.high, self.low, self.close, self.volume_)
+        assert_offset(
+            self, pandas_ta.eom, self.high, self.low, self.close, self.volume_
+        )
 
     def test_kvo(self):
         result = pandas_ta.kvo(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KVO_34_55_13")
-        assert_offset(self, pandas_ta.kvo, self.high, self.low, self.close, self.volume_)
+        assert_offset(
+            self, pandas_ta.kvo, self.high, self.low, self.close, self.volume_
+        )
         assert_columns(self, result, ["KVO_34_55_13", "KVOs_34_55_13"])
 
     def test_mfi(self):
@@ -154,7 +168,15 @@ class TestVolume(TestCase):
         result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MFI_14")
-        assert_offset(self, pandas_ta.mfi, self.high, self.low, self.close, self.volume_, talib=False)
+        assert_offset(
+            self,
+            pandas_ta.mfi,
+            self.high,
+            self.low,
+            self.close,
+            self.volume_,
+            talib=False,
+        )
 
     def test_nvi(self):
         result = pandas_ta.nvi(self.close, self.volume_)

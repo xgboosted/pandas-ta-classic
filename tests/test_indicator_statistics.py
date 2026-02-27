@@ -132,10 +132,19 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TOS_STDEVALL_30")
         self.assertEqual(len(result.columns), 5)
-        assert_columns(self, pandas_ta.tos_stdevall(self.close), [
-            "TOS_STDEVALL_LR", "TOS_STDEVALL_L_1", "TOS_STDEVALL_U_1",
-            "TOS_STDEVALL_L_2", "TOS_STDEVALL_U_2", "TOS_STDEVALL_L_3", "TOS_STDEVALL_U_3",
-        ])
+        assert_columns(
+            self,
+            pandas_ta.tos_stdevall(self.close),
+            [
+                "TOS_STDEVALL_LR",
+                "TOS_STDEVALL_L_1",
+                "TOS_STDEVALL_U_1",
+                "TOS_STDEVALL_L_2",
+                "TOS_STDEVALL_U_2",
+                "TOS_STDEVALL_L_3",
+                "TOS_STDEVALL_U_3",
+            ],
+        )
         assert_offset(self, pandas_ta.tos_stdevall, self.close)
 
     def test_variance(self):

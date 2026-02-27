@@ -54,8 +54,15 @@ class TestCandle(TestCase):
         result = pandas_ta.ha(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "Heikin-Ashi")
-        assert_offset(self, pandas_ta.ha, self.open, self.high, self.low, self.close,
-                      expected_cols=["HA_open", "HA_high", "HA_low", "HA_close"])
+        assert_offset(
+            self,
+            pandas_ta.ha,
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            expected_cols=["HA_open", "HA_high", "HA_low", "HA_close"],
+        )
 
     def test_cdl_pattern(self):
         result = pandas_ta.cdl_pattern(
@@ -90,7 +97,9 @@ class TestCandle(TestCase):
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
-        assert_offset(self, pandas_ta.cdl_doji, self.open, self.high, self.low, self.close)
+        assert_offset(
+            self, pandas_ta.cdl_doji, self.open, self.high, self.low, self.close
+        )
 
     def test_cdl_inside(self):
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close)
@@ -102,11 +111,20 @@ class TestCandle(TestCase):
         )
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_INSIDE")
-        assert_offset(self, pandas_ta.cdl_inside, self.open, self.high, self.low, self.close)
+        assert_offset(
+            self, pandas_ta.cdl_inside, self.open, self.high, self.low, self.close
+        )
 
     def test_cdl_z(self):
         result = pandas_ta.cdl_z(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CDL_Z_30_1")
-        assert_offset(self, pandas_ta.cdl_z, self.open, self.high, self.low, self.close,
-                      expected_cols=["open_Z_30_1", "high_Z_30_1", "low_Z_30_1", "close_Z_30_1"])
+        assert_offset(
+            self,
+            pandas_ta.cdl_z,
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            expected_cols=["open_Z_30_1", "high_Z_30_1", "low_Z_30_1", "close_Z_30_1"],
+        )

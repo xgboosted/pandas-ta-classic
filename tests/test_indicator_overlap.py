@@ -424,7 +424,9 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SMA_10")
         sma_result = pandas_ta.sma(self.close, talib=False)
-        pd.testing.assert_series_equal(sma_result, self.close.rolling(10).mean(), check_names=False)
+        pd.testing.assert_series_equal(
+            sma_result, self.close.rolling(10).mean(), check_names=False
+        )
         assert_offset(self, pandas_ta.sma, self.close, talib=False)
         assert_nan_count(self, sma_result, 10)
 
@@ -447,7 +449,11 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SUPERT_7_3.0")
         assert_offset(self, pandas_ta.supertrend, self.high, self.low, self.close)
-        assert_columns(self, result, ["SUPERT_7_3.0", "SUPERTd_7_3.0", "SUPERTl_7_3.0", "SUPERTs_7_3.0"])
+        assert_columns(
+            self,
+            result,
+            ["SUPERT_7_3.0", "SUPERTd_7_3.0", "SUPERTl_7_3.0", "SUPERTs_7_3.0"],
+        )
 
     def test_t3(self):
         result = pandas_ta.t3(self.close, talib=False)

@@ -56,7 +56,11 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ABER_5_15")
         assert_offset(self, pandas_ta.aberration, self.high, self.low, self.close)
-        assert_columns(self, result, ["ABER_ZG_5_15", "ABER_SG_5_15", "ABER_XG_5_15", "ABER_ATR_5_15"])
+        assert_columns(
+            self,
+            result,
+            ["ABER_ZG_5_15", "ABER_SG_5_15", "ABER_XG_5_15", "ABER_ATR_5_15"],
+        )
 
     def test_accbands(self):
         result = pandas_ta.accbands(self.high, self.low, self.close)
@@ -122,7 +126,11 @@ class TestVolatility(TestCase):
         self.assertEqual(result.name, "BBANDS_5_2.0")
         assert_offset(self, pandas_ta.bbands, self.close, talib=False)
         bbands_result = pandas_ta.bbands(self.close, talib=False)
-        assert_columns(self, bbands_result, ["BBL_5_2.0", "BBM_5_2.0", "BBU_5_2.0", "BBB_5_2.0", "BBP_5_2.0"])
+        assert_columns(
+            self,
+            bbands_result,
+            ["BBL_5_2.0", "BBM_5_2.0", "BBU_5_2.0", "BBB_5_2.0", "BBP_5_2.0"],
+        )
 
     def test_donchian(self):
         result = pandas_ta.donchian(self.high, self.low)
@@ -202,7 +210,16 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "THERMO_20_2_0.5")
         assert_offset(self, pandas_ta.thermo, self.high, self.low)
-        assert_columns(self, result, ["THERMO_20_2_0.5", "THERMOma_20_2_0.5", "THERMOl_20_2_0.5", "THERMOs_20_2_0.5"])
+        assert_columns(
+            self,
+            result,
+            [
+                "THERMO_20_2_0.5",
+                "THERMOma_20_2_0.5",
+                "THERMOl_20_2_0.5",
+                "THERMOs_20_2_0.5",
+            ],
+        )
 
     def test_true_range(self):
         result = pandas_ta.true_range(self.high, self.low, self.close, talib=False)
@@ -224,7 +241,9 @@ class TestVolatility(TestCase):
         result = pandas_ta.true_range(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRUERANGE_1")
-        assert_offset(self, pandas_ta.true_range, self.high, self.low, self.close, talib=False)
+        assert_offset(
+            self, pandas_ta.true_range, self.high, self.low, self.close, talib=False
+        )
 
     def test_ui(self):
         result = pandas_ta.ui(self.close)

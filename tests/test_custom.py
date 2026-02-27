@@ -80,6 +80,7 @@ class TestCustom(TestCase):
         # tests (e.g. strategy tests that iterate all category indicators) are
         # not affected by the temporary custom indicator.
         from pandas_ta_classic import AnalysisIndicators
+
         for attr in ("my_custom_ind", "my_custom_ind_method"):
             if hasattr(pandas_ta_classic, attr):
                 delattr(pandas_ta_classic, attr)

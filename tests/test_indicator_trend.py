@@ -71,7 +71,11 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
         assert_offset(self, pandas_ta.adx, self.high, self.low, self.close, talib=False)
-        assert_columns(self, pandas_ta.adx(self.high, self.low, self.close, talib=False), ["ADX_14", "DMP_14", "DMN_14"])
+        assert_columns(
+            self,
+            pandas_ta.adx(self.high, self.low, self.close, talib=False),
+            ["ADX_14", "DMP_14", "DMN_14"],
+        )
 
     def test_amat(self):
         result = pandas_ta.amat(self.close)
@@ -108,7 +112,11 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
         assert_offset(self, pandas_ta.aroon, self.high, self.low, talib=False)
-        assert_columns(self, pandas_ta.aroon(self.high, self.low, talib=False), ["AROOND_14", "AROONU_14", "AROONOSC_14"])
+        assert_columns(
+            self,
+            pandas_ta.aroon(self.high, self.low, talib=False),
+            ["AROOND_14", "AROONU_14", "AROONOSC_14"],
+        )
 
     def test_aroon_osc(self):
         result = pandas_ta.aroon(self.high, self.low)
