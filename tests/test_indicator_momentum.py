@@ -424,6 +424,11 @@ class TestMomentum(TestCase):
         assert_columns(self, result, ["PPO_12_26_9", "PPOh_12_26_9", "PPOs_12_26_9"])
         assert_offset(self, pandas_ta.ppo, self.close, talib=False)
 
+        # fast > slow triggers swap (line 29: fast, slow = slow, fast)
+        result_swap = pandas_ta.ppo(self.close, fast=26, slow=12, talib=False)
+        self.assertIsInstance(result_swap, DataFrame)
+        self.assertEqual(result_swap.name, "PPO_12_26_9")
+
     def test_psl(self):
         result = pandas_ta.psl(self.close)
         self.assertIsInstance(result, Series)
@@ -555,6 +560,10 @@ class TestMomentum(TestCase):
             self.close,
         )
 
+        # asint=False keeps bool flags as bool — bypasses the astype(int) block
+        result_bool = pandas_ta.squeeze(self.high, self.low, self.close, asint=False)
+        self.assertIsInstance(result_bool, DataFrame)
+
         # mamode="ema" exercises the ema branch instead of sma (line 80)
         result = pandas_ta.squeeze(self.high, self.low, self.close, mamode="ema")
         self.assertIsInstance(result, DataFrame)
@@ -584,6 +593,15 @@ class TestMomentum(TestCase):
         self.assertIn("SQZ_NDEC", result.columns)
         self.assertIn("SQZ_NINC", result.columns)
 
+        # fill branches inside the detailed block (lines 186-247)
+        pandas_ta.squeeze(self.high, self.low, self.close, detailed=True, fillna=0)
+        pandas_ta.squeeze(
+            self.high, self.low, self.close, detailed=True, fill_method="ffill"
+        )
+        pandas_ta.squeeze(
+            self.high, self.low, self.close, detailed=True, fill_method="bfill"
+        )
+
     def test_squeeze_pro(self):
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
@@ -608,6 +626,12 @@ class TestMomentum(TestCase):
                 kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2,
             )
         )
+
+        # asint=False keeps bool flags as bool — bypasses the astype(int) block
+        result_bool = pandas_ta.squeeze_pro(
+            self.high, self.low, self.close, asint=False
+        )
+        self.assertIsInstance(result_bool, DataFrame)
 
         # mamode="ema" exercises the ema branch (line 113)
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, mamode="ema")
@@ -638,6 +662,17 @@ class TestMomentum(TestCase):
         self.assertIn("SQZPRO_PDEC", result.columns)
         self.assertIn("SQZPRO_NDEC", result.columns)
         self.assertIn("SQZPRO_NINC", result.columns)
+
+        # fill branches inside the detailed block (lines 246-307)
+        pandas_ta.squeeze_pro(
+            self.high, self.low, self.close, detailed=True, fillna=0
+        )
+        pandas_ta.squeeze_pro(
+            self.high, self.low, self.close, detailed=True, fill_method="ffill"
+        )
+        pandas_ta.squeeze_pro(
+            self.high, self.low, self.close, detailed=True, fill_method="bfill"
+        )
 
     def test_stc(self):
         result = pandas_ta.stc(self.close)

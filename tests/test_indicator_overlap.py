@@ -124,6 +124,7 @@ class TestOverlap(TestCase):
         result = pandas_ta.fwma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "FWMA_10")
+        assert_offset(self, pandas_ta.fwma, self.close)
 
     def test_hilo(self):
         result = pandas_ta.hilo(self.high, self.low, self.close)

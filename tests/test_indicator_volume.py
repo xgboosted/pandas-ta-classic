@@ -130,6 +130,14 @@ class TestVolume(TestCase):
         )
         assert_offset(self, pandas_ta.aobv, self.close, self.volume_)
 
+        # slow < fast triggers swap (line 29: fast, slow = slow, fast)
+        result_swap = pandas_ta.aobv(self.close, self.volume_, fast=12, slow=4)
+        self.assertIsInstance(result_swap, DataFrame)
+
+        # "length" kwarg is popped before passing to sub-indicators (line 36)
+        result_len = pandas_ta.aobv(self.close, self.volume_, length=10)
+        self.assertIsInstance(result_len, DataFrame)
+
     def test_cmf(self):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
