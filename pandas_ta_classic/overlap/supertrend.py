@@ -33,30 +33,38 @@ def supertrend(
 
     # Calculate Results
     m = close.size
-    dir_, trend = [1] * m, [0] * m
-    long, short = [npNaN] * m, [npNaN] * m
 
     hl2_ = hl2(high, low)
     matr = multiplier * atr(high, low, close, length)
     upperband = hl2_ + matr
     lowerband = hl2_ - matr
 
+    # Use mutable numpy copies — avoids pandas iloc reads/writes in the loop,
+    # including in-place band adjustments (lowerband.iloc[i] = lowerband.iloc[i-1]).
+    c_arr = close.to_numpy()
+    ub_arr = upperband.to_numpy().copy()
+    lb_arr = lowerband.to_numpy().copy()
+    dir_ = np.ones(m, dtype=int)
+    trend = np.zeros(m)
+    long = np.full(m, npNaN)
+    short = np.full(m, npNaN)
+
     for i in range(1, m):
-        if close.iloc[i] > upperband.iloc[i - 1]:
+        if c_arr[i] > ub_arr[i - 1]:
             dir_[i] = 1
-        elif close.iloc[i] < lowerband.iloc[i - 1]:
+        elif c_arr[i] < lb_arr[i - 1]:
             dir_[i] = -1
         else:
             dir_[i] = dir_[i - 1]
-            if dir_[i] > 0 and lowerband.iloc[i] < lowerband.iloc[i - 1]:
-                lowerband.iloc[i] = lowerband.iloc[i - 1]
-            if dir_[i] < 0 and upperband.iloc[i] > upperband.iloc[i - 1]:
-                upperband.iloc[i] = upperband.iloc[i - 1]
+            if dir_[i] > 0 and lb_arr[i] < lb_arr[i - 1]:
+                lb_arr[i] = lb_arr[i - 1]
+            if dir_[i] < 0 and ub_arr[i] > ub_arr[i - 1]:
+                ub_arr[i] = ub_arr[i - 1]
 
         if dir_[i] > 0:
-            trend[i] = long[i] = lowerband.iloc[i]
+            trend[i] = long[i] = lb_arr[i]
         else:
-            trend[i] = short[i] = upperband.iloc[i]
+            trend[i] = short[i] = ub_arr[i]
 
     # Prepare DataFrame to return
     _props = f"_{length}_{multiplier}"
