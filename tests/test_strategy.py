@@ -147,8 +147,11 @@ class TestStrategyMethods(TestCase):
         )
         # Chained indicators require sequential execution because later
         # indicators depend on columns produced by earlier ones.
-        self.data.ta.cores = 0
-        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
+        # Must use a single accessor reference since each .ta access
+        # creates a new instance (pandas accessor protocol).
+        ta = self.data.ta
+        ta.cores = 0
+        ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         self.assertEqual(len(self.data.columns), 19)
 
     def test_custom_args_tuple(self):
