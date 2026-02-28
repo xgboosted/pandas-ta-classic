@@ -22,6 +22,9 @@ def hwma(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if close is None:
+        return None
+
     # Calculate Result — extract close to numpy to avoid per-bar pandas overhead.
     m = close.size
     c_arr = close.to_numpy()

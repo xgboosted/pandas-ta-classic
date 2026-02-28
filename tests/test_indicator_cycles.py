@@ -1,4 +1,5 @@
 from tests.config import (
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -52,8 +53,10 @@ class TestCycles(TestCase):
         result = pandas_ta.dsp(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DSP_14")
+        assert_offset(self, pandas_ta.dsp, self.close)
 
     def test_ebsw(self):
         result = pandas_ta.ebsw(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EBSW_40_10")
+        assert_offset(self, pandas_ta.ebsw, self.close)

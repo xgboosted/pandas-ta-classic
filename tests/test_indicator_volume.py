@@ -1,5 +1,6 @@
 from tests.config import (
     assert_columns,
+    assert_nan_count,
     assert_offset,
     error_analysis,
     get_sample_data,
@@ -142,6 +143,7 @@ class TestVolume(TestCase):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CMF_20")
+        assert_nan_count(self, result, 20)
         assert_offset(
             self, pandas_ta.cmf, self.high, self.low, self.close, self.volume_
         )
@@ -156,6 +158,7 @@ class TestVolume(TestCase):
         result = pandas_ta.eom(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EOM_14_100000000")
+        assert_nan_count(self, result, 14)
         assert_offset(
             self, pandas_ta.eom, self.high, self.low, self.close, self.volume_
         )
@@ -191,6 +194,7 @@ class TestVolume(TestCase):
         result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MFI_14")
+        assert_nan_count(self, result, 14)
         assert_offset(
             self,
             pandas_ta.mfi,
@@ -266,4 +270,5 @@ class TestVolume(TestCase):
         result = pandas_ta.vfi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VFI_130")
+        assert_nan_count(self, result, 130)
         assert_offset(self, pandas_ta.vfi, self.close, self.volume_)

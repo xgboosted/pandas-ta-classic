@@ -1,5 +1,6 @@
 from tests.config import (
     assert_columns,
+    assert_nan_count,
     assert_offset,
     error_analysis,
     get_sample_data,
@@ -81,6 +82,8 @@ class TestTrend(TestCase):
         result = pandas_ta.amat(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AMATe_8_21_2")
+        assert_columns(self, result, ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"])
+        assert_offset(self, pandas_ta.amat, self.close)
 
     def test_aroon(self):
         result = pandas_ta.aroon(self.high, self.low, talib=False)
@@ -139,6 +142,7 @@ class TestTrend(TestCase):
         result = pandas_ta.chop(self.high, self.low, self.close, ln=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CHOP_14_1_100")
+        assert_nan_count(self, result, 14)
 
         result = pandas_ta.chop(self.high, self.low, self.close, ln=True)
         self.assertIsInstance(result, Series)
@@ -149,11 +153,15 @@ class TestTrend(TestCase):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=False)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_3_20")
+        assert_columns(self, result, ["CKSPl_10_3_20", "CKSPs_10_3_20"])
+        assert_offset(self, pandas_ta.cksp, self.high, self.low, self.close, tvmode=False)
 
     def test_cksp_tv(self):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_1_9")
+        assert_columns(self, result, ["CKSPl_10_1_9", "CKSPs_10_1_9"])
+        assert_offset(self, pandas_ta.cksp, self.high, self.low, self.close, tvmode=True)
 
     def test_decay(self):
         result = pandas_ta.decay(self.close)
@@ -173,6 +181,7 @@ class TestTrend(TestCase):
         result = pandas_ta.decreasing(self.close, length=3, strict=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SDEC_3")
+        assert_offset(self, pandas_ta.decreasing, self.close)
 
     def test_dpo(self):
         result = pandas_ta.dpo(self.close)
@@ -188,16 +197,24 @@ class TestTrend(TestCase):
         result = pandas_ta.increasing(self.close, length=3, strict=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SINC_3")
+        assert_offset(self, pandas_ta.increasing, self.close)
 
     def test_long_run(self):
         result = pandas_ta.long_run(self.close, self.open)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LR_2")
+        assert_offset(self, pandas_ta.long_run, self.close, self.open)
 
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "PSAR_0.02_0.2")
+        assert_columns(
+            self,
+            result,
+            ["PSARl_0.02_0.2", "PSARs_0.02_0.2", "PSARaf_0.02_0.2", "PSARr_0.02_0.2"],
+        )
+        assert_offset(self, pandas_ta.psar, self.high, self.low)
 
         # Combine Long and Short SAR"s into one SAR value
         psar = result[result.columns[:2]].fillna(0)
@@ -220,21 +237,28 @@ class TestTrend(TestCase):
         result = pandas_ta.qstick(self.open, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "QS_10")
+        assert_nan_count(self, result, 10)
+        assert_offset(self, pandas_ta.qstick, self.open, self.close)
 
     def test_short_run(self):
         result = pandas_ta.short_run(self.close, self.open)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SR_2")
+        assert_offset(self, pandas_ta.short_run, self.close, self.open)
 
     def test_ttm_trend(self):
         result = pandas_ta.ttm_trend(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TTMTREND_6")
+        assert_columns(self, result, ["TTM_TRND_6"])
+        assert_offset(self, pandas_ta.ttm_trend, self.high, self.low, self.close)
 
     def test_vhf(self):
         result = pandas_ta.vhf(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VHF_28")
+        assert_nan_count(self, result, 28)
+        assert_offset(self, pandas_ta.vhf, self.close)
 
     def test_vortex(self):
         result = pandas_ta.vortex(self.high, self.low, self.close)
@@ -247,6 +271,7 @@ class TestTrend(TestCase):
         result = pandas_ta.pmax(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PMAX_E_10_3.0")
+        assert_offset(self, pandas_ta.pmax, self.high, self.low, self.close)
 
     def test_tsignals(self):
         # Create a simple trend series for testing
@@ -257,6 +282,8 @@ class TestTrend(TestCase):
         result = pandas_ta.tsignals(trend)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TS")
+        assert_columns(self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
+        assert_offset(self, pandas_ta.tsignals, trend)
 
     def test_xsignals(self):
         # Create simple signal series for testing
@@ -264,3 +291,5 @@ class TestTrend(TestCase):
         result = pandas_ta.xsignals(signal, xa=70, xb=30)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "XS")
+        assert_columns(self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
+        assert_offset(self, pandas_ta.xsignals, signal, 70, 30)
