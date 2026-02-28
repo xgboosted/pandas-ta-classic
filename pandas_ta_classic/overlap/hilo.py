@@ -146,14 +146,14 @@ Calculation:
         low_ma = SMA(low, low_length)
 
     # Similar to Supertrend MA selection
-    hilo = Series(npNaN, index=close.index)
+    hilo_arr = np.full(m, np.nan)
     for i in range(1, m):
-        if close.iloc[i] > high_ma.iloc[i - 1]:
-            hilo.iloc[i] = low_ma.iloc[i]
-        elif close.iloc[i] < low_ma.iloc[i - 1]:
-            hilo.iloc[i] = high_ma.iloc[i]
+        if close_arr[i] > hma_arr[i - 1]:
+            hilo_arr[i] = lma_arr[i]
+        elif close_arr[i] < lma_arr[i - 1]:
+            hilo_arr[i] = hma_arr[i]
         else:
-            hilo.iloc[i] = hilo.iloc[i - 1]
+            hilo_arr[i] = hilo_arr[i - 1]
 
 Args:
     high (pd.Series): Series of 'high's
