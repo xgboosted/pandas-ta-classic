@@ -12,9 +12,9 @@ from pandas_ta_classic.utils import (
 
 
 def kdj(
-    high: Optional[Series] = None,
-    low: Optional[Series] = None,
-    close: Optional[Series] = None,
+    high: Series,
+    low: Series,
+    close: Series,
     length: Optional[int] = None,
     signal: Optional[int] = None,
     offset: Optional[int] = None,
