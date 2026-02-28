@@ -35,21 +35,30 @@ def hilo(
 
     # Calculate Result
     m = close.size
-    hilo = Series(npNaN, index=close.index)
-    long = Series(npNaN, index=close.index)
-    short = Series(npNaN, index=close.index)
 
     high_ma = ma(mamode, high, length=high_length)
     low_ma = ma(mamode, low, length=low_length)
 
+    # Use raw numpy arrays to avoid pandas iloc overhead in the loop.
+    c_arr = close.to_numpy()
+    hma_arr = high_ma.to_numpy()
+    lma_arr = low_ma.to_numpy()
+    hilo_arr = np.full(m, npNaN)
+    long_arr = np.full(m, npNaN)
+    short_arr = np.full(m, npNaN)
+
     for i in range(1, m):
-        if close.iloc[i] > high_ma.iloc[i - 1]:
-            hilo.iloc[i] = long.iloc[i] = low_ma.iloc[i]
-        elif close.iloc[i] < low_ma.iloc[i - 1]:
-            hilo.iloc[i] = short.iloc[i] = high_ma.iloc[i]
+        if c_arr[i] > hma_arr[i - 1]:
+            hilo_arr[i] = long_arr[i] = lma_arr[i]
+        elif c_arr[i] < lma_arr[i - 1]:
+            hilo_arr[i] = short_arr[i] = hma_arr[i]
         else:
-            hilo.iloc[i] = hilo.iloc[i - 1]
-            long.iloc[i] = short.iloc[i] = hilo.iloc[i - 1]
+            hilo_arr[i] = hilo_arr[i - 1]
+            long_arr[i] = short_arr[i] = hilo_arr[i - 1]
+
+    hilo = Series(hilo_arr, index=close.index)
+    long = Series(long_arr, index=close.index)
+    short = Series(short_arr, index=close.index)
 
     # Offset
     if offset != 0:

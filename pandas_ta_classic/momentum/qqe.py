@@ -55,29 +55,37 @@ def qqe(
     lowerband = rsi_ma - dar
 
     m = close.size
-    long = Series(0, index=close.index)
-    short = Series(0, index=close.index)
-    trend = Series(1, index=close.index)
-    qqe = Series(rsi_ma.iloc[0], index=close.index)
-    qqe_long = Series(npNaN, index=close.index)
-    qqe_short = Series(npNaN, index=close.index)
+    idx = close.index
+
+    # Use raw numpy arrays for the iterative loop — avoids repeated pandas
+    # iloc overhead (~10x faster than Series.iloc[i] assignment in a loop).
+    rsi_arr = rsi_ma.to_numpy()
+    ub_arr = upperband.to_numpy()
+    lb_arr = lowerband.to_numpy()
+
+    long_arr = np.zeros(m)
+    short_arr = np.zeros(m)
+    trend_arr = np.ones(m)
+    qqe_arr = np.full(m, rsi_arr[0])
+    qqe_long_arr = np.full(m, npNaN)
+    qqe_short_arr = np.full(m, npNaN)
 
     for i in range(1, m):
-        c_rsi, p_rsi = rsi_ma.iloc[i], rsi_ma.iloc[i - 1]
-        c_long, p_long = long.iloc[i - 1], long.iloc[i - 2]
-        c_short, p_short = short.iloc[i - 1], short.iloc[i - 2]
+        c_rsi, p_rsi = rsi_arr[i], rsi_arr[i - 1]
+        c_long, p_long = long_arr[i - 1], long_arr[i - 2]
+        c_short, p_short = short_arr[i - 1], short_arr[i - 2]
 
         # Long Line
         if p_rsi > c_long and c_rsi > c_long:
-            long.iloc[i] = npMaximum(c_long, lowerband.iloc[i])
+            long_arr[i] = npMaximum(c_long, lb_arr[i])
         else:
-            long.iloc[i] = lowerband.iloc[i]
+            long_arr[i] = lb_arr[i]
 
         # Short Line
         if p_rsi < c_short and c_rsi < c_short:
-            short.iloc[i] = npMinimum(c_short, upperband.iloc[i])
+            short_arr[i] = npMinimum(c_short, ub_arr[i])
         else:
-            short.iloc[i] = upperband.iloc[i]
+            short_arr[i] = ub_arr[i]
 
         # Trend & QQE Calculation
         # Long: Current RSI_MA value Crosses the Prior Short Line Value
@@ -85,19 +93,25 @@ def qqe(
         if (c_rsi > c_short and p_rsi < p_short) or (
             c_rsi <= c_short and p_rsi >= p_short
         ):
-            trend.iloc[i] = 1
-            qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+            trend_arr[i] = 1
+            qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
         elif (c_rsi > c_long and p_rsi < p_long) or (
             c_rsi <= c_long and p_rsi >= p_long
         ):
-            trend.iloc[i] = -1
-            qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
+            trend_arr[i] = -1
+            qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
         else:
-            trend.iloc[i] = trend.iloc[i - 1]
-            if trend.iloc[i] == 1:
-                qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+            trend_arr[i] = trend_arr[i - 1]
+            if trend_arr[i] == 1:
+                qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
             else:
-                qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
+                qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
+
+    long = Series(long_arr, index=idx)
+    short = Series(short_arr, index=idx)
+    qqe = Series(qqe_arr, index=idx)
+    qqe_long = Series(qqe_long_arr, index=idx)
+    qqe_short = Series(qqe_short_arr, index=idx)
 
     # Offset
     if offset != 0:
@@ -113,42 +127,17 @@ def qqe(
         qqe_long.fillna(kwargs["fillna"], inplace=True)
         qqe_short.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                rsi_ma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                rsi_ma.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qqe.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qqe.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qqe_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qqe_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qqe_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qqe_short.bfill(inplace=True)
+        fill = kwargs["fill_method"]
+        if fill == "ffill":
+            rsi_ma.ffill(inplace=True)
+            qqe.ffill(inplace=True)
+            qqe_long.ffill(inplace=True)
+            qqe_short.ffill(inplace=True)
+        elif fill == "bfill":
+            rsi_ma.bfill(inplace=True)
+            qqe.bfill(inplace=True)
+            qqe_long.bfill(inplace=True)
+            qqe_short.bfill(inplace=True)
 
     # Name and Categorize it
     _props = f"{_mode}_{length}_{smooth}_{factor}"

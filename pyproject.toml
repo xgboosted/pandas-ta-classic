@@ -52,7 +52,7 @@ optional = [
     "sklearn", 
     "statsmodels",
     "stochastic",
-    "talib",
+    "TA-Lib",
     "tqdm",
 ]
 
@@ -81,9 +81,10 @@ dev = [
 # Testing framework
 test = [
     "pytest>=7.0.0",
-    "pytest-cov>=4.0.0", 
+    "pytest-cov>=4.0.0",
     "pytest-benchmark>=4.0.0",
-    "hypothesis>=6.0.0"
+    "hypothesis>=6.0.0",
+    "TA-Lib"
 ]
 
 # Documentation building
@@ -136,6 +137,29 @@ write_to = "pandas_ta_classic/_version.py"
 # Default scheme: gives clean version on tags, next minor .devN after tags
 local_scheme = "no-local-version"  # Omit local version for clean releases
 fallback_version = "0.0.0"  # Fallback if not in a git repository
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short -q"
+
+[tool.coverage.run]
+source = ["pandas_ta_classic"]
+omit = [
+    "pandas_ta_classic/_version.py",
+    "pandas_ta_classic/utils/data/yahoofinance.py",
+    "pandas_ta_classic/utils/data/alphavantage.py",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 70   # raised after bfill branch coverage + new talib cross-val tests
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]

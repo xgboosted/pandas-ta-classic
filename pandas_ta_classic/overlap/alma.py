@@ -33,24 +33,34 @@ def alma(
         return None
 
     # Pre-Calculations
-    m = distribution_offset * (length - 1)
+    m_offset = distribution_offset * (length - 1)
     s = length / sigma
-    wtd = list(range(length))
-    for i in range(0, length):
-        wtd[i] = npExp(-1 * ((i - m) * (i - m)) / (2 * s * s))
+    wtd = np.array(
+        [
+            npExp(-1 * ((i - m_offset) * (i - m_offset)) / (2 * s * s))
+            for i in range(length)
+        ]
+    )
+    w_norm = wtd / wtd.sum()  # normalised weights
 
-    # Calculate Result
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, close.size):
-        window_sum = 0
-        cum_sum = 0
-        for j in range(0, length):
-            # wtd = math.exp(-1 * ((j - m) * (j - m)) / (2 * s * s))        # moved to pre-calc for efficiency
-            window_sum = window_sum + wtd[j] * close.iloc[i - j]
-            cum_sum = cum_sum + wtd[j]
+    # Replace O(n×length) double loop with a single matrix multiply.
+    # Original loop: ALMA[i] = sum(wtd[j]*close[i-j]) / sum(wtd) for j=0..L-1
+    #   j=0 → close[i] (newest), j=L-1 → close[i-L+1] (oldest)
+    # sliding_window_view row k has close[k] (oldest) … close[k+L-1] (newest),
+    # so dot with w_norm reversed gives the same result.
+    from numpy.lib.stride_tricks import sliding_window_view
 
-        almean = window_sum / cum_sum
-        result.append(npNaN) if i == length else result.append(almean)
+    close_arr = close.to_numpy(dtype=float)
+    n = len(close_arr)
+    windows = sliding_window_view(close_arr, length)  # (n-L+1, L)
+    alma_vals = windows @ w_norm[::-1]  # w_norm[0]*newest + … + w_norm[L-1]*oldest
+
+    # Preserve the exact output structure of the original code:
+    #   indices 0..L-2: NaN, index L-1: 0, index L: NaN, L+1..n-1: ALMA values
+    result = np.full(n, npNaN)
+    result[length - 1] = 0.0
+    # alma_vals[k] ↔ i = k + L - 1; skip k=0 (→ i=L-1, already 0) and k=1 (→ i=L, stays NaN)
+    result[length + 1 :] = alma_vals[2:]
 
     alma = Series(result, index=close.index)
 

@@ -15,6 +15,9 @@ def drawdown(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if close is None:
+        return None
+
     # Calculate Result
     max_close = close.cummax()
     dd = max_close - close

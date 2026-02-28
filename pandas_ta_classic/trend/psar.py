@@ -27,6 +27,9 @@ def psar(
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
 
+    if high is None or low is None:
+        return None
+
     def _falling(high: Series, low: Series, drift: int = 1) -> bool:
         """Returns the last -DM value"""
         # Not to be confused with ta.falling()
@@ -48,17 +51,22 @@ def psar(
         close = verify_series(close)
         sar = close.iloc[0]
 
-    long = Series(npNaN, index=high.index)
-    short = long.copy()
-    reversal = Series(0, index=high.index)
-    _af = long.copy()
-    _af.iloc[0:2] = af0
+    # Use raw numpy arrays to avoid pandas iloc overhead in the loop.
+    h_arr = high.to_numpy()
+    l_arr = low.to_numpy()
+    m = h_arr.shape[0]
+    long_arr = np.full(m, npNaN)
+    short_arr = np.full(m, npNaN)
+    reversal_arr = np.zeros(m)
+    af_arr = np.full(m, npNaN)
+    af_arr[0] = af0
+    if m > 1:
+        af_arr[1] = af0
 
     # Calculate Result
-    m = high.shape[0]
     for row in range(1, m):
-        high_ = high.iloc[row]
-        low_ = low.iloc[row]
+        high_ = h_arr[row]
+        low_ = l_arr[row]
 
         if falling:
             _sar = sar + af * (ep - sar)
@@ -68,7 +76,7 @@ def psar(
                 ep = low_
                 af = min(af + af0, max_af)
 
-            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
+            _sar = max(h_arr[row - 1], h_arr[row - 2], _sar)
         else:
             _sar = sar + af * (ep - sar)
             reverse = low_ < _sar
@@ -77,7 +85,7 @@ def psar(
                 ep = high_
                 af = min(af + af0, max_af)
 
-            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
+            _sar = min(l_arr[row - 1], l_arr[row - 2], _sar)
 
         if reverse:
             _sar = ep
@@ -87,14 +95,19 @@ def psar(
 
         sar = _sar  # Update SAR
 
-        # Seperate long/short sar based on falling
+        # Separate long/short sar based on falling
         if falling:
-            short.iloc[row] = sar
+            short_arr[row] = sar
         else:
-            long.iloc[row] = sar
+            long_arr[row] = sar
 
-        _af.iloc[row] = af
-        reversal.iloc[row] = int(reverse)
+        af_arr[row] = af
+        reversal_arr[row] = int(reverse)
+
+    long = Series(long_arr, index=high.index)
+    short = Series(short_arr, index=high.index)
+    reversal = Series(reversal_arr, index=high.index)
+    _af = Series(af_arr, index=high.index)
 
     # Offset
     if offset != 0:
@@ -110,42 +123,17 @@ def psar(
         short.fillna(kwargs["fillna"], inplace=True)
         reversal.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                _af.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                _af.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                reversal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                reversal.bfill(inplace=True)
+        fill = kwargs["fill_method"]
+        if fill == "ffill":
+            _af.ffill(inplace=True)
+            long.ffill(inplace=True)
+            short.ffill(inplace=True)
+            reversal.ffill(inplace=True)
+        elif fill == "bfill":
+            _af.bfill(inplace=True)
+            long.bfill(inplace=True)
+            short.bfill(inplace=True)
+            reversal.bfill(inplace=True)
 
     # Prepare DataFrame to return
     _params = f"_{af0}_{max_af}"

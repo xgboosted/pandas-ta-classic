@@ -107,14 +107,40 @@ def test_indicator_name():
     """Test indicator_name with normal inputs."""
     # Arrange
     data = sample_data()
-    
+
     # Act
     result = indicator_name(data)
-    
+
     # Assert
     assert result is not None
     assert len(result) == len(data)
 ```
+
+#### Snapshot Testing
+
+The project uses golden-file snapshot tests (`tests/test_snapshots.py`) to detect unintended changes in indicator output. Each indicator's result is hashed (SHA-256 of the rounded CSV representation) and compared against frozen hashes stored in `tests/fixtures/snapshots.json`.
+
+**Workflow:**
+
+1. **Generate / update snapshots** (after intentional changes):
+   ```bash
+   pytest tests/test_snapshots.py --update-snapshots -v
+   ```
+   This overwrites `snapshots.json` with fresh hashes. Review the diff before committing.
+
+2. **Verify snapshots** (normal CI run):
+   ```bash
+   pytest tests/test_snapshots.py
+   ```
+   Each indicator is compared against its frozen hash. A mismatch fails the test with instructions to regenerate.
+
+**Multi-hash support:**
+
+Some indicators produce slightly different floating-point results across pandas/numpy versions (e.g., `kurtosis` and `skew` differ between pandas 2.x and 3.x). For these indicators, `snapshots.json` stores a JSON array of valid hashes instead of a single string. The test passes if the actual hash matches *any* hash in the array. When updating snapshots on a single Python/pandas version, be careful not to discard hashes that are valid on other versions — merge rather than replace.
+
+**Talib-validated exclusions:**
+
+Indicators that are already cross-validated against TA-Lib (correlation > 0.99) are excluded from snapshot testing to avoid redundancy. The exclusion list is in `TALIB_VALIDATED` within `test_snapshots.py`.
 
 ### 3. Documentation
 

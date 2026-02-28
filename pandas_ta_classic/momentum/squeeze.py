@@ -86,6 +86,12 @@ def squeeze(
     squeeze_off = (bbd.l < kch.l) & (bbd.u > kch.u)
     no_squeeze = ~squeeze_on & ~squeeze_off
 
+    # Convert bool flags to int before offset so NaN-safe shift works
+    if asint:
+        squeeze_on = squeeze_on.astype(int)
+        squeeze_off = squeeze_off.astype(int)
+        no_squeeze = no_squeeze.astype(int)
+
     # Offset
     if offset != 0:
         squeeze = squeeze.shift(offset)
@@ -145,9 +151,9 @@ def squeeze(
 
     data = {
         squeeze.name: squeeze,
-        f"SQZ_ON": squeeze_on.astype(int) if asint else squeeze_on,
-        f"SQZ_OFF": squeeze_off.astype(int) if asint else squeeze_off,
-        f"SQZ_NO": no_squeeze.astype(int) if asint else no_squeeze,
+        f"SQZ_ON": squeeze_on,
+        f"SQZ_OFF": squeeze_off,
+        f"SQZ_NO": no_squeeze,
     }
     df = DataFrame(data)
     df.name = squeeze.name

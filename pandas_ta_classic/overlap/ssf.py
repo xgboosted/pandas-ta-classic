@@ -26,9 +26,11 @@ def ssf(
     if close is None:
         return None
 
-    # Calculate Result
+    # Calculate Result — use numpy arrays to avoid pandas iloc overhead.
+    # ssf starts as a copy of close; the recurrence overwrites values in-place.
     m = close.size
-    ssf = close.copy()
+    c_arr = close.to_numpy(dtype=float)
+    ssf_arr = c_arr.copy()  # initial values = close (same as close.copy())
 
     if poles == 3:
         x = npPi / length  # x = PI / n
@@ -42,11 +44,11 @@ def ssf(
         c1 = 1 - c2 - c3 - c4
 
         for i in range(0, m):
-            ssf.iloc[i] = (
-                c1 * close.iloc[i]
-                + c2 * ssf.iloc[i - 1]
-                + c3 * ssf.iloc[i - 2]
-                + c4 * ssf.iloc[i - 3]
+            ssf_arr[i] = (
+                c1 * c_arr[i]
+                + c2 * ssf_arr[i - 1]
+                + c3 * ssf_arr[i - 2]
+                + c4 * ssf_arr[i - 3]
             )
 
     else:  # poles == 2
@@ -57,9 +59,9 @@ def ssf(
         c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
 
         for i in range(0, m):
-            ssf.iloc[i] = (
-                c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
-            )
+            ssf_arr[i] = c1 * c_arr[i] + b1 * ssf_arr[i - 1] + a1 * ssf_arr[i - 2]
+
+    ssf = Series(ssf_arr, index=close.index)
 
     # Offset
     if offset != 0:

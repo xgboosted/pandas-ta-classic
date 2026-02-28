@@ -21,26 +21,36 @@ def ha(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
+    import numpy as np
+
     m = close.size
-    df = DataFrame(
-        {
-            "HA_open": 0.5 * (open_.iloc[0] + close.iloc[0]),
-            "HA_high": high,
-            "HA_low": low,
-            "HA_close": 0.25 * (open_ + high + low + close),
-        }
+    ha_close = 0.25 * (
+        open_.to_numpy() + high.to_numpy() + low.to_numpy() + close.to_numpy()
     )
 
-    ha_open_col = df.columns.get_loc("HA_open")
-    ha_close_col = df.columns.get_loc("HA_close")
+    # HA_open recurrence: ha_open[i] = 0.5 * (ha_open[i-1] + ha_close[i-1])
+    # Compute with a numpy loop to avoid pandas iat overhead.
+    ha_open = np.empty(m)
+    ha_open[0] = 0.5 * (open_.iloc[0] + close.iloc[0])
     for i in range(1, m):
-        df.iat[i, ha_open_col] = 0.5 * (
-            df.iat[i - 1, ha_open_col] + df.iat[i - 1, ha_close_col]
-        )
+        ha_open[i] = 0.5 * (ha_open[i - 1] + ha_close[i - 1])
 
-    df["HA_high"] = df[["HA_open", "HA_high", "HA_close"]].max(axis=1)
-    df["HA_low"] = df[["HA_open", "HA_low", "HA_close"]].min(axis=1)
+    ha_high = np.maximum(np.maximum(ha_open, high.to_numpy()), ha_close)
+    ha_low = np.minimum(np.minimum(ha_open, low.to_numpy()), ha_close)
+
+    df = DataFrame(
+        {
+            "HA_open": ha_open,
+            "HA_high": ha_high,
+            "HA_low": ha_low,
+            "HA_close": ha_close,
+        },
+        index=close.index,
+    )
 
     # Offset
     if offset != 0:

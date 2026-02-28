@@ -33,55 +33,45 @@ def linreg(
     if close is None:
         return None
 
-    # Calculate Result
-    x = range(1, length + 1)  # [1, 2, ..., n] from 1 to n keeps Sum(xy) low
+    # Calculate Result — fully vectorised OLS over all windows at once.
+    # x = [1, 2, ..., L] is fixed; precompute scalar sums.
+    x_arr = np.arange(1, length + 1, dtype=float)
     x_sum = 0.5 * length * (length + 1)
     x2_sum = x_sum * (2 * length + 1) / 3
     divisor = length * x2_sum - x_sum * x_sum
 
-    def linear_regression(series: Any) -> Any:
-        y_sum = series.sum()
-        xy_sum = (x * series).sum()
+    from numpy.lib.stride_tricks import sliding_window_view
 
-        m = (length * xy_sum - x_sum * y_sum) / divisor
-        if slope:
-            return m
-        b = (y_sum * x2_sum - x_sum * xy_sum) / divisor
+    windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
+    # Each row: [close[k], ..., close[k+L-1]] — oldest first, matching x_arr ordering.
+    y_sums = windows.sum(axis=1)  # (n-L+1,)
+    xy_sums = (windows * x_arr).sum(axis=1)  # (n-L+1,)
+    m_slopes = (length * xy_sums - x_sum * y_sums) / divisor
+
+    if slope:
+        linreg_ = m_slopes
+    else:
+        bs = (y_sums * x2_sum - x_sum * xy_sums) / divisor
         if intercept:
-            return b
-
-        if angle:
-            theta = npAtan(m)
+            linreg_ = bs
+        elif angle:
+            theta = npAtan(m_slopes)
             if degrees:
                 theta *= 180 / npPi
-            return theta
+            linreg_ = theta
+        elif r:
+            y2_sums = (windows * windows).sum(axis=1)
+            rn = length * xy_sums - x_sum * y_sums
+            rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
+            linreg_ = rn / rd
+        elif tsf:
+            linreg_ = m_slopes * length + bs
+        else:
+            linreg_ = m_slopes * (length - 1) + bs
 
-        if r:
-            y2_sum = (series * series).sum()
-            rn = length * xy_sum - x_sum * y_sum
-            rd = (divisor * (length * y2_sum - y_sum * y_sum)) ** 0.5
-            return rn / rd
-
-        return m * length + b if tsf else m * (length - 1) + b
-
-    def rolling_window(array: Any, length: int) -> Any:
-        """https://github.com/twopirllc/pandas-ta/issues/285"""
-        strides = array.strides + (array.strides[-1],)
-        shape = array.shape[:-1] + (array.shape[-1] - length + 1, length)
-        return as_strided(array, shape=shape, strides=strides)
-
-    if npVersion >= "1.20.0":
-        from numpy.lib.stride_tricks import sliding_window_view
-
-        linreg_ = [
-            linear_regression(_) for _ in sliding_window_view(npArray(close), length)
-        ]
-    else:
-        from numpy.lib.stride_tricks import as_strided
-
-        linreg_ = [linear_regression(_) for _ in rolling_window(npArray(close), length)]
-
-    linreg = Series([npNaN] * (length - 1) + linreg_, index=close.index)
+    linreg = Series(
+        np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
+    )
 
     # Offset
     if offset != 0:
