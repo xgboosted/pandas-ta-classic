@@ -48,6 +48,8 @@ def bbands(
         # deviations = std * standard_deviation.loc[standard_deviation.first_valid_index():,]
 
         mid = ma(mamode, close, length=length, **kwargs)
+        if mid is None:
+            return None
         lower = mid - deviations
         upper = mid + deviations
 

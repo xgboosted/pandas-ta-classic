@@ -70,5 +70,9 @@ def ma(
     if name is None and source is None:
         return list(_MA_DISPATCH)
 
-    name = name.lower() if isinstance(name, str) and name.lower() in _MA_DISPATCH else "ema"
+    name = (
+        name.lower()
+        if isinstance(name, str) and name.lower() in _MA_DISPATCH
+        else "ema"
+    )
     return _MA_DISPATCH[name](source, **kwargs)

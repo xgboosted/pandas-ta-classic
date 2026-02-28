@@ -41,6 +41,8 @@ def atr(
     else:
         tr = true_range(high=high, low=low, close=close, drift=drift)
         atr = ma(mamode, tr, length=length)
+        if atr is None:
+            return None
 
     percentage = kwargs.pop("percent", False)
     if percentage:

@@ -41,6 +41,8 @@ def qqe(
     rsi_ = rsi(close, length)
     _mode = mamode.lower()[0] if mamode != "ema" else ""
     rsi_ma = ma(mamode, rsi_, length=smooth)
+    if rsi_ma is None:
+        return None
 
     # RSI MA True Range
     rsi_ma_tr = rsi_ma.diff(drift).abs()
@@ -48,7 +50,12 @@ def qqe(
     # Double Smooth the RSI MA True Range using Wilder's Length with a default
     # width of 4.236.
     smoothed_rsi_tr_ma = ma("ema", rsi_ma_tr, length=wilders_length)
-    dar = factor * ma("ema", smoothed_rsi_tr_ma, length=wilders_length)
+    if smoothed_rsi_tr_ma is None:
+        return None
+    _dar_ma = ma("ema", smoothed_rsi_tr_ma, length=wilders_length)
+    if _dar_ma is None:
+        return None
+    dar = factor * _dar_ma
 
     # Create the Upper and Lower Bands around RSI MA.
     upperband = rsi_ma + dar

@@ -60,7 +60,7 @@ def ebsw(
         Pwr = (Filt * Filt + filt_p * filt_p + filt_pp * filt_pp) / 3
 
         # Normalize the Average Wave to Square Root of the Average Power
-        Wave = Wave / npSqrt(Pwr)
+        Wave = Wave / npSqrt(Pwr) if Pwr > 0 else 0.0
 
         # update storage, result
         filt_pp = filt_p

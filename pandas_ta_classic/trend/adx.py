@@ -53,11 +53,17 @@ def adx(
     neg = neg.apply(zero)
 
     k = scalar / atr_
-    dmp = k * ma(mamode, pos, length=length)
-    dmn = k * ma(mamode, neg, length=length)
+    _dmp_ma = ma(mamode, pos, length=length)
+    _dmn_ma = ma(mamode, neg, length=length)
+    if _dmp_ma is None or _dmn_ma is None:
+        return None
+    dmp = k * _dmp_ma
+    dmn = k * _dmn_ma
 
     dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
     adx = ma(mamode, dx, length=lensig)
+    if adx is None:
+        return None
 
     # Offset
     dmp = apply_offset(dmp, offset, **kwargs)

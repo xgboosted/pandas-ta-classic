@@ -29,8 +29,13 @@ def mcgd(
     mcgd_arr = np.empty(len(c_arr))
     mcgd_arr[0] = c_arr[0]
     for i in range(1, len(c_arr)):
-        denom = c * length * (c_arr[i] / mcgd_arr[i - 1]) ** 4
-        mcgd_arr[i] = mcgd_arr[i - 1] + (c_arr[i] - mcgd_arr[i - 1]) / denom
+        if mcgd_arr[i - 1] != 0:
+            denom = c * length * (c_arr[i] / mcgd_arr[i - 1]) ** 4
+            mcgd_arr[i] = mcgd_arr[i - 1] + (c_arr[i] - mcgd_arr[i - 1]) / max(
+                denom, 1e-10
+            )
+        else:
+            mcgd_arr[i] = c_arr[i]
     mcg_ds = Series(mcgd_arr, index=close.index)
 
     # Offset

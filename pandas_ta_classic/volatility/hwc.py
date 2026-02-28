@@ -60,8 +60,9 @@ def hwc(
         lower_arr[i] = result_arr[i] - scalar * stddev
 
         if channel_eval:
-            chan_width_arr[i] = upper_arr[i] - lower_arr[i]
-            chan_pct_arr[i] = (c_arr[i] - lower_arr[i]) / (upper_arr[i] - lower_arr[i])
+            width = upper_arr[i] - lower_arr[i]
+            chan_width_arr[i] = width
+            chan_pct_arr[i] = (c_arr[i] - lower_arr[i]) / width if width != 0 else 0.5
 
         # update values
         last_price = c_arr[i]

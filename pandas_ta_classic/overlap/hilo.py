@@ -38,6 +38,8 @@ def hilo(
 
     high_ma = ma(mamode, high, length=high_length)
     low_ma = ma(mamode, low, length=low_length)
+    if high_ma is None or low_ma is None:
+        return None
 
     # Use raw numpy arrays to avoid pandas iloc overhead in the loop.
     c_arr = close.to_numpy()

@@ -34,6 +34,8 @@ def amat(
     # # Calculate Result
     fast_ma = ma(mamode, close, length=fast, **kwargs)
     slow_ma = ma(mamode, close, length=slow, **kwargs)
+    if fast_ma is None or slow_ma is None:
+        return None
 
     mas_long = long_run(fast_ma, slow_ma, length=lookback)
     mas_short = short_run(fast_ma, slow_ma, length=lookback)

@@ -455,7 +455,9 @@ class AnalysisIndicators:
             else:
                 with catch_warnings():
                     simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
-                    if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
+                    if "col_names" in kwargs and not isinstance(
+                        kwargs["col_names"], tuple
+                    ):
                         kwargs["col_names"] = (
                             kwargs["col_names"],
                         )  # Note: tuple(kwargs["col_names"]) doesn't work
@@ -463,7 +465,9 @@ class AnalysisIndicators:
                     if isinstance(result, pd.DataFrame):
                         # If specified in kwargs, rename the columns.
                         # If not, use the default names.
-                        if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
+                        if "col_names" in kwargs and isinstance(
+                            kwargs["col_names"], tuple
+                        ):
                             if len(kwargs["col_names"]) >= len(result.columns):
                                 for col, ind_name in zip(
                                     result.columns, kwargs["col_names"]

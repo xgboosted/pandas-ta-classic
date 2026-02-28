@@ -38,6 +38,8 @@ def apo(
     else:
         fastma = ma(mamode, close, length=fast)
         slowma = ma(mamode, close, length=slow)
+        if fastma is None or slowma is None:
+            return None
         apo = fastma - slowma
 
     # Offset

@@ -54,6 +54,8 @@ def dm(
         # Not the same values as TA Lib's -+DM (Good First Issue)
         pos = ma(mamode, pos_, length=length)
         neg = ma(mamode, neg_, length=length)
+        if pos is None or neg is None:
+            return None
 
     # Offset
     pos = apply_offset(pos, offset, **kwargs)

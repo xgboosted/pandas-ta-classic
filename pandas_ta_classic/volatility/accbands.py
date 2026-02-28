@@ -47,6 +47,8 @@ def accbands(
     lower = ma(mamode, _lower, length=length)
     mid = ma(mamode, close, length=length)
     upper = ma(mamode, _upper, length=length)
+    if lower is None or mid is None or upper is None:
+        return None
 
     # Offset
     lower = apply_offset(lower, offset, **kwargs)

@@ -15,7 +15,6 @@ def _camelCase2Title(x: str) -> str:
     return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
 
 
-
 def get_drift(x: Optional[int]) -> int:
     """Returns an int if not zero, otherwise defaults to one."""
     return int(x) if isinstance(x, int) and x != 0 else 1
@@ -80,15 +79,15 @@ def tal_ma(name: str) -> Any:
         from talib import MA_Type
 
         _map = {
-            "sma": MA_Type.SMA,    # 0
-            "ema": MA_Type.EMA,    # 1
-            "wma": MA_Type.WMA,    # 2
+            "sma": MA_Type.SMA,  # 0
+            "ema": MA_Type.EMA,  # 1
+            "wma": MA_Type.WMA,  # 2
             "dema": MA_Type.DEMA,  # 3
             "tema": MA_Type.TEMA,  # 4
             "trima": MA_Type.TRIMA,  # 5
             "kama": MA_Type.KAMA,  # 6
             "mama": MA_Type.MAMA,  # 7
-            "t3": MA_Type.T3,      # 8
+            "t3": MA_Type.T3,  # 8
         }
         return _map.get(name.lower(), 0)
     return 0  # Default: SMA -> 0

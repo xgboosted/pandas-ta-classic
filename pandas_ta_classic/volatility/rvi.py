@@ -52,6 +52,8 @@ def rvi(
 
         pos_avg = ma(mode, pos_std, length=length)
         neg_avg = ma(mode, neg_std, length=length)
+        if pos_avg is None or neg_avg is None:
+            return None
 
         result = scalar * pos_avg
         result /= pos_avg + neg_avg
