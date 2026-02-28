@@ -8,7 +8,7 @@ from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 
 
 def inertia(
-    close: Optional[Series] = None,
+    close: Series,
     high: Optional[Series] = None,
     low: Optional[Series] = None,
     length: Optional[int] = None,
