@@ -160,9 +160,7 @@ def optimal_leverage(
     """
     close = verify_series(close)
 
-    use_cagr = kwargs.pop("use_cagr", False)
     returns = percent_return(close=close) if not log else log_return(close=close)
-    # sharpe = sharpe_ratio(close, benchmark_rate=benchmark_rate, log=log, use_cagr=use_cagr, period=period)
 
     period_mu = period * returns.mean()
     period_std = npSqrt(period) * returns.std()

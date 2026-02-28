@@ -65,8 +65,6 @@ class Strategy:
     created: Optional[str] = get_time(to_string=True)
 
     def __post_init__(self):
-        has_name = True
-        is_ta = False
         required_args = ["[X] Strategy requires the following argument(s):"]
 
         name_is_str = isinstance(self.name, str)
@@ -76,15 +74,11 @@ class Strategy:
             required_args.append(
                 ' - name. Must be a string. Example: "My TA". Note: "all" is reserved.'
             )
-            has_name = False
 
         if self.ta is None:
             self.ta = None
         elif self.ta is not None and ta_is_list and self.total_ta() > 0:
-            # Check that all elements of the list are dicts.
-            # Does not check if the dicts values are valid indicator kwargs
-            # User must check indicator documentation for all indicators args.
-            is_ta = all([isinstance(_, dict) and len(_.keys()) > 0 for _ in self.ta])
+            pass  # Valid ta list; element-level validation left to indicator calls
         else:
             s = " - ta. Format is a list of dicts. Example: [{'kind': 'sma', 'length': 10}]"
             s += "\n       Check the indicator for the correct arguments if you receive this error."

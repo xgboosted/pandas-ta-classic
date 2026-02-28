@@ -6,7 +6,6 @@ from numpy import arange as npArange
 from numpy import polyfit as npPolyfit
 from numpy import std as npStd
 from pandas import DataFrame, DatetimeIndex, Series
-from .stdev import stdev as stdev
 from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
