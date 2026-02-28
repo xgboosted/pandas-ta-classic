@@ -40,16 +40,19 @@ def fisher(
 
     position = ((hl2_ - lowest_hl2) / hlr) - 0.5
 
-    v: float = 0
+    # Extract to numpy to avoid per-bar pandas indexing overhead.
+    pos_arr = position.to_numpy()
     m = high.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = np.full(m, npNaN)
+    result[length - 1] = 0.0
+    v: float = 0.0
     for i in range(length, m):
-        v = 0.66 * position.iloc[i] + 0.67 * v
+        v = 0.66 * pos_arr[i] + 0.67 * v
         if v < -0.99:
             v = -0.999
-        if v > 0.99:
+        elif v > 0.99:
             v = 0.999
-        result.append(0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1]))
+        result[i] = 0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1])
     fisher = Series(result, index=high.index)
     signalma = fisher.shift(signal)
 

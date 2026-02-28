@@ -25,6 +25,9 @@ def ad(
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
+    if high is None or low is None or close is None or volume is None:
+        return None
+
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import AD

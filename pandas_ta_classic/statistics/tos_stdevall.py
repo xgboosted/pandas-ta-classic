@@ -28,6 +28,9 @@ def tos_stdevall(
     ddof = int(ddof) if ddof and ddof >= 0 and ddof < length else 1
     offset = get_offset(offset)
 
+    if close is None:
+        return None
+
     _props = f"TOS_STDEVALL"
     if length is None:
         length = close.size

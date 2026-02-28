@@ -20,6 +20,9 @@ def pvt(
     drift = get_drift(drift)
     offset = get_offset(offset)
 
+    if close is None or volume is None:
+        return None
+
     # Calculate Result
     pv = roc(close=close, length=drift) * volume
     pvt = pv.cumsum()

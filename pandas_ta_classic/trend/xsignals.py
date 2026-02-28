@@ -27,6 +27,9 @@ def xsignals(
     signal = verify_series(signal)
     offset = get_offset(offset)
 
+    if signal is None:
+        return None
+
     # Calculate Result
     if above:
         entries = cross_value(signal, xa)

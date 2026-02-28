@@ -1,8 +1,13 @@
 from tests.config import (
-    error_analysis,
+    assert_columns,
+    assert_nan_count,
+    assert_offset,
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
+    HAS_TALIB,
+    tal,
+    talib_test,
     VERBOSE,
 )
 from tests.context import pandas_ta_classic as pandas_ta
@@ -10,14 +15,6 @@ from tests.context import pandas_ta_classic as pandas_ta
 from unittest import skip, TestCase
 import pandas.testing as pdt
 from pandas import DataFrame, Series
-
-try:
-    import talib as tal
-
-    HAS_TALIB = True
-except ImportError:
-    HAS_TALIB = False
-    tal = None
 
 
 class TestStatistics(TestCase):
@@ -52,54 +49,67 @@ class TestStatistics(TestCase):
         result = pandas_ta.entropy(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ENTP_10")
+        assert_offset(self, pandas_ta.entropy, self.close)
+        assert_nan_count(self, result, 10)
 
     def test_kurtosis(self):
         result = pandas_ta.kurtosis(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "KURT_30")
+        assert_offset(self, pandas_ta.kurtosis, self.close)
+        assert_nan_count(self, result, 30)
 
     def test_mad(self):
         result = pandas_ta.mad(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MAD_30")
+        assert_offset(self, pandas_ta.mad, self.close)
+        assert_nan_count(self, result, 30)
 
     def test_median(self):
         result = pandas_ta.median(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MEDIAN_30")
+        assert_offset(self, pandas_ta.median, self.close)
+        assert_nan_count(self, result, 30)
 
     def test_quantile(self):
         result = pandas_ta.quantile(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "QTL_30_0.5")
+        assert_offset(self, pandas_ta.quantile, self.close)
+        assert_nan_count(self, result, 30)
 
     def test_skew(self):
         result = pandas_ta.skew(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SKEW_30")
+        assert_offset(self, pandas_ta.skew, self.close)
+        assert_nan_count(self, result, 30)
 
     def test_stdev(self):
         result = pandas_ta.stdev(self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
 
-        try:
-            expected = tal.STDDEV(self.close, 30)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
         result = pandas_ta.stdev(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
+        assert_offset(self, pandas_ta.stdev, self.close, talib=False)
+        stdev_result = pandas_ta.stdev(self.close, talib=False)
+        assert_nan_count(self, stdev_result, 30)
 
-    def test_tos_sdtevall(self):
+    @talib_test
+    def test_stdev_talib(self):
+        result = pandas_ta.stdev(self.close, talib=False)
+        expected = tal.STDDEV(self.close, 30)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+
+    def test_tos_stdevall(self):
         result = pandas_ta.tos_stdevall(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TOS_STDEVALL")
@@ -114,29 +124,46 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TOS_STDEVALL_30")
         self.assertEqual(len(result.columns), 5)
+        assert_columns(
+            self,
+            pandas_ta.tos_stdevall(self.close),
+            [
+                "TOS_STDEVALL_LR",
+                "TOS_STDEVALL_L_1",
+                "TOS_STDEVALL_U_1",
+                "TOS_STDEVALL_L_2",
+                "TOS_STDEVALL_U_2",
+                "TOS_STDEVALL_L_3",
+                "TOS_STDEVALL_U_3",
+            ],
+        )
+        assert_offset(self, pandas_ta.tos_stdevall, self.close)
 
     def test_variance(self):
         result = pandas_ta.variance(self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
 
-        try:
-            expected = tal.VAR(self.close, 30)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
         result = pandas_ta.variance(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
+        assert_offset(self, pandas_ta.variance, self.close, talib=False)
+        variance_result = pandas_ta.variance(self.close, talib=False)
+        assert_nan_count(self, variance_result, 30)
+
+    @talib_test
+    def test_variance_talib(self):
+        result = pandas_ta.variance(self.close, talib=False)
+        expected = tal.VAR(self.close, 30)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_zscore(self):
         result = pandas_ta.zscore(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ZS_30")
+        assert_offset(self, pandas_ta.zscore, self.close)
+        assert_nan_count(self, result, 30)

@@ -27,6 +27,9 @@ def true_range(
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
+    if high is None or low is None or close is None:
+        return None
+
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import TRANGE

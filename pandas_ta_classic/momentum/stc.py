@@ -188,31 +188,40 @@ def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> lis
     xmacd_range = non_zero_range(xmacd.rolling(tclength).max(), lowest_xmacd)
     m = len(xmacd)
 
+    # Extract to numpy arrays to avoid pandas iloc overhead in the loops.
+    xmacd_arr = xmacd.to_numpy()
+    lxmacd_arr = lowest_xmacd.to_numpy()
+    xrange_arr = xmacd_range.to_numpy()
+
     # %Fast K of MACD
-    stoch1, pf = list(xmacd), list(xmacd)
+    stoch1 = list(xmacd_arr)
+    pf = list(xmacd_arr)
     stoch1[0], pf[0] = 0, 0
     for i in range(1, m):
-        if lowest_xmacd.iloc[i] > 0:
-            stoch1[i] = 100 * (
-                (xmacd.iloc[i] - lowest_xmacd.iloc[i]) / xmacd_range.iloc[i]
-            )
+        if lxmacd_arr[i] > 0:
+            stoch1[i] = 100 * ((xmacd_arr[i] - lxmacd_arr[i]) / xrange_arr[i])
         else:
             stoch1[i] = stoch1[i - 1]
         # Smoothed Calculation for % Fast D of MACD
         pf[i] = round(pf[i - 1] + (factor * (stoch1[i] - pf[i - 1])), 8)
 
-    pf = Series(pf, index=close.index)
+    pf_series = Series(pf, index=close.index)
 
     # 2nd : Stochastic of smoothed Percent Fast D, 'PF', above
-    lowest_pf = pf.rolling(tclength).min()
-    pf_range = non_zero_range(pf.rolling(tclength).max(), lowest_pf)
+    lowest_pf = pf_series.rolling(tclength).min()
+    pf_range = non_zero_range(pf_series.rolling(tclength).max(), lowest_pf)
+
+    pf_arr = pf_series.to_numpy()
+    lpf_arr = lowest_pf.to_numpy()
+    pfrange_arr = pf_range.to_numpy()
 
     # % of Fast K of PF
-    stoch2, pff = list(xmacd), list(xmacd)
+    stoch2 = list(xmacd_arr)
+    pff = list(xmacd_arr)
     stoch2[0], pff[0] = 0, 0
     for i in range(1, m):
-        if pf_range.iloc[i] > 0:
-            stoch2[i] = 100 * ((pf.iloc[i] - lowest_pf.iloc[i]) / pf_range.iloc[i])
+        if pfrange_arr[i] > 0:
+            stoch2[i] = 100 * ((pf_arr[i] - lpf_arr[i]) / pfrange_arr[i])
         else:
             stoch2[i] = stoch2[i - 1]
         # Smoothed Calculation for % Fast D of PF

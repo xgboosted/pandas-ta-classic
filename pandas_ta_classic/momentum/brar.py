@@ -20,8 +20,6 @@ def brar(
     # Validate Arguments
     length = int(length) if length and length > 0 else 26
     scalar = float(scalar) if scalar else 100
-    high_open_range = non_zero_range(high, open_)
-    open_low_range = non_zero_range(open_, low)
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)
@@ -31,6 +29,9 @@ def brar(
 
     if open_ is None or high is None or low is None or close is None:
         return None
+
+    high_open_range = non_zero_range(high, open_)
+    open_low_range = non_zero_range(open_, low)
 
     # Calculate Result
     hcy = non_zero_range(high, close.shift(drift))
@@ -48,7 +49,7 @@ def brar(
     # Offset
     if offset != 0:
         ar = ar.shift(offset)
-        br = ar.shift(offset)
+        br = br.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # McGinley Dynamic (MCGD)
 from typing import Any, Optional
-import pandas as pd
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
 
@@ -23,16 +23,15 @@ def mcgd(
     if close is None:
         return None
 
-    # Calculate Result
-    close = close.copy()
-
-    def mcg_(series: Series) -> float:
-        denom = c * length * (series.iloc[1] / series.iloc[0]) ** 4
-        series.iloc[1] = series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom)
-        return series.iloc[1]
-
-    mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
-    mcg_ds = pd.concat([close[:1], mcg_cell[1:]])
+    # Calculate Result — O(n) numpy loop (avoids 5240 pandas callbacks from
+    # rolling(2).apply, which passed a mutable Series view per bar).
+    c_arr = close.to_numpy(dtype=float)
+    mcgd_arr = np.empty(len(c_arr))
+    mcgd_arr[0] = c_arr[0]
+    for i in range(1, len(c_arr)):
+        denom = c * length * (c_arr[i] / mcgd_arr[i - 1]) ** 4
+        mcgd_arr[i] = mcgd_arr[i - 1] + (c_arr[i] - mcgd_arr[i - 1]) / denom
+    mcg_ds = Series(mcgd_arr, index=close.index)
 
     # Offset
     if offset != 0:

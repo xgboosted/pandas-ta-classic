@@ -23,10 +23,21 @@ def sinwma(
         return None
 
     # Calculate Result
+    import numpy as np
+    from numpy.lib.stride_tricks import sliding_window_view
+
     sines = Series([npSin((i + 1) * npPi / (length + 1)) for i in range(0, length)])
     w = sines / sines.sum()
 
-    sinwma = close.rolling(length, min_periods=length).apply(weights(w), raw=True)
+    # Replace rolling.apply (5000+ Python callbacks) with a single matrix multiply.
+    # sliding_window_view gives shape (n-L+1, L) with oldest element first per row,
+    # matching the order that rolling.apply(raw=True) passes to the callback.
+    close_arr = close.to_numpy(dtype=float)
+    w_arr = w.to_numpy(dtype=float)
+    windows = sliding_window_view(close_arr, length)  # (n-L+1, L)
+    result = np.full(len(close_arr), np.nan)
+    result[length - 1 :] = windows @ w_arr
+    sinwma = Series(result, index=close.index)
 
     # Offset
     if offset != 0:
