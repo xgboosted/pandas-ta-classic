@@ -4,7 +4,7 @@ from typing import Any, Optional, Sequence, Union
 from pandas import Series, DataFrame
 
 from . import cdl_doji, cdl_inside
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 from pandas_ta_classic import Imports
 
 ALL_PATTERNS = [
@@ -89,6 +89,10 @@ def cdl_pattern(
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
+
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     offset = get_offset(offset)
     scalar = float(scalar) if scalar else 100
 
@@ -129,22 +133,7 @@ def cdl_pattern(
             pattern_result.index = close.index
 
             # Offset
-            if offset != 0:
-                pattern_result = pattern_result.shift(offset)
-
-            # Handle fills
-            if "fillna" in kwargs:
-                pattern_result.fillna(kwargs["fillna"], inplace=True)
-            if "fill_method" in kwargs:
-                if "fill_method" in kwargs:
-
-                    if kwargs["fill_method"] == "ffill":
-
-                        pattern_result.ffill(inplace=True)
-
-                    elif kwargs["fill_method"] == "bfill":
-
-                        pattern_result.bfill(inplace=True)
+            pattern_result = apply_offset(pattern_result, offset, **kwargs)
 
             result[f"CDL_{n.upper()}"] = pattern_result
 

@@ -69,7 +69,7 @@ class Strategy:
             required_args.append(
                 ' - name. Must be a string. Example: "My TA". Note: "all" is reserved.'
             )
-            has_name != has_name
+            has_name = False
 
         if self.ta is None:
             self.ta = None
@@ -296,8 +296,10 @@ class AnalysisIndicators(BasePandasObject):
             else:
                 self.help()
 
-        except BaseException:
-            pass
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).exception("Error running indicator '%s'", kind)
 
     # Public Get/Set DataFrame Properties
     @property
@@ -923,7 +925,7 @@ class AnalysisIndicators(BasePandasObject):
         strategy = kwargs.pop("strategy", None)
 
         # Fetch the Data
-        ds = ds.lower() is not None and isinstance(ds, str)
+        ds = ds.lower() if isinstance(ds, str) else ds
         # df = av(ticker, **kwargs) if ds and ds == "av" else yf(ticker, **kwargs)
         df = yf(ticker, **kwargs)
 

@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from .hlc3 import hlc3
-from pandas_ta_classic.utils import get_offset, is_datetime_ordered, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    is_datetime_ordered,
+    verify_series,
+)
 
 
 def vwap(
@@ -21,6 +26,10 @@ def vwap(
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
+
+    if high is None or low is None or close is None or volume is None:
+        return None
+
     anchor = (
         anchor.upper()
         if anchor and isinstance(anchor, str) and len(anchor) >= 1
@@ -44,22 +53,7 @@ def vwap(
     vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
 
     # Offset
-    if offset != 0:
-        vwap = vwap.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vwap.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vwap.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vwap.bfill(inplace=True)
+    vwap = apply_offset(vwap, offset, **kwargs)
 
     # Name & Category
     vwap.name = f"VWAP_{anchor}"

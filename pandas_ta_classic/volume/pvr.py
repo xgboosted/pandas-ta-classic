@@ -14,6 +14,9 @@ def pvr(close: Series, volume: Series) -> Optional[Series]:
     close = verify_series(close)
     volume = verify_series(volume)
 
+    if close is None or volume is None:
+        return None
+
     # Calculate Result
     close_diff = close.diff().fillna(0)
     volume_diff = volume.diff().fillna(0)
