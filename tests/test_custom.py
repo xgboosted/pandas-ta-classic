@@ -60,6 +60,7 @@ class TestCustom(TestCase):
         # Ensure cleanup runs even if the test fails
         def _cleanup_custom_indicator():
             from pandas_ta_classic import AnalysisIndicators
+
             for attr in ("my_custom_ind", "my_custom_ind_method"):
                 if hasattr(pandas_ta_classic, attr):
                     delattr(pandas_ta_classic, attr)

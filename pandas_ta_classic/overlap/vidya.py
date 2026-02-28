@@ -47,9 +47,8 @@ def vidya(
     c_arr = close.to_numpy()
     vidya_arr = np.zeros(m)
     for i in range(length, m):
-        vidya_arr[i] = (
-            alpha * cmo_arr[i] * c_arr[i]
-            + vidya_arr[i - 1] * (1 - alpha * cmo_arr[i])
+        vidya_arr[i] = alpha * cmo_arr[i] * c_arr[i] + vidya_arr[i - 1] * (
+            1 - alpha * cmo_arr[i]
         )
     vidya_arr[vidya_arr == 0] = npNaN
     vidya = Series(vidya_arr, index=close.index)

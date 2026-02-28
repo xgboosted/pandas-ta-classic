@@ -9,6 +9,7 @@ Workflow:
 The first run writes tests/fixtures/snapshots.json.
 The second run verifies every indicator against the frozen hashes.
 """
+
 import inspect
 import json
 from pathlib import Path
@@ -23,19 +24,54 @@ from tests.config import get_sample_data, hash_result
 # ---------------------------------------------------------------------------
 TALIB_VALIDATED = {
     # momentum
-    "apo", "bop", "cmo", "dm", "macd", "mom", "ppo", "roc",
-    "rsi", "stoch", "stochrsi", "trix", "uo", "willr",
+    "apo",
+    "bop",
+    "cmo",
+    "dm",
+    "macd",
+    "mom",
+    "ppo",
+    "roc",
+    "rsi",
+    "stoch",
+    "stochrsi",
+    "trix",
+    "uo",
+    "willr",
     # overlap
-    "dema", "ema", "hl2", "hlc3", "kama", "linreg",
-    "midpoint", "midprice", "ohlc4", "sma", "t3", "tema", "trima", "wcp", "wma",
+    "dema",
+    "ema",
+    "hl2",
+    "hlc3",
+    "kama",
+    "linreg",
+    "midpoint",
+    "midprice",
+    "ohlc4",
+    "sma",
+    "t3",
+    "tema",
+    "trima",
+    "wcp",
+    "wma",
     # trend
-    "adx", "aroon", "aroonosc", "psar",
+    "adx",
+    "aroon",
+    "aroonosc",
+    "psar",
     # volatility
-    "atr", "bbands", "natr", "trange",
+    "atr",
+    "bbands",
+    "natr",
+    "trange",
     # volume
-    "ad", "adosc", "mfi", "obv",
+    "ad",
+    "adosc",
+    "mfi",
+    "obv",
     # statistics
-    "stdev", "variance",
+    "stdev",
+    "variance",
     # candles
     "cdl_doji",
 }
@@ -44,11 +80,11 @@ TALIB_VALIDATED = {
 # PARAM_MAP: maps a function parameter name to how to extract it from the df
 # ---------------------------------------------------------------------------
 PARAM_MAP = {
-    "close":  lambda d: d["close"],
-    "high":   lambda d: d["high"],
-    "low":    lambda d: d["low"],
-    "open_":  lambda d: d["open"],
-    "open":   lambda d: d["open"],
+    "close": lambda d: d["close"],
+    "high": lambda d: d["high"],
+    "low": lambda d: d["low"],
+    "open_": lambda d: d["open"],
+    "open": lambda d: d["open"],
     "volume": lambda d: d["volume"],
 }
 
@@ -155,6 +191,7 @@ def _load_fixture():
 # Update test (only active with --update-snapshots)
 # ---------------------------------------------------------------------------
 
+
 def test_write_snapshots(request):
     """Write tests/fixtures/snapshots.json (only runs with --update-snapshots)."""
     if not request.config.getoption("--update-snapshots", default=False):
@@ -165,12 +202,15 @@ def test_write_snapshots(request):
     with FIXTURE.open("w") as fh:
         json.dump(hashes, fh, indent=2, sort_keys=True)
     print(f"\n[snapshots] Wrote {len(hashes)} hashes to {FIXTURE}")
-    assert len(hashes) > 0, "No indicators were discovered — check TALIB_VALIDATED / SPECIAL_CALLS"
+    assert (
+        len(hashes) > 0
+    ), "No indicators were discovered — check TALIB_VALIDATED / SPECIAL_CALLS"
 
 
 # ---------------------------------------------------------------------------
 # Verification tests (normal CI run)
 # ---------------------------------------------------------------------------
+
 
 def _snapshot_params():
     """Return (name, expected_hash) pairs for parametrize, or [] if no file."""

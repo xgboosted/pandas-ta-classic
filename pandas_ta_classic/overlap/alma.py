@@ -36,7 +36,10 @@ def alma(
     m_offset = distribution_offset * (length - 1)
     s = length / sigma
     wtd = np.array(
-        [npExp(-1 * ((i - m_offset) * (i - m_offset)) / (2 * s * s)) for i in range(length)]
+        [
+            npExp(-1 * ((i - m_offset) * (i - m_offset)) / (2 * s * s))
+            for i in range(length)
+        ]
     )
     w_norm = wtd / wtd.sum()  # normalised weights
 
@@ -57,7 +60,7 @@ def alma(
     result = np.full(n, npNaN)
     result[length - 1] = 0.0
     # alma_vals[k] ↔ i = k + L - 1; skip k=0 (→ i=L-1, already 0) and k=1 (→ i=L, stays NaN)
-    result[length + 1:] = alma_vals[2:]
+    result[length + 1 :] = alma_vals[2:]
 
     alma = Series(result, index=close.index)
 

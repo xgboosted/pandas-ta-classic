@@ -36,7 +36,7 @@ def sinwma(
     w_arr = w.to_numpy(dtype=float)
     windows = sliding_window_view(close_arr, length)  # (n-L+1, L)
     result = np.full(len(close_arr), np.nan)
-    result[length - 1:] = windows @ w_arr
+    result[length - 1 :] = windows @ w_arr
     sinwma = Series(result, index=close.index)
 
     # Offset

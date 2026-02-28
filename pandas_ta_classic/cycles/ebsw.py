@@ -42,7 +42,7 @@ def ebsw(
     c_arr = close.to_numpy()
 
     lastClose = lastHP = 0.0
-    filt_p = 0.0   # FilterHist[1] — one bar back
+    filt_p = 0.0  # FilterHist[1] — one bar back
     filt_pp = 0.0  # FilterHist[0] — two bars back
 
     # Calculate Result

@@ -9,7 +9,9 @@ class TestPerformaceExtension(TestCase):
     @classmethod
     def setUpClass(cls):
         cls._original_data = get_sample_data()
-        cls.islong = cls._original_data["close"] > pandas_ta.sma(cls._original_data["close"], length=50)
+        cls.islong = cls._original_data["close"] > pandas_ta.sma(
+            cls._original_data["close"], length=50
+        )
 
     @classmethod
     def tearDownClass(cls):

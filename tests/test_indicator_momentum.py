@@ -93,9 +93,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_bias(self):
@@ -123,9 +121,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_brar(self):
@@ -159,9 +155,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_cfo(self):
@@ -193,9 +187,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_coppock(self):
@@ -373,9 +365,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_pgo(self):
@@ -462,9 +452,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_rsi(self):
@@ -484,9 +472,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_rsx(self):
@@ -546,7 +532,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.squeeze(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
-        assert_columns(self, result, ["SQZ_20_2.0_20_1.5", "SQZ_ON", "SQZ_OFF", "SQZ_NO"])
+        assert_columns(
+            self, result, ["SQZ_20_2.0_20_1.5", "SQZ_ON", "SQZ_OFF", "SQZ_NO"]
+        )
         assert_offset(
             self,
             pandas_ta.squeeze,
@@ -604,7 +592,14 @@ class TestMomentum(TestCase):
         assert_columns(
             self,
             result,
-            ["SQZPRO_20_2.0_20_2_1.5_1", "SQZPRO_ON_WIDE", "SQZPRO_ON_NORMAL", "SQZPRO_ON_NARROW", "SQZPRO_OFF", "SQZPRO_NO"],
+            [
+                "SQZPRO_20_2.0_20_2_1.5_1",
+                "SQZPRO_ON_WIDE",
+                "SQZPRO_ON_NORMAL",
+                "SQZPRO_ON_NARROW",
+                "SQZPRO_OFF",
+                "SQZPRO_NO",
+            ],
         )
         assert_offset(
             self,
@@ -617,8 +612,12 @@ class TestMomentum(TestCase):
         # invalid kc_scalar ordering triggers the valid_kc_scaler guard (line 61-62)
         self.assertIsNone(
             pandas_ta.squeeze_pro(
-                self.high, self.low, self.close,
-                kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2,
+                self.high,
+                self.low,
+                self.close,
+                kc_scalar_wide=1,
+                kc_scalar_normal=1.5,
+                kc_scalar_narrow=2,
             )
         )
 
@@ -659,9 +658,7 @@ class TestMomentum(TestCase):
         self.assertIn("SQZPRO_NINC", result.columns)
 
         # fill branches inside the detailed block (lines 246-307)
-        pandas_ta.squeeze_pro(
-            self.high, self.low, self.close, detailed=True, fillna=0
-        )
+        pandas_ta.squeeze_pro(self.high, self.low, self.close, detailed=True, fillna=0)
         pandas_ta.squeeze_pro(
             self.high, self.low, self.close, detailed=True, fill_method="ffill"
         )
@@ -796,9 +793,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_willr(self):
@@ -813,9 +808,7 @@ class TestMomentum(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_lrsi(self):

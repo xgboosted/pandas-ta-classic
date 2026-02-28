@@ -139,14 +139,18 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_3_20")
         assert_columns(self, result, ["CKSPl_10_3_20", "CKSPs_10_3_20"])
-        assert_offset(self, pandas_ta.cksp, self.high, self.low, self.close, tvmode=False)
+        assert_offset(
+            self, pandas_ta.cksp, self.high, self.low, self.close, tvmode=False
+        )
 
     def test_cksp_tv(self):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_1_9")
         assert_columns(self, result, ["CKSPl_10_1_9", "CKSPs_10_1_9"])
-        assert_offset(self, pandas_ta.cksp, self.high, self.low, self.close, tvmode=True)
+        assert_offset(
+            self, pandas_ta.cksp, self.high, self.low, self.close, tvmode=True
+        )
 
     def test_decay(self):
         result = pandas_ta.decay(self.close)
@@ -212,9 +216,7 @@ class TestTrend(TestCase):
         try:
             pdt.assert_series_equal(psar, expected)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                psar, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(psar, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_qstick(self):
@@ -266,7 +268,9 @@ class TestTrend(TestCase):
         result = pandas_ta.tsignals(trend)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TS")
-        assert_columns(self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
+        assert_columns(
+            self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
+        )
         assert_offset(self, pandas_ta.tsignals, trend)
 
     def test_xsignals(self):
@@ -275,5 +279,7 @@ class TestTrend(TestCase):
         result = pandas_ta.xsignals(signal, xa=70, xb=30)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "XS")
-        assert_columns(self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
+        assert_columns(
+            self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
+        )
         assert_offset(self, pandas_ta.xsignals, signal, 70, 30)

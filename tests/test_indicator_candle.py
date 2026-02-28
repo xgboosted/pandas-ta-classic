@@ -88,11 +88,11 @@ class TestCandle(TestCase):
         result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
         expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
         try:
-            pdt.assert_series_equal(result, expected, check_names=False, check_dtype=False)
-        except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
+            pdt.assert_series_equal(
+                result, expected, check_names=False, check_dtype=False
             )
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             # Doji detection algorithms differ; 0.95 is acceptable
             self.assertGreater(corr, 0.95)
 

@@ -74,9 +74,7 @@ class TestVolume(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_ad_open(self):
@@ -113,9 +111,7 @@ class TestVolume(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_aobv(self):
@@ -125,7 +121,15 @@ class TestVolume(TestCase):
         assert_columns(
             self,
             result,
-            ["OBV", "OBV_min_2", "OBV_max_2", "OBVe_4", "OBVe_12", "AOBV_LR_2", "AOBV_SR_2"],
+            [
+                "OBV",
+                "OBV_min_2",
+                "OBV_max_2",
+                "OBVe_4",
+                "OBVe_12",
+                "AOBV_LR_2",
+                "AOBV_SR_2",
+            ],
         )
         assert_offset(self, pandas_ta.aobv, self.close, self.volume_)
 
@@ -200,9 +204,7 @@ class TestVolume(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_nvi(self):
@@ -228,9 +230,7 @@ class TestVolume(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_pvi(self):

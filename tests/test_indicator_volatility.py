@@ -82,9 +82,7 @@ class TestVolatility(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_bbands(self):
@@ -169,9 +167,7 @@ class TestVolatility(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_pdist(self):
@@ -229,9 +225,7 @@ class TestVolatility(TestCase):
         try:
             pdt.assert_series_equal(result, expected, check_names=False)
         except AssertionError:
-            corr = pandas_ta.utils.df_error_analysis(
-                result, expected, col=CORRELATION
-            )
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_ui(self):

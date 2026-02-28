@@ -26,8 +26,11 @@ def ha(
 
     # Calculate Result
     import numpy as np
+
     m = close.size
-    ha_close = 0.25 * (open_.to_numpy() + high.to_numpy() + low.to_numpy() + close.to_numpy())
+    ha_close = 0.25 * (
+        open_.to_numpy() + high.to_numpy() + low.to_numpy() + close.to_numpy()
+    )
 
     # HA_open recurrence: ha_open[i] = 0.5 * (ha_open[i-1] + ha_close[i-1])
     # Compute with a numpy loop to avoid pandas iat overhead.

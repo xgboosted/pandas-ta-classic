@@ -41,9 +41,7 @@ def error_analysis(df, kind, msg, icon=INFO, newline=True):
         print(s)
 
 
-def assert_offset(
-    test_case, func, *args, expected_cols=None, none_arg_idx=0, **kwargs
-):
+def assert_offset(test_case, func, *args, expected_cols=None, none_arg_idx=0, **kwargs):
     """Assert result(offset=1) == result(offset=0).shift(1) for all columns.
 
     Also exercises fillna and fill_method code paths present in every indicator.

@@ -47,6 +47,7 @@ class TestVolumeExtension(TestCase):
                 "AOBV_SR_2",
             ],
         )
+
     def test_cmf_ext(self):
         self.data.ta.cmf(append=True)
         self.assertIsInstance(self.data, DataFrame)

@@ -44,8 +44,8 @@ def linreg(
 
     windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
     # Each row: [close[k], ..., close[k+L-1]] — oldest first, matching x_arr ordering.
-    y_sums = windows.sum(axis=1)                  # (n-L+1,)
-    xy_sums = (windows * x_arr).sum(axis=1)       # (n-L+1,)
+    y_sums = windows.sum(axis=1)  # (n-L+1,)
+    xy_sums = (windows * x_arr).sum(axis=1)  # (n-L+1,)
     m_slopes = (length * xy_sums - x_sum * y_sums) / divisor
 
     if slope:
@@ -62,7 +62,7 @@ def linreg(
         elif r:
             y2_sums = (windows * windows).sum(axis=1)
             rn = length * xy_sums - x_sum * y_sums
-            rd = (divisor * (length * y2_sums - y_sums ** 2)) ** 0.5
+            rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
             linreg_ = rn / rd
         elif tsf:
             linreg_ = m_slopes * length + bs
