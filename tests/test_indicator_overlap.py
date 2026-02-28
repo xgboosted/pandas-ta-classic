@@ -533,6 +533,15 @@ class TestOverlap(TestCase):
         result = pandas_ta.vwap(self.high, self.low, self.close, self.volume)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VWAP_D")
+        assert_offset(
+            self,
+            pandas_ta.vwap,
+            self.high,
+            self.low,
+            self.close,
+            self.volume,
+            none_arg_idx=None,
+        )
 
     def test_vwma(self):
         result = pandas_ta.vwma(self.close, self.volume)

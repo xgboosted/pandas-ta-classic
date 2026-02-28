@@ -137,6 +137,68 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result, Series)
         npt.assert_array_equal(result, self.crosseddf["crossed"])
 
+    def test_signals(self):
+        close = self.data["close"]
+        indicator = pandas_ta.rsi(close)
+        ma = pandas_ta.sma(close)
+
+        # xa/xb scalar thresholds, above/below (no cross)
+        result = self.utils.signals(
+            indicator,
+            xa=70,
+            xb=30,
+            cross_values=False,
+            xserie=None,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=False,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertGreater(len(result.columns), 0)
+
+        # xa/xb with cross_values=True (crossed above/below value)
+        result = self.utils.signals(
+            indicator,
+            xa=70,
+            xb=30,
+            cross_values=True,
+            xserie=None,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=False,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+
+        # xserie (Series threshold) with cross_series=False (above/below series)
+        result = self.utils.signals(
+            indicator,
+            xa=None,
+            xb=None,
+            cross_values=False,
+            xserie=ma,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=False,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+
+        # xserie with cross_series=True (crossed above/below series)
+        result = self.utils.signals(
+            indicator,
+            xa=None,
+            xb=None,
+            cross_values=False,
+            xserie=ma,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=True,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+
     def test_df_dates(self):
         result = self.utils.df_dates(self.data)
         self.assertEqual(None, result)

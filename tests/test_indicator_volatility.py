@@ -159,6 +159,9 @@ class TestVolatility(TestCase):
         result = pandas_ta.natr(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "NATR_14")
+        assert_offset(
+            self, pandas_ta.natr, self.high, self.low, self.close, talib=False
+        )
 
     @talib_test
     def test_natr_talib(self):
