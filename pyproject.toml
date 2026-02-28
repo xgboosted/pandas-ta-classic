@@ -26,14 +26,15 @@ classifiers = [
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
-    # Python version classifiers below are PLACEHOLDERS
-    # Replaced dynamically by CI/CD during release based on generate-matrix job
-    # Format: LATEST_PYTHON_VERSION and 4 preceding minor versions
+    # Python version classifiers — {{LATEST-N}} placeholders are replaced by
+    # CI/CD during release; Python :: 3 :: Only and Typing :: Typed are static.
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: {{LATEST-4}}",
     "Programming Language :: Python :: {{LATEST-3}}",
     "Programming Language :: Python :: {{LATEST-2}}",
     "Programming Language :: Python :: {{LATEST-1}}",
     "Programming Language :: Python :: {{LATEST}}",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.9"  # Minimum Python version - dynamically updated by CI/CD during release
 dependencies = [
@@ -119,21 +120,9 @@ Repository = "https://github.com/xgboosted/pandas-ta-classic.git"
 Documentation = "https://xgboosted.github.io/pandas-ta-classic/"
 "Bug Tracker" = "https://github.com/xgboosted/pandas-ta-classic/issues"
 
-[tool.setuptools]
-packages = [
-    "pandas_ta_classic",
-    "pandas_ta_classic.candles",
-    "pandas_ta_classic.cycles",
-    "pandas_ta_classic.momentum",
-    "pandas_ta_classic.overlap",
-    "pandas_ta_classic.performance",
-    "pandas_ta_classic.statistics",
-    "pandas_ta_classic.trend",
-    "pandas_ta_classic.utils",
-    "pandas_ta_classic.utils.data",
-    "pandas_ta_classic.volatility",
-    "pandas_ta_classic.volume"
-]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pandas_ta_classic*"]
 
 [tool.setuptools.package-data]
 "*" = ["data/*.csv"]
