@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stc(
@@ -74,44 +79,9 @@ def stc(
     stoch = Series(pf, index=close.index)
 
     # Offset
-    if offset != 0:
-        stc = stc.shift(offset)
-        macd = macd.shift(offset)
-        stoch = stoch.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        stc.fillna(kwargs["fillna"], inplace=True)
-        macd.fillna(kwargs["fillna"], inplace=True)
-        stoch.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stc.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                macd.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                macd.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stoch.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stoch.bfill(inplace=True)
+    stc = apply_offset(stc, offset, **kwargs)
+    macd = apply_offset(macd, offset, **kwargs)
+    stoch = apply_offset(stoch, offset, **kwargs)
 
     # Name and Categorize it
     _props = f"_{tclength}_{fast}_{slow}_{factor}"

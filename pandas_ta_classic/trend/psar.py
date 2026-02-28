@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series, zero
 
 
 def psar(
@@ -110,30 +110,10 @@ def psar(
     _af = Series(af_arr, index=high.index)
 
     # Offset
-    if offset != 0:
-        _af = _af.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
-        reversal = reversal.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        _af.fillna(kwargs["fillna"], inplace=True)
-        long.fillna(kwargs["fillna"], inplace=True)
-        short.fillna(kwargs["fillna"], inplace=True)
-        reversal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        fill = kwargs["fill_method"]
-        if fill == "ffill":
-            _af.ffill(inplace=True)
-            long.ffill(inplace=True)
-            short.ffill(inplace=True)
-            reversal.ffill(inplace=True)
-        elif fill == "bfill":
-            _af.bfill(inplace=True)
-            long.bfill(inplace=True)
-            short.bfill(inplace=True)
-            reversal.bfill(inplace=True)
+    _af = apply_offset(_af, offset, **kwargs)
+    long = apply_offset(long, offset, **kwargs)
+    short = apply_offset(short, offset, **kwargs)
+    reversal = apply_offset(reversal, offset, **kwargs)
 
     # Prepare DataFrame to return
     _params = f"_{af0}_{max_af}"

@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def massi(
@@ -39,22 +44,7 @@ def massi(
     massi = hl_ratio.rolling(slow, min_periods=slow).sum()
 
     # Offset
-    if offset != 0:
-        massi = massi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        massi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                massi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                massi.bfill(inplace=True)
+    massi = apply_offset(massi, offset, **kwargs)
 
     # Name and Categorize it
     massi.name = f"MASSI_{fast}_{slow}"

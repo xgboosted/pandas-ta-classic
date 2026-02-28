@@ -2,7 +2,13 @@
 # Fibonacci Weighted Moving Average (FWMA)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import fibonacci, get_offset, verify_series, weights
+from pandas_ta_classic.utils import (
+    apply_offset,
+    fibonacci,
+    get_offset,
+    verify_series,
+    weights,
+)
 
 
 def fwma(
@@ -27,22 +33,7 @@ def fwma(
     fwma = close.rolling(length, min_periods=length).apply(weights(fibs), raw=True)
 
     # Offset
-    if offset != 0:
-        fwma = fwma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        fwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                fwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                fwma.bfill(inplace=True)
+    fwma = apply_offset(fwma, offset, **kwargs)
 
     # Name & Category
     fwma.name = f"FWMA_{length}"

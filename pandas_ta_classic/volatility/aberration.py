@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from .atr import atr
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def aberration(
@@ -39,55 +39,10 @@ def aberration(
     xg = zg - atr_
 
     # Offset
-    if offset != 0:
-        zg = zg.shift(offset)
-        sg = sg.shift(offset)
-        xg = xg.shift(offset)
-        atr_ = atr_.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        zg.fillna(kwargs["fillna"], inplace=True)
-        sg.fillna(kwargs["fillna"], inplace=True)
-        xg.fillna(kwargs["fillna"], inplace=True)
-        atr_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                zg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                zg.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                sg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                sg.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                xg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                xg.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                atr_.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                atr_.bfill(inplace=True)
+    zg = apply_offset(zg, offset, **kwargs)
+    sg = apply_offset(sg, offset, **kwargs)
+    xg = apply_offset(xg, offset, **kwargs)
+    atr_ = apply_offset(atr_, offset, **kwargs)
 
     # Name and Categorize it
     _props = f"_{length}_{atr_length}"

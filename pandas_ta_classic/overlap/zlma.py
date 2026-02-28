@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from . import dema, ema, hma, linreg, rma, sma, swma, t3, tema, trima, vidya, wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def zlma(
@@ -52,22 +52,7 @@ def zlma(
         zlma = ema(close_, length=length, **kwargs)  # "ema"
 
     # Offset
-    if offset != 0:
-        zlma = zlma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        zlma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                zlma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                zlma.bfill(inplace=True)
+    zlma = apply_offset(zlma, offset, **kwargs)
 
     # Name & Category
     zlma.name = f"ZL_{zlma.name}"

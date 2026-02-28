@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.swma import swma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def rvgi(
@@ -41,25 +46,9 @@ def rvgi(
     histogram = rvgi - signal
 
     # Offset
-    if offset != 0:
-        rvgi = rvgi.shift(offset)
-        signal = signal.shift(offset)
-        histogram = histogram.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        rvgi.fillna(kwargs["fillna"], inplace=True)
-        signal.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            rvgi.ffill(inplace=True)
-            signal.ffill(inplace=True)
-            histogram.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            rvgi.bfill(inplace=True)
-            signal.bfill(inplace=True)
-            histogram.bfill(inplace=True)
+    rvgi = apply_offset(rvgi, offset, **kwargs)
+    signal = apply_offset(signal, offset, **kwargs)
+    histogram = apply_offset(histogram, offset, **kwargs)
 
     # Name & Category
     rvgi.name = f"RVGI_{length}_{swma_length}"

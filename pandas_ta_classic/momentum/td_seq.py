@@ -4,7 +4,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def td_seq(
@@ -55,23 +55,8 @@ def td_seq(
         down_seq = down_seq.astype(int)
 
     # Offset
-    if offset != 0:
-        up_seq = up_seq.shift(offset)
-        down_seq = down_seq.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        up_seq.fillna(kwargs["fillna"], inplace=True)
-        down_seq.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        fill = kwargs["fill_method"]
-        if fill == "ffill":
-            up_seq.ffill(inplace=True)
-            down_seq.ffill(inplace=True)
-        elif fill == "bfill":
-            up_seq.bfill(inplace=True)
-            down_seq.bfill(inplace=True)
+    up_seq = apply_offset(up_seq, offset, **kwargs)
+    down_seq = apply_offset(down_seq, offset, **kwargs)
 
     # Name & Category
     up_seq.name = "TD_SEQ_UPa" if show_all else "TD_SEQ_UP"

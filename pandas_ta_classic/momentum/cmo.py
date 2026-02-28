@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
 
 
 def cmo(
@@ -48,22 +48,7 @@ def cmo(
         cmo = scalar * (pos_ - neg_) / (pos_ + neg_)
 
     # Offset
-    if offset != 0:
-        cmo = cmo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cmo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cmo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cmo.bfill(inplace=True)
+    cmo = apply_offset(cmo, offset, **kwargs)
 
     # Name and Categorize it
     cmo.name = f"CMO_{length}"

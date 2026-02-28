@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
-from pandas_ta_classic.utils import get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    signed_series,
+    verify_series,
+)
 
 
 def nvi(
@@ -35,22 +40,7 @@ def nvi(
     nvi = nvi.cumsum()
 
     # Offset
-    if offset != 0:
-        nvi = nvi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        nvi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                nvi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                nvi.bfill(inplace=True)
+    nvi = apply_offset(nvi, offset, **kwargs)
 
     # Name and Categorize it
     nvi.name = f"NVI_{length}"

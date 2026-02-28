@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.volatility import true_range
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
 
 
 def vortex(
@@ -44,33 +44,8 @@ def vortex(
     vim = vmm.rolling(length, min_periods=min_periods).sum() / tr_sum
 
     # Offset
-    if offset != 0:
-        vip = vip.shift(offset)
-        vim = vim.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vip.fillna(kwargs["fillna"], inplace=True)
-        vim.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vip.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vip.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vim.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vim.bfill(inplace=True)
+    vip = apply_offset(vip, offset, **kwargs)
+    vim = apply_offset(vim, offset, **kwargs)
 
     # Name and Categorize it
     vip.name = f"VTXP_{length}"

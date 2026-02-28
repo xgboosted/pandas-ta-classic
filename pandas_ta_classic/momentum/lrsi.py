@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import maximum, where, zeros
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def lrsi(
@@ -60,17 +60,7 @@ def lrsi(
     lrsi = Series(100 * cu / denominator, index=close.index)
 
     # Offset
-    if offset != 0:
-        lrsi = lrsi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        lrsi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            lrsi.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            lrsi.bfill(inplace=True)
+    lrsi = apply_offset(lrsi, offset, **kwargs)
 
     # Name and Categorize it
     lrsi.name = f"LRSI_{length}"

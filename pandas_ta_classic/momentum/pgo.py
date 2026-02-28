@@ -5,7 +5,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def pgo(
@@ -32,22 +32,7 @@ def pgo(
     pgo /= ema(atr(high, low, close, length), length)
 
     # Offset
-    if offset != 0:
-        pgo = pgo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pgo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pgo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pgo.bfill(inplace=True)
+    pgo = apply_offset(pgo, offset, **kwargs)
 
     # Name and Categorize it
     pgo.name = f"PGO_{length}"

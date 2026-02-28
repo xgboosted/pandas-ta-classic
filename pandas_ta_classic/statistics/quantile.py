@@ -2,7 +2,7 @@
 # Quantile (QUANTILE)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def quantile(
@@ -31,22 +31,7 @@ def quantile(
     quantile = close.rolling(length, min_periods=min_periods).quantile(q)
 
     # Offset
-    if offset != 0:
-        quantile = quantile.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        quantile.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                quantile.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                quantile.bfill(inplace=True)
+    quantile = apply_offset(quantile, offset, **kwargs)
 
     # Name & Category
     quantile.name = f"QTL_{length}_{q}"

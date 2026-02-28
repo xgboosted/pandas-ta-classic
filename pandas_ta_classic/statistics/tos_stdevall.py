@@ -7,7 +7,7 @@ from numpy import polyfit as npPolyfit
 from numpy import std as npStd
 from pandas import DataFrame, DatetimeIndex, Series
 from .stdev import stdev as stdev
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def tos_stdevall(
@@ -63,22 +63,7 @@ def tos_stdevall(
         df[f"{_props}_L_{i}"].category = df[f"{_props}_U_{i}"].category = "statistics"
 
     # Offset
-    if offset != 0:
-        df = df.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
+    df = apply_offset(df, offset, **kwargs)
 
     # Prepare DataFrame to return
     df.name = f"{_props}"

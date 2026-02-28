@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series, signals
+from pandas_ta_classic.utils import apply_offset, get_offset, signals, verify_series
 
 
 def macd(
@@ -51,44 +51,9 @@ def macd(
         histogram = macd - signalma
 
     # Offset
-    if offset != 0:
-        macd = macd.shift(offset)
-        histogram = histogram.shift(offset)
-        signalma = signalma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        macd.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                macd.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                macd.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                histogram.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                histogram.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
+    macd = apply_offset(macd, offset, **kwargs)
+    histogram = apply_offset(histogram, offset, **kwargs)
+    signalma = apply_offset(signalma, offset, **kwargs)
 
     # Name and Categorize it
     _asmode = "AS" if as_mode else ""

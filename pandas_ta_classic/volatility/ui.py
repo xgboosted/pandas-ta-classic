@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import sqrt as npsqrt
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def ui(
@@ -38,22 +38,7 @@ def ui(
         ui = (d2.rolling(length).sum() / length).apply(npsqrt)
 
     # Offset
-    if offset != 0:
-        ui = ui.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ui.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ui.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ui.bfill(inplace=True)
+    ui = apply_offset(ui, offset, **kwargs)
 
     # Name and Categorize it
     ui.name = f"UI{'' if not everget else 'e'}_{length}"

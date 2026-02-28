@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, zero
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+    zero,
+)
 
 
 def adx(
@@ -54,44 +60,9 @@ def adx(
     adx = ma(mamode, dx, length=lensig)
 
     # Offset
-    if offset != 0:
-        dmp = dmp.shift(offset)
-        dmn = dmn.shift(offset)
-        adx = adx.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        adx.fillna(kwargs["fillna"], inplace=True)
-        dmp.fillna(kwargs["fillna"], inplace=True)
-        dmn.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                adx.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                adx.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dmp.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dmp.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dmn.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dmn.bfill(inplace=True)
+    dmp = apply_offset(dmp, offset, **kwargs)
+    dmn = apply_offset(dmn, offset, **kwargs)
+    adx = apply_offset(adx, offset, **kwargs)
 
     # Name and Categorize it
     adx.name = f"ADX_{lensig}"

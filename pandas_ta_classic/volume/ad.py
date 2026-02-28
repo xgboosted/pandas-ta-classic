@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def ad(
@@ -45,22 +50,7 @@ def ad(
         ad = ad.cumsum()
 
     # Offset
-    if offset != 0:
-        ad = ad.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ad.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ad.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ad.bfill(inplace=True)
+    ad = apply_offset(ad, offset, **kwargs)
 
     # Name and Categorize it
     ad.name = "AD" if open_ is None else "ADo"

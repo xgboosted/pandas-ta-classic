@@ -5,7 +5,7 @@ import numpy as np
 from numpy import fabs as npfabs
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def mad(
@@ -39,22 +39,7 @@ def mad(
     mad = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        mad = mad.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        mad.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mad.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mad.bfill(inplace=True)
+    mad = apply_offset(mad, offset, **kwargs)
 
     # Name & Category
     mad.name = f"MAD_{length}"

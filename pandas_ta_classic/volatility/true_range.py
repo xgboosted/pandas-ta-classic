@@ -6,7 +6,13 @@ from pandas import concat, Series
 
 npNaN = np.nan
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def true_range(
@@ -44,22 +50,7 @@ def true_range(
         true_range.iloc[:drift] = npNaN
 
     # Offset
-    if offset != 0:
-        true_range = true_range.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        true_range.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                true_range.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                true_range.bfill(inplace=True)
+    true_range = apply_offset(true_range, offset, **kwargs)
 
     # Name and Categorize it
     true_range.name = f"TRUERANGE_{drift}"

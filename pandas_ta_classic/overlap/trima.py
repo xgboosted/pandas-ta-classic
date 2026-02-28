@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .sma import sma
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def trima(
@@ -35,22 +35,7 @@ def trima(
         trima = sma(sma1, length=half_length)
 
     # Offset
-    if offset != 0:
-        trima = trima.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        trima.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                trima.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                trima.bfill(inplace=True)
+    trima = apply_offset(trima, offset, **kwargs)
 
     # Name & Category
     trima.name = f"TRIMA_{length}"

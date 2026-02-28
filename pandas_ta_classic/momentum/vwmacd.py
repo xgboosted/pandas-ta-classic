@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.vwma import vwma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def vwmacd(
@@ -44,25 +44,9 @@ def vwmacd(
     histogram = vwmacd - signal_line
 
     # Offset
-    if offset != 0:
-        vwmacd = vwmacd.shift(offset)
-        signal_line = signal_line.shift(offset)
-        histogram = histogram.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vwmacd.fillna(kwargs["fillna"], inplace=True)
-        signal_line.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            vwmacd.ffill(inplace=True)
-            signal_line.ffill(inplace=True)
-            histogram.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            vwmacd.bfill(inplace=True)
-            signal_line.bfill(inplace=True)
-            histogram.bfill(inplace=True)
+    vwmacd = apply_offset(vwmacd, offset, **kwargs)
+    signal_line = apply_offset(signal_line, offset, **kwargs)
+    histogram = apply_offset(histogram, offset, **kwargs)
 
     # Name and Categorize it
     _props = f"_{fast}_{slow}_{signal}"

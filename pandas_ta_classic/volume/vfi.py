@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def vfi(
@@ -59,17 +64,7 @@ def vfi(
     vfi = ma(mamode, vfi, length=3)
 
     # Offset
-    if offset != 0:
-        vfi = vfi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vfi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            vfi.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            vfi.bfill(inplace=True)
+    vfi = apply_offset(vfi, offset, **kwargs)
 
     # Name and Categorize it
     vfi.name = f"VFI_{length}"

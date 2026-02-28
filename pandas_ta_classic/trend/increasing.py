@@ -2,7 +2,13 @@
 # Increasing (INCREASING)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, is_percent, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    is_percent,
+    verify_series,
+)
 
 
 def increasing(
@@ -47,22 +53,7 @@ def increasing(
         increasing = increasing.astype(int)
 
     # Offset
-    if offset != 0:
-        increasing = increasing.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        increasing.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                increasing.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                increasing.bfill(inplace=True)
+    increasing = apply_offset(increasing, offset, **kwargs)
 
     # Name and Categorize it
     _percent = f"_{0.01 * percent}" if percent else ""

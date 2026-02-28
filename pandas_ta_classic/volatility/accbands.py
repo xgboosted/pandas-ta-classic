@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def accbands(
@@ -43,44 +49,9 @@ def accbands(
     upper = ma(mamode, _upper, length=length)
 
     # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        mid = mid.shift(offset)
-        upper = upper.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        mid.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mid.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mid.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
+    lower = apply_offset(lower, offset, **kwargs)
+    mid = apply_offset(mid, offset, **kwargs)
+    upper = apply_offset(upper, offset, **kwargs)
 
     # Name and Categorize it
     lower.name = f"ACCBL_{length}"

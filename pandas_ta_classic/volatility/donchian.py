@@ -2,7 +2,7 @@
 # Donchian Channels (DONCHIAN)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def donchian(
@@ -40,45 +40,10 @@ def donchian(
     upper = high.rolling(upper_length, min_periods=upper_min_periods).max()
     mid = 0.5 * (lower + upper)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        mid.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mid.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mid.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
-
     # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        mid = mid.shift(offset)
-        upper = upper.shift(offset)
+    lower = apply_offset(lower, offset, **kwargs)
+    mid = apply_offset(mid, offset, **kwargs)
+    upper = apply_offset(upper, offset, **kwargs)
 
     # Name and Categorize it
     lower.name = f"DCL_{lower_length}_{upper_length}"

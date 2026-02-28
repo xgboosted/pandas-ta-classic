@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .tsi import tsi
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def smi(
@@ -37,44 +37,9 @@ def smi(
     osc = smi - signalma
 
     # Offset
-    if offset != 0:
-        smi = smi.shift(offset)
-        signalma = signalma.shift(offset)
-        osc = osc.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        smi.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-        osc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                smi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                smi.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                osc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                osc.bfill(inplace=True)
+    smi = apply_offset(smi, offset, **kwargs)
+    signalma = apply_offset(signalma, offset, **kwargs)
+    osc = apply_offset(osc, offset, **kwargs)
 
     # Name and Categorize it
     _scalar = f"_{scalar}" if scalar != 1 else ""

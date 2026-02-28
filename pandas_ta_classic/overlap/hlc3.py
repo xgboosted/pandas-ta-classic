@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def hlc3(
@@ -34,8 +34,7 @@ def hlc3(
         hlc3 = (high + low + close) / 3.0
 
     # Offset
-    if offset != 0:
-        hlc3 = hlc3.shift(offset)
+    hlc3 = apply_offset(hlc3, offset, **kwargs)
 
     # Name & Category
     hlc3.name = "HLC3"

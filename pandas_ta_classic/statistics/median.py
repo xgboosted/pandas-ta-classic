@@ -2,7 +2,7 @@
 # Median (MEDIAN)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def median(
@@ -29,22 +29,7 @@ def median(
     median = close.rolling(length, min_periods=min_periods).median()
 
     # Offset
-    if offset != 0:
-        median = median.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        median.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                median.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                median.bfill(inplace=True)
+    median = apply_offset(median, offset, **kwargs)
 
     # Name & Category
     median.name = f"MEDIAN_{length}"

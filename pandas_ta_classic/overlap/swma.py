@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    apply_offset,
     get_offset,
     symmetric_triangle,
     verify_series,
@@ -34,22 +35,7 @@ def swma(
     # swma = close.rolling(length).apply(weights(triangle), raw=True)
 
     # Offset
-    if offset != 0:
-        swma = swma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        swma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                swma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                swma.bfill(inplace=True)
+    swma = apply_offset(swma, offset, **kwargs)
 
     # Name & Category
     swma.name = f"SWMA_{length}"

@@ -10,7 +10,7 @@ npNaN = np.nan
 
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
 
 
 def qqe(
@@ -114,30 +114,10 @@ def qqe(
     qqe_short = Series(qqe_short_arr, index=idx)
 
     # Offset
-    if offset != 0:
-        rsi_ma = rsi_ma.shift(offset)
-        qqe = qqe.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        rsi_ma.fillna(kwargs["fillna"], inplace=True)
-        qqe.fillna(kwargs["fillna"], inplace=True)
-        qqe_long.fillna(kwargs["fillna"], inplace=True)
-        qqe_short.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        fill = kwargs["fill_method"]
-        if fill == "ffill":
-            rsi_ma.ffill(inplace=True)
-            qqe.ffill(inplace=True)
-            qqe_long.ffill(inplace=True)
-            qqe_short.ffill(inplace=True)
-        elif fill == "bfill":
-            rsi_ma.bfill(inplace=True)
-            qqe.bfill(inplace=True)
-            qqe_long.bfill(inplace=True)
-            qqe_short.bfill(inplace=True)
+    rsi_ma = apply_offset(rsi_ma, offset, **kwargs)
+    qqe = apply_offset(qqe, offset, **kwargs)
+    long = apply_offset(long, offset, **kwargs)
+    short = apply_offset(short, offset, **kwargs)
 
     # Name and Categorize it
     _props = f"{_mode}_{length}_{smooth}_{factor}"

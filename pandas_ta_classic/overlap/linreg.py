@@ -9,7 +9,7 @@ from numpy.version import version as npVersion
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def linreg(
@@ -74,22 +74,7 @@ def linreg(
     )
 
     # Offset
-    if offset != 0:
-        linreg = linreg.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        linreg.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                linreg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                linreg.bfill(inplace=True)
+    linreg = apply_offset(linreg, offset, **kwargs)
 
     # Name and Categorize it
     linreg.name = f"LR"

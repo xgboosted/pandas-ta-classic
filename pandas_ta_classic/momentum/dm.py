@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series, get_drift, zero
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+    zero,
+)
 
 
 def dm(
@@ -50,9 +56,8 @@ def dm(
         neg = ma(mamode, neg_, length=length)
 
     # Offset
-    if offset != 0:
-        pos = pos.shift(offset)
-        neg = neg.shift(offset)
+    pos = apply_offset(pos, offset, **kwargs)
+    neg = apply_offset(neg, offset, **kwargs)
 
     _params = f"_{length}"
     data = {
