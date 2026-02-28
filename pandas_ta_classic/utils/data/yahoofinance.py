@@ -84,22 +84,13 @@ def yf(ticker: str, **kwargs):
     if Imports["yfinance"] and ticker is not None:
         import yfinance as yfra
 
-        yfra.pdr_override()
-
         # Ticker Info & Chart History
         yfd = yfra.Ticker(ticker)
 
         try:
             df = yfd.history(period=period, interval=interval, proxy=proxy, **kwargs)
-        except:
-            if yfra.__version__ == "0.1.60":
-                print(
-                    f"[!] If history is not downloading, see yfinance Issue #760 by user djl0."
-                )
-                print(
-                    f"[!] https://github.com/ranaroussi/yfinance/issues/760#issuecomment-877355832"
-                )
-                return None
+        except Exception:
+            return None
 
         if df.empty:
             return None
@@ -619,15 +610,7 @@ def yf(ticker: str, **kwargs):
             cfdf = yfd.cashflow
 
             if icdf.empty or bsdf.empty or cfdf.empty:
-                if yfra.__version__ <= "0.1.54":
-                    print(f"[!] Best choice: update yfinance to the latest version.")
-                    print(
-                        f"[!] Ignore if aleady patched. Some tickers do not have financials."
-                    )
-                    print(
-                        f"[!] Otherwise to enable Company Financials, see yfinance Issue #517 patch."
-                    )
-                    print(f"[!] https://github.com/ranaroussi/yfinance/pull/517/files")
+                pass
             else:
                 print("\n====  Company Financials   " + div)
                 if not icdf.empty:
