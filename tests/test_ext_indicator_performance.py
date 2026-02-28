@@ -8,19 +8,16 @@ from pandas import DataFrame
 class TestPerformaceExtension(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = get_sample_data()
-        cls.islong = cls.data["close"] > pandas_ta.sma(cls.data["close"], length=50)
+        cls._original_data = get_sample_data()
+        cls.islong = cls._original_data["close"] > pandas_ta.sma(cls._original_data["close"], length=50)
 
     @classmethod
     def tearDownClass(cls):
-        del cls.data
+        del cls._original_data
         del cls.islong
 
     def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+        self.data = self._original_data.copy()
 
     def test_log_return_ext(self):
         self.data.ta.log_return(append=True)

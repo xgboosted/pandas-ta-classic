@@ -57,6 +57,20 @@ class TestCustom(TestCase):
             custom.import_dir(tmp, verbose=False)
 
     def test_import_dir_valid_indicator(self):
+        # Ensure cleanup runs even if the test fails
+        def _cleanup_custom_indicator():
+            from pandas_ta_classic import AnalysisIndicators
+            for attr in ("my_custom_ind", "my_custom_ind_method"):
+                if hasattr(pandas_ta_classic, attr):
+                    delattr(pandas_ta_classic, attr)
+                if hasattr(AnalysisIndicators, attr):
+                    delattr(AnalysisIndicators, attr)
+            cat = pandas_ta_classic.Category.get("momentum", [])
+            if "my_custom_ind" in cat:
+                cat.remove("my_custom_ind")
+
+        self.addCleanup(_cleanup_custom_indicator)
+
         # Covers full load + bind path
         with tempfile.TemporaryDirectory() as tmp:
             cat_dir = os.path.join(tmp, "momentum")
@@ -75,17 +89,3 @@ class TestCustom(TestCase):
                 f.write(indicator_src)
             custom.import_dir(tmp, verbose=False)
             self.assertTrue(hasattr(pandas_ta_classic, "my_custom_ind"))
-
-        # Clean up: remove from module namespace and Category dict so subsequent
-        # tests (e.g. strategy tests that iterate all category indicators) are
-        # not affected by the temporary custom indicator.
-        from pandas_ta_classic import AnalysisIndicators
-
-        for attr in ("my_custom_ind", "my_custom_ind_method"):
-            if hasattr(pandas_ta_classic, attr):
-                delattr(pandas_ta_classic, attr)
-            if hasattr(AnalysisIndicators, attr):
-                delattr(AnalysisIndicators, attr)
-        cat = pandas_ta_classic.Category.get("momentum", [])
-        if "my_custom_ind" in cat:
-            cat.remove("my_custom_ind")

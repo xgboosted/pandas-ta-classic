@@ -8,17 +8,14 @@ from pandas import DataFrame
 class TestMomentumExtension(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = get_sample_data()
+        cls._original_data = get_sample_data()
 
     @classmethod
     def tearDownClass(cls):
-        del cls.data
+        del cls._original_data
 
     def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+        self.data = self._original_data.copy()
 
     def test_ao_ext(self):
         self.data.ta.ao(append=True)

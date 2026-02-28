@@ -8,19 +8,14 @@ from pandas import DataFrame
 class TestVolumeExtension(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = get_sample_data()
-        cls.open = cls.data["open"]
+        cls._original_data = get_sample_data()
 
     @classmethod
     def tearDownClass(cls):
-        del cls.data
-        del cls.open
+        del cls._original_data
 
     def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+        self.data = self._original_data.copy()
 
     def test_ad_ext(self):
         self.data.ta.ad(append=True)
@@ -28,7 +23,7 @@ class TestVolumeExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "AD")
 
     def test_ad_open_ext(self):
-        self.data.ta.ad(open_=self.open, append=True)
+        self.data.ta.ad(open_=self.data["open"], append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "ADo")
 
@@ -52,9 +47,6 @@ class TestVolumeExtension(TestCase):
                 "AOBV_SR_2",
             ],
         )
-        # Remove "OBV" so it does not interfere with test_obv_ext()
-        self.data.drop("OBV", axis=1, inplace=True)
-
     def test_cmf_ext(self):
         self.data.ta.cmf(append=True)
         self.assertIsInstance(self.data, DataFrame)
