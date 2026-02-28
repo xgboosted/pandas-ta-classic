@@ -54,7 +54,7 @@ def kama(
     c_arr = close.to_numpy()
     m = close.size
     result = np.full(m, npNaN)
-    result[length - 1] = 0.0
+    result[length - 1] = c_arr[length - 1]
     for i in range(length, m):
         result[i] = sc_arr[i] * c_arr[i] + (1 - sc_arr[i]) * result[i - 1]
 

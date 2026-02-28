@@ -55,12 +55,8 @@ def alma(
     windows = sliding_window_view(close_arr, length)  # (n-L+1, L)
     alma_vals = windows @ w_norm[::-1]  # w_norm[0]*newest + … + w_norm[L-1]*oldest
 
-    # Preserve the exact output structure of the original code:
-    #   indices 0..L-2: NaN, index L-1: 0, index L: NaN, L+1..n-1: ALMA values
     result = np.full(n, npNaN)
-    result[length - 1] = 0.0
-    # alma_vals[k] ↔ i = k + L - 1; skip k=0 (→ i=L-1, already 0) and k=1 (→ i=L, stays NaN)
-    result[length + 1 :] = alma_vals[2:]
+    result[length - 1 :] = alma_vals
 
     alma = Series(result, index=close.index)
 

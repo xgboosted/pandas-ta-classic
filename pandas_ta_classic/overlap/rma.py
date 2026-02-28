@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 # Wilder's Moving Average (RMA)
 from typing import Any, Optional
+import numpy as np
 from pandas import Series
+
+npNaN = np.nan
 from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
@@ -21,8 +24,12 @@ def rma(
     if close is None:
         return None
 
-    # Calculate Result
-    rma = close.ewm(alpha=alpha, min_periods=length).mean()
+    # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
+    close = close.copy()
+    sma_nth = close[0:length].mean()
+    close[: length - 1] = npNaN
+    close.iloc[length - 1] = sma_nth
+    rma = close.ewm(alpha=alpha, adjust=False).mean()
 
     # Offset
     rma = apply_offset(rma, offset, **kwargs)
@@ -46,9 +53,11 @@ Sources:
 Calculation:
     Default Inputs:
         length=10
-    EMA = Exponential Moving Average
     alpha = 1 / length
-    RMA = EMA(close, alpha=alpha)
+    SMA_nth = SMA(close, length)
+    close[:length - 1] = NaN
+    close[length - 1] = SMA_nth
+    RMA = EWM(close, alpha=alpha, adjust=False)
 
 Args:
     close (pd.Series): Series of 'close's
