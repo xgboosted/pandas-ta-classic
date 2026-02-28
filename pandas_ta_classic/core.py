@@ -249,7 +249,7 @@ class AnalysisIndicators(BasePandasObject):
 
     _adjusted = None
     _cores = cpu_count()
-    _df = DataFrame()
+    _df = pd.DataFrame()
     _exchange = "NYSE"
     _time_range = "years"
     _last_run = get_time(_exchange, to_string=True)

@@ -22,3 +22,12 @@ __description__ = (
     "Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib. "
     "This is the classic/community maintained version."
 )
+
+__all__ = [
+    "Category",
+    "Imports",
+    "version",
+    "CANGLE_AGG",
+    "EXCHANGE_TZ",
+    "RATE",
+]
