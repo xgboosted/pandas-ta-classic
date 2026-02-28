@@ -185,7 +185,7 @@ def signals(
     if xserie_b is None:
         xserie_b = xserie
 
-    if xserie_a is not None and verify_series(xserie_a):
+    if xserie_a is not None and verify_series(xserie_a) is not None:
         if cross_series:
             cross_serie_above = cross(indicator, xserie_a, above=True, offset=offset)
         else:
@@ -193,7 +193,7 @@ def signals(
 
         df[cross_serie_above.name] = cross_serie_above
 
-    if xserie_b is not None and verify_series(xserie_b):
+    if xserie_b is not None and verify_series(xserie_b) is not None:
         if cross_series:
             cross_serie_below = cross(indicator, xserie_b, above=False, offset=offset)
         else:

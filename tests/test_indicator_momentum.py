@@ -499,6 +499,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.slope(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SLOPE_1")
+        assert_offset(self, pandas_ta.slope, self.close)
 
     def test_slope_as_angle(self):
         result = pandas_ta.slope(self.close, as_angle=True)
@@ -740,6 +741,12 @@ class TestMomentum(TestCase):
         result = pandas_ta.td_seq(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TD_SEQ")
+        assert_offset(
+            self,
+            pandas_ta.td_seq,
+            self.close,
+            expected_cols=["TD_SEQ_UPa", "TD_SEQ_DNa"],
+        )
 
     def test_trix(self):
         result = pandas_ta.trix(self.close)
@@ -800,6 +807,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.willr(self.high, self.low, self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WILLR_14")
+        assert_offset(
+            self, pandas_ta.willr, self.high, self.low, self.close, talib=False
+        )
 
     @talib_test
     def test_willr_talib(self):
@@ -826,12 +836,21 @@ class TestMomentum(TestCase):
         result = pandas_ta.trixh(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TRIXH_18_9")
+        assert_offset(
+            self,
+            pandas_ta.trixh,
+            self.close,
+            expected_cols=["TRIX_18_9", "TRIXs_18_9", "TRIXh_18_9"],
+        )
 
     def test_vwmacd(self):
         result = pandas_ta.vwmacd(self.close, self.volume)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "VWMACD_12_26_9")
-
-        result = pandas_ta.willr(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "WILLR_14")
+        assert_offset(
+            self,
+            pandas_ta.vwmacd,
+            self.close,
+            self.volume,
+            expected_cols=["VWMACD_12_26_9", "VWMACDh_12_26_9", "VWMACDs_12_26_9"],
+        )

@@ -48,7 +48,6 @@ def natr(
             length=length,
             mamode=mamode,
             drift=drift,
-            offset=offset,
             **kwargs,
         )
 
