@@ -1,0 +1,49 @@
+name: 'Install TA-Lib'
+description: >
+  Build and install the TA-Lib C library with caching.
+  Update .github/talib-version.txt to bust the cache when a new release is needed.
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache TA-Lib build
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ~/ta-lib-install
+        key: talib-${{ runner.os }}-${{ hashFiles('.github/talib-version.txt') }}
+
+    - name: Install build dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y build-essential
+
+    - name: Build TA-Lib from source
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        git clone --depth=1 https://github.com/ta-lib/ta-lib.git ta-lib-src
+        cd ta-lib-src
+        if [ ! -f configure ]; then
+          chmod +x autogen.sh && ./autogen.sh
+        fi
+        ./configure --prefix="$HOME/ta-lib-install"
+        make -j$(nproc)
+        make install
+
+    # Always run: restoring from cache skips the build but the linker still
+    # needs to know about the library path on each fresh runner.
+    - name: Register TA-Lib with system linker
+      shell: bash
+      run: |
+        echo "$HOME/ta-lib-install/lib" | sudo tee /etc/ld.so.conf.d/ta-lib.conf
+        sudo ldconfig
+
+    # Export paths so `pip install TA-Lib` can find the C library and headers.
+    - name: Export TA-Lib paths
+      shell: bash
+      run: |
+        echo "TA_LIBRARY_PATH=$HOME/ta-lib-install/lib" >> "$GITHUB_ENV"
+        echo "TA_INCLUDE_PATH=$HOME/ta-lib-install/include" >> "$GITHUB_ENV"
