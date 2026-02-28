@@ -2,7 +2,13 @@
 # Decreasing (DECREASING)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, is_percent, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    is_percent,
+    verify_series,
+)
 
 
 def decreasing(
@@ -47,22 +53,7 @@ def decreasing(
         decreasing = decreasing.astype(int)
 
     # Offset
-    if offset != 0:
-        decreasing = decreasing.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        decreasing.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                decreasing.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                decreasing.bfill(inplace=True)
+    decreasing = apply_offset(decreasing, offset, **kwargs)
 
     # Name and Categorize it
     _percent = f"_{0.01 * percent}" if percent else ""

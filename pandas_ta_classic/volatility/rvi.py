@@ -5,7 +5,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics import stdev
 from pandas_ta_classic.utils import get_drift, get_offset
-from pandas_ta_classic.utils import unsigned_differences, verify_series
+from pandas_ta_classic.utils import apply_offset, unsigned_differences, verify_series
 
 
 def rvi(
@@ -73,22 +73,7 @@ def rvi(
         rvi = _rvi(close, length, scalar, mamode, drift)
 
     # Offset
-    if offset != 0:
-        rvi = rvi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        rvi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                rvi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                rvi.bfill(inplace=True)
+    rvi = apply_offset(rvi, offset, **kwargs)
 
     # Name and Categorize it
     rvi.name = f"RVI{_mode}_{length}"

@@ -2,7 +2,7 @@
 # Kurtosis (KURTOSIS)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def kurtosis(
@@ -29,22 +29,7 @@ def kurtosis(
     kurtosis = close.rolling(length, min_periods=min_periods).kurt()
 
     # Offset
-    if offset != 0:
-        kurtosis = kurtosis.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        kurtosis.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kurtosis.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kurtosis.bfill(inplace=True)
+    kurtosis = apply_offset(kurtosis, offset, **kwargs)
 
     # Name & Category
     kurtosis.name = f"KURT_{length}"

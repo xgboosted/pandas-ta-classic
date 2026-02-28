@@ -5,7 +5,13 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def kama(
@@ -55,22 +61,7 @@ def kama(
     kama = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        kama = kama.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        kama.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kama.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kama.bfill(inplace=True)
+    kama = apply_offset(kama, offset, **kwargs)
 
     # Name & Category
     kama.name = f"KAMA_{length}_{fast}_{slow}"

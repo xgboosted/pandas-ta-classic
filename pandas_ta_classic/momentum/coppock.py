@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .roc import roc
 from pandas_ta_classic.overlap.wma import wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def coppock(
@@ -31,22 +31,7 @@ def coppock(
     coppock = wma(total_roc, length)
 
     # Offset
-    if offset != 0:
-        coppock = coppock.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        coppock.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                coppock.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                coppock.bfill(inplace=True)
+    coppock = apply_offset(coppock, offset, **kwargs)
 
     # Name and Categorize it
     coppock.name = f"COPC_{fast}_{slow}_{length}"

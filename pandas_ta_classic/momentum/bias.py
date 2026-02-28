@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def bias(
@@ -28,22 +28,7 @@ def bias(
     bias = (close / bma) - 1
 
     # Offset
-    if offset != 0:
-        bias = bias.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        bias.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bias.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bias.bfill(inplace=True)
+    bias = apply_offset(bias, offset, **kwargs)
 
     # Name and Categorize it
     bias.name = f"BIAS_{bma.name}"

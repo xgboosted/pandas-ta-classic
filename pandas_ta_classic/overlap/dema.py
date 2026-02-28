@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def dema(
@@ -35,22 +35,7 @@ def dema(
         dema = 2 * ema1 - ema2
 
     # Offset
-    if offset != 0:
-        dema = dema.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        dema.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dema.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dema.bfill(inplace=True)
+    dema = apply_offset(dema, offset, **kwargs)
 
     # Name & Category
     dema.name = f"DEMA_{length}"

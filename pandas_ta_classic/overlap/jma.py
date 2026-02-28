@@ -10,7 +10,7 @@ from numpy import zeros_like as npZeroslike
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def jma(
@@ -101,22 +101,7 @@ def jma(
     jma = Series(jma, index=close.index)
 
     # Offset
-    if offset != 0:
-        jma = jma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        jma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                jma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                jma.bfill(inplace=True)
+    jma = apply_offset(jma, offset, **kwargs)
 
     # Name & Category
     jma.name = f"JMA_{_length}_{phase}"

@@ -4,7 +4,11 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
-from pandas_ta_classic.utils import recent_maximum_index, recent_minimum_index
+from pandas_ta_classic.utils import (
+    apply_offset,
+    recent_maximum_index,
+    recent_minimum_index,
+)
 
 
 def aroon(
@@ -43,45 +47,10 @@ def aroon(
         aroon_down *= 1 - (periods_from_ll / length)
         aroon_osc = aroon_up - aroon_down
 
-    # Handle fills
-    if "fillna" in kwargs:
-        aroon_up.fillna(kwargs["fillna"], inplace=True)
-        aroon_down.fillna(kwargs["fillna"], inplace=True)
-        aroon_osc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                aroon_up.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                aroon_up.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                aroon_down.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                aroon_down.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                aroon_osc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                aroon_osc.bfill(inplace=True)
-
     # Offset
-    if offset != 0:
-        aroon_up = aroon_up.shift(offset)
-        aroon_down = aroon_down.shift(offset)
-        aroon_osc = aroon_osc.shift(offset)
+    aroon_up = apply_offset(aroon_up, offset, **kwargs)
+    aroon_down = apply_offset(aroon_down, offset, **kwargs)
+    aroon_osc = apply_offset(aroon_osc, offset, **kwargs)
 
     # Name and Categorize it
     aroon_up.name = f"AROONU_{length}"

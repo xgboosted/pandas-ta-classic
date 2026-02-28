@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .atr import atr
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
 
 
 def natr(
@@ -53,22 +53,7 @@ def natr(
         )
 
     # Offset
-    if offset != 0:
-        natr = natr.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        natr.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                natr.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                natr.bfill(inplace=True)
+    natr = apply_offset(natr, offset, **kwargs)
 
     # Name and Categorize it
     natr.name = f"NATR_{length}"

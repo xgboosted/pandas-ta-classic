@@ -2,7 +2,12 @@
 # Price Volume (PVOL)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    signed_series,
+    verify_series,
+)
 
 
 def pvol(
@@ -27,22 +32,7 @@ def pvol(
         pvol *= signed_series(close, 1)
 
     # Offset
-    if offset != 0:
-        pvol = pvol.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pvol.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pvol.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pvol.bfill(inplace=True)
+    pvol = apply_offset(pvol, offset, **kwargs)
 
     # Name and Categorize it
     pvol.name = f"PVOL"

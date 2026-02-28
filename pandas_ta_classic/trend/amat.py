@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from .long_run import long_run
 from .short_run import short_run
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def amat(
@@ -39,34 +39,8 @@ def amat(
     mas_short = short_run(fast_ma, slow_ma, length=lookback)
 
     # Offset
-    if offset != 0:
-        mas_long = mas_long.shift(offset)
-        mas_short = mas_short.shift(offset)
-
-    # # Handle fills
-    if "fillna" in kwargs:
-        mas_long.fillna(kwargs["fillna"], inplace=True)
-        mas_short.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mas_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mas_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mas_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mas_short.bfill(inplace=True)
+    mas_long = apply_offset(mas_long, offset, **kwargs)
+    mas_short = apply_offset(mas_short, offset, **kwargs)
 
     # Prepare DataFrame to return
     amatdf = DataFrame(

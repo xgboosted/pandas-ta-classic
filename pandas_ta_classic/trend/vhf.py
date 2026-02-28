@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from numpy import fabs as npFabs
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def vhf(
@@ -30,22 +36,7 @@ def vhf(
     vhf = npFabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
 
     # Offset
-    if offset != 0:
-        vhf = vhf.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vhf.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vhf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vhf.bfill(inplace=True)
+    vhf = apply_offset(vhf, offset, **kwargs)
 
     # Name and Categorize it
     vhf.name = f"VHF_{length}"

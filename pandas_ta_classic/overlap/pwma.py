@@ -2,7 +2,13 @@
 # Pascal Weighted Moving Average (PWMA)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, pascals_triangle, verify_series, weights
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    pascals_triangle,
+    verify_series,
+    weights,
+)
 
 
 def pwma(
@@ -27,22 +33,7 @@ def pwma(
     pwma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
 
     # Offset
-    if offset != 0:
-        pwma = pwma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pwma.bfill(inplace=True)
+    pwma = apply_offset(pwma, offset, **kwargs)
 
     # Name & Category
     pwma.name = f"PWMA_{length}"

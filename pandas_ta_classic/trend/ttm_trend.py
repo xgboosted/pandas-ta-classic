@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.hl2 import hl2
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def ttm_trend(
@@ -36,22 +36,7 @@ def ttm_trend(
     tm_trend.replace(0, -1, inplace=True)
 
     # Offset
-    if offset != 0:
-        tm_trend = tm_trend.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        tm_trend.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                tm_trend.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                tm_trend.bfill(inplace=True)
+    tm_trend = apply_offset(tm_trend, offset, **kwargs)
 
     # Name and Categorize it
     tm_trend.name = f"TTM_TRND_{length}"

@@ -5,7 +5,7 @@ from pandas import Series
 from .true_range import true_range
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
 
 
 def atr(
@@ -47,22 +47,7 @@ def atr(
         atr *= 100 / close
 
     # Offset
-    if offset != 0:
-        atr = atr.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        atr.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                atr.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                atr.bfill(inplace=True)
+    atr = apply_offset(atr, offset, **kwargs)
 
     # Name and Categorize it
     atr.name = f"ATR{mamode[0]}_{length}{'p' if percentage else ''}"

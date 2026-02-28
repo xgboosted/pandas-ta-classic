@@ -6,7 +6,7 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.statistics import mad, stdev
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def cci(
@@ -46,22 +46,7 @@ def cci(
         cci /= c * mad_typical_price
 
     # Offset
-    if offset != 0:
-        cci = cci.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cci.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cci.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cci.bfill(inplace=True)
+    cci = apply_offset(cci, offset, **kwargs)
 
     # Name and Categorize it
     cci.name = f"CCI_{length}_{c}"

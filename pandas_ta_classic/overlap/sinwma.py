@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import pi as npPi
 from numpy import sin as npSin
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series, weights
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series, weights
 
 
 def sinwma(
@@ -40,22 +40,7 @@ def sinwma(
     sinwma = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        sinwma = sinwma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        sinwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                sinwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                sinwma.bfill(inplace=True)
+    sinwma = apply_offset(sinwma, offset, **kwargs)
 
     # Name & Category
     sinwma.name = f"SINWMA_{length}"

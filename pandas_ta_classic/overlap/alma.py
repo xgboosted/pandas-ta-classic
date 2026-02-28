@@ -6,7 +6,7 @@ from numpy import exp as npExp
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def alma(
@@ -65,22 +65,7 @@ def alma(
     alma = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        alma = alma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        alma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                alma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                alma.bfill(inplace=True)
+    alma = apply_offset(alma, offset, **kwargs)
 
     # Name & Category
     alma.name = f"ALMA_{length}_{sigma}_{distribution_offset}"

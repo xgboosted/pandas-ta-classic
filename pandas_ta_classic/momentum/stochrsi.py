@@ -4,7 +4,12 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stochrsi(
@@ -42,33 +47,8 @@ def stochrsi(
     stochrsi_d = ma(mamode, stochrsi_k, length=d)
 
     # Offset
-    if offset != 0:
-        stochrsi_k = stochrsi_k.shift(offset)
-        stochrsi_d = stochrsi_d.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        stochrsi_k.fillna(kwargs["fillna"], inplace=True)
-        stochrsi_d.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stochrsi_k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stochrsi_k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stochrsi_d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stochrsi_d.bfill(inplace=True)
+    stochrsi_k = apply_offset(stochrsi_k, offset, **kwargs)
+    stochrsi_d = apply_offset(stochrsi_d, offset, **kwargs)
 
     # Name and Categorize it
     _name = "STOCHRSI"

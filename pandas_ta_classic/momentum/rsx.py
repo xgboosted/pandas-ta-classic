@@ -5,7 +5,13 @@ import numpy as np
 from pandas import concat, DataFrame, Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, signals
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    signals,
+    verify_series,
+)
 
 
 def rsx(
@@ -116,22 +122,7 @@ def rsx(
     rsx = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        rsx = rsx.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        rsx.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                rsx.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                rsx.bfill(inplace=True)
+    rsx = apply_offset(rsx, offset, **kwargs)
 
     # Name and Categorize it
     rsx.name = f"RSX_{length}"

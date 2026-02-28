@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from .ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def hilo(
@@ -61,44 +61,9 @@ def hilo(
     short = Series(short_arr, index=close.index)
 
     # Offset
-    if offset != 0:
-        hilo = hilo.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        hilo.fillna(kwargs["fillna"], inplace=True)
-        long.fillna(kwargs["fillna"], inplace=True)
-        short.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hilo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hilo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short.bfill(inplace=True)
+    hilo = apply_offset(hilo, offset, **kwargs)
+    long = apply_offset(long, offset, **kwargs)
+    short = apply_offset(short, offset, **kwargs)
 
     # Name & Category
     _props = f"_{high_length}_{low_length}"
