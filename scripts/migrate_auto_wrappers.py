@@ -8,6 +8,7 @@ Removes ~130 boilerplate wrapper methods and replaces them with:
 
 Special-case methods that cannot be auto-generated are preserved verbatim.
 """
+
 import re
 import sys
 from pathlib import Path
@@ -20,15 +21,26 @@ SPECIAL_METHODS = {
     # Tuple return — cannot use _post_process directly
     "ichimoku",
     # Conditional optional series params (open_=None)
-    "ad", "adosc", "cmf", "psl",
+    "ad",
+    "adosc",
+    "cmf",
+    "psl",
     # Conditional optional series params (high=None, low=None)
     "inertia",
     # Early return when primary arg is None; non-OHLCV positional arg
-    "long_run", "short_run", "tsignals", "xsignals",
+    "long_run",
+    "short_run",
+    "tsignals",
+    "xsignals",
     # Datetime index mutation before calling underlying function
     "vwap",
     # Non-OHLCV series params (series_a, series_b) — not extractable by name
-    "above", "above_value", "below", "below_value", "cross", "cross_value",
+    "above",
+    "above_value",
+    "below",
+    "below_value",
+    "cross",
+    "cross_value",
 }
 
 # Module-level infrastructure inserted just before the class definition block
@@ -177,6 +189,7 @@ def _last_category_comment(body_lines):
 # Main transformation
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def main():
     src = CORE_PY.read_text(encoding="utf-8")
     original_lines = src.splitlines()
@@ -184,9 +197,7 @@ def main():
     # ── Locate the indicator-wrapper anchor. ─────────────────────────────────
     ANCHOR = "    # Public DataFrame Methods: Indicators and Utilities"
     try:
-        anchor_idx = next(
-            i for i, l in enumerate(original_lines) if l == ANCHOR
-        )
+        anchor_idx = next(i for i, l in enumerate(original_lines) if l == ANCHOR)
     except StopIteration:
         sys.exit(f"[ERROR] Anchor not found: {ANCHOR!r}")
 
@@ -247,7 +258,8 @@ def main():
         # Fallback: insert just before @pd.api.extensions decorator.
         try:
             insert_idx = next(
-                i for i, l in enumerate(infra_lines)
+                i
+                for i, l in enumerate(infra_lines)
                 if l.startswith("@pd.api.extensions.register_dataframe_accessor")
             )
         except StopIteration:
@@ -264,7 +276,9 @@ def main():
     output = "\n".join(final_lines) + "\n"
     CORE_PY.write_text(output, encoding="utf-8")
     print(f"[OK] Wrote {len(final_lines)} lines to {CORE_PY}")
-    print(f"     (was {len(original_lines)} lines; removed {len(original_lines) - len(final_lines)})")
+    print(
+        f"     (was {len(original_lines)} lines; removed {len(original_lines) - len(final_lines)})"
+    )
 
 
 if __name__ == "__main__":

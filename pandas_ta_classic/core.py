@@ -25,6 +25,7 @@ from pandas_ta_classic.statistics import *
 from pandas_ta_classic.trend import *
 from pandas_ta_classic.volatility import *
 from pandas_ta_classic.volume import *
+
 # TODO: These wildcard imports cause name collisions between indicator category
 # sub-packages and same-named functions from utils._metrics / utils._signals.
 # Affected names: `volatility` (shadows pandas_ta_classic.volatility subpackage),
