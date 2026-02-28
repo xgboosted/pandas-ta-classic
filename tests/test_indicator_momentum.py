@@ -546,14 +546,19 @@ class TestMomentum(TestCase):
         result = pandas_ta.squeeze(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
+        assert_columns(self, result, ["SQZ_20_2.0_20_1.5", "SQZ_ON", "SQZ_OFF", "SQZ_NO"])
         assert_offset(
             self,
             pandas_ta.squeeze,
             self.high,
             self.low,
             self.close,
-            expected_cols=["SQZ_20_2.0_20_1.5"],
         )
+
+        # mamode="ema" exercises the ema branch instead of sma (line 80)
+        result = pandas_ta.squeeze(self.high, self.low, self.close, mamode="ema")
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
 
         result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
@@ -569,18 +574,44 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5_LB")
 
+        # detailed=True covers the extended series branches (lines 163-254)
+        result = pandas_ta.squeeze(self.high, self.low, self.close, detailed=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("SQZ_INC", result.columns)
+        self.assertIn("SQZ_DEC", result.columns)
+        self.assertIn("SQZ_PINC", result.columns)
+        self.assertIn("SQZ_PDEC", result.columns)
+        self.assertIn("SQZ_NDEC", result.columns)
+        self.assertIn("SQZ_NINC", result.columns)
+
     def test_squeeze_pro(self):
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPRO_20_2.0_20_2_1.5_1")
+        assert_columns(
+            self,
+            result,
+            ["SQZPRO_20_2.0_20_2_1.5_1", "SQZPRO_ON_WIDE", "SQZPRO_ON_NORMAL", "SQZPRO_ON_NARROW", "SQZPRO_OFF", "SQZPRO_NO"],
+        )
         assert_offset(
             self,
             pandas_ta.squeeze_pro,
             self.high,
             self.low,
             self.close,
-            expected_cols=["SQZPRO_20_2.0_20_2_1.5_1"],
         )
+
+        # invalid kc_scalar ordering triggers the valid_kc_scaler guard (line 61-62)
+        self.assertIsNone(
+            pandas_ta.squeeze_pro(
+                self.high, self.low, self.close,
+                kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2,
+            )
+        )
+
+        # mamode="ema" exercises the ema branch (line 113)
+        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, mamode="ema")
+        self.assertIsInstance(result, DataFrame)
 
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
@@ -597,6 +628,16 @@ class TestMomentum(TestCase):
         )
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3.0_2.0_1.0")
+
+        # detailed=True covers the extended series branches (lines 223-314)
+        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, detailed=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("SQZPRO_INC", result.columns)
+        self.assertIn("SQZPRO_DEC", result.columns)
+        self.assertIn("SQZPRO_PINC", result.columns)
+        self.assertIn("SQZPRO_PDEC", result.columns)
+        self.assertIn("SQZPRO_NDEC", result.columns)
+        self.assertIn("SQZPRO_NINC", result.columns)
 
     def test_stc(self):
         result = pandas_ta.stc(self.close)
