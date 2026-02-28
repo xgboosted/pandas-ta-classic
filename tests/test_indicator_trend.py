@@ -5,6 +5,9 @@ from tests.config import (
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
+    HAS_TALIB,
+    tal,
+    talib_test,
     VERBOSE,
 )
 from tests.context import pandas_ta_classic as pandas_ta
@@ -12,14 +15,6 @@ from tests.context import pandas_ta_classic as pandas_ta
 from unittest import TestCase, skip
 import pandas.testing as pdt
 from pandas import DataFrame, Series
-
-try:
-    import talib as tal
-
-    HAS_TALIB = True
-except ImportError:
-    HAS_TALIB = False
-    tal = None
 
 
 class TestTrend(TestCase):
@@ -55,16 +50,6 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
 
-        if HAS_TALIB:
-            expected = tal.ADX(self.high, self.low, self.close)
-            try:
-                pdt.assert_series_equal(result.iloc[:, 0], expected)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.adx(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
@@ -74,6 +59,18 @@ class TestTrend(TestCase):
             pandas_ta.adx(self.high, self.low, self.close, talib=False),
             ["ADX_14", "DMP_14", "DMN_14"],
         )
+
+    @talib_test
+    def test_adx_talib(self):
+        result = pandas_ta.adx(self.high, self.low, self.close, talib=False)
+        expected = tal.ADX(self.high, self.low, self.close)
+        try:
+            pdt.assert_series_equal(result.iloc[:, 0], expected)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result.iloc[:, 0], expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_amat(self):
         result = pandas_ta.amat(self.close)
@@ -87,21 +84,6 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
 
-        if HAS_TALIB:
-            expected = tal.AROON(self.high, self.low)
-            expecteddf = DataFrame({"AROOND_14": expected[0], "AROONU_14": expected[1]})
-            try:
-                pdt.assert_frame_equal(result, expecteddf)
-            except AssertionError:
-                aroond_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                )
-                self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
-                aroonu_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(aroonu_corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.aroon(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
@@ -112,20 +94,34 @@ class TestTrend(TestCase):
             ["AROOND_14", "AROONU_14", "AROONOSC_14"],
         )
 
-    def test_aroon_osc(self):
-        result = pandas_ta.aroon(self.high, self.low)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "AROON_14")
+    @talib_test
+    def test_aroon_talib(self):
+        result = pandas_ta.aroon(self.high, self.low, talib=False)
+        expected = tal.AROON(self.high, self.low)
+        expecteddf = DataFrame({"AROOND_14": expected[0], "AROONU_14": expected[1]})
+        try:
+            pdt.assert_frame_equal(result, expecteddf)
+        except AssertionError:
+            aroond_corr = pandas_ta.utils.df_error_analysis(
+                result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
+            )
+            self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
+            aroonu_corr = pandas_ta.utils.df_error_analysis(
+                result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
+            )
+            self.assertGreater(aroonu_corr, CORRELATION_THRESHOLD)
 
-        if HAS_TALIB:
-            expected = tal.AROONOSC(self.high, self.low)
-            try:
-                pdt.assert_series_equal(result.iloc[:, 2], expected)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 2], expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
+    @talib_test
+    def test_aroon_osc_talib(self):
+        result = pandas_ta.aroon(self.high, self.low)
+        expected = tal.AROONOSC(self.high, self.low)
+        try:
+            pdt.assert_series_equal(result.iloc[:, 2], expected)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result.iloc[:, 2], expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_chop(self):
         result = pandas_ta.chop(self.high, self.low, self.close, ln=False)
@@ -205,20 +201,21 @@ class TestTrend(TestCase):
         )
         assert_offset(self, pandas_ta.psar, self.high, self.low)
 
-        # Combine Long and Short SAR"s into one SAR value
+    @talib_test
+    def test_psar_talib(self):
+        result = pandas_ta.psar(self.high, self.low)
+        # Combine Long and Short SAR's into one SAR value
         psar = result[result.columns[:2]].fillna(0)
         psar = psar[psar.columns[0]] + psar[psar.columns[1]]
         psar.name = result.name
-
-        if HAS_TALIB:
-            expected = tal.SAR(self.high, self.low)
-            try:
-                pdt.assert_series_equal(psar, expected)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    psar, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
+        expected = tal.SAR(self.high, self.low)
+        try:
+            pdt.assert_series_equal(psar, expected)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                psar, expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_qstick(self):
         result = pandas_ta.qstick(self.open, self.close)

@@ -9,14 +9,6 @@ from unittest import TestCase, skip
 import pandas.testing as pdt
 from pandas import DataFrame, Series
 
-try:
-    import talib as tal
-
-    HAS_TALIB = True
-except ImportError:
-    HAS_TALIB = False
-    tal = None
-
 
 class TestCycles(TestCase):
     @classmethod

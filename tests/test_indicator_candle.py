@@ -4,6 +4,9 @@ from tests.config import (
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
+    HAS_TALIB,
+    tal,
+    talib_test,
     VERBOSE,
 )
 from tests.context import pandas_ta_classic as pandas_ta
@@ -11,14 +14,6 @@ from tests.context import pandas_ta_classic as pandas_ta
 from unittest import TestCase, skip
 import pandas.testing as pdt
 from pandas import DataFrame, Series
-
-try:
-    import talib as tal
-
-    HAS_TALIB = True
-except ImportError:
-    HAS_TALIB = False
-    tal = None
 
 
 class TestCandle(TestCase):
@@ -84,20 +79,22 @@ class TestCandle(TestCase):
         result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_DOJI_10_0.1")
-
-        if HAS_TALIB:
-            expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
-            try:
-                pdt.assert_series_equal(result, expected, check_names=False, check_dtype=False)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                # Doji detection algorithms differ; 0.95 is acceptable
-                self.assertGreater(corr, 0.95)
         assert_offset(
             self, pandas_ta.cdl_doji, self.open, self.high, self.low, self.close
         )
+
+    @talib_test
+    def test_cdl_doji_talib(self):
+        result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
+        expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False, check_dtype=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result, expected, col=CORRELATION
+            )
+            # Doji detection algorithms differ; 0.95 is acceptable
+            self.assertGreater(corr, 0.95)
 
     def test_cdl_inside(self):
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close)

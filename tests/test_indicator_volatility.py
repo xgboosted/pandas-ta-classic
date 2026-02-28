@@ -5,6 +5,9 @@ from tests.config import (
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
+    HAS_TALIB,
+    tal,
+    talib_test,
     VERBOSE,
 )
 from tests.context import pandas_ta_classic as pandas_ta
@@ -12,14 +15,6 @@ from tests.context import pandas_ta_classic as pandas_ta
 from unittest import TestCase, skip
 import pandas.testing as pdt
 from pandas import DataFrame, Series
-
-try:
-    import talib as tal
-
-    HAS_TALIB = True
-except ImportError:
-    HAS_TALIB = False
-    tal = None
 
 
 class TestVolatility(TestCase):
@@ -73,16 +68,6 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ATRr_14")
 
-        if HAS_TALIB:
-            expected = tal.ATR(self.high, self.low, self.close)
-            try:
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.atr(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ATRr_14")
@@ -90,22 +75,22 @@ class TestVolatility(TestCase):
         atr_result = pandas_ta.atr(self.high, self.low, self.close, talib=False)
         assert_nan_count(self, atr_result, 14)
 
+    @talib_test
+    def test_atr_talib(self):
+        result = pandas_ta.atr(self.high, self.low, self.close, talib=False)
+        expected = tal.ATR(self.high, self.low, self.close)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result, expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+
     def test_bbands(self):
         result = pandas_ta.bbands(self.close, talib=False)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BBANDS_5_2.0")
-
-        if HAS_TALIB:
-            expected = tal.BBANDS(self.close)
-            for col, expected_series in zip(
-                ["BBU_5_2.0", "BBM_5_2.0", "BBL_5_2.0"], expected
-            ):
-                corr = pandas_ta.utils.df_error_analysis(
-                    result[col], expected_series, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            self.assertTrue(result["BBB_5_2.0"].dropna().gt(0).all())
-            self.assertTrue(result["BBP_5_2.0"].dropna().between(0, 1).all())
 
         result = pandas_ta.bbands(self.close, ddof=0)
         self.assertIsInstance(result, DataFrame)
@@ -121,6 +106,20 @@ class TestVolatility(TestCase):
             bbands_result,
             ["BBL_5_2.0", "BBM_5_2.0", "BBU_5_2.0", "BBB_5_2.0", "BBP_5_2.0"],
         )
+
+    @talib_test
+    def test_bbands_talib(self):
+        result = pandas_ta.bbands(self.close, talib=False)
+        expected = tal.BBANDS(self.close)
+        for col, expected_series in zip(
+            ["BBU_5_2.0", "BBM_5_2.0", "BBL_5_2.0"], expected
+        ):
+            corr = pandas_ta.utils.df_error_analysis(
+                result[col], expected_series, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+        self.assertTrue(result["BBB_5_2.0"].dropna().gt(0).all())
+        self.assertTrue(result["BBP_5_2.0"].dropna().between(0, 1).all())
 
     def test_donchian(self):
         result = pandas_ta.donchian(self.high, self.low)
@@ -159,19 +158,21 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "NATR_14")
 
-        if HAS_TALIB:
-            expected = tal.NATR(self.high, self.low, self.close)
-            try:
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.natr(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "NATR_14")
+
+    @talib_test
+    def test_natr_talib(self):
+        result = pandas_ta.natr(self.high, self.low, self.close, talib=False)
+        expected = tal.NATR(self.high, self.low, self.close)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result, expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_pdist(self):
         result = pandas_ta.pdist(self.open, self.high, self.low, self.close)
@@ -214,22 +215,24 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRUERANGE_1")
 
-        if HAS_TALIB:
-            expected = tal.TRANGE(self.high, self.low, self.close)
-            try:
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.true_range(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRUERANGE_1")
         assert_offset(
             self, pandas_ta.true_range, self.high, self.low, self.close, talib=False
         )
+
+    @talib_test
+    def test_true_range_talib(self):
+        result = pandas_ta.true_range(self.high, self.low, self.close, talib=False)
+        expected = tal.TRANGE(self.high, self.low, self.close)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result, expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_ui(self):
         result = pandas_ta.ui(self.close)

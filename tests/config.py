@@ -1,9 +1,20 @@
 import hashlib
 import json
 import os
+import unittest
 from pandas import read_csv
 
 VERBOSE = True
+
+try:
+    import talib as tal
+
+    HAS_TALIB = True
+except ImportError:
+    HAS_TALIB = False
+    tal = None
+
+talib_test = unittest.skipUnless(HAS_TALIB, "TA-Lib not installed")
 
 ALERT = f"[!]"
 INFO = f"[i]"

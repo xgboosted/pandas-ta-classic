@@ -5,6 +5,9 @@ from tests.config import (
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
+    HAS_TALIB,
+    tal,
+    talib_test,
     VERBOSE,
 )
 from tests.context import pandas_ta_classic as pandas_ta
@@ -12,14 +15,6 @@ from tests.context import pandas_ta_classic as pandas_ta
 from unittest import skip, TestCase
 import pandas.testing as pdt
 from pandas import DataFrame, Series
-
-try:
-    import talib as tal
-
-    HAS_TALIB = True
-except ImportError:
-    HAS_TALIB = False
-    tal = None
 
 
 class TestStatistics(TestCase):
@@ -97,22 +92,24 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
 
-        if HAS_TALIB:
-            expected = tal.STDDEV(self.close, 30)
-            try:
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.stdev(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
         assert_offset(self, pandas_ta.stdev, self.close, talib=False)
         stdev_result = pandas_ta.stdev(self.close, talib=False)
         assert_nan_count(self, stdev_result, 30)
+
+    @talib_test
+    def test_stdev_talib(self):
+        result = pandas_ta.stdev(self.close, talib=False)
+        expected = tal.STDDEV(self.close, 30)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result, expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_tos_stdevall(self):
         result = pandas_ta.tos_stdevall(self.close)
@@ -149,22 +146,24 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
 
-        if HAS_TALIB:
-            expected = tal.VAR(self.close, 30)
-            try:
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-
         result = pandas_ta.variance(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
         assert_offset(self, pandas_ta.variance, self.close, talib=False)
         variance_result = pandas_ta.variance(self.close, talib=False)
         assert_nan_count(self, variance_result, 30)
+
+    @talib_test
+    def test_variance_talib(self):
+        result = pandas_ta.variance(self.close, talib=False)
+        expected = tal.VAR(self.close, 30)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result, expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_zscore(self):
         result = pandas_ta.zscore(self.close)
