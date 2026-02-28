@@ -9,7 +9,7 @@ from pandas_ta_classic.utils import get_offset, verify_series
 
 
 def amat(
-    close: Optional[Series] = None,
+    close: Series,
     fast: Optional[int] = None,
     slow: Optional[int] = None,
     lookback: Optional[int] = None,
