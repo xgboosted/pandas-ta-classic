@@ -21,7 +21,6 @@ from .vidya import vidya
 from .wma import wma
 from .zlma import zlma
 
-
 _MA_DISPATCH = {
     "dema": dema,
     "ema": ema,
