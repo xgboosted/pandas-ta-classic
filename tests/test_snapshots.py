@@ -179,7 +179,13 @@ def _snapshot_params():
 
 @pytest.mark.parametrize("name,expected_hash", _snapshot_params())
 def test_snapshot(name, expected_hash):
-    """Verify that indicator output matches the frozen hash."""
+    """Verify that indicator output matches the frozen hash.
+
+    ``expected_hash`` may be a single string *or* a list of strings when a
+    pandas/numpy version upgrade produces a numerically equivalent but
+    bit-differently-rounded result (e.g. ``kurtosis`` / ``skew`` differ
+    between pandas 2.x and pandas 3.x).
+    """
     data = get_sample_data()
     result = _call_indicator(name, data)
 
@@ -188,7 +194,10 @@ def test_snapshot(name, expected_hash):
 
     actual_hash = hash_result(result)
     assert actual_hash is not None, f"{name} returned an unhashable result type"
-    assert actual_hash == expected_hash, (
+
+    # Normalise to a set so we can support version-sensitive indicators.
+    expected = {expected_hash} if isinstance(expected_hash, str) else set(expected_hash)
+    assert actual_hash in expected, (
         f"{name} output hash changed!\n"
         f"  expected: {expected_hash}\n"
         f"  actual:   {actual_hash}\n"
