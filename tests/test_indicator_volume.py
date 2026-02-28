@@ -109,11 +109,26 @@ class TestVolume(TestCase):
         result = pandas_ta.adosc(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ADOSC_3_10")
+        assert_offset(
+            self,
+            pandas_ta.adosc,
+            self.high,
+            self.low,
+            self.close,
+            self.volume_,
+            talib=False,
+        )
 
     def test_aobv(self):
         result = pandas_ta.aobv(self.close, self.volume_)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AOBVe_4_12_2_2_2")
+        assert_columns(
+            self,
+            result,
+            ["OBV", "OBV_min_2", "OBV_max_2", "OBVe_4", "OBVe_12", "AOBV_LR_2", "AOBV_SR_2"],
+        )
+        assert_offset(self, pandas_ta.aobv, self.close, self.volume_)
 
     def test_cmf(self):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
