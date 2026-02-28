@@ -43,10 +43,14 @@ def kama(
     x = er * (fr - sr) + sr
     sc = x * x
 
+    # Extract to numpy arrays to avoid per-bar pandas indexing overhead.
+    sc_arr = sc.to_numpy()
+    c_arr = close.to_numpy()
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = np.full(m, npNaN)
+    result[length - 1] = 0.0
     for i in range(length, m):
-        result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
+        result[i] = sc_arr[i] * c_arr[i] + (1 - sc_arr[i]) * result[i - 1]
 
     kama = Series(result, index=close.index)
 

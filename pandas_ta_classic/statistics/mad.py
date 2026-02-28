@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Mean Absolute Deviation (MAD)
 from typing import Any, Optional
+import numpy as np
 from numpy import fabs as npfabs
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
 
@@ -26,12 +28,15 @@ def mad(
     if close is None:
         return None
 
-    # Calculate Result
-    def mad_(series: Any) -> float:
-        """Mean Absolute Deviation"""
-        return npfabs(series - series.mean()).mean()
-
-    mad = close.rolling(length, min_periods=min_periods).apply(mad_, raw=True)
+    # Calculate Result — fully vectorised via sliding_window_view (avoids
+    # ~5 200 Python callbacks from rolling.apply).
+    c_arr = close.to_numpy(dtype=float)
+    windows = sliding_window_view(c_arr, length)  # (n-L+1, L)
+    means = windows.mean(axis=1)
+    mad_vals = np.abs(windows - means[:, np.newaxis]).mean(axis=1)
+    result = np.full(len(c_arr), np.nan)
+    result[length - 1 :] = mad_vals
+    mad = Series(result, index=close.index)
 
     # Offset
     if offset != 0:
