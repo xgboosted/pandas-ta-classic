@@ -69,20 +69,8 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
+    - name: Install TA-Lib
+      uses: ./.github/actions/install-talib
 
     - name: Install dependencies and quality tools
       run: |
@@ -175,20 +163,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
+    - name: Install TA-Lib
+      uses: ./.github/actions/install-talib
 
     - name: Install Python dependencies
       run: |
@@ -197,7 +173,7 @@ jobs:
         pip install -e .
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
-    
+
     - name: Install test dependencies
       run: pip install pytest pytest-cov
 
@@ -237,20 +213,8 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
 
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
+    - name: Install TA-Lib
+      uses: ./.github/actions/install-talib
 
     - name: Install dependencies
       run: |
@@ -259,7 +223,7 @@ jobs:
         pip install -e .
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
-    
+
     - name: Setup Pages
       uses: actions/configure-pages@v4
     
