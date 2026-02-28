@@ -219,6 +219,32 @@ class TestOverlap(TestCase):
         assert_columns(self, ichimoku, ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"])
         assert_columns(self, span, ["ISA_9", "ISB_26"])
 
+        # include_chikou=False omits the chikou_span column (line 108-109)
+        ichi_no_chikou, _ = pandas_ta.ichimoku(
+            self.high, self.low, self.close, include_chikou=False
+        )
+        assert_columns(self, ichi_no_chikou, ["ISA_9", "ISB_26", "ITS_9", "IKS_26"])
+
+        # lookahead=False sets include_chikou=False internally (line 29-30)
+        ichi_no_look, _ = pandas_ta.ichimoku(
+            self.high, self.low, self.close, lookahead=False
+        )
+        assert_columns(self, ichi_no_look, ["ISA_9", "ISB_26", "ITS_9", "IKS_26"])
+
+        # offset shifts all series (lines 51-55)
+        ichi_off, _ = pandas_ta.ichimoku(self.high, self.low, self.close, offset=1)
+        self.assertIsInstance(ichi_off, DataFrame)
+
+        # fillna and fill_method cover lines 58-89
+        pandas_ta.ichimoku(self.high, self.low, self.close, fillna=0)
+        pandas_ta.ichimoku(self.high, self.low, self.close, fill_method="ffill")
+        pandas_ta.ichimoku(self.high, self.low, self.close, fill_method="bfill")
+
+        # None-guard returns (None, None) tuple (line 32-33)
+        result_a, result_b = pandas_ta.ichimoku(None, self.low, self.close)
+        self.assertIsNone(result_a)
+        self.assertIsNone(result_b)
+
     def test_linreg(self):
         result = pandas_ta.linreg(self.close, talib=False)
         self.assertIsInstance(result, Series)
