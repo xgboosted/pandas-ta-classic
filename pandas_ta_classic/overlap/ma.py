@@ -22,6 +22,27 @@ from .wma import wma
 from .zlma import zlma
 
 
+_MA_DISPATCH = {
+    "dema": dema,
+    "ema": ema,
+    "fwma": fwma,
+    "hma": hma,
+    "linreg": linreg,
+    "midpoint": midpoint,
+    "pwma": pwma,
+    "rma": rma,
+    "sinwma": sinwma,
+    "sma": sma,
+    "swma": swma,
+    "t3": t3,
+    "tema": tema,
+    "trima": trima,
+    "vidya": vidya,
+    "wma": wma,
+    "zlma": zlma,
+}
+
+
 def ma(
     name: Optional[str] = None, source: Optional[Series] = None, **kwargs: Any
 ) -> Optional[Series]:
@@ -46,64 +67,8 @@ def ma(
     Returns:
         pd.Series: New feature generated.
     """
-
-    _mas = [
-        "dema",
-        "ema",
-        "fwma",
-        "hma",
-        "linreg",
-        "midpoint",
-        "pwma",
-        "rma",
-        "sinwma",
-        "sma",
-        "swma",
-        "t3",
-        "tema",
-        "trima",
-        "vidya",
-        "wma",
-        "zlma",
-    ]
     if name is None and source is None:
-        return _mas
-    elif isinstance(name, str) and name.lower() in _mas:
-        name = name.lower()
-    else:  # "ema"
-        name = _mas[1]
+        return list(_MA_DISPATCH)
 
-    if name == "dema":
-        return dema(source, **kwargs)
-    elif name == "fwma":
-        return fwma(source, **kwargs)
-    elif name == "hma":
-        return hma(source, **kwargs)
-    elif name == "linreg":
-        return linreg(source, **kwargs)
-    elif name == "midpoint":
-        return midpoint(source, **kwargs)
-    elif name == "pwma":
-        return pwma(source, **kwargs)
-    elif name == "rma":
-        return rma(source, **kwargs)
-    elif name == "sinwma":
-        return sinwma(source, **kwargs)
-    elif name == "sma":
-        return sma(source, **kwargs)
-    elif name == "swma":
-        return swma(source, **kwargs)
-    elif name == "t3":
-        return t3(source, **kwargs)
-    elif name == "tema":
-        return tema(source, **kwargs)
-    elif name == "trima":
-        return trima(source, **kwargs)
-    elif name == "vidya":
-        return vidya(source, **kwargs)
-    elif name == "wma":
-        return wma(source, **kwargs)
-    elif name == "zlma":
-        return zlma(source, **kwargs)
-    else:
-        return ema(source, **kwargs)
+    name = name.lower() if isinstance(name, str) and name.lower() in _MA_DISPATCH else "ema"
+    return _MA_DISPATCH[name](source, **kwargs)
