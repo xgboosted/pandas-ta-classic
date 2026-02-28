@@ -2,7 +2,6 @@
 from typing import Any, List, Optional, Tuple, Union
 
 import re as re_
-from pathlib import Path
 from sys import float_info as sflt
 
 from numpy import argmax, argmin
@@ -15,15 +14,6 @@ def _camelCase2Title(x: str) -> str:
     """https://stackoverflow.com/questions/5020906/python-convert-camel-case-to-space-delimited-using-regex-and-taking-acronyms-in"""
     return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
 
-
-def category_files(category: str) -> List[str]:
-    """Helper function to return all filenames in the category directory."""
-    files = [
-        x.stem
-        for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py"))
-        if x.stem != "__init__"
-    ]
-    return files
 
 
 def get_drift(x: Optional[int]) -> int:
@@ -38,13 +28,12 @@ def get_offset(x: Optional[int]) -> int:
 
 def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
     """Returns True if the index is a datetime and ordered."""
-    index_is_datetime = is_datetime64_any_dtype(df.index)
+    if not is_datetime64_any_dtype(df.index):
+        return False
     try:
-        ordered = df.index[0] < df.index[-1]
-    except RuntimeWarning:
-        pass
-    finally:
-        return True if index_is_datetime and ordered else False
+        return df.index[0] < df.index[-1]
+    except Exception:
+        return False
 
 
 def is_percent(x: Optional[Union[int, float]]) -> bool:

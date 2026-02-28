@@ -13,7 +13,6 @@ __all__ = [
     "high_low_range",
     "real_body",
     # _core
-    "category_files",
     "get_drift",
     "get_offset",
     "is_datetime_ordered",

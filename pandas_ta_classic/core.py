@@ -5,15 +5,13 @@ from multiprocessing import cpu_count, Pool
 from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple
-from warnings import simplefilter
+from warnings import catch_warnings, simplefilter
 
 logger = logging.getLogger(__name__)
 
 import pandas as pd
 from numpy import log10 as npLog10
 from numpy import ndarray as npNdarray
-from pandas.core.base import PandasObject
-
 from pandas_ta_classic._meta import Category, Imports, version
 from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 from pandas_ta_classic.candles import *
@@ -122,55 +120,6 @@ CommonStrategy = Strategy(
 )
 
 
-# Base Class for extending a Pandas DataFrame
-class BasePandasObject(PandasObject):
-    """Simple PandasObject Extension
-
-    Ensures the DataFrame is not empty and has columns.
-    It would be a sad Panda otherwise.
-
-    Args:
-        df (pd.DataFrame): Extends Pandas DataFrame
-    """
-
-    def __init__(self, df, **kwargs):
-        if df.empty:
-            return
-        if len(df.columns) > 0:
-            common_names = {
-                "Date": "date",
-                "Time": "time",
-                "Timestamp": "timestamp",
-                "Datetime": "datetime",
-                "Open": "open",
-                "High": "high",
-                "Low": "low",
-                "Close": "close",
-                "Adj Close": "adj_close",
-                "Volume": "volume",
-                "Dividends": "dividends",
-                "Stock Splits": "split",
-            }
-            # Preemptively drop the rows that are all NaNs
-            # Might need to be moved to AnalysisIndicators.__call__() to be
-            #   toggleable via kwargs.
-            # df.dropna(axis=0, inplace=True)
-            # Preemptively rename columns to lowercase
-            df.rename(columns=common_names, errors="ignore", inplace=True)
-
-            # Preemptively lowercase the index
-            index_name = df.index.name
-            if index_name is not None:
-                df.index.rename(index_name.lower(), inplace=True)
-
-            self._df = df
-        else:
-            raise AttributeError(f"[X] No columns!")
-
-    def __call__(self, kind, *args, **kwargs):
-        raise NotImplementedError()
-
-
 import inspect as _inspect
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -262,7 +211,7 @@ def _make_indicator_method(func):
 
 # Pandas TA - DataFrame Analysis Indicators
 @pd.api.extensions.register_dataframe_accessor("ta")
-class AnalysisIndicators(BasePandasObject):
+class AnalysisIndicators:
     """
     This Pandas Extension is named 'ta' for Technical Analysis. In other words,
     it is a Numerical Time Series Feature Generator where the Time Series data
@@ -313,7 +262,7 @@ class AnalysisIndicators(BasePandasObject):
 
     1. Loading the 'ta' module:
     >>> import pandas as pd
-    >>> import ta as ta
+    >>> import pandas_ta_classic
 
     2. Load some data:
     >>> df = pd.read_csv("AAPL.csv", index_col="date", parse_dates=True)
@@ -510,39 +459,40 @@ class AnalysisIndicators(BasePandasObject):
             if df is None or result is None:
                 return
             else:
-                simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
-                if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
-                    kwargs["col_names"] = (
-                        kwargs["col_names"],
-                    )  # Note: tuple(kwargs["col_names"]) doesn't work
+                with catch_warnings():
+                    simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+                    if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
+                        kwargs["col_names"] = (
+                            kwargs["col_names"],
+                        )  # Note: tuple(kwargs["col_names"]) doesn't work
 
-                if isinstance(result, pd.DataFrame):
-                    # If specified in kwargs, rename the columns.
-                    # If not, use the default names.
-                    if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
-                        if len(kwargs["col_names"]) >= len(result.columns):
-                            for col, ind_name in zip(
-                                result.columns, kwargs["col_names"]
-                            ):
-                                df[ind_name] = result.loc[:, col]
+                    if isinstance(result, pd.DataFrame):
+                        # If specified in kwargs, rename the columns.
+                        # If not, use the default names.
+                        if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
+                            if len(kwargs["col_names"]) >= len(result.columns):
+                                for col, ind_name in zip(
+                                    result.columns, kwargs["col_names"]
+                                ):
+                                    df[ind_name] = result.loc[:, col]
+                            else:
+                                logger.warning(
+                                    "Not enough col_names were specified: got %d, expected %d.",
+                                    len(kwargs["col_names"]),
+                                    len(result.columns),
+                                )
+                                return
                         else:
-                            logger.warning(
-                                "Not enough col_names were specified: got %d, expected %d.",
-                                len(kwargs["col_names"]),
-                                len(result.columns),
-                            )
-                            return
+                            for i, column in enumerate(result.columns):
+                                df[column] = result.iloc[:, i]
                     else:
-                        for i, column in enumerate(result.columns):
-                            df[column] = result.iloc[:, i]
-                else:
-                    ind_name = (
-                        kwargs["col_names"][0]
-                        if "col_names" in kwargs
-                        and isinstance(kwargs["col_names"], tuple)
-                        else result.name
-                    )
-                    df[ind_name] = result
+                        ind_name = (
+                            kwargs["col_names"][0]
+                            if "col_names" in kwargs
+                            and isinstance(kwargs["col_names"], tuple)
+                            else result.name
+                        )
+                        df[ind_name] = result
 
     def _check_na_columns(self, stdout: bool = True):
         """Returns the columns in which all it's values are na."""

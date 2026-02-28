@@ -4,7 +4,6 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 
 from ._core import get_offset, verify_series
-from ._math import zero
 
 
 def _above_below(
@@ -18,9 +17,6 @@ def _above_below(
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
     offset = get_offset(offset)
-
-    series_a.apply(zero)
-    series_b.apply(zero)
 
     # Calculate Result
     if above:
@@ -123,9 +119,6 @@ def cross(
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
     offset = get_offset(offset)
-
-    series_a.apply(zero)
-    series_b.apply(zero)
 
     # Calculate Result
     current = series_a > series_b  # current is above

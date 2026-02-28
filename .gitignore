@@ -154,5 +154,8 @@ _site/
 # Validation artifacts (temp files from our validation script)
 validate_structure.py.tmp
 
+# One-off migration / helper scripts
+scripts/
+
 # Backup files
 *.backup
