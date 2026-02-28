@@ -421,6 +421,8 @@ class TestMomentum(TestCase):
         result = pandas_ta.ppo(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "PPO_12_26_9")
+        assert_columns(self, result, ["PPO_12_26_9", "PPOh_12_26_9", "PPOs_12_26_9"])
+        assert_offset(self, pandas_ta.ppo, self.close, talib=False)
 
     def test_psl(self):
         result = pandas_ta.psl(self.close)
