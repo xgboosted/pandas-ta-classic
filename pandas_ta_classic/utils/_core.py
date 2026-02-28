@@ -126,35 +126,35 @@ def unsigned_differences(
 
 
 def apply_offset(
-    series: "Series",
+    result: Union[Series, DataFrame],
     offset: int,
     **kwargs: Any,
-) -> "Series":
+) -> Union[Series, DataFrame]:
     """Apply offset shift and optional fill operations to a Series or DataFrame.
 
     Args:
-        series: A pandas Series or DataFrame to modify.
+        result: A pandas Series or DataFrame to modify.
         offset: Number of periods to shift. 0 means no shift.
         **kwargs: Supports ``fillna`` (scalar) and ``fill_method``
             (``"ffill"`` or ``"bfill"``).
 
     Returns:
-        The modified series (also returned for chaining).
+        The modified Series or DataFrame (also returned for chaining).
 
     Example:
         >>> rsi = apply_offset(rsi, offset, **kwargs)
     """
     if offset != 0:
-        series = series.shift(offset)
+        result = result.shift(offset)
     if "fillna" in kwargs:
-        series.fillna(kwargs["fillna"], inplace=True)
+        result.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         fm = kwargs["fill_method"]
         if fm == "ffill":
-            series.ffill(inplace=True)
+            result.ffill(inplace=True)
         elif fm == "bfill":
-            series.bfill(inplace=True)
-    return series
+            result.bfill(inplace=True)
+    return result
 
 
 def verify_series(
