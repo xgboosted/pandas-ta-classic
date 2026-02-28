@@ -145,6 +145,9 @@ class TestStrategyMethods(TestCase):
             momo_bands_sma_ta,  # ta
             "Common indicators with specific lengths and a chained indicator",  # description
         )
+        # Chained indicators require sequential execution because later
+        # indicators depend on columns produced by earlier ones.
+        self.data.ta.cores = 0
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         self.assertEqual(len(self.data.columns), 19)
 
