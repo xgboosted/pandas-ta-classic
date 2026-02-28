@@ -30,10 +30,19 @@ def error_analysis(df, kind, msg, icon=INFO, newline=True):
         print(s)
 
 
-def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
+def assert_offset(
+    test_case, func, *args, expected_cols=None, none_arg_idx=0, **kwargs
+):
     """Assert result(offset=1) == result(offset=0).shift(1) for all columns.
 
     Also exercises fillna and fill_method code paths present in every indicator.
+
+    Args:
+        none_arg_idx: Index of the positional arg to replace with None when
+            testing the None-guard branch. Defaults to 0 (first arg). Override
+            when the indicator's primary verified series is not the first arg.
+            Set to None to skip the None-guard assertion entirely (e.g. for
+            indicators that return a tuple instead of None).
     """
     kwargs_clean = {k: v for k, v in kwargs.items() if k != "offset"}
     result_0 = func(*args, **kwargs_clean)
@@ -45,7 +54,10 @@ def assert_offset(test_case, func, *args, expected_cols=None, **kwargs):
     func(*args, **kwargs_clean, fill_method="bfill")
 
     # Exercise None-guard branch (verify_series(None) → None → early return)
-    test_case.assertIsNone(func(None, *args[1:]))
+    if none_arg_idx is not None:
+        none_args = list(args)
+        none_args[none_arg_idx] = None
+        test_case.assertIsNone(func(*none_args))
 
     import pandas as pd
 

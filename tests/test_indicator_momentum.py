@@ -690,6 +690,12 @@ class TestMomentum(TestCase):
         result = pandas_ta.stochrsi(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "STOCHRSI_14_14_3_3")
+        assert_columns(self, result, ["STOCHRSIk_14_14_3_3", "STOCHRSId_14_14_3_3"])
+        assert_offset(self, pandas_ta.stochrsi, self.close)
+
+        # mamode="ema" exercises the ema smoothing branch
+        result_ema = pandas_ta.stochrsi(self.close, mamode="ema")
+        self.assertIsInstance(result_ema, DataFrame)
 
         try:
             expected = tal.STOCHRSI(self.close, 14, 14, 3, 0)
