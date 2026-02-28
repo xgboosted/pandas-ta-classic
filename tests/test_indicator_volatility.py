@@ -2,7 +2,6 @@ from tests.config import (
     assert_columns,
     assert_nan_count,
     assert_offset,
-    error_analysis,
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
@@ -74,17 +73,15 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ATRr_14")
 
-        try:
+        if HAS_TALIB:
             expected = tal.ATR(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
             try:
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
                 corr = pandas_ta.utils.df_error_analysis(
                     result, expected, col=CORRELATION
                 )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.atr(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
@@ -98,24 +95,17 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BBANDS_5_2.0")
 
-        try:
+        if HAS_TALIB:
             expected = tal.BBANDS(self.close)
-            # expected is (upper, middle, lower); compare each named column
             for col, expected_series in zip(
                 ["BBU_5_2.0", "BBM_5_2.0", "BBL_5_2.0"], expected
             ):
-                try:
-                    corr = pandas_ta.utils.df_error_analysis(
-                        result[col], expected_series, col=CORRELATION
-                    )
-                    self.assertGreater(corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result[col], CORRELATION, ex)
-            # BBB and BBP: verify they are non-null and in a sensible value range
+                corr = pandas_ta.utils.df_error_analysis(
+                    result[col], expected_series, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
             self.assertTrue(result["BBB_5_2.0"].dropna().gt(0).all())
             self.assertTrue(result["BBP_5_2.0"].dropna().between(0, 1).all())
-        except Exception:
-            pass
 
         result = pandas_ta.bbands(self.close, ddof=0)
         self.assertIsInstance(result, DataFrame)
@@ -169,17 +159,15 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "NATR_14")
 
-        try:
+        if HAS_TALIB:
             expected = tal.NATR(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
             try:
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
                 corr = pandas_ta.utils.df_error_analysis(
                     result, expected, col=CORRELATION
                 )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.natr(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
@@ -226,17 +214,15 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRUERANGE_1")
 
-        try:
+        if HAS_TALIB:
             expected = tal.TRANGE(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
             try:
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
                 corr = pandas_ta.utils.df_error_analysis(
                     result, expected, col=CORRELATION
                 )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.true_range(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)

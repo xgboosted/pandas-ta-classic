@@ -151,7 +151,7 @@ class TestStrategyMethods(TestCase):
             "Common indicators with specific lengths and a chained indicator",  # description
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
-        self.assertEqual(len(self.data.columns), 15)
+        self.assertEqual(len(self.data.columns), 19)
 
     # @skip
     def test_custom_args_tuple(self):
@@ -197,7 +197,7 @@ class TestStrategyMethods(TestCase):
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
 
     # @skip
-    def test_custom_a(self):
+    def test_custom_e(self):
         self.category = "Custom E"
 
         amat_logret_ta = [

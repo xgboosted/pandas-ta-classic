@@ -1,9 +1,6 @@
 from tests.config import (
     assert_offset,
-    error_analysis,
     get_sample_data,
-    CORRELATION,
-    CORRELATION_THRESHOLD,
     VERBOSE,
 )
 from tests.context import pandas_ta_classic as pandas_ta

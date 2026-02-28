@@ -155,7 +155,11 @@ addopts = "--tb=short -q"
 
 [tool.coverage.run]
 source = ["pandas_ta_classic"]
-omit = ["pandas_ta_classic/_version.py"]
+omit = [
+    "pandas_ta_classic/_version.py",
+    "pandas_ta_classic/utils/data/yahoofinance.py",
+    "pandas_ta_classic/utils/data/alphavantage.py",
+]
 branch = true
 
 [tool.coverage.report]

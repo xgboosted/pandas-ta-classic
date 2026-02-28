@@ -2,7 +2,6 @@ from tests.config import (
     assert_columns,
     assert_nan_count,
     assert_offset,
-    error_analysis,
     get_sample_data,
     CORRELATION,
     CORRELATION_THRESHOLD,
@@ -98,17 +97,15 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
 
-        try:
+        if HAS_TALIB:
             expected = tal.STDDEV(self.close, 30)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
             try:
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
                 corr = pandas_ta.utils.df_error_analysis(
                     result, expected, col=CORRELATION
                 )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.stdev(self.close)
         self.assertIsInstance(result, Series)
@@ -152,17 +149,15 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
 
-        try:
+        if HAS_TALIB:
             expected = tal.VAR(self.close, 30)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
             try:
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
                 corr = pandas_ta.utils.df_error_analysis(
                     result, expected, col=CORRELATION
                 )
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.variance(self.close)
         self.assertIsInstance(result, Series)
