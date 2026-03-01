@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from .beta import beta
+from .correl import correl
 from .entropy import entropy
 from .kurtosis import kurtosis
 from .mad import mad
@@ -11,6 +13,8 @@ from .variance import variance
 from .zscore import zscore
 
 __all__ = [
+    "beta",
+    "correl",
     "entropy",
     "kurtosis",
     "mad",

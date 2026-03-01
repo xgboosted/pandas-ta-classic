@@ -733,6 +733,387 @@ def _ssf3_loop(
     return ssf_arr
 
 
+# ---------------------------------------------------------------------------
+# 16. Hilbert Transform  (cycles/_hilbert.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
+    """Ehlers Hilbert Transform core loop (TA-Lib compatible).
+
+    Faithfully reproduces the TA-Lib HT algorithm including:
+    - Even/odd-equivalent FIR Hilbert Transform
+    - DCPeriod rounding via int(smoothPeriod + 0.5)
+    - DCPhase edge-case handling (incremental adjustment)
+    - 4-step trend mode detection (crossover, daysInTrend, phase range,
+      price-trendline divergence)
+
+    Returns ``(smooth_period, dc_phase, in_phase, quadrature,
+               sine, lead_sine, trend_mode, trendline)`` arrays.
+    """
+    smooth_price = np.zeros(m)
+    detrend = np.zeros(m)
+    i1 = np.zeros(m)  # InPhase
+    q1 = np.zeros(m)  # Quadrature
+    ji = np.zeros(m)
+    jq = np.zeros(m)
+    i2 = np.zeros(m)
+    q2 = np.zeros(m)
+    re_ = np.zeros(m)
+    im_ = np.zeros(m)
+    period = np.zeros(m)
+    smooth_period_arr = np.full(m, np.nan)
+    dc_phase_arr = np.full(m, np.nan)
+    in_phase_arr = np.full(m, np.nan)
+    quad_arr = np.full(m, np.nan)
+    sine_arr = np.full(m, np.nan)
+    lead_sine_arr = np.full(m, np.nan)
+    trend_mode_arr = np.full(m, np.nan)
+    trendline_arr = np.full(m, np.nan)
+
+    # iTrend delay line (WMA(4) of SMA(dcPeriod))
+    it_trend = np.zeros(m)
+
+    # State for trend mode detection (matches TA-Lib)
+    days_in_trend = 0
+    prev_sine = 0.0
+    prev_lead_sine = 0.0
+    prev_dc_phase = 0.0
+
+    # TA-Lib warmup: WMA-only warmup before the Hilbert starts.
+    # The Hilbert computation begins at bar ht_start with empty circular
+    # buffers.  smooth_price[0..ht_start-1] stays 0 so FIR taps that
+    # reference bars before ht_start read 0, replicating the empty-buffer
+    # startup.
+    #   ht_start = 12  →  HT_DCPERIOD, HT_PHASOR  (lookback 32)
+    #   ht_start = 37  →  HT_DCPHASE, HT_SINE, HT_TRENDMODE,
+    #                      HT_TRENDLINE  (lookback 63)
+
+    for i in range(m):
+        # WMA(4) smoothing — only stored from bar ht_start onwards
+        # (matching TA-Lib which stores smoothPrice only in the main loop)
+        if i >= ht_start and i >= 3:
+            smooth_price[i] = (
+                4.0 * close_arr[i]
+                + 3.0 * close_arr[i - 1]
+                + 2.0 * close_arr[i - 2]
+                + close_arr[i - 3]
+            ) / 10.0
+        # smooth_price[0..ht_start-1] stays 0 (from np.zeros init)
+
+        if i < ht_start:
+            period[i] = 0.0
+            smooth_period_arr[i] = 0.0
+            continue
+
+        adj = 0.075 * period[i - 1] + 0.54
+
+        # Detrend (4-tap FIR — equivalent to TA-Lib's even/odd macro)
+        detrend[i] = (
+            0.0962 * smooth_price[i]
+            + 0.5769 * smooth_price[i - 2]
+            - 0.5769 * smooth_price[i - 4]
+            - 0.0962 * smooth_price[i - 6]
+        ) * adj
+
+        # InPhase and Quadrature
+        q1[i] = (
+            0.0962 * detrend[i]
+            + 0.5769 * detrend[i - 2]
+            - 0.5769 * detrend[i - 4]
+            - 0.0962 * detrend[i - 6]
+        ) * adj
+        i1[i] = detrend[i - 3]
+
+        # Advance the phase of I1 and Q1 by 90 degrees
+        ji[i] = (
+            0.0962 * i1[i]
+            + 0.5769 * i1[i - 2]
+            - 0.5769 * i1[i - 4]
+            - 0.0962 * i1[i - 6]
+        ) * adj
+        jq[i] = (
+            0.0962 * q1[i]
+            + 0.5769 * q1[i - 2]
+            - 0.5769 * q1[i - 4]
+            - 0.0962 * q1[i - 6]
+        ) * adj
+
+        # Phasor addition for 3-bar averaging
+        i2[i] = i1[i] - jq[i]
+        q2[i] = q1[i] + ji[i]
+
+        # Smooth the I and Q components
+        i2[i] = 0.2 * i2[i] + 0.8 * i2[i - 1]
+        q2[i] = 0.2 * q2[i] + 0.8 * q2[i - 1]
+
+        # Homodyne Discriminator
+        re_[i] = i2[i] * i2[i - 1] + q2[i] * q2[i - 1]
+        im_[i] = i2[i] * q2[i - 1] - q2[i] * i2[i - 1]
+        re_[i] = 0.2 * re_[i] + 0.8 * re_[i - 1]
+        im_[i] = 0.2 * im_[i] + 0.8 * im_[i - 1]
+
+        if im_[i] != 0.0 and re_[i] != 0.0:
+            period[i] = 360.0 / (np.arctan(im_[i] / re_[i]) * 180.0 / np.pi)
+        else:
+            period[i] = period[i - 1]
+
+        if period[i] > 1.5 * period[i - 1]:
+            period[i] = 1.5 * period[i - 1]
+        if period[i] < 0.67 * period[i - 1]:
+            period[i] = 0.67 * period[i - 1]
+        if period[i] < 6.0:
+            period[i] = 6.0
+        if period[i] > 50.0:
+            period[i] = 50.0
+
+        period[i] = 0.2 * period[i] + 0.8 * period[i - 1]
+        smooth_period_arr[i] = 0.33 * period[i] + 0.67 * smooth_period_arr[i - 1]
+
+        # DC Phase — TA-Lib uses int(smoothPeriod + 0.5) for rounding
+        sp = smooth_period_arr[i]
+        dc_period_int = max(int(sp + 0.5), 1)
+        real_part = 0.0
+        imag_part = 0.0
+        for j in range(dc_period_int):
+            if i - j >= 0:
+                angle = 2.0 * np.pi * j / dc_period_int
+                real_part += np.sin(angle) * smooth_price[i - j]
+                imag_part += np.cos(angle) * smooth_price[i - j]
+
+        # TA-Lib DCPhase: fabs(imagPart) > 0 → atan; else adjust previous
+        abs_imag = abs(imag_part)
+        if abs_imag > 0.0:
+            dc_phase_val = np.arctan(real_part / imag_part) * 180.0 / np.pi
+        else:
+            # Adjust previous DCPhase incrementally (TA-Lib behaviour)
+            dc_phase_val = prev_dc_phase
+            if real_part < 0.0:
+                dc_phase_val -= 90.0
+            elif real_part > 0.0:
+                dc_phase_val += 90.0
+
+        dc_phase_val += 90.0
+        # Compensate for one bar lag of the weighted moving average
+        if sp > 0.0:
+            dc_phase_val += 360.0 / sp
+        if imag_part < 0.0:
+            dc_phase_val += 180.0
+        if dc_phase_val > 315.0:
+            dc_phase_val -= 360.0
+
+        dc_phase_arr[i] = dc_phase_val
+        in_phase_arr[i] = i1[i]
+        quad_arr[i] = q1[i]
+
+        # Sine / LeadSine
+        sine_val = np.sin(dc_phase_val * np.pi / 180.0)
+        lead_sine_val = np.sin((dc_phase_val + 45.0) * np.pi / 180.0)
+        sine_arr[i] = sine_val
+        lead_sine_arr[i] = lead_sine_val
+
+        # Instantaneous Trendline (ITrend) — computed BEFORE trend mode
+        # because trend mode uses trendline for price-divergence check.
+        dc_per = max(int(sp + 0.5), 1)
+        itrend_sum = 0.0
+        for j in range(dc_per):
+            if i - j >= 0:
+                itrend_sum += close_arr[i - j]
+        it_trend[i] = itrend_sum / dc_per
+        trendline_arr[i] = (
+            4.0 * it_trend[i]
+            + 3.0 * it_trend[i - 1]
+            + 2.0 * (it_trend[i - 2] if i >= 2 else it_trend[0])
+            + (it_trend[i - 3] if i >= 3 else it_trend[0])
+        ) / 10.0
+
+        # ----- Trend Mode (TA-Lib 4-step algorithm) -----
+        trend = 1
+
+        # Step 1: Sine/LeadSine crossover resets trend counter
+        if (sine_val > lead_sine_val and prev_sine <= prev_lead_sine) or (
+            sine_val < lead_sine_val and prev_sine >= prev_lead_sine
+        ):
+            days_in_trend = 0
+            trend = 0
+
+        days_in_trend += 1
+
+        # Step 2: Not enough bars since crossover → cycle mode
+        if days_in_trend < 0.5 * sp:
+            trend = 0
+
+        # Step 3: Phase change in expected cycle range → cycle mode
+        phase_diff = dc_phase_val - prev_dc_phase
+        if (
+            sp != 0.0
+            and phase_diff > 0.67 * 360.0 / sp
+            and phase_diff < 1.5 * 360.0 / sp
+        ):
+            trend = 0
+
+        # Step 4: Price far from trendline → trend mode override
+        if (
+            trendline_arr[i] != 0.0
+            and abs((smooth_price[i] - trendline_arr[i]) / trendline_arr[i]) >= 0.015
+        ):
+            trend = 1
+
+        trend_mode_arr[i] = float(trend)
+
+        # Update previous-bar state
+        prev_sine = sine_val
+        prev_lead_sine = lead_sine_val
+        prev_dc_phase = dc_phase_val
+
+    return (
+        smooth_period_arr,
+        dc_phase_arr,
+        in_phase_arr,
+        quad_arr,
+        sine_arr,
+        lead_sine_arr,
+        trend_mode_arr,
+        trendline_arr,
+    )
+
+
+# ---------------------------------------------------------------------------
+# 17. SAREXT  (trend/sarext.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _sarext_loop(
+    h_arr: np.ndarray,
+    l_arr: np.ndarray,
+    m: int,
+    is_long: bool,
+    sar: float,
+    ep: float,
+    af_init_long: float,
+    af_long: float,
+    af_max_long: float,
+    af_init_short: float,
+    af_short: float,
+    af_max_short: float,
+    offset_on_reverse: float,
+) -> np.ndarray:
+    """Extended Parabolic SAR loop (TA-Lib compatible).
+
+    Faithfully reproduces TA-Lib's SAREXT main loop.  Key details:
+    - Bar 0 = NaN  (lookback = 1)
+    - The loop starts at bar 1 (todayIdx = startIdx = 1) and may
+      reverse on the very first bar.
+    - ``newLow``/``newHigh`` are initialised to bar 1 data (TA-Lib
+      overwrites them after the SAR/EP init), so the first iteration's
+      ``prev`` and ``new`` both refer to bar 1.
+    - ``offsetOnReverse`` is multiplicative.
+    - After reversal the SAR is stepped once and clamped.
+
+    Returns a single array: positive = long SAR, negative = short SAR.
+    """
+    result = np.full(m, np.nan)
+    if m < 2:
+        return result
+
+    af_l = af_init_long
+    af_s = af_init_short
+
+    # TA-Lib overwrites newLow/newHigh to bar 1 data BEFORE the loop.
+    # The loop's first iteration reads bar 1 again, so prev == new on
+    # the first pass — exactly matching TA-Lib.
+    new_high = h_arr[1]
+    new_low = l_arr[1]
+
+    for row in range(1, m):
+        prev_low = new_low
+        prev_high = new_high
+        new_low = l_arr[row]
+        new_high = h_arr[row]
+
+        if is_long:
+            if new_low <= sar:
+                # Long -> Short reversal
+                is_long = False
+                sar = ep
+                # Clamp overridden SAR within prev/current range
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+                # Multiplicative offset
+                if offset_on_reverse != 0.0:
+                    sar += sar * offset_on_reverse
+                result[row] = -sar
+
+                af_s = af_init_short
+                ep = new_low
+                # Post-reversal step + clamp
+                sar = sar + af_s * (ep - sar)
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+            else:
+                # No reversal
+                result[row] = sar
+                if new_high > ep:
+                    ep = new_high
+                    af_l += af_long
+                    if af_l > af_max_long:
+                        af_l = af_max_long
+                sar = sar + af_l * (ep - sar)
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+        else:
+            if new_high >= sar:
+                # Short -> Long reversal
+                is_long = True
+                sar = ep
+                # Clamp
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+                # Multiplicative offset
+                if offset_on_reverse != 0.0:
+                    sar -= sar * offset_on_reverse
+                result[row] = sar
+
+                af_l = af_init_long
+                ep = new_high
+                # Post-reversal step + clamp
+                sar = sar + af_l * (ep - sar)
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+            else:
+                # No reversal
+                result[row] = -sar
+                if new_low < ep:
+                    ep = new_low
+                    af_s += af_short
+                    if af_s > af_max_short:
+                        af_s = af_max_short
+                sar = sar + af_s * (ep - sar)
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+
+    return result
+
+
 __all__ = [
     "_rsx_loop",
     "_jma_loop",
@@ -751,4 +1132,6 @@ __all__ = [
     "_vidya_loop",
     "_ssf2_loop",
     "_ssf3_loop",
+    "_hilbert_transform_loop",
+    "_sarext_loop",
 ]

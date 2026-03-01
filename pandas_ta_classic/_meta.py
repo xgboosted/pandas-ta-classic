@@ -96,7 +96,7 @@ def _build_category_dict():
         # Find all .py files in this category (excluding __init__.py)
         indicators = []
         for file_path in category_path.glob("*.py"):
-            if file_path.name != "__init__.py":
+            if file_path.name != "__init__.py" and not file_path.name.startswith("_"):
                 # Remove .py extension to get the indicator name
                 indicators.append(file_path.stem)
 

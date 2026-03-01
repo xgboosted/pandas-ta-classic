@@ -100,6 +100,8 @@ __all__ = [
     "_vidya_loop",
     "_ssf2_loop",
     "_ssf3_loop",
+    "_hilbert_transform_loop",
+    "_sarext_loop",
     # data
     "av",
     "yf",

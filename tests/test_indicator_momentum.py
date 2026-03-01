@@ -343,6 +343,20 @@ class TestMomentum(TestCase):
             )
             self.assertGreater(signal_corr, CORRELATION_THRESHOLD)
 
+    def test_macd_mamode(self):
+        """Verify mamode parameter: default (ema) backward-compat + SMA variant."""
+        # Default mamode="ema" should produce same result as before
+        result_default = pandas_ta.macd(self.close, talib=False)
+        result_ema = pandas_ta.macd(self.close, mamode="ema", talib=False)
+        pdt.assert_frame_equal(result_default, result_ema)
+
+        # SMA variant should produce different result
+        result_sma = pandas_ta.macd(self.close, mamode="sma", talib=False)
+        self.assertIsInstance(result_sma, DataFrame)
+        self.assertEqual(result_sma.name, "MACD_12_26_9")
+        # SMA MACD should differ from EMA MACD
+        self.assertFalse(result_sma.equals(result_ema))
+
     def test_macdas(self):
         result = pandas_ta.macd(self.close, asmode=True)
         self.assertIsInstance(result, DataFrame)

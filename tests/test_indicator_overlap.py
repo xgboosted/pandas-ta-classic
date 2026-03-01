@@ -607,3 +607,60 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "RAINBOW_2_10")
         assert_offset(self, pandas_ta.rainbow, self.close)
+
+    def test_tsf(self):
+        result = pandas_ta.tsf(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "TSF_14")
+        assert_offset(self, pandas_ta.tsf, self.close, talib=False)
+
+    @talib_test
+    def test_tsf_talib(self):
+        result = pandas_ta.tsf(self.close, talib=False)
+        expected = tal.TSF(self.close, timeperiod=14)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+
+    def test_ht_trendline(self):
+        result = pandas_ta.ht_trendline(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "HT_TRENDLINE")
+        # HT indicators are iterative/stateful — manual fill tests
+        pandas_ta.ht_trendline(self.close, talib=False, fillna=0)
+        pandas_ta.ht_trendline(self.close, talib=False, fill_method="ffill")
+        pandas_ta.ht_trendline(self.close, talib=False, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_trendline(None))
+
+    @talib_test
+    def test_ht_trendline_talib(self):
+        result = pandas_ta.ht_trendline(self.close, talib=False)
+        expected = tal.HT_TRENDLINE(self.close)
+        corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+        self.assertGreater(corr, CORRELATION_THRESHOLD)
+
+    def test_mama(self):
+        result = pandas_ta.mama(self.close, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "MAMA_0.5_0.05")
+        assert_columns(self, result, ["MAMA_0.5_0.05", "FAMA_0.5_0.05"])
+        # MAMA is iterative/stateful — manual fill tests
+        pandas_ta.mama(self.close, talib=False, fillna=0)
+        pandas_ta.mama(self.close, talib=False, fill_method="ffill")
+        pandas_ta.mama(self.close, talib=False, fill_method="bfill")
+        self.assertIsNone(pandas_ta.mama(None))
+
+    @talib_test
+    def test_mama_talib(self):
+        result = pandas_ta.mama(self.close, talib=False)
+        expected_mama, expected_fama = tal.MAMA(self.close)
+        corr_mama = pandas_ta.utils.df_error_analysis(
+            result.iloc[:, 0], expected_mama, col=CORRELATION
+        )
+        self.assertGreater(corr_mama, CORRELATION_THRESHOLD)
+        corr_fama = pandas_ta.utils.df_error_analysis(
+            result.iloc[:, 1], expected_fama, col=CORRELATION
+        )
+        self.assertGreater(corr_fama, CORRELATION_THRESHOLD)

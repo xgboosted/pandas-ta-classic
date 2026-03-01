@@ -65,7 +65,7 @@ def linreg(
             rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
             linreg_ = rn / rd
         elif tsf:
-            linreg_ = m_slopes * length + bs
+            linreg_ = m_slopes * (length + 1) + bs
         else:
             linreg_ = m_slopes * (length - 1) + bs
 

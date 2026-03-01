@@ -72,6 +72,27 @@ class TestTrend(TestCase):
             )
             self.assertGreater(corr, CORRELATION_THRESHOLD)
 
+    def test_adxr(self):
+        result = pandas_ta.adxr(self.high, self.low, self.close, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "ADXR_14")
+        assert_columns(self, result, ["ADXR_14", "DMP_14", "DMN_14"])
+        assert_offset(
+            self, pandas_ta.adxr, self.high, self.low, self.close, talib=False
+        )
+
+    @talib_test
+    def test_adxr_talib(self):
+        result = pandas_ta.adxr(self.high, self.low, self.close, talib=False)
+        expected = tal.ADXR(self.high, self.low, self.close)
+        try:
+            pdt.assert_series_equal(result.iloc[:, 0], expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(
+                result.iloc[:, 0], expected, col=CORRELATION
+            )
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+
     def test_amat(self):
         result = pandas_ta.amat(self.close)
         self.assertIsInstance(result, DataFrame)
@@ -272,6 +293,27 @@ class TestTrend(TestCase):
             self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
         )
         assert_offset(self, pandas_ta.tsignals, trend)
+
+    def test_sarext(self):
+        result = pandas_ta.sarext(self.high, self.low, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertTrue(result.name.startswith("SAREXT"))
+        # SAREXT is iterative/stateful — manual fill tests
+        pandas_ta.sarext(self.high, self.low, talib=False, fillna=0)
+        pandas_ta.sarext(self.high, self.low, talib=False, fill_method="ffill")
+        pandas_ta.sarext(self.high, self.low, talib=False, fill_method="bfill")
+        self.assertIsNone(pandas_ta.sarext(None, self.low))
+
+    @talib_test
+    def test_sarext_talib(self):
+        result = pandas_ta.sarext(self.high, self.low, talib=False)
+        expected = tal.SAREXT(self.high, self.low)
+        # SAREXT is iterative; small floating-point differences can accumulate
+        # at reversal points, leading to cascading divergence.
+        corr = pandas_ta.utils.df_error_analysis(
+            result.iloc[1:], expected.iloc[1:], col=CORRELATION
+        )
+        self.assertGreater(corr, 0.98)
 
     def test_xsignals(self):
         # Create simple signal series for testing

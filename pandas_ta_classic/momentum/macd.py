@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     _get_tal_mode,
     _swap_fast_slow,
@@ -19,6 +20,7 @@ def macd(
     fast: Optional[int] = None,
     slow: Optional[int] = None,
     signal: Optional[int] = None,
+    mamode: Optional[str] = None,
     talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
@@ -29,6 +31,7 @@ def macd(
     slow = int(slow) if slow and slow > 0 else 26
     signal = int(signal) if signal and signal > 0 else 9
     fast, slow = _swap_fast_slow(fast, slow)
+    mamode = mamode.lower() if isinstance(mamode, str) else "ema"
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
     mode_tal = _get_tal_mode(talib)
@@ -39,21 +42,22 @@ def macd(
     as_mode = kwargs.setdefault("asmode", False)
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    # TA-Lib MACD only supports EMA; use native path for other mamodes
+    if Imports["talib"] and mode_tal and mamode == "ema":
         from talib import MACD
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
     else:
-        fastma = ema(close, length=fast)
-        slowma = ema(close, length=slow)
+        fastma = ma(mamode, close, length=fast)
+        slowma = ma(mamode, close, length=slow)
 
         macd = fastma - slowma
-        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        signalma = ma(mamode, macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
     if as_mode:
         macd = macd - signalma
-        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        signalma = ma(mamode, macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
     # Offset + Name + Category + DataFrame
@@ -136,6 +140,9 @@ Args:
     fast (int): The short period. Default: 12
     slow (int): The long period. Default: 26
     signal (int): The signal period. Default: 9
+    mamode (str): See ``help(ta.ma)``. Default: 'ema'
+        When set to a value other than 'ema', the native calculation is used
+        regardless of the talib flag (MACDEXT behaviour).
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

@@ -46,6 +46,42 @@ class TestStatistics(TestCase):
     def tearDown(self):
         pass
 
+    def test_beta(self):
+        result = pandas_ta.beta(self.close, self.open)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "BETA_30")
+        assert_offset(self, pandas_ta.beta, self.close, self.open)
+        assert_nan_count(self, result, 30)
+
+    @talib_test
+    def test_beta_talib(self):
+        result = pandas_ta.beta(self.close, self.open, talib=False)
+        # TA-Lib BETA(A, B) = Cov(A_ret, B_ret) / Var(A_ret), so pass
+        # benchmark first to match standard beta = Cov / Var(benchmark).
+        expected = tal.BETA(self.open, self.close, timeperiod=30)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+
+    def test_correl(self):
+        result = pandas_ta.correl(self.close, self.open)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "CORREL_30")
+        assert_offset(self, pandas_ta.correl, self.close, self.open)
+        assert_nan_count(self, result, 30)
+
+    @talib_test
+    def test_correl_talib(self):
+        result = pandas_ta.correl(self.close, self.open, talib=False)
+        expected = tal.CORREL(self.close, self.open, timeperiod=30)
+        try:
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
+
     def test_entropy(self):
         result = pandas_ta.entropy(self.close)
         self.assertIsInstance(result, Series)

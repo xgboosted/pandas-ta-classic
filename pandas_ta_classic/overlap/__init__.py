@@ -7,12 +7,14 @@ from .hilo import hilo
 from .hl2 import hl2
 from .hlc3 import hlc3
 from .hma import hma
+from .ht_trendline import ht_trendline
 from .hwma import hwma
 from .ichimoku import ichimoku
 from .jma import jma
 from .kama import kama
 from .linreg import linreg
 from .ma import ma
+from .mama import mama
 from .mcgd import mcgd
 from .midpoint import midpoint
 from .midprice import midprice
@@ -28,6 +30,7 @@ from .supertrend import supertrend
 from .swma import swma
 from .t3 import t3
 from .tema import tema
+from .tsf import tsf
 from .trima import trima
 from .vidya import vidya
 from .vwap import vwap
@@ -45,12 +48,14 @@ __all__ = [
     "hl2",
     "hlc3",
     "hma",
+    "ht_trendline",
     "hwma",
     "ichimoku",
     "jma",
     "kama",
     "linreg",
     "ma",
+    "mama",
     "mcgd",
     "midpoint",
     "midprice",
@@ -66,6 +71,7 @@ __all__ = [
     "swma",
     "t3",
     "tema",
+    "tsf",
     "trima",
     "vidya",
     "vwap",
