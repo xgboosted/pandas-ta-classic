@@ -79,8 +79,8 @@ jobs:
         pip install -e .
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
-        # Install code quality tools
-        pip install flake8 black mypy
+        # Install code quality tools (pin black to match .pre-commit-config.yaml)
+        pip install flake8 'black==25.11.0' mypy
 
     - name: Check code formatting with black
       run: |
