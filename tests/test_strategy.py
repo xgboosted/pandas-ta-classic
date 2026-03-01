@@ -10,7 +10,6 @@ from unittest import TestCase
 from pandas import DataFrame
 
 # Strategy Testing Parameters
-cores = cpu_count()
 cumulative = False
 speed_table = False
 strategy_timed = False
@@ -57,6 +56,7 @@ class TestStrategyMethods(TestCase):
     def setUp(self):
         # Always start with a fresh DataFrame for each test
         self.data = get_sample_data()
+        self.data.ta.cores = 0  # Sequential by default; MP tested explicitly
         self.added_cols = 0
         self.category = ""
         self.init_cols = len(self.data.columns)
@@ -149,9 +149,7 @@ class TestStrategyMethods(TestCase):
         # indicators depend on columns produced by earlier ones.
         # Must use a single accessor reference since each .ta access
         # creates a new instance (pandas accessor protocol).
-        ta = self.data.ta
-        ta.cores = 0
-        ta.strategy(custom, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         self.assertEqual(len(self.data.columns), 19)
 
     def test_custom_args_tuple(self):
@@ -243,35 +241,7 @@ class TestStrategyMethods(TestCase):
         self.category = "Volume"
         self.data.ta.strategy(self.category, verbose=verbose, timed=strategy_timed)
 
-    def test_all_no_multiprocessing(self):
-        self.category = "All with No Multiprocessing"
-
-        cores = self.data.ta.cores
-        self.data.ta.cores = 0
+    def test_multiprocessing(self):
+        self.category = "Multiprocessing"
+        self.data.ta.cores = min(4, cpu_count())
         self.data.ta.strategy(verbose=verbose, timed=strategy_timed)
-        self.data.ta.cores = cores
-
-    def test_custom_no_multiprocessing(self):
-        self.category = "Custom A with No Multiprocessing"
-
-        cores = self.data.ta.cores
-        self.data.ta.cores = 0
-
-        momo_bands_sma_ta = [
-            {"kind": "rsi"},  # 1
-            {"kind": "macd"},  # 3
-            {"kind": "sma", "length": 50},  # 1
-            {"kind": "sma", "length": 100, "col_names": "sma100"},  # 1
-            {"kind": "sma", "length": 200},  # 1
-            {"kind": "bbands", "length": 20},  # 3
-            {"kind": "log_return", "cumulative": True},  # 1
-            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},
-        ]
-
-        custom = pandas_ta.Strategy(
-            "Commons with Cumulative Log Return EMA Chain",  # name
-            momo_bands_sma_ta,  # ta
-            "Common indicators with specific lengths and a chained indicator",  # description
-        )
-        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
-        self.data.ta.cores = cores
