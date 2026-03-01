@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Fisher Transform (FISHER)
+from math import log as _log
 from typing import Any, Optional
 import numpy as np
-from numpy import log as nplog
 from pandas import DataFrame, Series
 
 npNaN = np.nan
@@ -57,7 +57,7 @@ def fisher(
             v = -0.999
         elif v > 0.99:
             v = 0.999
-        result[i] = 0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1])
+        result[i] = 0.5 * (_log((1 + v) / (1 - v)) + result[i - 1])
     fisher = Series(result, index=high.index)
     signalma = fisher.shift(signal)
 

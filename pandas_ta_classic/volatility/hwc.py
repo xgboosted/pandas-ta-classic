@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Holt-Winter Channel (HWC)
+from math import sqrt as _sqrt
 from typing import Any, Optional
-from numpy import sqrt as npSqrt
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
@@ -32,8 +32,7 @@ def hwc(
         return None
 
     # Calculate Result — extract close to numpy to avoid per-bar pandas overhead.
-    from numpy import empty as npEmpty, sqrt as _npSqrt
-    import numpy as _np
+    from numpy import empty as npEmpty
 
     m = close.size
     c_arr = close.to_numpy()
@@ -55,7 +54,7 @@ def hwc(
         var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
             last_price - last_result
         )
-        stddev = npSqrt(last_var)
+        stddev = _sqrt(last_var)
         upper_arr[i] = result_arr[i] + scalar * stddev
         lower_arr[i] = result_arr[i] - scalar * stddev
 

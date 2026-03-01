@@ -66,7 +66,8 @@ def rsx(
 
     # Calculate Result
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = np.full(m, npNaN)
+    result[length - 1] = 0.0
     for i in range(length, m):
         if f90 == 0:
             f90 = 1.0
@@ -118,7 +119,7 @@ def rsx(
                 v4 = 0.0
         else:
             v4 = 50.0
-        result.append(v4)
+        result[i] = v4
     rsx = Series(result, index=close.index)
 
     # Offset

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Laguerre Relative Strength Index (Laguerre RSI)
 from typing import Any, Optional
-from numpy import maximum, where, zeros
+from numpy import empty_like, maximum, where, zeros
 from pandas import Series
 from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
@@ -29,10 +29,11 @@ def lrsi(
     n = len(close)
 
     # Initialize Laguerre filter components as numpy arrays
-    l0 = close_arr.copy()
-    l1 = close_arr.copy()
-    l2 = close_arr.copy()
-    l3 = close_arr.copy()
+    l0 = empty_like(close_arr)
+    l1 = empty_like(close_arr)
+    l2 = empty_like(close_arr)
+    l3 = empty_like(close_arr)
+    l0[0] = l1[0] = l2[0] = l3[0] = close_arr[0]
 
     # Apply Laguerre filter (state-dependent, requires iteration)
     for i in range(1, n):

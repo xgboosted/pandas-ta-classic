@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 # Jurik Moving Average (JMA)
+from math import log as _log, pow as _pow, sqrt as _sqrt
 from typing import Any, Optional, Union
 import numpy as np
-from numpy import average as npAverage
-from numpy import log as npLog
-from numpy import power as npPower
-from numpy import sqrt as npSqrt
 from numpy import zeros_like as npZeroslike
 from pandas import Series
 
@@ -41,13 +38,13 @@ def jma(
     sum_length = 10
     length = 0.5 * (_length - 1)
     pr = 0.5 if phase < -100 else 2.5 if phase > 100 else 1.5 + phase * 0.01
-    length1 = max((npLog(npSqrt(length)) / npLog(2.0)) + 2.0, 0)
+    length1 = max((_log(_sqrt(length)) / _log(2.0)) + 2.0, 0)
     pow1 = max(length1 - 2.0, 0.5)
-    length2 = length1 * npSqrt(length)
+    length2 = length1 * _sqrt(length)
     bet = length2 / (length2 + 1)
     beta = 0.45 * (_length - 1) / (0.45 * (_length - 1) + 2.0)
     # Precompute the r_volty ceiling (a constant that was re-evaluated every bar).
-    r_volty_max = npPower(length1, 1 / pow1)
+    r_volty_max = _pow(length1, 1 / pow1)
 
     # Extract close to numpy array; maintain O(1) running window sum for
     # avg_volty (replaces npAverage slice of up to 66 elements per bar).
@@ -77,13 +74,13 @@ def jma(
         r_volty = max(1.0, min(r_volty_max, d_volty))
 
         # Jurik volatility bands — pow2 == power, compute once.
-        pow2 = npPower(r_volty, pow1)
-        kv = npPower(bet, npSqrt(pow2))
+        pow2 = _pow(r_volty, pow1)
+        kv = _pow(bet, _sqrt(pow2))
         uBand = price if (del1 > 0) else price - (kv * del1)
         lBand = price if (del2 < 0) else price - (kv * del2)
 
         # Jurik Dynamic Factor
-        alpha = npPower(beta, pow2)
+        alpha = _pow(beta, pow2)
 
         # 1st stage - prelimimary smoothing by adaptive EMA
         ma1 = ((1 - alpha) * price) + (alpha * ma1)

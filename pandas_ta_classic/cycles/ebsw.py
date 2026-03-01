@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Even Better Sine Wave (EBSW)
+from math import sqrt as _sqrt
 from typing import Any, Optional
 import numpy as np
 from numpy import cos as npCos
@@ -47,7 +48,8 @@ def ebsw(
 
     # Calculate Result
     m = close.size
-    result = [npNaN] * (length - 1) + [0.0]
+    result = np.full(m, npNaN)
+    result[length - 1] = 0.0
     for i in range(length, m):
         # HighPass filter cyclic components whose periods are shorter than Duration input
         HP = 0.5 * (1 + alpha1) * (c_arr[i] - lastClose) + alpha1 * lastHP
@@ -60,14 +62,14 @@ def ebsw(
         Pwr = (Filt * Filt + filt_p * filt_p + filt_pp * filt_pp) / 3
 
         # Normalize the Average Wave to Square Root of the Average Power
-        Wave = Wave / npSqrt(Pwr) if Pwr > 0 else 0.0
+        Wave = Wave / _sqrt(Pwr) if Pwr > 0 else 0.0
 
         # update storage, result
         filt_pp = filt_p
         filt_p = Filt
         lastHP = HP
         lastClose = c_arr[i]
-        result.append(Wave)
+        result[i] = Wave
 
     ebsw = Series(result, index=close.index)
 

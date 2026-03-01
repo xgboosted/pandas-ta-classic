@@ -33,8 +33,8 @@ def vidya(
         ma -> vidya -> cmo -> (momentum/__init__) -> apo -> ma
         """
         mom = source.diff(d)
-        positive = mom.copy().clip(lower=0)
-        negative = mom.copy().clip(upper=0).abs()
+        positive = mom.clip(lower=0)
+        negative = mom.clip(upper=0).abs()
         pos_sum = positive.rolling(n).sum()
         neg_sum = negative.rolling(n).sum()
         return (pos_sum - neg_sum) / (pos_sum + neg_sum)

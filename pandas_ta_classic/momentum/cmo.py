@@ -41,8 +41,8 @@ def cmo(
         cmo = CMO(close, length)
     else:
         mom = close.diff(drift)
-        positive = mom.copy().clip(lower=0)
-        negative = mom.copy().clip(upper=0).abs()
+        positive = mom.clip(lower=0)
+        negative = mom.clip(upper=0).abs()
 
         if mode_tal:
             pos_ = rma(positive, length)

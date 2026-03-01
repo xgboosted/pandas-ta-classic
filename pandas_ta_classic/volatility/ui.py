@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Ulcer Index (UI)
 from typing import Any, Optional
-from numpy import sqrt as npsqrt
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import _finalize, get_offset, verify_series
@@ -33,9 +33,9 @@ def ui(
     everget = kwargs.pop("everget", False)
     if everget:
         # Everget uses SMA instead of SUM for calculation
-        ui = (sma(d2, length) / length).apply(npsqrt)
+        ui = np.sqrt(sma(d2, length) / length)
     else:
-        ui = (d2.rolling(length).sum() / length).apply(npsqrt)
+        ui = np.sqrt(d2.rolling(length).sum() / length)
 
     return _finalize(
         ui, offset, f"UI{'' if not everget else 'e'}_{length}", "volatility", **kwargs
