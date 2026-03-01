@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.vwma import vwma
-from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def vwmacd(
@@ -20,8 +25,7 @@ def vwmacd(
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     signal = int(signal) if signal and signal > 0 else 9
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow, signal))
     volume = verify_series(volume, max(fast, slow, signal))
     offset = get_offset(offset)

@@ -6,7 +6,12 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def quantile(
@@ -19,11 +24,7 @@ def quantile(
     """Indicator: Quantile"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     q = float(q) if q and q > 0 and q < 1 else 0.5
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)

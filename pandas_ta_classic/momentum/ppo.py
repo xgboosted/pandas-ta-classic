@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import _build_dataframe, get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    tal_ma,
+    verify_series,
+)
 
 
 def ppo(
@@ -25,8 +31,7 @@ def ppo(
     signal = int(signal) if signal and signal > 0 else 9
     scalar = float(scalar) if scalar else 100
     mamode = mamode if isinstance(mamode, str) else "sma"
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True

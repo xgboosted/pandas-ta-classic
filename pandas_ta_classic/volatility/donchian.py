@@ -2,7 +2,13 @@
 # Donchian Channels (DONCHIAN)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _get_min_periods,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def donchian(
@@ -17,16 +23,8 @@ def donchian(
     # Validate arguments
     lower_length = int(lower_length) if lower_length and lower_length > 0 else 20
     upper_length = int(upper_length) if upper_length and upper_length > 0 else 20
-    lower_min_periods = (
-        int(kwargs["lower_min_periods"])
-        if "lower_min_periods" in kwargs and kwargs["lower_min_periods"] is not None
-        else lower_length
-    )
-    upper_min_periods = (
-        int(kwargs["upper_min_periods"])
-        if "upper_min_periods" in kwargs and kwargs["upper_min_periods"] is not None
-        else upper_length
-    )
+    lower_min_periods = _get_min_periods(kwargs, lower_length, "lower_min_periods")
+    upper_min_periods = _get_min_periods(kwargs, upper_length, "upper_min_periods")
     _length = max(lower_length, lower_min_periods, upper_length, upper_min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

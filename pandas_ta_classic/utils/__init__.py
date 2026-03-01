@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ._candles import *
 from ._core import *
-from ._core import _build_dataframe, _finalize
+from ._core import _build_dataframe, _finalize, _get_min_periods, _swap_fast_slow
 from ._math import *
 from ._signals import *
 from ._time import *
@@ -16,6 +16,8 @@ __all__ = [
     # _core
     "_build_dataframe",
     "_finalize",
+    "_get_min_periods",
+    "_swap_fast_slow",
     "get_drift",
     "get_offset",
     "is_datetime_ordered",

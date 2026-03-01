@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
     _build_dataframe,
+    _swap_fast_slow,
     get_offset,
     non_zero_range,
     verify_series,
@@ -26,8 +27,7 @@ def stc(
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     factor = float(factor) if factor and factor > 0 else 0.5
-    if slow < fast:  # mandatory condition, but might be confusing
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     _length = max(tclength, fast, slow)
     close = verify_series(close, _length)
     offset = get_offset(offset)

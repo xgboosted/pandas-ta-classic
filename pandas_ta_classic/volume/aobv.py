@@ -5,7 +5,12 @@ from pandas import DataFrame, Series
 from .obv import obv
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend import long_run, short_run
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    apply_offset,
+    get_offset,
+    verify_series,
+)
 
 
 def aobv(
@@ -25,8 +30,7 @@ def aobv(
     slow = int(slow) if slow and slow > 0 else 12
     max_lookback = int(max_lookback) if max_lookback and max_lookback > 0 else 2
     min_lookback = int(min_lookback) if min_lookback and min_lookback > 0 else 2
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     mamode = mamode if isinstance(mamode, str) else "ema"
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)

@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _get_min_periods,
     _finalize,
     apply_offset,
     get_offset,
@@ -24,11 +25,7 @@ def cmf(
     """Indicator: Chaikin Money Flow (CMF)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 20
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

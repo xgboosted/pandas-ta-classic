@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def ao(
@@ -18,8 +23,7 @@ def ao(
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 5
     slow = int(slow) if slow and slow > 0 else 34
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

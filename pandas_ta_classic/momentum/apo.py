@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import _finalize, get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _finalize,
+    get_offset,
+    tal_ma,
+    verify_series,
+)
 
 
 def apo(
@@ -20,8 +26,7 @@ def apo(
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow))
     mamode = mamode if isinstance(mamode, str) else "sma"
     offset = get_offset(offset)

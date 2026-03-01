@@ -124,6 +124,17 @@ def unsigned_differences(
     return positive, negative
 
 
+def _get_min_periods(kwargs: dict, default: int, key: str = "min_periods") -> int:
+    """Extract min_periods from kwargs, defaulting to *default*."""
+    v = kwargs.get(key)
+    return int(v) if v is not None else default
+
+
+def _swap_fast_slow(fast: int, slow: int) -> Tuple[int, int]:
+    """Ensure ``fast <= slow``; swap if necessary."""
+    return (slow, fast) if slow < fast else (fast, slow)
+
+
 def _build_dataframe(
     series_map: dict,
     name: str,

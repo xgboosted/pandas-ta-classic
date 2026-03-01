@@ -4,7 +4,12 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .tsi import tsi
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def smi(
@@ -21,8 +26,7 @@ def smi(
     fast = int(fast) if fast and fast > 0 else 5
     slow = int(slow) if slow and slow > 0 else 20
     signal = int(signal) if signal and signal > 0 else 5
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     scalar = float(scalar) if scalar else 1
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)

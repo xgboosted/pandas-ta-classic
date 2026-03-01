@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
+    _swap_fast_slow,
     _finalize,
     apply_offset,
     get_offset,
@@ -24,8 +25,7 @@ def massi(
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 9
     slow = int(slow) if slow and slow > 0 else 25
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

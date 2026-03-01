@@ -6,6 +6,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import (
+    _get_min_periods,
     _finalize,
     apply_offset,
     get_offset,
@@ -23,11 +24,7 @@ def skew(
     """Indicator: Skew"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 
