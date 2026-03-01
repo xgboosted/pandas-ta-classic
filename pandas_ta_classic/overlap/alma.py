@@ -6,7 +6,12 @@ from numpy import exp as npExp
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    verify_series,
+)
 
 
 def alma(
@@ -43,22 +48,9 @@ def alma(
     )
     w_norm = wtd / wtd.sum()  # normalised weights
 
-    # Replace O(n×length) double loop with a single matrix multiply.
-    # Original loop: ALMA[i] = sum(wtd[j]*close[i-j]) / sum(wtd) for j=0..L-1
-    #   j=0 → close[i] (newest), j=L-1 → close[i-L+1] (oldest)
-    # sliding_window_view row k has close[k] (oldest) … close[k+L-1] (newest),
-    # so dot with w_norm reversed gives the same result.
-    from numpy.lib.stride_tricks import sliding_window_view
-
-    close_arr = close.to_numpy(dtype=float)
-    n = len(close_arr)
-    windows = sliding_window_view(close_arr, length)  # (n-L+1, L)
-    alma_vals = windows @ w_norm[::-1]  # w_norm[0]*newest + … + w_norm[L-1]*oldest
-
-    result = np.full(n, npNaN)
-    result[length - 1 :] = alma_vals
-
-    alma = Series(result, index=close.index)
+    # w_norm[0] = newest, w_norm[L-1] = oldest; sliding_window_view rows are
+    # oldest-first, so reverse the weights.
+    alma = _sliding_weighted_ma(close, length, w_norm[::-1])
 
     return _finalize(
         alma,

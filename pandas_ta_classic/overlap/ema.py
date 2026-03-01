@@ -6,7 +6,13 @@ from pandas import Series
 from pandas_ta_classic import Imports
 
 npNaN = np.nan
-from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    _get_tal_mode,
+    _sma_seed,
+    get_offset,
+    verify_series,
+)
 
 
 def ema(
@@ -35,10 +41,7 @@ def ema(
         ema = EMA(close, length)
     else:
         if sma:
-            close = close.copy()
-            sma_nth = close[0:length].mean()
-            close[: length - 1] = npNaN
-            close.iloc[length - 1] = sma_nth
+            close = _sma_seed(close, length)
         ema = close.ewm(span=length, adjust=adjust).mean()
 
     return _finalize(ema, offset, f"EMA_{length}", "overlap", **kwargs)

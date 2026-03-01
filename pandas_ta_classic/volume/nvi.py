@@ -3,13 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
-from pandas_ta_classic.utils import (
-    _finalize,
-    apply_offset,
-    get_offset,
-    signed_series,
-    verify_series,
-)
+from pandas_ta_classic.utils import _finalize, get_offset, signed_series, verify_series
 
 
 def nvi(

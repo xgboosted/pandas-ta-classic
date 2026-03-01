@@ -124,6 +124,46 @@ def unsigned_differences(
     return positive, negative
 
 
+def _sma_seed(series: Series, length: int) -> Series:
+    """Return a copy of *series* with ``NaN`` before position *length-1* and
+    the SMA of the first *length* values at position *length-1*.
+
+    Used by EMA/RMA to initialise exponential smoothing with an SMA seed.
+    """
+    import numpy as np
+
+    s = series.copy()
+    sma_val = s.iloc[:length].mean()
+    s.iloc[: length - 1] = np.nan
+    s.iloc[length - 1] = sma_val
+    return s
+
+
+def _sliding_weighted_ma(
+    close: Series, length: int, weights: Any
+) -> Series:
+    """Vectorised weighted MA via :func:`sliding_window_view`.
+
+    Args:
+        close: The input series.
+        length: Window length (must equal ``len(weights)``).
+        weights: 1-D weight array whose orientation matches the window layout
+            (oldest-first unless caller reverses it).
+
+    Returns:
+        A Series aligned with *close*, with ``NaN`` for the first
+        ``length - 1`` positions.
+    """
+    import numpy as np
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    arr = close.to_numpy(dtype=float)
+    windows = sliding_window_view(arr, length)
+    result = np.full(len(arr), np.nan)
+    result[length - 1 :] = windows @ weights
+    return Series(result, index=close.index)
+
+
 def _get_tal_mode(talib: Any) -> bool:
     """Return True unless *talib* is explicitly ``False``."""
     return bool(talib) if isinstance(talib, bool) else True

@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, _sma_seed, get_offset, verify_series
 
 
 def rma(
@@ -25,10 +25,7 @@ def rma(
         return None
 
     # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
-    close = close.copy()
-    sma_nth = close[0:length].mean()
-    close[: length - 1] = npNaN
-    close.iloc[length - 1] = sma_nth
+    close = _sma_seed(close, length)
     rma = close.ewm(alpha=alpha, adjust=False).mean()
 
     return _finalize(rma, offset, f"RMA_{length}", "overlap", **kwargs)

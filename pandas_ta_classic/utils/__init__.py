@@ -6,6 +6,8 @@ from ._core import (
     _finalize,
     _get_min_periods,
     _get_tal_mode,
+    _sliding_weighted_ma,
+    _sma_seed,
     _swap_fast_slow,
 )
 from ._math import *
@@ -24,6 +26,8 @@ __all__ = [
     "_finalize",
     "_get_min_periods",
     "_get_tal_mode",
+    "_sliding_weighted_ma",
+    "_sma_seed",
     "_swap_fast_slow",
     "get_drift",
     "get_offset",
