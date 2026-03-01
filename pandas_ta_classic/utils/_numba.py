@@ -707,7 +707,7 @@ def _ssf2_loop(
     c_arr: np.ndarray, ssf_arr: np.ndarray, m: int, c1: float, b1: float, a1: float
 ) -> np.ndarray:
     """Super Smoother Filter (2-pole) loop.  Modifies *ssf_arr* in-place."""
-    for i in range(m):
+    for i in range(2, m):
         ssf_arr[i] = c1 * c_arr[i] + b1 * ssf_arr[i - 1] + a1 * ssf_arr[i - 2]
     return ssf_arr
 
@@ -723,7 +723,7 @@ def _ssf3_loop(
     c4: float,
 ) -> np.ndarray:
     """Super Smoother Filter (3-pole) loop.  Modifies *ssf_arr* in-place."""
-    for i in range(m):
+    for i in range(3, m):
         ssf_arr[i] = (
             c1 * c_arr[i]
             + c2 * ssf_arr[i - 1]

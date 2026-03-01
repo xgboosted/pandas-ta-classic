@@ -344,3 +344,139 @@ def test_talib_consistency(test_id, fn):
     assert fv_nat == fv_tal, (
         f"{test_id}: first_valid_index mismatch — " f"native={fv_nat}, talib={fv_tal}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Test 5: No data leak (future-data / lookahead bias detection)
+#
+# For each indicator, compute on full data (N rows) and on truncated data
+# (first M rows).  The first M rows of both results must be identical.
+# If an indicator peeks at future data (e.g. .shift(-k)), the truncated
+# result will differ → test fails → data leak detected.
+#
+# Two indicators intentionally support lookahead via a `lookahead` kwarg
+# (default True): dpo and ichimoku.  These are marked xfail here and
+# verified separately in Test 6.
+# ---------------------------------------------------------------------------
+
+_LEAK_CUT = 50  # rows removed from the end for truncation test
+
+_LOOKAHEAD_XFAIL = {
+    "trend/dpo": "centered=True uses .shift(-t) lookahead",
+    "overlap/ichimoku": "chikou_span uses close.shift(-kijun) lookahead",
+}
+
+
+def _discover_leak_test_indicators():
+    """Yield (test_id, fn) for data-leak testing."""
+    for test_id, fn, short in _ALL_INDICATORS:
+        if short:
+            continue
+        yield test_id, fn
+
+
+def _make_leak_params():
+    params, ids = [], []
+    for test_id, fn in _discover_leak_test_indicators():
+        if test_id in _LOOKAHEAD_XFAIL:
+            params.append(
+                pytest.param(
+                    test_id,
+                    fn,
+                    marks=pytest.mark.xfail(reason=_LOOKAHEAD_XFAIL[test_id]),
+                )
+            )
+        else:
+            params.append((test_id, fn))
+        ids.append(test_id)
+    return params, ids
+
+
+_LEAK_PARAMS, _LEAK_IDS = _make_leak_params()
+
+
+@pytest.mark.parametrize("test_id,fn", _LEAK_PARAMS, ids=_LEAK_IDS)
+def test_no_data_leak(test_id, fn):
+    """Indicator output must not change when future data is removed."""
+    M = N - _LEAK_CUT
+
+    kwargs_full = _build_call_args(fn)
+    kwargs_trunc = {k: v.iloc[:M].copy() for k, v in kwargs_full.items()}
+
+    result_full = fn(**kwargs_full)
+    result_trunc = fn(**kwargs_trunc)
+
+    if result_full is None or result_trunc is None:
+        pytest.skip(f"{test_id} returned None")
+
+    # Unpack tuples (ichimoku)
+    if isinstance(result_full, tuple):
+        result_full = result_full[0]
+    if isinstance(result_trunc, tuple):
+        result_trunc = result_trunc[0]
+
+    full_head = result_full.iloc[:M]
+
+    if isinstance(full_head, pd.DataFrame):
+        common = full_head.columns.intersection(result_trunc.columns)
+        pd.testing.assert_frame_equal(
+            full_head[common].reset_index(drop=True),
+            result_trunc[common].reset_index(drop=True),
+            check_names=False,
+        )
+    else:
+        pd.testing.assert_series_equal(
+            full_head.reset_index(drop=True),
+            result_trunc.reset_index(drop=True),
+            check_names=False,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Test 6: lookahead=False eliminates data leak
+#
+# dpo and ichimoku support lookahead=False to disable their forward shift.
+# Verify that this actually fixes the data leak.
+# ---------------------------------------------------------------------------
+
+_LOOKAHEAD_FIX_PARAMS = [
+    ("trend/dpo", ta.dpo),
+    ("overlap/ichimoku", ta.ichimoku),
+]
+
+
+@pytest.mark.parametrize(
+    "test_id,fn",
+    _LOOKAHEAD_FIX_PARAMS,
+    ids=[x[0] for x in _LOOKAHEAD_FIX_PARAMS],
+)
+def test_lookahead_false_fixes_leak(test_id, fn):
+    """lookahead=False must eliminate future data dependency."""
+    M = N - _LEAK_CUT
+
+    kwargs_full = _build_call_args(fn)
+    kwargs_trunc = {k: v.iloc[:M].copy() for k, v in kwargs_full.items()}
+
+    result_full = fn(**kwargs_full, lookahead=False)
+    result_trunc = fn(**kwargs_trunc, lookahead=False)
+
+    # Unpack tuples (ichimoku)
+    if isinstance(result_full, tuple):
+        result_full = result_full[0]
+    if isinstance(result_trunc, tuple):
+        result_trunc = result_trunc[0]
+
+    full_head = result_full.iloc[:M]
+
+    if isinstance(full_head, pd.DataFrame):
+        pd.testing.assert_frame_equal(
+            full_head.reset_index(drop=True),
+            result_trunc.reset_index(drop=True),
+            check_names=False,
+        )
+    else:
+        pd.testing.assert_series_equal(
+            full_head.reset_index(drop=True),
+            result_trunc.reset_index(drop=True),
+            check_names=False,
+        )
