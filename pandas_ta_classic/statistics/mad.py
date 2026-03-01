@@ -5,7 +5,7 @@ import numpy as np
 from numpy import fabs as npfabs
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def mad(
@@ -38,14 +38,7 @@ def mad(
     result[length - 1 :] = mad_vals
     mad = Series(result, index=close.index)
 
-    # Offset
-    mad = apply_offset(mad, offset, **kwargs)
-
-    # Name & Category
-    mad.name = f"MAD_{length}"
-    mad.category = "statistics"
-
-    return mad
+    return _finalize(mad, offset, f"MAD_{length}", "statistics", **kwargs)
 
 
 mad.__doc__ = """Rolling Mean Absolute Deviation

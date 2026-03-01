@@ -5,7 +5,7 @@ from pandas import Series
 from .true_range import true_range
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def atr(
@@ -48,14 +48,13 @@ def atr(
     if percentage:
         atr *= 100 / close
 
-    # Offset
-    atr = apply_offset(atr, offset, **kwargs)
-
-    # Name and Categorize it
-    atr.name = f"ATR{mamode[0]}_{length}{'p' if percentage else ''}"
-    atr.category = "volatility"
-
-    return atr
+    return _finalize(
+        atr,
+        offset,
+        f"ATR{mamode[0]}_{length}{'p' if percentage else ''}",
+        "volatility",
+        **kwargs,
+    )
 
 
 atr.__doc__ = """Average True Range (ATR)

@@ -6,7 +6,7 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def median(
@@ -40,14 +40,7 @@ def median(
 
     median = Series(result, index=close.index, dtype=np.float64)
 
-    # Offset
-    median = apply_offset(median, offset, **kwargs)
-
-    # Name & Category
-    median.name = f"MEDIAN_{length}"
-    median.category = "statistics"
-
-    return median
+    return _finalize(median, offset, f"MEDIAN_{length}", "statistics", **kwargs)
 
 
 median.__doc__ = """Rolling Median

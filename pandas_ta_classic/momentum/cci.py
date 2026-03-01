@@ -6,7 +6,7 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.statistics import mad, stdev
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def cci(
@@ -45,14 +45,7 @@ def cci(
         cci = typical_price - mean_typical_price
         cci /= c * mad_typical_price
 
-    # Offset
-    cci = apply_offset(cci, offset, **kwargs)
-
-    # Name and Categorize it
-    cci.name = f"CCI_{length}_{c}"
-    cci.category = "momentum"
-
-    return cci
+    return _finalize(cci, offset, f"CCI_{length}_{c}", "momentum", **kwargs)
 
 
 cci.__doc__ = """Commodity Channel Index (CCI)

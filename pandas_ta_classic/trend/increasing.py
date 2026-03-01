@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -52,16 +53,11 @@ def increasing(
     if asint:
         increasing = increasing.astype(int)
 
-    # Offset
-    increasing = apply_offset(increasing, offset, **kwargs)
-
-    # Name and Categorize it
     _percent = f"_{0.01 * percent}" if percent else ""
     _props = f"{'S' if strict else ''}INC{'p' if percent else ''}"
-    increasing.name = f"{_props}_{length}{_percent}"
-    increasing.category = "trend"
-
-    return increasing
+    return _finalize(
+        increasing, offset, f"{_props}_{length}{_percent}", "trend", **kwargs
+    )
 
 
 increasing.__doc__ = """Increasing

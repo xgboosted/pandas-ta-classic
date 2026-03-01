@@ -6,7 +6,7 @@ from pandas import Series
 from pandas_ta_classic import Imports
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ema(
@@ -41,14 +41,7 @@ def ema(
             close.iloc[length - 1] = sma_nth
         ema = close.ewm(span=length, adjust=adjust).mean()
 
-    # Offset
-    ema = apply_offset(ema, offset, **kwargs)
-
-    # Name & Category
-    ema.name = f"EMA_{length}"
-    ema.category = "overlap"
-
-    return ema
+    return _finalize(ema, offset, f"EMA_{length}", "overlap", **kwargs)
 
 
 ema.__doc__ = """Exponential Moving Average (EMA)

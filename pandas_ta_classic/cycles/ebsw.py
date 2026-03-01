@@ -10,7 +10,7 @@ from numpy import sqrt as npSqrt
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ebsw(
@@ -71,14 +71,7 @@ def ebsw(
 
     ebsw = Series(result, index=close.index)
 
-    # Offset
-    ebsw = apply_offset(ebsw, offset, **kwargs)
-
-    # Name and Categorize it
-    ebsw.name = f"EBSW_{length}_{bars}"
-    ebsw.category = "cycles"
-
-    return ebsw
+    return _finalize(ebsw, offset, f"EBSW_{length}_{bars}", "cycles", **kwargs)
 
 
 ebsw.__doc__ = """Even Better SineWave (EBSW) *beta*

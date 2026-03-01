@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     signed_series,
@@ -39,14 +40,7 @@ def nvi(
     nvi.iloc[0] = initial
     nvi = nvi.cumsum()
 
-    # Offset
-    nvi = apply_offset(nvi, offset, **kwargs)
-
-    # Name and Categorize it
-    nvi.name = f"NVI_{length}"
-    nvi.category = "volume"
-
-    return nvi
+    return _finalize(nvi, offset, f"NVI_{length}", "volume", **kwargs)
 
 
 nvi.__doc__ = """Negative Volume Index (NVI)

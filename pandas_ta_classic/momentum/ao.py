@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ao(
@@ -34,14 +34,7 @@ def ao(
     slow_sma = sma(median_price, slow)
     ao = fast_sma - slow_sma
 
-    # Offset
-    ao = apply_offset(ao, offset, **kwargs)
-
-    # Name and Categorize it
-    ao.name = f"AO_{fast}_{slow}"
-    ao.category = "momentum"
-
-    return ao
+    return _finalize(ao, offset, f"AO_{fast}_{slow}", "momentum", **kwargs)
 
 
 ao.__doc__ = """Awesome Oscillator (AO)

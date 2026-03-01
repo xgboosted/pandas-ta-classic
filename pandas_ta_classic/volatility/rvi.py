@@ -5,7 +5,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics import stdev
 from pandas_ta_classic.utils import get_drift, get_offset
-from pandas_ta_classic.utils import apply_offset, unsigned_differences, verify_series
+from pandas_ta_classic.utils import _finalize, unsigned_differences, verify_series
 
 
 def rvi(
@@ -74,14 +74,7 @@ def rvi(
     else:
         rvi = _rvi(close, length, scalar, mamode, drift)
 
-    # Offset
-    rvi = apply_offset(rvi, offset, **kwargs)
-
-    # Name and Categorize it
-    rvi.name = f"RVI{_mode}_{length}"
-    rvi.category = "volatility"
-
-    return rvi
+    return _finalize(rvi, offset, f"RVI{_mode}_{length}", "volatility", **kwargs)
 
 
 rvi.__doc__ = """Relative Volatility Index (RVI)

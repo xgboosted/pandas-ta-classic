@@ -5,7 +5,7 @@ from numpy import maximum, minimum
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def pmax(
@@ -78,14 +78,13 @@ def pmax(
     # Convert back to Series
     pmax = Series(pmax_arr, index=close.index)
 
-    # Offset
-    pmax = apply_offset(pmax, offset, **kwargs)
-
-    # Name and Categorize it
-    pmax.name = f"PMAX_{mamode[0].upper()}_{length}_{multiplier}"
-    pmax.category = "trend"
-
-    return pmax
+    return _finalize(
+        pmax,
+        offset,
+        f"PMAX_{mamode[0].upper()}_{length}_{multiplier}",
+        "trend",
+        **kwargs,
+    )
 
 
 pmax.__doc__ = """PMAX (Price Max)

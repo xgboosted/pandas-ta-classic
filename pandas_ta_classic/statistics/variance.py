@@ -7,6 +7,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     np_rolling_moments,
@@ -49,14 +50,7 @@ def variance(
         (m2,) = np_rolling_moments(close.values, length, 2)
         variance = Series(m2 / (length - ddof), index=close.index, dtype=np.float64)
 
-    # Offset
-    variance = apply_offset(variance, offset, **kwargs)
-
-    # Name & Category
-    variance.name = f"VAR_{length}"
-    variance.category = "statistics"
-
-    return variance
+    return _finalize(variance, offset, f"VAR_{length}", "statistics", **kwargs)
 
 
 variance.__doc__ = """Rolling Variance

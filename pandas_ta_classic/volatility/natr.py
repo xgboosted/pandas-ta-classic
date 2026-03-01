@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .atr import atr
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def natr(
@@ -51,14 +51,7 @@ def natr(
             **kwargs,
         )
 
-    # Offset
-    natr = apply_offset(natr, offset, **kwargs)
-
-    # Name and Categorize it
-    natr.name = f"NATR_{length}"
-    natr.category = "volatility"
-
-    return natr
+    return _finalize(natr, offset, f"NATR_{length}", "volatility", **kwargs)
 
 
 natr.__doc__ = """Normalized Average True Range (NATR)

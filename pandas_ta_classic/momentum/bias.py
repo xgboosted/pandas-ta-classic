@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def bias(
@@ -29,14 +29,7 @@ def bias(
         return None
     bias = (close / bma) - 1
 
-    # Offset
-    bias = apply_offset(bias, offset, **kwargs)
-
-    # Name and Categorize it
-    bias.name = f"BIAS_{bma.name}"
-    bias.category = "momentum"
-
-    return bias
+    return _finalize(bias, offset, f"BIAS_{bma.name}", "momentum", **kwargs)
 
 
 bias.__doc__ = """Bias (BIAS)

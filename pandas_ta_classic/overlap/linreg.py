@@ -9,7 +9,7 @@ from numpy.version import version as npVersion
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def linreg(
@@ -73,24 +73,19 @@ def linreg(
         np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
     )
 
-    # Offset
-    linreg = apply_offset(linreg, offset, **kwargs)
-
-    # Name and Categorize it
-    linreg.name = f"LR"
+    # Build name
+    name = "LR"
     if slope:
-        linreg.name += "m"
+        name += "m"
     if intercept:
-        linreg.name += "b"
+        name += "b"
     if angle:
-        linreg.name += "a"
+        name += "a"
     if r:
-        linreg.name += "r"
+        name += "r"
+    name += f"_{length}"
 
-    linreg.name += f"_{length}"
-    linreg.category = "overlap"
-
-    return linreg
+    return _finalize(linreg, offset, name, "overlap", **kwargs)
 
 
 linreg.__doc__ = """Linear Regression Moving Average (linreg)

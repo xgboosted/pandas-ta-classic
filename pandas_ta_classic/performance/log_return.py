@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import log as nplog
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def log_return(
@@ -30,14 +30,13 @@ def log_return(
     else:
         log_return = nplog(close / close.shift(length))  # nplog(close).diff(length)
 
-    # Offset
-    log_return = apply_offset(log_return, offset, **kwargs)
-
-    # Name & Category
-    log_return.name = f"{'CUM' if cumulative else ''}LOGRET_{length}"
-    log_return.category = "performance"
-
-    return log_return
+    return _finalize(
+        log_return,
+        offset,
+        f"{'CUM' if cumulative else ''}LOGRET_{length}",
+        "performance",
+        **kwargs,
+    )
 
 
 log_return.__doc__ = """Log Return

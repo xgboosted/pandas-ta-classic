@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     signed_series,
@@ -37,14 +38,7 @@ def obv(
         signed_volume = signed_series(close, initial=1) * volume
         obv = signed_volume.cumsum()
 
-    # Offset
-    obv = apply_offset(obv, offset, **kwargs)
-
-    # Name and Categorize it
-    obv.name = f"OBV"
-    obv.category = "volume"
-
-    return obv
+    return _finalize(obv, offset, f"OBV", "volume", **kwargs)
 
 
 obv.__doc__ = """On Balance Volume (OBV)

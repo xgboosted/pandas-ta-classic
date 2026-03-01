@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     non_zero_range,
@@ -49,14 +50,7 @@ def ad(
         ad *= volume / high_low_range
         ad = ad.cumsum()
 
-    # Offset
-    ad = apply_offset(ad, offset, **kwargs)
-
-    # Name and Categorize it
-    ad.name = "AD" if open_ is None else "ADo"
-    ad.category = "volume"
-
-    return ad
+    return _finalize(ad, offset, "AD" if open_ is None else "ADo", "volume", **kwargs)
 
 
 ad.__doc__ = """Accumulation/Distribution (AD)

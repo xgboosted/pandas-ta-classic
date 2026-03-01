@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def efi(
@@ -33,14 +33,7 @@ def efi(
     if efi is None:
         return None
 
-    # Offset
-    efi = apply_offset(efi, offset, **kwargs)
-
-    # Name and Categorize it
-    efi.name = f"EFI_{length}"
-    efi.category = "volume"
-
-    return efi
+    return _finalize(efi, offset, f"EFI_{length}", "volume", **kwargs)
 
 
 efi.__doc__ = """Elder's Force Index (EFI)

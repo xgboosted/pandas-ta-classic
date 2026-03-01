@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def mom(
@@ -31,14 +31,7 @@ def mom(
     else:
         mom = close.diff(length)
 
-    # Offset
-    mom = apply_offset(mom, offset, **kwargs)
-
-    # Name and Categorize it
-    mom.name = f"MOM_{length}"
-    mom.category = "momentum"
-
-    return mom
+    return _finalize(mom, offset, f"MOM_{length}", "momentum", **kwargs)
 
 
 mom.__doc__ = """Momentum (MOM)

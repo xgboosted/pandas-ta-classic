@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     symmetric_triangle,
@@ -34,14 +35,7 @@ def swma(
     swma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
     # swma = close.rolling(length).apply(weights(triangle), raw=True)
 
-    # Offset
-    swma = apply_offset(swma, offset, **kwargs)
-
-    # Name & Category
-    swma.name = f"SWMA_{length}"
-    swma.category = "overlap"
-
-    return swma
+    return _finalize(swma, offset, f"SWMA_{length}", "overlap", **kwargs)
 
 
 swma.__doc__ = """Symmetric Weighted Moving Average (SWMA)

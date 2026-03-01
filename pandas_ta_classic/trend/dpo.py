@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def dpo(
@@ -32,14 +32,7 @@ def dpo(
     if centered:
         dpo = (close.shift(t) - ma).shift(-t)
 
-    # Offset
-    dpo = apply_offset(dpo, offset, **kwargs)
-
-    # Name and Categorize it
-    dpo.name = f"DPO_{length}"
-    dpo.category = "trend"
-
-    return dpo
+    return _finalize(dpo, offset, f"DPO_{length}", "trend", **kwargs)
 
 
 dpo.__doc__ = """Detrend Price Oscillator (DPO)

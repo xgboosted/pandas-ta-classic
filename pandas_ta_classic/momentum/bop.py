@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     non_zero_range,
@@ -44,14 +45,7 @@ def bop(
         close_open_range = non_zero_range(close, open_)
         bop = scalar * close_open_range / high_low_range
 
-    # Offset
-    bop = apply_offset(bop, offset, **kwargs)
-
-    # Name and Categorize it
-    bop.name = f"BOP"
-    bop.category = "momentum"
-
-    return bop
+    return _finalize(bop, offset, f"BOP", "momentum", **kwargs)
 
 
 bop.__doc__ = """Balance of Power (BOP)

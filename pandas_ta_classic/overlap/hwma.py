@@ -3,7 +3,7 @@
 from typing import Any, Optional
 import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def hwma(
@@ -41,15 +41,7 @@ def hwma(
 
     hwma = Series(result_arr, index=close.index)
 
-    # Offset
-    hwma = apply_offset(hwma, offset, **kwargs)
-
-    # Name & Category
-    suffix = f"{na}_{nb}_{nc}"
-    hwma.name = f"HWMA_{suffix}"
-    hwma.category = "overlap"
-
-    return hwma
+    return _finalize(hwma, offset, f"HWMA_{na}_{nb}_{nc}", "overlap", **kwargs)
 
 
 hwma.__doc__ = """HWMA (Holt-Winter Moving Average)

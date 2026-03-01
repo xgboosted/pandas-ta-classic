@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def dema(
@@ -34,14 +34,7 @@ def dema(
         ema2 = ema(close=ema1, length=length)
         dema = 2 * ema1 - ema2
 
-    # Offset
-    dema = apply_offset(dema, offset, **kwargs)
-
-    # Name & Category
-    dema.name = f"DEMA_{length}"
-    dema.category = "overlap"
-
-    return dema
+    return _finalize(dema, offset, f"DEMA_{length}", "overlap", **kwargs)
 
 
 dema.__doc__ = """Double Exponential Moving Average (DEMA)

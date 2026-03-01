@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     fibonacci,
     get_offset,
@@ -32,14 +33,7 @@ def fwma(
     fibs = fibonacci(n=length, weighted=True)
     fwma = close.rolling(length, min_periods=length).apply(weights(fibs), raw=True)
 
-    # Offset
-    fwma = apply_offset(fwma, offset, **kwargs)
-
-    # Name & Category
-    fwma.name = f"FWMA_{length}"
-    fwma.category = "overlap"
-
-    return fwma
+    return _finalize(fwma, offset, f"FWMA_{length}", "overlap", **kwargs)
 
 
 fwma.__doc__ = """Fibonacci's Weighted Moving Average (FWMA)

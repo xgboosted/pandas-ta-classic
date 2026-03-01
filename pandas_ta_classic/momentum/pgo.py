@@ -5,7 +5,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def pgo(
@@ -31,14 +31,7 @@ def pgo(
     pgo = close - sma(close, length)
     pgo /= ema(atr(high, low, close, length), length)
 
-    # Offset
-    pgo = apply_offset(pgo, offset, **kwargs)
-
-    # Name and Categorize it
-    pgo.name = f"PGO_{length}"
-    pgo.category = "momentum"
-
-    return pgo
+    return _finalize(pgo, offset, f"PGO_{length}", "momentum", **kwargs)
 
 
 pgo.__doc__ = """Pretty Good Oscillator (PGO)

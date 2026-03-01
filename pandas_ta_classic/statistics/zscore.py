@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
 from .stdev import stdev
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def zscore(
@@ -29,14 +29,7 @@ def zscore(
     mean = sma(close=close, length=length, **kwargs)
     zscore = (close - mean) / std
 
-    # Offset
-    zscore = apply_offset(zscore, offset, **kwargs)
-
-    # Name & Category
-    zscore.name = f"ZS_{length}"
-    zscore.category = "statistics"
-
-    return zscore
+    return _finalize(zscore, offset, f"ZS_{length}", "statistics", **kwargs)
 
 
 zscore.__doc__ = """Rolling Z Score

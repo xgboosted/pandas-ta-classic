@@ -5,6 +5,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -47,14 +48,7 @@ def eom(
     eom = distance / box_ratio
     eom = sma(eom, length=length)
 
-    # Offset
-    eom = apply_offset(eom, offset, **kwargs)
-
-    # Name and Categorize it
-    eom.name = f"EOM_{length}_{divisor}"
-    eom.category = "volume"
-
-    return eom
+    return _finalize(eom, offset, f"EOM_{length}_{divisor}", "volume", **kwargs)
 
 
 eom.__doc__ = """Ease of Movement (EOM)

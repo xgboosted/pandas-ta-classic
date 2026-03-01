@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import candle_color, get_offset
-from pandas_ta_classic.utils import apply_offset, verify_series
+from pandas_ta_classic.utils import _finalize, verify_series
 
 
 def cdl_inside(
@@ -32,14 +32,7 @@ def cdl_inside(
     if not asbool:
         inside *= candle_color(open_, close)
 
-    # Offset
-    inside = apply_offset(inside, offset, **kwargs)
-
-    # Name and Categorize it
-    inside.name = f"CDL_INSIDE"
-    inside.category = "candles"
-
-    return inside
+    return _finalize(inside, offset, f"CDL_INSIDE", "candles", **kwargs)
 
 
 cdl_inside.__doc__ = """Candle Type: Inside Bar

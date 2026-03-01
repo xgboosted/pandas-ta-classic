@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def wcp(
@@ -33,14 +33,7 @@ def wcp(
     else:
         wcp = (high + low + 2 * close) / 4
 
-    # Offset
-    wcp = apply_offset(wcp, offset, **kwargs)
-
-    # Name & Category
-    wcp.name = "WCP"
-    wcp.category = "overlap"
-
-    return wcp
+    return _finalize(wcp, offset, "WCP", "overlap", **kwargs)
 
 
 wcp.__doc__ = """Weighted Closing Price (WCP)

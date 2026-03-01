@@ -5,7 +5,7 @@ from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def adosc(
@@ -48,14 +48,7 @@ def adosc(
         slow_ad = ema(close=ad_, length=slow, **kwargs)
         adosc = fast_ad - slow_ad
 
-    # Offset
-    adosc = apply_offset(adosc, offset, **kwargs)
-
-    # Name and Categorize it
-    adosc.name = f"ADOSC_{fast}_{slow}"
-    adosc.category = "volume"
-
-    return adosc
+    return _finalize(adosc, offset, f"ADOSC_{fast}_{slow}", "volume", **kwargs)
 
 
 adosc.__doc__ = """Accumulation/Distribution Oscillator or Chaikin Oscillator

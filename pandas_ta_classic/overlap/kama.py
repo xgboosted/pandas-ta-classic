@@ -6,6 +6,7 @@ from pandas import Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -60,14 +61,7 @@ def kama(
 
     kama = Series(result, index=close.index)
 
-    # Offset
-    kama = apply_offset(kama, offset, **kwargs)
-
-    # Name & Category
-    kama.name = f"KAMA_{length}_{fast}_{slow}"
-    kama.category = "overlap"
-
-    return kama
+    return _finalize(kama, offset, f"KAMA_{length}_{fast}_{slow}", "overlap", **kwargs)
 
 
 kama.__doc__ = """Kaufman's Adaptive Moving Average (KAMA)

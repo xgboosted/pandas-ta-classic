@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     pascals_triangle,
@@ -32,14 +33,7 @@ def pwma(
     triangle = pascals_triangle(n=length - 1, weighted=True)
     pwma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
 
-    # Offset
-    pwma = apply_offset(pwma, offset, **kwargs)
-
-    # Name & Category
-    pwma.name = f"PWMA_{length}"
-    pwma.category = "overlap"
-
-    return pwma
+    return _finalize(pwma, offset, f"PWMA_{length}", "overlap", **kwargs)
 
 
 pwma.__doc__ = """Pascal's Weighted Moving Average (PWMA)

@@ -7,6 +7,7 @@ from pandas import concat, Series
 npNaN = np.nan
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -49,14 +50,7 @@ def true_range(
         true_range = true_range.abs().max(axis=1)
         true_range.iloc[:drift] = npNaN
 
-    # Offset
-    true_range = apply_offset(true_range, offset, **kwargs)
-
-    # Name and Categorize it
-    true_range.name = f"TRUERANGE_{drift}"
-    true_range.category = "volatility"
-
-    return true_range
+    return _finalize(true_range, offset, f"TRUERANGE_{drift}", "volatility", **kwargs)
 
 
 true_range.__doc__ = """True Range

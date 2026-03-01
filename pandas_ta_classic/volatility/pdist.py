@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -37,14 +38,7 @@ def pdist(
     pdist += non_zero_range(open_, close.shift(drift)).abs()
     pdist -= non_zero_range(close, open_).abs()
 
-    # Offset
-    pdist = apply_offset(pdist, offset, **kwargs)
-
-    # Name & Category
-    pdist.name = "PDIST"
-    pdist.category = "volatility"
-
-    return pdist
+    return _finalize(pdist, offset, "PDIST", "volatility", **kwargs)
 
 
 pdist.__doc__ = """Price Distance (PDIST)

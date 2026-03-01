@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .mom import mom
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def roc(
@@ -34,14 +34,7 @@ def roc(
     else:
         roc = scalar * mom(close=close, length=length) / close.shift(length)
 
-    # Offset
-    roc = apply_offset(roc, offset, **kwargs)
-
-    # Name and Categorize it
-    roc.name = f"ROC_{length}"
-    roc.category = "momentum"
-
-    return roc
+    return _finalize(roc, offset, f"ROC_{length}", "momentum", **kwargs)
 
 
 roc.__doc__ = """Rate of Change (ROC)

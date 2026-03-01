@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import maximum, where, zeros
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def lrsi(
@@ -59,14 +59,7 @@ def lrsi(
     denominator = where(denominator == 0, 1, denominator)
     lrsi = Series(100 * cu / denominator, index=close.index)
 
-    # Offset
-    lrsi = apply_offset(lrsi, offset, **kwargs)
-
-    # Name and Categorize it
-    lrsi.name = f"LRSI_{length}"
-    lrsi.category = "momentum"
-
-    return lrsi
+    return _finalize(lrsi, offset, f"LRSI_{length}", "momentum", **kwargs)
 
 
 lrsi.__doc__ = """Laguerre RSI (LRSI)

@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, tal_ma, verify_series
 
 
 def apo(
@@ -42,14 +42,7 @@ def apo(
             return None
         apo = fastma - slowma
 
-    # Offset
-    apo = apply_offset(apo, offset, **kwargs)
-
-    # Name and Categorize it
-    apo.name = f"APO_{fast}_{slow}"
-    apo.category = "momentum"
-
-    return apo
+    return _finalize(apo, offset, f"APO_{fast}_{slow}", "momentum", **kwargs)
 
 
 apo.__doc__ = """Absolute Price Oscillator (APO)

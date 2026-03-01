@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def midpoint(
@@ -38,14 +38,7 @@ def midpoint(
         highest = close.rolling(length, min_periods=min_periods).max()
         midpoint = 0.5 * (lowest + highest)
 
-    # Offset
-    midpoint = apply_offset(midpoint, offset, **kwargs)
-
-    # Name and Categorize it
-    midpoint.name = f"MIDPOINT_{length}"
-    midpoint.category = "overlap"
-
-    return midpoint
+    return _finalize(midpoint, offset, f"MIDPOINT_{length}", "overlap", **kwargs)
 
 
 midpoint.__doc__ = """Midpoint Over Period (MIDPOINT)

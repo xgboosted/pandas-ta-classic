@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .decreasing import decreasing
 from .increasing import increasing
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def short_run(
@@ -31,14 +31,7 @@ def short_run(
     )  # fast and slow are decreasing
     short_run = pt | bd
 
-    # Offset
-    short_run = apply_offset(short_run, offset, **kwargs)
-
-    # Name and Categorize it
-    short_run.name = f"SR_{length}"
-    short_run.category = "trend"
-
-    return short_run
+    return _finalize(short_run, offset, f"SR_{length}", "trend", **kwargs)
 
 
 short_run.__doc__ = """Short Run

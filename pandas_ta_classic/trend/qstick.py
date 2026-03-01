@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap import dema, ema, hma, rma, sma
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     non_zero_range,
@@ -43,14 +44,7 @@ def qstick(
     else:  # "sma"
         qstick = sma(diff, length=length)
 
-    # Offset
-    qstick = apply_offset(qstick, offset, **kwargs)
-
-    # Name and Categorize it
-    qstick.name = f"QS_{length}"
-    qstick.category = "trend"
-
-    return qstick
+    return _finalize(qstick, offset, f"QS_{length}", "trend", **kwargs)
 
 
 qstick.__doc__ = """Q Stick

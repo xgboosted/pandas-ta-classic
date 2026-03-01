@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def pvt(
@@ -27,14 +27,7 @@ def pvt(
     pv = roc(close=close, length=drift) * volume
     pvt = pv.cumsum()
 
-    # Offset
-    pvt = apply_offset(pvt, offset, **kwargs)
-
-    # Name and Categorize it
-    pvt.name = f"PVT"
-    pvt.category = "volume"
-
-    return pvt
+    return _finalize(pvt, offset, f"PVT", "volume", **kwargs)
 
 
 pvt.__doc__ = """Price-Volume Trend (PVT)

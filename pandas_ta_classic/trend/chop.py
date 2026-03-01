@@ -5,7 +5,7 @@ from numpy import log10 as npLog10
 from numpy import log as npLn
 from pandas import Series
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def chop(
@@ -47,14 +47,13 @@ def chop(
     else:
         chop *= (npLog10(atr_sum) - npLog10(diff)) / npLog10(length)
 
-    # Offset
-    chop = apply_offset(chop, offset, **kwargs)
-
-    # Name and Categorize it
-    chop.name = f"CHOP{'ln' if ln else ''}_{length}_{atr_length}_{scalar}"
-    chop.category = "trend"
-
-    return chop
+    return _finalize(
+        chop,
+        offset,
+        f"CHOP{'ln' if ln else ''}_{length}_{atr_length}_{scalar}",
+        "trend",
+        **kwargs,
+    )
 
 
 chop.__doc__ = """Choppiness Index (CHOP)

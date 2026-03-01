@@ -6,7 +6,7 @@ from numpy import exp as npExp
 from numpy import pi as npPi
 from numpy import sqrt as npSqrt
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ssf(
@@ -63,14 +63,7 @@ def ssf(
 
     ssf = Series(ssf_arr, index=close.index)
 
-    # Offset
-    ssf = apply_offset(ssf, offset, **kwargs)
-
-    # Name & Category
-    ssf.name = f"SSF_{length}_{poles}"
-    ssf.category = "overlap"
-
-    return ssf
+    return _finalize(ssf, offset, f"SSF_{length}_{poles}", "overlap", **kwargs)
 
 
 ssf.__doc__ = """Ehler's Super Smoother Filter (SSF) © 2013

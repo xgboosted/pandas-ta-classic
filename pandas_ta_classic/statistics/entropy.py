@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import log as npLog
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def entropy(
@@ -29,14 +29,7 @@ def entropy(
     safe_log_p = npLog(p.where(p > 0, 1))
     entropy = (-p * safe_log_p / npLog(base)).rolling(length).sum()
 
-    # Offset
-    entropy = apply_offset(entropy, offset, **kwargs)
-
-    # Name & Category
-    entropy.name = f"ENTP_{length}"
-    entropy.category = "statistics"
-
-    return entropy
+    return _finalize(entropy, offset, f"ENTP_{length}", "statistics", **kwargs)
 
 
 entropy.__doc__ = """Entropy (ENTP)

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def willr(
@@ -44,14 +44,7 @@ def willr(
 
         willr = 100 * ((close - lowest_low) / (highest_high - lowest_low) - 1)
 
-    # Offset
-    willr = apply_offset(willr, offset, **kwargs)
-
-    # Name and Categorize it
-    willr.name = f"WILLR_{length}"
-    willr.category = "momentum"
-
-    return willr
+    return _finalize(willr, offset, f"WILLR_{length}", "momentum", **kwargs)
 
 
 willr.__doc__ = """William's Percent R (WILLR)

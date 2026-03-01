@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     non_zero_range,
@@ -49,14 +50,7 @@ def cmf(
     cmf = ad.rolling(length, min_periods=min_periods).sum()
     cmf /= volume.rolling(length, min_periods=min_periods).sum()
 
-    # Offset
-    cmf = apply_offset(cmf, offset, **kwargs)
-
-    # Name and Categorize it
-    cmf.name = f"CMF_{length}"
-    cmf.category = "volume"
-
-    return cmf
+    return _finalize(cmf, offset, f"CMF_{length}", "volume", **kwargs)
 
 
 cmf.__doc__ = """Chaikin Money Flow (CMF)

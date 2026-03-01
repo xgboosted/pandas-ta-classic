@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import arctan as npAtan
 from numpy import pi as npPi
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def slope(
@@ -34,18 +34,12 @@ def slope(
         if to_degrees:
             slope *= 180 / npPi
 
-    # Offset
-    slope = apply_offset(slope, offset, **kwargs)
-
-    # Name and Categorize it
-    slope.name = (
+    name = (
         f"SLOPE_{length}"
         if not as_angle
         else f"ANGLE{'d' if to_degrees else 'r'}_{length}"
     )
-    slope.category = "momentum"
-
-    return slope
+    return _finalize(slope, offset, name, "momentum", **kwargs)
 
 
 slope.__doc__ = """Slope

@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .hlc3 import hlc3
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     is_datetime_ordered,
@@ -52,14 +53,7 @@ def vwap(
     vwap = wp.groupby(wp.index.to_period(anchor), observed=True).cumsum()
     vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
 
-    # Offset
-    vwap = apply_offset(vwap, offset, **kwargs)
-
-    # Name & Category
-    vwap.name = f"VWAP_{anchor}"
-    vwap.category = "overlap"
-
-    return vwap
+    return _finalize(vwap, offset, f"VWAP_{anchor}", "overlap", **kwargs)
 
 
 vwap.__doc__ = """Volume Weighted Average Price (VWAP)

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def mcgd(
@@ -38,14 +38,7 @@ def mcgd(
             mcgd_arr[i] = c_arr[i]
     mcg_ds = Series(mcgd_arr, index=close.index)
 
-    # Offset
-    mcg_ds = apply_offset(mcg_ds, offset, **kwargs)
-
-    # Name & Category
-    mcg_ds.name = f"MCGD_{length}"
-    mcg_ds.category = "overlap"
-
-    return mcg_ds
+    return _finalize(mcg_ds, offset, f"MCGD_{length}", "overlap", **kwargs)
 
 
 mcgd.__doc__ = """McGinley Dynamic Indicator

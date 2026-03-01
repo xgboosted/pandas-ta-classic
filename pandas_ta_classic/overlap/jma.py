@@ -10,7 +10,7 @@ from numpy import zeros_like as npZeroslike
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def jma(
@@ -100,14 +100,7 @@ def jma(
     jma[0 : _length - 1] = npNaN
     jma = Series(jma, index=close.index)
 
-    # Offset
-    jma = apply_offset(jma, offset, **kwargs)
-
-    # Name & Category
-    jma.name = f"JMA_{_length}_{phase}"
-    jma.category = "overlap"
-
-    return jma
+    return _finalize(jma, offset, f"JMA_{_length}_{phase}", "overlap", **kwargs)
 
 
 jma.__doc__ = """Jurik Moving Average Average (JMA)

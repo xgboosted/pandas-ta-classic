@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.volatility import rvi
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def inertia(
@@ -69,15 +69,8 @@ def inertia(
 
     inertia = linreg(rvi_, length=length)
 
-    # Offset
-    inertia = apply_offset(inertia, offset, **kwargs)
-
-    # Name & Category
     _props = f"_{length}_{rvi_length}"
-    inertia.name = f"INERTIA{_mode}{_props}"
-    inertia.category = "momentum"
-
-    return inertia
+    return _finalize(inertia, offset, f"INERTIA{_mode}{_props}", "momentum", **kwargs)
 
 
 inertia.__doc__ = """Inertia (INERTIA)

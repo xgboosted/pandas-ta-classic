@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .roc import roc
 from pandas_ta_classic.overlap.wma import wma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def coppock(
@@ -30,14 +30,9 @@ def coppock(
     total_roc = roc(close, fast) + roc(close, slow)
     coppock = wma(total_roc, length)
 
-    # Offset
-    coppock = apply_offset(coppock, offset, **kwargs)
-
-    # Name and Categorize it
-    coppock.name = f"COPC_{fast}_{slow}_{length}"
-    coppock.category = "momentum"
-
-    return coppock
+    return _finalize(
+        coppock, offset, f"COPC_{fast}_{slow}_{length}", "momentum", **kwargs
+    )
 
 
 coppock.__doc__ = """Coppock Curve (COPC)

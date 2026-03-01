@@ -6,6 +6,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     np_rolling_moments,
@@ -45,14 +46,7 @@ def kurtosis(
 
     kurtosis = Series(result, index=close.index, dtype=np.float64)
 
-    # Offset
-    kurtosis = apply_offset(kurtosis, offset, **kwargs)
-
-    # Name & Category
-    kurtosis.name = f"KURT_{length}"
-    kurtosis.category = "statistics"
-
-    return kurtosis
+    return _finalize(kurtosis, offset, f"KURT_{length}", "statistics", **kwargs)
 
 
 kurtosis.__doc__ = """Rolling Kurtosis

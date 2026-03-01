@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def cmo(
@@ -47,14 +47,7 @@ def cmo(
 
         cmo = scalar * (pos_ - neg_) / (pos_ + neg_)
 
-    # Offset
-    cmo = apply_offset(cmo, offset, **kwargs)
-
-    # Name and Categorize it
-    cmo.name = f"CMO_{length}"
-    cmo.category = "momentum"
-
-    return cmo
+    return _finalize(cmo, offset, f"CMO_{length}", "momentum", **kwargs)
 
 
 cmo.__doc__ = """Chande Momentum Oscillator (CMO)

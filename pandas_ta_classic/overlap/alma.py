@@ -6,7 +6,7 @@ from numpy import exp as npExp
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def alma(
@@ -60,14 +60,13 @@ def alma(
 
     alma = Series(result, index=close.index)
 
-    # Offset
-    alma = apply_offset(alma, offset, **kwargs)
-
-    # Name & Category
-    alma.name = f"ALMA_{length}_{sigma}_{distribution_offset}"
-    alma.category = "overlap"
-
-    return alma
+    return _finalize(
+        alma,
+        offset,
+        f"ALMA_{length}_{sigma}_{distribution_offset}",
+        "overlap",
+        **kwargs,
+    )
 
 
 alma.__doc__ = """Arnaud Legoux Moving Average (ALMA)

@@ -124,6 +124,34 @@ def unsigned_differences(
     return positive, negative
 
 
+def _finalize(
+    result: Union[Series, DataFrame],
+    offset: int,
+    name: str,
+    category: str,
+    **kwargs: Any,
+) -> Union[Series, DataFrame]:
+    """Apply offset, fill, and set name/category on a result Series or DataFrame.
+
+    Args:
+        result: The computed indicator result.
+        offset: Number of periods to shift.
+        name: The indicator name (e.g. ``"SMA_10"``).
+        category: The indicator category (e.g. ``"overlap"``).
+        **kwargs: Passed through to :func:`apply_offset` (``fillna``, ``fill_method``).
+
+    Returns:
+        The finalized Series or DataFrame.
+
+    Example:
+        >>> return _finalize(sma, offset, f"SMA_{length}", "overlap", **kwargs)
+    """
+    result = apply_offset(result, offset, **kwargs)
+    result.name = name
+    result.category = category
+    return result
+
+
 def apply_offset(
     result: Union[Series, DataFrame],
     offset: int,

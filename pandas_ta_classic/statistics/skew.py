@@ -6,6 +6,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     np_rolling_moments,
@@ -43,14 +44,7 @@ def skew(
 
     skew = Series(result, index=close.index, dtype=np.float64)
 
-    # Offset
-    skew = apply_offset(skew, offset, **kwargs)
-
-    # Name & Category
-    skew.name = f"SKEW_{length}"
-    skew.category = "statistics"
-
-    return skew
+    return _finalize(skew, offset, f"SKEW_{length}", "statistics", **kwargs)
 
 
 skew.__doc__ = """Rolling Skew

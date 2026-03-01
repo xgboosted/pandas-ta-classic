@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import pi as npPi
 from numpy import sin as npSin
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series, weights
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series, weights
 
 
 def sinwma(
@@ -39,14 +39,7 @@ def sinwma(
     result[length - 1 :] = windows @ w_arr
     sinwma = Series(result, index=close.index)
 
-    # Offset
-    sinwma = apply_offset(sinwma, offset, **kwargs)
-
-    # Name & Category
-    sinwma.name = f"SINWMA_{length}"
-    sinwma.category = "overlap"
-
-    return sinwma
+    return _finalize(sinwma, offset, f"SINWMA_{length}", "overlap", **kwargs)
 
 
 sinwma.__doc__ = """Sine Weighted Moving Average (SWMA)

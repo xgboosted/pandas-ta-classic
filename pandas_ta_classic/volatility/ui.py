@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import sqrt as npsqrt
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ui(
@@ -37,14 +37,9 @@ def ui(
     else:
         ui = (d2.rolling(length).sum() / length).apply(npsqrt)
 
-    # Offset
-    ui = apply_offset(ui, offset, **kwargs)
-
-    # Name and Categorize it
-    ui.name = f"UI{'' if not everget else 'e'}_{length}"
-    ui.category = "volatility"
-
-    return ui
+    return _finalize(
+        ui, offset, f"UI{'' if not everget else 'e'}_{length}", "volatility", **kwargs
+    )
 
 
 ui.__doc__ = """Ulcer Index (UI)

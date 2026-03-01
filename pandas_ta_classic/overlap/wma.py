@@ -3,7 +3,7 @@
 from typing import Any, Callable, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def wma(
@@ -47,14 +47,7 @@ def wma(
         close_ = close.rolling(length, min_periods=length)
         wma = close_.apply(linear(weights), raw=True)
 
-    # Offset
-    wma = apply_offset(wma, offset, **kwargs)
-
-    # Name & Category
-    wma.name = f"WMA_{length}"
-    wma.category = "overlap"
-
-    return wma
+    return _finalize(wma, offset, f"WMA_{length}", "overlap", **kwargs)
 
 
 wma.__doc__ = """Weighted Moving Average (WMA)

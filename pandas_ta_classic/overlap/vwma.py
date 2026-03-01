@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from .sma import sma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def vwma(
@@ -27,14 +27,7 @@ def vwma(
     pv = close * volume
     vwma = sma(close=pv, length=length) / sma(close=volume, length=length)
 
-    # Offset
-    vwma = apply_offset(vwma, offset, **kwargs)
-
-    # Name & Category
-    vwma.name = f"VWMA_{length}"
-    vwma.category = "overlap"
-
-    return vwma
+    return _finalize(vwma, offset, f"VWMA_{length}", "overlap", **kwargs)
 
 
 vwma.__doc__ = """Volume Weighted Moving Average (VWMA)

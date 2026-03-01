@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from . import dema, ema, hma, linreg, rma, sma, swma, t3, tema, trima, vidya, wma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def zlma(
@@ -51,14 +51,7 @@ def zlma(
     else:
         zlma = ema(close_, length=length, **kwargs)  # "ema"
 
-    # Offset
-    zlma = apply_offset(zlma, offset, **kwargs)
-
-    # Name & Category
-    zlma.name = f"ZL_{zlma.name}"
-    zlma.category = "overlap"
-
-    return zlma
+    return _finalize(zlma, offset, f"ZL_{zlma.name}", "overlap", **kwargs)
 
 
 zlma.__doc__ = """Zero Lag Moving Average (ZLMA)

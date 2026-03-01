@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def vidya(
@@ -53,14 +53,7 @@ def vidya(
         )
     vidya = Series(vidya_arr, index=close.index)
 
-    # Offset
-    vidya = apply_offset(vidya, offset, **kwargs)
-
-    # Name & Category
-    vidya.name = f"VIDYA_{length}"
-    vidya.category = "overlap"
-
-    return vidya
+    return _finalize(vidya, offset, f"VIDYA_{length}", "overlap", **kwargs)
 
 
 vidya.__doc__ = """Variable Index Dynamic Average (VIDYA)

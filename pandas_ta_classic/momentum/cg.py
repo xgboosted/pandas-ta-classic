@@ -2,7 +2,7 @@
 # Center of Gravity (CG)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series, weights
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series, weights
 
 
 def cg(
@@ -25,14 +25,7 @@ def cg(
     numerator = -close.rolling(length).apply(weights(coefficients), raw=True)
     cg = numerator / close.rolling(length).sum()
 
-    # Offset
-    cg = apply_offset(cg, offset, **kwargs)
-
-    # Name and Categorize it
-    cg.name = f"CG_{length}"
-    cg.category = "momentum"
-
-    return cg
+    return _finalize(cg, offset, f"CG_{length}", "momentum", **kwargs)
 
 
 cg.__doc__ = """Center of Gravity (CG)

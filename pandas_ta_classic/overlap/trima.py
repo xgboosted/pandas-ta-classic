@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 from .sma import sma
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def trima(
@@ -36,14 +36,7 @@ def trima(
         sma1 = sma(close, length=first_window)
         trima = sma(sma1, length=second_window)
 
-    # Offset
-    trima = apply_offset(trima, offset, **kwargs)
-
-    # Name & Category
-    trima.name = f"TRIMA_{length}"
-    trima.category = "overlap"
-
-    return trima
+    return _finalize(trima, offset, f"TRIMA_{length}", "overlap", **kwargs)
 
 
 trima.__doc__ = """Triangular Moving Average (TRIMA)

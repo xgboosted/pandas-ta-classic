@@ -5,7 +5,7 @@ from numpy import sqrt as npsqrt
 from pandas import Series
 from .variance import variance
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def stdev(
@@ -35,14 +35,7 @@ def stdev(
     else:
         stdev = npsqrt(variance(close=close, length=length, ddof=ddof, talib=False))
 
-    # Offset
-    stdev = apply_offset(stdev, offset, **kwargs)
-
-    # Name & Category
-    stdev.name = f"STDEV_{length}"
-    stdev.category = "statistics"
-
-    return stdev
+    return _finalize(stdev, offset, f"STDEV_{length}", "statistics", **kwargs)
 
 
 stdev.__doc__ = """Rolling Standard Deviation

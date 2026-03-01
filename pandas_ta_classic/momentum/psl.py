@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import sign as npSign
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def psl(
@@ -39,15 +39,7 @@ def psl(
     psl = scalar * diff.rolling(length).sum()
     psl /= length
 
-    # Offset
-    psl = apply_offset(psl, offset, **kwargs)
-
-    # Name and Categorize it
-    _props = f"_{length}"
-    psl.name = f"PSL{_props}"
-    psl.category = "momentum"
-
-    return psl
+    return _finalize(psl, offset, f"PSL_{length}", "momentum", **kwargs)
 
 
 psl.__doc__ = """Psychological Line (PSL)

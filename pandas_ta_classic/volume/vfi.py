@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     non_zero_range,
@@ -65,14 +66,7 @@ def vfi(
     if vfi is None:
         return None
 
-    # Offset
-    vfi = apply_offset(vfi, offset, **kwargs)
-
-    # Name and Categorize it
-    vfi.name = f"VFI_{length}"
-    vfi.category = "volume"
-
-    return vfi
+    return _finalize(vfi, offset, f"VFI_{length}", "volume", **kwargs)
 
 
 vfi.__doc__ = """Volume Flow Indicator (VFI)

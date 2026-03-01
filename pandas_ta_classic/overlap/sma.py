@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def sma(
@@ -36,14 +36,7 @@ def sma(
     else:
         sma = close.rolling(length, min_periods=min_periods).mean()
 
-    # Offset
-    sma = apply_offset(sma, offset, **kwargs)
-
-    # Name & Category
-    sma.name = f"SMA_{length}"
-    sma.category = "overlap"
-
-    return sma
+    return _finalize(sma, offset, f"SMA_{length}", "overlap", **kwargs)
 
 
 sma.__doc__ = """Simple Moving Average (SMA)

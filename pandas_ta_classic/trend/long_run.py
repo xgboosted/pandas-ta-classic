@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .decreasing import decreasing
 from .increasing import increasing
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def long_run(
@@ -33,14 +33,7 @@ def long_run(
     )  # fast and slow are increasing
     long_run = pb | bi
 
-    # Offset
-    long_run = apply_offset(long_run, offset, **kwargs)
-
-    # Name and Categorize it
-    long_run.name = f"LR_{length}"
-    long_run.category = "trend"
-
-    return long_run
+    return _finalize(long_run, offset, f"LR_{length}", "trend", **kwargs)
 
 
 long_run.__doc__ = """Long Run

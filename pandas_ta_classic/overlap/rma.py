@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def rma(
@@ -31,14 +31,7 @@ def rma(
     close.iloc[length - 1] = sma_nth
     rma = close.ewm(alpha=alpha, adjust=False).mean()
 
-    # Offset
-    rma = apply_offset(rma, offset, **kwargs)
-
-    # Name & Category
-    rma.name = f"RMA_{length}"
-    rma.category = "overlap"
-
-    return rma
+    return _finalize(rma, offset, f"RMA_{length}", "overlap", **kwargs)
 
 
 rma.__doc__ = """Wilder's Moving Average (RMA)

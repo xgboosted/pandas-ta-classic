@@ -2,7 +2,7 @@
 # OHLC4 (OHLC4)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ohlc4(
@@ -27,14 +27,7 @@ def ohlc4(
     # Calculate Result
     ohlc4 = 0.25 * (open_ + high + low + close)
 
-    # Offset
-    ohlc4 = apply_offset(ohlc4, offset, **kwargs)
-
-    # Name & Category
-    ohlc4.name = "OHLC4"
-    ohlc4.category = "overlap"
-
-    return ohlc4
+    return _finalize(ohlc4, offset, "OHLC4", "overlap", **kwargs)
 
 
 ohlc4.__doc__ = """OHLC4 (Average of Open, High, Low, Close)

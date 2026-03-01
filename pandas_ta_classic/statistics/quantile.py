@@ -6,7 +6,7 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def quantile(
@@ -42,14 +42,7 @@ def quantile(
 
     quantile = Series(result, index=close.index, dtype=np.float64)
 
-    # Offset
-    quantile = apply_offset(quantile, offset, **kwargs)
-
-    # Name & Category
-    quantile.name = f"QTL_{length}_{q}"
-    quantile.category = "statistics"
-
-    return quantile
+    return _finalize(quantile, offset, f"QTL_{length}_{q}", "statistics", **kwargs)
 
 
 quantile.__doc__ = """Rolling Quantile

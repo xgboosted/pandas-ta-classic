@@ -4,6 +4,7 @@ from typing import Any, Optional
 from numpy import fabs as npFabs
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -35,14 +36,7 @@ def vhf(
     diff = npFabs(close.diff(drift))
     vhf = npFabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
 
-    # Offset
-    vhf = apply_offset(vhf, offset, **kwargs)
-
-    # Name and Categorize it
-    vhf.name = f"VHF_{length}"
-    vhf.category = "trend"
-
-    return vhf
+    return _finalize(vhf, offset, f"VHF_{length}", "trend", **kwargs)
 
 
 vhf.__doc__ = """Vertical Horizontal Filter (VHF)

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def midprice(
@@ -41,14 +41,7 @@ def midprice(
         highest_high = high.rolling(length, min_periods=min_periods).max()
         midprice = 0.5 * (lowest_low + highest_high)
 
-    # Offset
-    midprice = apply_offset(midprice, offset, **kwargs)
-
-    # Name and Categorize it
-    midprice.name = f"MIDPRICE_{length}"
-    midprice.category = "overlap"
-
-    return midprice
+    return _finalize(midprice, offset, f"MIDPRICE_{length}", "overlap", **kwargs)
 
 
 midprice.__doc__ = """Midpoint Price Over Period (MIDPRICE)

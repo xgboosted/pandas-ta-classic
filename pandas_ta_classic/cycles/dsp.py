@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def dsp(
@@ -28,14 +28,7 @@ def dsp(
     # Detrend by subtracting EMA
     dsp = close - ema_value
 
-    # Offset
-    dsp = apply_offset(dsp, offset, **kwargs)
-
-    # Name and Categorize it
-    dsp.name = f"DSP_{length}"
-    dsp.category = "cycles"
-
-    return dsp
+    return _finalize(dsp, offset, f"DSP_{length}", "cycles", **kwargs)
 
 
 dsp.__doc__ = """Detrended Synthetic Price (DSP)

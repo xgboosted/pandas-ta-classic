@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def t3(
@@ -45,14 +45,7 @@ def t3(
         e6 = ema(close=e5, length=length, **kwargs)
         t3 = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
 
-    # Offset
-    t3 = apply_offset(t3, offset, **kwargs)
-
-    # Name & Category
-    t3.name = f"T3_{length}_{a}"
-    t3.category = "overlap"
-
-    return t3
+    return _finalize(t3, offset, f"T3_{length}_{a}", "overlap", **kwargs)
 
 
 t3.__doc__ = """Tim Tillson's T3 Moving Average (T3)

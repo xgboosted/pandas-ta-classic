@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     signed_series,
@@ -38,14 +39,7 @@ def pvi(
     pvi.iloc[0] = initial
     pvi = pvi.cumsum()
 
-    # Offset
-    pvi = apply_offset(pvi, offset, **kwargs)
-
-    # Name and Categorize it
-    pvi.name = f"PVI_{length}"
-    pvi.category = "volume"
-
-    return pvi
+    return _finalize(pvi, offset, f"PVI_{length}", "volume", **kwargs)
 
 
 pvi.__doc__ = """Positive Volume Index (PVI)

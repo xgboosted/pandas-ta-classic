@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     non_zero_range,
@@ -35,14 +36,7 @@ def po(
     lr = non_zero_range(lr, lr)
     po = 100 * (close - lr) / lr
 
-    # Offset
-    po = apply_offset(po, offset, **kwargs)
-
-    # Name and Categorize it
-    po.name = f"PO_{length}"
-    po.category = "momentum"
-
-    return po
+    return _finalize(po, offset, f"PO_{length}", "momentum", **kwargs)
 
 
 po.__doc__ = """Projection Oscillator (PO)

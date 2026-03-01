@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_offset,
     signed_series,
@@ -31,14 +32,7 @@ def pvol(
     if signed:
         pvol *= signed_series(close, 1)
 
-    # Offset
-    pvol = apply_offset(pvol, offset, **kwargs)
-
-    # Name and Categorize it
-    pvol.name = f"PVOL"
-    pvol.category = "volume"
-
-    return pvol
+    return _finalize(pvol, offset, f"PVOL", "volume", **kwargs)
 
 
 pvol.__doc__ = """Price-Volume (PVOL)

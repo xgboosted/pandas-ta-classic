@@ -2,7 +2,7 @@
 # HL2 (HL2)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def hl2(
@@ -20,14 +20,7 @@ def hl2(
     # Calculate Result
     hl2 = 0.5 * (high + low)
 
-    # Offset
-    hl2 = apply_offset(hl2, offset, **kwargs)
-
-    # Name & Category
-    hl2.name = "HL2"
-    hl2.category = "overlap"
-
-    return hl2
+    return _finalize(hl2, offset, "HL2", "overlap", **kwargs)
 
 
 hl2.__doc__ = """HL2 (Median Price)

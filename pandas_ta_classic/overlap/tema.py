@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def tema(
@@ -35,14 +35,7 @@ def tema(
         ema3 = ema(close=ema2, length=length, **kwargs)
         tema = 3 * (ema1 - ema2) + ema3
 
-    # Offset
-    tema = apply_offset(tema, offset, **kwargs)
-
-    # Name & Category
-    tema.name = f"TEMA_{length}"
-    tema.category = "overlap"
-
-    return tema
+    return _finalize(tema, offset, f"TEMA_{length}", "overlap", **kwargs)
 
 
 tema.__doc__ = """Triple Exponential Moving Average (TEMA)

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def cfo(
@@ -29,14 +29,7 @@ def cfo(
     cfo = scalar * (close - linreg(close, length=length, tsf=True))
     cfo /= close
 
-    # Offset
-    cfo = apply_offset(cfo, offset, **kwargs)
-
-    # Name and Categorize it
-    cfo.name = f"CFO_{length}"
-    cfo.category = "momentum"
-
-    return cfo
+    return _finalize(cfo, offset, f"CFO_{length}", "momentum", **kwargs)
 
 
 cfo.__doc__ = """Chande Forcast Oscillator (CFO)

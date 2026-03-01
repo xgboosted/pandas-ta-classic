@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
     apply_offset,
     get_drift,
     get_offset,
@@ -52,16 +53,11 @@ def decreasing(
     if asint:
         decreasing = decreasing.astype(int)
 
-    # Offset
-    decreasing = apply_offset(decreasing, offset, **kwargs)
-
-    # Name and Categorize it
     _percent = f"_{0.01 * percent}" if percent else ""
     _props = f"{'S' if strict else ''}DEC{'p' if percent else ''}"
-    decreasing.name = f"{_props}_{length}{_percent}"
-    decreasing.category = "trend"
-
-    return decreasing
+    return _finalize(
+        decreasing, offset, f"{_props}_{length}{_percent}", "trend", **kwargs
+    )
 
 
 decreasing.__doc__ = """Decreasing
