@@ -5,6 +5,7 @@ Every indicator must satisfy:
   1. len(output) == len(input) — no truncated Series
   2. output is not all-NaN (sanity check)
   3. NaN lookback scales consistently with `length` parameter
+  4. talib=True and talib=False produce same length and same first_valid_index
 
 Indicators are auto-discovered from Category metadata — no manual list
 to maintain.  Adding a new indicator file is enough; it will be tested
@@ -18,6 +19,13 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._meta import Category
+
+try:
+    import talib as _tal
+
+    HAS_TALIB = True
+except ImportError:
+    HAS_TALIB = False
 
 # ---------------------------------------------------------------------------
 # Shared test data
@@ -126,8 +134,42 @@ def _discover_indicators_with_length():
             yield f"{cat}/{name}", fn
 
 
+def _discover_talib_indicators():
+    """Yield (test_id, fn) for indicators that accept a `talib` parameter."""
+    for cat in sorted(Category):
+        for name in sorted(Category[cat]):
+            if name in _SKIP or name in _SHORT_OUTPUT:
+                continue
+            fn = getattr(ta, name, None)
+            if fn is None:
+                continue
+            sig = inspect.signature(fn)
+            if "talib" not in sig.parameters:
+                continue
+            if not _can_auto_call(fn):
+                continue
+            yield f"{cat}/{name}", fn
+
+
 _ALL_INDICATORS = list(_discover_indicators())
 _LENGTH_INDICATORS = list(_discover_indicators_with_length())
+_TALIB_INDICATORS = list(_discover_talib_indicators())
+
+# Known first_valid_index mismatches between native and TA-Lib paths.
+# Tracked here so they show up as xfail (not silently hidden).
+_TALIB_FV_XFAIL = {
+    "momentum/rsi": "RMA off-by-one: native fv=13, talib fv=14",
+    "momentum/uo": "off-by-one: native fv=27, talib fv=28",
+    "momentum/macd": "EMA chain stacking: native fv=25, talib fv=33",
+    "volatility/atr": "RMA off-by-one: native fv=13, talib fv=14",
+    "volume/mfi": "RMA off-by-one: native fv=13, talib fv=14",
+    "trend/adxr": "ADX seed difference: native fv=27, talib fv=40",
+    "cycles/ht_dcperiod": "Hilbert warmup: native fv=0, talib fv=32",
+    "cycles/ht_dcphase": "Hilbert warmup: native fv=37, talib fv=63",
+    "cycles/ht_phasor": "Hilbert warmup: native fv=12, talib fv=32",
+    "cycles/ht_sine": "Hilbert warmup: native fv=37, talib fv=63",
+    "overlap/ht_trendline": "Hilbert warmup: native fv=37, talib fv=63",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -240,3 +282,65 @@ def test_nan_scales_with_length(test_id, fn):
 
     assert _len(r10) == N, f"{test_id}: length=10 output {_len(r10)} != {N}"
     assert _len(r20) == N, f"{test_id}: length=20 output {_len(r20)} != {N}"
+
+
+# ---------------------------------------------------------------------------
+# Test 4: talib=True vs talib=False consistency
+#
+# For every indicator with a `talib` parameter, verify that both paths
+# produce the same output length and the same first_valid_index.
+# Known mismatches are tracked as xfail so they don't block CI but remain
+# visible.  When a mismatch is fixed the xfail will xpass and pytest will
+# flag it for removal.
+# ---------------------------------------------------------------------------
+
+
+def _make_talib_params():
+    """Build parametrize list with xfail markers for known mismatches."""
+    params = []
+    ids = []
+    for test_id, fn in _TALIB_INDICATORS:
+        if test_id in _TALIB_FV_XFAIL:
+            params.append(
+                pytest.param(
+                    test_id,
+                    fn,
+                    marks=pytest.mark.xfail(reason=_TALIB_FV_XFAIL[test_id]),
+                )
+            )
+        else:
+            params.append((test_id, fn))
+        ids.append(test_id)
+    return params, ids
+
+
+_TALIB_PARAMS, _TALIB_IDS = _make_talib_params()
+
+
+@pytest.mark.skipif(not HAS_TALIB, reason="TA-Lib not installed")
+@pytest.mark.parametrize("test_id,fn", _TALIB_PARAMS, ids=_TALIB_IDS)
+def test_talib_consistency(test_id, fn):
+    """talib=True and talib=False must produce same length and NaN lookback."""
+    kwargs = _build_call_args(fn)
+
+    r_native = fn(**kwargs, talib=False)
+    r_talib = fn(**kwargs, talib=True)
+
+    if r_native is None or r_talib is None:
+        pytest.skip(f"{test_id} returned None")
+
+    def _result_len(r):
+        if isinstance(r, tuple):
+            return len(r[0])
+        return len(r)
+
+    len_nat = _result_len(r_native)
+    len_tal = _result_len(r_talib)
+    assert len_nat == N, f"{test_id}: native length {len_nat} != {N}"
+    assert len_tal == N, f"{test_id}: talib length {len_tal} != {N}"
+
+    fv_nat = _fv(r_native)
+    fv_tal = _fv(r_talib)
+    assert fv_nat == fv_tal, (
+        f"{test_id}: first_valid_index mismatch — " f"native={fv_nat}, talib={fv_tal}"
+    )
