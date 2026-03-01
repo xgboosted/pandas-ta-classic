@@ -293,6 +293,7 @@ class AnalysisIndicators:
     _cores = cpu_count()
     _df = pd.DataFrame()
     _exchange = "NYSE"
+    _pending_appends: Optional[List[pd.DataFrame]] = None
     _time_range = "years"
     _last_run = get_time(_exchange, to_string=True)
 
@@ -446,6 +447,38 @@ class AnalysisIndicators:
             else:
                 result.columns = [prefix + column + suffix for column in result.columns]
 
+    @staticmethod
+    def _build_append_fragment(result, **kwargs):
+        """Build a DataFrame fragment from an indicator result, applying col_names.
+
+        Returns a DataFrame ready for concat, or None if inputs are invalid.
+        """
+        if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
+            kwargs["col_names"] = (kwargs["col_names"],)
+
+        if isinstance(result, pd.DataFrame):
+            if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
+                if len(kwargs["col_names"]) >= len(result.columns):
+                    renamed = result.copy()
+                    renamed.columns = list(kwargs["col_names"][: len(result.columns)])
+                    return renamed
+                else:
+                    logger.warning(
+                        "Not enough col_names were specified: got %d, expected %d.",
+                        len(kwargs["col_names"]),
+                        len(result.columns),
+                    )
+                    return None
+            else:
+                return result
+        else:
+            ind_name = (
+                kwargs["col_names"][0]
+                if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple)
+                else result.name
+            )
+            return result.rename(ind_name).to_frame()
+
     def _append(self, result=None, **kwargs) -> None:
         """Appends a Pandas Series or DataFrame columns to self._df."""
         if "append" in kwargs and kwargs["append"]:
@@ -453,44 +486,19 @@ class AnalysisIndicators:
             if df is None or result is None:
                 return
             else:
-                with catch_warnings():
-                    simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
-                    if "col_names" in kwargs and not isinstance(
-                        kwargs["col_names"], tuple
-                    ):
-                        kwargs["col_names"] = (
-                            kwargs["col_names"],
-                        )  # Note: tuple(kwargs["col_names"]) doesn't work
+                fragment = self._build_append_fragment(result, **kwargs)
+                if fragment is None:
+                    return
 
-                    if isinstance(result, pd.DataFrame):
-                        # If specified in kwargs, rename the columns.
-                        # If not, use the default names.
-                        if "col_names" in kwargs and isinstance(
-                            kwargs["col_names"], tuple
-                        ):
-                            if len(kwargs["col_names"]) >= len(result.columns):
-                                for col, ind_name in zip(
-                                    result.columns, kwargs["col_names"]
-                                ):
-                                    df[ind_name] = result.loc[:, col]
-                            else:
-                                logger.warning(
-                                    "Not enough col_names were specified: got %d, expected %d.",
-                                    len(kwargs["col_names"]),
-                                    len(result.columns),
-                                )
-                                return
-                        else:
-                            for i, column in enumerate(result.columns):
-                                df[column] = result.iloc[:, i]
-                    else:
-                        ind_name = (
-                            kwargs["col_names"][0]
-                            if "col_names" in kwargs
-                            and isinstance(kwargs["col_names"], tuple)
-                            else result.name
+                if self._pending_appends is not None:
+                    self._pending_appends.append(fragment)
+                else:
+                    with catch_warnings():
+                        simplefilter(
+                            action="ignore", category=pd.errors.PerformanceWarning
                         )
-                        df[ind_name] = result
+                        for col in fragment.columns:
+                            df[col] = fragment[col]
 
     def _check_na_columns(self, stdout: bool = True):
         """Returns the columns in which all it's values are na."""
@@ -797,6 +805,12 @@ class AnalysisIndicators:
             # from tqdm import tqdm
             from tqdm import tqdm
 
+        # Enable deferred batching for all/category modes.
+        # Custom mode stays immediate so chained indicators can reference
+        # columns produced by earlier ones.
+        if not mode["custom"]:
+            self._pending_appends: List[pd.DataFrame] = []
+
         if use_multiprocessing:
             _total_ta = len(ta)
 
@@ -868,6 +882,7 @@ class AnalysisIndicators:
                             )  # Speed over Order
                 if results is None:
                     logger.error("[X] ta.strategy('%s') has no results.", name)
+                    self._pending_appends = None
                     return
 
                 # Consume the lazy iterator while the pool is still alive.
@@ -916,6 +931,18 @@ class AnalysisIndicators:
                     for ind in ta:
                         getattr(self, ind)(*tuple(), **kwargs)
                 self._last_run = get_time(self.exchange, to_string=True)
+
+        # Flush deferred appends for all/category modes.
+        if not mode["custom"]:
+            if self._pending_appends:
+                new_df = pd.concat([self._df] + self._pending_appends, axis=1)
+                # Swap the internal block manager so the original DataFrame
+                # object is updated in-place (external references like user
+                # variables keep working).
+                self._df._mgr = new_df._mgr
+                if hasattr(self._df, "_item_cache"):
+                    self._df._item_cache.clear()
+            self._pending_appends = None
 
         if verbose:
             logger.info("[i] Total indicators: %d", len(ta))
