@@ -596,6 +596,41 @@ class TestOverlap(TestCase):
         self.assertEqual(result.name, "ZL_EMA_10")
         assert_offset(self, pandas_ta.zlma, self.close)
 
+    def test_zlma_mamodes(self):
+        for mode in [
+            "dema",
+            "hma",
+            "linreg",
+            "rma",
+            "sma",
+            "swma",
+            "t3",
+            "tema",
+            "trima",
+            "vidya",
+            "wma",
+        ]:
+            result = pandas_ta.zlma(self.close, mamode=mode)
+            self.assertIsInstance(result, Series, msg=f"zlma(mamode={mode!r}) failed")
+
+    def test_vwap_anchor(self):
+        result = pandas_ta.vwap(
+            self.high, self.low, self.close, self.volume, anchor="W"
+        )
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "VWAP_W")
+
+    def test_vwap_none_guard(self):
+        self.assertIsNone(pandas_ta.vwap(None, self.low, self.close, self.volume))
+
+    def test_vwap_unordered_datetime(self):
+        high = self.high.iloc[::-1]
+        low = self.low.iloc[::-1]
+        close = self.close.iloc[::-1]
+        volume = self.volume.iloc[::-1]
+        result = pandas_ta.vwap(high, low, close, volume)
+        self.assertIsInstance(result, Series)
+
     def test_mmar(self):
         result = pandas_ta.mmar(self.close)
         self.assertIsInstance(result, DataFrame)

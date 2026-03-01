@@ -247,6 +247,11 @@ class TestTrend(TestCase):
         assert_nan_count(self, result, 10)
         assert_offset(self, pandas_ta.qstick, self.open, self.close)
 
+    def test_qstick_mamodes(self):
+        for mode in ["dema", "ema", "hma", "rma"]:
+            result = pandas_ta.qstick(self.open, self.close, ma=mode)
+            self.assertIsInstance(result, Series, msg=f"qstick(ma={mode!r}) failed")
+
     def test_short_run(self):
         result = pandas_ta.short_run(self.close, self.open)
         self.assertIsInstance(result, Series)
@@ -303,6 +308,18 @@ class TestTrend(TestCase):
         pandas_ta.sarext(self.high, self.low, talib=False, fill_method="ffill")
         pandas_ta.sarext(self.high, self.low, talib=False, fill_method="bfill")
         self.assertIsNone(pandas_ta.sarext(None, self.low))
+
+    def test_sarext_startvalue_positive(self):
+        result = pandas_ta.sarext(self.high, self.low, startvalue=100.0, talib=False)
+        self.assertIsInstance(result, Series)
+
+    def test_sarext_startvalue_negative(self):
+        result = pandas_ta.sarext(self.high, self.low, startvalue=-100.0, talib=False)
+        self.assertIsInstance(result, Series)
+
+    def test_sarext_short_series(self):
+        result = pandas_ta.sarext(self.high.iloc[:1], self.low.iloc[:1], talib=False)
+        self.assertIsNone(result)
 
     @talib_test
     def test_sarext_talib(self):

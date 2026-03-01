@@ -696,6 +696,19 @@ class TestMomentum(TestCase):
             ],
         )
 
+    def test_stc_external_ma(self):
+        ma1 = pandas_ta.ema(self.close, length=12)
+        ma2 = pandas_ta.ema(self.close, length=26)
+        result = pandas_ta.stc(self.close, ma1=ma1, ma2=ma2)
+        self.assertIsInstance(result, DataFrame)
+
+    def test_stc_external_osc(self):
+        osc = pandas_ta.ema(self.close, length=12) - pandas_ta.ema(
+            self.close, length=26
+        )
+        result = pandas_ta.stc(self.close, osc=osc)
+        self.assertIsInstance(result, DataFrame)
+
     def test_stoch(self):
         # TV Correlation
         result = pandas_ta.stoch(self.high, self.low, self.close)

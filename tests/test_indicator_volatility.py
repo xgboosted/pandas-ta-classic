@@ -247,3 +247,8 @@ class TestVolatility(TestCase):
         self.assertEqual(result.name, "HWC")
         assert_offset(self, pandas_ta.hwc, self.close)
         assert_columns(self, result, ["HWM", "HWU", "HWL"])
+
+    def test_hwc_channel_eval(self):
+        result = pandas_ta.hwc(self.close, channel_eval=True)
+        self.assertIsInstance(result, DataFrame)
+        assert_columns(self, result, ["HWM", "HWU", "HWL", "HWW", "HWPCT"])
