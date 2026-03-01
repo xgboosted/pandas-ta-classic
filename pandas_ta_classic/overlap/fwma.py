@@ -4,11 +4,11 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
+    _sliding_weighted_ma,
     apply_offset,
     fibonacci,
     get_offset,
     verify_series,
-    weights,
 )
 
 
@@ -31,7 +31,7 @@ def fwma(
 
     # Calculate Result
     fibs = fibonacci(n=length, weighted=True)
-    fwma = close.rolling(length, min_periods=length).apply(weights(fibs), raw=True)
+    fwma = _sliding_weighted_ma(close, length, fibs)
 
     return _finalize(fwma, offset, f"FWMA_{length}", "overlap", **kwargs)
 

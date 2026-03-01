@@ -2,7 +2,13 @@
 # Center of Gravity (CG)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series, weights
+import numpy as np
+from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    verify_series,
+)
 
 
 def cg(
@@ -21,8 +27,8 @@ def cg(
         return None
 
     # Calculate Result
-    coefficients = [length - i for i in range(0, length)]
-    numerator = -close.rolling(length).apply(weights(coefficients), raw=True)
+    coefficients = np.array([length - i for i in range(length)])
+    numerator = -_sliding_weighted_ma(close, length, coefficients)
     cg = numerator / close.rolling(length).sum()
 
     return _finalize(cg, offset, f"CG_{length}", "momentum", **kwargs)

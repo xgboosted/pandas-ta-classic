@@ -147,6 +147,8 @@ Returns:
 
 def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> list:
     # ACTUAL Calculation part, which is shared between operation modes
+    import numpy as np
+
     # 1St : Stochastic of MACD
     lowest_xmacd = xmacd.rolling(tclength).min()  # min value in interval tclen
     xmacd_range = non_zero_range(xmacd.rolling(tclength).max(), lowest_xmacd)
@@ -158,16 +160,16 @@ def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> lis
     xrange_arr = xmacd_range.to_numpy()
 
     # %Fast K of MACD
-    stoch1 = list(xmacd_arr)
-    pf = list(xmacd_arr)
-    stoch1[0], pf[0] = 0, 0
+    stoch1 = np.empty(m)
+    pf = np.zeros(m)
+    stoch1[0] = 0.0
     for i in range(1, m):
         if lxmacd_arr[i] > 0:
             stoch1[i] = 100 * ((xmacd_arr[i] - lxmacd_arr[i]) / xrange_arr[i])
         else:
             stoch1[i] = stoch1[i - 1]
         # Smoothed Calculation for % Fast D of MACD
-        pf[i] = round(pf[i - 1] + (factor * (stoch1[i] - pf[i - 1])), 8)
+        pf[i] = pf[i - 1] + factor * (stoch1[i] - pf[i - 1])
 
     pf_series = Series(pf, index=close.index)
 
@@ -180,15 +182,15 @@ def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> lis
     pfrange_arr = pf_range.to_numpy()
 
     # % of Fast K of PF
-    stoch2 = list(xmacd_arr)
-    pff = list(xmacd_arr)
-    stoch2[0], pff[0] = 0, 0
+    stoch2 = np.empty(m)
+    pff = np.zeros(m)
+    stoch2[0] = 0.0
     for i in range(1, m):
         if pfrange_arr[i] > 0:
             stoch2[i] = 100 * ((pf_arr[i] - lpf_arr[i]) / pfrange_arr[i])
         else:
             stoch2[i] = stoch2[i - 1]
         # Smoothed Calculation for % Fast D of PF
-        pff[i] = round(pff[i - 1] + (factor * (stoch2[i] - pff[i - 1])), 8)
+        pff[i] = pff[i - 1] + factor * (stoch2[i] - pff[i - 1])
 
     return [pff, pf]

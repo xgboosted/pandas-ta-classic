@@ -4,11 +4,11 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
+    _sliding_weighted_ma,
     apply_offset,
     get_offset,
     symmetric_triangle,
     verify_series,
-    weights,
 )
 
 
@@ -32,7 +32,7 @@ def swma(
 
     # Calculate Result
     triangle = symmetric_triangle(length, weighted=True)
-    swma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
+    swma = _sliding_weighted_ma(close, length, triangle)
     # swma = close.rolling(length).apply(weights(triangle), raw=True)
 
     return _finalize(swma, offset, f"SWMA_{length}", "overlap", **kwargs)

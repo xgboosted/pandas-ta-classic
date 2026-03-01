@@ -4,11 +4,11 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
+    _sliding_weighted_ma,
     apply_offset,
     get_offset,
     pascals_triangle,
     verify_series,
-    weights,
 )
 
 
@@ -31,7 +31,7 @@ def pwma(
 
     # Calculate Result
     triangle = pascals_triangle(n=length - 1, weighted=True)
-    pwma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
+    pwma = _sliding_weighted_ma(close, length, triangle)
 
     return _finalize(pwma, offset, f"PWMA_{length}", "overlap", **kwargs)
 
