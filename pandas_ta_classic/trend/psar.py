@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series, zero
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series, zero
 
 
 def psar(
@@ -109,25 +109,20 @@ def psar(
     reversal = Series(reversal_arr, index=high.index)
     _af = Series(af_arr, index=high.index)
 
-    # Offset
-    _af = apply_offset(_af, offset, **kwargs)
-    long = apply_offset(long, offset, **kwargs)
-    short = apply_offset(short, offset, **kwargs)
-    reversal = apply_offset(reversal, offset, **kwargs)
-
-    # Prepare DataFrame to return
+    # Offset, Name and Categorize it
     _params = f"_{af0}_{max_af}"
-    data = {
-        f"PSARl{_params}": long,
-        f"PSARs{_params}": short,
-        f"PSARaf{_params}": _af,
-        f"PSARr{_params}": reversal,
-    }
-    psardf = DataFrame(data)
-    psardf.name = f"PSAR{_params}"
-    psardf.category = long.category = short.category = "trend"
-
-    return psardf
+    return _build_dataframe(
+        {
+            f"PSARl{_params}": long,
+            f"PSARs{_params}": short,
+            f"PSARaf{_params}": _af,
+            f"PSARr{_params}": reversal,
+        },
+        f"PSAR{_params}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 psar.__doc__ = """Parabolic Stop and Reverse (psar)

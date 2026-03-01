@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def supertrend(
@@ -66,25 +66,27 @@ def supertrend(
         else:
             trend[i] = short[i] = ub_arr[i]
 
-    # Prepare DataFrame to return
+    # Wrap numpy arrays as Series
+    _idx = close.index
+    trend = Series(trend, index=_idx)
+    dir_ = Series(dir_, index=_idx)
+    long = Series(long, index=_idx)
+    short = Series(short, index=_idx)
+
+    # Offset, Name and Categorize it
     _props = f"_{length}_{multiplier}"
-    df = DataFrame(
+    return _build_dataframe(
         {
             f"SUPERT{_props}": trend,
             f"SUPERTd{_props}": dir_,
             f"SUPERTl{_props}": long,
             f"SUPERTs{_props}": short,
         },
-        index=close.index,
+        f"SUPERT{_props}",
+        "overlap",
+        offset,
+        **kwargs,
     )
-
-    df.name = f"SUPERT{_props}"
-    df.category = "overlap"
-
-    # Offset
-    df = apply_offset(df, offset, **kwargs)
-
-    return df
 
 
 supertrend.__doc__ = """Supertrend (supertrend)

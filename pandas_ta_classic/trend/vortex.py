@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.volatility import true_range
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def vortex(
@@ -43,22 +48,14 @@ def vortex(
     vip = vmp.rolling(length, min_periods=min_periods).sum() / tr_sum
     vim = vmm.rolling(length, min_periods=min_periods).sum() / tr_sum
 
-    # Offset
-    vip = apply_offset(vip, offset, **kwargs)
-    vim = apply_offset(vim, offset, **kwargs)
-
-    # Name and Categorize it
-    vip.name = f"VTXP_{length}"
-    vim.name = f"VTXM_{length}"
-    vip.category = vim.category = "trend"
-
-    # Prepare DataFrame to return
-    data = {vip.name: vip, vim.name: vim}
-    vtxdf = DataFrame(data)
-    vtxdf.name = f"VTX_{length}"
-    vtxdf.category = "trend"
-
-    return vtxdf
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {f"VTXP_{length}": vip, f"VTXM_{length}": vim},
+        f"VTX_{length}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 vortex.__doc__ = """Vortex

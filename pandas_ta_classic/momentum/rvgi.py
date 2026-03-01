@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.swma import swma
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     non_zero_range,
     verify_series,
@@ -45,23 +45,19 @@ def rvgi(
     signal = swma(rvgi, length=swma_length)
     histogram = rvgi - signal
 
-    # Offset
-    rvgi = apply_offset(rvgi, offset, **kwargs)
-    signal = apply_offset(signal, offset, **kwargs)
-    histogram = apply_offset(histogram, offset, **kwargs)
-
-    # Name & Category
-    rvgi.name = f"RVGI_{length}_{swma_length}"
-    signal.name = f"RVGIs_{length}_{swma_length}"
-    histogram.name = f"RVGIh_{length}_{swma_length}"
-    rvgi.category = signal.category = histogram.category = "momentum"
-
-    # Prepare DataFrame to return
-    df = DataFrame({histogram.name: histogram, rvgi.name: rvgi, signal.name: signal})
-    df.name = f"RVGI_{length}_{swma_length}"
-    df.category = rvgi.category
-
-    return df
+    # Offset + Name + Category + DataFrame
+    _props = f"_{length}_{swma_length}"
+    return _build_dataframe(
+        {
+            f"RVGIh{_props}": histogram,
+            f"RVGI{_props}": rvgi,
+            f"RVGIs{_props}": signal,
+        },
+        f"RVGI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 rvgi.__doc__ = """Relative Vigor Index (RVGI)

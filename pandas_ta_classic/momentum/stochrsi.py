@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     non_zero_range,
     verify_series,
@@ -50,24 +50,15 @@ def stochrsi(
     if stochrsi_d is None:
         return None
 
-    # Offset
-    stochrsi_k = apply_offset(stochrsi_k, offset, **kwargs)
-    stochrsi_d = apply_offset(stochrsi_d, offset, **kwargs)
-
-    # Name and Categorize it
-    _name = "STOCHRSI"
+    # Offset + Name + Category + DataFrame
     _props = f"_{length}_{rsi_length}_{k}_{d}"
-    stochrsi_k.name = f"{_name}k{_props}"
-    stochrsi_d.name = f"{_name}d{_props}"
-    stochrsi_k.category = stochrsi_d.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stochrsi_k.name: stochrsi_k, stochrsi_d.name: stochrsi_d}
-    df = DataFrame(data)
-    df.name = f"{_name}{_props}"
-    df.category = stochrsi_k.category
-
-    return df
+    return _build_dataframe(
+        {f"STOCHRSIk{_props}": stochrsi_k, f"STOCHRSId{_props}": stochrsi_d},
+        f"STOCHRSI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 stochrsi.__doc__ = """Stochastic (STOCHRSI)

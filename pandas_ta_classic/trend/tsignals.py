@@ -2,7 +2,12 @@
 # Trend Signals (TSIGNALS)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def tsignals(
@@ -42,22 +47,19 @@ def tsignals(
         entries = entries.astype(bool)
         exits = exits.astype(bool)
 
-    data = {
-        f"TS_Trends": trends,
-        f"TS_Trades": trades,
-        f"TS_Entries": entries,
-        f"TS_Exits": exits,
-    }
-    df = DataFrame(data, index=trends.index)
-
-    # Offset
-    df = apply_offset(df, offset, **kwargs)
-
-    # Name & Category
-    df.name = f"TS"
-    df.category = "trend"
-
-    return df
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {
+            "TS_Trends": trends,
+            "TS_Trades": trades,
+            "TS_Entries": entries,
+            "TS_Exits": exits,
+        },
+        "TS",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 tsignals.__doc__ = """Trend Signals

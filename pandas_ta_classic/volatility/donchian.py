@@ -2,7 +2,7 @@
 # Donchian Channels (DONCHIAN)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def donchian(
@@ -40,24 +40,14 @@ def donchian(
     upper = high.rolling(upper_length, min_periods=upper_min_periods).max()
     mid = 0.5 * (lower + upper)
 
-    # Offset
-    lower = apply_offset(lower, offset, **kwargs)
-    mid = apply_offset(mid, offset, **kwargs)
-    upper = apply_offset(upper, offset, **kwargs)
-
-    # Name and Categorize it
-    lower.name = f"DCL_{lower_length}_{upper_length}"
-    mid.name = f"DCM_{lower_length}_{upper_length}"
-    upper.name = f"DCU_{lower_length}_{upper_length}"
-    mid.category = upper.category = lower.category = "volatility"
-
-    # Prepare DataFrame to return
-    data = {lower.name: lower, mid.name: mid, upper.name: upper}
-    dcdf = DataFrame(data)
-    dcdf.name = f"DC_{lower_length}_{upper_length}"
-    dcdf.category = mid.category
-
-    return dcdf
+    _props = f"_{lower_length}_{upper_length}"
+    return _build_dataframe(
+        {f"DCL{_props}": lower, f"DCM{_props}": mid, f"DCU{_props}": upper},
+        f"DC{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 donchian.__doc__ = """Donchian Channels (DC)

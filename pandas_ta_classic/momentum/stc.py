@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     non_zero_range,
     verify_series,
@@ -78,25 +78,19 @@ def stc(
     macd = Series(xmacd, index=close.index)
     stoch = Series(pf, index=close.index)
 
-    # Offset
-    stc = apply_offset(stc, offset, **kwargs)
-    macd = apply_offset(macd, offset, **kwargs)
-    stoch = apply_offset(stoch, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{tclength}_{fast}_{slow}_{factor}"
-    stc.name = f"STC{_props}"
-    macd.name = f"STCmacd{_props}"
-    stoch.name = f"STCstoch{_props}"
-    stc.category = macd.category = stoch.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stc.name: stc, macd.name: macd, stoch.name: stoch}
-    df = DataFrame(data)
-    df.name = f"STC{_props}"
-    df.category = stc.category
-
-    return df
+    return _build_dataframe(
+        {
+            f"STC{_props}": stc,
+            f"STCmacd{_props}": macd,
+            f"STCstoch{_props}": stoch,
+        },
+        f"STC{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 stc.__doc__ = """Schaff Trend Cycle (STC)

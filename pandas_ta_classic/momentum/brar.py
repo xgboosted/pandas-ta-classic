@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_drift,
     get_offset,
     non_zero_range,
@@ -52,22 +52,15 @@ def brar(
     br = scalar * hcy.rolling(length).sum()
     br /= cyl.rolling(length).sum()
 
-    # Offset
-    ar = apply_offset(ar, offset, **kwargs)
-    br = apply_offset(br, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{length}"
-    ar.name = f"AR{_props}"
-    br.name = f"BR{_props}"
-    ar.category = br.category = "momentum"
-
-    # Prepare DataFrame to return
-    brardf = DataFrame({ar.name: ar, br.name: br})
-    brardf.name = f"BRAR{_props}"
-    brardf.category = "momentum"
-
-    return brardf
+    return _build_dataframe(
+        {f"AR{_props}": ar, f"BR{_props}": br},
+        f"BRAR{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 brar.__doc__ = """BRAR (BRAR)

@@ -11,6 +11,7 @@ from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.trend import decreasing, increasing
 from pandas_ta_classic.volatility import bbands, kc
 from pandas_ta_classic.utils import (
+    _build_dataframe,
     apply_offset,
     get_offset,
     unsigned_differences,
@@ -133,51 +134,46 @@ def squeeze_pro(
         squeeze_off_wide = squeeze_off_wide.astype(int)
         no_squeeze = no_squeeze.astype(int)
 
-    # Offset
-    squeeze = apply_offset(squeeze, offset, **kwargs)
-    squeeze_on_wide = apply_offset(squeeze_on_wide, offset, **kwargs)
-    squeeze_on_normal = apply_offset(squeeze_on_normal, offset, **kwargs)
-    squeeze_on_narrow = apply_offset(squeeze_on_narrow, offset, **kwargs)
-    squeeze_off_wide = apply_offset(squeeze_off_wide, offset, **kwargs)
-    no_squeeze = apply_offset(no_squeeze, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = "" if use_tr else "hlr"
     _props += f"_{bb_length}_{bb_std}_{kc_length}_{kc_scalar_wide}_{kc_scalar_normal}_{kc_scalar_narrow}"
-    squeeze.name = f"SQZPRO{_props}"
 
-    data = {
-        squeeze.name: squeeze,
-        f"SQZPRO_ON_WIDE": squeeze_on_wide,
-        f"SQZPRO_ON_NORMAL": squeeze_on_normal,
-        f"SQZPRO_ON_NARROW": squeeze_on_narrow,
-        f"SQZPRO_OFF": squeeze_off_wide,
-        f"SQZPRO_NO": no_squeeze,
-    }
-    df = DataFrame(data)
-    df.name = squeeze.name
-    df.category = squeeze.category = "momentum"
+    df = _build_dataframe(
+        {
+            f"SQZPRO{_props}": squeeze,
+            "SQZPRO_ON_WIDE": squeeze_on_wide,
+            "SQZPRO_ON_NORMAL": squeeze_on_normal,
+            "SQZPRO_ON_NARROW": squeeze_on_narrow,
+            "SQZPRO_OFF": squeeze_off_wide,
+            "SQZPRO_NO": no_squeeze,
+        },
+        f"SQZPRO{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
     # Detailed Squeeze Series
     if detailed:
-        pos_squeeze = squeeze[squeeze >= 0]
-        neg_squeeze = squeeze[squeeze < 0]
+        sqz = df.iloc[:, 0]
+        pos_squeeze = sqz[sqz >= 0]
+        neg_squeeze = sqz[sqz < 0]
 
         pos_inc, pos_dec = unsigned_differences(pos_squeeze, asint=True)
         neg_inc, neg_dec = unsigned_differences(neg_squeeze, asint=True)
 
-        pos_inc *= squeeze
-        pos_dec *= squeeze
-        neg_dec *= squeeze
-        neg_inc *= squeeze
+        pos_inc *= sqz
+        pos_dec *= sqz
+        neg_dec *= sqz
+        neg_inc *= sqz
 
         pos_inc.replace(0, npNaN, inplace=True)
         pos_dec.replace(0, npNaN, inplace=True)
         neg_dec.replace(0, npNaN, inplace=True)
         neg_inc.replace(0, npNaN, inplace=True)
 
-        sqz_inc = squeeze * increasing(squeeze)
-        sqz_dec = squeeze * decreasing(squeeze)
+        sqz_inc = sqz * increasing(sqz)
+        sqz_dec = sqz * decreasing(sqz)
         sqz_inc.replace(0, npNaN, inplace=True)
         sqz_dec.replace(0, npNaN, inplace=True)
 

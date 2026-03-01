@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.hl2 import hl2
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def ttm_trend(
@@ -35,20 +35,14 @@ def ttm_trend(
     tm_trend = (close > trend_avg).astype(int)
     tm_trend.replace(0, -1, inplace=True)
 
-    # Offset
-    tm_trend = apply_offset(tm_trend, offset, **kwargs)
-
-    # Name and Categorize it
-    tm_trend.name = f"TTM_TRND_{length}"
-    tm_trend.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {tm_trend.name: tm_trend}
-    df = DataFrame(data)
-    df.name = f"TTMTREND_{length}"
-    df.category = tm_trend.category
-
-    return df
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {f"TTM_TRND_{length}": tm_trend},
+        f"TTMTREND_{length}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 ttm_trend.__doc__ = """TTM Trend (TTM_TRND)

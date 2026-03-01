@@ -124,6 +124,46 @@ def unsigned_differences(
     return positive, negative
 
 
+def _build_dataframe(
+    series_map: dict,
+    name: str,
+    category: str,
+    offset: int = 0,
+    **kwargs: Any,
+) -> DataFrame:
+    """Build a named/categorized DataFrame from a dict of named Series.
+
+    Applies :func:`apply_offset` to each Series, sets ``name`` and
+    ``category`` on both the individual Series and the resulting DataFrame.
+
+    Args:
+        series_map: ``{column_name: series}`` mapping.
+        name: The DataFrame name (e.g. ``"BBANDS_5_2.0"``).
+        category: The indicator category (e.g. ``"volatility"``).
+        offset: Number of periods to shift each series.
+        **kwargs: Passed through to :func:`apply_offset`.
+
+    Returns:
+        A named and categorized DataFrame.
+
+    Example:
+        >>> return _build_dataframe(
+        ...     {f"DCL_{l}": lower, f"DCM_{l}": mid, f"DCU_{l}": upper},
+        ...     f"DC_{l}", "volatility", offset, **kwargs,
+        ... )
+    """
+    data = {}
+    for col_name, s in series_map.items():
+        s = apply_offset(s, offset, **kwargs)
+        s.name = col_name
+        s.category = category
+        data[col_name] = s
+    df = DataFrame(data)
+    df.name = name
+    df.category = category
+    return df
+
+
 def _finalize(
     result: Union[Series, DataFrame],
     offset: int,

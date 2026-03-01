@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .tsi import tsi
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def smi(
@@ -36,26 +36,16 @@ def smi(
     signalma = tsi_df.iloc[:, 1]
     osc = smi - signalma
 
-    # Offset
-    smi = apply_offset(smi, offset, **kwargs)
-    signalma = apply_offset(signalma, offset, **kwargs)
-    osc = apply_offset(osc, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _scalar = f"_{scalar}" if scalar != 1 else ""
     _props = f"_{fast}_{slow}_{signal}{_scalar}"
-    smi.name = f"SMI{_props}"
-    signalma.name = f"SMIs{_props}"
-    osc.name = f"SMIo{_props}"
-    smi.category = signalma.category = osc.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {smi.name: smi, signalma.name: signalma, osc.name: osc}
-    df = DataFrame(data)
-    df.name = f"SMI{_props}"
-    df.category = smi.category
-
-    return df
+    return _build_dataframe(
+        {f"SMI{_props}": smi, f"SMIs{_props}": signalma, f"SMIo{_props}": osc},
+        f"SMI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 smi.__doc__ = """SMI Ergodic Indicator (SMI)

@@ -8,7 +8,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     high_low_range,
     verify_series,
@@ -61,23 +61,15 @@ def fisher(
     fisher = Series(result, index=high.index)
     signalma = fisher.shift(signal)
 
-    # Offset
-    fisher = apply_offset(fisher, offset, **kwargs)
-    signalma = apply_offset(signalma, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{length}_{signal}"
-    fisher.name = f"FISHERT{_props}"
-    signalma.name = f"FISHERTs{_props}"
-    fisher.category = signalma.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {fisher.name: fisher, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"FISHERT{_props}"
-    df.category = fisher.category
-
-    return df
+    return _build_dataframe(
+        {f"FISHERT{_props}": fisher, f"FISHERTs{_props}": signalma},
+        f"FISHERT{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 fisher.__doc__ = """Fisher Transform (FISHT)

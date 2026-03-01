@@ -6,7 +6,7 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics import stdev
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     non_zero_range,
     tal_ma,
@@ -57,35 +57,20 @@ def bbands(
     bandwidth = 100 * ulr / mid
     percent = non_zero_range(close, lower) / ulr
 
-    # Offset
-    lower = apply_offset(lower, offset, **kwargs)
-    mid = apply_offset(mid, offset, **kwargs)
-    upper = apply_offset(upper, offset, **kwargs)
-    bandwidth = apply_offset(bandwidth, offset, **kwargs)
-    percent = apply_offset(percent, offset, **kwargs)
-
-    # Name and Categorize it
-    lower.name = f"BBL_{length}_{std}"
-    mid.name = f"BBM_{length}_{std}"
-    upper.name = f"BBU_{length}_{std}"
-    bandwidth.name = f"BBB_{length}_{std}"
-    percent.name = f"BBP_{length}_{std}"
-    upper.category = lower.category = "volatility"
-    mid.category = bandwidth.category = upper.category
-
-    # Prepare DataFrame to return
-    data = {
-        lower.name: lower,
-        mid.name: mid,
-        upper.name: upper,
-        bandwidth.name: bandwidth,
-        percent.name: percent,
-    }
-    bbandsdf = DataFrame(data)
-    bbandsdf.name = f"BBANDS_{length}_{std}"
-    bbandsdf.category = mid.category
-
-    return bbandsdf
+    _props = f"_{length}_{std}"
+    return _build_dataframe(
+        {
+            f"BBL{_props}": lower,
+            f"BBM{_props}": mid,
+            f"BBU{_props}": upper,
+            f"BBB{_props}": bandwidth,
+            f"BBP{_props}": percent,
+        },
+        f"BBANDS{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 bbands.__doc__ = """Bollinger Bands (BBANDS)

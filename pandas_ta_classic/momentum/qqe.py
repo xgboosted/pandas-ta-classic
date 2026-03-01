@@ -10,7 +10,12 @@ npNaN = np.nan
 
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def qqe(
@@ -120,34 +125,20 @@ def qqe(
     qqe_long = Series(qqe_long_arr, index=idx)
     qqe_short = Series(qqe_short_arr, index=idx)
 
-    # Offset
-    rsi_ma = apply_offset(rsi_ma, offset, **kwargs)
-    qqe = apply_offset(qqe, offset, **kwargs)
-    long = apply_offset(long, offset, **kwargs)
-    short = apply_offset(short, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"{_mode}_{length}_{smooth}_{factor}"
-    qqe.name = f"QQE{_props}"
-    rsi_ma.name = f"QQE{_props}_RSI{_mode.upper()}MA"
-    qqe_long.name = f"QQEl{_props}"
-    qqe_short.name = f"QQEs{_props}"
-    qqe.category = rsi_ma.category = "momentum"
-    qqe_long.category = qqe_short.category = qqe.category
-
-    # Prepare DataFrame to return
-    data = {
-        qqe.name: qqe,
-        rsi_ma.name: rsi_ma,
-        # long.name: long, short.name: short
-        qqe_long.name: qqe_long,
-        qqe_short.name: qqe_short,
-    }
-    df = DataFrame(data)
-    df.name = f"QQE{_props}"
-    df.category = qqe.category
-
-    return df
+    return _build_dataframe(
+        {
+            f"QQE{_props}": qqe,
+            f"QQE{_props}_RSI{_mode.upper()}MA": rsi_ma,
+            f"QQEl{_props}": qqe_long,
+            f"QQEs{_props}": qqe_short,
+        },
+        f"QQE{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 qqe.__doc__ = """Quantitative Qualitative Estimation (QQE)

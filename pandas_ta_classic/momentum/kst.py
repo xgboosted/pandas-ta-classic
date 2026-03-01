@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .roc import roc
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def kst(
@@ -51,22 +56,15 @@ def kst(
     kst = 100 * (rocma1 + 2 * rocma2 + 3 * rocma3 + 4 * rocma4)
     kst_signal = kst.rolling(signal).mean()
 
-    # Offset
-    kst = apply_offset(kst, offset, **kwargs)
-    kst_signal = apply_offset(kst_signal, offset, **kwargs)
-
-    # Name and Categorize it
-    kst.name = f"KST_{roc1}_{roc2}_{roc3}_{roc4}_{sma1}_{sma2}_{sma3}_{sma4}"
-    kst_signal.name = f"KSTs_{signal}"
-    kst.category = kst_signal.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {kst.name: kst, kst_signal.name: kst_signal}
-    kstdf = DataFrame(data)
-    kstdf.name = f"KST_{roc1}_{roc2}_{roc3}_{roc4}_{sma1}_{sma2}_{sma3}_{sma4}_{signal}"
-    kstdf.category = "momentum"
-
-    return kstdf
+    # Offset + Name + Category + DataFrame
+    _kst_name = f"KST_{roc1}_{roc2}_{roc3}_{roc4}_{sma1}_{sma2}_{sma3}_{sma4}"
+    return _build_dataframe(
+        {_kst_name: kst, f"KSTs_{signal}": kst_signal},
+        f"{_kst_name}_{signal}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 kst.__doc__ = """'Know Sure Thing' (KST)

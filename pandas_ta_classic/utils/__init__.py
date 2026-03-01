@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ._candles import *
 from ._core import *
-from ._core import _finalize
+from ._core import _build_dataframe, _finalize
 from ._math import *
 from ._signals import *
 from ._time import *
@@ -14,6 +14,7 @@ __all__ = [
     "high_low_range",
     "real_body",
     # _core
+    "_build_dataframe",
     "_finalize",
     "get_drift",
     "get_offset",

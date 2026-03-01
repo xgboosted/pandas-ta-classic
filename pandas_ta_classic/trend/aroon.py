@@ -3,11 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
+    get_offset,
     recent_maximum_index,
     recent_minimum_index,
+    verify_series,
 )
 
 
@@ -47,29 +48,18 @@ def aroon(
         aroon_down *= 1 - (periods_from_ll / length)
         aroon_osc = aroon_up - aroon_down
 
-    # Offset
-    aroon_up = apply_offset(aroon_up, offset, **kwargs)
-    aroon_down = apply_offset(aroon_down, offset, **kwargs)
-    aroon_osc = apply_offset(aroon_osc, offset, **kwargs)
-
-    # Name and Categorize it
-    aroon_up.name = f"AROONU_{length}"
-    aroon_down.name = f"AROOND_{length}"
-    aroon_osc.name = f"AROONOSC_{length}"
-
-    aroon_down.category = aroon_up.category = aroon_osc.category = "trend"
-
-    # Prepare DataFrame to return
-    data = {
-        aroon_down.name: aroon_down,
-        aroon_up.name: aroon_up,
-        aroon_osc.name: aroon_osc,
-    }
-    aroondf = DataFrame(data)
-    aroondf.name = f"AROON_{length}"
-    aroondf.category = aroon_down.category
-
-    return aroondf
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {
+            f"AROOND_{length}": aroon_down,
+            f"AROONU_{length}": aroon_up,
+            f"AROONOSC_{length}": aroon_osc,
+        },
+        f"AROON_{length}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 aroon.__doc__ = """Aroon & Aroon Oscillator (AROON)

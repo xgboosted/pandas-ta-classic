@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def mmar(
@@ -32,17 +32,14 @@ def mmar(
         ema_value = ema(close, length=period)
         ribbons[f"MMAR_{period}"] = ema_value
 
-    # Create DataFrame
-    df = DataFrame(ribbons)
-
-    # Offset
-    df = apply_offset(df, offset, **kwargs)
-
-    # Name and Categorize it
-    df.name = f"MMAR_{length}_{step}_{num_ribbons}"
-    df.category = "overlap"
-
-    return df
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        ribbons,
+        f"MMAR_{length}_{step}_{num_ribbons}",
+        "overlap",
+        offset,
+        **kwargs,
+    )
 
 
 mmar.__doc__ = """Madrid Moving Average Ribbon (MMAR)

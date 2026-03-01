@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from .true_range import true_range
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     high_low_range,
     verify_series,
@@ -50,25 +50,14 @@ def kc(
     lower = basis - scalar * band
     upper = basis + scalar * band
 
-    # Offset
-    lower = apply_offset(lower, offset, **kwargs)
-    basis = apply_offset(basis, offset, **kwargs)
-    upper = apply_offset(upper, offset, **kwargs)
-
-    # Name and Categorize it
     _props = f"{mamode.lower()[0] if len(mamode) else ''}_{length}_{scalar}"
-    lower.name = f"KCL{_props}"
-    basis.name = f"KCB{_props}"
-    upper.name = f"KCU{_props}"
-    basis.category = upper.category = lower.category = "volatility"
-
-    # Prepare DataFrame to return
-    data = {lower.name: lower, basis.name: basis, upper.name: upper}
-    kcdf = DataFrame(data)
-    kcdf.name = f"KC{_props}"
-    kcdf.category = basis.category
-
-    return kcdf
+    return _build_dataframe(
+        {f"KCL{_props}": lower, f"KCB{_props}": basis, f"KCU{_props}": upper},
+        f"KC{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 kc.__doc__ = """Keltner Channels (KC)

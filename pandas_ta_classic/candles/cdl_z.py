@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.statistics import zscore
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def cdl_z(
@@ -42,26 +42,26 @@ def cdl_z(
 
     _full = "a" if full else ""
     _props = _full if full else f"_{length}_{ddof}"
-    df = DataFrame(
+
+    if full:
+        z_open = z_open.bfill()
+        z_high = z_high.bfill()
+        z_low = z_low.bfill()
+        z_close = z_close.bfill()
+
+    # Offset, Name and Categorize it
+    return _build_dataframe(
         {
             f"open_Z{_props}": z_open,
             f"high_Z{_props}": z_high,
             f"low_Z{_props}": z_low,
             f"close_Z{_props}": z_close,
-        }
+        },
+        f"CDL_Z{_props}",
+        "candles",
+        offset,
+        **kwargs,
     )
-
-    if full:
-        df.bfill(axis=0, inplace=True)
-
-    # Offset
-    df = apply_offset(df, offset, **kwargs)
-
-    # Name and Categorize it
-    df.name = f"CDL_Z{_props}"
-    df.category = "candles"
-
-    return df
 
 
 cdl_z.__doc__ = """Candle Type: Z

@@ -2,7 +2,7 @@
 # Heikin Ashi (HA)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def ha(
@@ -42,24 +42,26 @@ def ha(
     ha_high = np.maximum(np.maximum(ha_open, high.to_numpy()), ha_close)
     ha_low = np.minimum(np.minimum(ha_open, low.to_numpy()), ha_close)
 
-    df = DataFrame(
+    # Wrap numpy arrays as Series
+    _idx = close.index
+    ha_open = Series(ha_open, index=_idx)
+    ha_high = Series(ha_high, index=_idx)
+    ha_low = Series(ha_low, index=_idx)
+    ha_close = Series(ha_close, index=_idx)
+
+    # Offset, Name and Categorize it
+    return _build_dataframe(
         {
             "HA_open": ha_open,
             "HA_high": ha_high,
             "HA_low": ha_low,
             "HA_close": ha_close,
         },
-        index=close.index,
+        "Heikin-Ashi",
+        "candles",
+        offset,
+        **kwargs,
     )
-
-    # Offset
-    df = apply_offset(df, offset, **kwargs)
-
-    # Name and Categorize it
-    df.name = "Heikin-Ashi"
-    df.category = "candles"
-
-    return df
 
 
 ha.__doc__ = """Heikin Ashi Candles (HA)

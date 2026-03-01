@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def trix(
@@ -35,21 +40,15 @@ def trix(
 
     trix_signal = trix.rolling(signal).mean()
 
-    # Offset
-    trix = apply_offset(trix, offset, **kwargs)
-    trix_signal = apply_offset(trix_signal, offset, **kwargs)
-
-    # Name & Category
-    trix.name = f"TRIX_{length}_{signal}"
-    trix_signal.name = f"TRIXs_{length}_{signal}"
-    trix.category = trix_signal.category = "momentum"
-
-    # Prepare DataFrame to return
-    df = DataFrame({trix.name: trix, trix_signal.name: trix_signal})
-    df.name = f"TRIX_{length}_{signal}"
-    df.category = "momentum"
-
-    return df
+    # Offset + Name + Category + DataFrame
+    _props = f"_{length}_{signal}"
+    return _build_dataframe(
+        {f"TRIX{_props}": trix, f"TRIXs{_props}": trix_signal},
+        f"TRIX{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 trix.__doc__ = """Trix (TRIX)

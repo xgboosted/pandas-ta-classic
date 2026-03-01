@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, tal_ma, verify_series
 
 
 def ppo(
@@ -52,25 +52,15 @@ def ppo(
         return None
     histogram = ppo - signalma
 
-    # Offset
-    ppo = apply_offset(ppo, offset, **kwargs)
-    histogram = apply_offset(histogram, offset, **kwargs)
-    signalma = apply_offset(signalma, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{fast}_{slow}_{signal}"
-    ppo.name = f"PPO{_props}"
-    histogram.name = f"PPOh{_props}"
-    signalma.name = f"PPOs{_props}"
-    ppo.category = histogram.category = signalma.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {ppo.name: ppo, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"PPO{_props}"
-    df.category = ppo.category
-
-    return df
+    return _build_dataframe(
+        {f"PPO{_props}": ppo, f"PPOh{_props}": histogram, f"PPOs{_props}": signalma},
+        f"PPO{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 ppo.__doc__ = """Percentage Price Oscillator (PPO)

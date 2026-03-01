@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def eri(
@@ -30,22 +30,14 @@ def eri(
     bull = high - ema_
     bear = low - ema_
 
-    # Offset
-    bull = apply_offset(bull, offset, **kwargs)
-    bear = apply_offset(bear, offset, **kwargs)
-
-    # Name and Categorize it
-    bull.name = f"BULLP_{length}"
-    bear.name = f"BEARP_{length}"
-    bull.category = bear.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {bull.name: bull, bear.name: bear}
-    df = DataFrame(data)
-    df.name = f"ERI_{length}"
-    df.category = bull.category
-
-    return df
+    # Offset + Name + Category + DataFrame
+    return _build_dataframe(
+        {f"BULLP_{length}": bull, f"BEARP_{length}": bear},
+        f"ERI_{length}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 eri.__doc__ = """Elder Ray Index (ERI)

@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from .ma import ma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def hilo(
@@ -62,20 +62,15 @@ def hilo(
     long = Series(long_arr, index=close.index)
     short = Series(short_arr, index=close.index)
 
-    # Offset
-    hilo = apply_offset(hilo, offset, **kwargs)
-    long = apply_offset(long, offset, **kwargs)
-    short = apply_offset(short, offset, **kwargs)
-
-    # Name & Category
+    # Offset, Name and Categorize it
     _props = f"_{high_length}_{low_length}"
-    data = {f"HILO{_props}": hilo, f"HILOl{_props}": long, f"HILOs{_props}": short}
-    df = DataFrame(data, index=close.index)
-
-    df.name = f"HILO{_props}"
-    df.category = "overlap"
-
-    return df
+    return _build_dataframe(
+        {f"HILO{_props}": hilo, f"HILOl{_props}": long, f"HILOs{_props}": short},
+        f"HILO{_props}",
+        "overlap",
+        offset,
+        **kwargs,
+    )
 
 
 hilo.__doc__ = """Gann HiLo Activator(HiLo)

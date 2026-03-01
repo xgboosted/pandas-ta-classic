@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.vwma import vwma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def vwmacd(
@@ -43,29 +43,19 @@ def vwmacd(
     # Histogram
     histogram = vwmacd - signal_line
 
-    # Offset
-    vwmacd = apply_offset(vwmacd, offset, **kwargs)
-    signal_line = apply_offset(signal_line, offset, **kwargs)
-    histogram = apply_offset(histogram, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{fast}_{slow}_{signal}"
-    vwmacd.name = f"VWMACD{_props}"
-    signal_line.name = f"VWMACDs{_props}"
-    histogram.name = f"VWMACDh{_props}"
-    vwmacd.category = signal_line.category = histogram.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {
-        vwmacd.name: vwmacd,
-        histogram.name: histogram,
-        signal_line.name: signal_line,
-    }
-    df = DataFrame(data)
-    df.name = f"VWMACD{_props}"
-    df.category = "momentum"
-
-    return df
+    return _build_dataframe(
+        {
+            f"VWMACD{_props}": vwmacd,
+            f"VWMACDh{_props}": histogram,
+            f"VWMACDs{_props}": signal_line,
+        },
+        f"VWMACD{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 vwmacd.__doc__ = """Volume Weighted MACD (VWMACD)

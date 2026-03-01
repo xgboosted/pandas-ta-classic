@@ -4,7 +4,12 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def tsi(
@@ -50,21 +55,15 @@ def tsi(
     if tsi_signal is None:
         return None
 
-    # Offset
-    tsi = apply_offset(tsi, offset, **kwargs)
-    tsi_signal = apply_offset(tsi_signal, offset, **kwargs)
-
-    # Name and Categorize it
-    tsi.name = f"TSI_{fast}_{slow}_{signal}"
-    tsi_signal.name = f"TSIs_{fast}_{slow}_{signal}"
-    tsi.category = tsi_signal.category = "momentum"
-
-    # Prepare DataFrame to return
-    df = DataFrame({tsi.name: tsi, tsi_signal.name: tsi_signal})
-    df.name = f"TSI_{fast}_{slow}_{signal}"
-    df.category = "momentum"
-
-    return df
+    # Offset + Name + Category + DataFrame
+    _props = f"_{fast}_{slow}_{signal}"
+    return _build_dataframe(
+        {f"TSI{_props}": tsi, f"TSIs{_props}": tsi_signal},
+        f"TSI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 tsi.__doc__ = """True Strength Index (TSI)

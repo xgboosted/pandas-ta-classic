@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_drift,
     get_offset,
     verify_series,
@@ -65,25 +65,14 @@ def adx(
     if adx is None:
         return None
 
-    # Offset
-    dmp = apply_offset(dmp, offset, **kwargs)
-    dmn = apply_offset(dmn, offset, **kwargs)
-    adx = apply_offset(adx, offset, **kwargs)
-
-    # Name and Categorize it
-    adx.name = f"ADX_{lensig}"
-    dmp.name = f"DMP_{length}"
-    dmn.name = f"DMN_{length}"
-
-    adx.category = dmp.category = dmn.category = "trend"
-
-    # Prepare DataFrame to return
-    data = {adx.name: adx, dmp.name: dmp, dmn.name: dmn}
-    adxdf = DataFrame(data)
-    adxdf.name = f"ADX_{lensig}"
-    adxdf.category = "trend"
-
-    return adxdf
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {f"ADX_{lensig}": adx, f"DMP_{length}": dmp, f"DMN_{length}": dmn},
+        f"ADX_{lensig}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 adx.__doc__ = """Average Directional Movement (ADX)

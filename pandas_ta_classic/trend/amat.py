@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from .long_run import long_run
 from .short_run import short_run
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def amat(
@@ -40,23 +40,16 @@ def amat(
     mas_long = long_run(fast_ma, slow_ma, length=lookback)
     mas_short = short_run(fast_ma, slow_ma, length=lookback)
 
-    # Offset
-    mas_long = apply_offset(mas_long, offset, **kwargs)
-    mas_short = apply_offset(mas_short, offset, **kwargs)
-
-    # Prepare DataFrame to return
-    amatdf = DataFrame(
-        {
-            f"AMAT{mamode[0]}_LR_{fast}_{slow}_{lookback}": mas_long,
-            f"AMAT{mamode[0]}_SR_{fast}_{slow}_{lookback}": mas_short,
-        }
+    # Offset, Name and Categorize it
+    _m = mamode[0]
+    _p = f"_{fast}_{slow}_{lookback}"
+    return _build_dataframe(
+        {f"AMAT{_m}_LR{_p}": mas_long, f"AMAT{_m}_SR{_p}": mas_short},
+        f"AMAT{_m}{_p}",
+        "trend",
+        offset,
+        **kwargs,
     )
-
-    # Name and Categorize it
-    amatdf.name = f"AMAT{mamode[0]}_{fast}_{slow}_{lookback}"
-    amatdf.category = "trend"
-
-    return amatdf
 
 
 amat.__doc__ = """Archer Moving Averages Trends (AMAT)

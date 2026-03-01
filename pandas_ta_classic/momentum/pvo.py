@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def pvo(
@@ -38,25 +38,15 @@ def pvo(
     signalma = ema(pvo, length=signal)
     histogram = pvo - signalma
 
-    # Offset
-    pvo = apply_offset(pvo, offset, **kwargs)
-    histogram = apply_offset(histogram, offset, **kwargs)
-    signalma = apply_offset(signalma, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{fast}_{slow}_{signal}"
-    pvo.name = f"PVO{_props}"
-    histogram.name = f"PVOh{_props}"
-    signalma.name = f"PVOs{_props}"
-    pvo.category = histogram.category = signalma.category = "momentum"
-
-    #
-    data = {pvo.name: pvo, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = pvo.name
-    df.category = pvo.category
-
-    return df
+    return _build_dataframe(
+        {f"PVO{_props}": pvo, f"PVOh{_props}": histogram, f"PVOs{_props}": signalma},
+        f"PVO{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 pvo.__doc__ = """Percentage Volume Oscillator (PVO)

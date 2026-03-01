@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_drift,
     get_offset,
     non_zero_range,
@@ -50,24 +50,14 @@ def accbands(
     if lower is None or mid is None or upper is None:
         return None
 
-    # Offset
-    lower = apply_offset(lower, offset, **kwargs)
-    mid = apply_offset(mid, offset, **kwargs)
-    upper = apply_offset(upper, offset, **kwargs)
-
-    # Name and Categorize it
-    lower.name = f"ACCBL_{length}"
-    mid.name = f"ACCBM_{length}"
-    upper.name = f"ACCBU_{length}"
-    mid.category = upper.category = lower.category = "volatility"
-
-    # Prepare DataFrame to return
-    data = {lower.name: lower, mid.name: mid, upper.name: upper}
-    accbandsdf = DataFrame(data)
-    accbandsdf.name = f"ACCBANDS_{length}"
-    accbandsdf.category = mid.category
-
-    return accbandsdf
+    _props = f"_{length}"
+    return _build_dataframe(
+        {f"ACCBL{_props}": lower, f"ACCBM{_props}": mid, f"ACCBU{_props}": upper},
+        f"ACCBANDS{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 accbands.__doc__ = """Acceleration Bands (ACCBANDS)

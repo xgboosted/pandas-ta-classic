@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from .atr import atr
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def aberration(
@@ -38,28 +38,19 @@ def aberration(
     sg = zg + atr_
     xg = zg - atr_
 
-    # Offset
-    zg = apply_offset(zg, offset, **kwargs)
-    sg = apply_offset(sg, offset, **kwargs)
-    xg = apply_offset(xg, offset, **kwargs)
-    atr_ = apply_offset(atr_, offset, **kwargs)
-
-    # Name and Categorize it
     _props = f"_{length}_{atr_length}"
-    zg.name = f"ABER_ZG{_props}"
-    sg.name = f"ABER_SG{_props}"
-    xg.name = f"ABER_XG{_props}"
-    atr_.name = f"ABER_ATR{_props}"
-    zg.category = sg.category = "volatility"
-    xg.category = atr_.category = zg.category
-
-    # Prepare DataFrame to return
-    data = {zg.name: zg, sg.name: sg, xg.name: xg, atr_.name: atr_}
-    aberdf = DataFrame(data)
-    aberdf.name = f"ABER{_props}"
-    aberdf.category = zg.category
-
-    return aberdf
+    return _build_dataframe(
+        {
+            f"ABER_ZG{_props}": zg,
+            f"ABER_SG{_props}": sg,
+            f"ABER_XG{_props}": xg,
+            f"ABER_ATR{_props}": atr_,
+        },
+        f"ABER{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 aberration.__doc__ = """Aberration

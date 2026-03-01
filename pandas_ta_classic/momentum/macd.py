@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_offset, get_offset, signals, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, signals, verify_series
 
 
 def macd(
@@ -50,24 +50,20 @@ def macd(
         signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
-    # Offset
-    macd = apply_offset(macd, offset, **kwargs)
-    histogram = apply_offset(histogram, offset, **kwargs)
-    signalma = apply_offset(signalma, offset, **kwargs)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _asmode = "AS" if as_mode else ""
     _props = f"_{fast}_{slow}_{signal}"
-    macd.name = f"MACD{_asmode}{_props}"
-    histogram.name = f"MACD{_asmode}h{_props}"
-    signalma.name = f"MACD{_asmode}s{_props}"
-    macd.category = histogram.category = signalma.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {macd.name: macd, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"MACD{_asmode}{_props}"
-    df.category = macd.category
+    df = _build_dataframe(
+        {
+            f"MACD{_asmode}{_props}": macd,
+            f"MACD{_asmode}h{_props}": histogram,
+            f"MACD{_asmode}s{_props}": signalma,
+        },
+        f"MACD{_asmode}{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:

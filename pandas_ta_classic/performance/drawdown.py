@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import log as nplog
 from numpy import seterr
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def drawdown(
@@ -28,24 +28,14 @@ def drawdown(
     dd_log = nplog(max_close) - nplog(close)
     seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
 
-    # Offset
-    dd = apply_offset(dd, offset, **kwargs)
-    dd_pct = apply_offset(dd_pct, offset, **kwargs)
-    dd_log = apply_offset(dd_log, offset, **kwargs)
-
-    # Name and Categorize it
-    dd.name = "DD"
-    dd_pct.name = f"{dd.name}_PCT"
-    dd_log.name = f"{dd.name}_LOG"
-    dd.category = dd_pct.category = dd_log.category = "performance"
-
-    # Prepare DataFrame to return
-    data = {dd.name: dd, dd_pct.name: dd_pct, dd_log.name: dd_log}
-    df = DataFrame(data)
-    df.name = dd.name
-    df.category = dd.category
-
-    return df
+    # Offset + Name + Category + DataFrame
+    return _build_dataframe(
+        {"DD": dd, "DD_PCT": dd_pct, "DD_LOG": dd_log},
+        "DD",
+        "performance",
+        offset,
+        **kwargs,
+    )
 
 
 drawdown.__doc__ = """Drawdown (DD)

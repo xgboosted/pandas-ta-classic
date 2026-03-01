@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import sqrt as npSqrt
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def hwc(
@@ -80,40 +80,12 @@ def hwc(
         hwc_width = Series(chan_width_arr, index=close.index)
         hwc_pctwidth = Series(chan_pct_arr, index=close.index)
 
-    # Offset
-    hwc = apply_offset(hwc, offset, **kwargs)
-    hwc_upper = apply_offset(hwc_upper, offset, **kwargs)
-    hwc_lower = apply_offset(hwc_lower, offset, **kwargs)
-
-    # Name and Categorize it
-    # suffix = f'{str(na).replace(".", "")}-{str(nb).replace(".", "")}-{str(nc).replace(".", "")}'
-    hwc.name = "HWM"
-    hwc_upper.name = "HWU"
-    hwc_lower.name = "HWL"
-    hwc.category = hwc_upper.category = hwc_lower.category = "volatility"
+    series_map = {"HWM": hwc, "HWU": hwc_upper, "HWL": hwc_lower}
     if channel_eval:
-        hwc_width.name = "HWW"
-        hwc_pctwidth.name = "HWPCT"
+        series_map["HWW"] = hwc_width
+        series_map["HWPCT"] = hwc_pctwidth
 
-    # Prepare DataFrame to return
-    if channel_eval:
-        data = {
-            hwc.name: hwc,
-            hwc_upper.name: hwc_upper,
-            hwc_lower.name: hwc_lower,
-            hwc_width.name: hwc_width,
-            hwc_pctwidth.name: hwc_pctwidth,
-        }
-        df = DataFrame(data)
-        df.name = "HWC"
-        df.category = hwc.category
-    else:
-        data = {hwc.name: hwc, hwc_upper.name: hwc_upper, hwc_lower.name: hwc_lower}
-        df = DataFrame(data)
-        df.name = "HWC"
-        df.category = hwc.category
-
-    return df
+    return _build_dataframe(series_map, "HWC", "volatility", offset, **kwargs)
 
 
 hwc.__doc__ = """HWC (Holt-Winter Channel)

@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_offset,
     non_zero_range,
     verify_series,
@@ -51,23 +51,15 @@ def stoch(
     if stoch_d is None:
         return None
 
-    # Offset
-    stoch_k = apply_offset(stoch_k, offset, **kwargs)
-    stoch_d = apply_offset(stoch_d, offset, **kwargs)
-
-    # Name and Categorize it
-    _name = "STOCH"
+    # Offset + Name + Category + DataFrame
     _props = f"_{k}_{d}_{smooth_k}"
-    stoch_k.name = f"{_name}k{_props}"
-    stoch_d.name = f"{_name}d{_props}"
-    stoch_k.category = stoch_d.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stoch_k.name: stoch_k, stoch_d.name: stoch_d}
-    df = DataFrame(data)
-    df.name = f"{_name}{_props}"
-    df.category = stoch_k.category
-    return df
+    return _build_dataframe(
+        {f"STOCHk{_props}": stoch_k, f"STOCHd{_props}": stoch_d},
+        f"STOCH{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 stoch.__doc__ = """Stochastic (STOCH)

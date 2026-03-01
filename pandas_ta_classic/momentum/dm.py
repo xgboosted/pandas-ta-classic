@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
-    apply_offset,
+    _build_dataframe,
     get_drift,
     get_offset,
     verify_series,
@@ -57,23 +57,15 @@ def dm(
         if pos is None or neg is None:
             return None
 
-    # Offset
-    pos = apply_offset(pos, offset, **kwargs)
-    neg = apply_offset(neg, offset, **kwargs)
-
+    # Offset + Name + Category + DataFrame
     _params = f"_{length}"
-    data = {
-        f"DMP{_params}": pos,
-        f"DMN{_params}": neg,
-    }
-
-    dmdf = DataFrame(data)
-    # print(dmdf.head(20))
-    # print()
-    dmdf.name = f"DM{_params}"
-    dmdf.category = "trend"
-
-    return dmdf
+    return _build_dataframe(
+        {f"DMP{_params}": pos, f"DMN{_params}": neg},
+        f"DM{_params}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 dm.__doc__ = """Directional Movement (DM)
