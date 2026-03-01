@@ -313,6 +313,11 @@ class AnalysisIndicators:
     def __init__(self, pandas_obj):
         self._validate(pandas_obj)
         self._df = pandas_obj
+        attrs = pandas_obj.attrs
+        self._adjusted = attrs.get("_ta_adjusted", None)
+        self._cores = attrs.get("_ta_cores", cpu_count())
+        self._exchange = attrs.get("_ta_exchange", "NYSE")
+        self._time_range = attrs.get("_ta_time_range", "years")
         self._last_run = get_time(self._exchange, to_string=True)
 
     @staticmethod
@@ -368,6 +373,7 @@ class AnalysisIndicators:
             self._adjusted = value
         else:
             self._adjusted = None
+        self._df.attrs["_ta_adjusted"] = self._adjusted
 
     @property
     def cores(self) -> int:
@@ -382,6 +388,7 @@ class AnalysisIndicators:
             self._cores = int(value) if 0 <= value <= cpus else cpus
         else:
             self._cores = cpus
+        self._df.attrs["_ta_cores"] = self._cores
 
     @property
     def exchange(self) -> str:
@@ -393,6 +400,7 @@ class AnalysisIndicators:
         """property: df.ta.exchange = "LSE" """
         if value is not None and isinstance(value, str) and value in EXCHANGE_TZ.keys():
             self._exchange = value
+            self._df.attrs["_ta_exchange"] = self._exchange
 
     @property
     def last_run(self) -> Optional[str]:
@@ -430,6 +438,7 @@ class AnalysisIndicators:
             self._time_range = value
         else:
             self._time_range = "years"
+        self._df.attrs["_ta_time_range"] = self._time_range
 
     @property
     def to_utc(self) -> None:
