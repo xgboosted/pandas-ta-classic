@@ -22,6 +22,11 @@ class TestStrategy(TestCase):
         s = Strategy(name="Empty", ta=[])
         self.assertEqual(s.total_ta(), 0)
 
+    def test_strategy_invalid_name(self):
+        # name=None triggers the error branch in __post_init__
+        s = Strategy(name=None, ta=[{"kind": "sma"}])
+        # __post_init__ logs error and returns None (no crash)
+
 
 class TestAnalysisIndicators(TestCase):
     @classmethod
@@ -251,3 +256,258 @@ class TestAnalysisIndicators(TestCase):
         df = DataFrame({"a": [1, 2], "b": [3, 4]})
         frag = AnalysisIndicators._build_append_fragment(df, col_names=("x",))
         self.assertIsNone(frag)
+
+    def test_build_append_fragment_str_col_names(self):
+        # col_names as string (not tuple) should be auto-wrapped
+        s = Series([1, 2, 3], name="test")
+        frag = AnalysisIndicators._build_append_fragment(s, col_names="renamed")
+        self.assertIsInstance(frag, DataFrame)
+        self.assertIn("renamed", frag.columns)
+
+    def test_call_version(self):
+        df = self.data.copy()
+        df.ta(version=True)
+
+    def test_get_column_adjusted(self):
+        df = self.data.copy()
+        df.ta.adjusted = "close"
+        result = df.ta._get_column(None)
+        pd.testing.assert_series_equal(result, df["close"])
+
+    def test_get_column_case_insensitive(self):
+        # DataFrame with uppercase column names
+        df = self.data.copy()
+        df.columns = df.columns.str.upper()
+        result = df.ta._get_column("close")
+        # Should fuzzy-match "CLOSE"
+        self.assertIsNotNone(result)
+
+    def test_post_process_col_numbers(self):
+        df = self.data.copy()
+        result_df = df.ta(kind="bbands", talib=False)
+        # Now test col_numbers selection
+        result = df.ta._post_process(result_df, col_numbers=(0, 2))
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(len(result.columns), 2)
+
+    def test_post_process_prefix_suffix(self):
+        df = self.data.copy()
+        result = df.ta(kind="sma")
+        processed = df.ta._post_process(result, prefix="MY", suffix="END")
+        self.assertIn("MY_", processed.name)
+        self.assertIn("_END", processed.name)
+
+    def test_strategy_verbose_timed(self):
+        df = self.data.copy()
+        df.ta.strategy("statistics", verbose=True, timed=True, append=True)
+        self.assertGreater(len(df.columns), 5)
+
+    def test_strategy_returns(self):
+        df = self.data.copy()
+        result = df.ta.strategy("statistics", returns=True)
+        self.assertIsInstance(result, DataFrame)
+
+    def test_strategy_custom_col_names(self):
+        df = self.data.copy()
+        s = Strategy(
+            name="Custom",
+            ta=[
+                {"kind": "sma", "length": 10, "col_names": ("MySMA10",)},
+            ],
+        )
+        df.ta.cores = 0
+        df.ta.strategy(s, append=True)
+        self.assertIn("MySMA10", df.columns)
+
+    def test_strategy_custom_verbose_no_mp(self):
+        df = self.data.copy()
+        s = Strategy(
+            name="Custom",
+            ta=[{"kind": "sma", "length": 10}],
+        )
+        df.ta.cores = 0
+        df.ta.strategy(s, verbose=True, append=True)
+
+    def test_strategy_mode_category_strategy_obj(self):
+        df = self.data.copy()
+        # ta must not be None (that triggers "all" mode)
+        s = Strategy(name="statistics", ta=[{"kind": "stdev"}])
+        name, mode = df.ta._strategy_mode(s)
+        self.assertTrue(mode["category"])
+
+    def test_strategy_custom_length_too_big(self):
+        df = self.data.copy()
+        s = Strategy(
+            name="LengthTest",
+            ta=[
+                {"kind": "sma", "length": 10},
+                {"kind": "sma", "length": 999999},
+            ],
+        )
+        df.ta.strategy(s, append=True)
+
+    def test_strategy_ordered_false(self):
+        df = self.data.copy()
+        df.ta.strategy("statistics", ordered=False, append=True)
+        self.assertGreater(len(df.columns), 5)
+
+    def test_append_via_accessor(self):
+        df = self.data.copy()
+        df.ta.sma(length=10, append=True)
+        self.assertIn("SMA_10", df.columns)
+
+    def test_accessor_inertia(self):
+        df = self.data.copy()
+        result = df.ta.inertia()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_inertia_refined(self):
+        df = self.data.copy()
+        result = df.ta.inertia(refined=True)
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_psl(self):
+        df = self.data.copy()
+        result = df.ta.psl()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_psl_with_open(self):
+        df = self.data.copy()
+        result = df.ta.psl(open_=df["open"])
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_ichimoku(self):
+        df = self.data.copy()
+        result = df.ta.ichimoku()
+        self.assertIsInstance(result, DataFrame)
+
+    def test_accessor_vwap(self):
+        df = self.data.copy()
+        result = df.ta.vwap()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_psar(self):
+        df = self.data.copy()
+        result = df.ta.psar()
+        self.assertIsInstance(result, DataFrame)
+
+    def test_accessor_tsignals(self):
+        df = self.data.copy()
+        trend = df["close"] > pandas_ta.sma(df["close"], length=50)
+        result = df.ta.tsignals(trend=trend)
+        self.assertIsInstance(result, DataFrame)
+
+    def test_accessor_tsignals_none(self):
+        df = self.data.copy()
+        result = df.ta.tsignals()
+        self.assertIsNone(result)
+
+    def test_accessor_xsignals(self):
+        df = self.data.copy()
+        signal = pandas_ta.rsi(df["close"])
+        result = df.ta.xsignals(signal=signal, xa=70, xb=30)
+        self.assertIsInstance(result, DataFrame)
+
+    def test_accessor_xsignals_none(self):
+        df = self.data.copy()
+        result = df.ta.xsignals()
+        self.assertIsNone(result)
+
+    def test_accessor_long_run_none(self):
+        df = self.data.copy()
+        result = df.ta.long_run()
+        self.assertIsNone(result)
+
+    def test_accessor_short_run_none(self):
+        df = self.data.copy()
+        result = df.ta.short_run()
+        self.assertIsNone(result)
+
+    def test_accessor_ad(self):
+        df = self.data.copy()
+        result = df.ta.ad()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_ad_with_open(self):
+        df = self.data.copy()
+        result = df.ta.ad(open_=df["open"])
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_adosc(self):
+        df = self.data.copy()
+        result = df.ta.adosc()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_adosc_with_open(self):
+        df = self.data.copy()
+        result = df.ta.adosc(open_=df["open"])
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_cmf(self):
+        df = self.data.copy()
+        result = df.ta.cmf()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_cmf_with_open(self):
+        df = self.data.copy()
+        result = df.ta.cmf(open_=df["open"])
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_above(self):
+        df = self.data.copy()
+        sma = pandas_ta.sma(df["close"], length=50)
+        df["a"] = df["close"]
+        df["b"] = sma
+        result = df.ta.above()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_below(self):
+        df = self.data.copy()
+        sma = pandas_ta.sma(df["close"], length=50)
+        df["a"] = df["close"]
+        df["b"] = sma
+        result = df.ta.below()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_above_value(self):
+        df = self.data.copy()
+        df["a"] = df["close"]
+        result = df.ta.above_value(value=100.0)
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_below_value(self):
+        df = self.data.copy()
+        df["a"] = df["close"]
+        result = df.ta.below_value(value=100.0)
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_cross(self):
+        df = self.data.copy()
+        sma = pandas_ta.sma(df["close"], length=50)
+        df["a"] = df["close"]
+        df["b"] = sma
+        result = df.ta.cross()
+        self.assertIsInstance(result, Series)
+
+    def test_accessor_cross_value(self):
+        df = self.data.copy()
+        df["a"] = df["close"]
+        result = df.ta.cross_value(value=100.0)
+        self.assertIsInstance(result, Series)
+
+    def test_strategy_custom_with_params(self):
+        df = self.data.copy()
+        s = Strategy(
+            name="Params",
+            ta=[{"kind": "sma", "params": (10,)}],
+        )
+        df.ta.strategy(s, append=True)
+
+    def test_append_with_pending(self):
+        df = self.data.copy()
+        # Simulate deferred append mode
+        df.ta._pending_appends = []
+        result = pandas_ta.sma(df["close"], length=10)
+        df.ta._append(result=result, append=True)
+        self.assertEqual(len(df.ta._pending_appends), 1)
+        df.ta._pending_appends = None

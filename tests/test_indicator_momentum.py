@@ -881,3 +881,65 @@ class TestMomentum(TestCase):
             self.volume,
             expected_cols=["VWMACD_12_26_9", "VWMACDh_12_26_9", "VWMACDs_12_26_9"],
         )
+
+    # -- Parameter-variant tests --
+
+    def test_td_seq_show_all_false(self):
+        result = pandas_ta.td_seq(self.close, show_all=False)
+        self.assertIsInstance(result, DataFrame)
+        assert_columns(self, result, ["TD_SEQ_UP", "TD_SEQ_DN"])
+
+    def test_td_seq_asint(self):
+        result = pandas_ta.td_seq(self.close, asint=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertTrue(result["TD_SEQ_UPa"].dtype in ("int32", "int64"))
+        self.assertTrue(result["TD_SEQ_DNa"].dtype in ("int32", "int64"))
+
+    def test_er_signal_indicators(self):
+        result = pandas_ta.er(self.close, signal_indicators=True)
+        self.assertIsInstance(result, DataFrame)
+        # Should have the ER column plus signal columns
+        self.assertIn("ER_10", result.columns)
+        self.assertGreater(len(result.columns), 1)
+
+    def test_inertia_refined(self):
+        result = pandas_ta.inertia(
+            self.close, high=self.high, low=self.low, refined=True
+        )
+        self.assertIsInstance(result, Series)
+        self.assertIn("r", result.name)
+
+    def test_inertia_thirds(self):
+        result = pandas_ta.inertia(
+            self.close, high=self.high, low=self.low, thirds=True
+        )
+        self.assertIsInstance(result, Series)
+        self.assertIn("t", result.name)
+
+    def test_inertia_refined_no_hl(self):
+        # refined=True without high/low should return None
+        result = pandas_ta.inertia(self.close, refined=True)
+        self.assertIsNone(result)
+
+    def test_macd_signal_indicators(self):
+        result = pandas_ta.macd(self.close, signal_indicators=True, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        # Should have MACD + histogram + signal + signal indicator columns
+        self.assertGreater(len(result.columns), 3)
+
+    def test_macd_asmode(self):
+        result = pandas_ta.macd(self.close, asmode=True, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("MACDAS_12_26_9", result.columns)
+
+    def test_rsi_signal_indicators(self):
+        result = pandas_ta.rsi(self.close, signal_indicators=True, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("RSI_14", result.columns)
+        self.assertGreater(len(result.columns), 1)
+
+    def test_rsx_signal_indicators(self):
+        result = pandas_ta.rsx(self.close, signal_indicators=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("RSX_14", result.columns)
+        self.assertGreater(len(result.columns), 1)

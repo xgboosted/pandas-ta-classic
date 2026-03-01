@@ -252,3 +252,10 @@ class TestVolatility(TestCase):
         result = pandas_ta.hwc(self.close, channel_eval=True)
         self.assertIsInstance(result, DataFrame)
         assert_columns(self, result, ["HWM", "HWU", "HWL", "HWW", "HWPCT"])
+
+    def test_atr_percent(self):
+        result = pandas_ta.atr(
+            self.high, self.low, self.close, percent=True, talib=False
+        )
+        self.assertIsInstance(result, Series)
+        self.assertIn("p", result.name)  # name ends with 'p' for percent

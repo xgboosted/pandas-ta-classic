@@ -123,3 +123,17 @@ class TestCandle(TestCase):
             self.close,
             expected_cols=["open_Z_30_1", "high_Z_30_1", "low_Z_30_1", "close_Z_30_1"],
         )
+
+    def test_cdl_z_full(self):
+        result = pandas_ta.cdl_z(self.open, self.high, self.low, self.close, full=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "CDL_Za")
+        assert_columns(self, result, ["open_Za", "high_Za", "low_Za", "close_Za"])
+        # full=True uses bfill, so no NaNs should remain
+        self.assertEqual(result.isna().sum().sum(), 0)
+
+    def test_cdl_pattern_invalid_name(self):
+        result = pandas_ta.cdl_pattern(
+            self.open, self.high, self.low, self.close, name="nonexistent"
+        )
+        self.assertIsNone(result)

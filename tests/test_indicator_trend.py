@@ -332,6 +332,27 @@ class TestTrend(TestCase):
         )
         self.assertGreater(corr, 0.98)
 
+    def test_tsignals_asbool(self):
+        trend = self.close > pandas_ta.sma(self.close, length=50)
+        result = pandas_ta.tsignals(trend, asbool=True)
+        self.assertIsInstance(result, DataFrame)
+        assert_columns(
+            self, result, ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
+        )
+        # asbool=True converts Trends, Entries, Exits to bool dtype
+        self.assertTrue(result["TS_Trends"].dtype == "bool")
+        self.assertTrue(result["TS_Entries"].dtype == "bool")
+        self.assertTrue(result["TS_Exits"].dtype == "bool")
+
+    def test_dpo_lookahead_false(self):
+        result = pandas_ta.dpo(self.close, lookahead=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "DPO_20")
+        # lookahead=False forces centered=False, which means no backward shift;
+        # result should differ from default centered=True
+        result_default = pandas_ta.dpo(self.close)
+        self.assertFalse(result.equals(result_default))
+
     def test_xsignals(self):
         # Create simple signal series for testing
         signal = pandas_ta.rsi(self.close)
