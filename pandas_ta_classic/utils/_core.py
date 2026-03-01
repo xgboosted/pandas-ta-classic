@@ -124,6 +124,11 @@ def unsigned_differences(
     return positive, negative
 
 
+def _get_tal_mode(talib: Any) -> bool:
+    """Return True unless *talib* is explicitly ``False``."""
+    return bool(talib) if isinstance(talib, bool) else True
+
+
 def _get_min_periods(kwargs: dict, default: int, key: str = "min_periods") -> int:
     """Extract min_periods from kwargs, defaulting to *default*."""
     v = kwargs.get(key)

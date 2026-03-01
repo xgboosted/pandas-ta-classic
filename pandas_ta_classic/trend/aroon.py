@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _build_dataframe,
     get_offset,
     recent_maximum_index,
@@ -28,7 +29,7 @@ def aroon(
     high = verify_series(high, length)
     low = verify_series(low, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None:
         return None

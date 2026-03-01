@@ -5,6 +5,7 @@ from pandas import DataFrame, Series, concat
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.rma import rma
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     apply_offset,
     get_drift,
     get_offset,
@@ -29,7 +30,7 @@ def rsi(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None

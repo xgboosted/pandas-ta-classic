@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _finalize,
     apply_offset,
     get_offset,
@@ -24,7 +25,7 @@ def obv(
     close = verify_series(close)
     volume = verify_series(volume)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None or volume is None:
         return None

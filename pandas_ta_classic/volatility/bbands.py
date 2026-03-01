@@ -6,6 +6,7 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics import stdev
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _build_dataframe,
     get_offset,
     non_zero_range,
@@ -32,7 +33,7 @@ def bbands(
     ddof = int(ddof) if ddof >= 0 and ddof < length else 1
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None

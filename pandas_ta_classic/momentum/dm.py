@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _build_dataframe,
     get_drift,
     get_offset,
@@ -31,7 +32,7 @@ def dm(
     low = verify_series(low)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None:
         return None

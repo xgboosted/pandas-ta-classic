@@ -7,6 +7,7 @@ from pandas import concat, Series
 npNaN = np.nan
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _finalize,
     apply_offset,
     get_drift,
@@ -32,7 +33,7 @@ def true_range(
     close = verify_series(close)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None

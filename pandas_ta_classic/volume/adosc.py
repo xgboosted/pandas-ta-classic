@@ -5,7 +5,7 @@ from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def adosc(
@@ -32,7 +32,7 @@ def adosc(
     offset = get_offset(offset)
     if "length" in kwargs:
         kwargs.pop("length")
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None or volume is None:
         return None

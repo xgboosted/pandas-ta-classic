@@ -5,6 +5,7 @@ from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _swap_fast_slow,
     _finalize,
     get_offset,
@@ -30,7 +31,7 @@ def apo(
     close = verify_series(close, max(fast, slow))
     mamode = mamode if isinstance(mamode, str) else "sma"
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None

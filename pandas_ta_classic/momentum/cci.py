@@ -6,7 +6,7 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.statistics import mad, stdev
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def cci(
@@ -27,7 +27,7 @@ def cci(
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None

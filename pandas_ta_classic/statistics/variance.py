@@ -7,6 +7,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _get_min_periods,
     _finalize,
     apply_offset,
@@ -31,7 +32,7 @@ def variance(
     min_periods = _get_min_periods(kwargs, length)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None

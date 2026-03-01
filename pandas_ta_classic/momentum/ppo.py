@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
+    _get_tal_mode,
     _swap_fast_slow,
     _build_dataframe,
     get_offset,
@@ -34,7 +35,7 @@ def ppo(
     fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None

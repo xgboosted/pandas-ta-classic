@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 from .sma import sma
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import _finalize, get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def trima(
@@ -20,7 +20,7 @@ def trima(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
