@@ -37,7 +37,7 @@ def tsignals(
     offset = get_offset(offset)
 
     # Calculate Result
-    trends = trend.astype(int)
+    trends = trend.fillna(0).astype(int)
     trades = trends.diff(drift).shift(trade_offset).fillna(0).astype(int)
     entries = (trades > 0).astype(int)
     exits = (trades < 0).abs().astype(int)

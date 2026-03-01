@@ -27,7 +27,7 @@ def bbands(
 ) -> Optional[DataFrame]:
     """Indicator: Bollinger Bands (BBANDS)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 5
+    length = int(length) if length and length > 1 else 5
     std = float(std) if std and std > 0 else 2.0
     mamode = mamode if isinstance(mamode, str) else "sma"
     ddof = int(ddof) if ddof >= 0 and ddof < length else 1
@@ -45,6 +45,8 @@ def bbands(
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))
     else:
         standard_deviation = stdev(close=close, length=length, ddof=ddof)
+        if standard_deviation is None:
+            return None
         deviations = std * standard_deviation
         # deviations = std * standard_deviation.loc[standard_deviation.first_valid_index():,]
 

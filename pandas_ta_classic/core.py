@@ -1185,7 +1185,7 @@ class AnalysisIndicators:
 
     def long_run(self, fast=None, slow=None, length=None, offset=None, **kwargs):
         if fast is None and slow is None:
-            return self._df
+            return None
         else:
             result = long_run(
                 fast=fast, slow=slow, length=length, offset=offset, **kwargs
@@ -1194,7 +1194,7 @@ class AnalysisIndicators:
 
     def short_run(self, fast=None, slow=None, length=None, offset=None, **kwargs):
         if fast is None and slow is None:
-            return self._df
+            return None
         else:
             result = short_run(
                 fast=fast, slow=slow, length=length, offset=offset, **kwargs
@@ -1229,7 +1229,7 @@ class AnalysisIndicators:
         **kwargs,
     ):
         if trend is None:
-            return self._df
+            return None
         else:
             result = tsignals(
                 trend,
@@ -1255,7 +1255,7 @@ class AnalysisIndicators:
         **kwargs,
     ):
         if signal is None:
-            return self._df
+            return None
         else:
             result = xsignals(
                 signal=signal,
