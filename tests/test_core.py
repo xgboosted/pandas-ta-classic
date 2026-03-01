@@ -506,8 +506,8 @@ class TestAnalysisIndicators(TestCase):
     def test_append_with_pending(self):
         df = self.data.copy()
         # Simulate deferred append mode
-        df.ta._pending_appends = []
+        df.ta.pending_appends = []
         result = pandas_ta.sma(df["close"], length=10)
         df.ta._append(result=result, append=True)
-        self.assertEqual(len(df.ta._pending_appends), 1)
-        df.ta._pending_appends = None
+        self.assertEqual(len(df.ta.pending_appends), 1)
+        df.ta.pending_appends = None

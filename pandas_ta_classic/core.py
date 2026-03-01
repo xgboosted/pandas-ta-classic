@@ -318,6 +318,7 @@ class AnalysisIndicators:
         self._cores = attrs.get("_ta_cores", cpu_count())
         self._exchange = attrs.get("_ta_exchange", "NYSE")
         self._time_range = attrs.get("_ta_time_range", "years")
+        self._pending_appends = attrs.get("_ta_pending_appends", None)
         self._last_run = get_time(self._exchange, to_string=True)
 
     @staticmethod
@@ -389,6 +390,16 @@ class AnalysisIndicators:
         else:
             self._cores = cpus
         self._df.attrs["_ta_cores"] = self._cores
+
+    @property
+    def pending_appends(self) -> Optional[List[pd.DataFrame]]:
+        """Deferred append buffer used during strategy execution."""
+        return self._pending_appends
+
+    @pending_appends.setter
+    def pending_appends(self, value: Optional[List[pd.DataFrame]]) -> None:
+        self._pending_appends = value
+        self._df.attrs["_ta_pending_appends"] = value
 
     @property
     def exchange(self) -> str:
@@ -512,8 +523,8 @@ class AnalysisIndicators:
                 if fragment is None:
                     return
 
-                if self._pending_appends is not None:
-                    self._pending_appends.append(fragment)
+                if self.pending_appends is not None:
+                    self.pending_appends.append(fragment)
                 else:
                     with catch_warnings():
                         simplefilter(
@@ -829,7 +840,7 @@ class AnalysisIndicators:
         # Custom mode stays immediate so chained indicators can reference
         # columns produced by earlier ones.
         if not mode["custom"]:
-            self._pending_appends: List[pd.DataFrame] = []
+            self.pending_appends = []
 
         if use_multiprocessing:
             _total_ta = len(ta)
@@ -902,7 +913,7 @@ class AnalysisIndicators:
                             )  # Speed over Order
                 if results is None:
                     logger.error("[X] ta.strategy('%s') has no results.", name)
-                    self._pending_appends = None
+                    self.pending_appends = None
                     return
 
                 # Consume the lazy iterator while the pool is still alive.
@@ -954,15 +965,15 @@ class AnalysisIndicators:
 
         # Flush deferred appends for all/category modes.
         if not mode["custom"]:
-            if self._pending_appends:
-                new_df = pd.concat([self._df] + self._pending_appends, axis=1)
+            if self.pending_appends:
+                new_df = pd.concat([self._df] + self.pending_appends, axis=1)
                 # Swap the internal block manager so the original DataFrame
                 # object is updated in-place (external references like user
                 # variables keep working).
                 self._df._mgr = new_df._mgr
                 if hasattr(self._df, "_item_cache"):
                     self._df._item_cache.clear()
-            self._pending_appends = None
+            self.pending_appends = None
 
         if verbose:
             logger.info("[i] Total indicators: %d", len(ta))
