@@ -42,7 +42,7 @@ def np_rolling_moments(
     """
     from numpy.lib.stride_tricks import sliding_window_view
 
-    arr = values.astype(np.float64)
+    arr: np.ndarray = values.astype(np.float64)
     windows = sliding_window_view(arr, length)
     mean = windows.mean(axis=1, keepdims=True)
     dev = windows - mean
@@ -50,7 +50,7 @@ def np_rolling_moments(
     results: List[npNdArray] = []
     for k in orders:
         mk = (dev**k).sum(axis=1)
-        out = np.empty(len(arr), dtype=np.float64)
+        out: np.ndarray = np.empty(len(arr), dtype=np.float64)
         out[: length - 1] = np.nan
         out[length - 1 :] = mk
         results.append(out)

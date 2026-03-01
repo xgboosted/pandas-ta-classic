@@ -30,7 +30,7 @@ def td_seq(
         # Vectorised consecutive-True streak, capped at 13 (equivalent to
         # rolling(13, min_periods=0).apply(true_sequence_count))
         n = len(bool_arr)
-        streak = np.zeros(n, dtype=float)
+        streak: np.ndarray = np.zeros(n, dtype=float)
         for i in range(1, n):
             if bool_arr[i]:
                 streak[i] = streak[i - 1] + 1 if streak[i - 1] < 13 else 13

@@ -35,7 +35,7 @@ def median(
     windows = sliding_window_view(values, length)
     med = np.median(windows, axis=1)
 
-    result = np.empty(len(values), dtype=np.float64)
+    result: np.ndarray = np.empty(len(values), dtype=np.float64)
     result[: length - 1] = np.nan
     result[length - 1 :] = med
 

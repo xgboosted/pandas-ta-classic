@@ -37,7 +37,7 @@ def quantile(
     windows = sliding_window_view(values, length)
     qtl = np.quantile(windows, q, axis=1)
 
-    result = np.empty(len(values), dtype=np.float64)
+    result: np.ndarray = np.empty(len(values), dtype=np.float64)
     result[: length - 1] = np.nan
     result[length - 1 :] = qtl
 
