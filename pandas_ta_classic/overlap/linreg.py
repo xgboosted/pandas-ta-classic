@@ -67,7 +67,7 @@ def linreg(
         elif tsf:
             linreg_ = m_slopes * (length + 1) + bs
         else:
-            linreg_ = m_slopes * (length - 1) + bs
+            linreg_ = m_slopes * length + bs
 
     linreg = Series(
         np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
