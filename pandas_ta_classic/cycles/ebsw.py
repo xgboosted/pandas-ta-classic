@@ -39,37 +39,12 @@ def ebsw(
     c3 = -1 * a1 * a1
     c1 = 1 - c2 - c3
 
-    # Extract close to numpy array to avoid per-bar pandas indexing overhead.
-    c_arr = close.to_numpy()
-
-    lastClose = lastHP = 0.0
-    filt_p = 0.0  # FilterHist[1] — one bar back
-    filt_pp = 0.0  # FilterHist[0] — two bars back
-
     # Calculate Result
+    from pandas_ta_classic.utils._numba import _ebsw_loop
+
+    c_arr = close.to_numpy()
     m = close.size
-    result = np.full(m, npNaN)
-    result[length - 1] = 0.0
-    for i in range(length, m):
-        # HighPass filter cyclic components whose periods are shorter than Duration input
-        HP = 0.5 * (1 + alpha1) * (c_arr[i] - lastClose) + alpha1 * lastHP
-
-        # Smooth with a Super Smoother Filter from equation 3-3
-        Filt = c1 * (HP + lastHP) / 2 + c2 * filt_p + c3 * filt_pp
-
-        # 3 Bar average of Wave amplitude and power
-        Wave = (Filt + filt_p + filt_pp) / 3
-        Pwr = (Filt * Filt + filt_p * filt_p + filt_pp * filt_pp) / 3
-
-        # Normalize the Average Wave to Square Root of the Average Power
-        Wave = Wave / _sqrt(Pwr) if Pwr > 0 else 0.0
-
-        # update storage, result
-        filt_pp = filt_p
-        filt_p = Filt
-        lastHP = HP
-        lastClose = c_arr[i]
-        result[i] = Wave
+    result = _ebsw_loop(c_arr, m, length, alpha1, c1, c2, c3)
 
     ebsw = Series(result, index=close.index)
 

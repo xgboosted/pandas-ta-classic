@@ -14,6 +14,7 @@ from ._math import *
 from ._signals import *
 from ._time import *
 from ._metrics import *
+from ._numba import *
 from .data import *
 
 __all__ = [
@@ -81,6 +82,14 @@ __all__ = [
     "sharpe_ratio",
     "sortino_ratio",
     "volatility",
+    # _numba
+    "_rsx_loop",
+    "_jma_loop",
+    "_hwc_loop",
+    "_schaff_tc_loop",
+    "_schaff_tc_loop2",
+    "_ebsw_loop",
+    "_qqe_loop",
     # data
     "av",
     "yf",

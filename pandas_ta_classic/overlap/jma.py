@@ -26,14 +26,6 @@ def jma(
     if close is None:
         return None
 
-    # Define base variables
-    jma = npZeroslike(close)
-    volty = npZeroslike(close)
-    v_sum = npZeroslike(close)
-
-    kv = det0 = det1 = ma2 = 0.0
-    jma[0] = ma1 = uBand = lBand = close.iloc[0]
-
     # Static variables
     sum_length = 10
     length = 0.5 * (_length - 1)
@@ -43,55 +35,16 @@ def jma(
     length2 = length1 * _sqrt(length)
     bet = length2 / (length2 + 1)
     beta = 0.45 * (_length - 1) / (0.45 * (_length - 1) + 2.0)
-    # Precompute the r_volty ceiling (a constant that was re-evaluated every bar).
     r_volty_max = _pow(length1, 1 / pow1)
 
-    # Extract close to numpy array; maintain O(1) running window sum for
-    # avg_volty (replaces npAverage slice of up to 66 elements per bar).
+    # Calculate Result
+    from pandas_ta_classic.utils._numba import _jma_loop
+
     c_arr = close.to_numpy()
-    avg_volty_sum = v_sum[0]  # v_sum[0] == 0.0
-
     m = close.shape[0]
-    for i in range(1, m):
-        price = c_arr[i]
-
-        # Price volatility
-        del1 = price - uBand
-        del2 = price - lBand
-        volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0
-
-        # Relative price volatility factor
-        v_sum[i] = (
-            v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
-        )
-        # Incremental window sum over v_sum[max(i-65,0):i+1] (up to 66 bars).
-        avg_volty_sum += v_sum[i]
-        if i > 65:
-            avg_volty_sum -= v_sum[i - 66]
-        avg_volty_window = min(i + 1, 66)
-        avg_volty = avg_volty_sum / avg_volty_window
-        d_volty = 0 if avg_volty == 0 else volty[i] / avg_volty
-        r_volty = max(1.0, min(r_volty_max, d_volty))
-
-        # Jurik volatility bands — pow2 == power, compute once.
-        pow2 = _pow(r_volty, pow1)
-        kv = _pow(bet, _sqrt(pow2))
-        uBand = price if (del1 > 0) else price - (kv * del1)
-        lBand = price if (del2 < 0) else price - (kv * del2)
-
-        # Jurik Dynamic Factor
-        alpha = _pow(beta, pow2)
-
-        # 1st stage - prelimimary smoothing by adaptive EMA
-        ma1 = ((1 - alpha) * price) + (alpha * ma1)
-
-        # 2nd stage - one more prelimimary smoothing by Kalman filter
-        det0 = ((price - ma1) * (1 - beta)) + (beta * det0)
-        ma2 = ma1 + pr * det0
-
-        # 3rd stage - final smoothing by unique Jurik adaptive filter
-        det1 = ((ma2 - jma[i - 1]) * (1 - alpha) * (1 - alpha)) + (alpha * alpha * det1)
-        jma[i] = jma[i - 1] + det1
+    jma = _jma_loop(
+        c_arr, m, sum_length, length, pr, length1, pow1, bet, beta, r_volty_max
+    )
 
     # Remove initial lookback data and convert to pandas frame
     jma[0 : _length - 1] = npNaN

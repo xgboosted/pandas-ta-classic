@@ -31,45 +31,21 @@ def hwc(
     if close is None:
         return None
 
-    # Calculate Result — extract close to numpy to avoid per-bar pandas overhead.
+    # Calculate Result
     from numpy import empty as npEmpty
+    from pandas_ta_classic.utils._numba import _hwc_loop
 
     m = close.size
     c_arr = close.to_numpy()
-    last_a = last_v = last_var = 0.0
-    last_f = last_price = last_result = c_arr[0]
-    result_arr = npEmpty(m)
-    upper_arr = npEmpty(m)
-    lower_arr = npEmpty(m)
+    result_arr, upper_arr, lower_arr = _hwc_loop(c_arr, m, na, nb, nc, nd, scalar)
+
     if channel_eval:
         chan_width_arr = npEmpty(m)
         chan_pct_arr = npEmpty(m)
-
-    for i in range(m):
-        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * c_arr[i]
-        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
-        A = (1.0 - nc) * last_a + nc * (V - last_v)
-        result_arr[i] = F + V + 0.5 * A
-
-        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
-            last_price - last_result
-        )
-        stddev = _sqrt(last_var)
-        upper_arr[i] = result_arr[i] + scalar * stddev
-        lower_arr[i] = result_arr[i] - scalar * stddev
-
-        if channel_eval:
+        for i in range(m):
             width = upper_arr[i] - lower_arr[i]
             chan_width_arr[i] = width
             chan_pct_arr[i] = (c_arr[i] - lower_arr[i]) / width if width != 0 else 0.5
-
-        # update values
-        last_price = c_arr[i]
-        last_a = A
-        last_f = F
-        last_v = V
-        last_var = var
-        last_result = result_arr[i]
 
     # Aggregate
     hwc = Series(result_arr, index=close.index)

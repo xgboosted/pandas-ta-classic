@@ -31,95 +31,12 @@ def rsx(
     if close is None:
         return None
 
-    # variables
-    vC: float = 0
-    v1C: float = 0
-    v4: float = 0
-    v8: float = 0
-    v10: float = 0
-    v14: float = 0
-    v18: float = 0
-    v20: float = 0
-
-    f0: float = 0
-    f8: float = 0
-    f10: float = 0
-    f18: float = 0
-    f20: float = 0
-    f28: float = 0
-    f30: float = 0
-    f38: float = 0
-    f40: float = 0
-    f48: float = 0
-    f50: float = 0
-    f58: float = 0
-    f60: float = 0
-    f68: float = 0
-    f70: float = 0
-    f78: float = 0
-    f80: float = 0
-    f88: float = 0
-    f90: float = 0
-
-    # Extract close to numpy to avoid per-bar pandas indexing overhead.
-    c_arr = close.to_numpy()
-
     # Calculate Result
+    from pandas_ta_classic.utils._numba import _rsx_loop
+
+    c_arr = close.to_numpy()
     m = close.size
-    result = np.full(m, npNaN)
-    result[length - 1] = 0.0
-    for i in range(length, m):
-        if f90 == 0:
-            f90 = 1.0
-            f0 = 0.0
-            if length - 1.0 >= 5:
-                f88 = length - 1.0
-            else:
-                f88 = 5.0
-            f8 = 100.0 * c_arr[i]
-            f18 = 3.0 / (length + 2.0)
-            f20 = 1.0 - f18
-        else:
-            if f88 <= f90:
-                f90 = f88 + 1
-            else:
-                f90 = f90 + 1
-            f10 = f8
-            f8 = 100 * c_arr[i]
-            v8 = f8 - f10
-            f28 = f20 * f28 + f18 * v8
-            f30 = f18 * f28 + f20 * f30
-            vC = 1.5 * f28 - 0.5 * f30
-            f38 = f20 * f38 + f18 * vC
-            f40 = f18 * f38 + f20 * f40
-            v10 = 1.5 * f38 - 0.5 * f40
-            f48 = f20 * f48 + f18 * v10
-            f50 = f18 * f48 + f20 * f50
-            v14 = 1.5 * f48 - 0.5 * f50
-            f58 = f20 * f58 + f18 * abs(v8)
-            f60 = f18 * f58 + f20 * f60
-            v18 = 1.5 * f58 - 0.5 * f60
-            f68 = f20 * f68 + f18 * v18
-            f70 = f18 * f68 + f20 * f70
-            v1C = 1.5 * f68 - 0.5 * f70
-            f78 = f20 * f78 + f18 * v1C
-            f80 = f18 * f78 + f20 * f80
-            v20 = 1.5 * f78 - 0.5 * f80
-
-            if f88 >= f90 and f8 != f10:
-                f0 = 1.0
-            if f88 == f90 and f0 == 0.0:
-                f90 = 0.0
-
-        if f88 < f90 and v20 > 0.0000000001:
-            v4 = (v14 / v20 + 1.0) * 50.0
-            if v4 > 100.0:
-                v4 = 100.0
-            if v4 < 0.0:
-                v4 = 0.0
-        else:
-            v4 = 50.0
-        result[i] = v4
+    result = _rsx_loop(c_arr, length, m)
     rsx = Series(result, index=close.index)
 
     # Offset

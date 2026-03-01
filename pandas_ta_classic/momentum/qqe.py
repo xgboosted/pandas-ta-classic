@@ -69,55 +69,15 @@ def qqe(
     m = close.size
     idx = close.index
 
-    # Use raw numpy arrays for the iterative loop — avoids repeated pandas
-    # iloc overhead (~10x faster than Series.iloc[i] assignment in a loop).
+    from pandas_ta_classic.utils._numba import _qqe_loop
+
     rsi_arr = rsi_ma.to_numpy()
     ub_arr = upperband.to_numpy()
     lb_arr = lowerband.to_numpy()
 
-    long_arr = np.zeros(m)
-    short_arr = np.zeros(m)
-    trend_arr = np.ones(m)
-    qqe_arr = np.full(m, rsi_arr[0])
-    qqe_long_arr = np.full(m, npNaN)
-    qqe_short_arr = np.full(m, npNaN)
-
-    for i in range(1, m):
-        c_rsi, p_rsi = rsi_arr[i], rsi_arr[i - 1]
-        c_long, p_long = long_arr[i - 1], long_arr[i - 2]
-        c_short, p_short = short_arr[i - 1], short_arr[i - 2]
-
-        # Long Line
-        if p_rsi > c_long and c_rsi > c_long:
-            long_arr[i] = npMaximum(c_long, lb_arr[i])
-        else:
-            long_arr[i] = lb_arr[i]
-
-        # Short Line
-        if p_rsi < c_short and c_rsi < c_short:
-            short_arr[i] = npMinimum(c_short, ub_arr[i])
-        else:
-            short_arr[i] = ub_arr[i]
-
-        # Trend & QQE Calculation
-        # Long: Current RSI_MA value Crosses the Prior Short Line Value
-        # Short: Current RSI_MA Crosses the Prior Long Line Value
-        if (c_rsi > c_short and p_rsi < p_short) or (
-            c_rsi <= c_short and p_rsi >= p_short
-        ):
-            trend_arr[i] = 1
-            qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
-        elif (c_rsi > c_long and p_rsi < p_long) or (
-            c_rsi <= c_long and p_rsi >= p_long
-        ):
-            trend_arr[i] = -1
-            qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
-        else:
-            trend_arr[i] = trend_arr[i - 1]
-            if trend_arr[i] == 1:
-                qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
-            else:
-                qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
+    long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr = _qqe_loop(
+        rsi_arr, ub_arr, lb_arr, m
+    )
 
     long = Series(long_arr, index=idx)
     short = Series(short_arr, index=idx)
