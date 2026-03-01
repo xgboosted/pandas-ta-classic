@@ -139,9 +139,7 @@ def _sma_seed(series: Series, length: int) -> Series:
     return s
 
 
-def _sliding_weighted_ma(
-    close: Series, length: int, weights: Any
-) -> Series:
+def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
     """Vectorised weighted MA via :func:`sliding_window_view`.
 
     Args:

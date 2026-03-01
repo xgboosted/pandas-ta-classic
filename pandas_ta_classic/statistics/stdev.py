@@ -33,7 +33,10 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        stdev = npsqrt(variance(close=close, length=length, ddof=ddof, talib=False))
+        var = variance(close=close, length=length, ddof=ddof, talib=False)
+        if var is None:
+            return None
+        stdev = npsqrt(var)
 
     return _finalize(stdev, offset, f"STDEV_{length}", "statistics", **kwargs)
 
