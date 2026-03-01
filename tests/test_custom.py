@@ -76,7 +76,8 @@ class TestCustom(TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             cat_dir = os.path.join(tmp, "momentum")
             os.makedirs(cat_dir)
-            indicator_src = textwrap.dedent("""\
+            indicator_src = textwrap.dedent(
+                """\
                 from pandas import Series
                 def my_custom_ind(close, length=10, offset=None, **kwargs):
                     return close.rolling(length).mean()
@@ -85,7 +86,8 @@ class TestCustom(TestCase):
                         self._get_column(self._data, 'close'),
                         length=length, **kwargs
                     )
-            """)
+            """
+            )
             with open(os.path.join(cat_dir, "my_custom_ind.py"), "w") as f:
                 f.write(indicator_src)
             custom.import_dir(tmp, verbose=False)

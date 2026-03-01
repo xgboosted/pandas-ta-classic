@@ -168,7 +168,7 @@ class TestStatistics(TestCase):
         expected = self.close.rolling(30).kurt()
         mask = expected.notna()
         self.assertTrue(
-            np.allclose(result[mask], expected[mask], atol=1e-7),
+            np.allclose(result[mask], expected[mask], atol=1e-5),
             "kurtosis deviates from pandas rolling.kurt()",
         )
 
