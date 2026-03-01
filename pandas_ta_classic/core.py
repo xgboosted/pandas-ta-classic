@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
 from time import perf_counter
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 from warnings import catch_warnings, simplefilter
 
 logger = logging.getLogger(__name__)
@@ -200,6 +200,19 @@ def _make_indicator_method(func):
     method.__name__ = func.__name__
     method.__qualname__ = f"AnalysisIndicators.{func.__name__}"
     method.__doc__ = func.__doc__
+
+    # Build a signature that shows only user-facing params (no OHLCV series).
+    _wrapper_params = [
+        _inspect.Parameter("self", _inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    for _pname, _param in params_list:
+        if _pname not in _SERIES_PARAM_MAP:
+            _wrapper_params.append(_param)
+    method.__signature__ = _inspect.Signature(
+        _wrapper_params,
+        return_annotation=sig.return_annotation,
+    )
+
     return method
 
 
@@ -331,7 +344,7 @@ class AnalysisIndicators:
                     self.exchange, to_string=True
                 )  # Save when it completed it's run
 
-                if timed:
+                if timed and result is not None:
                     result.timed = final_time(stime)
                     logger.debug("[+] %s: %s", kind, result.timed)
 
@@ -541,13 +554,11 @@ class AnalysisIndicators:
     def _mp_worker(self, arguments: tuple):
         """Multiprocessing Worker to handle different Methods."""
         method, args, kwargs = arguments
+        return getattr(self, method)(*args, **kwargs)
 
-        if method != "ichimoku":
-            return getattr(self, method)(*args, **kwargs)
-        else:
-            return getattr(self, method)(*args, **kwargs)[0]
-
-    def _post_process(self, result, **kwargs) -> Tuple[pd.Series, pd.DataFrame]:
+    def _post_process(
+        self, result, **kwargs
+    ) -> Optional[Union[pd.Series, pd.DataFrame]]:
         """Applies any additional modifications to the DataFrame
         * Applies prefixes and/or suffixes
         * Appends the result to main DataFrame
@@ -556,7 +567,7 @@ class AnalysisIndicators:
         if not isinstance(result, (pd.Series, pd.DataFrame)):
             if verbose:
                 logger.debug("[X] Oops! The result was not a Series or DataFrame.")
-            return self._df
+            return None
         else:
             # Append only specific columns to the dataframe (via
             # 'col_numbers':(0,1,3) for example)
@@ -1146,11 +1157,9 @@ class AnalysisIndicators:
             offset=offset,
             **kwargs,
         )
-        self._add_prefix_suffix(result, **kwargs)
+        # Apply prefix/suffix to span for consistency, but only return main result.
         self._add_prefix_suffix(span, **kwargs)
-        self._append(result, **kwargs)
-        # return self._post_process(result, **kwargs), span
-        return result, span
+        return self._post_process(result, **kwargs)
 
     def vwap(self, anchor=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
