@@ -51,58 +51,15 @@ def psar(
         close = verify_series(close)
         sar = close.iloc[0]
 
-    # Use raw numpy arrays to avoid pandas iloc overhead in the loop.
+    from pandas_ta_classic.utils._numba import _psar_loop
+
     h_arr = high.to_numpy()
     l_arr = low.to_numpy()
     m = h_arr.shape[0]
-    long_arr = np.full(m, npNaN)
-    short_arr = np.full(m, npNaN)
-    reversal_arr = np.zeros(m)
-    af_arr = np.full(m, npNaN)
-    af_arr[0] = af0
-    if m > 1:
-        af_arr[1] = af0
 
-    # Calculate Result
-    for row in range(1, m):
-        high_ = h_arr[row]
-        low_ = l_arr[row]
-
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = high_ > _sar
-
-            if low_ < ep:
-                ep = low_
-                af = min(af + af0, max_af)
-
-            _sar = max(h_arr[row - 1], h_arr[row - 2], _sar)
-        else:
-            _sar = sar + af * (ep - sar)
-            reverse = low_ < _sar
-
-            if high_ > ep:
-                ep = high_
-                af = min(af + af0, max_af)
-
-            _sar = min(l_arr[row - 1], l_arr[row - 2], _sar)
-
-        if reverse:
-            _sar = ep
-            af = af0
-            falling = not falling  # Must come before next line
-            ep = low_ if falling else high_
-
-        sar = _sar  # Update SAR
-
-        # Separate long/short sar based on falling
-        if falling:
-            short_arr[row] = sar
-        else:
-            long_arr[row] = sar
-
-        af_arr[row] = af
-        reversal_arr[row] = int(reverse)
+    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
+        h_arr, l_arr, m, falling, sar, ep, af0, max_af
+    )
 
     long = Series(long_arr, index=high.index)
     short = Series(short_arr, index=high.index)

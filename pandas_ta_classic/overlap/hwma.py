@@ -25,19 +25,12 @@ def hwma(
     if close is None:
         return None
 
-    # Calculate Result — extract close to numpy to avoid per-bar pandas overhead.
+    # Calculate Result
+    from pandas_ta_classic.utils._numba import _hwma_loop
+
     m = close.size
     c_arr = close.to_numpy()
-    last_a = last_v = 0.0
-    last_f = c_arr[0]
-    result_arr = np.empty(m)
-
-    for i in range(m):
-        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * c_arr[i]
-        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
-        A = (1.0 - nc) * last_a + nc * (V - last_v)
-        result_arr[i] = F + V + 0.5 * A
-        last_a, last_f, last_v = A, F, V  # update values
+    result_arr = _hwma_loop(c_arr, m, na, nb, nc)
 
     hwma = Series(result_arr, index=close.index)
 

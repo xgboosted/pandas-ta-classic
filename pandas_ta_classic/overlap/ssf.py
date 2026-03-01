@@ -26,40 +26,34 @@ def ssf(
     if close is None:
         return None
 
-    # Calculate Result — use numpy arrays to avoid pandas iloc overhead.
-    # ssf starts as a copy of close; the recurrence overwrites values in-place.
+    # Calculate Result
+    from pandas_ta_classic.utils._numba import _ssf2_loop, _ssf3_loop
+
     m = close.size
     c_arr = close.to_numpy(dtype=float)
-    ssf_arr = c_arr.copy()  # initial values = close (same as close.copy())
+    ssf_arr = c_arr.copy()
 
     if poles == 3:
-        x = npPi / length  # x = PI / n
-        a0 = npExp(-x)  # e^(-x)
-        b0 = 2 * a0 * npCos(npSqrt(3) * x)  # 2e^(-x)*cos(3^(.5) * x)
-        c0 = a0 * a0  # e^(-2x)
+        x = npPi / length
+        a0 = npExp(-x)
+        b0 = 2 * a0 * npCos(npSqrt(3) * x)
+        c0 = a0 * a0
 
-        c4 = c0 * c0  # e^(-4x)
-        c3 = -c0 * (1 + b0)  # -e^(-2x) * (1 + 2e^(-x)*cos(3^(.5) * x))
-        c2 = c0 + b0  # e^(-2x) + 2e^(-x)*cos(3^(.5) * x)
+        c4 = c0 * c0
+        c3 = -c0 * (1 + b0)
+        c2 = c0 + b0
         c1 = 1 - c2 - c3 - c4
 
-        for i in range(0, m):
-            ssf_arr[i] = (
-                c1 * c_arr[i]
-                + c2 * ssf_arr[i - 1]
-                + c3 * ssf_arr[i - 2]
-                + c4 * ssf_arr[i - 3]
-            )
+        ssf_arr = _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4)
 
     else:  # poles == 2
-        x = npPi * npSqrt(2) / length  # x = PI * 2^(.5) / n
-        a0 = npExp(-x)  # e^(-x)
-        a1 = -a0 * a0  # -e^(-2x)
-        b1 = 2 * a0 * npCos(x)  # 2e^(-x)*cos(x)
-        c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
+        x = npPi * npSqrt(2) / length
+        a0 = npExp(-x)
+        a1 = -a0 * a0
+        b1 = 2 * a0 * npCos(x)
+        c1 = 1 - a1 - b1
 
-        for i in range(0, m):
-            ssf_arr[i] = c1 * c_arr[i] + b1 * ssf_arr[i - 1] + a1 * ssf_arr[i - 2]
+        ssf_arr = _ssf2_loop(c_arr, ssf_arr, m, c1, b1, a1)
 
     ssf = Series(ssf_arr, index=close.index)
 

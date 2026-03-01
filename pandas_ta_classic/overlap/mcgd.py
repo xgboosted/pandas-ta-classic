@@ -23,19 +23,11 @@ def mcgd(
     if close is None:
         return None
 
-    # Calculate Result — O(n) numpy loop (avoids 5240 pandas callbacks from
-    # rolling(2).apply, which passed a mutable Series view per bar).
+    # Calculate Result
+    from pandas_ta_classic.utils._numba import _mcgd_loop
+
     c_arr = close.to_numpy(dtype=float)
-    mcgd_arr = np.empty(len(c_arr))
-    mcgd_arr[0] = c_arr[0]
-    for i in range(1, len(c_arr)):
-        if mcgd_arr[i - 1] != 0:
-            denom = c * length * (c_arr[i] / mcgd_arr[i - 1]) ** 4
-            mcgd_arr[i] = mcgd_arr[i - 1] + (c_arr[i] - mcgd_arr[i - 1]) / max(
-                denom, 1e-10
-            )
-        else:
-            mcgd_arr[i] = c_arr[i]
+    mcgd_arr = _mcgd_loop(c_arr, len(c_arr), c, length)
     mcg_ds = Series(mcgd_arr, index=close.index)
 
     return _finalize(mcg_ds, offset, f"MCGD_{length}", "overlap", **kwargs)

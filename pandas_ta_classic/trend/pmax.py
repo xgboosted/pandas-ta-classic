@@ -44,38 +44,15 @@ def pmax(
     pmax_up = ma_value - (multiplier * atr_value)
     pmax_down = ma_value + (multiplier * atr_value)
 
-    # Convert to numpy arrays for faster iteration
+    from pandas_ta_classic.utils._numba import _pmax_loop
+
     close_arr = close.to_numpy()
     pmax_up_arr = pmax_up.to_numpy(copy=True)
     pmax_down_arr = pmax_down.to_numpy(copy=True)
-
-    # Initialize arrays
     n = len(close)
-    trend_arr = [1] * n  # Start with uptrend
-    pmax_arr = [0.0] * n
 
-    # Iterate using numpy arrays (much faster than pandas .iloc)
-    for i in range(1, n):
-        # Update upper band: if price was above upper band, maintain higher of current or previous
-        if close_arr[i - 1] > pmax_up_arr[i - 1]:
-            pmax_up_arr[i] = max(pmax_up_arr[i], pmax_up_arr[i - 1])
+    _trend_arr, pmax_arr = _pmax_loop(close_arr, pmax_up_arr, pmax_down_arr, n)
 
-        # Update lower band: if price was below lower band, maintain lower of current or previous
-        if close_arr[i - 1] < pmax_down_arr[i - 1]:
-            pmax_down_arr[i] = min(pmax_down_arr[i], pmax_down_arr[i - 1])
-
-        # Determine trend: price crosses lower band (uptrend) or upper band (downtrend)
-        if close_arr[i] > pmax_down_arr[i - 1]:
-            trend_arr[i] = 1
-        elif close_arr[i] < pmax_up_arr[i - 1]:
-            trend_arr[i] = -1
-        else:
-            trend_arr[i] = trend_arr[i - 1]  # Maintain previous trend
-
-        # Set PMAX value based on trend
-        pmax_arr[i] = pmax_up_arr[i] if trend_arr[i] == 1 else pmax_down_arr[i]
-
-    # Convert back to Series
     pmax = Series(pmax_arr, index=close.index)
 
     return _finalize(

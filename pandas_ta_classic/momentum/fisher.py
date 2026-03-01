@@ -45,19 +45,11 @@ def fisher(
 
     position = ((hl2_ - lowest_hl2) / hlr) - 0.5
 
-    # Extract to numpy to avoid per-bar pandas indexing overhead.
+    from pandas_ta_classic.utils._numba import _fisher_loop
+
     pos_arr = position.to_numpy()
     m = high.size
-    result = np.full(m, npNaN)
-    result[length - 1] = 0.0
-    v: float = 0.0
-    for i in range(length, m):
-        v = 0.66 * pos_arr[i] + 0.67 * v
-        if v < -0.99:
-            v = -0.999
-        elif v > 0.99:
-            v = 0.999
-        result[i] = 0.5 * (_log((1 + v) / (1 - v)) + result[i - 1])
+    result = _fisher_loop(pos_arr, m, length)
     fisher = Series(result, index=high.index)
     signalma = fisher.shift(signal)
 

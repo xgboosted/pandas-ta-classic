@@ -39,18 +39,16 @@ def vidya(
         neg_sum = negative.rolling(n).sum()
         return (pos_sum - neg_sum) / (pos_sum + neg_sum)
 
-    # Calculate Result — numpy arrays avoid pandas iloc overhead in the loop.
+    # Calculate Result
+    from pandas_ta_classic.utils._numba import _vidya_loop
+
     m = close.size
     alpha = 2 / (length + 1)
     abs_cmo = _cmo(close, length, drift).abs()
     cmo_arr = abs_cmo.to_numpy()
     c_arr = close.to_numpy()
-    vidya_arr = np.full(m, npNaN)
-    vidya_arr[length - 1] = c_arr[:length].mean()  # SMA seed
-    for i in range(length, m):
-        vidya_arr[i] = alpha * cmo_arr[i] * c_arr[i] + vidya_arr[i - 1] * (
-            1 - alpha * cmo_arr[i]
-        )
+    seed = float(c_arr[:length].mean())
+    vidya_arr = _vidya_loop(c_arr, cmo_arr, m, length, alpha, seed)
     vidya = Series(vidya_arr, index=close.index)
 
     return _finalize(vidya, offset, f"VIDYA_{length}", "overlap", **kwargs)

@@ -436,6 +436,318 @@ def _qqe_loop(
     return long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr
 
 
+# ---------------------------------------------------------------------------
+# 7. LRSI  (momentum/lrsi.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _lrsi_loop(
+    c_arr: np.ndarray, n: int, gamma: float
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Laguerre filter.  Returns ``(l0, l1, l2, l3)`` arrays."""
+    l0 = np.empty(n)
+    l1 = np.empty(n)
+    l2 = np.empty(n)
+    l3 = np.empty(n)
+    l0[0] = l1[0] = l2[0] = l3[0] = c_arr[0]
+
+    for i in range(1, n):
+        l0[i] = (1 - gamma) * c_arr[i] + gamma * l0[i - 1]
+        l1[i] = -gamma * l0[i] + l0[i - 1] + gamma * l1[i - 1]
+        l2[i] = -gamma * l1[i] + l1[i - 1] + gamma * l2[i - 1]
+        l3[i] = -gamma * l2[i] + l2[i - 1] + gamma * l3[i - 1]
+
+    return l0, l1, l2, l3
+
+
+# ---------------------------------------------------------------------------
+# 8. PMAX  (trend/pmax.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _pmax_loop(
+    c_arr: np.ndarray,
+    pmax_up_arr: np.ndarray,
+    pmax_down_arr: np.ndarray,
+    n: int,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """PMAX band/trend loop.  Returns ``(trend, pmax)`` arrays."""
+    trend_arr = np.ones(n)
+    pmax_arr = np.zeros(n)
+
+    for i in range(1, n):
+        if c_arr[i - 1] > pmax_up_arr[i - 1]:
+            pmax_up_arr[i] = max(pmax_up_arr[i], pmax_up_arr[i - 1])
+
+        if c_arr[i - 1] < pmax_down_arr[i - 1]:
+            pmax_down_arr[i] = min(pmax_down_arr[i], pmax_down_arr[i - 1])
+
+        if c_arr[i] > pmax_down_arr[i - 1]:
+            trend_arr[i] = 1.0
+        elif c_arr[i] < pmax_up_arr[i - 1]:
+            trend_arr[i] = -1.0
+        else:
+            trend_arr[i] = trend_arr[i - 1]
+
+        if trend_arr[i] == 1.0:
+            pmax_arr[i] = pmax_up_arr[i]
+        else:
+            pmax_arr[i] = pmax_down_arr[i]
+
+    return trend_arr, pmax_arr
+
+
+# ---------------------------------------------------------------------------
+# 9. Fisher Transform  (momentum/fisher.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _fisher_loop(pos_arr: np.ndarray, m: int, length: int) -> np.ndarray:
+    """Fisher Transform iterative loop.  Returns result array."""
+    result = np.empty(m)
+    for k in range(length - 1):
+        result[k] = np.nan
+    result[length - 1] = 0.0
+
+    v = 0.0
+    for i in range(length, m):
+        v = 0.66 * pos_arr[i] + 0.67 * v
+        if v < -0.99:
+            v = -0.999
+        elif v > 0.99:
+            v = 0.999
+        result[i] = 0.5 * (np.log((1 + v) / (1 - v)) + result[i - 1])
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 10. PSAR  (trend/psar.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _psar_loop(
+    h_arr: np.ndarray,
+    l_arr: np.ndarray,
+    m: int,
+    falling: bool,
+    sar: float,
+    ep: float,
+    af0: float,
+    max_af: float,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Parabolic SAR iterative loop.
+
+    Returns ``(long, short, af, reversal)`` arrays.
+    """
+    long_arr = np.empty(m)
+    short_arr = np.empty(m)
+    af_arr = np.empty(m)
+    reversal_arr = np.zeros(m)
+
+    for k in range(m):
+        long_arr[k] = np.nan
+        short_arr[k] = np.nan
+        af_arr[k] = np.nan
+
+    af_arr[0] = af0
+    if m > 1:
+        af_arr[1] = af0
+    af = af0
+
+    for row in range(1, m):
+        high_ = h_arr[row]
+        low_ = l_arr[row]
+
+        if falling:
+            _sar = sar + af * (ep - sar)
+            reverse = high_ > _sar
+
+            if low_ < ep:
+                ep = low_
+                af = min(af + af0, max_af)
+
+            prev1 = h_arr[row - 1]
+            prev2 = h_arr[row - 2] if row >= 2 else prev1
+            _sar = max(prev1, prev2, _sar)
+        else:
+            _sar = sar + af * (ep - sar)
+            reverse = low_ < _sar
+
+            if high_ > ep:
+                ep = high_
+                af = min(af + af0, max_af)
+
+            prev1 = l_arr[row - 1]
+            prev2 = l_arr[row - 2] if row >= 2 else prev1
+            _sar = min(prev1, prev2, _sar)
+
+        if reverse:
+            _sar = ep
+            af = af0
+            falling = not falling
+            ep = low_ if falling else high_
+
+        sar = _sar
+
+        if falling:
+            short_arr[row] = sar
+        else:
+            long_arr[row] = sar
+
+        af_arr[row] = af
+        reversal_arr[row] = 1.0 if reverse else 0.0
+
+    return long_arr, short_arr, af_arr, reversal_arr
+
+
+# ---------------------------------------------------------------------------
+# 11. MCGD  (overlap/mcgd.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _mcgd_loop(c_arr: np.ndarray, n: int, c: float, length: int) -> np.ndarray:
+    """McGinley Dynamic iterative loop.  Returns result array."""
+    result = np.empty(n)
+    result[0] = c_arr[0]
+
+    for i in range(1, n):
+        if result[i - 1] != 0:
+            denom = c * length * (c_arr[i] / result[i - 1]) ** 4
+            if denom < 1e-10:
+                denom = 1e-10
+            result[i] = result[i - 1] + (c_arr[i] - result[i - 1]) / denom
+        else:
+            result[i] = c_arr[i]
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 12. HWMA  (overlap/hwma.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _hwma_loop(
+    c_arr: np.ndarray, m: int, na: float, nb: float, nc: float
+) -> np.ndarray:
+    """Holt-Winter Moving Average loop.  Returns result array."""
+    result = np.empty(m)
+    last_a = 0.0
+    last_v = 0.0
+    last_f = c_arr[0]
+
+    for i in range(m):
+        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * c_arr[i]
+        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
+        A = (1.0 - nc) * last_a + nc * (V - last_v)
+        result[i] = F + V + 0.5 * A
+        last_a = A
+        last_f = F
+        last_v = V
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 13. SuperTrend  (overlap/supertrend.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _supertrend_loop(
+    c_arr: np.ndarray,
+    ub_arr: np.ndarray,
+    lb_arr: np.ndarray,
+    m: int,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """SuperTrend band/direction loop.
+
+    Returns ``(dir_, trend, long, short)`` arrays.
+    Note: *ub_arr* and *lb_arr* are modified in-place.
+    """
+    dir_ = np.ones(m)
+    trend = np.zeros(m)
+    long = np.empty(m)
+    short = np.empty(m)
+    for k in range(m):
+        long[k] = np.nan
+        short[k] = np.nan
+
+    for i in range(1, m):
+        if c_arr[i] > ub_arr[i - 1]:
+            dir_[i] = 1.0
+        elif c_arr[i] < lb_arr[i - 1]:
+            dir_[i] = -1.0
+        else:
+            dir_[i] = dir_[i - 1]
+            if dir_[i] > 0 and lb_arr[i] < lb_arr[i - 1]:
+                lb_arr[i] = lb_arr[i - 1]
+            if dir_[i] < 0 and ub_arr[i] > ub_arr[i - 1]:
+                ub_arr[i] = ub_arr[i - 1]
+
+        if dir_[i] > 0:
+            trend[i] = lb_arr[i]
+            long[i] = lb_arr[i]
+        else:
+            trend[i] = ub_arr[i]
+            short[i] = ub_arr[i]
+
+    return dir_, trend, long, short
+
+
+# ---------------------------------------------------------------------------
+# 14. VIDYA  (overlap/vidya.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _vidya_loop(
+    c_arr: np.ndarray,
+    cmo_arr: np.ndarray,
+    m: int,
+    length: int,
+    alpha: float,
+    seed: float,
+) -> np.ndarray:
+    """VIDYA adaptive EMA loop.  Returns result array."""
+    result = np.empty(m)
+    for k in range(length - 1):
+        result[k] = np.nan
+    result[length - 1] = seed
+
+    for i in range(length, m):
+        result[i] = alpha * cmo_arr[i] * c_arr[i] + result[i - 1] * (
+            1 - alpha * cmo_arr[i]
+        )
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 15. SSF  (overlap/ssf.py)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _ssf2_loop(
+    c_arr: np.ndarray, ssf_arr: np.ndarray, m: int, c1: float, b1: float, a1: float
+) -> np.ndarray:
+    """Super Smoother Filter (2-pole) loop.  Modifies *ssf_arr* in-place."""
+    for i in range(m):
+        ssf_arr[i] = c1 * c_arr[i] + b1 * ssf_arr[i - 1] + a1 * ssf_arr[i - 2]
+    return ssf_arr
+
+
+@njit(cache=True)
+def _ssf3_loop(
+    c_arr: np.ndarray,
+    ssf_arr: np.ndarray,
+    m: int,
+    c1: float,
+    c2: float,
+    c3: float,
+    c4: float,
+) -> np.ndarray:
+    """Super Smoother Filter (3-pole) loop.  Modifies *ssf_arr* in-place."""
+    for i in range(m):
+        ssf_arr[i] = (
+            c1 * c_arr[i]
+            + c2 * ssf_arr[i - 1]
+            + c3 * ssf_arr[i - 2]
+            + c4 * ssf_arr[i - 3]
+        )
+    return ssf_arr
+
+
 __all__ = [
     "_rsx_loop",
     "_jma_loop",
@@ -444,4 +756,14 @@ __all__ = [
     "_schaff_tc_loop2",
     "_ebsw_loop",
     "_qqe_loop",
+    "_lrsi_loop",
+    "_pmax_loop",
+    "_fisher_loop",
+    "_psar_loop",
+    "_mcgd_loop",
+    "_hwma_loop",
+    "_supertrend_loop",
+    "_vidya_loop",
+    "_ssf2_loop",
+    "_ssf3_loop",
 ]

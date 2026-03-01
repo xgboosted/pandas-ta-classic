@@ -24,23 +24,12 @@ def lrsi(
         return None
 
     # Calculate Result
-    # Convert to numpy arrays for faster iteration
+    from pandas_ta_classic.utils._numba import _lrsi_loop
+
     close_arr = close.values
     n = len(close)
 
-    # Initialize Laguerre filter components as numpy arrays
-    l0 = empty_like(close_arr)
-    l1 = empty_like(close_arr)
-    l2 = empty_like(close_arr)
-    l3 = empty_like(close_arr)
-    l0[0] = l1[0] = l2[0] = l3[0] = close_arr[0]
-
-    # Apply Laguerre filter (state-dependent, requires iteration)
-    for i in range(1, n):
-        l0[i] = (1 - gamma) * close_arr[i] + gamma * l0[i - 1]
-        l1[i] = -gamma * l0[i] + l0[i - 1] + gamma * l1[i - 1]
-        l2[i] = -gamma * l1[i] + l1[i - 1] + gamma * l2[i - 1]
-        l3[i] = -gamma * l2[i] + l2[i - 1] + gamma * l3[i - 1]
+    l0, l1, l2, l3 = _lrsi_loop(close_arr, n, gamma)
 
     # Calculate Laguerre RSI components (can be vectorized)
     cu = zeros(n)

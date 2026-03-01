@@ -39,39 +39,20 @@ def supertrend(
     upperband = hl2_ + matr
     lowerband = hl2_ - matr
 
-    # Use mutable numpy copies — avoids pandas iloc reads/writes in the loop,
-    # including in-place band adjustments (lowerband.iloc[i] = lowerband.iloc[i-1]).
+    from pandas_ta_classic.utils._numba import _supertrend_loop
+
     c_arr = close.to_numpy()
     ub_arr = upperband.to_numpy().copy()
     lb_arr = lowerband.to_numpy().copy()
-    dir_ = np.ones(m, dtype=int)
-    trend = np.zeros(m)
-    long = np.full(m, npNaN)
-    short = np.full(m, npNaN)
 
-    for i in range(1, m):
-        if c_arr[i] > ub_arr[i - 1]:
-            dir_[i] = 1
-        elif c_arr[i] < lb_arr[i - 1]:
-            dir_[i] = -1
-        else:
-            dir_[i] = dir_[i - 1]
-            if dir_[i] > 0 and lb_arr[i] < lb_arr[i - 1]:
-                lb_arr[i] = lb_arr[i - 1]
-            if dir_[i] < 0 and ub_arr[i] > ub_arr[i - 1]:
-                ub_arr[i] = ub_arr[i - 1]
-
-        if dir_[i] > 0:
-            trend[i] = long[i] = lb_arr[i]
-        else:
-            trend[i] = short[i] = ub_arr[i]
+    dir_arr, trend_arr, long_arr, short_arr = _supertrend_loop(c_arr, ub_arr, lb_arr, m)
 
     # Wrap numpy arrays as Series
     _idx = close.index
-    trend = Series(trend, index=_idx)
-    dir_ = Series(dir_, index=_idx)
-    long = Series(long, index=_idx)
-    short = Series(short, index=_idx)
+    trend = Series(trend_arr, index=_idx)
+    dir_ = Series(dir_arr, index=_idx)
+    long = Series(long_arr, index=_idx)
+    short = Series(short_arr, index=_idx)
 
     # Offset, Name and Categorize it
     _props = f"_{length}_{multiplier}"
