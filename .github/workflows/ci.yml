@@ -147,6 +147,7 @@ jobs:
     needs: [code-quality, generate-matrix]
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.python-versions) }}
     
