@@ -33,7 +33,7 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        stdev = variance(close=close, length=length, ddof=ddof).apply(npsqrt)
+        stdev = npsqrt(variance(close=close, length=length, ddof=ddof, talib=False))
 
     # Offset
     stdev = apply_offset(stdev, offset, **kwargs)

@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 # Variance (VARIANCE)
 from typing import Any, Optional
+
+import numpy as np
 from pandas import Series
+
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_offset,
+    np_rolling_moments,
+    verify_series,
+)
 
 
 def variance(
@@ -36,7 +44,10 @@ def variance(
 
         variance = VAR(close, length)
     else:
-        variance = close.rolling(length, min_periods=min_periods).var(ddof)
+        # Pure numpy for cross-version determinism.
+        # var = Σ(xi − mean)² / (n − ddof)
+        (m2,) = np_rolling_moments(close.values, length, 2)
+        variance = Series(m2 / (length - ddof), index=close.index, dtype=np.float64)
 
     # Offset
     variance = apply_offset(variance, offset, **kwargs)

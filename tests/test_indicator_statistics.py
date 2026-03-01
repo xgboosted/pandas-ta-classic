@@ -13,6 +13,7 @@ from tests.config import (
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import skip, TestCase
+import numpy as np
 import pandas.testing as pdt
 from pandas import DataFrame, Series
 
@@ -160,6 +161,66 @@ class TestStatistics(TestCase):
         except AssertionError:
             corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
             self.assertGreater(corr, CORRELATION_THRESHOLD)
+
+    def test_kurtosis_vs_pandas(self):
+        """Cross-validate numpy kurtosis against pandas rolling.kurt()."""
+        result = pandas_ta.kurtosis(self.close)
+        expected = self.close.rolling(30).kurt()
+        mask = expected.notna()
+        self.assertTrue(
+            np.allclose(result[mask], expected[mask], atol=1e-7),
+            "kurtosis deviates from pandas rolling.kurt()",
+        )
+
+    def test_skew_vs_pandas(self):
+        """Cross-validate numpy skew against pandas rolling.skew()."""
+        result = pandas_ta.skew(self.close)
+        expected = self.close.rolling(30).skew()
+        mask = expected.notna()
+        self.assertTrue(
+            np.allclose(result[mask], expected[mask], atol=1e-7),
+            "skew deviates from pandas rolling.skew()",
+        )
+
+    def test_variance_vs_pandas(self):
+        """Cross-validate numpy variance against pandas rolling.var()."""
+        result = pandas_ta.variance(self.close, talib=False)
+        expected = self.close.rolling(30).var()
+        mask = expected.notna()
+        self.assertTrue(
+            np.allclose(result[mask], expected[mask], atol=1e-7),
+            "variance deviates from pandas rolling.var()",
+        )
+
+    def test_stdev_vs_pandas(self):
+        """Cross-validate numpy stdev against pandas rolling.std()."""
+        result = pandas_ta.stdev(self.close, talib=False)
+        expected = self.close.rolling(30).std()
+        mask = expected.notna()
+        self.assertTrue(
+            np.allclose(result[mask], expected[mask], atol=1e-7),
+            "stdev deviates from pandas rolling.std()",
+        )
+
+    def test_median_vs_pandas(self):
+        """Cross-validate numpy median against pandas rolling.median()."""
+        result = pandas_ta.median(self.close)
+        expected = self.close.rolling(30).median()
+        mask = expected.notna()
+        self.assertTrue(
+            np.allclose(result[mask], expected[mask], atol=1e-7),
+            "median deviates from pandas rolling.median()",
+        )
+
+    def test_quantile_vs_pandas(self):
+        """Cross-validate numpy quantile against pandas rolling.quantile()."""
+        result = pandas_ta.quantile(self.close)
+        expected = self.close.rolling(30).quantile(0.5)
+        mask = expected.notna()
+        self.assertTrue(
+            np.allclose(result[mask], expected[mask], atol=1e-7),
+            "quantile deviates from pandas rolling.quantile()",
+        )
 
     def test_zscore(self):
         result = pandas_ta.zscore(self.close)
