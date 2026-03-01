@@ -29,9 +29,7 @@ except ImportError:
 @njit(cache=True)
 def _rsx_loop(c_arr: np.ndarray, length: int, m: int) -> np.ndarray:
     """Core RSX iterative filter.  Returns result array of length *m*."""
-    result = np.empty(m)
-    for k in range(length - 1):
-        result[k] = np.nan
+    result = np.full(m, np.nan)
     result[length - 1] = 0.0
 
     # State variables
@@ -264,57 +262,61 @@ def _hwc_loop(
 
 # ---------------------------------------------------------------------------
 # 4. STC helper  (momentum/stc.py — schaff_tc inner loops)
+#    The two loops look similar but differ in which array gates the condition:
+#    loop 1 checks the *low* array, loop 2 checks the *range* array.
 # ---------------------------------------------------------------------------
 @njit(cache=True)
 def _schaff_tc_loop(
-    xmacd_arr: np.ndarray,
-    lxmacd_arr: np.ndarray,
-    xrange_arr: np.ndarray,
+    val_arr: np.ndarray,
+    low_arr: np.ndarray,
+    range_arr: np.ndarray,
     m: int,
     factor: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """First stochastic of MACD for Schaff Trend Cycle.
 
-    Returns ``(stoch1, pf)`` arrays of length *m*.
+    Condition gates on ``low_arr[i] > 0``.
+    Returns ``(stoch, smoothed)`` arrays of length *m*.
     """
-    stoch1 = np.empty(m)
-    pf = np.zeros(m)
-    stoch1[0] = 0.0
+    stoch = np.empty(m)
+    smoothed = np.zeros(m)
+    stoch[0] = 0.0
 
     for i in range(1, m):
-        if lxmacd_arr[i] > 0:
-            stoch1[i] = 100.0 * ((xmacd_arr[i] - lxmacd_arr[i]) / xrange_arr[i])
+        if low_arr[i] > 0:
+            stoch[i] = 100.0 * ((val_arr[i] - low_arr[i]) / range_arr[i])
         else:
-            stoch1[i] = stoch1[i - 1]
-        pf[i] = pf[i - 1] + factor * (stoch1[i] - pf[i - 1])
+            stoch[i] = stoch[i - 1]
+        smoothed[i] = smoothed[i - 1] + factor * (stoch[i] - smoothed[i - 1])
 
-    return stoch1, pf
+    return stoch, smoothed
 
 
 @njit(cache=True)
 def _schaff_tc_loop2(
-    pf_arr: np.ndarray,
-    lpf_arr: np.ndarray,
-    pfrange_arr: np.ndarray,
+    val_arr: np.ndarray,
+    low_arr: np.ndarray,
+    range_arr: np.ndarray,
     m: int,
     factor: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Second stochastic of smoothed PF for Schaff Trend Cycle.
 
-    Returns ``(stoch2, pff)`` arrays of length *m*.
+    Condition gates on ``range_arr[i] > 0``.
+    Returns ``(stoch, smoothed)`` arrays of length *m*.
     """
-    stoch2 = np.empty(m)
-    pff = np.zeros(m)
-    stoch2[0] = 0.0
+    stoch = np.empty(m)
+    smoothed = np.zeros(m)
+    stoch[0] = 0.0
 
     for i in range(1, m):
-        if pfrange_arr[i] > 0:
-            stoch2[i] = 100.0 * ((pf_arr[i] - lpf_arr[i]) / pfrange_arr[i])
+        if range_arr[i] > 0:
+            stoch[i] = 100.0 * ((val_arr[i] - low_arr[i]) / range_arr[i])
         else:
-            stoch2[i] = stoch2[i - 1]
-        pff[i] = pff[i - 1] + factor * (stoch2[i] - pff[i - 1])
+            stoch[i] = stoch[i - 1]
+        smoothed[i] = smoothed[i - 1] + factor * (stoch[i] - smoothed[i - 1])
 
-    return stoch2, pff
+    return stoch, smoothed
 
 
 # ---------------------------------------------------------------------------
@@ -331,9 +333,7 @@ def _ebsw_loop(
     c3: float,
 ) -> np.ndarray:
     """Core Even Better SineWave filter.  Returns result array of length *m*."""
-    result = np.empty(m)
-    for k in range(length - 1):
-        result[k] = np.nan
+    result = np.full(m, np.nan)
     result[length - 1] = 0.0
 
     lastClose = 0.0
@@ -381,11 +381,8 @@ def _qqe_loop(
     trend_arr = np.ones(m)
     qqe_arr = np.empty(m)
     qqe_arr[0] = rsi_arr[0]
-    qqe_long_arr = np.empty(m)
-    qqe_short_arr = np.empty(m)
-    for k in range(m):
-        qqe_long_arr[k] = np.nan
-        qqe_short_arr[k] = np.nan
+    qqe_long_arr = np.full(m, np.nan)
+    qqe_short_arr = np.full(m, np.nan)
 
     for i in range(1, m):
         c_rsi = rsi_arr[i]
@@ -501,9 +498,7 @@ def _pmax_loop(
 @njit(cache=True)
 def _fisher_loop(pos_arr: np.ndarray, m: int, length: int) -> np.ndarray:
     """Fisher Transform iterative loop.  Returns result array."""
-    result = np.empty(m)
-    for k in range(length - 1):
-        result[k] = np.nan
+    result = np.full(m, np.nan)
     result[length - 1] = 0.0
 
     v = 0.0
@@ -536,15 +531,10 @@ def _psar_loop(
 
     Returns ``(long, short, af, reversal)`` arrays.
     """
-    long_arr = np.empty(m)
-    short_arr = np.empty(m)
-    af_arr = np.empty(m)
+    long_arr = np.full(m, np.nan)
+    short_arr = np.full(m, np.nan)
+    af_arr = np.full(m, np.nan)
     reversal_arr = np.zeros(m)
-
-    for k in range(m):
-        long_arr[k] = np.nan
-        short_arr[k] = np.nan
-        af_arr[k] = np.nan
 
     af_arr[0] = af0
     if m > 1:
@@ -660,11 +650,8 @@ def _supertrend_loop(
     """
     dir_ = np.ones(m)
     trend = np.zeros(m)
-    long = np.empty(m)
-    short = np.empty(m)
-    for k in range(m):
-        long[k] = np.nan
-        short[k] = np.nan
+    long = np.full(m, np.nan)
+    short = np.full(m, np.nan)
 
     for i in range(1, m):
         if c_arr[i] > ub_arr[i - 1]:
@@ -701,9 +688,7 @@ def _vidya_loop(
     seed: float,
 ) -> np.ndarray:
     """VIDYA adaptive EMA loop.  Returns result array."""
-    result = np.empty(m)
-    for k in range(length - 1):
-        result[k] = np.nan
+    result = np.full(m, np.nan)
     result[length - 1] = seed
 
     for i in range(length, m):
