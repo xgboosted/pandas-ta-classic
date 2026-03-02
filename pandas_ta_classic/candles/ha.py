@@ -84,7 +84,7 @@ Calculation:
     HA_CLOSE = (open[0] + high[0] + low[0] + close[0]) / 4
 
     for i > 1 in df.index:
-        HA_OPEN = (HA_OPEN[i−1] + HA_CLOSE[i−1]) / 2
+        HA_OPEN = (HA_OPEN[i-1] + HA_CLOSE[i-1]) / 2
 
     HA_HIGH = MAX(HA_OPEN, HA_HIGH, HA_CLOSE)
     HA_LOW = MIN(HA_OPEN, HA_LOW, HA_CLOSE)

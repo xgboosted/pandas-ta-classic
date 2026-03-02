@@ -32,7 +32,7 @@ def skew(
 
     # Pure numpy rolling skewness (adjusted Fisher-Pearson) for cross-version
     # determinism.
-    # G1 = n·√(n−1) / (n−2) · M3 / M2^(3/2)
+    # G1 = n·sqrt(n-1) / (n-2) · M3 / M2^(3/2)
     m2, m3 = np_rolling_moments(close.values, length, 2, 3)
     nf = np.float64(length)
     with np.errstate(divide="ignore", invalid="ignore"):

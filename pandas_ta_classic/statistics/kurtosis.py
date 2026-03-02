@@ -31,7 +31,7 @@ def kurtosis(
         return None
 
     # Pure numpy rolling excess kurtosis (Fisher) for cross-version determinism.
-    # G2 = n(n+1)(n-1)·M4 / ((n-2)(n-3)·M2²) − 3(n-1)²/((n-2)(n-3))
+    # G2 = n(n+1)(n-1)·M4 / ((n-2)(n-3)·M2²) - 3(n-1)²/((n-2)(n-3))
     m2, m4 = np_rolling_moments(close.values, length, 2, 4)
     nf = np.float64(length)
     with np.errstate(divide="ignore", invalid="ignore"):

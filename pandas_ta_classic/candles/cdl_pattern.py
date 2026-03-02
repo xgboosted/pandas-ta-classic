@@ -137,7 +137,7 @@ def cdl_pattern(
 
             result[f"CDL_{n.upper()}"] = pattern_result
 
-    if len(result) == 0:
+    if not result:
         return None
 
     # Prepare DataFrame to return

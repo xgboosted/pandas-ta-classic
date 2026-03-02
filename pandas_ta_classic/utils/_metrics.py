@@ -132,7 +132,7 @@ def max_drawdown(
     if all:
         return max_dd_
 
-    if isinstance(method, str) and method in max_dd_.keys():
+    if isinstance(method, str) and method in max_dd_:
         return max_dd_[method]
     return max_dd_["dollar"]
 

@@ -31,7 +31,7 @@ from ._core import verify_series
 def np_rolling_moments(
     values: npNdArray, length: int, *orders: int
 ) -> Tuple[npNdArray, ...]:
-    """Rolling central moments Σ(x − mean)^k using pure numpy.
+    """Rolling central moments Σ(x - mean)^k using pure numpy.
 
     Returns one float64 array per *order*, each of ``len(values)`` elements
     with the first ``length - 1`` values set to NaN.

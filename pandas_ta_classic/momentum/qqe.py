@@ -79,6 +79,7 @@ def qqe(
 
     long = Series(long_arr, index=idx)
     short = Series(short_arr, index=idx)
+    trend = Series(trend_arr, index=idx)
     qqe = Series(qqe_arr, index=idx)
     qqe_long = Series(qqe_long_arr, index=idx)
     qqe_short = Series(qqe_short_arr, index=idx)
@@ -93,6 +94,7 @@ def qqe(
             f"QQEs{_props}": qqe_short,
             f"QQEb_l{_props}": long,
             f"QQEb_s{_props}": short,
+            f"QQEd{_props}": trend,
         },
         f"QQE{_props}",
         "momentum",
@@ -132,5 +134,5 @@ Kwargs:
 Returns:
     pd.DataFrame: QQE, RSI_MA (basis), QQEl (sparse long signal),
         QQEs (sparse short signal), QQEb_l (continuous long band),
-        and QQEb_s (continuous short band) columns.
+        QQEb_s (continuous short band), and QQEd (trend direction) columns.
 """

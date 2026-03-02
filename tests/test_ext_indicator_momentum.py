@@ -157,7 +157,7 @@ class TestMomentumExtension(TestCase):
         self.data.ta.qqe(append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(
-            list(self.data.columns[-6:]),
+            list(self.data.columns[-7:]),
             [
                 "QQE_14_5_4.236",
                 "QQE_14_5_4.236_RSIMA",
@@ -165,6 +165,7 @@ class TestMomentumExtension(TestCase):
                 "QQEs_14_5_4.236",
                 "QQEb_l_14_5_4.236",
                 "QQEb_s_14_5_4.236",
+                "QQEd_14_5_4.236",
             ],
         )
 

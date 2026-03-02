@@ -43,7 +43,7 @@ def variance(
         variance = VAR(close, length)
     else:
         # Pure numpy for cross-version determinism.
-        # var = Σ(xi − mean)² / (n − ddof)
+        # var = Σ(xi - mean)² / (n - ddof)
         (m2,) = np_rolling_moments(close.values, length, 2)
         variance = Series(m2 / (length - ddof), index=close.index, dtype=np.float64)
 

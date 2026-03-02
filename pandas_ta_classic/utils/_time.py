@@ -102,7 +102,7 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
         "seconds": time_diff.total_seconds(),
     }
 
-    if isinstance(tf, str) and tf in TimeFrame.keys():
+    if isinstance(tf, str) and tf in TimeFrame:
         return TimeFrame[tf]
     return TimeFrame["years"]
 

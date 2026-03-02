@@ -422,7 +422,7 @@ class AnalysisIndicators:
     @exchange.setter
     def exchange(self, value: str) -> None:
         """property: df.ta.exchange = "LSE" """
-        if value is not None and isinstance(value, str) and value in EXCHANGE_TZ.keys():
+        if value is not None and isinstance(value, str) and value in EXCHANGE_TZ:
             self._exchange = value
             self._df.attrs["_ta_exchange"] = self._exchange
 
@@ -527,7 +527,7 @@ class AnalysisIndicators:
 
     def _append(self, result=None, **kwargs) -> None:
         """Appends a Pandas Series or DataFrame columns to self._df."""
-        if "append" in kwargs and kwargs["append"]:
+        if kwargs.get("append"):
             df = self._df
             if df is None or result is None:
                 return
@@ -671,7 +671,7 @@ class AnalysisIndicators:
             Returns nothing to the user.  Either adds or removes constant ranges
             from the working DataFrame.
         """
-        if isinstance(values, npNdarray) or isinstance(values, list):
+        if isinstance(values, (npNdarray, list)):
             if append:
                 for x in values:
                     self._df[f"{x}"] = x
@@ -822,7 +822,7 @@ class AnalysisIndicators:
 
         timed = kwargs.pop("timed", False)
         results: Any = []
-        use_multiprocessing = True if self.cores > 0 else False
+        use_multiprocessing = self.cores > 0
         has_col_names = False
 
         if timed:
@@ -902,7 +902,7 @@ class AnalysisIndicators:
                     # Custom multiprocessing pool. Must be ordered for Chained Strategies
                     results = pool.imap(slim._mp_worker, custom_ta, _chunksize)
                 else:
-                    default_ta: list = [(ind, tuple(), kwargs) for ind in ta]
+                    default_ta: list = [(ind, (), kwargs) for ind in ta]
                     # All and Categorical multiprocessing pool.
                     if all_ordered:
                         if Imports["tqdm"]:
@@ -955,7 +955,7 @@ class AnalysisIndicators:
                         params = (
                             ind["params"]
                             if "params" in ind and isinstance(ind["params"], tuple)
-                            else tuple()
+                            else ()
                         )
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
                 else:
@@ -963,17 +963,17 @@ class AnalysisIndicators:
                         params = (
                             ind["params"]
                             if "params" in ind and isinstance(ind["params"], tuple)
-                            else tuple()
+                            else ()
                         )
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
             else:
                 if Imports["tqdm"] and verbose:
                     pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
-                        getattr(self, ind)(*tuple(), **kwargs)
+                        getattr(self, ind)(**kwargs)
                 else:
                     for ind in ta:
-                        getattr(self, ind)(*tuple(), **kwargs)
+                        getattr(self, ind)(**kwargs)
                 self._last_run = get_time(self.exchange, to_string=True)
 
         # Flush deferred appends for all/category modes.
