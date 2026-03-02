@@ -219,23 +219,23 @@ class TestStatistics(TestCase):
         )
 
     def test_variance_vs_pandas(self):
-        """Cross-validate numpy variance against pandas rolling.var()."""
+        """Cross-validate numpy variance against pandas rolling.var(ddof=0)."""
         result = pandas_ta.variance(self.close, talib=False)
-        expected = self.close.rolling(30).var()
+        expected = self.close.rolling(30).var(ddof=0)
         mask = expected.notna()
         self.assertTrue(
             np.allclose(result[mask], expected[mask], atol=1e-7),
-            "variance deviates from pandas rolling.var()",
+            "variance deviates from pandas rolling.var(ddof=0)",
         )
 
     def test_stdev_vs_pandas(self):
-        """Cross-validate numpy stdev against pandas rolling.std()."""
+        """Cross-validate numpy stdev against pandas rolling.std(ddof=0)."""
         result = pandas_ta.stdev(self.close, talib=False)
-        expected = self.close.rolling(30).std()
+        expected = self.close.rolling(30).std(ddof=0)
         mask = expected.notna()
         self.assertTrue(
             np.allclose(result[mask], expected[mask], atol=1e-7),
-            "stdev deviates from pandas rolling.std()",
+            "stdev deviates from pandas rolling.std(ddof=0)",
         )
 
     def test_median_vs_pandas(self):

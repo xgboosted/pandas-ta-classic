@@ -33,10 +33,10 @@ def linreg(
         return None
 
     # Calculate Result — fully vectorised OLS over all windows at once.
-    # x = [1, 2, ..., L] is fixed; precompute scalar sums.
-    x_arr = np.arange(1, length + 1, dtype=float)
-    x_sum = 0.5 * length * (length + 1)
-    x2_sum = x_sum * (2 * length + 1) / 3
+    # x = [0, 1, ..., L-1] matches TA-Lib convention; precompute scalar sums.
+    x_arr = np.arange(length, dtype=float)
+    x_sum = 0.5 * length * (length - 1)
+    x2_sum = length * (length - 1) * (2 * length - 1) / 6
     divisor = length * x2_sum - x_sum * x_sum
 
     from numpy.lib.stride_tricks import sliding_window_view
@@ -64,9 +64,9 @@ def linreg(
             rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
             linreg_ = rn / rd
         elif tsf:
-            linreg_ = m_slopes * (length + 1) + bs
-        else:
             linreg_ = m_slopes * length + bs
+        else:
+            linreg_ = m_slopes * (length - 1) + bs
 
     linreg = Series(
         np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
@@ -98,9 +98,9 @@ Source: TA Lib
 Calculation:
     Default Inputs:
         length=14
-    x = [1, 2, ..., n]
-    x_sum = 0.5 * length * (length + 1)
-    x2_sum = length * (length + 1) * (2 * length + 1) / 6
+    x = [0, 1, ..., n-1]  (matches TA-Lib convention)
+    x_sum = 0.5 * length * (length - 1)
+    x2_sum = length * (length - 1) * (2 * length - 1) / 6
     divisor = length * x2_sum - x_sum * x_sum
 
     lr(series):
