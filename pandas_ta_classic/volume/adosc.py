@@ -62,7 +62,7 @@ Sources:
 
 Calculation:
     Default Inputs:
-        fast=12, slow=26
+        fast=3, slow=10
     AD = Accum/Dist
     ad = AD(high, low, close, open)
     fast_ad = EMA(ad, fast)

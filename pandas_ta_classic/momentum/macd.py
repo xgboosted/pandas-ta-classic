@@ -120,6 +120,13 @@ Sources:
     https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)
     AS Mode: https://tr.tradingview.com/script/YFlKXHnP/
 
+TA-Lib note:
+    TA-Lib's MACD() uses an internal EMA warmup convention that differs
+    from its standalone EMA() function, causing the native output to
+    start ~8 bars earlier and the signal line to diverge by up to ~0.15
+    in absolute terms (corr > 0.999). This is a TA-Lib implementation
+    detail, not a bug in this library.
+
 Calculation:
     Default Inputs:
         fast=12, slow=26, signal=9
