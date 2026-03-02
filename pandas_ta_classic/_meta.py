@@ -86,7 +86,7 @@ def _build_category_dict():
         category_name = category_path.name
 
         # Skip special directories and non-indicator directories
-        if category_name.startswith("_") or category_name.startswith("."):
+        if category_name.startswith(("_", ".")):
             continue
         if category_name == "__pycache__":
             continue

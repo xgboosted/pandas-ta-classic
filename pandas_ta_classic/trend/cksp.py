@@ -33,7 +33,7 @@ def cksp(
 
     offset = get_offset(offset)
     tvmode = tvmode if isinstance(tvmode, bool) else True
-    mamode = "rma" if tvmode is True else "sma"
+    mamode = "rma" if tvmode else "sma"
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=p, mamode=mamode)

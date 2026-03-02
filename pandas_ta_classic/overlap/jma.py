@@ -46,7 +46,7 @@ def jma(
     )
 
     # Remove initial lookback data and convert to pandas frame
-    jma[0 : _length - 1] = npNaN
+    jma[: _length - 1] = npNaN
     jma = Series(jma, index=close.index)
 
     return _finalize(jma, offset, f"JMA_{_length}_{phase}", "overlap", **kwargs)

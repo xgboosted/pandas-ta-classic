@@ -23,7 +23,7 @@ def hma(
         return None
 
     # Calculate Result
-    half_length = int(length / 2)
+    half_length = length // 2
     sqrt_length = int(npSqrt(length))
 
     wmaf = wma(close=close, length=half_length)

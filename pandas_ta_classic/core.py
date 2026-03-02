@@ -621,19 +621,19 @@ class AnalysisIndicators:
         name = "All"
         mode = {"all": False, "category": False, "custom": False}
 
-        if len(args) == 0:
+        if not args:
             mode["all"] = True
         else:
             if isinstance(args[0], str):
                 if args[0].lower() == "all":
-                    name, mode["all"] = name, True
+                    mode["all"] = True
                 if args[0].lower() in self.categories:
                     name, mode["category"] = args[0], True
 
             if isinstance(args[0], Strategy):
                 strategy_ = args[0]
                 if strategy_.ta is None or strategy_.name.lower() == "all":
-                    name, mode["all"] = name, True
+                    mode["all"] = True
                 elif strategy_.name.lower() in self.categories:
                     name, mode["category"] = strategy_.name, True
                 else:
