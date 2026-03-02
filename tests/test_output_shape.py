@@ -158,6 +158,7 @@ _TALIB_INDICATORS = list(_discover_talib_indicators())
 # Known first_valid_index mismatches between native and TA-Lib paths.
 # Tracked here so they show up as xfail (not silently hidden).
 _TALIB_FV_XFAIL = {
+    "momentum/cmo": "RMA off-by-one: native fv=13, talib fv=14",
     "momentum/rsi": "RMA off-by-one: native fv=13, talib fv=14",
     "momentum/uo": "off-by-one: native fv=27, talib fv=28",
     "momentum/macd": "EMA chain stacking: native fv=25, talib fv=33",
