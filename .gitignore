@@ -159,3 +159,6 @@ scripts/
 
 # Backup files
 *.backup
+
+# log
+log/

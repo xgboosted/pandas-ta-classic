@@ -505,9 +505,12 @@ class TestAnalysisIndicators(TestCase):
 
     def test_append_with_pending(self):
         df = self.data.copy()
-        # Simulate deferred append mode
-        df.ta.pending_appends = []
+        # Use a single accessor reference since pending_appends is an
+        # instance attribute (not persisted in attrs) and each df.ta
+        # access creates a new accessor instance.
+        ta = df.ta
+        ta.pending_appends = ta._AppendBuffer()
         result = pandas_ta.sma(df["close"], length=10)
-        df.ta._append(result=result, append=True)
-        self.assertEqual(len(df.ta.pending_appends), 1)
-        df.ta.pending_appends = None
+        ta._append(result=result, append=True)
+        self.assertEqual(len(ta.pending_appends), 1)
+        ta.pending_appends = None

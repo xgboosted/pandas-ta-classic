@@ -148,7 +148,6 @@ jobs:
     needs: [code-quality, generate-matrix]
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.python-versions) }}
     
@@ -188,11 +187,7 @@ jobs:
         pytest --cov=pandas_ta_classic \
                --cov-report=xml \
                --cov-report=term-missing \
-               --cov-fail-under=70 \
-               --ignore=tests/test_strategy.py
-
-    - name: Run strategy tests (without coverage)
-      run: pytest tests/test_strategy.py -v
+               --cov-fail-under=70
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v4

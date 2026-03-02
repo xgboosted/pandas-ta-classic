@@ -302,6 +302,16 @@ class AnalysisIndicators:
     >>> print(apo.timed)
     """
 
+    class _AppendBuffer(list):
+        """list subclass with identity-based ``__eq__`` to safely hold
+        DataFrames.  Prevents accidental element-wise comparison that
+        would raise ``ValueError: The truth value of a DataFrame is
+        ambiguous``.
+        """
+
+        def __eq__(self, other: object) -> bool:
+            return self is other
+
     _adjusted = None
     _cores = cpu_count()
     _df = pd.DataFrame()
@@ -318,7 +328,12 @@ class AnalysisIndicators:
         self._cores = attrs.get("_ta_cores", cpu_count())
         self._exchange = attrs.get("_ta_exchange", "NYSE")
         self._time_range = attrs.get("_ta_time_range", "years")
-        self._pending_appends = attrs.get("_ta_pending_appends", None)
+        # NOTE: _pending_appends is intentionally NOT stored in attrs.
+        # Storing DataFrames in attrs causes pandas __finalize__ to crash
+        # (ValueError on DataFrame == comparison) or become extremely slow
+        # (deepcopy of entire buffer on every intermediate operation).
+        # It only needs to live during strategy() on the same accessor instance.
+        self._pending_appends = None
         self._last_run = get_time(self._exchange, to_string=True)
 
     @staticmethod
@@ -399,7 +414,6 @@ class AnalysisIndicators:
     @pending_appends.setter
     def pending_appends(self, value: Optional[List[pd.DataFrame]]) -> None:
         self._pending_appends = value
-        self._df.attrs["_ta_pending_appends"] = value
 
     @property
     def exchange(self) -> str:
@@ -840,7 +854,7 @@ class AnalysisIndicators:
         # Custom mode stays immediate so chained indicators can reference
         # columns produced by earlier ones.
         if not mode["custom"]:
-            self.pending_appends = []
+            self.pending_appends = self._AppendBuffer()
 
         if use_multiprocessing:
             _total_ta = len(ta)
