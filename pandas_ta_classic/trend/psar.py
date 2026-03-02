@@ -4,7 +4,6 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
 from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series, zero
 
 
@@ -31,21 +30,20 @@ def psar(
         return None
 
     def _falling(high: Series, low: Series, drift: int = 1) -> bool:
-        """Returns the last -DM value"""
-        # Not to be confused with ta.falling()
+        """Returns True if MINUS_DM > 0 (TA-Lib convention)."""
         up = high - high.shift(drift)
         dn = low.shift(drift) - low
         _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
         return _dmn > 0
 
-    # Falling if the first NaN -DM is positive
-    falling = _falling(high.iloc[:2], low.iloc[:2])
+    # Initial direction via MINUS_DM (matches TA-Lib SAR)
+    falling = _falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if falling:
         sar = high.iloc[0]
-        ep = low.iloc[0]
+        ep = low.iloc[1] if len(low) > 1 else low.iloc[0]
     else:
         sar = low.iloc[0]
-        ep = high.iloc[0]
+        ep = high.iloc[1] if len(high) > 1 else high.iloc[0]
 
     if close is not None:
         close = verify_series(close)

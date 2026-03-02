@@ -527,7 +527,13 @@ def _psar_loop(
     af0: float,
     max_af: float,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Parabolic SAR iterative loop.
+    """Parabolic SAR iterative loop (TA-Lib compatible).
+
+    Uses the output-then-update pattern from TA-Lib's SAR implementation:
+    - Check reversal against the *current* SAR (not a stepped value)
+    - On no-reversal: output SAR, update EP/AF, step SAR for next bar, clamp
+    - On reversal: SAR=EP (clamped), output, reset AF/EP, post-reversal
+      step+clamp (preparing next bar's SAR)
 
     Returns ``(long, short, af, reversal)`` arrays.
     """
@@ -537,49 +543,84 @@ def _psar_loop(
     reversal_arr = np.zeros(m)
 
     af_arr[0] = af0
-    if m > 1:
-        af_arr[1] = af0
     af = af0
 
+    if m < 2:
+        return long_arr, short_arr, af_arr, reversal_arr
+
+    is_long = not falling
+
+    # Initialise prev to bar-1 data so the first iteration (row=1)
+    # has prev == new, matching TA-Lib's startup.
+    new_high = h_arr[1]
+    new_low = l_arr[1]
+
     for row in range(1, m):
-        high_ = h_arr[row]
-        low_ = l_arr[row]
+        prev_low = new_low
+        prev_high = new_high
+        new_low = l_arr[row]
+        new_high = h_arr[row]
 
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = high_ > _sar
+        reverse = False
 
-            if low_ < ep:
-                ep = low_
-                af = min(af + af0, max_af)
-
-            prev1 = h_arr[row - 1]
-            prev2 = h_arr[row - 2] if row >= 2 else prev1
-            _sar = max(prev1, prev2, _sar)
+        if is_long:
+            if new_low <= sar:
+                # Long -> Short reversal
+                reverse = True
+                is_long = False
+                sar = ep
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+                short_arr[row] = sar
+                af = af0
+                ep = new_low
+                # Post-reversal step + clamp
+                sar = sar + af * (ep - sar)
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+            else:
+                long_arr[row] = sar
+                if new_high > ep:
+                    ep = new_high
+                    af = min(af + af0, max_af)
+                sar = sar + af * (ep - sar)
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
         else:
-            _sar = sar + af * (ep - sar)
-            reverse = low_ < _sar
-
-            if high_ > ep:
-                ep = high_
-                af = min(af + af0, max_af)
-
-            prev1 = l_arr[row - 1]
-            prev2 = l_arr[row - 2] if row >= 2 else prev1
-            _sar = min(prev1, prev2, _sar)
-
-        if reverse:
-            _sar = ep
-            af = af0
-            falling = not falling
-            ep = low_ if falling else high_
-
-        sar = _sar
-
-        if falling:
-            short_arr[row] = sar
-        else:
-            long_arr[row] = sar
+            if new_high >= sar:
+                # Short -> Long reversal
+                reverse = True
+                is_long = True
+                sar = ep
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+                long_arr[row] = sar
+                af = af0
+                ep = new_high
+                # Post-reversal step + clamp
+                sar = sar + af * (ep - sar)
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+            else:
+                short_arr[row] = sar
+                if new_low < ep:
+                    ep = new_low
+                    af = min(af + af0, max_af)
+                sar = sar + af * (ep - sar)
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
 
         af_arr[row] = af
         reversal_arr[row] = 1.0 if reverse else 0.0
