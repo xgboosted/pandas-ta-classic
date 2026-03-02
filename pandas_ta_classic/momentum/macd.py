@@ -45,6 +45,23 @@ def macd(
         from talib import MACD
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
+    elif mamode == "ema":
+        # TA-Lib-compatible EMA: align fast seed to slow start point
+        import numpy as np
+        from pandas_ta_classic.utils._numba import _ema_aligned
+
+        c_arr = close.to_numpy(dtype=float)
+        m = c_arr.shape[0]
+        slow_start = slow - 1  # first bar for slow EMA
+        slow_ema = _ema_aligned(c_arr, m, slow, slow_start)
+        fast_ema = _ema_aligned(c_arr, m, fast, slow_start)
+        macd_arr = fast_ema - slow_ema
+        sig_start = slow_start + signal - 1
+        sig_ema = _ema_aligned(macd_arr, m, signal, sig_start)
+
+        macd = Series(macd_arr, index=close.index)
+        signalma = Series(sig_ema, index=close.index)
+        histogram = macd - signalma
     else:
         fastma = ma(mamode, close, length=fast)
         slowma = ma(mamode, close, length=slow)
