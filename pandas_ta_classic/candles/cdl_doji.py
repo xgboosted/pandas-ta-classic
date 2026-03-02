@@ -55,7 +55,8 @@ A candle body is Doji, when it's shorter than 10% of the
 average of the 10 previous candles' high-low range.
 
 Sources:
-    TA-Lib: 96.56% Correlation
+    TA-Lib comparison: ~97% correlation. TA-Lib uses a different
+    threshold algorithm, so exact match is not expected.
 
 Calculation:
     Default values:
