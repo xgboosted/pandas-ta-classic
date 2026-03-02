@@ -166,15 +166,15 @@ def squeeze_pro(
         neg_dec *= sqz
         neg_inc *= sqz
 
-        pos_inc.replace(0, npNaN, inplace=True)
-        pos_dec.replace(0, npNaN, inplace=True)
-        neg_dec.replace(0, npNaN, inplace=True)
-        neg_inc.replace(0, npNaN, inplace=True)
+        pos_inc = pos_inc.replace(0, npNaN)
+        pos_dec = pos_dec.replace(0, npNaN)
+        neg_dec = neg_dec.replace(0, npNaN)
+        neg_inc = neg_inc.replace(0, npNaN)
 
         sqz_inc = sqz * increasing(sqz)
         sqz_dec = sqz * decreasing(sqz)
-        sqz_inc.replace(0, npNaN, inplace=True)
-        sqz_dec.replace(0, npNaN, inplace=True)
+        sqz_inc = sqz_inc.replace(0, npNaN)
+        sqz_dec = sqz_dec.replace(0, npNaN)
 
         sqz_inc = apply_offset(sqz_inc, 0, **kwargs)
         sqz_dec = apply_offset(sqz_dec, 0, **kwargs)

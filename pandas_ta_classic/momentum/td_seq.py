@@ -48,8 +48,8 @@ def td_seq(
 
     if asint:
         if up_seq.hasnans and down_seq.hasnans:
-            up_seq.fillna(0, inplace=True)
-            down_seq.fillna(0, inplace=True)
+            up_seq = up_seq.fillna(0)
+            down_seq = down_seq.fillna(0)
         up_seq = up_seq.astype(int)
         down_seq = down_seq.astype(int)
 

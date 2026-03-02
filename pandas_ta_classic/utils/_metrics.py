@@ -90,7 +90,7 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
     returns = verify_series(returns)
     benchmark_returns = verify_series(benchmark_returns)
 
-    benchmark_returns.interpolate(inplace=True)
+    benchmark_returns = benchmark_returns.interpolate()
     return linear_regression(benchmark_returns, returns)["a"]
 
 

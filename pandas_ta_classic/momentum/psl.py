@@ -32,7 +32,7 @@ def psl(
     else:
         diff = npSign(close.diff(drift))
 
-    diff.fillna(0, inplace=True)
+    diff = diff.fillna(0)
     diff[diff <= 0] = 0  # Zero negative values
 
     psl = scalar * diff.rolling(length).sum()

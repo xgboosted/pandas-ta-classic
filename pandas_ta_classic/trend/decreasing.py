@@ -44,7 +44,7 @@ def decreasing(
                 close.shift(x - (drift + 1)) < close_.shift(x - drift)
             )
 
-        decreasing.fillna(0, inplace=True)
+        decreasing = decreasing.fillna(0)
         decreasing = decreasing.astype(bool)
     else:
         decreasing = close_.diff(length) < 0

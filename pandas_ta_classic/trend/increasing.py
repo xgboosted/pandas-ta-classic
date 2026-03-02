@@ -44,7 +44,7 @@ def increasing(
                 close.shift(x - (drift + 1)) > close_.shift(x - drift)
             )
 
-        increasing.fillna(0, inplace=True)
+        increasing = increasing.fillna(0)
         increasing = increasing.astype(bool)
     else:
         increasing = close_.diff(length) > 0

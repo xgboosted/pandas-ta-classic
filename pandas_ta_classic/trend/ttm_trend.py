@@ -33,7 +33,7 @@ def ttm_trend(
     trend_avg = trend_avg / length
 
     tm_trend = (close > trend_avg).astype(int)
-    tm_trend.replace(0, -1, inplace=True)
+    tm_trend = tm_trend.replace(0, -1)
 
     # Offset, Name and Categorize it
     return _build_dataframe(

@@ -108,7 +108,7 @@ def unsigned_differences(
     """
     amount = int(amount) if amount is not None else 1
     negative = series.diff(amount)
-    negative.fillna(0, inplace=True)
+    negative = negative.fillna(0)
     positive = negative.copy()
 
     positive[positive <= 0] = 0
@@ -268,13 +268,13 @@ def apply_offset(
     if offset != 0:
         result = result.shift(offset)
     if "fillna" in kwargs:
-        result.fillna(kwargs["fillna"], inplace=True)
+        result = result.fillna(kwargs["fillna"])
     if "fill_method" in kwargs:
         fm = kwargs["fill_method"]
         if fm == "ffill":
-            result.ffill(inplace=True)
+            result = result.ffill()
         elif fm == "bfill":
-            result.bfill(inplace=True)
+            result = result.bfill()
     return result
 
 

@@ -75,7 +75,7 @@ class TestStrategyMethods(TestCase):
 
         self.result = self.data[self.data.columns[-self.added_cols :]]
         self.assertIsInstance(self.result, DataFrame)
-        self.data.drop(columns=self.result.columns, inplace=True)
+        self.data = self.data.drop(columns=self.result.columns)
 
         self.speed_test[self.category] = [self.added_cols, self.time_diff]
 

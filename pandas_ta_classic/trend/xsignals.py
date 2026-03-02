@@ -40,9 +40,9 @@ def xsignals(
     trades = entries + exits
 
     # Modify trades to fill gaps for trends
-    trades.replace({0: npNaN}, inplace=True)
-    trades.ffill(inplace=True)
-    trades.fillna(0, inplace=True)
+    trades = trades.replace({0: npNaN})
+    trades = trades.ffill()
+    trades = trades.fillna(0)
 
     trends = (trades > 0).astype(int)
     if not long:

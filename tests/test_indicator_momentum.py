@@ -58,7 +58,7 @@ class TestMomentum(TestCase):
 
         # Test a non-datetime64 index
         original = self.data.copy()
-        original.reset_index(inplace=True)
+        original = original.reset_index()
         result = original.ta.datetime_ordered
         self.assertFalse(result)
 

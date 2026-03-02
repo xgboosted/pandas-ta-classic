@@ -31,7 +31,7 @@ def _read_sample_csv():
         index_col="date",
         parse_dates=True,
     )
-    df.drop(columns=["Unnamed: 0"], inplace=True, errors="ignore")
+    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
     return df
 
 

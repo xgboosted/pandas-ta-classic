@@ -535,7 +535,7 @@ def yf(ticker: str, **kwargs):
         if kind in _all + ["institutional_holders", "ih"]:
             ihdf = yfd.institutional_holders
             if ihdf is not None and "Date Reported" in ihdf.columns:
-                ihdf.set_index("Date Reported", inplace=True)
+                ihdf = ihdf.set_index("Date Reported")
                 ihdf["Shares"] = ihdf.apply(lambda x: f"{x['Shares']:,}", axis=1)
                 ihdf["Value"] = ihdf.apply(lambda x: f"{x['Value']:,}", axis=1)
                 if kind not in _all:
@@ -546,7 +546,7 @@ def yf(ticker: str, **kwargs):
             mhdf = yfd.major_holders
             if mhdf is not None and "Major Holders" in mhdf.columns:
                 mhdf.columns = ["Percentage", "Major Holders"]
-                mhdf.set_index("Major Holders", inplace=True)
+                mhdf = mhdf.set_index("Major Holders")
                 mhdf["Shares"] = mhdf.apply(lambda x: f"{x['Shares']:,}", axis=1)
                 mhdf["Value"] = mhdf.apply(lambda x: f"{x['Value']:,}", axis=1)
                 if kind not in _all:
@@ -556,7 +556,7 @@ def yf(ticker: str, **kwargs):
         if kind in _all + ["mutualfund_holders", "mfh"]:
             mfhdf = yfd.get_mutualfund_holders()
             if mfhdf is not None and "Holder" in mfhdf.columns:
-                mfhdf.set_index("Date Reported", inplace=True)
+                mfhdf = mfhdf.set_index("Date Reported")
                 mfhdf["Shares"] = mfhdf.apply(lambda x: f"{x['Shares']:,}", axis=1)
                 mfhdf["Value"] = mfhdf.apply(lambda x: f"{x['Value']:,}", axis=1)
                 if kind not in _all:
@@ -576,7 +576,7 @@ def yf(ticker: str, **kwargs):
         if kind in _all + ["calendar", "cal"]:
             caldf = yfd.calendar
             if caldf is not None and "Earnings Date" in caldf.columns:
-                caldf.set_index("Earnings Date", inplace=True)
+                caldf = caldf.set_index("Earnings Date")
                 if kind not in _all:
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Earnings Calendar    " + div + f"\n{caldf}")
@@ -595,12 +595,10 @@ def yf(ticker: str, **kwargs):
         if kind in _all + ["sustainability", "sus", "esg"]:
             susdf = yfd.sustainability
             if susdf is not None:
-                susdf.replace({None: False}, inplace=True)
+                susdf = susdf.replace({None: False})
                 susdf.columns = ["Score"]
-                susdf.drop(
-                    susdf[susdf["Score"] == False].index, inplace=True
-                )  # noqa: E712
-                susdf.rename(index=_camelCase2Title, errors="ignore", inplace=True)
+                susdf = susdf.drop(susdf[susdf["Score"] == False].index)  # noqa: E712
+                susdf = susdf.rename(index=_camelCase2Title, errors="ignore")
                 susdf.index.name = "Source"
                 if kind not in _all:
                     print(f"\n{ticker_info['symbol']}")
@@ -672,8 +670,8 @@ def yf(ticker: str, **kwargs):
                     cp_chain = yfd.option_chain(proxy=proxy)
                     calls, puts = cp_chain.calls, cp_chain.puts
                     calls.columns = puts.columns = option_columns
-                    calls.set_index("Contract", inplace=True)
-                    puts.set_index("Contract", inplace=True)
+                    calls = calls.set_index("Contract")
+                    puts = puts.set_index("Contract")
 
                     calls.name = f"{ticker} Calls for {opt_date}"
                     puts.name = f"{ticker} Puts for {opt_date}"
