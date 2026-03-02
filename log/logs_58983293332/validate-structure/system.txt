@@ -1,0 +1,8 @@
+2026-03-01T21:38:18.0190000Z Job is about to start running on the hosted runner: GitHub Actions 1000000153
+2026-03-01T21:38:18.0080000Z Requested labels: ubuntu-latest
+2026-03-01T21:38:18.0080000Z Job defined at: rmarcink/pandas-ta-classic/.github/workflows/ci.yml@refs/heads/dev
+2026-03-01T21:38:18.0080000Z Waiting for a runner to pick up this job...
+2026-03-01T21:38:18.0060000Z Evaluating validate-structure.if
+2026-03-01T21:38:18.0060000Z Evaluating: success()
+2026-03-01T21:38:18.0060000Z Result: true
+2026-03-01T21:38:18.0190000Z Job is waiting for a hosted runner to come online.

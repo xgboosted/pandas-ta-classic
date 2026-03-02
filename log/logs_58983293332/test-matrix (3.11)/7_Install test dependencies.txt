@@ -1,0 +1,37 @@
+﻿2026-03-01T21:42:19.3188524Z ##[group]Run pip install pytest pytest-cov
+2026-03-01T21:42:19.3189216Z [36;1mpip install pytest pytest-cov[0m
+2026-03-01T21:42:19.3237719Z shell: /usr/bin/bash -e {0}
+2026-03-01T21:42:19.3237970Z env:
+2026-03-01T21:42:19.3238145Z   LATEST_PYTHON_VERSION: 3.13
+2026-03-01T21:42:19.3238449Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:19.3239000Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2026-03-01T21:42:19.3239408Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:19.3239771Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:19.3240140Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:19.3240506Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2026-03-01T21:42:19.3240843Z   TA_LIBRARY_PATH: /home/runner/ta-lib-install/lib
+2026-03-01T21:42:19.3241163Z   TA_INCLUDE_PATH: /home/runner/ta-lib-install/include
+2026-03-01T21:42:19.3241442Z ##[endgroup]
+2026-03-01T21:42:19.7489984Z Collecting pytest
+2026-03-01T21:42:19.8061264Z   Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+2026-03-01T21:42:19.8231881Z Collecting pytest-cov
+2026-03-01T21:42:19.8269880Z   Downloading pytest_cov-7.0.0-py3-none-any.whl.metadata (31 kB)
+2026-03-01T21:42:19.8454686Z Collecting iniconfig>=1.0.1 (from pytest)
+2026-03-01T21:42:19.8497421Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-03-01T21:42:19.8534203Z Requirement already satisfied: packaging>=22 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest) (26.0)
+2026-03-01T21:42:19.8621714Z Collecting pluggy<2,>=1.5 (from pytest)
+2026-03-01T21:42:19.8665350Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-03-01T21:42:19.8840685Z Collecting pygments>=2.7.2 (from pytest)
+2026-03-01T21:42:19.8885671Z   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2026-03-01T21:42:20.2425898Z Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov)
+2026-03-01T21:42:20.2469927Z   Downloading coverage-7.13.4-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.5 kB)
+2026-03-01T21:42:20.2604255Z Downloading pytest-9.0.2-py3-none-any.whl (374 kB)
+2026-03-01T21:42:20.2764675Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-03-01T21:42:20.2820205Z Downloading pytest_cov-7.0.0-py3-none-any.whl (22 kB)
+2026-03-01T21:42:20.2879010Z Downloading coverage-7.13.4-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (252 kB)
+2026-03-01T21:42:20.2958488Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-03-01T21:42:20.3017072Z Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2026-03-01T21:42:20.3147617Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 97.0 MB/s  0:00:00
+2026-03-01T21:42:20.3524669Z Installing collected packages: pygments, pluggy, iniconfig, coverage, pytest, pytest-cov
+2026-03-01T21:42:21.3756149Z 
+2026-03-01T21:42:21.3770419Z Successfully installed coverage-7.13.4 iniconfig-2.3.0 pluggy-1.6.0 pygments-2.19.2 pytest-9.0.2 pytest-cov-7.0.0

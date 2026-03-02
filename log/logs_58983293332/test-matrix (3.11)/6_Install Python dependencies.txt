@@ -1,0 +1,68 @@
+﻿2026-03-01T21:42:05.3582473Z ##[group]Run python -m pip install --upgrade pip
+2026-03-01T21:42:05.3582871Z [36;1mpython -m pip install --upgrade pip[0m
+2026-03-01T21:42:05.3583241Z [36;1m# Install package with dependencies from pyproject.toml[0m
+2026-03-01T21:42:05.3583579Z [36;1mpip install -e .[0m
+2026-03-01T21:42:05.3583842Z [36;1m# Install TA-Lib for candlestick patterns[0m
+2026-03-01T21:42:05.3584136Z [36;1mpip install TA-Lib[0m
+2026-03-01T21:42:05.3631767Z shell: /usr/bin/bash -e {0}
+2026-03-01T21:42:05.3632010Z env:
+2026-03-01T21:42:05.3632187Z   LATEST_PYTHON_VERSION: 3.13
+2026-03-01T21:42:05.3632664Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:05.3633080Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2026-03-01T21:42:05.3633489Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:05.3633876Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:05.3634248Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-03-01T21:42:05.3634644Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2026-03-01T21:42:05.3634991Z   TA_LIBRARY_PATH: /home/runner/ta-lib-install/lib
+2026-03-01T21:42:05.3635331Z   TA_INCLUDE_PATH: /home/runner/ta-lib-install/include
+2026-03-01T21:42:05.3635618Z ##[endgroup]
+2026-03-01T21:42:07.3535871Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (26.0.1)
+2026-03-01T21:42:07.9257009Z Obtaining file:///home/runner/work/pandas-ta-classic/pandas-ta-classic
+2026-03-01T21:42:07.9282268Z   Installing build dependencies: started
+2026-03-01T21:42:08.7964416Z   Installing build dependencies: finished with status 'done'
+2026-03-01T21:42:08.7971344Z   Checking if build backend supports build_editable: started
+2026-03-01T21:42:09.1285249Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-03-01T21:42:09.1294272Z   Getting requirements to build editable: started
+2026-03-01T21:42:09.6034315Z   Getting requirements to build editable: finished with status 'done'
+2026-03-01T21:42:09.6044463Z   Preparing editable metadata (pyproject.toml): started
+2026-03-01T21:42:09.9850253Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-03-01T21:42:10.2932737Z Collecting numpy>=2.0.0 (from pandas-ta-classic==0.0.1.dev844)
+2026-03-01T21:42:10.3546220Z   Downloading numpy-2.4.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-03-01T21:42:10.4783202Z Collecting pandas>=2.0.0 (from pandas-ta-classic==0.0.1.dev844)
+2026-03-01T21:42:10.4825993Z   Downloading pandas-3.0.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+2026-03-01T21:42:10.6183343Z Collecting python-dateutil>=2.8.2 (from pandas>=2.0.0->pandas-ta-classic==0.0.1.dev844)
+2026-03-01T21:42:10.6236793Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-03-01T21:42:10.6670819Z Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas>=2.0.0->pandas-ta-classic==0.0.1.dev844)
+2026-03-01T21:42:10.6730915Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-03-01T21:42:10.6824957Z Downloading numpy-2.4.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+2026-03-01T21:42:11.2243475Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 31.1 MB/s  0:00:00
+2026-03-01T21:42:11.2332140Z Downloading pandas-3.0.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (11.3 MB)
+2026-03-01T21:42:11.5187877Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.3/11.3 MB 38.9 MB/s  0:00:00
+2026-03-01T21:42:11.5227425Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-03-01T21:42:11.5296210Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-03-01T21:42:11.5722706Z Building wheels for collected packages: pandas-ta-classic
+2026-03-01T21:42:11.5731129Z   Building editable for pandas-ta-classic (pyproject.toml): started
+2026-03-01T21:42:11.9704966Z   Building editable for pandas-ta-classic (pyproject.toml): finished with status 'done'
+2026-03-01T21:42:11.9711544Z   Created wheel for pandas-ta-classic: filename=pandas_ta_classic-0.0.1.dev844-0.editable-py3-none-any.whl size=7954 sha256=c63083e7b3f6b45758d972616cd28699e7ef254e4cdb622058113a5bf6cf9e94
+2026-03-01T21:42:11.9713255Z   Stored in directory: /tmp/pip-ephem-wheel-cache-6pxydaf7/wheels/26/2a/94/899359d3469ccc41d532b7a6e61f4b857a5509c171998aeba8
+2026-03-01T21:42:11.9735937Z Successfully built pandas-ta-classic
+2026-03-01T21:42:12.0049429Z Installing collected packages: six, numpy, python-dateutil, pandas, pandas-ta-classic
+2026-03-01T21:42:18.3563884Z 
+2026-03-01T21:42:18.3575713Z Successfully installed numpy-2.4.2 pandas-3.0.1 pandas-ta-classic-0.0.1.dev844 python-dateutil-2.9.0.post0 six-1.17.0
+2026-03-01T21:42:18.8979105Z Collecting TA-Lib
+2026-03-01T21:42:18.9556547Z   Downloading ta_lib-0.6.8-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (23 kB)
+2026-03-01T21:42:18.9802324Z Collecting build (from TA-Lib)
+2026-03-01T21:42:18.9843154Z   Downloading build-1.4.0-py3-none-any.whl.metadata (5.8 kB)
+2026-03-01T21:42:18.9893259Z Requirement already satisfied: numpy in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from TA-Lib) (2.4.2)
+2026-03-01T21:42:19.0015045Z Collecting packaging>=24.0 (from build->TA-Lib)
+2026-03-01T21:42:19.0030361Z   Using cached packaging-26.0-py3-none-any.whl.metadata (3.3 kB)
+2026-03-01T21:42:19.0112864Z Collecting pyproject_hooks (from build->TA-Lib)
+2026-03-01T21:42:19.0152105Z   Downloading pyproject_hooks-1.2.0-py3-none-any.whl.metadata (1.3 kB)
+2026-03-01T21:42:19.0240140Z Downloading ta_lib-0.6.8-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.1 MB)
+2026-03-01T21:42:19.0760810Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.1/4.1 MB 108.6 MB/s  0:00:00
+2026-03-01T21:42:19.0801145Z Downloading build-1.4.0-py3-none-any.whl (24 kB)
+2026-03-01T21:42:19.0837487Z Using cached packaging-26.0-py3-none-any.whl (74 kB)
+2026-03-01T21:42:19.0875068Z Downloading pyproject_hooks-1.2.0-py3-none-any.whl (10 kB)
+2026-03-01T21:42:19.1211204Z Installing collected packages: pyproject_hooks, packaging, build, TA-Lib
+2026-03-01T21:42:19.2676340Z 
+2026-03-01T21:42:19.2687582Z Successfully installed TA-Lib-0.6.8 build-1.4.0 packaging-26.0 pyproject_hooks-1.2.0
