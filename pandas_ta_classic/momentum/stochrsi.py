@@ -78,22 +78,30 @@ Calculation:
     RSI = Relative Strength Index
     SMA = Simple Moving Average
 
-    RSI = RSI(high, low, close, rsi_length)
-    LL  = lowest RSI for last rsi_length periods
-    HH  = highest RSI for last rsi_length periods
+    RSI = RSI(close, rsi_length)
+    LL  = lowest RSI for last ``length`` periods
+    HH  = highest RSI for last ``length`` periods
 
     STOCHRSI  = 100 * (RSI - LL) / (HH - LL)
     STOCHRSIk = SMA(STOCHRSI, k)
     STOCHRSId = SMA(STOCHRSIk, d)
 
+TA-Lib parameter mapping:
+    TA-Lib STOCHRSI(timeperiod, fastk_period, fastd_period, fastd_matype)
+    timeperiod  -> rsi_length  (RSI lookback)
+    fastk_period -> length     (stochastic lookback for min/max)
+    fastd_period -> k          (smoothing of %K)
+    Note: TA-Lib's FastK is the *raw* stochastic (unsmoothed);
+    this library's %K is already SMA-smoothed, so it corresponds
+    to TA-Lib's FastD, not FastK.
+
 Args:
-    high (pd.Series): Series of 'high's
-    low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): The STOCHRSI period. Default: 14
+    length (int): The stochastic lookback period (min/max window).
+        Default: 14 (TA-Lib default: fastk_period=5)
     rsi_length (int): RSI period. Default: 14
-    k (int): The Fast %K period. Default: 3
-    d (int): The Slow %K period. Default: 3
+    k (int): SMA smoothing period for %K. Default: 3
+    d (int): SMA smoothing period for %D. Default: 3
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0
 

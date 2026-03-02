@@ -85,15 +85,23 @@ Calculation:
 
     STOCH = 100 * (close - LL) / (HH - LL)
     STOCHk = SMA(STOCH, smooth_k)
-    STOCHd = SMA(FASTK, d)
+    STOCHd = SMA(STOCHk, d)
+
+TA-Lib parameter mapping:
+    TA-Lib STOCH(fastk_period, slowk_period, slowk_matype, slowd_period, slowd_matype)
+    fastk_period -> k        (lookback for min/max)
+    slowk_period -> smooth_k (smoothing of raw %K)
+    slowd_period -> d        (smoothing of %K to get %D)
+    Note: Default k=14 differs from TA-Lib's fastk_period=5.
 
 Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    k (int): The Fast %K period. Default: 14
-    d (int): The Slow %K period. Default: 3
-    smooth_k (int): The Slow %D period. Default: 3
+    k (int): The lookback period (min/max window).
+        Default: 14 (TA-Lib default: fastk_period=5)
+    d (int): The %D smoothing period. Default: 3
+    smooth_k (int): The %K smoothing period. Default: 3
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0
 
