@@ -48,12 +48,13 @@ def dm(
         pos_ = ((up > dn) & (up > 0)) * up
         neg_ = ((dn > up) & (dn > 0)) * dn
 
-        pos_ = pos_.apply(zero)
-        neg_ = neg_.apply(zero)
+        pos_ = pos_.apply(zero).fillna(0)
+        neg_ = neg_.apply(zero).fillna(0)
 
-        # Not the same values as TA Lib's -+DM (Good First Issue)
-        pos = ma(mamode, pos_, length=length)
-        neg = ma(mamode, neg_, length=length)
+        # TA-Lib outputs the Wilder-smoothed *sum* (not average), so
+        # we multiply the RMA (average) by ``length`` to match.
+        pos = ma(mamode, pos_, length=length) * length
+        neg = ma(mamode, neg_, length=length) * length
         if pos is None or neg is None:
             return None
 
