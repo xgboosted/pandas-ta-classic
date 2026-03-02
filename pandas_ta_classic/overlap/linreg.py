@@ -24,7 +24,7 @@ def linreg(
     offset = get_offset(offset)
     angle = kwargs.pop("angle", False)
     intercept = kwargs.pop("intercept", False)
-    degrees = kwargs.pop("degrees", False)
+    degrees = kwargs.pop("degrees", True)
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
@@ -120,10 +120,10 @@ Args:
     offset (int): How many periods to offset the result.  Default: 0
 
 Kwargs:
-    angle (bool, optional): If True, returns the angle of the slope in radians.
+    angle (bool, optional): If True, returns the angle of the slope.
         Default: False.
-    degrees (bool, optional): If True, returns the angle of the slope in
-        degrees. Default: False.
+    degrees (bool, optional): If True, returns the angle in degrees;
+        if False, in radians. Default: True (matches TA-Lib convention).
     intercept (bool, optional): If True, returns the angle of the slope in
         radians. Default: False.
     r (bool, optional): If True, returns it's correlation 'r'. Default: False.
