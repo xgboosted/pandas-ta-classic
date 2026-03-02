@@ -980,13 +980,11 @@ class AnalysisIndicators:
         # Flush deferred appends for all/category modes.
         if not mode["custom"]:
             if self.pending_appends:
-                new_df = pd.concat([self._df] + self.pending_appends, axis=1)
-                # Swap the internal block manager so the original DataFrame
-                # object is updated in-place (external references like user
-                # variables keep working).
-                self._df._mgr = new_df._mgr
-                if hasattr(self._df, "_item_cache"):
-                    self._df._item_cache.clear()
+                with catch_warnings():
+                    simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+                    for fragment in self.pending_appends:
+                        for col in fragment.columns:
+                            self._df[col] = fragment[col]
             self.pending_appends = None
 
         if verbose:
