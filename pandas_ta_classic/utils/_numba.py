@@ -1172,6 +1172,190 @@ def _sarext_loop(
     return result
 
 
+# ---------------------------------------------------------------------------
+# 15. ADX  (trend/adx.py) — TA-Lib compatible monolithic loop
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _adx_talib_loop(
+    h_arr: np.ndarray,
+    l_arr: np.ndarray,
+    c_arr: np.ndarray,
+    m: int,
+    period: int,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """ADX via coupled Wilder smoothing, matching TA-Lib exactly.
+
+    Phases:
+    1. Sum first (period-1) bars of +DM, -DM, TR.
+    2. Wilder-smooth for ``period`` bars, computing DI/DX, accumulate sumDX.
+    3. ADX seed = sumDX / period.
+    4. Wilder-smooth ADX for remaining bars.
+
+    Returns ``(adx, dmp, dmn)`` arrays aligned to the input index.
+    """
+    adx_arr = np.full(m, np.nan)
+    dmp_arr = np.full(m, np.nan)
+    dmn_arr = np.full(m, np.nan)
+
+    if m < 2 * period:
+        return adx_arr, dmp_arr, dmn_arr
+
+    prev_plus_dm = 0.0
+    prev_minus_dm = 0.0
+    prev_tr = 0.0
+
+    today = 0
+    prev_high = h_arr[0]
+    prev_low = l_arr[0]
+    prev_close = c_arr[0]
+
+    # Phase 1: accumulate sums for the first (period - 1) bars
+    for _ in range(period - 1):
+        today += 1
+        high = h_arr[today]
+        diff_p = high - prev_high
+        prev_high = high
+
+        low = l_arr[today]
+        diff_m = prev_low - low
+        prev_low = low
+
+        if diff_m > 0.0 and diff_p < diff_m:
+            prev_minus_dm += diff_m
+        elif diff_p > 0.0 and diff_p > diff_m:
+            prev_plus_dm += diff_p
+
+        # True Range(currentH, currentL, previousClose)
+        tr = prev_high - prev_low
+        t = abs(prev_high - prev_close)
+        if t > tr:
+            tr = t
+        t = abs(prev_low - prev_close)
+        if t > tr:
+            tr = t
+        prev_tr += tr
+        prev_close = c_arr[today]
+
+    # Phase 2: Wilder-smooth for ``period`` bars, compute DI → DX, sum DX
+    sum_dx = 0.0
+    for _ in range(period):
+        today += 1
+        high = h_arr[today]
+        diff_p = high - prev_high
+        prev_high = high
+
+        low = l_arr[today]
+        diff_m = prev_low - low
+        prev_low = low
+
+        # Wilder smoothing of +DM, -DM
+        prev_minus_dm -= prev_minus_dm / period
+        prev_plus_dm -= prev_plus_dm / period
+
+        if diff_m > 0.0 and diff_p < diff_m:
+            prev_minus_dm += diff_m
+        elif diff_p > 0.0 and diff_p > diff_m:
+            prev_plus_dm += diff_p
+
+        # True Range + Wilder smooth
+        tr = prev_high - prev_low
+        t = abs(prev_high - prev_close)
+        if t > tr:
+            tr = t
+        t = abs(prev_low - prev_close)
+        if t > tr:
+            tr = t
+        prev_tr = prev_tr - prev_tr / period + tr
+        prev_close = c_arr[today]
+
+        if prev_tr != 0.0:
+            minus_di = 100.0 * prev_minus_dm / prev_tr
+            plus_di = 100.0 * prev_plus_dm / prev_tr
+            dmp_arr[today] = plus_di
+            dmn_arr[today] = minus_di
+            di_sum = minus_di + plus_di
+            if di_sum != 0.0:
+                sum_dx += 100.0 * abs(minus_di - plus_di) / di_sum
+
+    # ADX seed = SMA of the ``period`` DX values just computed
+    prev_adx = sum_dx / period
+    adx_arr[today] = prev_adx
+
+    # Phase 3: main output loop — Wilder-smooth ADX
+    while today < m - 1:
+        today += 1
+        high = h_arr[today]
+        diff_p = high - prev_high
+        prev_high = high
+
+        low = l_arr[today]
+        diff_m = prev_low - low
+        prev_low = low
+
+        prev_minus_dm -= prev_minus_dm / period
+        prev_plus_dm -= prev_plus_dm / period
+
+        if diff_m > 0.0 and diff_p < diff_m:
+            prev_minus_dm += diff_m
+        elif diff_p > 0.0 and diff_p > diff_m:
+            prev_plus_dm += diff_p
+
+        tr = prev_high - prev_low
+        t = abs(prev_high - prev_close)
+        if t > tr:
+            tr = t
+        t = abs(prev_low - prev_close)
+        if t > tr:
+            tr = t
+        prev_tr = prev_tr - prev_tr / period + tr
+        prev_close = c_arr[today]
+
+        if prev_tr != 0.0:
+            minus_di = 100.0 * prev_minus_dm / prev_tr
+            plus_di = 100.0 * prev_plus_dm / prev_tr
+            dmp_arr[today] = plus_di
+            dmn_arr[today] = minus_di
+            di_sum = minus_di + plus_di
+            if di_sum != 0.0:
+                dx = 100.0 * abs(minus_di - plus_di) / di_sum
+                prev_adx = ((prev_adx * (period - 1)) + dx) / period
+
+        adx_arr[today] = prev_adx
+
+    return adx_arr, dmp_arr, dmn_arr
+
+
+# ---------------------------------------------------------------------------
+# 16. EMA with aligned seed (for MACD / ADOSC)
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _ema_aligned(arr: np.ndarray, m: int, period: int, seed_end: int) -> np.ndarray:
+    """EMA with SMA seed ending at ``seed_end`` (inclusive).
+
+    Seeds with SMA of arr[seed_end - period + 1 .. seed_end], then applies
+    standard EMA from seed_end + 1 onwards.  Matches TA-Lib INT_EMA when
+    called with a specific startIdx.
+    """
+    result = np.full(m, np.nan)
+    if seed_end < period - 1 or seed_end >= m:
+        return result
+
+    # SMA seed
+    s = 0.0
+    for i in range(seed_end - period + 1, seed_end + 1):
+        s += arr[i]
+    prev = s / period
+
+    k = 2.0 / (period + 1)
+    result[seed_end] = prev
+
+    for i in range(seed_end + 1, m):
+        prev = (arr[i] - prev) * k + prev
+        result[i] = prev
+
+    return result
+
+
 __all__ = [
     "_rsx_loop",
     "_jma_loop",
@@ -1192,4 +1376,6 @@ __all__ = [
     "_ssf3_loop",
     "_hilbert_transform_loop",
     "_sarext_loop",
+    "_adx_talib_loop",
+    "_ema_aligned",
 ]

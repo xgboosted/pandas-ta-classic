@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # Average Directional Movement Index (ADX)
 from typing import Any, Optional
+
+import numpy as np
 from pandas import DataFrame, Series
-from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.volatility import atr
+
 from pandas_ta_classic.utils import (
     _build_dataframe,
-    get_drift,
     get_offset,
     verify_series,
-    zero,
 )
 
 
@@ -29,41 +28,27 @@ def adx(
     # Validate Arguments
     length = length if length and length > 0 else 14
     lensig = lensig if lensig and lensig > 0 else length
-    mamode = mamode if isinstance(mamode, str) else "rma"
-    scalar = float(scalar) if scalar else 100
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
-    drift = get_drift(drift)
     offset = get_offset(offset)
 
     if high is None or low is None or close is None:
         return None
 
-    # Calculate Result
-    atr_ = atr(high=high, low=low, close=close, length=length)
+    # Calculate Result — monolithic coupled Wilder loop (matches TA-Lib)
+    from pandas_ta_classic.utils._numba import _adx_talib_loop
 
-    up = high - high.shift(drift)  # high.diff(drift)
-    dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
+    h_arr = high.to_numpy(dtype=float)
+    l_arr = low.to_numpy(dtype=float)
+    c_arr = close.to_numpy(dtype=float)
+    m = h_arr.shape[0]
 
-    pos = ((up > dn) & (up > 0)) * up
-    neg = ((dn > up) & (dn > 0)) * dn
+    adx_out, dmp_out, dmn_out = _adx_talib_loop(h_arr, l_arr, c_arr, m, length)
 
-    pos = pos.apply(zero)
-    neg = neg.apply(zero)
-
-    k = scalar / atr_
-    _dmp_ma = ma(mamode, pos, length=length)
-    _dmn_ma = ma(mamode, neg, length=length)
-    if _dmp_ma is None or _dmn_ma is None:
-        return None
-    dmp = k * _dmp_ma
-    dmn = k * _dmn_ma
-
-    dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
-    adx = ma(mamode, dx, length=lensig)
-    if adx is None:
-        return None
+    adx = Series(adx_out, index=close.index)
+    dmp = Series(dmp_out, index=close.index)
+    dmn = Series(dmn_out, index=close.index)
 
     # Offset, Name and Categorize it
     return _build_dataframe(

@@ -164,7 +164,6 @@ _TALIB_FV_XFAIL = {
     "momentum/macd": "EMA chain stacking: native fv=25, talib fv=33",
     "volatility/atr": "RMA off-by-one: native fv=13, talib fv=14",
     "volume/mfi": "RMA off-by-one: native fv=13, talib fv=14",
-    "trend/adxr": "ADX seed difference: native fv=27, talib fv=40",
     "cycles/ht_dcperiod": "Hilbert warmup: native fv=0, talib fv=32",
     "cycles/ht_dcphase": "Hilbert warmup: native fv=37, talib fv=63",
     "cycles/ht_phasor": "Hilbert warmup: native fv=12, talib fv=32",
