@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)
 from typing import Any, Optional
 

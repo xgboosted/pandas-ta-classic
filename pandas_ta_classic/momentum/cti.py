@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Correlation Trend Indicator (CTI)
 from typing import Any, Optional
 from pandas import Series

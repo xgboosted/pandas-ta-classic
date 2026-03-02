@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Bias (BIAS)
 from typing import Any, Optional
 from pandas import Series

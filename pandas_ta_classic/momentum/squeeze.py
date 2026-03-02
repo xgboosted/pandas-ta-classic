@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Squeeze (SQUEEZE)
 from typing import Any, Optional
 import numpy as np

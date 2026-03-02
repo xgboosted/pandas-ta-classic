@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Candle Doji (CDL_DOJI)
 from typing import Any, Optional
 from pandas import Series

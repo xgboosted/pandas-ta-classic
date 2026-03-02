@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hilbert Transform - Dominant Cycle Period (HT_DCPERIOD)
 from typing import Any, Optional
 

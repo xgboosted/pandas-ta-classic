@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Absolute Price Oscillator (APO)
 from typing import Any, Optional
 from pandas import Series

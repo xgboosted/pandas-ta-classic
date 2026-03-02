@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Vigor Index (RVGI)
 from typing import Any, Optional
 from pandas import DataFrame, Series

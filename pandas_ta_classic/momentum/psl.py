@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Psychological Line (PSL)
 from typing import Any, Optional
 from numpy import sign as npSign

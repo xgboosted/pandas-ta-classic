@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hilbert Transform - SineWave (HT_SINE)
 from typing import Any, Optional
 

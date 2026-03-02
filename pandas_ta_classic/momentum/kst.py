@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Know Sure Thing (KST)
 from typing import Any, Optional
 from pandas import DataFrame, Series

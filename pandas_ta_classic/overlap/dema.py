@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Double Exponential Moving Average (DEMA)
 from typing import Any, Optional
 from pandas import Series

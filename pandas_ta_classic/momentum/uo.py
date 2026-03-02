@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Ultimate Oscillator (UO)
 from typing import Any, Optional
 from pandas import DataFrame, Series

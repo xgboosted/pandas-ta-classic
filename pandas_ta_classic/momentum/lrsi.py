@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Laguerre Relative Strength Index (Laguerre RSI)
 from typing import Any, Optional
 from numpy import maximum, where, zeros

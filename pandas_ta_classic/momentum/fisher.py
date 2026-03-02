@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Fisher Transform (FISHER)
 from typing import Any, Optional
 import numpy as np

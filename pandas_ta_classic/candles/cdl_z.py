@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Candle Z (CDL_Z)
 from typing import Any, Optional
 from pandas import DataFrame, Series

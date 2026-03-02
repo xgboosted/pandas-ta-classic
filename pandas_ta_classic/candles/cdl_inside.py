@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Candle Inside (CDL_INSIDE)
 from typing import Any, Optional
 from pandas import Series

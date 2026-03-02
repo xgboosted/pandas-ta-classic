@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Shared Hilbert Transform helper.
 
 This internal module wraps the numba-accelerated ``_hilbert_transform_loop``
@@ -8,6 +7,7 @@ call ``hilbert_result()`` and pick the arrays they need.
 The leading underscore keeps ``_meta.py`` from registering this file as an
 indicator.
 """
+
 from typing import Dict, Tuple
 
 import numpy as np
@@ -16,7 +16,7 @@ from pandas import Series
 from pandas_ta_classic.utils._numba import _hilbert_transform_loop
 
 _CACHE_MAX = 4
-_cache: Dict[Tuple[int, int], Dict[str, np.ndarray]] = {}
+_cache: dict[tuple[int, int], dict[str, np.ndarray]] = {}
 
 
 def clear_hilbert_cache() -> None:
@@ -24,7 +24,7 @@ def clear_hilbert_cache() -> None:
     _cache.clear()
 
 
-def hilbert_result(close: Series, ht_start: int = 12) -> Dict[str, np.ndarray]:
+def hilbert_result(close: Series, ht_start: int = 12) -> dict[str, np.ndarray]:
     """Run the Hilbert Transform and return all intermediate arrays.
 
     Results are cached by ``(id(close), ht_start)`` so that multiple

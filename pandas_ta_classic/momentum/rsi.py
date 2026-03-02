@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Strength Index (RSI)
 from typing import Any, Optional, Union
 from pandas import DataFrame, Series, concat

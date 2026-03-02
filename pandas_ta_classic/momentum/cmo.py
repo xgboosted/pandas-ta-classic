@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Chande Momentum Oscillator (CMO)
 from typing import Any, Optional
 from pandas import Series

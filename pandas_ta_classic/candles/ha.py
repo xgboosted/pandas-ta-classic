@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Heikin Ashi (HA)
 from typing import Any, Optional
 from pandas import DataFrame, Series
@@ -97,7 +96,7 @@ Calculation:
     the first HA open. The high of the period will be the first HA high,
     and the low will be the first HA low. With the first HA calculated,
     it is now possible to continue computing the HA candles per the formulas.
-​​
+
 Args:
     open_ (pd.Series): Series of 'open's
     high (pd.Series): Series of 'high's

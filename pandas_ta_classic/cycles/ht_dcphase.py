@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hilbert Transform - Dominant Cycle Phase (HT_DCPHASE)
 from typing import Any, Optional
 

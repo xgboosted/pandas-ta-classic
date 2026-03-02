@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Efficiency Ratio (ER)
 from typing import Any, Optional, Union
 from pandas import DataFrame, concat, Series

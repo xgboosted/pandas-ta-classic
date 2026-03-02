@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Moving Average Convergence Divergence (MACD)
 from typing import Any, Optional
 from pandas import concat, DataFrame, Series

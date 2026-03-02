@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Strength Xtra (RSX)
 from typing import Any, Optional, Union
 import numpy as np

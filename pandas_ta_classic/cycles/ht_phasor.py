@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hilbert Transform - Phasor Components (HT_PHASOR)
 from typing import Any, Optional
 

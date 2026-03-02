@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Center of Gravity (CG)
 from typing import Any, Optional
 from pandas import Series

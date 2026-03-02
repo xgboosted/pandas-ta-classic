@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Volume Weighted Moving Average Convergence Divergence (Volume Weighted MACD)
 from typing import Any, Optional
 from pandas import DataFrame, Series

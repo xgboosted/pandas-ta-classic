@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .alma import alma
 from .dema import dema
 from .ema import ema

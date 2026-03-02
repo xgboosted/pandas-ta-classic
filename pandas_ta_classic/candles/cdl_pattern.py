@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
 # Candle Pattern (CDL_PATTERN)
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Optional, Union
+
+from collections.abc import Sequence
 from pandas import Series, DataFrame
 
 from . import cdl_doji, cdl_inside

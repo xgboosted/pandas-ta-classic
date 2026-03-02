@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # TRIX (TRIX)
 from typing import Any, Optional
 from pandas import DataFrame, Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Commodity Channel Index (CCI)
 from typing import Any, Optional
 from pandas import Series
