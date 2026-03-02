@@ -8,16 +8,27 @@ call ``hilbert_result()`` and pick the arrays they need.
 The leading underscore keeps ``_meta.py`` from registering this file as an
 indicator.
 """
-from typing import Dict
+from typing import Dict, Tuple
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils._numba import _hilbert_transform_loop
 
+_CACHE_MAX = 4
+_cache: Dict[Tuple[int, int], Dict[str, np.ndarray]] = {}
+
+
+def clear_hilbert_cache() -> None:
+    """Explicitly clear the Hilbert result cache."""
+    _cache.clear()
+
 
 def hilbert_result(close: Series, ht_start: int = 12) -> Dict[str, np.ndarray]:
     """Run the Hilbert Transform and return all intermediate arrays.
+
+    Results are cached by ``(id(close), ht_start)`` so that multiple
+    indicators sharing the same close Series avoid redundant computation.
 
     Args:
         close: Series of close prices.
@@ -31,6 +42,11 @@ def hilbert_result(close: Series, ht_start: int = 12) -> Dict[str, np.ndarray]:
         ``quadrature``, ``sine``, ``lead_sine``, ``trend_mode``,
         ``trendline``.
     """
+    key = (id(close), ht_start)
+    cached = _cache.get(key)
+    if cached is not None:
+        return cached
+
     c_arr = close.to_numpy(dtype=float)
     m = c_arr.shape[0]
 
@@ -45,7 +61,7 @@ def hilbert_result(close: Series, ht_start: int = 12) -> Dict[str, np.ndarray]:
         trendline,
     ) = _hilbert_transform_loop(c_arr, m, ht_start)
 
-    return {
+    result = {
         "smooth_period": smooth_period,
         "dc_phase": dc_phase,
         "in_phase": in_phase,
@@ -55,3 +71,8 @@ def hilbert_result(close: Series, ht_start: int = 12) -> Dict[str, np.ndarray]:
         "trend_mode": trend_mode,
         "trendline": trendline,
     }
+
+    if len(_cache) >= _CACHE_MAX:
+        _cache.clear()
+    _cache[key] = result
+    return result

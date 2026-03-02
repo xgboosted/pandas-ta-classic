@@ -782,6 +782,23 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
     # iTrend delay line (WMA(4) of SMA(dcPeriod))
     it_trend = np.zeros(m)
 
+    # Pre-compute sin/cos lookup tables for DC Phase inner loop.
+    # dc_period_int is clamped to [1, 50], so we need tables up to 50.
+    _MAX_P = 51
+    sin_table = np.zeros((_MAX_P, _MAX_P))
+    cos_table = np.zeros((_MAX_P, _MAX_P))
+    for p in range(1, _MAX_P):
+        for j in range(p):
+            angle = 2.0 * np.pi * j / p
+            sin_table[p, j] = np.sin(angle)
+            cos_table[p, j] = np.cos(angle)
+
+    # Pre-compute cumulative sum for iTrend SMA (O(1) per bar instead of
+    # O(dc_period) inner loop).
+    close_cumsum = np.zeros(m + 1)
+    for ci in range(m):
+        close_cumsum[ci + 1] = close_cumsum[ci] + close_arr[ci]
+
     # State for trend mode detection (matches TA-Lib)
     days_in_trend = 0
     prev_sine = 0.0
@@ -885,9 +902,9 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         imag_part = 0.0
         for j in range(dc_period_int):
             if i - j >= 0:
-                angle = 2.0 * np.pi * j / dc_period_int
-                real_part += np.sin(angle) * smooth_price[i - j]
-                imag_part += np.cos(angle) * smooth_price[i - j]
+                sp_val = smooth_price[i - j]
+                real_part += sin_table[dc_period_int, j] * sp_val
+                imag_part += cos_table[dc_period_int, j] * sp_val
 
         # TA-Lib DCPhase: fabs(imagPart) > 0 → atan; else adjust previous
         abs_imag = abs(imag_part)
@@ -922,12 +939,12 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
 
         # Instantaneous Trendline (ITrend) — computed BEFORE trend mode
         # because trend mode uses trendline for price-divergence check.
+        # Uses pre-computed cumsum for O(1) SMA instead of O(dc_per) loop.
         dc_per = max(int(sp + 0.5), 1)
-        itrend_sum = 0.0
-        for j in range(dc_per):
-            if i - j >= 0:
-                itrend_sum += close_arr[i - j]
-        it_trend[i] = itrend_sum / dc_per
+        start_idx = i - dc_per + 1
+        if start_idx < 0:
+            start_idx = 0
+        it_trend[i] = (close_cumsum[i + 1] - close_cumsum[start_idx]) / dc_per
         trendline_arr[i] = (
             4.0 * it_trend[i]
             + 3.0 * it_trend[i - 1]
