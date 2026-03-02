@@ -93,8 +93,7 @@ class TestCandle(TestCase):
             )
         except AssertionError:
             corr = pandas_ta.utils.df_error_analysis(result, expected, col=CORRELATION)
-            # Doji detection algorithms differ; 0.95 is acceptable
-            self.assertGreater(corr, 0.95)
+            self.assertGreater(corr, CORRELATION_THRESHOLD)
 
     def test_cdl_inside(self):
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close)

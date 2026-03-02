@@ -34,13 +34,15 @@ def cdl_doji(
         return None
 
     # Calculate Result
+    # TA-Lib averages the HL range of the *previous* ``length`` bars
+    # (excluding the current bar), so shift the SMA by 1.
     body = real_body(open_, close).abs()
     hl_range = high_low_range(high, low).abs()
-    hl_range_avg = sma(hl_range, length)
-    doji = body < 0.01 * factor * hl_range_avg
+    hl_range_avg = sma(hl_range, length).shift(1)
+    doji = body <= 0.01 * factor * hl_range_avg
 
     if naive:
-        doji.iloc[:length] = body < 0.01 * factor * hl_range
+        doji.iloc[:length] = body <= 0.01 * factor * hl_range
     if asint:
         doji = scalar * doji.astype(int)
 
@@ -55,19 +57,19 @@ A candle body is Doji, when it's shorter than 10% of the
 average of the 10 previous candles' high-low range.
 
 Sources:
-    TA-Lib comparison: ~97% correlation. TA-Lib uses a different
-    threshold algorithm, so exact match is not expected.
+    TA-Lib CDL_DOJI C implementation
 
 Calculation:
     Default values:
-        length=10, percent=10 (0.1), scalar=100
+        length=10, factor=10 (percent=0.1), scalar=100
     ABS = Absolute Value
     SMA = Simple Moving Average
 
     BODY = ABS(close - open)
     HL_RANGE = ABS(high - low)
+    AVG_RANGE = SMA(HL_RANGE, length).shift(1)   # previous bars only
 
-    DOJI = scalar IF BODY < 0.01 * percent * SMA(HL_RANGE, length) ELSE 0
+    DOJI = scalar IF BODY <= factor/100 * AVG_RANGE ELSE 0
 
 Args:
     open_ (pd.Series): Series of 'open's
