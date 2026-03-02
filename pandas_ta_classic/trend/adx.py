@@ -82,7 +82,13 @@ the amount of movement in a single direction.
 
 Sources:
     https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/average-directional-movement-adx/
-    TA Lib Correlation: >99%
+    TA-Lib Correlation: ~99.8%
+    Note: TA-Lib uses a monolithic iterative loop that couples +DM, -DM, and
+    TR smoothing in a single pass with a sum-of-(period-1) seed.  The native
+    implementation decomposes these into independent RMA calls, each seeded
+    with their own SMA.  This architectural difference means the two
+    converge but never fully align (the EWM seed offset decays
+    geometrically but never reaches zero).
 
 Calculation:
     DMI ADX TREND 2.0 by @TraderR0BERT, NETWORTHIE.COM
