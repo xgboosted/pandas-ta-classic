@@ -71,7 +71,7 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     benchmark (pd.Series): Series of benchmark 'close's
-    length (int): It's period. Default: 30
+    length (int): It's period. Default: 30 (TA-Lib default: 5)
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

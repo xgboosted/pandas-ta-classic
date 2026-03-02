@@ -53,7 +53,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 30
+    length (int): It's period. Default: 30 (TA-Lib default: 5)
     ddof (int): Delta Degrees of Freedom.
                 The divisor used in calculations is N - ddof,
                 where N represents the number of elements. Default: 1
