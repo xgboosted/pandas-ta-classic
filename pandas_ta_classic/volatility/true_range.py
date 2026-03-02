@@ -9,7 +9,6 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     _get_tal_mode,
     _finalize,
-    apply_offset,
     get_drift,
     get_offset,
     non_zero_range,

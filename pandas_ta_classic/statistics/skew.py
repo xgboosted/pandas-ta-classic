@@ -8,7 +8,6 @@ from pandas import Series
 from pandas_ta_classic.utils import (
     _get_min_periods,
     _finalize,
-    apply_offset,
     get_offset,
     np_rolling_moments,
     verify_series,

@@ -3,7 +3,6 @@
 from math import log as _log, pow as _pow, sqrt as _sqrt
 from typing import Any, Optional, Union
 import numpy as np
-from numpy import zeros_like as npZeroslike
 from pandas import Series
 
 npNaN = np.nan

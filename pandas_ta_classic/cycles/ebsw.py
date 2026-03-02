@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Even Better Sine Wave (EBSW)
-from math import sqrt as _sqrt
 from typing import Any, Optional
 import numpy as np
 from numpy import cos as npCos

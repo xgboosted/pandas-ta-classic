@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Fisher Transform (FISHER)
-from math import log as _log
 from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series

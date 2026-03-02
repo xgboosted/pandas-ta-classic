@@ -9,7 +9,6 @@ from pandas_ta_classic.trend.adx import adx
 from pandas_ta_classic.utils import (
     _get_tal_mode,
     _build_dataframe,
-    get_drift,
     get_offset,
     verify_series,
 )

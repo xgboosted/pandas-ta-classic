@@ -2,7 +2,6 @@
 # Mean Absolute Deviation (MAD)
 from typing import Any, Optional
 import numpy as np
-from numpy import fabs as npfabs
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 from pandas_ta_classic.utils import (

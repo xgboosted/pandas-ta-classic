@@ -32,7 +32,7 @@ def cdl_inside(
     if not asbool:
         inside *= candle_color(open_, close)
 
-    return _finalize(inside, offset, f"CDL_INSIDE", "candles", **kwargs)
+    return _finalize(inside, offset, "CDL_INSIDE", "candles", **kwargs)
 
 
 cdl_inside.__doc__ = """Candle Type: Inside Bar

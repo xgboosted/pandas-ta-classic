@@ -5,7 +5,6 @@ from numpy import fabs as npFabs
 from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
-    apply_offset,
     get_drift,
     get_offset,
     non_zero_range,

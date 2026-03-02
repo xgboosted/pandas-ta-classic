@@ -6,7 +6,6 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     _get_tal_mode,
     _finalize,
-    apply_offset,
     get_offset,
     signed_series,
     verify_series,
@@ -39,7 +38,7 @@ def obv(
         signed_volume = signed_series(close, initial=1) * volume
         obv = signed_volume.cumsum()
 
-    return _finalize(obv, offset, f"OBV", "volume", **kwargs)
+    return _finalize(obv, offset, "OBV", "volume", **kwargs)
 
 
 obv.__doc__ = """On Balance Volume (OBV)

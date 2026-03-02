@@ -5,7 +5,6 @@ from pandas import Series
 from pandas_ta_classic.utils import (
     _get_min_periods,
     _finalize,
-    apply_offset,
     get_offset,
     non_zero_range,
     verify_series,

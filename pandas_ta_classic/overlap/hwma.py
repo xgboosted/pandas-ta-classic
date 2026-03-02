@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Holt-Winter Moving Average (HWMA)
 from typing import Any, Optional
-import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 

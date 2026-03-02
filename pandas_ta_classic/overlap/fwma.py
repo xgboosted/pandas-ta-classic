@@ -5,7 +5,6 @@ from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
     _sliding_weighted_ma,
-    apply_offset,
     fibonacci,
     get_offset,
     verify_series,

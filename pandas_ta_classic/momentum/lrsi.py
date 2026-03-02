@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Laguerre Relative Strength Index (Laguerre RSI)
 from typing import Any, Optional
-from numpy import empty_like, maximum, where, zeros
+from numpy import maximum, where, zeros
 from pandas import Series
 from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 

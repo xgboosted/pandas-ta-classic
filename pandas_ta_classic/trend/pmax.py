@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Price Max (PMAX)
 from typing import Any, Optional
-from numpy import maximum, minimum
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr

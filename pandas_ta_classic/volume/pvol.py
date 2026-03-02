@@ -4,7 +4,6 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
-    apply_offset,
     get_offset,
     signed_series,
     verify_series,
@@ -32,7 +31,7 @@ def pvol(
     if signed:
         pvol *= signed_series(close, 1)
 
-    return _finalize(pvol, offset, f"PVOL", "volume", **kwargs)
+    return _finalize(pvol, offset, "PVOL", "volume", **kwargs)
 
 
 pvol.__doc__ = """Price-Volume (PVOL)

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Holt-Winter Channel (HWC)
-from math import sqrt as _sqrt
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series

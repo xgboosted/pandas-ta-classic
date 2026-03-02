@@ -6,7 +6,6 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     _get_tal_mode,
     _finalize,
-    apply_offset,
     get_offset,
     non_zero_range,
     verify_series,
@@ -46,7 +45,7 @@ def bop(
         close_open_range = non_zero_range(close, open_)
         bop = scalar * close_open_range / high_low_range
 
-    return _finalize(bop, offset, f"BOP", "momentum", **kwargs)
+    return _finalize(bop, offset, "BOP", "momentum", **kwargs)
 
 
 bop.__doc__ = """Balance of Power (BOP)

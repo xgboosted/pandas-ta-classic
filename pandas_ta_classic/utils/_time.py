@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from time import localtime, perf_counter
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from pandas import DataFrame, Timestamp, to_datetime
 

@@ -2,7 +2,6 @@
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
-from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple, Union
 from warnings import catch_warnings, simplefilter
@@ -951,7 +950,7 @@ class AnalysisIndicators:
 
             if mode["custom"]:
                 if Imports["tqdm"] and verbose:
-                    pbar = tqdm(ta, f"[i] Progress")
+                    pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
                         params = (
                             ind["params"]
@@ -969,7 +968,7 @@ class AnalysisIndicators:
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
             else:
                 if Imports["tqdm"] and verbose:
-                    pbar = tqdm(ta, f"[i] Progress")
+                    pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
                         getattr(self, ind)(*tuple(), **kwargs)
                 else:

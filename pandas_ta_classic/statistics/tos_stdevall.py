@@ -30,7 +30,7 @@ def tos_stdevall(
     if close is None:
         return None
 
-    _props = f"TOS_STDEVALL"
+    _props = "TOS_STDEVALL"
     if length is None:
         length = close.size
     else:

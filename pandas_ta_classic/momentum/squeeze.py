@@ -146,12 +146,12 @@ def squeeze(
         neg_dec = apply_offset(neg_dec, 0, **kwargs)
         neg_inc = apply_offset(neg_inc, 0, **kwargs)
 
-        df[f"SQZ_INC"] = sqz_inc
-        df[f"SQZ_DEC"] = sqz_dec
-        df[f"SQZ_PINC"] = pos_inc
-        df[f"SQZ_PDEC"] = pos_dec
-        df[f"SQZ_NDEC"] = neg_dec
-        df[f"SQZ_NINC"] = neg_inc
+        df["SQZ_INC"] = sqz_inc
+        df["SQZ_DEC"] = sqz_dec
+        df["SQZ_PINC"] = pos_inc
+        df["SQZ_PDEC"] = pos_dec
+        df["SQZ_NDEC"] = neg_dec
+        df["SQZ_NINC"] = neg_inc
 
     return df
 

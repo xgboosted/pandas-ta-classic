@@ -7,7 +7,6 @@ from pandas import Series
 npNaN = np.nan
 from pandas_ta_classic.utils import (
     _finalize,
-    apply_offset,
     get_drift,
     get_offset,
     non_zero_range,

@@ -5,7 +5,6 @@ from pandas import Series
 from pandas_ta_classic.utils import (
     _finalize,
     _sliding_weighted_ma,
-    apply_offset,
     get_offset,
     symmetric_triangle,
     verify_series,

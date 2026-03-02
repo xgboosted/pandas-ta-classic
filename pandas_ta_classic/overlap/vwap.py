@@ -5,7 +5,6 @@ from pandas import Series
 from .hlc3 import hlc3
 from pandas_ta_classic.utils import (
     _finalize,
-    apply_offset,
     get_offset,
     is_datetime_ordered,
     verify_series,
@@ -41,11 +40,11 @@ def vwap(
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(
-            f"[!] VWAP volume series is not datetime ordered. Results may not be as expected."
+            "[!] VWAP volume series is not datetime ordered. Results may not be as expected."
         )
     if not is_datetime_ordered(typical_price):
         print(
-            f"[!] VWAP price series is not datetime ordered. Results may not be as expected."
+            "[!] VWAP price series is not datetime ordered. Results may not be as expected."
         )
 
     # Calculate Result

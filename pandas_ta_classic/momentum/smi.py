@@ -3,7 +3,6 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .tsi import tsi
-from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
     _swap_fast_slow,
     _build_dataframe,

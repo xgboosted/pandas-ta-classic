@@ -2,7 +2,6 @@
 # Extended Parabolic SAR (SAREXT)
 from typing import Any, Optional
 
-import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports

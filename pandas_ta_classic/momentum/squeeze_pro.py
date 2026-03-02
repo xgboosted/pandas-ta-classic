@@ -184,12 +184,12 @@ def squeeze_pro(
         neg_dec = apply_offset(neg_dec, 0, **kwargs)
         neg_inc = apply_offset(neg_inc, 0, **kwargs)
 
-        df[f"SQZPRO_INC"] = sqz_inc
-        df[f"SQZPRO_DEC"] = sqz_dec
-        df[f"SQZPRO_PINC"] = pos_inc
-        df[f"SQZPRO_PDEC"] = pos_dec
-        df[f"SQZPRO_NDEC"] = neg_dec
-        df[f"SQZPRO_NINC"] = neg_inc
+        df["SQZPRO_INC"] = sqz_inc
+        df["SQZPRO_DEC"] = sqz_dec
+        df["SQZPRO_PINC"] = pos_inc
+        df["SQZPRO_PDEC"] = pos_dec
+        df["SQZPRO_NDEC"] = neg_dec
+        df["SQZPRO_NINC"] = neg_inc
 
     return df
 

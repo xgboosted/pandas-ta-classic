@@ -5,7 +5,6 @@ import numpy as np
 from numpy import array as npArray
 from numpy import arctan as npAtan
 from numpy import pi as npPi
-from numpy.version import version as npVersion
 from pandas import Series
 
 npNaN = np.nan

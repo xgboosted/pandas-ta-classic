@@ -3,7 +3,6 @@
 from typing import Any, Optional
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     _get_tal_mode,

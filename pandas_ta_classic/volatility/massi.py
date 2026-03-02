@@ -6,7 +6,6 @@ from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
     _swap_fast_slow,
     _finalize,
-    apply_offset,
     get_offset,
     non_zero_range,
     verify_series,

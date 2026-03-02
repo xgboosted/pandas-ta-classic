@@ -4,7 +4,6 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import (
     _get_min_periods,
-    _get_min_periods,
     _build_dataframe,
     get_offset,
     verify_series,

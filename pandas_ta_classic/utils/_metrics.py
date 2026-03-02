@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 from numpy import log as npLog
@@ -10,7 +10,7 @@ npNaN = np.nan
 
 from ._core import verify_series
 from ._time import total_time
-from ._math import linear_regression, log_geometric_mean
+from ._math import linear_regression
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance import drawdown, log_return, percent_return
 

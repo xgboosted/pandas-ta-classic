@@ -27,7 +27,7 @@ def pvt(
     pv = roc(close=close, length=drift) * volume
     pvt = pv.cumsum()
 
-    return _finalize(pvt, offset, f"PVT", "volume", **kwargs)
+    return _finalize(pvt, offset, "PVT", "volume", **kwargs)
 
 
 pvt.__doc__ = """Price-Volume Trend (PVT)

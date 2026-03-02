@@ -2,8 +2,6 @@
 # Quantitative Qualitative Estimation (QQE)
 from typing import Any, Optional
 import numpy as np
-from numpy import maximum as npMaximum
-from numpy import minimum as npMinimum
 from pandas import DataFrame, Series
 
 npNaN = np.nan
@@ -93,6 +91,8 @@ def qqe(
             f"QQE{_props}_RSI{_mode.upper()}MA": rsi_ma,
             f"QQEl{_props}": qqe_long,
             f"QQEs{_props}": qqe_short,
+            f"QQEb_l{_props}": long,
+            f"QQEb_s{_props}": short,
         },
         f"QQE{_props}",
         "momentum",
@@ -130,5 +130,7 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: QQE, RSI_MA (basis), QQEl (long), and QQEs (short) columns.
+    pd.DataFrame: QQE, RSI_MA (basis), QQEl (sparse long signal),
+        QQEs (sparse short signal), QQEb_l (continuous long band),
+        and QQEb_s (continuous short band) columns.
 """

@@ -5,7 +5,6 @@ from pandas import Series
 from pandas_ta_classic.overlap import dema, ema, hma, rma, sma
 from pandas_ta_classic.utils import (
     _finalize,
-    apply_offset,
     get_offset,
     non_zero_range,
     verify_series,

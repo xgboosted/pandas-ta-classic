@@ -6,7 +6,6 @@ from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import (
     _finalize,
-    apply_offset,
     get_drift,
     get_offset,
     non_zero_range,
