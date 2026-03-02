@@ -1045,7 +1045,297 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
 
 
 # ---------------------------------------------------------------------------
-# 17. SAREXT  (trend/sarext.py)
+# 17. MAMA/FAMA  (overlap/mama.py)
+#
+# Monolithic Hilbert Transform + adaptive filter matching TA-Lib ta_MAMA.c
+# exactly, including even/odd ring buffers, WMA price smoother, and the
+# I1-delay shift registers.
+# ---------------------------------------------------------------------------
+@njit(cache=True)
+def _mama_talib_loop(
+    close_arr: np.ndarray,
+    m: int,
+    fastlimit: float,
+    slowlimit: float,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """MAMA / FAMA with inline Hilbert Transform (TA-Lib exact)."""
+    mama_out = np.full(m, np.nan)
+    fama_out = np.full(m, np.nan)
+
+    a = 0.0962
+    b = 0.5769
+    rad2deg = 180.0 / np.pi
+
+    # --- Hilbert ring-buffer state (4 components) ---
+    # detrender
+    det_odd = np.zeros(3)
+    det_even = np.zeros(3)
+    prev_det_odd = 0.0
+    prev_det_even = 0.0
+    prev_det_in_odd = 0.0
+    prev_det_in_even = 0.0
+    detrender = 0.0
+
+    # Q1
+    q1_odd = np.zeros(3)
+    q1_even = np.zeros(3)
+    prev_q1_odd = 0.0
+    prev_q1_even = 0.0
+    prev_q1_in_odd = 0.0
+    prev_q1_in_even = 0.0
+    Q1 = 0.0
+
+    # jI
+    ji_odd = np.zeros(3)
+    ji_even = np.zeros(3)
+    prev_ji_odd = 0.0
+    prev_ji_even = 0.0
+    prev_ji_in_odd = 0.0
+    prev_ji_in_even = 0.0
+    jI = 0.0
+
+    # jQ
+    jq_odd = np.zeros(3)
+    jq_even = np.zeros(3)
+    prev_jq_odd = 0.0
+    prev_jq_even = 0.0
+    prev_jq_in_odd = 0.0
+    prev_jq_in_even = 0.0
+    jQ = 0.0
+
+    # --- Other state ---
+    period = 0.0
+    prev_i2 = 0.0
+    prev_q2 = 0.0
+    re = 0.0
+    im = 0.0
+    mama_val = 0.0
+    fama_val = 0.0
+    prev_phase = 0.0
+    hilbert_idx = 0
+
+    # I1 delay shift registers (separate for even/odd paths)
+    i1_for_odd_prev2 = 0.0
+    i1_for_odd_prev3 = 0.0
+    i1_for_even_prev2 = 0.0
+    i1_for_even_prev3 = 0.0
+
+    # --- WMA(4) state ---
+    # TA-Lib uses a running WMA with weights [1,2,3,4], divisor=10.
+    # WMA warmup consumes 12 bars (3 init + 9 loop iterations).
+    lookback = 32
+    if m < 4:
+        return mama_out, fama_out
+
+    # WMA init: accumulate first 3 bars (indices 0,1,2)
+    trailing_wma_idx = 0
+    period_wma_sub = close_arr[0] + close_arr[1] + close_arr[2]
+    period_wma_sum = close_arr[0] * 1.0 + close_arr[1] * 2.0 + close_arr[2] * 3.0
+    trailing_wma_value = 0.0
+
+    # WMA warmup loop: 9 more bars (indices 3..11), total 12 bars
+    smoothed_value = 0.0
+    for idx in range(3, 12):
+        if idx >= m:
+            return mama_out, fama_out
+        new_price = close_arr[idx]
+        period_wma_sub += new_price
+        period_wma_sub -= trailing_wma_value
+        period_wma_sum += new_price * 4.0
+        trailing_wma_value = close_arr[trailing_wma_idx]
+        trailing_wma_idx += 1
+        smoothed_value = period_wma_sum * 0.1
+        period_wma_sum -= period_wma_sub
+
+    # --- Main loop (from bar 12 onward) ---
+    today = 12
+    while today < m:
+        adjusted_prev_period = 0.075 * period + 0.54
+
+        today_value = close_arr[today]
+
+        # DO_PRICE_WMA
+        period_wma_sub += today_value
+        period_wma_sub -= trailing_wma_value
+        period_wma_sum += today_value * 4.0
+        trailing_wma_value = close_arr[trailing_wma_idx]
+        trailing_wma_idx += 1
+        smoothed_value = period_wma_sum * 0.1
+        period_wma_sum -= period_wma_sub
+
+        if (today % 2) == 0:
+            # --- EVEN bar: use Even ring buffers ---
+            # DO_HILBERT_EVEN(detrender, smoothed_value)
+            ht = a * smoothed_value
+            detrender = -det_even[hilbert_idx]
+            det_even[hilbert_idx] = ht
+            detrender += ht
+            detrender -= prev_det_even
+            prev_det_even = b * prev_det_in_even
+            detrender += prev_det_even
+            prev_det_in_even = smoothed_value
+            detrender *= adjusted_prev_period
+
+            # DO_HILBERT_EVEN(Q1, detrender)
+            ht = a * detrender
+            Q1 = -q1_even[hilbert_idx]
+            q1_even[hilbert_idx] = ht
+            Q1 += ht
+            Q1 -= prev_q1_even
+            prev_q1_even = b * prev_q1_in_even
+            Q1 += prev_q1_even
+            prev_q1_in_even = detrender
+            Q1 *= adjusted_prev_period
+
+            # DO_HILBERT_EVEN(jI, i1_for_even_prev3)
+            ht = a * i1_for_even_prev3
+            jI = -ji_even[hilbert_idx]
+            ji_even[hilbert_idx] = ht
+            jI += ht
+            jI -= prev_ji_even
+            prev_ji_even = b * prev_ji_in_even
+            jI += prev_ji_even
+            prev_ji_in_even = i1_for_even_prev3
+            jI *= adjusted_prev_period
+
+            # DO_HILBERT_EVEN(jQ, Q1)
+            ht = a * Q1
+            jQ = -jq_even[hilbert_idx]
+            jq_even[hilbert_idx] = ht
+            jQ += ht
+            jQ -= prev_jq_even
+            prev_jq_even = b * prev_jq_in_even
+            jQ += prev_jq_even
+            prev_jq_in_even = Q1
+            jQ *= adjusted_prev_period
+
+            # hilbertIdx advances on EVEN bars only
+            hilbert_idx += 1
+            if hilbert_idx == 3:
+                hilbert_idx = 0
+
+            Q2 = 0.2 * (Q1 + jI) + 0.8 * prev_q2
+            I2 = 0.2 * (i1_for_even_prev3 - jQ) + 0.8 * prev_i2
+
+            # Shift I1 delay for the ODD path
+            i1_for_odd_prev3 = i1_for_odd_prev2
+            i1_for_odd_prev2 = detrender
+
+            # Phase from I1/Q1
+            if i1_for_even_prev3 != 0.0:
+                phase = np.arctan(Q1 / i1_for_even_prev3) * rad2deg
+            else:
+                phase = 0.0
+        else:
+            # --- ODD bar: use Odd ring buffers ---
+            # DO_HILBERT_ODD(detrender, smoothed_value)
+            ht = a * smoothed_value
+            detrender = -det_odd[hilbert_idx]
+            det_odd[hilbert_idx] = ht
+            detrender += ht
+            detrender -= prev_det_odd
+            prev_det_odd = b * prev_det_in_odd
+            detrender += prev_det_odd
+            prev_det_in_odd = smoothed_value
+            detrender *= adjusted_prev_period
+
+            # DO_HILBERT_ODD(Q1, detrender)
+            ht = a * detrender
+            Q1 = -q1_odd[hilbert_idx]
+            q1_odd[hilbert_idx] = ht
+            Q1 += ht
+            Q1 -= prev_q1_odd
+            prev_q1_odd = b * prev_q1_in_odd
+            Q1 += prev_q1_odd
+            prev_q1_in_odd = detrender
+            Q1 *= adjusted_prev_period
+
+            # DO_HILBERT_ODD(jI, i1_for_odd_prev3)
+            ht = a * i1_for_odd_prev3
+            jI = -ji_odd[hilbert_idx]
+            ji_odd[hilbert_idx] = ht
+            jI += ht
+            jI -= prev_ji_odd
+            prev_ji_odd = b * prev_ji_in_odd
+            jI += prev_ji_odd
+            prev_ji_in_odd = i1_for_odd_prev3
+            jI *= adjusted_prev_period
+
+            # DO_HILBERT_ODD(jQ, Q1)
+            ht = a * Q1
+            jQ = -jq_odd[hilbert_idx]
+            jq_odd[hilbert_idx] = ht
+            jQ += ht
+            jQ -= prev_jq_odd
+            prev_jq_odd = b * prev_jq_in_odd
+            jQ += prev_jq_odd
+            prev_jq_in_odd = Q1
+            jQ *= adjusted_prev_period
+
+            # hilbertIdx NOT incremented on odd bars
+
+            Q2 = 0.2 * (Q1 + jI) + 0.8 * prev_q2
+            I2 = 0.2 * (i1_for_odd_prev3 - jQ) + 0.8 * prev_i2
+
+            # Shift I1 delay for the EVEN path
+            i1_for_even_prev3 = i1_for_even_prev2
+            i1_for_even_prev2 = detrender
+
+            # Phase from I1/Q1
+            if i1_for_odd_prev3 != 0.0:
+                phase = np.arctan(Q1 / i1_for_odd_prev3) * rad2deg
+            else:
+                phase = 0.0
+
+        # --- Delta Phase -> Alpha ---
+        delta_phase = prev_phase - phase
+        prev_phase = phase
+        if delta_phase < 1.0:
+            delta_phase = 1.0
+
+        if delta_phase > 1.0:
+            alpha = fastlimit / delta_phase
+            if alpha < slowlimit:
+                alpha = slowlimit
+        else:
+            alpha = fastlimit
+
+        # --- MAMA / FAMA (uses raw price, not smoothed) ---
+        mama_val = alpha * today_value + (1.0 - alpha) * mama_val
+        fama_val = 0.5 * alpha * mama_val + (1.0 - 0.5 * alpha) * fama_val
+
+        if today >= lookback:
+            mama_out[today] = mama_val
+            fama_out[today] = fama_val
+
+        # --- Period update (homodyne discriminator) ---
+        re = 0.2 * (I2 * prev_i2 + Q2 * prev_q2) + 0.8 * re
+        im = 0.2 * (I2 * prev_q2 - Q2 * prev_i2) + 0.8 * im
+        prev_q2 = Q2
+        prev_i2 = I2
+
+        prev_period = period
+        if im != 0.0 and re != 0.0:
+            period = 360.0 / (np.arctan(im / re) * rad2deg)
+
+        if period > 1.5 * prev_period:
+            period = 1.5 * prev_period
+        if period < 0.67 * prev_period:
+            period = 0.67 * prev_period
+        if period < 6.0:
+            period = 6.0
+        elif period > 50.0:
+            period = 50.0
+
+        period = 0.2 * period + 0.8 * prev_period
+
+        today += 1
+
+    return mama_out, fama_out
+
+
+# ---------------------------------------------------------------------------
+# 18. SAREXT  (trend/sarext.py)
 # ---------------------------------------------------------------------------
 @njit(cache=True)
 def _sarext_loop(
@@ -1378,4 +1668,5 @@ __all__ = [
     "_sarext_loop",
     "_adx_talib_loop",
     "_ema_aligned",
+    "_mama_talib_loop",
 ]
