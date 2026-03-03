@@ -23,62 +23,25 @@ from pandas_ta_classic.trend import *
 from pandas_ta_classic.volatility import *
 from pandas_ta_classic.volume import *
 
-# Explicit utils imports to avoid shadowing the ``volatility`` subpackage
-# (by utils._metrics.volatility) and ``signals`` (by utils._signals.signals).
+# Explicit utils imports — avoids shadowing the ``volatility`` subpackage
+# (utils._metrics.volatility) and ``signals`` (utils._signals.signals) that
+# the old ``from pandas_ta_classic.utils import *`` caused.
 from pandas_ta_classic.utils import (
-    # _candles
-    candle_color,
-    high_low_range,
-    real_body,
-    # _core
-    _build_dataframe,
-    _finalize,
-    _get_min_periods,
-    _get_tal_mode,
-    _sliding_weighted_ma,
-    _sma_seed,
-    _swap_fast_slow,
-    apply_offset,
-    get_drift,
-    get_offset,
-    is_datetime_ordered,
-    is_percent,
-    non_zero_range,
-    recent_maximum_index,
-    recent_minimum_index,
-    signed_series,
-    tal_ma,
-    unsigned_differences,
-    verify_series,
-    # _math
-    combination,
-    df_error_analysis,
-    erf,
-    fibonacci,
-    geometric_mean,
-    linear_regression,
-    log_geometric_mean,
-    pascals_triangle,
-    symmetric_triangle,
-    weights,
-    zero,
-    # _signals (excluding ``signals`` to avoid shadowing)
+    # _signals — used by explicit wrapper methods
     above,
     above_value,
     below,
     below_value,
     cross,
     cross_value,
-    # _time
-    df_dates,
-    df_month_to_date,
-    df_quarter_to_date,
-    df_year_to_date,
+    # _time — used by properties / strategy runner
     final_time,
     get_time,
+    is_datetime_ordered,
     to_utc,
     total_time,
-    # _metrics (excluding ``volatility`` to avoid shadowing the subpackage)
+    # _metrics — public API (accessed as pandas_ta.xxx by users)
+    # NOTE: ``volatility`` deliberately excluded to avoid shadowing the subpackage
     cagr,
     calmar_ratio,
     downside_deviation,
@@ -89,28 +52,7 @@ from pandas_ta_classic.utils import (
     pure_profit_score,
     sharpe_ratio,
     sortino_ratio,
-    # _numba
-    _rsx_loop,
-    _jma_loop,
-    _hwc_loop,
-    _schaff_tc_loop,
-    _schaff_tc_loop2,
-    _ebsw_loop,
-    _qqe_loop,
-    _lrsi_loop,
-    _pmax_loop,
-    _fisher_loop,
-    _psar_loop,
-    _mcgd_loop,
-    _hwma_loop,
-    _supertrend_loop,
-    _vidya_loop,
-    _ssf2_loop,
-    _ssf3_loop,
-    _hilbert_transform_loop,
-    _sarext_loop,
     # data
-    av,
     yf,
 )
 
