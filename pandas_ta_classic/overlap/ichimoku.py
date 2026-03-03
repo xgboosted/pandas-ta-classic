@@ -61,7 +61,7 @@ def ichimoku(
     chikou_span.name = f"ICS_{kijun}"
 
     chikou_span.category = kijun_sen.category = tenkan_sen.category = "trend"
-    span_b.category = span_a.category = chikou_span
+    span_b.category = span_a.category = "trend"
 
     # Prepare Ichimoku DataFrame
     data = {
