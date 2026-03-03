@@ -224,7 +224,7 @@ def _make_indicator_method(func):
     explicitly declared parameters are forwarded so that meta-kwargs like
     ``append`` or ``prefix`` do not cause a ``TypeError``.
 
-    The generated method is cached on the class after first use so that
+    The generated method is cached on the instance after first use so that
     subsequent calls bypass ``__getattr__``.
     """
     sig = _inspect.signature(func)
@@ -1153,7 +1153,8 @@ class AnalysisIndicators:
         Any indicator registered in ``Category`` that does not have an explicit
         wrapper method defined on this class is wrapped on-the-fly via
         :func:`_make_indicator_method`.  The resulting bound method is cached on
-        the class so that subsequent lookups bypass ``__getattr__`` entirely.
+        the **instance** so that subsequent lookups bypass ``__getattr__``
+        without leaking state between different ``AnalysisIndicators`` instances.
         """
         # Bail out immediately for private/dunder names to avoid recursion.
         if name.startswith("_"):
@@ -1172,9 +1173,10 @@ class AnalysisIndicators:
                 f"Category but not available in the module namespace"
             )
         method = _make_indicator_method(func)
-        # Cache on the class so __getattr__ is not called again for this name.
-        setattr(type(self), name, method)
-        return method.__get__(self)
+        # Cache on the instance so __getattr__ is not called again for this name.
+        bound = method.__get__(self)
+        self.__dict__[name] = bound
+        return bound
 
     # Momentum
 
