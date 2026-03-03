@@ -136,3 +136,78 @@ class TestCandle(TestCase):
             self.open, self.high, self.low, self.close, name="nonexistent"
         )
         self.assertIsNone(result)
+
+    # -- Native pattern offset tests --
+    def test_cdl_hammer(self):
+        result = pandas_ta.cdl_hammer(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        assert_offset(
+            self, pandas_ta.cdl_hammer, self.open, self.high, self.low, self.close
+        )
+
+    def test_cdl_engulfing(self):
+        result = pandas_ta.cdl_engulfing(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        assert_offset(
+            self, pandas_ta.cdl_engulfing, self.open, self.high, self.low, self.close
+        )
+
+    def test_cdl_morningstar(self):
+        result = pandas_ta.cdl_morningstar(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        assert_offset(
+            self, pandas_ta.cdl_morningstar, self.open, self.high, self.low, self.close
+        )
+
+    def test_cdl_3inside(self):
+        result = pandas_ta.cdl_3inside(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        assert_offset(
+            self, pandas_ta.cdl_3inside, self.open, self.high, self.low, self.close
+        )
+
+    def test_cdl_hikkake(self):
+        result = pandas_ta.cdl_hikkake(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        assert_offset(
+            self, pandas_ta.cdl_hikkake, self.open, self.high, self.low, self.close
+        )
+
+    def test_cdl_risefall3methods(self):
+        result = pandas_ta.cdl_risefall3methods(
+            self.open, self.high, self.low, self.close
+        )
+        self.assertIsInstance(result, Series)
+        assert_offset(
+            self,
+            pandas_ta.cdl_risefall3methods,
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+        )
+
+    # -- TA-Lib cross-validation: all native patterns at once --
+    @talib_test
+    def test_all_native_patterns_talib(self):
+        """Cross-validate every native pattern against TA-Lib (exact equality)."""
+        from pandas_ta_classic.candles.cdl_pattern import _NATIVE_PATTERNS
+
+        import talib
+
+        for name, func in sorted(_NATIVE_PATTERNS.items()):
+            talib_name = f"CDL{name.upper()}"
+            talib_func = getattr(talib, talib_name, None)
+            if talib_func is None:
+                continue
+            with self.subTest(pattern=name):
+                native = func(self.open, self.high, self.low, self.close)
+                expected = Series(
+                    talib_func(self.open, self.high, self.low, self.close).astype(
+                        float
+                    ),
+                    index=self.close.index,
+                )
+                pdt.assert_series_equal(
+                    native, expected, check_names=False, check_dtype=False
+                )
