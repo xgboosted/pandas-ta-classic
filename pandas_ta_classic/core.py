@@ -572,12 +572,12 @@ class AnalysisIndicators:
                 # misspelled.
                 matches = df.columns.str.match(series, case=False)
                 match = [i for i, x in enumerate(matches) if x]
-                # If found, awesome.  Return it or return the 'series'.
-                cols = ", ".join(list(df.columns))
-                NOT_FOUND = f"[X] Ooops!!! It's {series not in df.columns}, the series '{series}' was not found in {cols}"
                 if len(match):
                     return df.iloc[:, match[0]]
-                logger.warning(NOT_FOUND)
+                cols = ", ".join(list(df.columns))
+                logger.warning(
+                    f"[X] Column '{series}' not found." f" Available columns: {cols}"
+                )
                 return None
 
     def _indicators_by_category(self, name: str) -> Optional[list]:
