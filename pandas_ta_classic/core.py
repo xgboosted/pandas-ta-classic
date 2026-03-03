@@ -76,17 +76,15 @@ class Strategy:
 
         if self.ta is None:
             self.ta = None
-        elif self.ta is not None and ta_is_list and self.total_ta() > 0:
-            pass  # Valid ta list; element-level validation left to indicator calls
+        elif ta_is_list:
+            pass  # Valid ta list (may be empty); element validation left to indicator calls
         else:
             s = " - ta. Format is a list of dicts. Example: [{'kind': 'sma', 'length': 10}]"
             s += "\n       Check the indicator for the correct arguments if you receive this error."
             required_args.append(s)
 
         if len(required_args) > 1:
-            for _msg in required_args:
-                logger.error(_msg)
-            return None
+            raise ValueError("\n".join(required_args))
 
     def total_ta(self):
         return len(self.ta) if self.ta is not None else 0

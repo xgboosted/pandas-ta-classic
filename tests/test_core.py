@@ -23,9 +23,9 @@ class TestStrategy(TestCase):
         self.assertEqual(s.total_ta(), 0)
 
     def test_strategy_invalid_name(self):
-        # name=None triggers the error branch in __post_init__
-        s = Strategy(name=None, ta=[{"kind": "sma"}])
-        # __post_init__ logs error and returns None (no crash)
+        # name=None triggers ValueError in __post_init__
+        with self.assertRaises(ValueError):
+            Strategy(name=None, ta=[{"kind": "sma"}])
 
 
 class TestAnalysisIndicators(TestCase):
