@@ -12,7 +12,7 @@ import pandas as pd
 from numpy import log10 as npLog10
 from numpy import ndarray as npNdarray
 from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version
-from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
+from pandas_ta_classic import candles
 from pandas_ta_classic.candles import *
 from pandas_ta_classic.cycles import *
 from pandas_ta_classic.momentum import *
@@ -22,39 +22,9 @@ from pandas_ta_classic.statistics import *
 from pandas_ta_classic.trend import *
 from pandas_ta_classic.volatility import *
 from pandas_ta_classic.volume import *
+from pandas_ta_classic.utils import *
 
-# Explicit utils imports — avoids shadowing the ``volatility`` subpackage
-# (utils._metrics.volatility) and ``signals`` (utils._signals.signals) that
-# the old ``from pandas_ta_classic.utils import *`` caused.
-from pandas_ta_classic.utils import (
-    # _signals — used by explicit wrapper methods
-    above,
-    above_value,
-    below,
-    below_value,
-    cross,
-    cross_value,
-    # _time — used by properties / strategy runner
-    final_time,
-    get_time,
-    is_datetime_ordered,
-    to_utc,
-    total_time,
-    # _metrics — public API (accessed as pandas_ta.xxx by users)
-    # NOTE: ``volatility`` deliberately excluded to avoid shadowing the subpackage
-    cagr,
-    calmar_ratio,
-    downside_deviation,
-    jensens_alpha,
-    log_max_drawdown,
-    max_drawdown,
-    optimal_leverage,
-    pure_profit_score,
-    sharpe_ratio,
-    sortino_ratio,
-    # data
-    yf,
-)
+__all__ = ["Strategy", "AllStrategy", "CommonStrategy", "AnalysisIndicators"]
 
 df = pd.DataFrame()
 
@@ -741,11 +711,11 @@ class AnalysisIndicators:
 
         total_indicators = len(ta_indicators)
         header = f"Pandas TA - Technical Analysis Indicators - v{self.version}"
-        s = f"{header}\nTotal Indicators & Utilities: {total_indicators + len(ALL_PATTERNS)}\n"
+        s = f"{header}\nTotal Indicators & Utilities: {total_indicators + len(candles.CDL_PATTERN_NAMES)}\n"
         if total_indicators > 0:
             print(
                 f"{s}Abbreviations:\n    {', '.join(ta_indicators)}"
-                f"\n\nCandle Patterns:\n    {', '.join(ALL_PATTERNS)}"
+                f"\n\nCandle Patterns:\n    {', '.join(candles.CDL_PATTERN_NAMES)}"
             )
         else:
             print(s)  # intentional: indicators() is an explicit user-facing listing

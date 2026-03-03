@@ -60,7 +60,7 @@ __all__ = [
     "below_value",
     "cross",
     "cross_value",
-    "signals",
+    # "signals" excluded — would shadow subpackage-level names
     # _time
     "df_dates",
     "df_month_to_date",
@@ -81,7 +81,7 @@ __all__ = [
     "pure_profit_score",
     "sharpe_ratio",
     "sortino_ratio",
-    "volatility",
+    # "volatility" excluded — would shadow the volatility subpackage
     # _numba
     "_rsx_loop",
     "_jma_loop",
