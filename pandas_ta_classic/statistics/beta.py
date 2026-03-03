@@ -37,8 +37,8 @@ def beta(
     # Calculate Result
     # Beta uses returns (pct_change), not raw prices.
     # Standard financial beta = Cov(close_ret, bench_ret) / Var(bench_ret)
-    close_ret = close.pct_change()
-    bench_ret = benchmark.pct_change()
+    close_ret = close / close.shift(1) - 1
+    bench_ret = benchmark / benchmark.shift(1) - 1
 
     if Imports["talib"] and mode_tal:
         from talib import BETA as taBETA
