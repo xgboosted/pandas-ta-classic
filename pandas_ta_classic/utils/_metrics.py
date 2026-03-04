@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 from numpy import log as npLog
@@ -10,7 +10,7 @@ npNaN = np.nan
 
 from ._core import verify_series
 from ._time import total_time
-from ._math import linear_regression, log_geometric_mean
+from ._math import linear_regression
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance import drawdown, log_return, percent_return
 
@@ -90,7 +90,7 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
     returns = verify_series(returns)
     benchmark_returns = verify_series(benchmark_returns)
 
-    benchmark_returns.interpolate(inplace=True)
+    benchmark_returns = benchmark_returns.interpolate()
     return linear_regression(benchmark_returns, returns)["a"]
 
 
@@ -132,7 +132,7 @@ def max_drawdown(
     if all:
         return max_dd_
 
-    if isinstance(method, str) and method in max_dd_.keys():
+    if isinstance(method, str) and method in max_dd_:
         return max_dd_[method]
     return max_dd_["dollar"]
 
@@ -160,9 +160,7 @@ def optimal_leverage(
     """
     close = verify_series(close)
 
-    use_cagr = kwargs.pop("use_cagr", False)
     returns = percent_return(close=close) if not log else log_return(close=close)
-    # sharpe = sharpe_ratio(close, benchmark_rate=benchmark_rate, log=log, use_cagr=use_cagr, period=period)
 
     period_mu = period * returns.mean()
     period_std = npSqrt(period) * returns.std()

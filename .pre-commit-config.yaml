@@ -9,7 +9,7 @@ repos:
       - id: mypy
         name: mypy
         entry: mypy
-        args: [--config-file=pyproject.toml, pandas_ta_classic/]
+        args: [--config-file=pyproject.toml]
         language: system
         types: [python]
         pass_filenames: false

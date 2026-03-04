@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from typing import Any, List, Optional, Tuple, Union
+import logging
+from typing import Any, Optional, Tuple, Union
 
 import re as re_
-from pathlib import Path
 from sys import float_info as sflt
 
 from numpy import argmax, argmin
@@ -10,20 +10,12 @@ from pandas import DataFrame, Series
 from pandas.api.types import is_datetime64_any_dtype
 from pandas_ta_classic import Imports
 
+logger = logging.getLogger(__name__)
+
 
 def _camelCase2Title(x: str) -> str:
     """https://stackoverflow.com/questions/5020906/python-convert-camel-case-to-space-delimited-using-regex-and-taking-acronyms-in"""
     return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
-
-
-def category_files(category: str) -> List[str]:
-    """Helper function to return all filenames in the category directory."""
-    files = [
-        x.stem
-        for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py"))
-        if x.stem != "__init__"
-    ]
-    return files
 
 
 def get_drift(x: Optional[int]) -> int:
@@ -38,13 +30,12 @@ def get_offset(x: Optional[int]) -> int:
 
 def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
     """Returns True if the index is a datetime and ordered."""
-    index_is_datetime = is_datetime64_any_dtype(df.index)
+    if not is_datetime64_any_dtype(df.index):
+        return False
     try:
-        ordered = df.index[0] < df.index[-1]
-    except RuntimeWarning:
-        pass
-    finally:
-        return True if index_is_datetime and ordered else False
+        return df.index[0] < df.index[-1]
+    except Exception:
+        return False
 
 
 def is_percent(x: Optional[Union[int, float]]) -> bool:
@@ -90,25 +81,18 @@ def tal_ma(name: str) -> Any:
     if Imports["talib"] and isinstance(name, str) and len(name) > 1:
         from talib import MA_Type
 
-        name = name.lower()
-        if name == "sma":
-            return MA_Type.SMA  # 0
-        elif name == "ema":
-            return MA_Type.EMA  # 1
-        elif name == "wma":
-            return MA_Type.WMA  # 2
-        elif name == "dema":
-            return MA_Type.DEMA  # 3
-        elif name == "tema":
-            return MA_Type.TEMA  # 4
-        elif name == "trima":
-            return MA_Type.TRIMA  # 5
-        elif name == "kama":
-            return MA_Type.KAMA  # 6
-        elif name == "mama":
-            return MA_Type.MAMA  # 7
-        elif name == "t3":
-            return MA_Type.T3  # 8
+        _map = {
+            "sma": MA_Type.SMA,  # 0
+            "ema": MA_Type.EMA,  # 1
+            "wma": MA_Type.WMA,  # 2
+            "dema": MA_Type.DEMA,  # 3
+            "tema": MA_Type.TEMA,  # 4
+            "trima": MA_Type.TRIMA,  # 5
+            "kama": MA_Type.KAMA,  # 6
+            "mama": MA_Type.MAMA,  # 7
+            "t3": MA_Type.T3,  # 8
+        }
+        return _map.get(name.lower(), 0)
     return 0  # Default: SMA -> 0
 
 
@@ -127,7 +111,7 @@ def unsigned_differences(
     """
     amount = int(amount) if amount is not None else 1
     negative = series.diff(amount)
-    negative.fillna(0, inplace=True)
+    negative = negative.fillna(0)
     positive = negative.copy()
 
     positive[positive <= 0] = 0
@@ -143,11 +127,171 @@ def unsigned_differences(
     return positive, negative
 
 
+def _sma_seed(series: Series, length: int) -> Series:
+    """Return a copy of *series* with ``NaN`` before position *length-1* and
+    the SMA of the first *length* values at position *length-1*.
+
+    Used by EMA/RMA to initialise exponential smoothing with an SMA seed.
+    """
+    import numpy as np
+
+    s = series.copy()
+    sma_val = s.iloc[:length].mean()
+    s.iloc[: length - 1] = np.nan
+    s.iloc[length - 1] = sma_val
+    return s
+
+
+def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
+    """Vectorised weighted MA via :func:`sliding_window_view`.
+
+    Args:
+        close: The input series.
+        length: Window length (must equal ``len(weights)``).
+        weights: 1-D weight array whose orientation matches the window layout
+            (oldest-first unless caller reverses it).
+
+    Returns:
+        A Series aligned with *close*, with ``NaN`` for the first
+        ``length - 1`` positions.
+    """
+    import numpy as np
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    arr = close.to_numpy(dtype=float)
+    windows = sliding_window_view(arr, length)
+    result = np.full(len(arr), np.nan)
+    result[length - 1 :] = windows @ weights
+    return Series(result, index=close.index)
+
+
+def _get_tal_mode(talib: Any) -> bool:
+    """Return True unless *talib* is explicitly ``False``."""
+    return bool(talib) if isinstance(talib, bool) else True
+
+
+def _get_min_periods(kwargs: dict, default: int, key: str = "min_periods") -> int:
+    """Extract min_periods from kwargs, defaulting to *default*."""
+    v = kwargs.get(key)
+    return int(v) if v is not None else default
+
+
+def _swap_fast_slow(fast: int, slow: int) -> Tuple[int, int]:
+    """Ensure ``fast <= slow``; swap if necessary."""
+    return (slow, fast) if slow < fast else (fast, slow)
+
+
+def _build_dataframe(
+    series_map: dict,
+    name: str,
+    category: str,
+    offset: int = 0,
+    **kwargs: Any,
+) -> DataFrame:
+    """Build a named/categorized DataFrame from a dict of named Series.
+
+    Applies :func:`apply_offset` to each Series, sets ``name`` and
+    ``category`` on both the individual Series and the resulting DataFrame.
+
+    Args:
+        series_map: ``{column_name: series}`` mapping.
+        name: The DataFrame name (e.g. ``"BBANDS_5_2.0"``).
+        category: The indicator category (e.g. ``"volatility"``).
+        offset: Number of periods to shift each series.
+        **kwargs: Passed through to :func:`apply_offset`.
+
+    Returns:
+        A named and categorized DataFrame.
+
+    Example:
+        >>> return _build_dataframe(
+        ...     {f"DCL_{l}": lower, f"DCM_{l}": mid, f"DCU_{l}": upper},
+        ...     f"DC_{l}", "volatility", offset, **kwargs,
+        ... )
+    """
+    data = {}
+    for col_name, s in series_map.items():
+        s = apply_offset(s, offset, **kwargs)
+        s.name = col_name
+        s.category = category
+        data[col_name] = s
+    df = DataFrame(data)
+    df.name = name
+    df.category = category
+    return df
+
+
+def _finalize(
+    result: Union[Series, DataFrame],
+    offset: int,
+    name: str,
+    category: str,
+    **kwargs: Any,
+) -> Union[Series, DataFrame]:
+    """Apply offset, fill, and set name/category on a result Series or DataFrame.
+
+    Args:
+        result: The computed indicator result.
+        offset: Number of periods to shift.
+        name: The indicator name (e.g. ``"SMA_10"``).
+        category: The indicator category (e.g. ``"overlap"``).
+        **kwargs: Passed through to :func:`apply_offset` (``fillna``, ``fill_method``).
+
+    Returns:
+        The finalized Series or DataFrame.
+
+    Example:
+        >>> return _finalize(sma, offset, f"SMA_{length}", "overlap", **kwargs)
+    """
+    result = apply_offset(result, offset, **kwargs)
+    result.name = name
+    result.category = category
+    return result
+
+
+def apply_offset(
+    result: Union[Series, DataFrame],
+    offset: int,
+    **kwargs: Any,
+) -> Union[Series, DataFrame]:
+    """Apply offset shift and optional fill operations to a Series or DataFrame.
+
+    Args:
+        result: A pandas Series or DataFrame to modify.
+        offset: Number of periods to shift. 0 means no shift.
+        **kwargs: Supports ``fillna`` (scalar) and ``fill_method``
+            (``"ffill"`` or ``"bfill"``).
+
+    Returns:
+        The modified Series or DataFrame (also returned for chaining).
+
+    Example:
+        >>> rsi = apply_offset(rsi, offset, **kwargs)
+    """
+    if offset != 0:
+        result = result.shift(offset)
+    if "fillna" in kwargs:
+        result = result.fillna(kwargs["fillna"])
+    if "fill_method" in kwargs:
+        fm = kwargs["fill_method"]
+        if fm == "ffill":
+            result = result.ffill()
+        elif fm == "bfill":
+            result = result.bfill()
+    return result
+
+
 def verify_series(
     series: Series, min_length: Optional[Union[int, float]] = None
 ) -> Optional[Series]:
     """If a Pandas Series and it meets the min_length of the indicator return it."""
     has_length = min_length is not None and isinstance(min_length, int)
     if series is not None and isinstance(series, Series):
-        return None if has_length and series.size < min_length else series
+        if has_length and series.size < min_length:
+            logger.warning(
+                f"[X] Series has {series.size} rows but indicator requires"
+                f" at least {min_length}. Returning None."
+            )
+            return None
+        return series
     return None

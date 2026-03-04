@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from time import localtime, perf_counter
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from pandas import DataFrame, Timestamp, to_datetime
 
@@ -102,7 +102,7 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
         "seconds": time_diff.total_seconds(),
     }
 
-    if isinstance(tf, str) and tf in TimeFrame.keys():
+    if isinstance(tf, str) and tf in TimeFrame:
         return TimeFrame[tf]
     return TimeFrame["years"]
 

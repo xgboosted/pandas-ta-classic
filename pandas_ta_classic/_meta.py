@@ -21,17 +21,7 @@ except ImportError:
         except PackageNotFoundError:
             __version__ = "0.0.0"  # Fallback if package not installed
     except ImportError:
-        # Fallback for Python < 3.8
-        try:
-            from pkg_resources import get_distribution, DistributionNotFound
-
-            try:
-                _dist = get_distribution("pandas-ta-classic")
-                __version__ = _dist.version
-            except DistributionNotFound:
-                __version__ = "0.0.0"  # Fallback if package not installed
-        except ImportError:
-            __version__ = "0.0.0"  # Final fallback
+        __version__ = "0.0.0"  # Final fallback
 
 version = __version__
 
@@ -96,7 +86,7 @@ def _build_category_dict():
         category_name = category_path.name
 
         # Skip special directories and non-indicator directories
-        if category_name.startswith("_") or category_name.startswith("."):
+        if category_name.startswith(("_", ".")):
             continue
         if category_name == "__pycache__":
             continue
@@ -106,7 +96,7 @@ def _build_category_dict():
         # Find all .py files in this category (excluding __init__.py)
         indicators = []
         for file_path in category_path.glob("*.py"):
-            if file_path.name != "__init__.py":
+            if file_path.name != "__init__.py" and not file_path.name.startswith("_"):
                 # Remove .py extension to get the indicator name
                 indicators.append(file_path.stem)
 
