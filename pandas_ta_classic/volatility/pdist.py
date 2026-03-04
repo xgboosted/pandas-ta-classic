@@ -2,7 +2,13 @@
 # Price Distance (PDIST)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def pdist(
@@ -23,34 +29,15 @@ def pdist(
     drift = get_drift(drift)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
     pdist = 2 * non_zero_range(high, low)
     pdist += non_zero_range(open_, close.shift(drift)).abs()
     pdist -= non_zero_range(close, open_).abs()
 
-    # Offset
-    if offset != 0:
-        pdist = pdist.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pdist.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pdist.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pdist.bfill(inplace=True)
-
-    # Name & Category
-    pdist.name = "PDIST"
-    pdist.category = "volatility"
-
-    return pdist
+    return _finalize(pdist, offset, "PDIST", "volatility", **kwargs)
 
 
 pdist.__doc__ = """Price Distance (PDIST)

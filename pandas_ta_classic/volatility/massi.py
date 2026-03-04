@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def massi(
@@ -18,8 +24,7 @@ def massi(
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 9
     slow = int(slow) if slow and slow > 0 else 25
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -38,29 +43,7 @@ def massi(
     hl_ratio = hl_ema1 / hl_ema2
     massi = hl_ratio.rolling(slow, min_periods=slow).sum()
 
-    # Offset
-    if offset != 0:
-        massi = massi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        massi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                massi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                massi.bfill(inplace=True)
-
-    # Name and Categorize it
-    massi.name = f"MASSI_{fast}_{slow}"
-    massi.category = "volatility"
-
-    return massi
+    return _finalize(massi, offset, f"MASSI_{fast}_{slow}", "volatility", **kwargs)
 
 
 massi.__doc__ = """Mass Index (MASSI)

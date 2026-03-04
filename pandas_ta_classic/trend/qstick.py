@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap import dema, ema, hma, rma, sma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def qstick(
@@ -38,29 +43,7 @@ def qstick(
     else:  # "sma"
         qstick = sma(diff, length=length)
 
-    # Offset
-    if offset != 0:
-        qstick = qstick.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        qstick.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qstick.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qstick.bfill(inplace=True)
-
-    # Name and Categorize it
-    qstick.name = f"QS_{length}"
-    qstick.category = "trend"
-
-    return qstick
+    return _finalize(qstick, offset, f"QS_{length}", "trend", **kwargs)
 
 
 qstick.__doc__ = """Q Stick

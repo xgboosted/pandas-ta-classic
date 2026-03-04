@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import Series
 from .atr import atr
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def natr(
@@ -29,7 +35,7 @@ def natr(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None
@@ -48,33 +54,10 @@ def natr(
             length=length,
             mamode=mamode,
             drift=drift,
-            offset=offset,
             **kwargs,
         )
 
-    # Offset
-    if offset != 0:
-        natr = natr.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        natr.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                natr.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                natr.bfill(inplace=True)
-
-    # Name and Categorize it
-    natr.name = f"NATR_{length}"
-    natr.category = "volatility"
-
-    return natr
+    return _finalize(natr, offset, f"NATR_{length}", "volatility", **kwargs)
 
 
 natr.__doc__ = """Normalized Average True Range (NATR)

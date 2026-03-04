@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def mfi(
@@ -27,7 +33,7 @@ def mfi(
     volume = verify_series(volume, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None or volume is None:
         return None
@@ -56,22 +62,7 @@ def mfi(
         tdf["mfi"] = mfi
 
     # Offset
-    if offset != 0:
-        mfi = mfi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        mfi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mfi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mfi.bfill(inplace=True)
+    mfi = apply_offset(mfi, offset, **kwargs)
 
     # Name and Categorize it
     mfi.name = f"MFI_{length}"

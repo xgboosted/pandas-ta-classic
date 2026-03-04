@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def ad(
@@ -23,7 +29,10 @@ def ad(
     close = verify_series(close)
     volume = verify_series(volume)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
+
+    if high is None or low is None or close is None or volume is None:
+        return None
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
@@ -41,29 +50,7 @@ def ad(
         ad *= volume / high_low_range
         ad = ad.cumsum()
 
-    # Offset
-    if offset != 0:
-        ad = ad.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ad.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ad.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ad.bfill(inplace=True)
-
-    # Name and Categorize it
-    ad.name = "AD" if open_ is None else "ADo"
-    ad.category = "volume"
-
-    return ad
+    return _finalize(ad, offset, "AD" if open_ is None else "ADo", "volume", **kwargs)
 
 
 ad.__doc__ = """Accumulation/Distribution (AD)

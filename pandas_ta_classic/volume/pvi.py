@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
-from pandas_ta_classic.utils import get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, signed_series, verify_series
 
 
 def pvi(
@@ -29,33 +29,11 @@ def pvi(
     # Calculate Result
     signed_volume = signed_series(volume, 1)
     pvi = roc(close=close, length=length) * signed_volume[signed_volume > 0].abs()
-    pvi.fillna(0, inplace=True)
+    pvi = pvi.fillna(0)
     pvi.iloc[0] = initial
     pvi = pvi.cumsum()
 
-    # Offset
-    if offset != 0:
-        pvi = pvi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pvi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pvi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pvi.bfill(inplace=True)
-
-    # Name and Categorize it
-    pvi.name = f"PVI_{length}"
-    pvi.category = "volume"
-
-    return pvi
+    return _finalize(pvi, offset, f"PVI_{length}", "volume", **kwargs)
 
 
 pvi.__doc__ = """Positive Volume Index (PVI)
@@ -75,7 +53,7 @@ Calculation:
     roc = ROC(close, length)
     signed_volume = signed_series(volume, initial=1)
     pvi = signed_volume[signed_volume > 0].abs() * roc_
-    pvi.fillna(0, inplace=True)
+    pvi = pvi.fillna(0)
     pvi.iloc[0]= initial
     pvi = pvi.cumsum()
 

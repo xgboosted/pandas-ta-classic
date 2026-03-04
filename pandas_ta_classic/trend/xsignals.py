@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from .tsignals import tsignals
 from pandas_ta_classic.utils._signals import cross_value
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def xsignals(
@@ -27,6 +27,9 @@ def xsignals(
     signal = verify_series(signal)
     offset = get_offset(offset)
 
+    if signal is None:
+        return None
+
     # Calculate Result
     if above:
         entries = cross_value(signal, xa)
@@ -37,9 +40,9 @@ def xsignals(
     trades = entries + exits
 
     # Modify trades to fill gaps for trends
-    trades.replace({0: npNaN}, inplace=True)
-    trades.ffill(inplace=True)
-    trades.fillna(0, inplace=True)
+    trades = trades.replace({0: npNaN})
+    trades = trades.ffill()
+    trades = trades.fillna(0)
 
     trends = (trades > 0).astype(int)
     if not long:
@@ -54,24 +57,12 @@ def xsignals(
     df = tsignals(trends, **tskwargs)
 
     # Offset handled by tsignals
-    DataFrame({f"XS_LONG": df.TS_Trends, f"XS_SHORT": 1 - df.TS_Trends})
+    DataFrame({"XS_LONG": df.TS_Trends, "XS_SHORT": 1 - df.TS_Trends})
 
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
+    df = apply_offset(df, 0, **kwargs)
 
     # Name & Category
-    df.name = f"XS"
+    df.name = "XS"
     df.category = "trend"
 
     return df

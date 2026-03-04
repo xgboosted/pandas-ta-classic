@@ -2,7 +2,12 @@
 # Donchian Channels (DONCHIAN)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def donchian(
@@ -17,16 +22,8 @@ def donchian(
     # Validate arguments
     lower_length = int(lower_length) if lower_length and lower_length > 0 else 20
     upper_length = int(upper_length) if upper_length and upper_length > 0 else 20
-    lower_min_periods = (
-        int(kwargs["lower_min_periods"])
-        if "lower_min_periods" in kwargs and kwargs["lower_min_periods"] is not None
-        else lower_length
-    )
-    upper_min_periods = (
-        int(kwargs["upper_min_periods"])
-        if "upper_min_periods" in kwargs and kwargs["upper_min_periods"] is not None
-        else upper_length
-    )
+    lower_min_periods = _get_min_periods(kwargs, lower_length, "lower_min_periods")
+    upper_min_periods = _get_min_periods(kwargs, upper_length, "upper_min_periods")
     _length = max(lower_length, lower_min_periods, upper_length, upper_min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -40,59 +37,14 @@ def donchian(
     upper = high.rolling(upper_length, min_periods=upper_min_periods).max()
     mid = 0.5 * (lower + upper)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        mid.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mid.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mid.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
-
-    # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        mid = mid.shift(offset)
-        upper = upper.shift(offset)
-
-    # Name and Categorize it
-    lower.name = f"DCL_{lower_length}_{upper_length}"
-    mid.name = f"DCM_{lower_length}_{upper_length}"
-    upper.name = f"DCU_{lower_length}_{upper_length}"
-    mid.category = upper.category = lower.category = "volatility"
-
-    # Prepare DataFrame to return
-    data = {lower.name: lower, mid.name: mid, upper.name: upper}
-    dcdf = DataFrame(data)
-    dcdf.name = f"DC_{lower_length}_{upper_length}"
-    dcdf.category = mid.category
-
-    return dcdf
+    _props = f"_{lower_length}_{upper_length}"
+    return _build_dataframe(
+        {f"DCL{_props}": lower, f"DCM{_props}": mid, f"DCU{_props}": upper},
+        f"DC{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 donchian.__doc__ = """Donchian Channels (DC)

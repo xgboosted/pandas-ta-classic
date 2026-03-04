@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def vfi(
@@ -57,25 +62,10 @@ def vfi(
 
     # Smooth VFI
     vfi = ma(mamode, vfi, length=3)
+    if vfi is None:
+        return None
 
-    # Offset
-    if offset != 0:
-        vfi = vfi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vfi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            vfi.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            vfi.bfill(inplace=True)
-
-    # Name and Categorize it
-    vfi.name = f"VFI_{length}"
-    vfi.category = "volume"
-
-    return vfi
+    return _finalize(vfi, offset, f"VFI_{length}", "volume", **kwargs)
 
 
 vfi.__doc__ = """Volume Flow Indicator (VFI)

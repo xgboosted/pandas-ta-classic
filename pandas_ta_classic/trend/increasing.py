@@ -2,7 +2,13 @@
 # Increasing (INCREASING)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, is_percent, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_drift,
+    get_offset,
+    is_percent,
+    verify_series,
+)
 
 
 def increasing(
@@ -38,7 +44,7 @@ def increasing(
                 close.shift(x - (drift + 1)) > close_.shift(x - drift)
             )
 
-        increasing.fillna(0, inplace=True)
+        increasing = increasing.fillna(0)
         increasing = increasing.astype(bool)
     else:
         increasing = close_.diff(length) > 0
@@ -46,31 +52,11 @@ def increasing(
     if asint:
         increasing = increasing.astype(int)
 
-    # Offset
-    if offset != 0:
-        increasing = increasing.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        increasing.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                increasing.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                increasing.bfill(inplace=True)
-
-    # Name and Categorize it
     _percent = f"_{0.01 * percent}" if percent else ""
     _props = f"{'S' if strict else ''}INC{'p' if percent else ''}"
-    increasing.name = f"{_props}_{length}{_percent}"
-    increasing.category = "trend"
-
-    return increasing
+    return _finalize(
+        increasing, offset, f"{_props}_{length}{_percent}", "trend", **kwargs
+    )
 
 
 increasing.__doc__ = """Increasing

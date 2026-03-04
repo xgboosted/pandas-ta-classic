@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # Holt-Winter Channel (HWC)
 from typing import Any, Optional
-from numpy import sqrt as npSqrt
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def hwc(
@@ -28,144 +27,39 @@ def hwc(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if close is None:
+        return None
+
     # Calculate Result
-    last_a = last_v = last_var = 0
-    last_f = last_price = last_result = close.iloc[0]
-    lower, result, upper = [], [], []
-    chan_pct_width, chan_width = [], []
+    from numpy import empty as npEmpty
+    from pandas_ta_classic.utils._numba import _hwc_loop
 
     m = close.size
-    for i in range(m):
-        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * close.iloc[i]
-        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
-        A = (1.0 - nc) * last_a + nc * (V - last_v)
-        result.append((F + V + 0.5 * A))
+    c_arr = close.to_numpy()
+    result_arr, upper_arr, lower_arr = _hwc_loop(c_arr, m, na, nb, nc, nd, scalar)
 
-        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
-            last_price - last_result
-        )
-        stddev = npSqrt(last_var)
-        upper.append(result[i] + scalar * stddev)
-        lower.append(result[i] - scalar * stddev)
-
-        if channel_eval:
-            # channel width
-            chan_width.append(upper[i] - lower[i])
-            # channel percentage price position
-            chan_pct_width.append((close.iloc[i] - lower[i]) / (upper[i] - lower[i]))
-            # print('channel_eval (width|percentageWidth):', chan_width[i], chan_pct_width[i])
-
-        # update values
-        last_price = close.iloc[i]
-        last_a = A
-        last_f = F
-        last_v = V
-        last_var = var
-        last_result = result[i]
+    if channel_eval:
+        chan_width_arr = npEmpty(m)
+        chan_pct_arr = npEmpty(m)
+        for i in range(m):
+            width = upper_arr[i] - lower_arr[i]
+            chan_width_arr[i] = width
+            chan_pct_arr[i] = (c_arr[i] - lower_arr[i]) / width if width != 0 else 0.5
 
     # Aggregate
-    hwc = Series(result, index=close.index)
-    hwc_upper = Series(upper, index=close.index)
-    hwc_lower = Series(lower, index=close.index)
+    hwc = Series(result_arr, index=close.index)
+    hwc_upper = Series(upper_arr, index=close.index)
+    hwc_lower = Series(lower_arr, index=close.index)
     if channel_eval:
-        hwc_width = Series(chan_width, index=close.index)
-        hwc_pctwidth = Series(chan_pct_width, index=close.index)
+        hwc_width = Series(chan_width_arr, index=close.index)
+        hwc_pctwidth = Series(chan_pct_arr, index=close.index)
 
-    # Offset
-    if offset != 0:
-        hwc = hwc.shift(offset)
-        hwc_upper = hwc_upper.shift(offset)
-        hwc_lower = hwc_lower.shift(offset)
-        if channel_eval:
-            hwc_width = hwc_width.shift(offset)
-            hwc_pctwidth = hwc_pctwidth.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        hwc.fillna(kwargs["fillna"], inplace=True)
-        hwc_upper.fillna(kwargs["fillna"], inplace=True)
-        hwc_lower.fillna(kwargs["fillna"], inplace=True)
-        if channel_eval:
-            hwc_width.fillna(kwargs["fillna"], inplace=True)
-            hwc_pctwidth.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwc.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwc_upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwc_upper.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwc_lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwc_lower.bfill(inplace=True)
-        if channel_eval:
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    hwc_width.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    hwc_width.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    hwc_pctwidth.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    hwc_pctwidth.bfill(inplace=True)
-
-    # Name and Categorize it
-    # suffix = f'{str(na).replace(".", "")}-{str(nb).replace(".", "")}-{str(nc).replace(".", "")}'
-    hwc.name = "HWM"
-    hwc_upper.name = "HWU"
-    hwc_lower.name = "HWL"
-    hwc.category = hwc_upper.category = hwc_lower.category = "volatility"
+    series_map = {"HWM": hwc, "HWU": hwc_upper, "HWL": hwc_lower}
     if channel_eval:
-        hwc_width.name = "HWW"
-        hwc_pctwidth.name = "HWPCT"
+        series_map["HWW"] = hwc_width
+        series_map["HWPCT"] = hwc_pctwidth
 
-    # Prepare DataFrame to return
-    if channel_eval:
-        data = {
-            hwc.name: hwc,
-            hwc_upper.name: hwc_upper,
-            hwc_lower.name: hwc_lower,
-            hwc_width.name: hwc_width,
-            hwc_pctwidth.name: hwc_pctwidth,
-        }
-        df = DataFrame(data)
-        df.name = "HWC"
-        df.category = hwc.category
-    else:
-        data = {hwc.name: hwc, hwc_upper.name: hwc_upper, hwc_lower.name: hwc_lower}
-        df = DataFrame(data)
-        df.name = "HWC"
-        df.category = hwc.category
-
-    return df
+    return _build_dataframe(series_map, "HWC", "volatility", offset, **kwargs)
 
 
 hwc.__doc__ = """HWC (Holt-Winter Channel)

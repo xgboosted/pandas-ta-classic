@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def efi(
@@ -30,30 +30,10 @@ def efi(
     # Calculate Result
     pv_diff = close.diff(drift) * volume
     efi = ma(mamode, pv_diff, length=length)
+    if efi is None:
+        return None
 
-    # Offset
-    if offset != 0:
-        efi = efi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        efi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                efi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                efi.bfill(inplace=True)
-
-    # Name and Categorize it
-    efi.name = f"EFI_{length}"
-    efi.category = "volume"
-
-    return efi
+    return _finalize(efi, offset, f"EFI_{length}", "volume", **kwargs)
 
 
 efi.__doc__ = """Elder's Force Index (EFI)

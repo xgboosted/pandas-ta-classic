@@ -4,7 +4,12 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .true_range import true_range
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_offset,
+    high_low_range,
+    verify_series,
+)
 
 
 def kc(
@@ -39,64 +44,20 @@ def kc(
 
     basis = ma(mamode, close, length=length)
     band = ma(mamode, range_, length=length)
+    if basis is None or band is None:
+        return None
 
     lower = basis - scalar * band
     upper = basis + scalar * band
 
-    # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        basis = basis.shift(offset)
-        upper = upper.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        basis.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                basis.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                basis.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
-
-    # Name and Categorize it
     _props = f"{mamode.lower()[0] if len(mamode) else ''}_{length}_{scalar}"
-    lower.name = f"KCL{_props}"
-    basis.name = f"KCB{_props}"
-    upper.name = f"KCU{_props}"
-    basis.category = upper.category = lower.category = "volatility"
-
-    # Prepare DataFrame to return
-    data = {lower.name: lower, basis.name: basis, upper.name: upper}
-    kcdf = DataFrame(data)
-    kcdf.name = f"KC{_props}"
-    kcdf.category = basis.category
-
-    return kcdf
+    return _build_dataframe(
+        {f"KCL{_props}": lower, f"KCB{_props}": basis, f"KCU{_props}": upper},
+        f"KC{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 kc.__doc__ = """Keltner Channels (KC)

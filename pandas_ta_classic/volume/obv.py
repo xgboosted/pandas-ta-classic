@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_offset,
+    signed_series,
+    verify_series,
+)
 
 
 def obv(
@@ -18,7 +24,10 @@ def obv(
     close = verify_series(close)
     volume = verify_series(volume)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
+
+    if close is None or volume is None:
+        return None
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
@@ -29,29 +38,7 @@ def obv(
         signed_volume = signed_series(close, initial=1) * volume
         obv = signed_volume.cumsum()
 
-    # Offset
-    if offset != 0:
-        obv = obv.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        obv.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                obv.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                obv.bfill(inplace=True)
-
-    # Name and Categorize it
-    obv.name = f"OBV"
-    obv.category = "volume"
-
-    return obv
+    return _finalize(obv, offset, "OBV", "volume", **kwargs)
 
 
 obv.__doc__ = """On Balance Volume (OBV)

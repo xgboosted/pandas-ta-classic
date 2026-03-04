@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    signed_series,
+    verify_series,
+)
 
 
 def kvo(
@@ -40,37 +46,18 @@ def kvo(
     # Calculate Result
     signed_volume = volume * signed_series(hlc3(high, low, close), 1)
     sv = signed_volume.loc[signed_volume.first_valid_index() :,]
-    kvo = ma(mamode, sv, length=fast) - ma(mamode, sv, length=slow)
+    _kvo_fast = ma(mamode, sv, length=fast)
+    _kvo_slow = ma(mamode, sv, length=slow)
+    if _kvo_fast is None or _kvo_slow is None:
+        return None
+    kvo = _kvo_fast - _kvo_slow
     kvo_signal = ma(mamode, kvo.loc[kvo.first_valid_index() :,], length=signal)
+    if kvo_signal is None:
+        return None
 
     # Offset
-    if offset != 0:
-        kvo = kvo.shift(offset)
-        kvo_signal = kvo_signal.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        kvo.fillna(kwargs["fillna"], inplace=True)
-        kvo_signal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kvo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kvo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kvo_signal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kvo_signal.bfill(inplace=True)
+    kvo = apply_offset(kvo, offset, **kwargs)
+    kvo_signal = apply_offset(kvo_signal, offset, **kwargs)
 
     # Name and Categorize it
     _props = f"_{fast}_{slow}_{signal}"

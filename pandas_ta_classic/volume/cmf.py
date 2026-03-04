@@ -2,7 +2,13 @@
 # Chaikin Money Flow (CMF)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def cmf(
@@ -18,11 +24,7 @@ def cmf(
     """Indicator: Chaikin Money Flow (CMF)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 20
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -44,29 +46,7 @@ def cmf(
     cmf = ad.rolling(length, min_periods=min_periods).sum()
     cmf /= volume.rolling(length, min_periods=min_periods).sum()
 
-    # Offset
-    if offset != 0:
-        cmf = cmf.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cmf.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cmf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cmf.bfill(inplace=True)
-
-    # Name and Categorize it
-    cmf.name = f"CMF_{length}"
-    cmf.category = "volume"
-
-    return cmf
+    return _finalize(cmf, offset, f"CMF_{length}", "volume", **kwargs)
 
 
 cmf.__doc__ = """Chaikin Money Flow (CMF)

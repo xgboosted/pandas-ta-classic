@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.volatility import true_range
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def vortex(
@@ -18,11 +24,7 @@ def vortex(
     """Indicator: Vortex"""
     # Validate arguments
     length = length if length and length > 0 else 14
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -43,47 +45,14 @@ def vortex(
     vip = vmp.rolling(length, min_periods=min_periods).sum() / tr_sum
     vim = vmm.rolling(length, min_periods=min_periods).sum() / tr_sum
 
-    # Offset
-    if offset != 0:
-        vip = vip.shift(offset)
-        vim = vim.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vip.fillna(kwargs["fillna"], inplace=True)
-        vim.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vip.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vip.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vim.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vim.bfill(inplace=True)
-
-    # Name and Categorize it
-    vip.name = f"VTXP_{length}"
-    vim.name = f"VTXM_{length}"
-    vip.category = vim.category = "trend"
-
-    # Prepare DataFrame to return
-    data = {vip.name: vip, vim.name: vim}
-    vtxdf = DataFrame(data)
-    vtxdf.name = f"VTX_{length}"
-    vtxdf.category = "trend"
-
-    return vtxdf
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {f"VTXP_{length}": vip, f"VTXM_{length}": vim},
+        f"VTX_{length}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 vortex.__doc__ = """Vortex

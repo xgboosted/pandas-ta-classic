@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 # Price Max (PMAX)
 from typing import Any, Optional
-from numpy import maximum, minimum
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def pmax(
@@ -37,63 +36,31 @@ def pmax(
 
     # Calculate moving average of close
     ma_value = ma(mamode, close, length=length)
+    if ma_value is None:
+        return None
 
     # Calculate PMAX bands
     pmax_up = ma_value - (multiplier * atr_value)
     pmax_down = ma_value + (multiplier * atr_value)
 
-    # Convert to numpy arrays for faster iteration
+    from pandas_ta_classic.utils._numba import _pmax_loop
+
     close_arr = close.to_numpy()
     pmax_up_arr = pmax_up.to_numpy(copy=True)
     pmax_down_arr = pmax_down.to_numpy(copy=True)
-
-    # Initialize arrays
     n = len(close)
-    trend_arr = [1] * n  # Start with uptrend
-    pmax_arr = [0.0] * n
 
-    # Iterate using numpy arrays (much faster than pandas .iloc)
-    for i in range(1, n):
-        # Update upper band: if price was above upper band, maintain higher of current or previous
-        if close_arr[i - 1] > pmax_up_arr[i - 1]:
-            pmax_up_arr[i] = max(pmax_up_arr[i], pmax_up_arr[i - 1])
+    _trend_arr, pmax_arr = _pmax_loop(close_arr, pmax_up_arr, pmax_down_arr, n)
 
-        # Update lower band: if price was below lower band, maintain lower of current or previous
-        if close_arr[i - 1] < pmax_down_arr[i - 1]:
-            pmax_down_arr[i] = min(pmax_down_arr[i], pmax_down_arr[i - 1])
-
-        # Determine trend: price crosses lower band (uptrend) or upper band (downtrend)
-        if close_arr[i] > pmax_down_arr[i - 1]:
-            trend_arr[i] = 1
-        elif close_arr[i] < pmax_up_arr[i - 1]:
-            trend_arr[i] = -1
-        else:
-            trend_arr[i] = trend_arr[i - 1]  # Maintain previous trend
-
-        # Set PMAX value based on trend
-        pmax_arr[i] = pmax_up_arr[i] if trend_arr[i] == 1 else pmax_down_arr[i]
-
-    # Convert back to Series
     pmax = Series(pmax_arr, index=close.index)
 
-    # Offset
-    if offset != 0:
-        pmax = pmax.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pmax.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            pmax.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            pmax.bfill(inplace=True)
-
-    # Name and Categorize it
-    pmax.name = f"PMAX_{mamode[0].upper()}_{length}_{multiplier}"
-    pmax.category = "trend"
-
-    return pmax
+    return _finalize(
+        pmax,
+        offset,
+        f"PMAX_{mamode[0].upper()}_{length}_{multiplier}",
+        "trend",
+        **kwargs,
+    )
 
 
 pmax.__doc__ = """PMAX (Price Max)

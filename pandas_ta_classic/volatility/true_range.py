@@ -6,7 +6,14 @@ from pandas import concat, Series
 
 npNaN = np.nan
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def true_range(
@@ -25,7 +32,10 @@ def true_range(
     close = verify_series(close)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
+
+    if high is None or low is None or close is None:
+        return None
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
@@ -40,29 +50,7 @@ def true_range(
         true_range = true_range.abs().max(axis=1)
         true_range.iloc[:drift] = npNaN
 
-    # Offset
-    if offset != 0:
-        true_range = true_range.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        true_range.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                true_range.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                true_range.bfill(inplace=True)
-
-    # Name and Categorize it
-    true_range.name = f"TRUERANGE_{drift}"
-    true_range.category = "volatility"
-
-    return true_range
+    return _finalize(true_range, offset, f"TRUERANGE_{drift}", "volatility", **kwargs)
 
 
 true_range.__doc__ = """True Range

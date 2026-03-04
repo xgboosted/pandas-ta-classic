@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # Ulcer Index (UI)
 from typing import Any, Optional
-from numpy import sqrt as npsqrt
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def ui(
@@ -33,33 +33,13 @@ def ui(
     everget = kwargs.pop("everget", False)
     if everget:
         # Everget uses SMA instead of SUM for calculation
-        ui = (sma(d2, length) / length).apply(npsqrt)
+        ui = np.sqrt(sma(d2, length) / length)
     else:
-        ui = (d2.rolling(length).sum() / length).apply(npsqrt)
+        ui = np.sqrt(d2.rolling(length).sum() / length)
 
-    # Offset
-    if offset != 0:
-        ui = ui.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ui.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ui.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ui.bfill(inplace=True)
-
-    # Name and Categorize it
-    ui.name = f"UI{'' if not everget else 'e'}_{length}"
-    ui.category = "volatility"
-
-    return ui
+    return _finalize(
+        ui, offset, f"UI{'' if not everget else 'e'}_{length}", "volatility", **kwargs
+    )
 
 
 ui.__doc__ = """Ulcer Index (UI)

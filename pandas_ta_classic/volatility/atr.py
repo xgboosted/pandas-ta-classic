@@ -5,7 +5,13 @@ from pandas import Series
 from .true_range import true_range
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def atr(
@@ -28,7 +34,7 @@ def atr(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None
@@ -41,34 +47,20 @@ def atr(
     else:
         tr = true_range(high=high, low=low, close=close, drift=drift)
         atr = ma(mamode, tr, length=length)
+        if atr is None:
+            return None
 
     percentage = kwargs.pop("percent", False)
     if percentage:
         atr *= 100 / close
 
-    # Offset
-    if offset != 0:
-        atr = atr.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        atr.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                atr.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                atr.bfill(inplace=True)
-
-    # Name and Categorize it
-    atr.name = f"ATR{mamode[0]}_{length}{'p' if percentage else ''}"
-    atr.category = "volatility"
-
-    return atr
+    return _finalize(
+        atr,
+        offset,
+        f"ATR{mamode[0]}_{length}{'p' if percentage else ''}",
+        "volatility",
+        **kwargs,
+    )
 
 
 atr.__doc__ = """Average True Range (ATR)

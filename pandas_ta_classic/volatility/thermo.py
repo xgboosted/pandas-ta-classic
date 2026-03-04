@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series, get_drift
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def thermo(
@@ -41,6 +46,8 @@ def thermo(
     thermo.index = high.index
 
     thermo_ma = ma(mamode, thermo, length=length)
+    if thermo_ma is None:
+        return None
 
     # Create signals
     thermo_long = thermo < (thermo_ma * long)
@@ -51,80 +58,19 @@ def thermo(
         thermo_long = thermo_long.astype(int)
         thermo_short = thermo_short.astype(int)
 
-    # Offset
-    if offset != 0:
-        thermo = thermo.shift(offset)
-        thermo_ma = thermo_ma.shift(offset)
-        thermo_long = thermo_long.shift(offset)
-        thermo_short = thermo_short.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        thermo.fillna(kwargs["fillna"], inplace=True)
-        thermo_ma.fillna(kwargs["fillna"], inplace=True)
-        thermo_long.fillna(kwargs["fillna"], inplace=True)
-        thermo_short.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo_ma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo_ma.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo_short.bfill(inplace=True)
-
-    # Name and Categorize it
     _props = f"_{length}_{long}_{short}"
-    thermo.name = f"THERMO{_props}"
-    thermo_ma.name = f"THERMOma{_props}"
-    thermo_long.name = f"THERMOl{_props}"
-    thermo_short.name = f"THERMOs{_props}"
-
-    thermo.category = thermo_ma.category = thermo_long.category = (
-        thermo_short.category
-    ) = "volatility"
-
-    # Prepare Dataframe to return
-    data = {
-        thermo.name: thermo,
-        thermo_ma.name: thermo_ma,
-        thermo_long.name: thermo_long,
-        thermo_short.name: thermo_short,
-    }
-    df = DataFrame(data)
-    df.name = f"THERMO{_props}"
-    df.category = thermo.category
-
-    return df
+    return _build_dataframe(
+        {
+            f"THERMO{_props}": thermo,
+            f"THERMOma{_props}": thermo_ma,
+            f"THERMOl{_props}": thermo_long,
+            f"THERMOs{_props}": thermo_short,
+        },
+        f"THERMO{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 thermo.__doc__ = """Elders Thermometer (THERMO)

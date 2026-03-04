@@ -5,7 +5,7 @@ from numpy import log10 as npLog10
 from numpy import log as npLn
 from pandas import Series
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def chop(
@@ -47,29 +47,13 @@ def chop(
     else:
         chop *= (npLog10(atr_sum) - npLog10(diff)) / npLog10(length)
 
-    # Offset
-    if offset != 0:
-        chop = chop.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        chop.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                chop.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                chop.bfill(inplace=True)
-
-    # Name and Categorize it
-    chop.name = f"CHOP{'ln' if ln else ''}_{length}_{atr_length}_{scalar}"
-    chop.category = "trend"
-
-    return chop
+    return _finalize(
+        chop,
+        offset,
+        f"CHOP{'ln' if ln else ''}_{length}_{atr_length}_{scalar}",
+        "trend",
+        **kwargs,
+    )
 
 
 chop.__doc__ = """Choppiness Index (CHOP)

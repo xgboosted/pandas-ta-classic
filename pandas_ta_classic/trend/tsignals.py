@@ -2,7 +2,12 @@
 # Trend Signals (TSIGNALS)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def tsignals(
@@ -17,6 +22,9 @@ def tsignals(
     """Indicator: Trend Signals"""
     # Validate Arguments
     trend = verify_series(trend)
+    if trend is None:
+        return None
+
     asbool = bool(asbool) if isinstance(asbool, bool) else False
     trend_reset = (
         int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
@@ -29,7 +37,7 @@ def tsignals(
     offset = get_offset(offset)
 
     # Calculate Result
-    trends = trend.astype(int)
+    trends = trend.fillna(0).astype(int)
     trades = trends.diff(drift).shift(trade_offset).fillna(0).astype(int)
     entries = (trades > 0).astype(int)
     exits = (trades < 0).abs().astype(int)
@@ -39,37 +47,19 @@ def tsignals(
         entries = entries.astype(bool)
         exits = exits.astype(bool)
 
-    data = {
-        f"TS_Trends": trends,
-        f"TS_Trades": trades,
-        f"TS_Entries": entries,
-        f"TS_Exits": exits,
-    }
-    df = DataFrame(data, index=trends.index)
-
-    # Offset
-    if offset != 0:
-        df = df.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
-
-    # Name & Category
-    df.name = f"TS"
-    df.category = "trend"
-
-    return df
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {
+            "TS_Trends": trends,
+            "TS_Trades": trades,
+            "TS_Entries": entries,
+            "TS_Exits": exits,
+        },
+        "TS",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 tsignals.__doc__ = """Trend Signals

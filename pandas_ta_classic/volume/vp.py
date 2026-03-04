@@ -3,9 +3,8 @@
 from typing import Any, Optional
 from numpy import arange as npArange
 from numpy import array_split as npArraySplit
-from numpy import mean
 from pandas import cut, concat, DataFrame, Series
-from pandas_ta_classic.utils import signed_series, verify_series
+from pandas_ta_classic.utils import apply_offset, signed_series, verify_series
 
 
 def vp(
@@ -49,12 +48,13 @@ def vp(
     if sort_close:
         vp[mean_price_col] = vp[close_col]
         vpdf = vp.groupby(
-            cut(vp[close_col], width, include_lowest=True, precision=2)
+            cut(vp[close_col], width, include_lowest=True, precision=2),
+            observed=True,
         ).agg(
             {
-                mean_price_col: mean,
-                pos_volume_col: sum,
-                neg_volume_col: sum,
+                mean_price_col: "mean",
+                pos_volume_col: "sum",
+                neg_volume_col: "sum",
             }
         )
         vpdf[low_price_col] = [x.left for x in vpdf.index]
@@ -84,19 +84,7 @@ def vp(
         vpdf = DataFrame(result)
     vpdf[total_volume_col] = vpdf[pos_volume_col] + vpdf[neg_volume_col]
 
-    # Handle fills
-    if "fillna" in kwargs:
-        vpdf.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vpdf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vpdf.bfill(inplace=True)
+    vpdf = apply_offset(vpdf, 0, **kwargs)
 
     # Name and Categorize it
     vpdf.name = f"VP_{width}"

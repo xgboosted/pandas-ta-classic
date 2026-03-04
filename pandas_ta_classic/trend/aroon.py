@@ -3,8 +3,14 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
-from pandas_ta_classic.utils import recent_maximum_index, recent_minimum_index
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _build_dataframe,
+    get_offset,
+    recent_maximum_index,
+    recent_minimum_index,
+    verify_series,
+)
 
 
 def aroon(
@@ -23,7 +29,7 @@ def aroon(
     high = verify_series(high, length)
     low = verify_series(low, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None:
         return None
@@ -43,64 +49,18 @@ def aroon(
         aroon_down *= 1 - (periods_from_ll / length)
         aroon_osc = aroon_up - aroon_down
 
-    # Handle fills
-    if "fillna" in kwargs:
-        aroon_up.fillna(kwargs["fillna"], inplace=True)
-        aroon_down.fillna(kwargs["fillna"], inplace=True)
-        aroon_osc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                aroon_up.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                aroon_up.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                aroon_down.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                aroon_down.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                aroon_osc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                aroon_osc.bfill(inplace=True)
-
-    # Offset
-    if offset != 0:
-        aroon_up = aroon_up.shift(offset)
-        aroon_down = aroon_down.shift(offset)
-        aroon_osc = aroon_osc.shift(offset)
-
-    # Name and Categorize it
-    aroon_up.name = f"AROONU_{length}"
-    aroon_down.name = f"AROOND_{length}"
-    aroon_osc.name = f"AROONOSC_{length}"
-
-    aroon_down.category = aroon_up.category = aroon_osc.category = "trend"
-
-    # Prepare DataFrame to return
-    data = {
-        aroon_down.name: aroon_down,
-        aroon_up.name: aroon_up,
-        aroon_osc.name: aroon_osc,
-    }
-    aroondf = DataFrame(data)
-    aroondf.name = f"AROON_{length}"
-    aroondf.category = aroon_down.category
-
-    return aroondf
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {
+            f"AROOND_{length}": aroon_down,
+            f"AROONU_{length}": aroon_up,
+            f"AROONOSC_{length}": aroon_osc,
+        },
+        f"AROON_{length}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 aroon.__doc__ = """Aroon & Aroon Oscillator (AROON)

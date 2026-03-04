@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def accbands(
@@ -41,60 +47,17 @@ def accbands(
     lower = ma(mamode, _lower, length=length)
     mid = ma(mamode, close, length=length)
     upper = ma(mamode, _upper, length=length)
+    if lower is None or mid is None or upper is None:
+        return None
 
-    # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        mid = mid.shift(offset)
-        upper = upper.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        mid.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mid.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mid.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
-
-    # Name and Categorize it
-    lower.name = f"ACCBL_{length}"
-    mid.name = f"ACCBM_{length}"
-    upper.name = f"ACCBU_{length}"
-    mid.category = upper.category = lower.category = "volatility"
-
-    # Prepare DataFrame to return
-    data = {lower.name: lower, mid.name: mid, upper.name: upper}
-    accbandsdf = DataFrame(data)
-    accbandsdf.name = f"ACCBANDS_{length}"
-    accbandsdf.category = mid.category
-
-    return accbandsdf
+    _props = f"_{length}"
+    return _build_dataframe(
+        {f"ACCBL{_props}": lower, f"ACCBM{_props}": mid, f"ACCBU{_props}": upper},
+        f"ACCBANDS{_props}",
+        "volatility",
+        offset,
+        **kwargs,
+    )
 
 
 accbands.__doc__ = """Acceleration Bands (ACCBANDS)

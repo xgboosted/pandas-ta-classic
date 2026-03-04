@@ -5,7 +5,12 @@ from pandas import DataFrame, Series
 from .obv import obv
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend import long_run, short_run
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    apply_offset,
+    get_offset,
+    verify_series,
+)
 
 
 def aobv(
@@ -25,8 +30,7 @@ def aobv(
     slow = int(slow) if slow and slow > 0 else 12
     max_lookback = int(max_lookback) if max_lookback and max_lookback > 0 else 2
     min_lookback = int(min_lookback) if min_lookback and min_lookback > 0 else 2
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     mamode = mamode if isinstance(mamode, str) else "ema"
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
@@ -43,72 +47,19 @@ def aobv(
     obv_ = obv(close=close, volume=volume, **kwargs)
     maf = ma(mamode, obv_, length=fast, **kwargs)
     mas = ma(mamode, obv_, length=slow, **kwargs)
+    if maf is None or mas is None:
+        return None
 
     # When MAs are long and short
     obv_long = long_run(maf, mas, length=run_length)
     obv_short = short_run(maf, mas, length=run_length)
 
     # Offset
-    if offset != 0:
-        obv_ = obv_.shift(offset)
-        maf = maf.shift(offset)
-        mas = mas.shift(offset)
-        obv_long = obv_long.shift(offset)
-        obv_short = obv_short.shift(offset)
-
-    # # Handle fills
-    if "fillna" in kwargs:
-        obv_.fillna(kwargs["fillna"], inplace=True)
-        maf.fillna(kwargs["fillna"], inplace=True)
-        mas.fillna(kwargs["fillna"], inplace=True)
-        obv_long.fillna(kwargs["fillna"], inplace=True)
-        obv_short.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                obv_.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                obv_.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                maf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                maf.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mas.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mas.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                obv_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                obv_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                obv_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                obv_short.bfill(inplace=True)
+    obv_ = apply_offset(obv_, offset, **kwargs)
+    maf = apply_offset(maf, offset, **kwargs)
+    mas = apply_offset(mas, offset, **kwargs)
+    obv_long = apply_offset(obv_long, offset, **kwargs)
+    obv_short = apply_offset(obv_short, offset, **kwargs)
 
     # Prepare DataFrame to return
     _mode = mamode.lower()[0] if len(mamode) else ""

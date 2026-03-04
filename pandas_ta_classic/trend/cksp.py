@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def cksp(
@@ -33,7 +33,7 @@ def cksp(
 
     offset = get_offset(offset)
     tvmode = tvmode if isinstance(tvmode, bool) else True
-    mamode = "rma" if tvmode is True else "sma"
+    mamode = "rma" if tvmode else "sma"
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=p, mamode=mamode)
@@ -44,47 +44,15 @@ def cksp(
     short_stop_ = low.rolling(p).min() + x * atr_
     short_stop = short_stop_.rolling(q).min()
 
-    # Offset
-    if offset != 0:
-        long_stop = long_stop.shift(offset)
-        short_stop = short_stop.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        long_stop.fillna(kwargs["fillna"], inplace=True)
-        short_stop.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long_stop.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long_stop.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short_stop.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short_stop.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset, Name and Categorize it
     _props = f"_{p}_{x}_{q}"
-    long_stop.name = f"CKSPl{_props}"
-    short_stop.name = f"CKSPs{_props}"
-    long_stop.category = short_stop.category = "trend"
-
-    # Prepare DataFrame to return
-    ckspdf = DataFrame({long_stop.name: long_stop, short_stop.name: short_stop})
-    ckspdf.name = f"CKSP{_props}"
-    ckspdf.category = long_stop.category
-
-    return ckspdf
+    return _build_dataframe(
+        {f"CKSPl{_props}": long_stop, f"CKSPs{_props}": short_stop},
+        f"CKSP{_props}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 cksp.__doc__ = """Chande Kroll Stop (CKSP)

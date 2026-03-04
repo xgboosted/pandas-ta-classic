@@ -5,11 +5,11 @@ from pandas import DataFrame, Series
 from .long_run import long_run
 from .short_run import short_run
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def amat(
-    close: Optional[Series] = None,
+    close: Series,
     fast: Optional[int] = None,
     slow: Optional[int] = None,
     lookback: Optional[int] = None,
@@ -34,53 +34,22 @@ def amat(
     # # Calculate Result
     fast_ma = ma(mamode, close, length=fast, **kwargs)
     slow_ma = ma(mamode, close, length=slow, **kwargs)
+    if fast_ma is None or slow_ma is None:
+        return None
 
     mas_long = long_run(fast_ma, slow_ma, length=lookback)
     mas_short = short_run(fast_ma, slow_ma, length=lookback)
 
-    # Offset
-    if offset != 0:
-        mas_long = mas_long.shift(offset)
-        mas_short = mas_short.shift(offset)
-
-    # # Handle fills
-    if "fillna" in kwargs:
-        mas_long.fillna(kwargs["fillna"], inplace=True)
-        mas_short.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mas_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mas_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mas_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mas_short.bfill(inplace=True)
-
-    # Prepare DataFrame to return
-    amatdf = DataFrame(
-        {
-            f"AMAT{mamode[0]}_LR_{fast}_{slow}_{lookback}": mas_long,
-            f"AMAT{mamode[0]}_SR_{fast}_{slow}_{lookback}": mas_short,
-        }
+    # Offset, Name and Categorize it
+    _m = mamode[0]
+    _p = f"_{fast}_{slow}_{lookback}"
+    return _build_dataframe(
+        {f"AMAT{_m}_LR{_p}": mas_long, f"AMAT{_m}_SR{_p}": mas_short},
+        f"AMAT{_m}{_p}",
+        "trend",
+        offset,
+        **kwargs,
     )
-
-    # Name and Categorize it
-    amatdf.name = f"AMAT{mamode[0]}_{fast}_{slow}_{lookback}"
-    amatdf.category = "trend"
-
-    return amatdf
 
 
 amat.__doc__ = """Archer Moving Averages Trends (AMAT)

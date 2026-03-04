@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
-from pandas_ta_classic.utils import get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, signed_series, verify_series
 
 
 def nvi(
@@ -30,33 +30,11 @@ def nvi(
     roc_ = roc(close=close, length=length)
     signed_volume = signed_series(volume, 1)
     nvi = signed_volume[signed_volume < 0].abs() * roc_
-    nvi.fillna(0, inplace=True)
+    nvi = nvi.fillna(0)
     nvi.iloc[0] = initial
     nvi = nvi.cumsum()
 
-    # Offset
-    if offset != 0:
-        nvi = nvi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        nvi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                nvi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                nvi.bfill(inplace=True)
-
-    # Name and Categorize it
-    nvi.name = f"NVI_{length}"
-    nvi.category = "volume"
-
-    return nvi
+    return _finalize(nvi, offset, f"NVI_{length}", "volume", **kwargs)
 
 
 nvi.__doc__ = """Negative Volume Index (NVI)
@@ -76,7 +54,7 @@ Calculation:
     roc = ROC(close, length)
     signed_volume = signed_series(volume, initial=1)
     nvi = signed_volume[signed_volume < 0].abs() * roc_
-    nvi.fillna(0, inplace=True)
+    nvi = nvi.fillna(0)
     nvi.iloc[0]= initial
     nvi = nvi.cumsum()
 
