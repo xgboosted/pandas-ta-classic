@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
+    hooks:
+      - id: black
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy
+        args: [--config-file=pyproject.toml, pandas_ta_classic/]
+        language: system
+        types: [python]
+        pass_filenames: false

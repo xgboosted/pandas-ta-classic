@@ -22,8 +22,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Job 1: Basic structure validation (fast, runs first)
@@ -36,7 +36,7 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -65,24 +65,12 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
+    - name: Install TA-Lib
+      uses: ./.github/actions/install-talib
 
     - name: Install dependencies and quality tools
       run: |
@@ -91,19 +79,23 @@ jobs:
         pip install -e .
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
-        # Install code quality tools
-        pip install flake8 black
-    
+        # Install code quality tools (pin black to match .pre-commit-config.yaml)
+        pip install flake8 'black==25.11.0' 'mypy==1.19.1'
+
     - name: Check code formatting with black
       run: |
         black --check --diff pandas_ta_classic/
-    
+
     - name: Run flake8 linting
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 pandas_ta_classic --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings for non-critical issues
         flake8 pandas_ta_classic --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=pandas_ta_classic/__init__.py
+
+    - name: Run mypy type checking
+      run: |
+        mypy
 
   # Job 3: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
@@ -122,7 +114,7 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -152,6 +144,7 @@ jobs:
   # Job 4: Test matrix - Run tests on all dynamically generated Python versions
   test-matrix:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [code-quality, generate-matrix]
     strategy:
       fail-fast: false
@@ -171,24 +164,12 @@ jobs:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
+    - name: Install TA-Lib
+      uses: ./.github/actions/install-talib
 
     - name: Install Python dependencies
       run: |
@@ -197,22 +178,33 @@ jobs:
         pip install -e .
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
-    
-    - name: Run comprehensive tests
+
+    - name: Install test dependencies
+      run: pip install pytest pytest-cov
+
+    - name: Run tests with coverage
       run: |
-        python -m unittest discover tests/ -v
-    
-    - name: Test package installation and performance
-      run: |
-        python -c "import pandas_ta_classic as ta; print('Package imported successfully on Python ${{ matrix.python-version }}')"
-        python -m unittest tests.test_indicator_performance -v
+        pytest --cov=pandas_ta_classic \
+               --cov-report=xml \
+               --cov-report=term-missing \
+               --cov-fail-under=70
+
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v4
+      if: matrix.python-version == '3.13'
+      with:
+        file: coverage.xml
+        fail_ci_if_error: false
 
   # Job 5: Documentation - Build and deploy documentation (independent deployment)
   documentation:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix, test-matrix]
     if: github.event_name == 'push'
-    environment: 
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
+    environment:
       name: docs-production
       url: ${{ steps.deployment.outputs.page_url }}
     
@@ -222,24 +214,12 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
 
-    - name: Install system dependencies for ta-lib
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git
-        git clone https://github.com/ta-lib/ta-lib.git
-        cd ta-lib
-        if [ ! -f configure ]; then
-          chmod +x autogen.sh
-          ./autogen.sh
-        fi
-        ./configure --prefix=/usr
-        make
-        sudo make install
-        sudo ldconfig
+    - name: Install TA-Lib
+      uses: ./.github/actions/install-talib
 
     - name: Install dependencies
       run: |
@@ -248,7 +228,7 @@ jobs:
         pip install -e .
         # Install TA-Lib for candlestick patterns
         pip install TA-Lib
-    
+
     - name: Setup Pages
       uses: actions/configure-pages@v4
     
@@ -352,7 +332,7 @@ jobs:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
