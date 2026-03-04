@@ -137,6 +137,68 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result, Series)
         npt.assert_array_equal(result, self.crosseddf["crossed"])
 
+    def test_signals(self):
+        close = self.data["close"]
+        indicator = pandas_ta.rsi(close)
+        ma = pandas_ta.sma(close)
+
+        # xa/xb scalar thresholds, above/below (no cross)
+        result = self.utils.signals(
+            indicator,
+            xa=70,
+            xb=30,
+            cross_values=False,
+            xserie=None,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=False,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertGreater(len(result.columns), 0)
+
+        # xa/xb with cross_values=True (crossed above/below value)
+        result = self.utils.signals(
+            indicator,
+            xa=70,
+            xb=30,
+            cross_values=True,
+            xserie=None,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=False,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+
+        # xserie (Series threshold) with cross_series=False (above/below series)
+        result = self.utils.signals(
+            indicator,
+            xa=None,
+            xb=None,
+            cross_values=False,
+            xserie=ma,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=False,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+
+        # xserie with cross_series=True (crossed above/below series)
+        result = self.utils.signals(
+            indicator,
+            xa=None,
+            xb=None,
+            cross_values=False,
+            xserie=ma,
+            xserie_a=None,
+            xserie_b=None,
+            cross_series=True,
+            offset=0,
+        )
+        self.assertIsInstance(result, DataFrame)
+
     def test_df_dates(self):
         result = self.utils.df_dates(self.data)
         self.assertEqual(None, result)
@@ -386,6 +448,98 @@ class TestUtilities(TestCase):
 
         result = self.utils.total_time(self.data, "seconds")
         self.assertEqual(657158400.0, result)
+
+    def test_erf(self):
+        result = self.utils.erf(0)
+        self.assertAlmostEqual(result, 0, places=5)
+        result_pos = self.utils.erf(1)
+        self.assertAlmostEqual(result_pos, 0.8427, places=3)
+        result_neg = self.utils.erf(-1)
+        self.assertAlmostEqual(result_neg, -0.8427, places=3)
+
+    def test_weights(self):
+        w = np.array([0.5, 0.3, 0.2])
+        dot_fn = self.utils.weights(w)
+        self.assertTrue(callable(dot_fn))
+        result = dot_fn(np.array([1, 2, 3]))
+        self.assertAlmostEqual(result, 0.5 + 0.6 + 0.6)
+
+    def test_linear_regression_unequal(self):
+        x = Series([1, 2, 3])
+        y = Series([1, 2])
+        result = self.utils.linear_regression(x, y)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(len(result), 0)
+
+    def test_df_error_analysis(self):
+        a = Series([1.0, 2.0, 3.0, 4.0], name="a")
+        b = Series([1.1, 2.1, 3.1, 4.1], name="b")
+        result = self.utils.df_error_analysis(a, b)
+        self.assertIsInstance(result, float)
+
+    def test_symmetric_triangle_none(self):
+        result = self.utils.symmetric_triangle(n=1)
+        self.assertIsNone(result)
+
+    def test_get_time_short(self):
+        result = self.utils.get_time(full=False, to_string=True)
+        self.assertIsInstance(result, str)
+
+    def test_get_time_print(self):
+        result = self.utils.get_time(to_string=False)
+        self.assertIsInstance(result, str)
+
+    def test_final_time(self):
+        from time import perf_counter
+
+        stime = perf_counter()
+        result = self.utils.final_time(stime)
+        self.assertIsInstance(result, str)
+        self.assertIn("ms", result)
+
+    def test_total_time_invalid_tf(self):
+        result = self.utils.total_time(self.data, "invalid")
+        expected = self.utils.total_time(self.data, "years")
+        self.assertEqual(result, expected)
+
+    def test_to_utc_already_utc(self):
+        df_utc = self.utils.to_utc(self.data.copy())
+        result = self.utils.to_utc(df_utc)
+        self.assertTrue(isinstance(result.index.dtype, pd.DatetimeTZDtype))
+
+    def test_to_utc_empty(self):
+        empty_df = pd.DataFrame()
+        result = self.utils.to_utc(empty_df)
+        self.assertTrue(result.empty)
+
+    def test_geometric_mean_single(self):
+        result = self.utils.geometric_mean(Series([5.0]))
+        self.assertEqual(result, 5.0)
+
+    def test_log_geometric_mean_single(self):
+        result = self.utils.log_geometric_mean(Series([5.0]))
+        self.assertEqual(result, 0)
+
+    def test_np_rolling_moments(self):
+        arr = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        results = self.utils.np_rolling_moments(arr, 3, 2)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results[0]), 5)
+        self.assertTrue(np.isnan(results[0][0]))
+        self.assertTrue(np.isnan(results[0][1]))
+
+    def test_build_category_dict(self):
+        from pandas_ta_classic._meta import _build_category_dict
+
+        cats = _build_category_dict()
+        self.assertIsInstance(cats, dict)
+        self.assertIn("momentum", cats)
+        self.assertIn("overlap", cats)
+        self.assertIn("trend", cats)
+        self.assertNotIn("utils", cats)
+        self.assertNotIn("__pycache__", cats)
+        for cat, indicators in cats.items():
+            self.assertEqual(indicators, sorted(indicators))
 
     def test_version(self):
         result = pandas_ta.version
