@@ -140,6 +140,285 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_1_9")
 
+    def test_cpr_basic(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, levels="basic"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "CPR")
+        self.assertIn("CPR_TC", result.columns)
+        self.assertIn("CPR_PIVOT", result.columns)
+        self.assertIn("CPR_BC", result.columns)
+
+    def test_cpr_classic_standard(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="classic",
+            levels="standard",
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R1", result.columns)
+        self.assertIn("CPR_R2", result.columns)
+        self.assertIn("CPR_S1", result.columns)
+        self.assertIn("CPR_S2", result.columns)
+
+    def test_cpr_classic_extended(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="classic",
+            levels="extended",
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R3", result.columns)
+        self.assertIn("CPR_R4", result.columns)
+        self.assertIn("CPR_S3", result.columns)
+        self.assertIn("CPR_S4", result.columns)
+
+    def test_cpr_camarilla(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, method="camarilla", levels="all"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R4", result.columns)
+        self.assertIn("CPR_S4", result.columns)
+
+    def test_cpr_fibonacci(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, method="fibonacci", levels="all"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R3", result.columns)
+        self.assertIn("CPR_S3", result.columns)
+
+    def test_cpr_woodie(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="woodie",
+            levels="standard",
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R2", result.columns)
+        self.assertIn("CPR_S2", result.columns)
+
+    def test_cpr_width_analysis(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, width_analysis=True
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_WIDTH", result.columns)
+        self.assertIn("CPR_WIDTH_PCT", result.columns)
+        self.assertIn("CPR_WIDTH_CLASS", result.columns)
+
+    def test_cpr_price_position(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, price_position=True
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_POSITION", result.columns)
+
+    def test_cpr_option_basic(self):
+        result = pandas_ta.cpr_option(
+            self.open, self.high, self.low, self.close, strike_round=50
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "CPR_OPTION")
+        # Check base CPR columns
+        self.assertIn("CPR_TC", result.columns)
+        self.assertIn("CPR_PIVOT", result.columns)
+        self.assertIn("CPR_BC", result.columns)
+        # Check option strike columns
+        self.assertIn("OPT_TC_STRIKE", result.columns)
+        self.assertIn("OPT_PIVOT_STRIKE", result.columns)
+        self.assertIn("OPT_BC_STRIKE", result.columns)
+        self.assertIn("OPT_CALL_OTM1", result.columns)
+        self.assertIn("OPT_CALL_OTM2", result.columns)
+        self.assertIn("OPT_PUT_OTM1", result.columns)
+        self.assertIn("OPT_PUT_OTM2", result.columns)
+
+    def test_cpr_option_signals(self):
+        result = pandas_ta.cpr_option(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        # Check signal columns
+        self.assertIn("OPT_BREAKOUT_CALL", result.columns)
+        self.assertIn("OPT_BREAKOUT_PUT", result.columns)
+        self.assertIn("OPT_REJECTION_CALL", result.columns)
+        self.assertIn("OPT_REJECTION_PUT", result.columns)
+
+    def test_cpr_option_expected_range(self):
+        result = pandas_ta.cpr_option(
+            self.open, self.high, self.low, self.close, volatility_factor=2.0
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Check expected range columns
+        self.assertIn("OPT_RANGE_HIGH", result.columns)
+        self.assertIn("OPT_RANGE_LOW", result.columns)
+
+    def test_cpr_option_strike_rounding(self):
+        result = pandas_ta.cpr_option(
+            self.open, self.high, self.low, self.close, strike_round=100
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Check that strikes are rounded to 100
+        tc_strike = result["OPT_TC_STRIKE"].dropna()
+        if len(tc_strike) > 0:
+            # All strikes should be multiples of 100
+            self.assertTrue(all(tc_strike % 100 == 0))
+
+    def test_cpr_option_camarilla(self):
+        result = pandas_ta.cpr_option(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="camarilla",
+            levels="all",
+            strike_round=50,
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Should have all Camarilla levels plus option columns
+        self.assertIn("CPR_R4", result.columns)
+        self.assertIn("CPR_S4", result.columns)
+        self.assertIn("OPT_CALL_OTM1", result.columns)
+
+    def test_cpr_option_custom_parameters(self):
+        result = pandas_ta.cpr_option(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="fibonacci",
+            levels="all",
+            strike_round=25,
+            volatility_factor=1.2,
+            breakout_lookback=3,
+            rejection_threshold=0.5,
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Check all expected columns exist
+        self.assertIn("OPT_RANGE_HIGH", result.columns)
+        self.assertIn("OPT_RANGE_LOW", result.columns)
+        self.assertIn("OPT_BREAKOUT_CALL", result.columns)
+
+    def test_cpr_virgin_detection(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            virgin_cpr=True,
+            virgin_lookforward=5,
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Check virgin CPR column exists
+        self.assertIn("CPR_VIRGIN", result.columns)
+        # Virgin column should be boolean type
+        virgin_values = result["CPR_VIRGIN"].dropna()
+        if len(virgin_values) > 0:
+            self.assertTrue(virgin_values.dtype == bool)
+
+    def test_cpr_virgin_disabled(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, virgin_cpr=False
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Virgin column should NOT exist when disabled
+        self.assertNotIn("CPR_VIRGIN", result.columns)
+
+    def test_cpr_option_virgin_default(self):
+        result = pandas_ta.cpr_option(self.open, self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        # Virgin CPR should be enabled by default in cpr_option
+        self.assertIn("CPR_VIRGIN", result.columns)
+
+    def test_cpr_option_virgin_disabled(self):
+        result = pandas_ta.cpr_option(
+            self.open, self.high, self.low, self.close, virgin_cpr=False
+        )
+        self.assertIsInstance(result, DataFrame)
+        # Virgin column should NOT exist when explicitly disabled
+        self.assertNotIn("CPR_VIRGIN", result.columns)
+
+    def test_cpr_virgin_custom_lookforward(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            virgin_cpr=True,
+            virgin_lookforward=10,
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_VIRGIN", result.columns)
+
+    def test_cpr_invalid_method(self):
+        # Test with invalid method - should default to 'classic'
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, method="invalid_method"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_TC", result.columns)
+
+    def test_cpr_invalid_timeframe(self):
+        # Test with invalid timeframe - should default to 'daily'
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, timeframe="invalid_timeframe"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_TC", result.columns)
+
+    def test_cpr_invalid_levels(self):
+        # Test with invalid levels - should default to 'standard'
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, levels="invalid_levels"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R1", result.columns)
+
+    def test_cpr_empty_series(self):
+        # Test with empty series - should return None
+        empty_series = Series(dtype=float)
+        result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
+        self.assertIsNone(result)
+
+    def test_cpr_with_nans(self):
+        # Test with series containing NaN values
+        import numpy as np
+
+        open_with_nan = self.open.copy()
+        open_with_nan.iloc[0:5] = np.nan
+
+        result = pandas_ta.cpr(open_with_nan, self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        # Should still have CPR columns
+        self.assertIn("CPR_TC", result.columns)
+
+    def test_cpr_option_offset(self):
+        # Test option CPR with offset
+        result = pandas_ta.cpr_option(
+            self.open, self.high, self.low, self.close, offset=5
+        )
+        self.assertIsInstance(result, DataFrame)
+        # First 5 rows should have NaN values due to offset
+        self.assertTrue(result["OPT_TC_STRIKE"].iloc[0:5].isna().all())
+
+    def test_cpr_option_fillna(self):
+        # Test option CPR with fillna
+        result = pandas_ta.cpr_option(
+            self.open, self.high, self.low, self.close, fillna=0
+        )
+        self.assertIsInstance(result, DataFrame)
+        # No NaN values in strike columns (filled with 0)
+        self.assertFalse(result["OPT_TC_STRIKE"].isna().any())
+
     def test_decay(self):
         result = pandas_ta.decay(self.close)
         self.assertIsInstance(result, Series)
