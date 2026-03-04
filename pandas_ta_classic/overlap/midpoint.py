@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def midpoint(
@@ -16,14 +22,10 @@ def midpoint(
     """Indicator: Midpoint"""
     # Validate arguments
     length = int(length) if length and length > 0 else 2
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -38,29 +40,7 @@ def midpoint(
         highest = close.rolling(length, min_periods=min_periods).max()
         midpoint = 0.5 * (lowest + highest)
 
-    # Offset
-    if offset != 0:
-        midpoint = midpoint.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        midpoint.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                midpoint.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                midpoint.bfill(inplace=True)
-
-    # Name and Categorize it
-    midpoint.name = f"MIDPOINT_{length}"
-    midpoint.category = "overlap"
-
-    return midpoint
+    return _finalize(midpoint, offset, f"MIDPOINT_{length}", "overlap", **kwargs)
 
 
 midpoint.__doc__ = """Midpoint Over Period (MIDPOINT)
@@ -84,7 +64,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): Its period. Default: 2
+    length (int): Its period. Default: 2 (TA-Lib default: 14)
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

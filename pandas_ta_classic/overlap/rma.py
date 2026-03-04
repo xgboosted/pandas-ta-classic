@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Wilder's Moving Average (RMA)
 from typing import Any, Optional
+import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+npNaN = np.nan
+from pandas_ta_classic.utils import _finalize, _sma_seed, get_offset, verify_series
 
 
 def rma(
@@ -21,27 +24,11 @@ def rma(
     if close is None:
         return None
 
-    # Calculate Result
-    rma = close.ewm(alpha=alpha, min_periods=length).mean()
+    # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
+    close = _sma_seed(close, length)
+    rma = close.ewm(alpha=alpha, adjust=False).mean()
 
-    # Offset
-    if offset != 0:
-        rma = rma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        rma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            rma.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            rma.bfill(inplace=True)
-
-    # Name & Category
-    rma.name = f"RMA_{length}"
-    rma.category = "overlap"
-
-    return rma
+    return _finalize(rma, offset, f"RMA_{length}", "overlap", **kwargs)
 
 
 rma.__doc__ = """Wilder's Moving Average (RMA)
@@ -56,9 +43,11 @@ Sources:
 Calculation:
     Default Inputs:
         length=10
-    EMA = Exponential Moving Average
     alpha = 1 / length
-    RMA = EMA(close, alpha=alpha)
+    SMA_nth = SMA(close, length)
+    close[:length - 1] = NaN
+    close[length - 1] = SMA_nth
+    RMA = EWM(close, alpha=alpha, adjust=False)
 
 Args:
     close (pd.Series): Series of 'close's

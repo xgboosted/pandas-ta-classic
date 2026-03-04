@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def t3(
@@ -21,7 +21,7 @@ def t3(
     a = float(a) if a and a > 0 and a < 1 else 0.7
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -45,29 +45,7 @@ def t3(
         e6 = ema(close=e5, length=length, **kwargs)
         t3 = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
 
-    # Offset
-    if offset != 0:
-        t3 = t3.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        t3.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                t3.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                t3.bfill(inplace=True)
-
-    # Name & Category
-    t3.name = f"T3_{length}_{a}"
-    t3.category = "overlap"
-
-    return t3
+    return _finalize(t3, offset, f"T3_{length}_{a}", "overlap", **kwargs)
 
 
 t3.__doc__ = """Tim Tillson's T3 Moving Average (T3)

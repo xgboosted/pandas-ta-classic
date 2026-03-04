@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 # Skew (SKEW)
 from typing import Any, Optional
+
+import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    np_rolling_moments,
+    verify_series,
+)
 
 
 def skew(
@@ -14,43 +23,24 @@ def skew(
     """Indicator: Skew"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 
     if close is None:
         return None
 
-    # Calculate Result
-    skew = close.rolling(length, min_periods=min_periods).skew()
+    # Pure numpy rolling skewness (adjusted Fisher-Pearson) for cross-version
+    # determinism.
+    # G1 = n·sqrt(n-1) / (n-2) · M3 / M2^(3/2)
+    m2, m3 = np_rolling_moments(close.values, length, 2, 3)
+    nf = np.float64(length)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        result = nf * np.sqrt(nf - 1) / (nf - 2) * m3 / m2**1.5
 
-    # Offset
-    if offset != 0:
-        skew = skew.shift(offset)
+    skew = Series(result, index=close.index, dtype=np.float64)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        skew.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                skew.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                skew.bfill(inplace=True)
-
-    # Name & Category
-    skew.name = f"SKEW_{length}"
-    skew.category = "statistics"
-
-    return skew
+    return _finalize(skew, offset, f"SKEW_{length}", "statistics", **kwargs)
 
 
 skew.__doc__ = """Rolling Skew

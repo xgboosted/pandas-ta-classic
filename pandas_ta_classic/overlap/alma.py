@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Arnaud Legoux Moving Average (ALMA)
 from typing import Any, Optional
 import numpy as np
@@ -6,7 +5,12 @@ from numpy import exp as npExp
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    verify_series,
+)
 
 
 def alma(
@@ -33,50 +37,27 @@ def alma(
         return None
 
     # Pre-Calculations
-    m = distribution_offset * (length - 1)
+    m_offset = distribution_offset * (length - 1)
     s = length / sigma
-    wtd = list(range(length))
-    for i in range(0, length):
-        wtd[i] = npExp(-1 * ((i - m) * (i - m)) / (2 * s * s))
+    wtd = np.array(
+        [
+            npExp(-1 * ((i - m_offset) * (i - m_offset)) / (2 * s * s))
+            for i in range(length)
+        ]
+    )
+    w_norm = wtd / wtd.sum()  # normalised weights
 
-    # Calculate Result
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, close.size):
-        window_sum = 0
-        cum_sum = 0
-        for j in range(0, length):
-            # wtd = math.exp(-1 * ((j - m) * (j - m)) / (2 * s * s))        # moved to pre-calc for efficiency
-            window_sum = window_sum + wtd[j] * close.iloc[i - j]
-            cum_sum = cum_sum + wtd[j]
+    # w_norm[0] = newest, w_norm[L-1] = oldest; sliding_window_view rows are
+    # oldest-first, so reverse the weights.
+    alma = _sliding_weighted_ma(close, length, w_norm[::-1])
 
-        almean = window_sum / cum_sum
-        result.append(npNaN) if i == length else result.append(almean)
-
-    alma = Series(result, index=close.index)
-
-    # Offset
-    if offset != 0:
-        alma = alma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        alma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                alma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                alma.bfill(inplace=True)
-
-    # Name & Category
-    alma.name = f"ALMA_{length}_{sigma}_{distribution_offset}"
-    alma.category = "overlap"
-
-    return alma
+    return _finalize(
+        alma,
+        offset,
+        f"ALMA_{length}_{sigma}_{distribution_offset}",
+        "overlap",
+        **kwargs,
+    )
 
 
 alma.__doc__ = """Arnaud Legoux Moving Average (ALMA)

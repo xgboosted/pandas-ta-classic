@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def midprice(
@@ -17,16 +23,12 @@ def midprice(
     """Indicator: Midprice"""
     # Validate arguments
     length = int(length) if length and length > 0 else 2
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None:
         return None
@@ -41,29 +43,7 @@ def midprice(
         highest_high = high.rolling(length, min_periods=min_periods).max()
         midprice = 0.5 * (lowest_low + highest_high)
 
-    # Offset
-    if offset != 0:
-        midprice = midprice.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        midprice.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                midprice.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                midprice.bfill(inplace=True)
-
-    # Name and Categorize it
-    midprice.name = f"MIDPRICE_{length}"
-    midprice.category = "overlap"
-
-    return midprice
+    return _finalize(midprice, offset, f"MIDPRICE_{length}", "overlap", **kwargs)
 
 
 midprice.__doc__ = """Midpoint Price Over Period (MIDPRICE)

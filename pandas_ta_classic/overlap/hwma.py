@@ -2,7 +2,7 @@
 # Holt-Winter Moving Average (HWMA)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def hwma(
@@ -21,45 +21,19 @@ def hwma(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if close is None:
+        return None
+
     # Calculate Result
-    last_a = last_v = 0
-    last_f = close.iloc[0]
+    from pandas_ta_classic.utils._numba import _hwma_loop
 
-    result = []
     m = close.size
-    for i in range(m):
-        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * close.iloc[i]
-        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
-        A = (1.0 - nc) * last_a + nc * (V - last_v)
-        result.append((F + V + 0.5 * A))
-        last_a, last_f, last_v = A, F, V  # update values
+    c_arr = close.to_numpy()
+    result_arr = _hwma_loop(c_arr, m, na, nb, nc)
 
-    hwma = Series(result, index=close.index)
+    hwma = Series(result_arr, index=close.index)
 
-    # Offset
-    if offset != 0:
-        hwma = hwma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        hwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwma.bfill(inplace=True)
-
-    # Name & Category
-    suffix = f"{na}_{nb}_{nc}"
-    hwma.name = f"HWMA_{suffix}"
-    hwma.category = "overlap"
-
-    return hwma
+    return _finalize(hwma, offset, f"HWMA_{na}_{nb}_{nc}", "overlap", **kwargs)
 
 
 hwma.__doc__ = """HWMA (Holt-Winter Moving Average)

@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 # Jurik Moving Average (JMA)
+from math import log as _log, pow as _pow, sqrt as _sqrt
 from typing import Any, Optional, Union
 import numpy as np
-from numpy import average as npAverage
-from numpy import log as npLog
-from numpy import power as npPower
-from numpy import sqrt as npSqrt
-from numpy import zeros_like as npZeroslike
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def jma(
@@ -29,89 +25,31 @@ def jma(
     if close is None:
         return None
 
-    # Define base variables
-    jma = npZeroslike(close)
-    volty = npZeroslike(close)
-    v_sum = npZeroslike(close)
-
-    kv = det0 = det1 = ma2 = 0.0
-    jma[0] = ma1 = uBand = lBand = close.iloc[0]
-
     # Static variables
     sum_length = 10
     length = 0.5 * (_length - 1)
     pr = 0.5 if phase < -100 else 2.5 if phase > 100 else 1.5 + phase * 0.01
-    length1 = max((npLog(npSqrt(length)) / npLog(2.0)) + 2.0, 0)
+    length1 = max((_log(_sqrt(length)) / _log(2.0)) + 2.0, 0)
     pow1 = max(length1 - 2.0, 0.5)
-    length2 = length1 * npSqrt(length)
+    length2 = length1 * _sqrt(length)
     bet = length2 / (length2 + 1)
     beta = 0.45 * (_length - 1) / (0.45 * (_length - 1) + 2.0)
+    r_volty_max = _pow(length1, 1 / pow1)
 
+    # Calculate Result
+    from pandas_ta_classic.utils._numba import _jma_loop
+
+    c_arr = close.to_numpy()
     m = close.shape[0]
-    for i in range(1, m):
-        price = close.iloc[i]
-
-        # Price volatility
-        del1 = price - uBand
-        del2 = price - lBand
-        volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0
-
-        # Relative price volatility factor
-        v_sum[i] = (
-            v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
-        )
-        avg_volty = npAverage(v_sum[max(i - 65, 0) : i + 1])
-        d_volty = 0 if avg_volty == 0 else volty[i] / avg_volty
-        r_volty = max(1.0, min(npPower(length1, 1 / pow1), d_volty))
-
-        # Jurik volatility bands
-        pow2 = npPower(r_volty, pow1)
-        kv = npPower(bet, npSqrt(pow2))
-        uBand = price if (del1 > 0) else price - (kv * del1)
-        lBand = price if (del2 < 0) else price - (kv * del2)
-
-        # Jurik Dynamic Factor
-        power = npPower(r_volty, pow1)
-        alpha = npPower(beta, power)
-
-        # 1st stage - prelimimary smoothing by adaptive EMA
-        ma1 = ((1 - alpha) * price) + (alpha * ma1)
-
-        # 2nd stage - one more prelimimary smoothing by Kalman filter
-        det0 = ((price - ma1) * (1 - beta)) + (beta * det0)
-        ma2 = ma1 + pr * det0
-
-        # 3rd stage - final smoothing by unique Jurik adaptive filter
-        det1 = ((ma2 - jma[i - 1]) * (1 - alpha) * (1 - alpha)) + (alpha * alpha * det1)
-        jma[i] = jma[i - 1] + det1
+    jma = _jma_loop(
+        c_arr, m, sum_length, length, pr, length1, pow1, bet, beta, r_volty_max
+    )
 
     # Remove initial lookback data and convert to pandas frame
-    jma[0 : _length - 1] = npNaN
+    jma[: _length - 1] = npNaN
     jma = Series(jma, index=close.index)
 
-    # Offset
-    if offset != 0:
-        jma = jma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        jma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                jma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                jma.bfill(inplace=True)
-
-    # Name & Category
-    jma.name = f"JMA_{_length}_{phase}"
-    jma.category = "overlap"
-
-    return jma
+    return _finalize(jma, offset, f"JMA_{_length}_{phase}", "overlap", **kwargs)
 
 
 jma.__doc__ = """Jurik Moving Average Average (JMA)

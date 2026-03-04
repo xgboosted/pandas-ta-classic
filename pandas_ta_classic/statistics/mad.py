@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 # Mean Absolute Deviation (MAD)
 from typing import Any, Optional
-from numpy import fabs as npfabs
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def mad(
@@ -15,47 +21,24 @@ def mad(
     """Indicator: Mean Absolute Deviation"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 
     if close is None:
         return None
 
-    # Calculate Result
-    def mad_(series: Any) -> float:
-        """Mean Absolute Deviation"""
-        return npfabs(series - series.mean()).mean()
+    # Calculate Result — fully vectorised via sliding_window_view (avoids
+    # ~5 200 Python callbacks from rolling.apply).
+    c_arr = close.to_numpy(dtype=float)
+    windows = sliding_window_view(c_arr, length)  # (n-L+1, L)
+    means = windows.mean(axis=1)
+    mad_vals = np.abs(windows - means[:, np.newaxis]).mean(axis=1)
+    result = np.full(len(c_arr), np.nan)
+    result[length - 1 :] = mad_vals
+    mad = Series(result, index=close.index)
 
-    mad = close.rolling(length, min_periods=min_periods).apply(mad_, raw=True)
-
-    # Offset
-    if offset != 0:
-        mad = mad.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        mad.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mad.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mad.bfill(inplace=True)
-
-    # Name & Category
-    mad.name = f"MAD_{length}"
-    mad.category = "statistics"
-
-    return mad
+    return _finalize(mad, offset, f"MAD_{length}", "statistics", **kwargs)
 
 
 mad.__doc__ = """Rolling Mean Absolute Deviation

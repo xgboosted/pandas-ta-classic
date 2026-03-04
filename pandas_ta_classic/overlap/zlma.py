@@ -2,8 +2,19 @@
 # Zero Lag Moving Average (ZLMA)
 from typing import Any, Optional
 from pandas import Series
-from . import dema, ema, hma, linreg, rma, sma, swma, t3, tema, trima, vidya, wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from .dema import dema
+from .ema import ema
+from .hma import hma
+from .linreg import linreg
+from .rma import rma
+from .sma import sma
+from .swma import swma
+from .t3 import t3
+from .tema import tema
+from .trima import trima
+from .vidya import vidya
+from .wma import wma
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def zlma(
@@ -51,29 +62,7 @@ def zlma(
     else:
         zlma = ema(close_, length=length, **kwargs)  # "ema"
 
-    # Offset
-    if offset != 0:
-        zlma = zlma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        zlma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                zlma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                zlma.bfill(inplace=True)
-
-    # Name & Category
-    zlma.name = f"ZL_{zlma.name}"
-    zlma.category = "overlap"
-
-    return zlma
+    return _finalize(zlma, offset, f"ZL_{zlma.name}", "overlap", **kwargs)
 
 
 zlma.__doc__ = """Zero Lag Moving Average (ZLMA)

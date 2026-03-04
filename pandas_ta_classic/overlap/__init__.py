@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .alma import alma
 from .dema import dema
 from .ema import ema
@@ -35,3 +34,42 @@ from .vwma import vwma
 from .wcp import wcp
 from .wma import wma
 from .zlma import zlma
+
+__all__ = [
+    "alma",
+    "dema",
+    "ema",
+    "fwma",
+    "hilo",
+    "hl2",
+    "hlc3",
+    "hma",
+    "hwma",
+    "ichimoku",
+    "jma",
+    "kama",
+    "linreg",
+    "ma",
+    "mcgd",
+    "midpoint",
+    "midprice",
+    "mmar",
+    "ohlc4",
+    "pwma",
+    "rainbow",
+    "rma",
+    "sinwma",
+    "sma",
+    "ssf",
+    "supertrend",
+    "swma",
+    "t3",
+    "tema",
+    "trima",
+    "vidya",
+    "vwap",
+    "vwma",
+    "wcp",
+    "wma",
+    "zlma",
+]

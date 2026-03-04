@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def wcp(
@@ -20,7 +20,10 @@ def wcp(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
+
+    if high is None or low is None or close is None:
+        return None
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
@@ -30,29 +33,7 @@ def wcp(
     else:
         wcp = (high + low + 2 * close) / 4
 
-    # Offset
-    if offset != 0:
-        wcp = wcp.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        wcp.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                wcp.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                wcp.bfill(inplace=True)
-
-    # Name & Category
-    wcp.name = "WCP"
-    wcp.category = "overlap"
-
-    return wcp
+    return _finalize(wcp, offset, "WCP", "overlap", **kwargs)
 
 
 wcp.__doc__ = """Weighted Closing Price (WCP)

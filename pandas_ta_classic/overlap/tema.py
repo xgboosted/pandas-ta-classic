@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def tema(
@@ -19,7 +19,7 @@ def tema(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -35,29 +35,7 @@ def tema(
         ema3 = ema(close=ema2, length=length, **kwargs)
         tema = 3 * (ema1 - ema2) + ema3
 
-    # Offset
-    if offset != 0:
-        tema = tema.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        tema.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                tema.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                tema.bfill(inplace=True)
-
-    # Name & Category
-    tema.name = f"TEMA_{length}"
-    tema.category = "overlap"
-
-    return tema
+    return _finalize(tema, offset, f"TEMA_{length}", "overlap", **kwargs)
 
 
 tema.__doc__ = """Triple Exponential Moving Average (TEMA)

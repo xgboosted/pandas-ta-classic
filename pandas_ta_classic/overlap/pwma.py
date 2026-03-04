@@ -2,7 +2,13 @@
 # Pascal Weighted Moving Average (PWMA)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, pascals_triangle, verify_series, weights
+from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    pascals_triangle,
+    verify_series,
+)
 
 
 def pwma(
@@ -24,31 +30,9 @@ def pwma(
 
     # Calculate Result
     triangle = pascals_triangle(n=length - 1, weighted=True)
-    pwma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
+    pwma = _sliding_weighted_ma(close, length, triangle)
 
-    # Offset
-    if offset != 0:
-        pwma = pwma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pwma.bfill(inplace=True)
-
-    # Name & Category
-    pwma.name = f"PWMA_{length}"
-    pwma.category = "overlap"
-
-    return pwma
+    return _finalize(pwma, offset, f"PWMA_{length}", "overlap", **kwargs)
 
 
 pwma.__doc__ = """Pascal's Weighted Moving Average (PWMA)

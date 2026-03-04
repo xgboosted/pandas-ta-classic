@@ -4,7 +4,12 @@ from typing import Any, Optional
 from numpy import pi as npPi
 from numpy import sin as npSin
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series, weights
+from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    verify_series,
+)
 
 
 def sinwma(
@@ -23,34 +28,13 @@ def sinwma(
         return None
 
     # Calculate Result
-    sines = Series([npSin((i + 1) * npPi / (length + 1)) for i in range(0, length)])
+    import numpy as np
+
+    sines = np.array([npSin((i + 1) * npPi / (length + 1)) for i in range(length)])
     w = sines / sines.sum()
+    sinwma = _sliding_weighted_ma(close, length, w)
 
-    sinwma = close.rolling(length, min_periods=length).apply(weights(w), raw=True)
-
-    # Offset
-    if offset != 0:
-        sinwma = sinwma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        sinwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                sinwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                sinwma.bfill(inplace=True)
-
-    # Name & Category
-    sinwma.name = f"SINWMA_{length}"
-    sinwma.category = "overlap"
-
-    return sinwma
+    return _finalize(sinwma, offset, f"SINWMA_{length}", "overlap", **kwargs)
 
 
 sinwma.__doc__ = """Sine Weighted Moving Average (SWMA)

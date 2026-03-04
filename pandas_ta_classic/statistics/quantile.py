@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 # Quantile (QUANTILE)
 from typing import Any, Optional
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def quantile(
@@ -15,11 +24,7 @@ def quantile(
     """Indicator: Quantile"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     q = float(q) if q and q > 0 and q < 1 else 0.5
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
@@ -27,32 +32,18 @@ def quantile(
     if close is None:
         return None
 
-    # Calculate Result
-    quantile = close.rolling(length, min_periods=min_periods).quantile(q)
+    # Pure numpy for cross-version determinism.
+    values = close.values.astype(np.float64)
+    windows = sliding_window_view(values, length)
+    qtl = np.quantile(windows, q, axis=1)
 
-    # Offset
-    if offset != 0:
-        quantile = quantile.shift(offset)
+    result: np.ndarray = np.empty(len(values), dtype=np.float64)
+    result[: length - 1] = np.nan
+    result[length - 1 :] = qtl
 
-    # Handle fills
-    if "fillna" in kwargs:
-        quantile.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
+    quantile = Series(result, index=close.index, dtype=np.float64)
 
-            if kwargs["fill_method"] == "ffill":
-
-                quantile.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                quantile.bfill(inplace=True)
-
-    # Name & Category
-    quantile.name = f"QTL_{length}_{q}"
-    quantile.category = "statistics"
-
-    return quantile
+    return _finalize(quantile, offset, f"QTL_{length}_{q}", "statistics", **kwargs)
 
 
 quantile.__doc__ = """Rolling Quantile

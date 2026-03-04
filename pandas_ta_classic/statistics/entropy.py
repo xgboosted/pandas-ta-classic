@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import log as npLog
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def entropy(
@@ -25,31 +25,11 @@ def entropy(
 
     # Calculate Result
     p = close / close.rolling(length).sum()
-    entropy = (-p * npLog(p) / npLog(base)).rolling(length).sum()
+    # Shannon entropy convention: 0 * log(0) = 0
+    safe_log_p = npLog(p.where(p > 0, 1))
+    entropy = (-p * safe_log_p / npLog(base)).rolling(length).sum()
 
-    # Offset
-    if offset != 0:
-        entropy = entropy.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        entropy.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                entropy.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                entropy.bfill(inplace=True)
-
-    # Name & Category
-    entropy.name = f"ENTP_{length}"
-    entropy.category = "statistics"
-
-    return entropy
+    return _finalize(entropy, offset, f"ENTP_{length}", "statistics", **kwargs)
 
 
 entropy.__doc__ = """Entropy (ENTP)

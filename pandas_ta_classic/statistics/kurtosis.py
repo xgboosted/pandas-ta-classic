@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 # Kurtosis (KURTOSIS)
 from typing import Any, Optional
+
+import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+from pandas_ta_classic.utils import (
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    np_rolling_moments,
+    verify_series,
+)
 
 
 def kurtosis(
@@ -14,43 +23,26 @@ def kurtosis(
     """Indicator: Kurtosis"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 
     if close is None:
         return None
 
-    # Calculate Result
-    kurtosis = close.rolling(length, min_periods=min_periods).kurt()
+    # Pure numpy rolling excess kurtosis (Fisher) for cross-version determinism.
+    # G2 = n(n+1)(n-1)·M4 / ((n-2)(n-3)·M2²) - 3(n-1)²/((n-2)(n-3))
+    m2, m4 = np_rolling_moments(close.values, length, 2, 4)
+    nf = np.float64(length)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        numer = nf * (nf + 1) * (nf - 1) * m4
+        denom = (nf - 2) * (nf - 3) * m2**2
+        adj = 3.0 * (nf - 1) ** 2 / ((nf - 2) * (nf - 3))
+        result = numer / denom - adj
 
-    # Offset
-    if offset != 0:
-        kurtosis = kurtosis.shift(offset)
+    kurtosis = Series(result, index=close.index, dtype=np.float64)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        kurtosis.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kurtosis.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kurtosis.bfill(inplace=True)
-
-    # Name & Category
-    kurtosis.name = f"KURT_{length}"
-    kurtosis.category = "statistics"
-
-    return kurtosis
+    return _finalize(kurtosis, offset, f"KURT_{length}", "statistics", **kwargs)
 
 
 kurtosis.__doc__ = """Rolling Kurtosis

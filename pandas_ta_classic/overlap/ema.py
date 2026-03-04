@@ -6,7 +6,13 @@ from pandas import Series
 from pandas_ta_classic import Imports
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    _get_tal_mode,
+    _sma_seed,
+    get_offset,
+    verify_series,
+)
 
 
 def ema(
@@ -23,7 +29,7 @@ def ema(
     sma = kwargs.pop("sma", True)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -35,35 +41,10 @@ def ema(
         ema = EMA(close, length)
     else:
         if sma:
-            close = close.copy()
-            sma_nth = close[0:length].mean()
-            close[: length - 1] = npNaN
-            close.iloc[length - 1] = sma_nth
+            close = _sma_seed(close, length)
         ema = close.ewm(span=length, adjust=adjust).mean()
 
-    # Offset
-    if offset != 0:
-        ema = ema.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ema.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ema.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ema.bfill(inplace=True)
-
-    # Name & Category
-    ema.name = f"EMA_{length}"
-    ema.category = "overlap"
-
-    return ema
+    return _finalize(ema, offset, f"EMA_{length}", "overlap", **kwargs)
 
 
 ema.__doc__ = """Exponential Moving Average (EMA)
@@ -83,7 +64,7 @@ Calculation:
         length=10, adjust=False, sma=True
     if sma:
         sma_nth = close[0:length].sum() / length
-        close[:length - 1] = np.NaN
+        close[:length - 1] = np.nan
         close.iloc[length - 1] = sma_nth
     EMA = close.ewm(span=length, adjust=adjust).mean()
 

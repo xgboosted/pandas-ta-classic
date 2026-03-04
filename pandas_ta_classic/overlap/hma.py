@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import sqrt as npSqrt
 from pandas import Series
 from .wma import wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def hma(
@@ -23,36 +23,14 @@ def hma(
         return None
 
     # Calculate Result
-    half_length = int(length / 2)
+    half_length = length // 2
     sqrt_length = int(npSqrt(length))
 
     wmaf = wma(close=close, length=half_length)
     wmas = wma(close=close, length=length)
     hma = wma(close=2 * wmaf - wmas, length=sqrt_length)
 
-    # Offset
-    if offset != 0:
-        hma = hma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        hma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hma.bfill(inplace=True)
-
-    # Name & Category
-    hma.name = f"HMA_{length}"
-    hma.category = "overlap"
-
-    return hma
+    return _finalize(hma, offset, f"HMA_{length}", "overlap", **kwargs)
 
 
 hma.__doc__ = """Hull Moving Average (HMA)

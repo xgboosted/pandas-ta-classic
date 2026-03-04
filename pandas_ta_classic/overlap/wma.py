@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 # Weighted Moving Average (WMA)
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    verify_series,
+)
 
 
 def wma(
@@ -20,7 +26,7 @@ def wma(
     asc = asc if asc else True
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -32,44 +38,13 @@ def wma(
         wma = WMA(close, length)
     else:
         from numpy import arange as npArange
-        from numpy import dot as npDot
 
         total_weight = 0.5 * length * (length + 1)
-        weights_ = Series(npArange(1, length + 1))
-        weights = weights_ if asc else weights_[::-1]
+        weights_ = npArange(1, length + 1, dtype=float)
+        w = weights_ if asc else weights_[::-1].copy()
+        wma = _sliding_weighted_ma(close, length, w / total_weight)
 
-        def linear(w: Any) -> Callable:
-            def _compute(x: Any) -> float:
-                return npDot(x, w) / total_weight
-
-            return _compute
-
-        close_ = close.rolling(length, min_periods=length)
-        wma = close_.apply(linear(weights), raw=True)
-
-    # Offset
-    if offset != 0:
-        wma = wma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        wma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                wma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                wma.bfill(inplace=True)
-
-    # Name & Category
-    wma.name = f"WMA_{length}"
-    wma.category = "overlap"
-
-    return wma
+    return _finalize(wma, offset, f"WMA_{length}", "overlap", **kwargs)
 
 
 wma.__doc__ = """Weighted Moving Average (WMA)

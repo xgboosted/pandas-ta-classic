@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def supertrend(
@@ -33,66 +33,41 @@ def supertrend(
 
     # Calculate Results
     m = close.size
-    dir_, trend = [1] * m, [0] * m
-    long, short = [npNaN] * m, [npNaN] * m
 
     hl2_ = hl2(high, low)
     matr = multiplier * atr(high, low, close, length)
     upperband = hl2_ + matr
     lowerband = hl2_ - matr
 
-    for i in range(1, m):
-        if close.iloc[i] > upperband.iloc[i - 1]:
-            dir_[i] = 1
-        elif close.iloc[i] < lowerband.iloc[i - 1]:
-            dir_[i] = -1
-        else:
-            dir_[i] = dir_[i - 1]
-            if dir_[i] > 0 and lowerband.iloc[i] < lowerband.iloc[i - 1]:
-                lowerband.iloc[i] = lowerband.iloc[i - 1]
-            if dir_[i] < 0 and upperband.iloc[i] > upperband.iloc[i - 1]:
-                upperband.iloc[i] = upperband.iloc[i - 1]
+    from pandas_ta_classic.utils._numba import _supertrend_loop
 
-        if dir_[i] > 0:
-            trend[i] = long[i] = lowerband.iloc[i]
-        else:
-            trend[i] = short[i] = upperband.iloc[i]
+    c_arr = close.to_numpy()
+    ub_arr = upperband.to_numpy().copy()
+    lb_arr = lowerband.to_numpy().copy()
 
-    # Prepare DataFrame to return
+    dir_arr, trend_arr, long_arr, short_arr = _supertrend_loop(c_arr, ub_arr, lb_arr, m)
+
+    # Wrap numpy arrays as Series
+    _idx = close.index
+    trend = Series(trend_arr, index=_idx)
+    dir_ = Series(dir_arr, index=_idx)
+    long = Series(long_arr, index=_idx)
+    short = Series(short_arr, index=_idx)
+
+    # Offset, Name and Categorize it
     _props = f"_{length}_{multiplier}"
-    df = DataFrame(
+    return _build_dataframe(
         {
             f"SUPERT{_props}": trend,
             f"SUPERTd{_props}": dir_,
             f"SUPERTl{_props}": long,
             f"SUPERTs{_props}": short,
         },
-        index=close.index,
+        f"SUPERT{_props}",
+        "overlap",
+        offset,
+        **kwargs,
     )
-
-    df.name = f"SUPERT{_props}"
-    df.category = "overlap"
-
-    # Apply offset if needed
-    if offset != 0:
-        df = df.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
-
-    return df
 
 
 supertrend.__doc__ = """Supertrend (supertrend)

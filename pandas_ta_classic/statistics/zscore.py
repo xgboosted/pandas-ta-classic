@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
 from .stdev import stdev
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def zscore(
@@ -29,29 +29,7 @@ def zscore(
     mean = sma(close=close, length=length, **kwargs)
     zscore = (close - mean) / std
 
-    # Offset
-    if offset != 0:
-        zscore = zscore.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        zscore.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                zscore.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                zscore.bfill(inplace=True)
-
-    # Name & Category
-    zscore.name = f"ZS_{length}"
-    zscore.category = "statistics"
-
-    return zscore
+    return _finalize(zscore, offset, f"ZS_{length}", "statistics", **kwargs)
 
 
 zscore.__doc__ = """Rolling Z Score

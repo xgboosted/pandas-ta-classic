@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from .ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def hilo(
@@ -35,71 +35,42 @@ def hilo(
 
     # Calculate Result
     m = close.size
-    hilo = Series(npNaN, index=close.index)
-    long = Series(npNaN, index=close.index)
-    short = Series(npNaN, index=close.index)
 
     high_ma = ma(mamode, high, length=high_length)
     low_ma = ma(mamode, low, length=low_length)
+    if high_ma is None or low_ma is None:
+        return None
+
+    # Use raw numpy arrays to avoid pandas iloc overhead in the loop.
+    c_arr = close.to_numpy()
+    hma_arr = high_ma.to_numpy()
+    lma_arr = low_ma.to_numpy()
+    hilo_arr = np.full(m, npNaN)
+    long_arr = np.full(m, npNaN)
+    short_arr = np.full(m, npNaN)
 
     for i in range(1, m):
-        if close.iloc[i] > high_ma.iloc[i - 1]:
-            hilo.iloc[i] = long.iloc[i] = low_ma.iloc[i]
-        elif close.iloc[i] < low_ma.iloc[i - 1]:
-            hilo.iloc[i] = short.iloc[i] = high_ma.iloc[i]
+        if c_arr[i] > hma_arr[i - 1]:
+            hilo_arr[i] = long_arr[i] = lma_arr[i]
+        elif c_arr[i] < lma_arr[i - 1]:
+            hilo_arr[i] = short_arr[i] = hma_arr[i]
         else:
-            hilo.iloc[i] = hilo.iloc[i - 1]
-            long.iloc[i] = short.iloc[i] = hilo.iloc[i - 1]
+            hilo_arr[i] = hilo_arr[i - 1]
+            long_arr[i] = short_arr[i] = hilo_arr[i - 1]
 
-    # Offset
-    if offset != 0:
-        hilo = hilo.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
+    hilo = Series(hilo_arr, index=close.index)
+    long = Series(long_arr, index=close.index)
+    short = Series(short_arr, index=close.index)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        hilo.fillna(kwargs["fillna"], inplace=True)
-        long.fillna(kwargs["fillna"], inplace=True)
-        short.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hilo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hilo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short.bfill(inplace=True)
-
-    # Name & Category
+    # Offset, Name and Categorize it
     _props = f"_{high_length}_{low_length}"
-    data = {f"HILO{_props}": hilo, f"HILOl{_props}": long, f"HILOs{_props}": short}
-    df = DataFrame(data, index=close.index)
-
-    df.name = f"HILO{_props}"
-    df.category = "overlap"
-
-    return df
+    return _build_dataframe(
+        {f"HILO{_props}": hilo, f"HILOl{_props}": long, f"HILOs{_props}": short},
+        f"HILO{_props}",
+        "overlap",
+        offset,
+        **kwargs,
+    )
 
 
 hilo.__doc__ = """Gann HiLo Activator(HiLo)
@@ -137,14 +108,14 @@ Calculation:
         low_ma = SMA(low, low_length)
 
     # Similar to Supertrend MA selection
-    hilo = Series(npNaN, index=close.index)
+    hilo_arr = np.full(m, np.nan)
     for i in range(1, m):
-        if close.iloc[i] > high_ma.iloc[i - 1]:
-            hilo.iloc[i] = low_ma.iloc[i]
-        elif close.iloc[i] < low_ma.iloc[i - 1]:
-            hilo.iloc[i] = high_ma.iloc[i]
+        if close_arr[i] > hma_arr[i - 1]:
+            hilo_arr[i] = lma_arr[i]
+        elif close_arr[i] < lma_arr[i - 1]:
+            hilo_arr[i] = hma_arr[i]
         else:
-            hilo.iloc[i] = hilo.iloc[i - 1]
+            hilo_arr[i] = hilo_arr[i - 1]
 
 Args:
     high (pd.Series): Series of 'high's

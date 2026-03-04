@@ -5,7 +5,13 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def kama(
@@ -43,36 +49,18 @@ def kama(
     x = er * (fr - sr) + sr
     sc = x * x
 
+    # Extract to numpy arrays to avoid per-bar pandas indexing overhead.
+    sc_arr = sc.to_numpy()
+    c_arr = close.to_numpy()
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = np.full(m, npNaN)
+    result[length - 1] = c_arr[length - 1]
     for i in range(length, m):
-        result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
+        result[i] = sc_arr[i] * c_arr[i] + (1 - sc_arr[i]) * result[i - 1]
 
     kama = Series(result, index=close.index)
 
-    # Offset
-    if offset != 0:
-        kama = kama.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        kama.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kama.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kama.bfill(inplace=True)
-
-    # Name & Category
-    kama.name = f"KAMA_{length}_{fast}_{slow}"
-    kama.category = "overlap"
-
-    return kama
+    return _finalize(kama, offset, f"KAMA_{length}_{fast}_{slow}", "overlap", **kwargs)
 
 
 kama.__doc__ = """Kaufman's Adaptive Moving Average (KAMA)

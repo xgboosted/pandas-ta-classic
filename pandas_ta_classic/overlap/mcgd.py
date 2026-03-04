@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # McGinley Dynamic (MCGD)
 from typing import Any, Optional
-import pandas as pd
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def mcgd(
@@ -24,34 +23,13 @@ def mcgd(
         return None
 
     # Calculate Result
-    close = close.copy()
+    from pandas_ta_classic.utils._numba import _mcgd_loop
 
-    def mcg_(series: Series) -> float:
-        denom = c * length * (series.iloc[1] / series.iloc[0]) ** 4
-        series.iloc[1] = series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom)
-        return series.iloc[1]
+    c_arr = close.to_numpy(dtype=float)
+    mcgd_arr = _mcgd_loop(c_arr, len(c_arr), c, length)
+    mcg_ds = Series(mcgd_arr, index=close.index)
 
-    mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
-    mcg_ds = pd.concat([close[:1], mcg_cell[1:]])
-
-    # Offset
-    if offset != 0:
-        mcg_ds = mcg_ds.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        mcg_ds.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            mcg_ds.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            mcg_ds.bfill(inplace=True)
-
-    # Name & Category
-    mcg_ds.name = f"MCGD_{length}"
-    mcg_ds.category = "overlap"
-
-    return mcg_ds
+    return _finalize(mcg_ds, offset, f"MCGD_{length}", "overlap", **kwargs)
 
 
 mcgd.__doc__ = """McGinley Dynamic Indicator

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # Triangular Moving Average (TRIMA)
+from math import ceil, floor
 from typing import Any, Optional
 from pandas import Series
 from .sma import sma
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def trima(
@@ -19,7 +20,7 @@ def trima(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -30,33 +31,12 @@ def trima(
 
         trima = TRIMA(close, length)
     else:
-        half_length = round(0.5 * (length + 1))
-        sma1 = sma(close, length=half_length)
-        trima = sma(sma1, length=half_length)
+        first_window = ceil(length / 2)
+        second_window = floor(length / 2) + 1
+        sma1 = sma(close, length=first_window)
+        trima = sma(sma1, length=second_window)
 
-    # Offset
-    if offset != 0:
-        trima = trima.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        trima.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                trima.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                trima.bfill(inplace=True)
-
-    # Name & Category
-    trima.name = f"TRIMA_{length}"
-    trima.category = "overlap"
-
-    return trima
+    return _finalize(trima, offset, f"TRIMA_{length}", "overlap", **kwargs)
 
 
 trima.__doc__ = """Triangular Moving Average (TRIMA)
@@ -73,9 +53,10 @@ Calculation:
     Default Inputs:
         length=10
     SMA = Simple Moving Average
-    half_length = round(0.5 * (length + 1))
-    SMA1 = SMA(close, half_length)
-    TRIMA = SMA(SMA1, half_length)
+    first_window = ceil(length / 2)
+    second_window = floor(length / 2) + 1
+    SMA1 = SMA(close, first_window)
+    TRIMA = SMA(SMA1, second_window)
 
 Args:
     close (pd.Series): Series of 'close's

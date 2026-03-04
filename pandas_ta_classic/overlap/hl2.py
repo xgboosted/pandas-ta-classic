@@ -2,7 +2,7 @@
 # HL2 (HL2)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def hl2(
@@ -14,18 +14,13 @@ def hl2(
     low = verify_series(low)
     offset = get_offset(offset)
 
+    if high is None or low is None:
+        return None
+
     # Calculate Result
     hl2 = 0.5 * (high + low)
 
-    # Offset
-    if offset != 0:
-        hl2 = hl2.shift(offset)
-
-    # Name & Category
-    hl2.name = "HL2"
-    hl2.category = "overlap"
-
-    return hl2
+    return _finalize(hl2, offset, "HL2", "overlap", **kwargs)
 
 
 hl2.__doc__ = """HL2 (Median Price)

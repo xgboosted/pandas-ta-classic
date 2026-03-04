@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def rainbow(
@@ -33,27 +33,14 @@ def rainbow(
         ribbons[f"RAINBOW_{i}"] = current_sma
         prev_sma = current_sma
 
-    # Create DataFrame
-    df = DataFrame(ribbons)
-
-    # Offset
-    if offset != 0:
-        df = df.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            df.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            df.bfill(inplace=True)
-
-    # Name and Categorize it
-    df.name = f"RAINBOW_{length}_{num_ribbons}"
-    df.category = "overlap"
-
-    return df
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        ribbons,
+        f"RAINBOW_{length}_{num_ribbons}",
+        "overlap",
+        offset,
+        **kwargs,
+    )
 
 
 rainbow.__doc__ = """Rainbow Charts

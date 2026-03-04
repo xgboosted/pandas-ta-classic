@@ -3,7 +3,12 @@
 from typing import Any, Optional
 from pandas import Series
 from .hlc3 import hlc3
-from pandas_ta_classic.utils import get_offset, is_datetime_ordered, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_offset,
+    is_datetime_ordered,
+    verify_series,
+)
 
 
 def vwap(
@@ -21,6 +26,10 @@ def vwap(
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
+
+    if high is None or low is None or close is None or volume is None:
+        return None
+
     anchor = (
         anchor.upper()
         if anchor and isinstance(anchor, str) and len(anchor) >= 1
@@ -31,41 +40,19 @@ def vwap(
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(
-            f"[!] VWAP volume series is not datetime ordered. Results may not be as expected."
+            "[!] VWAP volume series is not datetime ordered. Results may not be as expected."
         )
     if not is_datetime_ordered(typical_price):
         print(
-            f"[!] VWAP price series is not datetime ordered. Results may not be as expected."
+            "[!] VWAP price series is not datetime ordered. Results may not be as expected."
         )
 
     # Calculate Result
     wp = typical_price * volume
-    vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
-    vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
+    vwap = wp.groupby(wp.index.to_period(anchor), observed=True).cumsum()
+    vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
 
-    # Offset
-    if offset != 0:
-        vwap = vwap.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vwap.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vwap.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vwap.bfill(inplace=True)
-
-    # Name & Category
-    vwap.name = f"VWAP_{anchor}"
-    vwap.category = "overlap"
-
-    return vwap
+    return _finalize(vwap, offset, f"VWAP_{anchor}", "overlap", **kwargs)
 
 
 vwap.__doc__ = """Volume Weighted Average Price (VWAP)

@@ -3,10 +3,11 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
     get_offset,
     symmetric_triangle,
     verify_series,
-    weights,
 )
 
 
@@ -30,32 +31,10 @@ def swma(
 
     # Calculate Result
     triangle = symmetric_triangle(length, weighted=True)
-    swma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
+    swma = _sliding_weighted_ma(close, length, triangle)
     # swma = close.rolling(length).apply(weights(triangle), raw=True)
 
-    # Offset
-    if offset != 0:
-        swma = swma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        swma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                swma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                swma.bfill(inplace=True)
-
-    # Name & Category
-    swma.name = f"SWMA_{length}"
-    swma.category = "overlap"
-
-    return swma
+    return _finalize(swma, offset, f"SWMA_{length}", "overlap", **kwargs)
 
 
 swma.__doc__ = """Symmetric Weighted Moving Average (SWMA)
