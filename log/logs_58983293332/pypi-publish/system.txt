@@ -1,4 +1,0 @@
-2026-03-01T22:51:18.5470000Z Evaluating pypi-publish.if
-2026-03-01T22:51:18.5470000Z Evaluating: (success() && (((github.event_name == 'release') && (github.event.action == 'published'))))
-2026-03-01T22:51:18.5470000Z Expanded: (false && ((github.event_name == 'release') && (github.event.action == 'published')))
-2026-03-01T22:51:18.5470000Z Result: false
