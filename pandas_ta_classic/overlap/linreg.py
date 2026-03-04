@@ -5,11 +5,10 @@ import numpy as np
 from numpy import array as npArray
 from numpy import arctan as npAtan
 from numpy import pi as npPi
-from numpy.version import version as npVersion
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def linreg(
@@ -25,7 +24,7 @@ def linreg(
     offset = get_offset(offset)
     angle = kwargs.pop("angle", False)
     intercept = kwargs.pop("intercept", False)
-    degrees = kwargs.pop("degrees", False)
+    degrees = kwargs.pop("degrees", True)
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
@@ -33,89 +32,59 @@ def linreg(
     if close is None:
         return None
 
-    # Calculate Result
-    x = range(1, length + 1)  # [1, 2, ..., n] from 1 to n keeps Sum(xy) low
-    x_sum = 0.5 * length * (length + 1)
-    x2_sum = x_sum * (2 * length + 1) / 3
+    # Calculate Result — fully vectorised OLS over all windows at once.
+    # x = [0, 1, ..., L-1] matches TA-Lib convention; precompute scalar sums.
+    x_arr = np.arange(length, dtype=float)
+    x_sum = 0.5 * length * (length - 1)
+    x2_sum = length * (length - 1) * (2 * length - 1) / 6
     divisor = length * x2_sum - x_sum * x_sum
 
-    def linear_regression(series: Any) -> Any:
-        y_sum = series.sum()
-        xy_sum = (x * series).sum()
+    from numpy.lib.stride_tricks import sliding_window_view
 
-        m = (length * xy_sum - x_sum * y_sum) / divisor
-        if slope:
-            return m
-        b = (y_sum * x2_sum - x_sum * xy_sum) / divisor
+    windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
+    # Each row: [close[k], ..., close[k+L-1]] — oldest first, matching x_arr ordering.
+    y_sums = windows.sum(axis=1)  # (n-L+1,)
+    xy_sums = (windows * x_arr).sum(axis=1)  # (n-L+1,)
+    m_slopes = (length * xy_sums - x_sum * y_sums) / divisor
+
+    if slope:
+        linreg_ = m_slopes
+    else:
+        bs = (y_sums * x2_sum - x_sum * xy_sums) / divisor
         if intercept:
-            return b
-
-        if angle:
-            theta = npAtan(m)
+            linreg_ = bs
+        elif angle:
+            theta = npAtan(m_slopes)
             if degrees:
                 theta *= 180 / npPi
-            return theta
+            linreg_ = theta
+        elif r:
+            y2_sums = (windows * windows).sum(axis=1)
+            rn = length * xy_sums - x_sum * y_sums
+            rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
+            linreg_ = rn / rd
+        elif tsf:
+            linreg_ = m_slopes * length + bs
+        else:
+            linreg_ = m_slopes * (length - 1) + bs
 
-        if r:
-            y2_sum = (series * series).sum()
-            rn = length * xy_sum - x_sum * y_sum
-            rd = (divisor * (length * y2_sum - y_sum * y_sum)) ** 0.5
-            return rn / rd
+    linreg = Series(
+        np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
+    )
 
-        return m * length + b if tsf else m * (length - 1) + b
-
-    def rolling_window(array: Any, length: int) -> Any:
-        """https://github.com/twopirllc/pandas-ta/issues/285"""
-        strides = array.strides + (array.strides[-1],)
-        shape = array.shape[:-1] + (array.shape[-1] - length + 1, length)
-        return as_strided(array, shape=shape, strides=strides)
-
-    if npVersion >= "1.20.0":
-        from numpy.lib.stride_tricks import sliding_window_view
-
-        linreg_ = [
-            linear_regression(_) for _ in sliding_window_view(npArray(close), length)
-        ]
-    else:
-        from numpy.lib.stride_tricks import as_strided
-
-        linreg_ = [linear_regression(_) for _ in rolling_window(npArray(close), length)]
-
-    linreg = Series([npNaN] * (length - 1) + linreg_, index=close.index)
-
-    # Offset
-    if offset != 0:
-        linreg = linreg.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        linreg.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                linreg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                linreg.bfill(inplace=True)
-
-    # Name and Categorize it
-    linreg.name = f"LR"
+    # Build name
+    name = "LR"
     if slope:
-        linreg.name += "m"
+        name += "m"
     if intercept:
-        linreg.name += "b"
+        name += "b"
     if angle:
-        linreg.name += "a"
+        name += "a"
     if r:
-        linreg.name += "r"
+        name += "r"
+    name += f"_{length}"
 
-    linreg.name += f"_{length}"
-    linreg.category = "overlap"
-
-    return linreg
+    return _finalize(linreg, offset, name, "overlap", **kwargs)
 
 
 linreg.__doc__ = """Linear Regression Moving Average (linreg)
@@ -129,9 +98,9 @@ Source: TA Lib
 Calculation:
     Default Inputs:
         length=14
-    x = [1, 2, ..., n]
-    x_sum = 0.5 * length * (length + 1)
-    x2_sum = length * (length + 1) * (2 * length + 1) / 6
+    x = [0, 1, ..., n-1]  (matches TA-Lib convention)
+    x_sum = 0.5 * length * (length - 1)
+    x2_sum = length * (length - 1) * (2 * length - 1) / 6
     divisor = length * x2_sum - x_sum * x_sum
 
     lr(series):
@@ -151,10 +120,10 @@ Args:
     offset (int): How many periods to offset the result.  Default: 0
 
 Kwargs:
-    angle (bool, optional): If True, returns the angle of the slope in radians.
+    angle (bool, optional): If True, returns the angle of the slope.
         Default: False.
-    degrees (bool, optional): If True, returns the angle of the slope in
-        degrees. Default: False.
+    degrees (bool, optional): If True, returns the angle in degrees;
+        if False, in radians. Default: True (matches TA-Lib convention).
     intercept (bool, optional): If True, returns the angle of the slope in
         radians. Default: False.
     r (bool, optional): If True, returns it's correlation 'r'. Default: False.

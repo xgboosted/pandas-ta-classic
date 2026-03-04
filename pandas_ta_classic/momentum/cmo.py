@@ -1,10 +1,15 @@
-# -*- coding: utf-8 -*-
 # Chande Momentum Oscillator (CMO)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def cmo(
@@ -23,7 +28,7 @@ def cmo(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -35,41 +40,16 @@ def cmo(
         cmo = CMO(close, length)
     else:
         mom = close.diff(drift)
-        positive = mom.copy().clip(lower=0)
-        negative = mom.copy().clip(upper=0).abs()
+        positive = mom.clip(lower=0)
+        negative = mom.clip(upper=0).abs()
 
-        if mode_tal:
-            pos_ = rma(positive, length)
-            neg_ = rma(negative, length)
-        else:
-            pos_ = positive.rolling(length).sum()
-            neg_ = negative.rolling(length).sum()
+        # Use RMA (Wilder smoothing) to match TA-Lib's CMO algorithm.
+        pos_ = rma(positive, length)
+        neg_ = rma(negative, length)
 
         cmo = scalar * (pos_ - neg_) / (pos_ + neg_)
 
-    # Offset
-    if offset != 0:
-        cmo = cmo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cmo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cmo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cmo.bfill(inplace=True)
-
-    # Name and Categorize it
-    cmo.name = f"CMO_{length}"
-    cmo.category = "momentum"
-
-    return cmo
+    return _finalize(cmo, offset, f"CMO_{length}", "momentum", **kwargs)
 
 
 cmo.__doc__ = """Chande Momentum Oscillator (CMO)
@@ -85,8 +65,13 @@ Calculation:
     Default Inputs:
         drift=1, scalar=100
 
-    # Same Calculation as RSI except for this step
-    CMO = scalar * (PSUM - NSUM) / (PSUM + NSUM)
+    MOM  = close.diff(drift)
+    POS  = RMA(MOM.clip(lower=0), length)
+    NEG  = RMA(ABS(MOM.clip(upper=0)), length)
+    CMO  = scalar * (POS - NEG) / (POS + NEG)
+
+    Note: Uses Wilder's RMA smoothing (same as TA-Lib) rather than
+    a simple rolling sum, which some textbooks describe.
 
 Args:
     close (pd.Series): Series of 'close's

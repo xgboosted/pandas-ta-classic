@@ -1,10 +1,16 @@
-# -*- coding: utf-8 -*-
 # Moving Average Convergence Divergence (MACD)
 from typing import Any, Optional
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series, signals
+from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    signals,
+    verify_series,
+)
 
 
 def macd(
@@ -12,6 +18,7 @@ def macd(
     fast: Optional[int] = None,
     slow: Optional[int] = None,
     signal: Optional[int] = None,
+    mamode: Optional[str] = None,
     talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
@@ -21,11 +28,11 @@ def macd(
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     signal = int(signal) if signal and signal > 0 else 9
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
+    mamode = mamode.lower() if isinstance(mamode, str) else "ema"
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -33,76 +40,55 @@ def macd(
     as_mode = kwargs.setdefault("asmode", False)
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    # TA-Lib MACD only supports EMA; use native path for other mamodes
+    if Imports["talib"] and mode_tal and mamode == "ema":
         from talib import MACD
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
+    elif mamode == "ema":
+        # TA-Lib-compatible EMA: align fast seed to slow start point
+        import numpy as np
+        from pandas_ta_classic.utils._numba import _ema_aligned
+
+        c_arr = close.to_numpy(dtype=float)
+        m = c_arr.shape[0]
+        slow_start = slow - 1  # first bar for slow EMA
+        slow_ema = _ema_aligned(c_arr, m, slow, slow_start)
+        fast_ema = _ema_aligned(c_arr, m, fast, slow_start)
+        macd_arr = fast_ema - slow_ema
+        sig_start = slow_start + signal - 1
+        sig_ema = _ema_aligned(macd_arr, m, signal, sig_start)
+
+        macd = Series(macd_arr, index=close.index)
+        signalma = Series(sig_ema, index=close.index)
+        histogram = macd - signalma
     else:
-        fastma = ema(close, length=fast)
-        slowma = ema(close, length=slow)
+        fastma = ma(mamode, close, length=fast)
+        slowma = ma(mamode, close, length=slow)
 
         macd = fastma - slowma
-        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        signalma = ma(mamode, macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
     if as_mode:
         macd = macd - signalma
-        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        signalma = ma(mamode, macd.loc[macd.first_valid_index() :,], length=signal)
         histogram = macd - signalma
 
-    # Offset
-    if offset != 0:
-        macd = macd.shift(offset)
-        histogram = histogram.shift(offset)
-        signalma = signalma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        macd.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                macd.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                macd.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                histogram.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                histogram.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _asmode = "AS" if as_mode else ""
     _props = f"_{fast}_{slow}_{signal}"
-    macd.name = f"MACD{_asmode}{_props}"
-    histogram.name = f"MACD{_asmode}h{_props}"
-    signalma.name = f"MACD{_asmode}s{_props}"
-    macd.category = histogram.category = signalma.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {macd.name: macd, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"MACD{_asmode}{_props}"
-    df.category = macd.category
+    df = _build_dataframe(
+        {
+            f"MACD{_asmode}{_props}": macd,
+            f"MACD{_asmode}h{_props}": histogram,
+            f"MACD{_asmode}s{_props}": signalma,
+        },
+        f"MACD{_asmode}{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:
@@ -151,6 +137,13 @@ Sources:
     https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)
     AS Mode: https://tr.tradingview.com/script/YFlKXHnP/
 
+TA-Lib note:
+    TA-Lib's MACD() uses an internal EMA warmup convention that differs
+    from its standalone EMA() function, causing the native output to
+    start ~8 bars earlier and the signal line to diverge by up to ~0.15
+    in absolute terms (corr > 0.999). This is a TA-Lib implementation
+    detail, not a bug in this library.
+
 Calculation:
     Default Inputs:
         fast=12, slow=26, signal=9
@@ -169,6 +162,9 @@ Args:
     fast (int): The short period. Default: 12
     slow (int): The long period. Default: 26
     signal (int): The signal period. Default: 9
+    mamode (str): See ``help(ta.ma)``. Default: 'ema'
+        When set to a value other than 'ema', the native calculation is used
+        regardless of the talib flag (MACDEXT behaviour).
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

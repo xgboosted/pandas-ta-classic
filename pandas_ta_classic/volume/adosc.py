@@ -5,7 +5,7 @@ from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def adosc(
@@ -32,7 +32,7 @@ def adosc(
     offset = get_offset(offset)
     if "length" in kwargs:
         kwargs.pop("length")
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None or volume is None:
         return None
@@ -43,34 +43,25 @@ def adosc(
 
         adosc = ADOSC(high, low, close, volume, fast, slow)
     else:
+        import numpy as np
+
         ad_ = ad(high=high, low=low, close=close, volume=volume, open_=open_)
-        fast_ad = ema(close=ad_, length=fast, **kwargs)
-        slow_ad = ema(close=ad_, length=slow, **kwargs)
-        adosc = fast_ad - slow_ad
+        ad_arr = ad_.to_numpy(dtype=float)
+        m = ad_arr.shape[0]
+        # TA-Lib seeds both EMAs with AD[0] (no SMA seed)
+        fastk = 2.0 / (fast + 1)
+        slowk = 2.0 / (slow + 1)
+        fast_ema = ad_arr[0]
+        slow_ema = ad_arr[0]
+        result = np.full(m, np.nan)
+        for i in range(1, m):
+            fast_ema = fastk * ad_arr[i] + (1 - fastk) * fast_ema
+            slow_ema = slowk * ad_arr[i] + (1 - slowk) * slow_ema
+            if i >= slow - 1:
+                result[i] = fast_ema - slow_ema
+        adosc = Series(result, index=close.index)
 
-    # Offset
-    if offset != 0:
-        adosc = adosc.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        adosc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                adosc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                adosc.bfill(inplace=True)
-
-    # Name and Categorize it
-    adosc.name = f"ADOSC_{fast}_{slow}"
-    adosc.category = "volume"
-
-    return adosc
+    return _finalize(adosc, offset, f"ADOSC_{fast}_{slow}", "volume", **kwargs)
 
 
 adosc.__doc__ = """Accumulation/Distribution Oscillator or Chaikin Oscillator
@@ -84,7 +75,7 @@ Sources:
 
 Calculation:
     Default Inputs:
-        fast=12, slow=26
+        fast=3, slow=10
     AD = Accum/Dist
     ad = AD(high, low, close, open)
     fast_ad = EMA(ad, fast)

@@ -4,8 +4,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series, zero
 
 
 def psar(
@@ -27,139 +26,58 @@ def psar(
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
 
+    if high is None or low is None:
+        return None
+
     def _falling(high: Series, low: Series, drift: int = 1) -> bool:
-        """Returns the last -DM value"""
-        # Not to be confused with ta.falling()
+        """Returns True if MINUS_DM > 0 (TA-Lib convention)."""
         up = high - high.shift(drift)
         dn = low.shift(drift) - low
         _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
         return _dmn > 0
 
-    # Falling if the first NaN -DM is positive
-    falling = _falling(high.iloc[:2], low.iloc[:2])
+    # Initial direction via MINUS_DM (matches TA-Lib SAR)
+    falling = _falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if falling:
         sar = high.iloc[0]
-        ep = low.iloc[0]
+        ep = low.iloc[1] if len(low) > 1 else low.iloc[0]
     else:
         sar = low.iloc[0]
-        ep = high.iloc[0]
+        ep = high.iloc[1] if len(high) > 1 else high.iloc[0]
 
     if close is not None:
         close = verify_series(close)
         sar = close.iloc[0]
 
-    long = Series(npNaN, index=high.index)
-    short = long.copy()
-    reversal = Series(0, index=high.index)
-    _af = long.copy()
-    _af.iloc[0:2] = af0
+    from pandas_ta_classic.utils._numba import _psar_loop
 
-    # Calculate Result
-    m = high.shape[0]
-    for row in range(1, m):
-        high_ = high.iloc[row]
-        low_ = low.iloc[row]
+    h_arr = high.to_numpy()
+    l_arr = low.to_numpy()
+    m = h_arr.shape[0]
 
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = high_ > _sar
+    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
+        h_arr, l_arr, m, falling, sar, ep, af0, max_af
+    )
 
-            if low_ < ep:
-                ep = low_
-                af = min(af + af0, max_af)
+    long = Series(long_arr, index=high.index)
+    short = Series(short_arr, index=high.index)
+    reversal = Series(reversal_arr, index=high.index)
+    _af = Series(af_arr, index=high.index)
 
-            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
-        else:
-            _sar = sar + af * (ep - sar)
-            reverse = low_ < _sar
-
-            if high_ > ep:
-                ep = high_
-                af = min(af + af0, max_af)
-
-            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
-
-        if reverse:
-            _sar = ep
-            af = af0
-            falling = not falling  # Must come before next line
-            ep = low_ if falling else high_
-
-        sar = _sar  # Update SAR
-
-        # Seperate long/short sar based on falling
-        if falling:
-            short.iloc[row] = sar
-        else:
-            long.iloc[row] = sar
-
-        _af.iloc[row] = af
-        reversal.iloc[row] = int(reverse)
-
-    # Offset
-    if offset != 0:
-        _af = _af.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
-        reversal = reversal.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        _af.fillna(kwargs["fillna"], inplace=True)
-        long.fillna(kwargs["fillna"], inplace=True)
-        short.fillna(kwargs["fillna"], inplace=True)
-        reversal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                _af.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                _af.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                reversal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                reversal.bfill(inplace=True)
-
-    # Prepare DataFrame to return
+    # Offset, Name and Categorize it
     _params = f"_{af0}_{max_af}"
-    data = {
-        f"PSARl{_params}": long,
-        f"PSARs{_params}": short,
-        f"PSARaf{_params}": _af,
-        f"PSARr{_params}": reversal,
-    }
-    psardf = DataFrame(data)
-    psardf.name = f"PSAR{_params}"
-    psardf.category = long.category = short.category = "trend"
-
-    return psardf
+    return _build_dataframe(
+        {
+            f"PSARl{_params}": long,
+            f"PSARs{_params}": short,
+            f"PSARaf{_params}": _af,
+            f"PSARr{_params}": reversal,
+        },
+        f"PSAR{_params}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 psar.__doc__ = """Parabolic Stop and Reverse (psar)

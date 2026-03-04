@@ -5,7 +5,7 @@ from numpy import sqrt as npsqrt
 from pandas import Series
 from .variance import variance
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def stdev(
@@ -19,10 +19,10 @@ def stdev(
     """Indicator: Standard Deviation"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 1
+    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 0
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -33,31 +33,12 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        stdev = variance(close=close, length=length, ddof=ddof).apply(npsqrt)
+        var = variance(close=close, length=length, ddof=ddof, talib=False)
+        if var is None:
+            return None
+        stdev = npsqrt(var)
 
-    # Offset
-    if offset != 0:
-        stdev = stdev.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        stdev.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stdev.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stdev.bfill(inplace=True)
-
-    # Name & Category
-    stdev.name = f"STDEV_{length}"
-    stdev.category = "statistics"
-
-    return stdev
+    return _finalize(stdev, offset, f"STDEV_{length}", "statistics", **kwargs)
 
 
 stdev.__doc__ = """Rolling Standard Deviation
@@ -72,10 +53,11 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 30
+    length (int): It's period. Default: 30 (TA-Lib default: 5)
     ddof (int): Delta Degrees of Freedom.
                 The divisor used in calculations is N - ddof,
-                where N represents the number of elements. Default: 1
+                where N represents the number of elements. Default: 0
+                (population std dev, matches TA-Lib)
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

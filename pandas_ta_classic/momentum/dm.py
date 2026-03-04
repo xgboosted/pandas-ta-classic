@@ -1,10 +1,16 @@
-# -*- coding: utf-8 -*-
 # Directional Movement (DM)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series, get_drift, zero
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+    zero,
+)
 
 
 def dm(
@@ -25,7 +31,7 @@ def dm(
     low = verify_series(low)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None:
         return None
@@ -42,31 +48,25 @@ def dm(
         pos_ = ((up > dn) & (up > 0)) * up
         neg_ = ((dn > up) & (dn > 0)) * dn
 
-        pos_ = pos_.apply(zero)
-        neg_ = neg_.apply(zero)
+        pos_ = pos_.apply(zero).fillna(0)
+        neg_ = neg_.apply(zero).fillna(0)
 
-        # Not the same values as TA Lib's -+DM (Good First Issue)
-        pos = ma(mamode, pos_, length=length)
-        neg = ma(mamode, neg_, length=length)
+        # TA-Lib outputs the Wilder-smoothed *sum* (not average), so
+        # we multiply the RMA (average) by ``length`` to match.
+        pos = ma(mamode, pos_, length=length) * length
+        neg = ma(mamode, neg_, length=length) * length
+        if pos is None or neg is None:
+            return None
 
-    # Offset
-    if offset != 0:
-        pos = pos.shift(offset)
-        neg = neg.shift(offset)
-
+    # Offset + Name + Category + DataFrame
     _params = f"_{length}"
-    data = {
-        f"DMP{_params}": pos,
-        f"DMN{_params}": neg,
-    }
-
-    dmdf = DataFrame(data)
-    # print(dmdf.head(20))
-    # print()
-    dmdf.name = f"DM{_params}"
-    dmdf.category = "trend"
-
-    return dmdf
+    return _build_dataframe(
+        {f"DMP{_params}": pos, f"DMN{_params}": neg},
+        f"DM{_params}",
+        "trend",
+        offset,
+        **kwargs,
+    )
 
 
 dm.__doc__ = """Directional Movement (DM)
