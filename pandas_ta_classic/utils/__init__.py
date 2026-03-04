@@ -14,4 +14,5 @@ from ._math import *
 from ._signals import *
 from ._time import *
 from ._metrics import *
+from ._numba import *
 from .data import *

@@ -225,6 +225,7 @@ module = [
     "pandas_ta_classic.overlap.dema",
     "pandas_ta_classic.momentum.macd",
     "pandas_ta_classic.momentum.dm",
+    "pandas_ta_classic.utils._numba",
 ]
 # Under numpy 2.0 + Python 3.9, numpy stubs type arithmetic results as
 # ndarray[Any, dtype[floating[_64Bit]]] precisely, causing false-positive
