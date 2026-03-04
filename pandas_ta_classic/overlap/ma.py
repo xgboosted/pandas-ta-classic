@@ -8,6 +8,7 @@ from .ema import ema
 from .fwma import fwma
 from .hma import hma
 from .linreg import linreg
+from .mama import mama
 from .midpoint import midpoint
 from .pwma import pwma
 from .rma import rma
@@ -27,6 +28,7 @@ _MA_DISPATCH = {
     "fwma": fwma,
     "hma": hma,
     "linreg": linreg,
+    "mama": mama,
     "midpoint": midpoint,
     "pwma": pwma,
     "rma": rma,

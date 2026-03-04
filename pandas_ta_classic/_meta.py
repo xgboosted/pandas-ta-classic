@@ -100,6 +100,36 @@ def _build_category_dict():
                 # Remove .py extension to get the indicator name
                 indicators.append(file_path.stem)
 
+        # If __all__ is defined in the category __init__.py, restrict to
+        # only the indicators that are actually exported. This prevents
+        # filesystem-only files from appearing in Category before core.py
+        # has wrapper methods for them.
+        init_file = category_path / "__init__.py"
+        if init_file.exists():
+            import ast
+
+            try:
+                tree = ast.parse(init_file.read_text(encoding="utf-8"))
+                for node in ast.walk(tree):
+                    if (
+                        isinstance(node, ast.Assign)
+                        and any(
+                            isinstance(t, ast.Name) and t.id == "__all__"
+                            for t in node.targets
+                        )
+                        and isinstance(node.value, ast.List)
+                    ):
+                        exported = {
+                            elt.value
+                            for elt in node.value.elts
+                            if isinstance(elt, (ast.Constant, ast.Str))
+                        }
+                        if exported:
+                            indicators = [i for i in indicators if i in exported]
+                        break
+            except (SyntaxError, UnicodeDecodeError):
+                pass
+
         # Sort indicators alphabetically for consistency
         if indicators:
             categories[category_name] = sorted(indicators)
