@@ -1,10 +1,13 @@
-# -*- coding: utf-8 -*-
 # Stochastic Momentum Index (SMI)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .tsi import tsi
-from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def smi(
@@ -21,8 +24,7 @@ def smi(
     fast = int(fast) if fast and fast > 0 else 5
     slow = int(slow) if slow and slow > 0 else 20
     signal = int(signal) if signal and signal > 0 else 5
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     scalar = float(scalar) if scalar else 1
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
@@ -36,61 +38,16 @@ def smi(
     signalma = tsi_df.iloc[:, 1]
     osc = smi - signalma
 
-    # Offset
-    if offset != 0:
-        smi = smi.shift(offset)
-        signalma = signalma.shift(offset)
-        osc = osc.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        smi.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-        osc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                smi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                smi.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                osc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                osc.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _scalar = f"_{scalar}" if scalar != 1 else ""
     _props = f"_{fast}_{slow}_{signal}{_scalar}"
-    smi.name = f"SMI{_props}"
-    signalma.name = f"SMIs{_props}"
-    osc.name = f"SMIo{_props}"
-    smi.category = signalma.category = osc.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {smi.name: smi, signalma.name: signalma, osc.name: osc}
-    df = DataFrame(data)
-    df.name = f"SMI{_props}"
-    df.category = smi.category
-
-    return df
+    return _build_dataframe(
+        {f"SMI{_props}": smi, f"SMIs{_props}": signalma, f"SMIo{_props}": osc},
+        f"SMI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 smi.__doc__ = """SMI Ergodic Indicator (SMI)

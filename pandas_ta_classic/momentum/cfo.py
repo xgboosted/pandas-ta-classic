@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Chande Forecast Oscillator (CFO)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def cfo(
@@ -29,29 +28,7 @@ def cfo(
     cfo = scalar * (close - linreg(close, length=length, tsf=True))
     cfo /= close
 
-    # Offset
-    if offset != 0:
-        cfo = cfo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cfo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cfo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cfo.bfill(inplace=True)
-
-    # Name and Categorize it
-    cfo.name = f"CFO_{length}"
-    cfo.category = "momentum"
-
-    return cfo
+    return _finalize(cfo, offset, f"CFO_{length}", "momentum", **kwargs)
 
 
 cfo.__doc__ = """Chande Forcast Oscillator (CFO)

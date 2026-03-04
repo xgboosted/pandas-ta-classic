@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
 # Williams %R (WILLR)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _get_min_periods,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def willr(
@@ -18,17 +23,13 @@ def willr(
     """Indicator: William's Percent R (WILLR)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = _get_min_periods(kwargs, length)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None
@@ -44,29 +45,7 @@ def willr(
 
         willr = 100 * ((close - lowest_low) / (highest_high - lowest_low) - 1)
 
-    # Offset
-    if offset != 0:
-        willr = willr.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        willr.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                willr.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                willr.bfill(inplace=True)
-
-    # Name and Categorize it
-    willr.name = f"WILLR_{length}"
-    willr.category = "momentum"
-
-    return willr
+    return _finalize(willr, offset, f"WILLR_{length}", "momentum", **kwargs)
 
 
 willr.__doc__ = """William's Percent R (WILLR)

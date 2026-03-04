@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Squeeze (SQUEEZE)
 from typing import Any, Optional
 import numpy as np
@@ -11,8 +10,13 @@ from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.trend import decreasing, increasing
 from pandas_ta_classic.volatility import bbands, kc
-from pandas_ta_classic.utils import get_offset
-from pandas_ta_classic.utils import unsigned_differences, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    apply_offset,
+    get_offset,
+    unsigned_differences,
+    verify_series,
+)
 
 
 def squeeze(
@@ -86,166 +90,67 @@ def squeeze(
     squeeze_off = (bbd.l < kch.l) & (bbd.u > kch.u)
     no_squeeze = ~squeeze_on & ~squeeze_off
 
-    # Offset
-    if offset != 0:
-        squeeze = squeeze.shift(offset)
-        squeeze_on = squeeze_on.shift(offset)
-        squeeze_off = squeeze_off.shift(offset)
-        no_squeeze = no_squeeze.shift(offset)
+    # Convert bool flags to int before offset so NaN-safe shift works
+    if asint:
+        squeeze_on = squeeze_on.astype(int)
+        squeeze_off = squeeze_off.astype(int)
+        no_squeeze = no_squeeze.astype(int)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        squeeze.fillna(kwargs["fillna"], inplace=True)
-        squeeze_on.fillna(kwargs["fillna"], inplace=True)
-        squeeze_off.fillna(kwargs["fillna"], inplace=True)
-        no_squeeze.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                squeeze.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                squeeze.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                squeeze_on.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                squeeze_on.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                squeeze_off.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                squeeze_off.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                no_squeeze.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                no_squeeze.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = "" if use_tr else "hlr"
     _props += f"_{bb_length}_{bb_std}_{kc_length}_{kc_scalar}"
     _props += "_LB" if lazybear else ""
-    squeeze.name = f"SQZ{_props}"
 
-    data = {
-        squeeze.name: squeeze,
-        f"SQZ_ON": squeeze_on.astype(int) if asint else squeeze_on,
-        f"SQZ_OFF": squeeze_off.astype(int) if asint else squeeze_off,
-        f"SQZ_NO": no_squeeze.astype(int) if asint else no_squeeze,
-    }
-    df = DataFrame(data)
-    df.name = squeeze.name
-    df.category = squeeze.category = "momentum"
+    df = _build_dataframe(
+        {
+            f"SQZ{_props}": squeeze,
+            "SQZ_ON": squeeze_on,
+            "SQZ_OFF": squeeze_off,
+            "SQZ_NO": no_squeeze,
+        },
+        f"SQZ{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
     # Detailed Squeeze Series
     if detailed:
-        pos_squeeze = squeeze[squeeze >= 0]
-        neg_squeeze = squeeze[squeeze < 0]
+        sqz = df.iloc[:, 0]
+        pos_squeeze = sqz[sqz >= 0]
+        neg_squeeze = sqz[sqz < 0]
 
         pos_inc, pos_dec = unsigned_differences(pos_squeeze, asint=True)
         neg_inc, neg_dec = unsigned_differences(neg_squeeze, asint=True)
 
-        pos_inc *= squeeze
-        pos_dec *= squeeze
-        neg_dec *= squeeze
-        neg_inc *= squeeze
+        pos_inc *= sqz
+        pos_dec *= sqz
+        neg_dec *= sqz
+        neg_inc *= sqz
 
-        pos_inc.replace(0, npNaN, inplace=True)
-        pos_dec.replace(0, npNaN, inplace=True)
-        neg_dec.replace(0, npNaN, inplace=True)
-        neg_inc.replace(0, npNaN, inplace=True)
+        pos_inc = pos_inc.replace(0, npNaN)
+        pos_dec = pos_dec.replace(0, npNaN)
+        neg_dec = neg_dec.replace(0, npNaN)
+        neg_inc = neg_inc.replace(0, npNaN)
 
-        sqz_inc = squeeze * increasing(squeeze)
-        sqz_dec = squeeze * decreasing(squeeze)
-        sqz_inc.replace(0, npNaN, inplace=True)
-        sqz_dec.replace(0, npNaN, inplace=True)
+        sqz_inc = sqz * increasing(sqz)
+        sqz_dec = sqz * decreasing(sqz)
+        sqz_inc = sqz_inc.replace(0, npNaN)
+        sqz_dec = sqz_dec.replace(0, npNaN)
 
-        # Handle fills
-        if "fillna" in kwargs:
-            sqz_inc.fillna(kwargs["fillna"], inplace=True)
-            sqz_dec.fillna(kwargs["fillna"], inplace=True)
-            pos_inc.fillna(kwargs["fillna"], inplace=True)
-            pos_dec.fillna(kwargs["fillna"], inplace=True)
-            neg_dec.fillna(kwargs["fillna"], inplace=True)
-            neg_inc.fillna(kwargs["fillna"], inplace=True)
-        if "fill_method" in kwargs:
-            if "fill_method" in kwargs:
+        sqz_inc = apply_offset(sqz_inc, 0, **kwargs)
+        sqz_dec = apply_offset(sqz_dec, 0, **kwargs)
+        pos_inc = apply_offset(pos_inc, 0, **kwargs)
+        pos_dec = apply_offset(pos_dec, 0, **kwargs)
+        neg_dec = apply_offset(neg_dec, 0, **kwargs)
+        neg_inc = apply_offset(neg_inc, 0, **kwargs)
 
-                if kwargs["fill_method"] == "ffill":
-
-                    sqz_inc.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    sqz_inc.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    sqz_dec.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    sqz_dec.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    pos_inc.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    pos_inc.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    pos_dec.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    pos_dec.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    neg_dec.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    neg_dec.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    neg_inc.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    neg_inc.bfill(inplace=True)
-
-        df[f"SQZ_INC"] = sqz_inc
-        df[f"SQZ_DEC"] = sqz_dec
-        df[f"SQZ_PINC"] = pos_inc
-        df[f"SQZ_PDEC"] = pos_dec
-        df[f"SQZ_NDEC"] = neg_dec
-        df[f"SQZ_NINC"] = neg_inc
+        df["SQZ_INC"] = sqz_inc
+        df["SQZ_DEC"] = sqz_dec
+        df["SQZ_PINC"] = pos_inc
+        df["SQZ_PDEC"] = pos_dec
+        df["SQZ_NDEC"] = neg_dec
+        df["SQZ_NINC"] = neg_inc
 
     return df
 

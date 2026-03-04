@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
-# import numpy as np
 from typing import Any, Optional
-from numpy import where as npWhere
+
+import numpy as np
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def td_seq(
@@ -15,25 +15,26 @@ def td_seq(
     """Indicator: Tom Demark Sequential (TD_SEQ)"""
     # Validate arguments
     close = verify_series(close)
+    if close is None:
+        return None
     offset = get_offset(offset)
     asint = asint if isinstance(asint, bool) else False
     show_all = kwargs.setdefault("show_all", True)
 
-    def true_sequence_count(series: Series):
-        index = series.where(series == False).last_valid_index()
-
-        if index is None:
-            return series.count()
-        else:
-            s = series[series.index > index]
-            return s.count()
-
     def calc_td(series: Series, direction: str, show_all: bool):
-        td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
-        td_num = npWhere(
-            td_bool, td_bool.rolling(13, min_periods=0).apply(true_sequence_count), 0
-        )
-        td_num = Series(td_num)
+        bool_arr = (
+            (series.diff(4) > 0) if direction == "up" else (series.diff(4) < 0)
+        ).to_numpy()
+
+        # Vectorised consecutive-True streak, capped at 13 (equivalent to
+        # rolling(13, min_periods=0).apply(true_sequence_count))
+        n = len(bool_arr)
+        streak: np.ndarray = np.zeros(n, dtype=float)
+        for i in range(1, n):
+            if bool_arr[i]:
+                streak[i] = streak[i - 1] + 1 if streak[i - 1] < 13 else 13
+
+        td_num = Series(streak, index=series.index)
 
         if show_all:
             td_num = td_num.mask(td_num == 0)
@@ -47,44 +48,18 @@ def td_seq(
 
     if asint:
         if up_seq.hasnans and down_seq.hasnans:
-            up_seq.fillna(0, inplace=True)
-            down_seq.fillna(0, inplace=True)
+            up_seq = up_seq.fillna(0)
+            down_seq = down_seq.fillna(0)
         up_seq = up_seq.astype(int)
         down_seq = down_seq.astype(int)
 
     # Offset
-    if offset != 0:
-        up_seq = up_seq.shift(offset)
-        down_seq = down_seq.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        up_seq.fillna(kwargs["fillna"], inplace=True)
-        down_seq.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                up_seq.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                up_seq.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                down_seq.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                down_seq.bfill(inplace=True)
+    up_seq = apply_offset(up_seq, offset, **kwargs)
+    down_seq = apply_offset(down_seq, offset, **kwargs)
 
     # Name & Category
-    up_seq.name = f"TD_SEQ_UPa" if show_all else f"TD_SEQ_UP"
-    down_seq.name = f"TD_SEQ_DNa" if show_all else f"TD_SEQ_DN"
+    up_seq.name = "TD_SEQ_UPa" if show_all else "TD_SEQ_UP"
+    down_seq.name = "TD_SEQ_DNa" if show_all else "TD_SEQ_DN"
     up_seq.category = down_seq.category = "momentum"
 
     # Prepare Dataframe to return

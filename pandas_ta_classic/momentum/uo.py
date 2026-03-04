@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
 # Ultimate Oscillator (UO)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def uo(
@@ -35,7 +40,7 @@ def uo(
     close = verify_series(close, _length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None
@@ -65,22 +70,7 @@ def uo(
         uo = 100 * weights / total_weight
 
     # Offset
-    if offset != 0:
-        uo = uo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        uo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                uo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                uo.bfill(inplace=True)
+    uo = apply_offset(uo, offset, **kwargs)
 
     # Name and Categorize it
     uo.name = f"UO_{fast}_{medium}_{slow}"

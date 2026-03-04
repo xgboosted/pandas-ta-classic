@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 # Inertia (INERTIA)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.volatility import rvi
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def inertia(
-    close: Optional[Series] = None,
+    close: Series,
     high: Optional[Series] = None,
     low: Optional[Series] = None,
     length: Optional[int] = None,
@@ -26,8 +25,8 @@ def inertia(
     length = int(length) if length and length > 0 else 20
     rvi_length = int(rvi_length) if rvi_length and rvi_length > 0 else 14
     scalar = float(scalar) if scalar and scalar > 0 else 100
-    refined = False if refined is None else True
-    thirds = False if thirds is None else True
+    refined = refined is not None
+    thirds = thirds is not None
     mamode = mamode if isinstance(mamode, str) else "ema"
     _length = max(length, rvi_length)
     close = verify_series(close, _length)
@@ -69,30 +68,8 @@ def inertia(
 
     inertia = linreg(rvi_, length=length)
 
-    # Offset
-    if offset != 0:
-        inertia = inertia.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        inertia.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                inertia.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                inertia.bfill(inplace=True)
-
-    # Name & Category
     _props = f"_{length}_{rvi_length}"
-    inertia.name = f"INERTIA{_mode}{_props}"
-    inertia.category = "momentum"
-
-    return inertia
+    return _finalize(inertia, offset, f"INERTIA{_mode}{_props}", "momentum", **kwargs)
 
 
 inertia.__doc__ = """Inertia (INERTIA)

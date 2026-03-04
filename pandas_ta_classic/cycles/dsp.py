@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Detrended Synthetic Price (DSP)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def dsp(
@@ -28,24 +27,7 @@ def dsp(
     # Detrend by subtracting EMA
     dsp = close - ema_value
 
-    # Offset
-    if offset != 0:
-        dsp = dsp.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        dsp.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            dsp.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            dsp.bfill(inplace=True)
-
-    # Name and Categorize it
-    dsp.name = f"DSP_{length}"
-    dsp.category = "cycles"
-
-    return dsp
+    return _finalize(dsp, offset, f"DSP_{length}", "cycles", **kwargs)
 
 
 dsp.__doc__ = """Detrended Synthetic Price (DSP)

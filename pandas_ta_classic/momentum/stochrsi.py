@@ -1,10 +1,14 @@
-# -*- coding: utf-8 -*-
 # Stochastic RSI (STOCHRSI)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stochrsi(
@@ -39,51 +43,21 @@ def stochrsi(
     stoch /= non_zero_range(highest_rsi, lowest_rsi)
 
     stochrsi_k = ma(mamode, stoch, length=k)
+    if stochrsi_k is None:
+        return None
     stochrsi_d = ma(mamode, stochrsi_k, length=d)
+    if stochrsi_d is None:
+        return None
 
-    # Offset
-    if offset != 0:
-        stochrsi_k = stochrsi_k.shift(offset)
-        stochrsi_d = stochrsi_d.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        stochrsi_k.fillna(kwargs["fillna"], inplace=True)
-        stochrsi_d.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stochrsi_k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stochrsi_k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stochrsi_d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stochrsi_d.bfill(inplace=True)
-
-    # Name and Categorize it
-    _name = "STOCHRSI"
+    # Offset + Name + Category + DataFrame
     _props = f"_{length}_{rsi_length}_{k}_{d}"
-    stochrsi_k.name = f"{_name}k{_props}"
-    stochrsi_d.name = f"{_name}d{_props}"
-    stochrsi_k.category = stochrsi_d.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stochrsi_k.name: stochrsi_k, stochrsi_d.name: stochrsi_d}
-    df = DataFrame(data)
-    df.name = f"{_name}{_props}"
-    df.category = stochrsi_k.category
-
-    return df
+    return _build_dataframe(
+        {f"STOCHRSIk{_props}": stochrsi_k, f"STOCHRSId{_props}": stochrsi_d},
+        f"STOCHRSI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 stochrsi.__doc__ = """Stochastic (STOCHRSI)
@@ -104,22 +78,30 @@ Calculation:
     RSI = Relative Strength Index
     SMA = Simple Moving Average
 
-    RSI = RSI(high, low, close, rsi_length)
-    LL  = lowest RSI for last rsi_length periods
-    HH  = highest RSI for last rsi_length periods
+    RSI = RSI(close, rsi_length)
+    LL  = lowest RSI for last ``length`` periods
+    HH  = highest RSI for last ``length`` periods
 
     STOCHRSI  = 100 * (RSI - LL) / (HH - LL)
     STOCHRSIk = SMA(STOCHRSI, k)
     STOCHRSId = SMA(STOCHRSIk, d)
 
+TA-Lib parameter mapping:
+    TA-Lib STOCHRSI(timeperiod, fastk_period, fastd_period, fastd_matype)
+    timeperiod  -> rsi_length  (RSI lookback)
+    fastk_period -> length     (stochastic lookback for min/max)
+    fastd_period -> k          (smoothing of %K)
+    Note: TA-Lib's FastK is the *raw* stochastic (unsmoothed);
+    this library's %K is already SMA-smoothed, so it corresponds
+    to TA-Lib's FastD, not FastK.
+
 Args:
-    high (pd.Series): Series of 'high's
-    low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): The STOCHRSI period. Default: 14
+    length (int): The stochastic lookback period (min/max window).
+        Default: 14 (TA-Lib default: fastk_period=5)
     rsi_length (int): RSI period. Default: 14
-    k (int): The Fast %K period. Default: 3
-    d (int): The Slow %K period. Default: 3
+    k (int): SMA smoothing period for %K. Default: 3
+    d (int): SMA smoothing period for %D. Default: 3
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0
 

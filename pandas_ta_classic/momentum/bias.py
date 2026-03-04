@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Bias (BIAS)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def bias(
@@ -25,31 +24,11 @@ def bias(
 
     # Calculate Result
     bma = ma(mamode, close, length=length, **kwargs)
+    if bma is None:
+        return None
     bias = (close / bma) - 1
 
-    # Offset
-    if offset != 0:
-        bias = bias.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        bias.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bias.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bias.bfill(inplace=True)
-
-    # Name and Categorize it
-    bias.name = f"BIAS_{bma.name}"
-    bias.category = "momentum"
-
-    return bias
+    return _finalize(bias, offset, f"BIAS_{bma.name}", "momentum", **kwargs)
 
 
 bias.__doc__ = """Bias (BIAS)

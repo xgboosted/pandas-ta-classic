@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 # Coppock Curve (COPC)
 from typing import Any, Optional
 from pandas import Series
 from .roc import roc
 from pandas_ta_classic.overlap.wma import wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def coppock(
@@ -30,29 +29,9 @@ def coppock(
     total_roc = roc(close, fast) + roc(close, slow)
     coppock = wma(total_roc, length)
 
-    # Offset
-    if offset != 0:
-        coppock = coppock.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        coppock.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                coppock.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                coppock.bfill(inplace=True)
-
-    # Name and Categorize it
-    coppock.name = f"COPC_{fast}_{slow}_{length}"
-    coppock.category = "momentum"
-
-    return coppock
+    return _finalize(
+        coppock, offset, f"COPC_{fast}_{slow}_{length}", "momentum", **kwargs
+    )
 
 
 coppock.__doc__ = """Coppock Curve (COPC)

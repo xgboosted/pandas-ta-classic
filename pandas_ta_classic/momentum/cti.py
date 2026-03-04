@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Correlation Trend Indicator (CTI)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def cti(
@@ -22,27 +21,7 @@ def cti(
 
     cti = linreg(close, length=length, r=True)
 
-    # Offset
-    if offset != 0:
-        cti = cti.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cti.fillna(method=kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cti.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cti.bfill(inplace=True)
-
-    cti.name = f"CTI_{length}"
-    cti.category = "momentum"
-    return cti
+    return _finalize(cti, offset, f"CTI_{length}", "momentum", **kwargs)
 
 
 cti.__doc__ = """Correlation Trend Indicator (CTI)

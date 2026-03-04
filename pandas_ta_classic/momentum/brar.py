@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 # BRAR (Bull and Bear Ratio)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def brar(
@@ -20,8 +25,6 @@ def brar(
     # Validate Arguments
     length = int(length) if length and length > 0 else 26
     scalar = float(scalar) if scalar else 100
-    high_open_range = non_zero_range(high, open_)
-    open_low_range = non_zero_range(open_, low)
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)
@@ -31,6 +34,9 @@ def brar(
 
     if open_ is None or high is None or low is None or close is None:
         return None
+
+    high_open_range = non_zero_range(high, open_)
+    open_low_range = non_zero_range(open_, low)
 
     # Calculate Result
     hcy = non_zero_range(high, close.shift(drift))
@@ -45,47 +51,15 @@ def brar(
     br = scalar * hcy.rolling(length).sum()
     br /= cyl.rolling(length).sum()
 
-    # Offset
-    if offset != 0:
-        ar = ar.shift(offset)
-        br = ar.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ar.fillna(kwargs["fillna"], inplace=True)
-        br.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ar.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ar.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                br.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                br.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{length}"
-    ar.name = f"AR{_props}"
-    br.name = f"BR{_props}"
-    ar.category = br.category = "momentum"
-
-    # Prepare DataFrame to return
-    brardf = DataFrame({ar.name: ar, br.name: br})
-    brardf.name = f"BRAR{_props}"
-    brardf.category = "momentum"
-
-    return brardf
+    return _build_dataframe(
+        {f"AR{_props}": ar, f"BR{_props}": br},
+        f"BRAR{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 brar.__doc__ = """BRAR (BRAR)

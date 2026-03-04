@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # TRIX (TRIX)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def trix(
@@ -31,50 +35,19 @@ def trix(
     ema1 = ema(close=close, length=length, **kwargs)
     ema2 = ema(close=ema1, length=length, **kwargs)
     ema3 = ema(close=ema2, length=length, **kwargs)
-    trix = scalar * ema3.pct_change(drift)
+    trix = scalar * (ema3 / ema3.shift(drift) - 1)
 
     trix_signal = trix.rolling(signal).mean()
 
-    # Offset
-    if offset != 0:
-        trix = trix.shift(offset)
-        trix_signal = trix_signal.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        trix.fillna(kwargs["fillna"], inplace=True)
-        trix_signal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                trix.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                trix.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                trix_signal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                trix_signal.bfill(inplace=True)
-
-    # Name & Category
-    trix.name = f"TRIX_{length}_{signal}"
-    trix_signal.name = f"TRIXs_{length}_{signal}"
-    trix.category = trix_signal.category = "momentum"
-
-    # Prepare DataFrame to return
-    df = DataFrame({trix.name: trix, trix_signal.name: trix_signal})
-    df.name = f"TRIX_{length}_{signal}"
-    df.category = "momentum"
-
-    return df
+    # Offset + Name + Category + DataFrame
+    _props = f"_{length}_{signal}"
+    return _build_dataframe(
+        {f"TRIX{_props}": trix, f"TRIXs{_props}": trix_signal},
+        f"TRIX{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 trix.__doc__ = """Trix (TRIX)

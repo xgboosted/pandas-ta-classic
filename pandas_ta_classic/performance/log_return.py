@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import log as nplog
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def log_return(
@@ -30,24 +30,13 @@ def log_return(
     else:
         log_return = nplog(close / close.shift(length))  # nplog(close).diff(length)
 
-    # Offset
-    if offset != 0:
-        log_return = log_return.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        log_return.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            log_return.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            log_return.bfill(inplace=True)
-
-    # Name & Category
-    log_return.name = f"{'CUM' if cumulative else ''}LOGRET_{length}"
-    log_return.category = "performance"
-
-    return log_return
+    return _finalize(
+        log_return,
+        offset,
+        f"{'CUM' if cumulative else ''}LOGRET_{length}",
+        "performance",
+        **kwargs,
+    )
 
 
 log_return.__doc__ = """Log Return

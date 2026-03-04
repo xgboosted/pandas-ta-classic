@@ -1,10 +1,16 @@
-# -*- coding: utf-8 -*-
 # Percentage Price Oscillator (PPO)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    tal_ma,
+    verify_series,
+)
 
 
 def ppo(
@@ -25,11 +31,10 @@ def ppo(
     signal = int(signal) if signal and signal > 0 else 9
     scalar = float(scalar) if scalar else 100
     mamode = mamode if isinstance(mamode, str) else "sma"
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -42,66 +47,25 @@ def ppo(
     else:
         fastma = ma(mamode, close, length=fast)
         slowma = ma(mamode, close, length=slow)
+        if fastma is None or slowma is None:
+            return None
         ppo = scalar * (fastma - slowma)
         ppo /= slowma
 
     signalma = ma("ema", ppo, length=signal)
+    if signalma is None:
+        return None
     histogram = ppo - signalma
 
-    # Offset
-    if offset != 0:
-        ppo = ppo.shift(offset)
-        histogram = histogram.shift(offset)
-        signalma = signalma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ppo.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ppo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ppo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                histogram.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                histogram.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{fast}_{slow}_{signal}"
-    ppo.name = f"PPO{_props}"
-    histogram.name = f"PPOh{_props}"
-    signalma.name = f"PPOs{_props}"
-    ppo.category = histogram.category = signalma.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {ppo.name: ppo, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"PPO{_props}"
-    df.category = ppo.category
-
-    return df
+    return _build_dataframe(
+        {f"PPO{_props}": ppo, f"PPOh{_props}": histogram, f"PPOs{_props}": signalma},
+        f"PPO{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 ppo.__doc__ = """Percentage Price Oscillator (PPO)

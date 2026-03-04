@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # Awesome Oscillator (AO)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _finalize,
+    get_offset,
+    verify_series,
+)
 
 
 def ao(
@@ -18,8 +22,7 @@ def ao(
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 5
     slow = int(slow) if slow and slow > 0 else 34
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -34,29 +37,7 @@ def ao(
     slow_sma = sma(median_price, slow)
     ao = fast_sma - slow_sma
 
-    # Offset
-    if offset != 0:
-        ao = ao.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ao.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ao.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ao.bfill(inplace=True)
-
-    # Name and Categorize it
-    ao.name = f"AO_{fast}_{slow}"
-    ao.category = "momentum"
-
-    return ao
+    return _finalize(ao, offset, f"AO_{fast}_{slow}", "momentum", **kwargs)
 
 
 ao.__doc__ = """Awesome Oscillator (AO)

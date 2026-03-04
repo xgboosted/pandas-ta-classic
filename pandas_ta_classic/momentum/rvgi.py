@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # Relative Vigor Index (RVGI)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.swma import swma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def rvgi(
@@ -18,8 +22,6 @@ def rvgi(
 ) -> Optional[DataFrame]:
     """Indicator: Relative Vigor Index (RVGI)"""
     # Validate Arguments
-    high_low_range = non_zero_range(high, low)
-    close_open_range = non_zero_range(close, open_)
     length = int(length) if length and length > 0 else 14
     swma_length = int(swma_length) if swma_length and swma_length > 0 else 4
     _length = max(length, swma_length)
@@ -33,6 +35,8 @@ def rvgi(
         return None
 
     # Calculate Result
+    high_low_range = non_zero_range(high, low)
+    close_open_range = non_zero_range(close, open_)
     numerator = swma(close_open_range, length=swma_length).rolling(length).sum()
     denominator = swma(high_low_range, length=swma_length).rolling(length).sum()
 
@@ -40,39 +44,19 @@ def rvgi(
     signal = swma(rvgi, length=swma_length)
     histogram = rvgi - signal
 
-    # Offset
-    if offset != 0:
-        rvgi = rvgi.shift(offset)
-        signal = signal.shift(offset)
-        histogram = histogram.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        rvgi.fillna(kwargs["fillna"], inplace=True)
-        signal.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            rvgi.ffill(inplace=True)
-            signal.ffill(inplace=True)
-            histogram.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            rvgi.bfill(inplace=True)
-            signal.bfill(inplace=True)
-            histogram.bfill(inplace=True)
-
-    # Name & Category
-    rvgi.name = f"RVGI_{length}_{swma_length}"
-    signal.name = f"RVGIs_{length}_{swma_length}"
-    histogram.name = f"RVGIh_{length}_{swma_length}"
-    rvgi.category = signal.category = histogram.category = "momentum"
-
-    # Prepare DataFrame to return
-    df = DataFrame({histogram.name: histogram, rvgi.name: rvgi, signal.name: signal})
-    df.name = f"RVGI_{length}_{swma_length}"
-    df.category = rvgi.category
-
-    return df
+    # Offset + Name + Category + DataFrame
+    _props = f"_{length}_{swma_length}"
+    return _build_dataframe(
+        {
+            f"RVGIh{_props}": histogram,
+            f"RVGI{_props}": rvgi,
+            f"RVGIs{_props}": signal,
+        },
+        f"RVGI{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 rvgi.__doc__ = """Relative Vigor Index (RVGI)

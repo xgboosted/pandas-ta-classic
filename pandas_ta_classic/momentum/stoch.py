@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # Stochastic Oscillator (STOCH)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stoch(
@@ -39,51 +43,22 @@ def stoch(
     stoch = 100 * (close - lowest_low)
     stoch /= non_zero_range(highest_high, lowest_low)
 
-    stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index() :,], length=smooth_k)
-    stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index() :,], length=d)
+    stoch_k = ma(mamode, stoch, length=smooth_k)
+    if stoch_k is None:
+        return None
+    stoch_d = ma(mamode, stoch_k, length=d)
+    if stoch_d is None:
+        return None
 
-    # Offset
-    if offset != 0:
-        stoch_k = stoch_k.shift(offset)
-        stoch_d = stoch_d.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        stoch_k.fillna(kwargs["fillna"], inplace=True)
-        stoch_d.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stoch_k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stoch_k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stoch_d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stoch_d.bfill(inplace=True)
-
-    # Name and Categorize it
-    _name = "STOCH"
+    # Offset + Name + Category + DataFrame
     _props = f"_{k}_{d}_{smooth_k}"
-    stoch_k.name = f"{_name}k{_props}"
-    stoch_d.name = f"{_name}d{_props}"
-    stoch_k.category = stoch_d.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stoch_k.name: stoch_k, stoch_d.name: stoch_d}
-    df = DataFrame(data)
-    df.name = f"{_name}{_props}"
-    df.category = stoch_k.category
-    return df
+    return _build_dataframe(
+        {f"STOCHk{_props}": stoch_k, f"STOCHd{_props}": stoch_d},
+        f"STOCH{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 stoch.__doc__ = """Stochastic (STOCH)
@@ -110,15 +85,23 @@ Calculation:
 
     STOCH = 100 * (close - LL) / (HH - LL)
     STOCHk = SMA(STOCH, smooth_k)
-    STOCHd = SMA(FASTK, d)
+    STOCHd = SMA(STOCHk, d)
+
+TA-Lib parameter mapping:
+    TA-Lib STOCH(fastk_period, slowk_period, slowk_matype, slowd_period, slowd_matype)
+    fastk_period -> k        (lookback for min/max)
+    slowk_period -> smooth_k (smoothing of raw %K)
+    slowd_period -> d        (smoothing of %K to get %D)
+    Note: Default k=14 differs from TA-Lib's fastk_period=5.
 
 Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    k (int): The Fast %K period. Default: 14
-    d (int): The Slow %K period. Default: 3
-    smooth_k (int): The Slow %D period. Default: 3
+    k (int): The lookback period (min/max window).
+        Default: 14 (TA-Lib default: fastk_period=5)
+    d (int): The %D smoothing period. Default: 3
+    smooth_k (int): The %K smoothing period. Default: 3
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0
 

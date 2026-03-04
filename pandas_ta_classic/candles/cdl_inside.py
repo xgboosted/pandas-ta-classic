@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Candle Inside (CDL_INSIDE)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import candle_color, get_offset
-from pandas_ta_classic.utils import verify_series
+from pandas_ta_classic.utils import _finalize, verify_series
 
 
 def cdl_inside(
@@ -23,35 +22,16 @@ def cdl_inside(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
     inside = (high.diff() < 0) & (low.diff() > 0)
 
     if not asbool:
         inside *= candle_color(open_, close)
 
-    # Offset
-    if offset != 0:
-        inside = inside.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        inside.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                inside.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                inside.bfill(inplace=True)
-
-    # Name and Categorize it
-    inside.name = f"CDL_INSIDE"
-    inside.category = "candles"
-
-    return inside
+    return _finalize(inside, offset, "CDL_INSIDE", "candles", **kwargs)
 
 
 cdl_inside.__doc__ = """Candle Type: Inside Bar

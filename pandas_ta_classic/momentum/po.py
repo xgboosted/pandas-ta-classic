@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # Projection Oscillator (PO)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def po(
@@ -30,24 +34,7 @@ def po(
     lr = non_zero_range(lr, lr)
     po = 100 * (close - lr) / lr
 
-    # Offset
-    if offset != 0:
-        po = po.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        po.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            po.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            po.bfill(inplace=True)
-
-    # Name and Categorize it
-    po.name = f"PO_{length}"
-    po.category = "momentum"
-
-    return po
+    return _finalize(po, offset, f"PO_{length}", "momentum", **kwargs)
 
 
 po.__doc__ = """Projection Oscillator (PO)

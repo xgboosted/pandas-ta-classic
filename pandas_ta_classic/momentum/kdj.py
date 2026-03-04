@@ -1,15 +1,19 @@
-# -*- coding: utf-8 -*-
 # KDJ (KDJ)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def kdj(
-    high: Optional[Series] = None,
-    low: Optional[Series] = None,
-    close: Optional[Series] = None,
+    high: Series,
+    low: Series,
+    close: Series,
     length: Optional[int] = None,
     signal: Optional[int] = None,
     offset: Optional[int] = None,
@@ -38,59 +42,15 @@ def kdj(
     d = rma(k, length=signal)
     j = 3 * k - 2 * d
 
-    # Offset
-    if offset != 0:
-        k = k.shift(offset)
-        d = d.shift(offset)
-        j = j.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        k.fillna(kwargs["fillna"], inplace=True)
-        d.fillna(kwargs["fillna"], inplace=True)
-        j.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                d.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                j.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                j.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _params = f"_{length}_{signal}"
-    k.name = f"K{_params}"
-    d.name = f"D{_params}"
-    j.name = f"J{_params}"
-    k.category = d.category = j.category = "momentum"
-
-    # Prepare DataFrame to return
-    kdjdf = DataFrame({k.name: k, d.name: d, j.name: j})
-    kdjdf.name = f"KDJ{_params}"
-    kdjdf.category = "momentum"
-
-    return kdjdf
+    return _build_dataframe(
+        {f"K{_params}": k, f"D{_params}": d, f"J{_params}": j},
+        f"KDJ{_params}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 kdj.__doc__ = """KDJ (KDJ)

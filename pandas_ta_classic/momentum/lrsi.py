@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Laguerre Relative Strength Index (Laguerre RSI)
 from typing import Any, Optional
 from numpy import maximum, where, zeros
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def lrsi(
@@ -24,22 +23,12 @@ def lrsi(
         return None
 
     # Calculate Result
-    # Convert to numpy arrays for faster iteration
+    from pandas_ta_classic.utils._numba import _lrsi_loop
+
     close_arr = close.values
     n = len(close)
 
-    # Initialize Laguerre filter components as numpy arrays
-    l0 = close_arr.copy()
-    l1 = close_arr.copy()
-    l2 = close_arr.copy()
-    l3 = close_arr.copy()
-
-    # Apply Laguerre filter (state-dependent, requires iteration)
-    for i in range(1, n):
-        l0[i] = (1 - gamma) * close_arr[i] + gamma * l0[i - 1]
-        l1[i] = -gamma * l0[i] + l0[i - 1] + gamma * l1[i - 1]
-        l2[i] = -gamma * l1[i] + l1[i - 1] + gamma * l2[i - 1]
-        l3[i] = -gamma * l2[i] + l2[i - 1] + gamma * l3[i - 1]
+    l0, l1, l2, l3 = _lrsi_loop(close_arr, n, gamma)
 
     # Calculate Laguerre RSI components (can be vectorized)
     cu = zeros(n)
@@ -59,24 +48,7 @@ def lrsi(
     denominator = where(denominator == 0, 1, denominator)
     lrsi = Series(100 * cu / denominator, index=close.index)
 
-    # Offset
-    if offset != 0:
-        lrsi = lrsi.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        lrsi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            lrsi.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            lrsi.bfill(inplace=True)
-
-    # Name and Categorize it
-    lrsi.name = f"LRSI_{length}"
-    lrsi.category = "momentum"
-
-    return lrsi
+    return _finalize(lrsi, offset, f"LRSI_{length}", "momentum", **kwargs)
 
 
 lrsi.__doc__ = """Laguerre RSI (LRSI)

@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
 # Balance of Power (BOP)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _finalize,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def bop(
@@ -24,7 +29,10 @@ def bop(
     close = verify_series(close)
     scalar = float(scalar) if scalar else 1
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
+
+    if open_ is None or high is None or low is None or close is None:
+        return None
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
@@ -36,29 +44,7 @@ def bop(
         close_open_range = non_zero_range(close, open_)
         bop = scalar * close_open_range / high_low_range
 
-    # Offset
-    if offset != 0:
-        bop = bop.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        bop.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bop.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bop.bfill(inplace=True)
-
-    # Name and Categorize it
-    bop.name = f"BOP"
-    bop.category = "momentum"
-
-    return bop
+    return _finalize(bop, offset, "BOP", "momentum", **kwargs)
 
 
 bop.__doc__ = """Balance of Power (BOP)

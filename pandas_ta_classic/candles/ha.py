@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 # Heikin Ashi (HA)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def ha(
@@ -21,50 +20,47 @@ def ha(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
+    import numpy as np
+
     m = close.size
-    df = DataFrame(
-        {
-            "HA_open": 0.5 * (open_.iloc[0] + close.iloc[0]),
-            "HA_high": high,
-            "HA_low": low,
-            "HA_close": 0.25 * (open_ + high + low + close),
-        }
+    ha_close = 0.25 * (
+        open_.to_numpy() + high.to_numpy() + low.to_numpy() + close.to_numpy()
     )
 
-    ha_open_col = df.columns.get_loc("HA_open")
-    ha_close_col = df.columns.get_loc("HA_close")
+    # HA_open recurrence: ha_open[i] = 0.5 * (ha_open[i-1] + ha_close[i-1])
+    # Compute with a numpy loop to avoid pandas iat overhead.
+    ha_open = np.empty(m)
+    ha_open[0] = 0.5 * (open_.iloc[0] + close.iloc[0])
     for i in range(1, m):
-        df.iat[i, ha_open_col] = 0.5 * (
-            df.iat[i - 1, ha_open_col] + df.iat[i - 1, ha_close_col]
-        )
+        ha_open[i] = 0.5 * (ha_open[i - 1] + ha_close[i - 1])
 
-    df["HA_high"] = df[["HA_open", "HA_high", "HA_close"]].max(axis=1)
-    df["HA_low"] = df[["HA_open", "HA_low", "HA_close"]].min(axis=1)
+    ha_high = np.maximum(np.maximum(ha_open, high.to_numpy()), ha_close)
+    ha_low = np.minimum(np.minimum(ha_open, low.to_numpy()), ha_close)
 
-    # Offset
-    if offset != 0:
-        df = df.shift(offset)
+    # Wrap numpy arrays as Series
+    _idx = close.index
+    ha_open = Series(ha_open, index=_idx)
+    ha_high = Series(ha_high, index=_idx)
+    ha_low = Series(ha_low, index=_idx)
+    ha_close = Series(ha_close, index=_idx)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
-
-    # Name and Categorize it
-    df.name = "Heikin-Ashi"
-    df.category = "candles"
-
-    return df
+    # Offset, Name and Categorize it
+    return _build_dataframe(
+        {
+            "HA_open": ha_open,
+            "HA_high": ha_high,
+            "HA_low": ha_low,
+            "HA_close": ha_close,
+        },
+        "Heikin-Ashi",
+        "candles",
+        offset,
+        **kwargs,
+    )
 
 
 ha.__doc__ = """Heikin Ashi Candles (HA)
@@ -87,7 +83,7 @@ Calculation:
     HA_CLOSE = (open[0] + high[0] + low[0] + close[0]) / 4
 
     for i > 1 in df.index:
-        HA_OPEN = (HA_OPEN[i−1] + HA_CLOSE[i−1]) / 2
+        HA_OPEN = (HA_OPEN[i-1] + HA_CLOSE[i-1]) / 2
 
     HA_HIGH = MAX(HA_OPEN, HA_HIGH, HA_CLOSE)
     HA_LOW = MIN(HA_OPEN, HA_LOW, HA_CLOSE)
@@ -100,7 +96,7 @@ Calculation:
     the first HA open. The high of the period will be the first HA high,
     and the low will be the first HA low. With the first HA calculated,
     it is now possible to continue computing the HA candles per the formulas.
-​​
+
 Args:
     open_ (pd.Series): Series of 'open's
     high (pd.Series): Series of 'high's

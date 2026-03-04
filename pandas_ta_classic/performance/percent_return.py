@@ -2,7 +2,7 @@
 # Percent Return (PERCENT_RETURN)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def percent_return(
@@ -26,31 +26,15 @@ def percent_return(
     if cumulative:
         pct_return = (close / close.iloc[0]) - 1
     else:
-        pct_return = close.pct_change(length)  # (close / close.shift(length)) - 1
+        pct_return = close / close.shift(length) - 1
 
-    # Offset
-    if offset != 0:
-        pct_return = pct_return.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pct_return.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pct_return.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pct_return.bfill(inplace=True)
-
-    # Name & Category
-    pct_return.name = f"{'CUM' if cumulative else ''}PCTRET_{length}"
-    pct_return.category = "performance"
-
-    return pct_return
+    return _finalize(
+        pct_return,
+        offset,
+        f"{'CUM' if cumulative else ''}PCTRET_{length}",
+        "performance",
+        **kwargs,
+    )
 
 
 percent_return.__doc__ = """Percent Return

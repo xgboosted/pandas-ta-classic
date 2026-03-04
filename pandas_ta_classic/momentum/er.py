@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 # Efficiency Ratio (ER)
 from typing import Any, Optional, Union
 from pandas import DataFrame, concat, Series
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, signals
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    signals,
+    verify_series,
+)
 
 
 def er(
@@ -30,22 +35,7 @@ def er(
     er /= abs_volatility.rolling(window=length).sum()
 
     # Offset
-    if offset != 0:
-        er = er.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        er.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                er.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                er.bfill(inplace=True)
+    er = apply_offset(er, offset, **kwargs)
 
     # Name and Categorize it
     er.name = f"ER_{length}"

@@ -1,10 +1,16 @@
-# -*- coding: utf-8 -*-
 # Absolute Price Oscillator (APO)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import (
+    _get_tal_mode,
+    _swap_fast_slow,
+    _finalize,
+    get_offset,
+    tal_ma,
+    verify_series,
+)
 
 
 def apo(
@@ -20,12 +26,11 @@ def apo(
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow))
     mamode = mamode if isinstance(mamode, str) else "sma"
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -38,31 +43,11 @@ def apo(
     else:
         fastma = ma(mamode, close, length=fast)
         slowma = ma(mamode, close, length=slow)
+        if fastma is None or slowma is None:
+            return None
         apo = fastma - slowma
 
-    # Offset
-    if offset != 0:
-        apo = apo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        apo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                apo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                apo.bfill(inplace=True)
-
-    # Name and Categorize it
-    apo.name = f"APO_{fast}_{slow}"
-    apo.category = "momentum"
-
-    return apo
+    return _finalize(apo, offset, f"APO_{fast}_{slow}", "momentum", **kwargs)
 
 
 apo.__doc__ = """Absolute Price Oscillator (APO)

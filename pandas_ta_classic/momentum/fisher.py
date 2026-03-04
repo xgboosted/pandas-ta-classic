@@ -1,13 +1,16 @@
-# -*- coding: utf-8 -*-
 # Fisher Transform (FISHER)
 from typing import Any, Optional
 import numpy as np
-from numpy import log as nplog
 from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
-from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    get_offset,
+    high_low_range,
+    verify_series,
+)
 
 
 def fisher(
@@ -40,61 +43,23 @@ def fisher(
 
     position = ((hl2_ - lowest_hl2) / hlr) - 0.5
 
-    v: float = 0
+    from pandas_ta_classic.utils._numba import _fisher_loop
+
+    pos_arr = position.to_numpy()
     m = high.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, m):
-        v = 0.66 * position.iloc[i] + 0.67 * v
-        if v < -0.99:
-            v = -0.999
-        if v > 0.99:
-            v = 0.999
-        result.append(0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1]))
+    result = _fisher_loop(pos_arr, m, length)
     fisher = Series(result, index=high.index)
     signalma = fisher.shift(signal)
 
-    # Offset
-    if offset != 0:
-        fisher = fisher.shift(offset)
-        signalma = signalma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        fisher.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                fisher.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                fisher.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{length}_{signal}"
-    fisher.name = f"FISHERT{_props}"
-    signalma.name = f"FISHERTs{_props}"
-    fisher.category = signalma.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {fisher.name: fisher, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"FISHERT{_props}"
-    df.category = fisher.category
-
-    return df
+    return _build_dataframe(
+        {f"FISHERT{_props}": fisher, f"FISHERTs{_props}": signalma},
+        f"FISHERT{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 fisher.__doc__ = """Fisher Transform (FISHT)

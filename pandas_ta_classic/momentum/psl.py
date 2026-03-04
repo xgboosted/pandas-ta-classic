@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Psychological Line (PSL)
 from typing import Any, Optional
 from numpy import sign as npSign
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_drift, get_offset, verify_series
 
 
 def psl(
@@ -33,36 +32,13 @@ def psl(
     else:
         diff = npSign(close.diff(drift))
 
-    diff.fillna(0, inplace=True)
+    diff = diff.fillna(0)
     diff[diff <= 0] = 0  # Zero negative values
 
     psl = scalar * diff.rolling(length).sum()
     psl /= length
 
-    # Offset
-    if offset != 0:
-        psl = psl.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        psl.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                psl.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                psl.bfill(inplace=True)
-
-    # Name and Categorize it
-    _props = f"_{length}"
-    psl.name = f"PSL{_props}"
-    psl.category = "momentum"
-
-    return psl
+    return _finalize(psl, offset, f"PSL_{length}", "momentum", **kwargs)
 
 
 psl.__doc__ = """Psychological Line (PSL)

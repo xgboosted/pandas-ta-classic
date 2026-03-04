@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # Volume Weighted Moving Average Convergence Divergence (Volume Weighted MACD)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.vwma import vwma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def vwmacd(
@@ -20,8 +24,7 @@ def vwmacd(
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     signal = int(signal) if signal and signal > 0 else 9
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     close = verify_series(close, max(fast, slow, signal))
     volume = verify_series(volume, max(fast, slow, signal))
     offset = get_offset(offset)
@@ -43,45 +46,19 @@ def vwmacd(
     # Histogram
     histogram = vwmacd - signal_line
 
-    # Offset
-    if offset != 0:
-        vwmacd = vwmacd.shift(offset)
-        signal_line = signal_line.shift(offset)
-        histogram = histogram.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        vwmacd.fillna(kwargs["fillna"], inplace=True)
-        signal_line.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            vwmacd.ffill(inplace=True)
-            signal_line.ffill(inplace=True)
-            histogram.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            vwmacd.bfill(inplace=True)
-            signal_line.bfill(inplace=True)
-            histogram.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{fast}_{slow}_{signal}"
-    vwmacd.name = f"VWMACD{_props}"
-    signal_line.name = f"VWMACDs{_props}"
-    histogram.name = f"VWMACDh{_props}"
-    vwmacd.category = signal_line.category = histogram.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {
-        vwmacd.name: vwmacd,
-        histogram.name: histogram,
-        signal_line.name: signal_line,
-    }
-    df = DataFrame(data)
-    df.name = f"VWMACD{_props}"
-    df.category = "momentum"
-
-    return df
+    return _build_dataframe(
+        {
+            f"VWMACD{_props}": vwmacd,
+            f"VWMACDh{_props}": histogram,
+            f"VWMACDs{_props}": signal_line,
+        },
+        f"VWMACD{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 vwmacd.__doc__ = """Volume Weighted MACD (VWMACD)

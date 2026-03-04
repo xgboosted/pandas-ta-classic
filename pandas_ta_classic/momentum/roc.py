@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 # Rate of Change (ROC)
 from typing import Any, Optional
 from pandas import Series
 from .mom import mom
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def roc(
@@ -21,7 +20,7 @@ def roc(
     scalar = float(scalar) if scalar and scalar > 0 else 100
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if close is None:
         return None
@@ -34,29 +33,7 @@ def roc(
     else:
         roc = scalar * mom(close=close, length=length) / close.shift(length)
 
-    # Offset
-    if offset != 0:
-        roc = roc.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        roc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                roc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                roc.bfill(inplace=True)
-
-    # Name and Categorize it
-    roc.name = f"ROC_{length}"
-    roc.category = "momentum"
-
-    return roc
+    return _finalize(roc, offset, f"ROC_{length}", "momentum", **kwargs)
 
 
 roc.__doc__ = """Rate of Change (ROC)

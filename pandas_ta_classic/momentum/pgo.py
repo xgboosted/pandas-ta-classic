@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 # Pretty Good Oscillator (PGO)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def pgo(
@@ -31,29 +30,7 @@ def pgo(
     pgo = close - sma(close, length)
     pgo /= ema(atr(high, low, close, length), length)
 
-    # Offset
-    if offset != 0:
-        pgo = pgo.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pgo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pgo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pgo.bfill(inplace=True)
-
-    # Name and Categorize it
-    pgo.name = f"PGO_{length}"
-    pgo.category = "momentum"
-
-    return pgo
+    return _finalize(pgo, offset, f"PGO_{length}", "momentum", **kwargs)
 
 
 pgo.__doc__ = """Pretty Good Oscillator (PGO)

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 # Slope (SLOPE)
 from typing import Any, Optional
 from numpy import arctan as npAtan
 from numpy import pi as npPi
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _finalize, get_offset, verify_series
 
 
 def slope(
@@ -12,7 +11,6 @@ def slope(
     length: Optional[int] = None,
     as_angle: Optional[bool] = None,
     to_degrees: Optional[bool] = None,
-    vertical: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -34,33 +32,12 @@ def slope(
         if to_degrees:
             slope *= 180 / npPi
 
-    # Offset
-    if offset != 0:
-        slope = slope.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        slope.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                slope.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                slope.bfill(inplace=True)
-
-    # Name and Categorize it
-    slope.name = (
+    name = (
         f"SLOPE_{length}"
         if not as_angle
         else f"ANGLE{'d' if to_degrees else 'r'}_{length}"
     )
-    slope.category = "momentum"
-
-    return slope
+    return _finalize(slope, offset, name, "momentum", **kwargs)
 
 
 slope.__doc__ = """Slope

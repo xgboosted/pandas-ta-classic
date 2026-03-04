@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 # Center of Gravity (CG)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series, weights
+import numpy as np
+from pandas_ta_classic.utils import (
+    _finalize,
+    _sliding_weighted_ma,
+    get_offset,
+    verify_series,
+)
 
 
 def cg(
@@ -21,33 +26,11 @@ def cg(
         return None
 
     # Calculate Result
-    coefficients = [length - i for i in range(0, length)]
-    numerator = -close.rolling(length).apply(weights(coefficients), raw=True)
+    coefficients = np.array([length - i for i in range(length)])
+    numerator = -_sliding_weighted_ma(close, length, coefficients)
     cg = numerator / close.rolling(length).sum()
 
-    # Offset
-    if offset != 0:
-        cg = cg.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cg.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cg.bfill(inplace=True)
-
-    # Name and Categorize it
-    cg.name = f"CG_{length}"
-    cg.category = "momentum"
-
-    return cg
+    return _finalize(cg, offset, f"CG_{length}", "momentum", **kwargs)
 
 
 cg.__doc__ = """Center of Gravity (CG)

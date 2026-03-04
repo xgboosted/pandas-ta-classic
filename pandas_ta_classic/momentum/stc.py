@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
 # Schaff Trend Cycle (STC)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    _build_dataframe,
+    _swap_fast_slow,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stc(
@@ -21,8 +26,7 @@ def stc(
     fast = int(fast) if fast and fast > 0 else 12
     slow = int(slow) if slow and slow > 0 else 26
     factor = float(factor) if factor and factor > 0 else 0.5
-    if slow < fast:  # mandatory condition, but might be confusing
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     _length = max(tclength, fast, slow)
     close = verify_series(close, _length)
     offset = get_offset(offset)
@@ -73,60 +77,19 @@ def stc(
     macd = Series(xmacd, index=close.index)
     stoch = Series(pf, index=close.index)
 
-    # Offset
-    if offset != 0:
-        stc = stc.shift(offset)
-        macd = macd.shift(offset)
-        stoch = stoch.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        stc.fillna(kwargs["fillna"], inplace=True)
-        macd.fillna(kwargs["fillna"], inplace=True)
-        stoch.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stc.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                macd.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                macd.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stoch.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stoch.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{tclength}_{fast}_{slow}_{factor}"
-    stc.name = f"STC{_props}"
-    macd.name = f"STCmacd{_props}"
-    stoch.name = f"STCstoch{_props}"
-    stc.category = macd.category = stoch.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stc.name: stc, macd.name: macd, stoch.name: stoch}
-    df = DataFrame(data)
-    df.name = f"STC{_props}"
-    df.category = stc.category
-
-    return df
+    return _build_dataframe(
+        {
+            f"STC{_props}": stc,
+            f"STCmacd{_props}": macd,
+            f"STCstoch{_props}": stoch,
+        },
+        f"STC{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 stc.__doc__ = """Schaff Trend Cycle (STC)
@@ -183,39 +146,29 @@ Returns:
 
 def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> list:
     # ACTUAL Calculation part, which is shared between operation modes
-    # 1St : Stochastic of MACD
-    lowest_xmacd = xmacd.rolling(tclength).min()  # min value in interval tclen
+    from pandas_ta_classic.utils._numba import _schaff_tc_loop, _schaff_tc_loop2
+
+    # 1st : Stochastic of MACD
+    lowest_xmacd = xmacd.rolling(tclength).min()
     xmacd_range = non_zero_range(xmacd.rolling(tclength).max(), lowest_xmacd)
     m = len(xmacd)
 
-    # %Fast K of MACD
-    stoch1, pf = list(xmacd), list(xmacd)
-    stoch1[0], pf[0] = 0, 0
-    for i in range(1, m):
-        if lowest_xmacd.iloc[i] > 0:
-            stoch1[i] = 100 * (
-                (xmacd.iloc[i] - lowest_xmacd.iloc[i]) / xmacd_range.iloc[i]
-            )
-        else:
-            stoch1[i] = stoch1[i - 1]
-        # Smoothed Calculation for % Fast D of MACD
-        pf[i] = round(pf[i - 1] + (factor * (stoch1[i] - pf[i - 1])), 8)
+    xmacd_arr = xmacd.to_numpy()
+    lxmacd_arr = lowest_xmacd.to_numpy()
+    xrange_arr = xmacd_range.to_numpy()
 
-    pf = Series(pf, index=close.index)
+    _stoch1, pf = _schaff_tc_loop(xmacd_arr, lxmacd_arr, xrange_arr, m, factor)
+
+    pf_series = Series(pf, index=close.index)
 
     # 2nd : Stochastic of smoothed Percent Fast D, 'PF', above
-    lowest_pf = pf.rolling(tclength).min()
-    pf_range = non_zero_range(pf.rolling(tclength).max(), lowest_pf)
+    lowest_pf = pf_series.rolling(tclength).min()
+    pf_range = non_zero_range(pf_series.rolling(tclength).max(), lowest_pf)
 
-    # % of Fast K of PF
-    stoch2, pff = list(xmacd), list(xmacd)
-    stoch2[0], pff[0] = 0, 0
-    for i in range(1, m):
-        if pf_range.iloc[i] > 0:
-            stoch2[i] = 100 * ((pf.iloc[i] - lowest_pf.iloc[i]) / pf_range.iloc[i])
-        else:
-            stoch2[i] = stoch2[i - 1]
-        # Smoothed Calculation for % Fast D of PF
-        pff[i] = round(pff[i - 1] + (factor * (stoch2[i] - pff[i - 1])), 8)
+    pf_arr = pf_series.to_numpy()
+    lpf_arr = lowest_pf.to_numpy()
+    pfrange_arr = pf_range.to_numpy()
+
+    _stoch2, pff = _schaff_tc_loop2(pf_arr, lpf_arr, pfrange_arr, m, factor)
 
     return [pff, pf]

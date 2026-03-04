@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # TRIX Histogram (TRIXH)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.momentum import trix
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def trixh(
@@ -43,44 +42,19 @@ def trixh(
     # Calculate histogram
     histogram = trix_line - trix_signal
 
-    # Offset
-    if offset != 0:
-        trix_line = trix_line.shift(offset)
-        trix_signal = trix_signal.shift(offset)
-        histogram = histogram.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        trix_line.fillna(kwargs["fillna"], inplace=True)
-        trix_signal.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            trix_line.ffill(inplace=True)
-            trix_signal.ffill(inplace=True)
-            histogram.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            trix_line.bfill(inplace=True)
-            trix_signal.bfill(inplace=True)
-            histogram.bfill(inplace=True)
-
-    # Name and Categorize it
-    trix_line.name = f"TRIX_{length}_{signal}"
-    trix_signal.name = f"TRIXs_{length}_{signal}"
-    histogram.name = f"TRIXh_{length}_{signal}"
-    trix_line.category = trix_signal.category = histogram.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {
-        trix_line.name: trix_line,
-        trix_signal.name: trix_signal,
-        histogram.name: histogram,
-    }
-    df = DataFrame(data)
-    df.name = f"TRIXH_{length}_{signal}"
-    df.category = "momentum"
-
-    return df
+    # Offset + Name + Category + DataFrame
+    _props = f"_{length}_{signal}"
+    return _build_dataframe(
+        {
+            f"TRIX{_props}": trix_line,
+            f"TRIXs{_props}": trix_signal,
+            f"TRIXh{_props}": histogram,
+        },
+        f"TRIXH{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 trixh.__doc__ = """TRIX Histogram (TRIXH)

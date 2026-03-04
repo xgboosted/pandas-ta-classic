@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 # Commodity Channel Index (CCI)
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.statistics import mad, stdev
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.statistics import mad
+from pandas_ta_classic.utils import _get_tal_mode, _finalize, get_offset, verify_series
 
 
 def cci(
@@ -27,7 +26,7 @@ def cci(
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_tal = _get_tal_mode(talib)
 
     if high is None or low is None or close is None:
         return None
@@ -45,29 +44,7 @@ def cci(
         cci = typical_price - mean_typical_price
         cci /= c * mad_typical_price
 
-    # Offset
-    if offset != 0:
-        cci = cci.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        cci.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cci.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cci.bfill(inplace=True)
-
-    # Name and Categorize it
-    cci.name = f"CCI_{length}_{c}"
-    cci.category = "momentum"
-
-    return cci
+    return _finalize(cci, offset, f"CCI_{length}_{c}", "momentum", **kwargs)
 
 
 cci.__doc__ = """Commodity Channel Index (CCI)

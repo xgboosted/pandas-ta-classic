@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 # Percentage Volume Oscillator (PVO)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import (
+    _swap_fast_slow,
+    _build_dataframe,
+    get_offset,
+    verify_series,
+)
 
 
 def pvo(
@@ -21,8 +25,7 @@ def pvo(
     slow = int(slow) if slow and slow > 0 else 26
     signal = int(signal) if signal and signal > 0 else 9
     scalar = float(scalar) if scalar else 100
-    if slow < fast:
-        fast, slow = slow, fast
+    fast, slow = _swap_fast_slow(fast, slow)
     volume = verify_series(volume, max(fast, slow, signal))
     offset = get_offset(offset)
 
@@ -38,60 +41,15 @@ def pvo(
     signalma = ema(pvo, length=signal)
     histogram = pvo - signalma
 
-    # Offset
-    if offset != 0:
-        pvo = pvo.shift(offset)
-        histogram = histogram.shift(offset)
-        signalma = signalma.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        pvo.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pvo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pvo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                histogram.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                histogram.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
-
-    # Name and Categorize it
+    # Offset + Name + Category + DataFrame
     _props = f"_{fast}_{slow}_{signal}"
-    pvo.name = f"PVO{_props}"
-    histogram.name = f"PVOh{_props}"
-    signalma.name = f"PVOs{_props}"
-    pvo.category = histogram.category = signalma.category = "momentum"
-
-    #
-    data = {pvo.name: pvo, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = pvo.name
-    df.category = pvo.category
-
-    return df
+    return _build_dataframe(
+        {f"PVO{_props}": pvo, f"PVOh{_props}": histogram, f"PVOs{_props}": signalma},
+        f"PVO{_props}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 pvo.__doc__ = """Percentage Volume Oscillator (PVO)

@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # Elder Ray Index (ERI)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import _build_dataframe, get_offset, verify_series
 
 
 def eri(
@@ -30,47 +29,14 @@ def eri(
     bull = high - ema_
     bear = low - ema_
 
-    # Offset
-    if offset != 0:
-        bull = bull.shift(offset)
-        bear = bear.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        bull.fillna(kwargs["fillna"], inplace=True)
-        bear.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bull.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bull.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bear.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bear.bfill(inplace=True)
-
-    # Name and Categorize it
-    bull.name = f"BULLP_{length}"
-    bear.name = f"BEARP_{length}"
-    bull.category = bear.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {bull.name: bull, bear.name: bear}
-    df = DataFrame(data)
-    df.name = f"ERI_{length}"
-    df.category = bull.category
-
-    return df
+    # Offset + Name + Category + DataFrame
+    return _build_dataframe(
+        {f"BULLP_{length}": bull, f"BEARP_{length}": bear},
+        f"ERI_{length}",
+        "momentum",
+        offset,
+        **kwargs,
+    )
 
 
 eri.__doc__ = """Elder Ray Index (ERI)
