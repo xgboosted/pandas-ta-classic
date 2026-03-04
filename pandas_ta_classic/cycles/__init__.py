@@ -9,4 +9,9 @@ from .ht_trendmode import ht_trendmode
 __all__ = [
     "dsp",
     "ebsw",
+    "ht_dcperiod",
+    "ht_dcphase",
+    "ht_phasor",
+    "ht_sine",
+    "ht_trendmode",
 ]

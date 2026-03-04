@@ -13,6 +13,8 @@ from .variance import variance
 from .zscore import zscore
 
 __all__ = [
+    "beta",
+    "correl",
     "entropy",
     "kurtosis",
     "mad",

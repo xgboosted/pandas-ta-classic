@@ -23,6 +23,7 @@ from .xsignals import xsignals
 
 __all__ = [
     "adx",
+    "adxr",
     "amat",
     "aroon",
     "chop",
@@ -35,6 +36,7 @@ __all__ = [
     "pmax",
     "psar",
     "qstick",
+    "sarext",
     "short_run",
     "tsignals",
     "ttm_trend",

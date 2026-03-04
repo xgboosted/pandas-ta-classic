@@ -29,8 +29,8 @@ from .supertrend import supertrend
 from .swma import swma
 from .t3 import t3
 from .tema import tema
-from .trima import trima
 from .tsf import tsf
+from .trima import trima
 from .vidya import vidya
 from .vwap import vwap
 from .vwma import vwma
@@ -47,12 +47,14 @@ __all__ = [
     "hl2",
     "hlc3",
     "hma",
+    "ht_trendline",
     "hwma",
     "ichimoku",
     "jma",
     "kama",
     "linreg",
     "ma",
+    "mama",
     "mcgd",
     "midpoint",
     "midprice",
@@ -68,6 +70,7 @@ __all__ = [
     "swma",
     "t3",
     "tema",
+    "tsf",
     "trima",
     "vidya",
     "vwap",

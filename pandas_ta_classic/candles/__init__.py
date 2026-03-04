@@ -4,23 +4,11 @@ from .cdl_pattern import cdl_pattern, cdl, ALL_PATTERNS as CDL_PATTERN_NAMES
 from .cdl_z import cdl_z
 from .ha import ha
 
-# Auto-import all native cdl_* pattern functions into module scope
-# so they are accessible via ``from pandas_ta_classic.candles import cdl_engulfing``
-# etc., but keep __all__ limited to the original set so that
-# _build_category_dict() (which filters by __all__) does not expose
-# them to the strategy runner until core.py has auto-dispatch (PR 6).
+# Auto-import all native cdl_* pattern functions
 from .cdl_pattern import _NATIVE_PATTERNS as _np
+import importlib as _importlib
 
-for _name, _func in _np.items():
-    globals()[f"cdl_{_name}"] = _func
-
-# Clean up loop variables (may not exist if _np is empty)
-del _np
-for _v in ("_name", "_func"):
-    globals().pop(_v, None)
-del _v
-
-__all__ = [
+_all_cdl = [
     "CDL_PATTERN_NAMES",
     "cdl",
     "cdl_doji",
@@ -29,3 +17,12 @@ __all__ = [
     "cdl_z",
     "ha",
 ]
+
+for _name, _func in _np.items():
+    _fname = f"cdl_{_name}"
+    globals()[_fname] = _func
+    _all_cdl.append(_fname)
+
+__all__ = sorted(set(_all_cdl))
+
+del _np, _importlib, _name, _func, _fname, _all_cdl

@@ -93,8 +93,8 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "SINC_3")
 
     def test_long_run_ext(self):
-        # Nothing passed, return self
-        self.assertEqual(self.data.ta.long_run(append=True).shape, self.data.shape)
+        # Nothing passed, return None
+        self.assertIsNone(self.data.ta.long_run())
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)
@@ -116,8 +116,8 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "QS_10")
 
     def test_short_run_ext(self):
-        # Nothing passed, return self
-        self.assertEqual(self.data.ta.short_run(append=True).shape, self.data.shape)
+        # Nothing passed, return None
+        self.assertIsNone(self.data.ta.short_run())
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)

@@ -25,6 +25,20 @@ def bind(function_name, function, method):
     setattr(AnalysisIndicators, function_name, method)
 
 
+def unbind(function_name):
+    """
+    Remove a previously bound custom indicator from the active
+    pandas_ta_classic instance.
+
+    Args:
+        function_name (str): The name of the indicator to remove
+    """
+    if hasattr(pandas_ta_classic, function_name):
+        delattr(pandas_ta_classic, function_name)
+    if hasattr(AnalysisIndicators, function_name):
+        delattr(AnalysisIndicators, function_name)
+
+
 def create_dir(path, create_categories=True, verbose=True):
     """
     Helper function to setup a suitable folder structure for working with
@@ -90,6 +104,7 @@ def import_dir(path, verbose=True):
     dirs = glob(abspath(join(path, "*")))
 
     # traverse full directory, importing all modules found there
+    added_to_path = []
     for d in dirs:
         dirname = basename(d)
 
@@ -108,6 +123,7 @@ def import_dir(path, verbose=True):
             # ensure that the supplied path is included in our python path
             if d not in sys.path:
                 sys.path.append(d)
+                added_to_path.append(d)
 
             # (re)load the indicator module
             module_functions = load_indicator_module(module_name)
@@ -116,12 +132,12 @@ def import_dir(path, verbose=True):
             fcn_callable = module_functions.get(module_name, None)
             fcn_method_callable = module_functions.get(f"{module_name}_method", None)
 
-            if fcn_callable == None:
+            if fcn_callable is None:
                 print(
                     f"[X] Unable to find a function named '{module_name}' in the module '{module_name}.py'."
                 )
                 continue
-            if fcn_method_callable == None:
+            if fcn_method_callable is None:
                 missing_method = f"{module_name}_method"
                 print(
                     f"[X] Unable to find a method function named '{missing_method}' in the module '{module_name}.py'."
@@ -137,6 +153,14 @@ def import_dir(path, verbose=True):
                 print(
                     f"[i] Successfully imported the custom indicator '{module}' into category '{dirname}'."
                 )
+
+    # Clean up any sys.path entries added during this call so they do not
+    # persist beyond import_dir's scope.
+    for p in added_to_path:
+        try:
+            sys.path.remove(p)
+        except ValueError:
+            pass
 
 
 import_dir.__doc__ = """
@@ -225,8 +249,9 @@ def load_indicator_module(name):
     try:
         module = importlib.import_module(name)
     except Exception as ex:
-        print(f"[X] An error occurred when attempting to load module {name}: {ex}")
-        sys.exit(1)
+        raise ImportError(
+            f"[X] An error occurred when attempting to load module {name}: {ex}"
+        ) from ex
 
     # reload to refresh previously loaded module
     module = importlib.reload(module)
