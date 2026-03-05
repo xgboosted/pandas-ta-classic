@@ -7,7 +7,6 @@ from pandas_ta_classic import Imports, version
 
 
 def av(ticker: str, **kwargs):
-    print(f"[!] kwargs: {kwargs}")
     verbose = kwargs.pop("verbose", False)
     kind = kwargs.pop("kind", "history")
     kind = kind.lower()
