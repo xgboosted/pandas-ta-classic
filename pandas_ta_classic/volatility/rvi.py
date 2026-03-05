@@ -96,7 +96,7 @@ Calculation:
     DOWN = STDEV(src, length) IF src.diff() <= 0 ELSE 0
 
     UPSUM = EMA(UP, length)
-    DOWNSUM = EMA(DOWN, length
+    DOWNSUM = EMA(DOWN, length)
 
     RVI = scalar * (UPSUM / (UPSUM + DOWNSUM))
 

@@ -1,9 +1,11 @@
 # Candle Pattern (CDL_PATTERN)
-from typing import Any, Optional, Union
-
 import importlib
+import logging
 import os
 from collections.abc import Sequence
+from typing import Any, Optional, Union
+
+logger = logging.getLogger(__name__)
 from pandas import Series, DataFrame
 
 from . import cdl_doji, cdl_inside
@@ -147,7 +149,7 @@ def cdl_pattern(
     result = {}
     for n in name:
         if n not in ALL_PATTERNS:
-            print(f"[X] There is no candle pattern named {n} available!")
+            logger.warning("There is no candle pattern named %s available!", n)
             continue
 
         col_name = f"CDL_{n.upper()}"
@@ -177,7 +179,7 @@ def cdl_pattern(
 
             result[col_name] = pattern_result
         else:
-            print(f"[X] Please install TA-Lib to use {n}. (pip install TA-Lib)")
+            logger.warning("Please install TA-Lib to use %s. (pip install TA-Lib)", n)
             continue
 
     if not result:

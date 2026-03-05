@@ -24,6 +24,8 @@ def cagr(close: Series) -> float:
     >>> result = ta.cagr(df.close)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
     start, end = close.iloc[0], close.iloc[-1]
     return ((end / start) ** (1 / total_time(close))) - 1
 
@@ -44,6 +46,8 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
         # Guard: years must be positive and nonzero
         return npNaN
     close = verify_series(close)
+    if close is None:
+        return npNaN
 
     n_years_ago = close.index[-1] - Timedelta(days=365.25 * years)
     close = close[close.index > n_years_ago]
@@ -68,6 +72,8 @@ def downside_deviation(
     """
     # For both de-annualizing the benchmark rate and annualizing result
     returns = verify_series(returns)
+    if returns is None:
+        return npNaN
     days_per_year = returns.shape[0] / total_time(returns, tf)
 
     adjusted_benchmark_rate = ((1 + benchmark_rate) ** (1 / days_per_year)) - 1
@@ -89,6 +95,8 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
     """
     returns = verify_series(returns)
     benchmark_returns = verify_series(benchmark_returns)
+    if returns is None or benchmark_returns is None:
+        return npNaN
 
     benchmark_returns = benchmark_returns.interpolate()
     return linear_regression(benchmark_returns, returns)["a"]
@@ -103,6 +111,8 @@ def log_max_drawdown(close: Series) -> float:
     >>> result = ta.log_max_drawdown(close)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
     log_return = npLog(close.iloc[-1]) - npLog(close.iloc[0])
     return log_return - max_drawdown(close, method="log")
 
@@ -122,6 +132,8 @@ def max_drawdown(
     >>> result = ta.max_drawdown(close, method="dollar", all=False)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
     max_dd = drawdown(close).max()
 
     max_dd_ = {
@@ -159,6 +171,8 @@ def optimal_leverage(
     >>> result = ta.optimal_leverage(close, benchmark_rate=0.0, log=False)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
 
     returns = percent_return(close=close) if not log else log_return(close=close)
 
@@ -182,6 +196,8 @@ def pure_profit_score(close: Series) -> Union[float, int]:
     >>> result = ta.pure_profit_score(df.close)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
     close_index = Series(0, index=close.reset_index().index)
 
     r = linear_regression(close_index, close)["r"]
@@ -212,6 +228,8 @@ def sharpe_ratio(
     >>> result = ta.sharpe_ratio(close, benchmark_rate=0.0, log=False)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     if use_cagr:
@@ -236,6 +254,8 @@ def sortino_ratio(
     >>> result = ta.sortino_ratio(close, benchmark_rate=0.0, log=False)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     result = cagr(close) - benchmark_rate
@@ -265,6 +285,8 @@ def volatility(
     >>> result = ta.volatility(close, tf="years", returns=False, log=False, **kwargs)
     """
     close = verify_series(close)
+    if close is None:
+        return npNaN
 
     _returns: Series
     if not returns:

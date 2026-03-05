@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 # Volume Weighted Average Price (VWAP)
+import logging
 from typing import Any, Optional
 from pandas import Series
+
+logger = logging.getLogger(__name__)
 from .hlc3 import hlc3
 from pandas_ta_classic.utils import (
     _finalize,
@@ -39,12 +42,12 @@ def vwap(
 
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
-        print(
-            "[!] VWAP volume series is not datetime ordered. Results may not be as expected."
+        logger.warning(
+            "VWAP volume series is not datetime ordered. Results may not be as expected."
         )
     if not is_datetime_ordered(typical_price):
-        print(
-            "[!] VWAP price series is not datetime ordered. Results may not be as expected."
+        logger.warning(
+            "VWAP price series is not datetime ordered. Results may not be as expected."
         )
 
     # Calculate Result
