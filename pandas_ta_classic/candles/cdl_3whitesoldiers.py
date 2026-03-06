@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -25,6 +26,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bs = ca._ranges[CandleSetting.BodyShort]
+    arr_fr = ca._ranges[CandleSetting.Far]
+    arr_nr = ca._ranges[CandleSetting.Near]
+    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
+
     # Trailing indices
     svs_trail = start_idx - svs_period
     near_trail = start_idx - near_period
@@ -32,33 +38,17 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_short_trail = start_idx - body_short_period
 
     # Seed ShadowVeryShort totals [2], [1], [0]
-    svs_total_2 = 0.0
-    svs_total_1 = 0.0
-    svs_total_0 = 0.0
-    for j in range(svs_trail, start_idx):
-        svs_total_2 += ca.candle_range(CandleSetting.ShadowVeryShort, j - 2)
-        svs_total_1 += ca.candle_range(CandleSetting.ShadowVeryShort, j - 1)
-        svs_total_0 += ca.candle_range(CandleSetting.ShadowVeryShort, j)
-
+    svs_total_2 = float(arr_svs[svs_trail - 2 : start_idx - 2].sum())
+    svs_total_1 = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
+    svs_total_0 = float(arr_svs[svs_trail:start_idx].sum())
     # Seed Near totals [2], [1] (not [0])
-    near_total_2 = 0.0
-    near_total_1 = 0.0
-    for j in range(near_trail, start_idx):
-        near_total_2 += ca.candle_range(CandleSetting.Near, j - 2)
-        near_total_1 += ca.candle_range(CandleSetting.Near, j - 1)
-
+    near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
+    near_total_1 = float(arr_nr[near_trail - 1 : start_idx - 1].sum())
     # Seed Far totals [2], [1] (not [0])
-    far_total_2 = 0.0
-    far_total_1 = 0.0
-    for j in range(far_trail, start_idx):
-        far_total_2 += ca.candle_range(CandleSetting.Far, j - 2)
-        far_total_1 += ca.candle_range(CandleSetting.Far, j - 1)
-
+    far_total_2 = float(arr_fr[far_trail - 2 : start_idx - 2].sum())
+    far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
     # Seed BodyShort total
-    body_short_total = 0.0
-    for j in range(body_short_trail, start_idx):
-        body_short_total += ca.candle_range(CandleSetting.BodyShort, j)
-
+    body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
     O = ca.open
     C = ca.close
 
@@ -68,71 +58,50 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             ca.color[i - 2] == 1
             # 1st: very short upper shadow
             and ca.upper_shadow[i - 2]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total_2, i - 2)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
             # 2nd white
             and ca.color[i - 1] == 1
             # 2nd: very short upper shadow
             and ca.upper_shadow[i - 1]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total_1, i - 1)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
             # 3rd white
             and ca.color[i] == 1
             # 3rd: very short upper shadow
             and ca.upper_shadow[i]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total_0, i)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
             # Consecutive higher closes
             and C[i] > C[i - 1]
             and C[i - 1] > C[i - 2]
             # 2nd opens within/near 1st real body
             and O[i - 1] > O[i - 2]
-            and O[i - 1]
-            <= C[i - 2] + ca.candle_average(CandleSetting.Near, near_total_2, i - 2)
+            and O[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
             # 3rd opens within/near 2nd real body
             and O[i] > O[i - 1]
-            and O[i]
-            <= C[i - 1] + ca.candle_average(CandleSetting.Near, near_total_1, i - 1)
+            and O[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
             # 2nd not far shorter than 1st
             and ca.real_body[i - 1]
-            > ca.real_body[i - 2]
-            - ca.candle_average(CandleSetting.Far, far_total_2, i - 2)
+            > ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
             # 3rd not far shorter than 2nd
             and ca.real_body[i]
-            > ca.real_body[i - 1]
-            - ca.candle_average(CandleSetting.Far, far_total_1, i - 1)
+            > ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1
             # 3rd: not short real body
-            and ca.real_body[i]
-            > ca.candle_average(CandleSetting.BodyShort, body_short_total, i)
+            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
         ):
             out[i] = 100  # Always bullish
 
         # Update ShadowVeryShort totals [2], [1], [0]
-        svs_total_2 += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i - 2
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail - 2)
-        svs_total_1 += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i - 1
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail - 1)
-        svs_total_0 += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail)
+        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
+        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
+        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
 
         # Update Far and Near totals [2], [1]
-        far_total_2 += ca.candle_range(CandleSetting.Far, i - 2) - ca.candle_range(
-            CandleSetting.Far, far_trail - 2
-        )
-        far_total_1 += ca.candle_range(CandleSetting.Far, i - 1) - ca.candle_range(
-            CandleSetting.Far, far_trail - 1
-        )
-        near_total_2 += ca.candle_range(CandleSetting.Near, i - 2) - ca.candle_range(
-            CandleSetting.Near, near_trail - 2
-        )
-        near_total_1 += ca.candle_range(CandleSetting.Near, i - 1) - ca.candle_range(
-            CandleSetting.Near, near_trail - 1
-        )
+        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
+        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
+        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
+        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
 
         # Update BodyShort total
-        body_short_total += ca.candle_range(
-            CandleSetting.BodyShort, i
-        ) - ca.candle_range(CandleSetting.BodyShort, body_short_trail)
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
 
         svs_trail += 1
         near_trail += 1

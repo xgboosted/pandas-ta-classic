@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -19,21 +20,23 @@ def _detect(ca, out, **kwargs):
     if start_idx >= len(out):
         return
 
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+
     body_long_trail = start_idx - body_long_period
 
     body_long_total = [0.0, 0.0]
     for j in range(body_long_trail, start_idx):
-        body_long_total[1] += ca.candle_range(CandleSetting.BodyLong, j - 1)
-        body_long_total[0] += ca.candle_range(CandleSetting.BodyLong, j)
+        body_long_total[1] += arr_bl[j - 1]
+        body_long_total[0] += arr_bl[j]
 
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == -1
             and ca.real_body[i - 1]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total[1], i - 1)
+            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total[1]
             and ca.color[i] == 1
             and ca.real_body[i]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total[0], i)
+            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total[0]
             and ca.open[i] < ca.low[i - 1]
             and ca.close[i] < ca.open[i - 1]
             and ca.close[i] > ca.close[i - 1] + ca.real_body[i - 1] * 0.5
@@ -41,9 +44,9 @@ def _detect(ca, out, **kwargs):
             out[i] = 100
 
         for tot_idx in range(2):
-            body_long_total[tot_idx] += ca.candle_range(
-                CandleSetting.BodyLong, i - tot_idx
-            ) - ca.candle_range(CandleSetting.BodyLong, body_long_trail - tot_idx)
+            body_long_total[tot_idx] += (
+                arr_bl[i - tot_idx] - arr_bl[body_long_trail - tot_idx]
+            )
         body_long_trail += 1
 
 

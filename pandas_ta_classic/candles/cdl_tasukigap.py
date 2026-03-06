@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -19,39 +20,37 @@ def _detect(ca, out, **kwargs):
     if start_idx >= len(out):
         return
 
+    arr_nr = ca._ranges[CandleSetting.Near]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     near_trail = start_idx - near_period
-
-    near_total = 0.0
-    for j in range(near_trail, start_idx):
-        near_total += ca.candle_range(CandleSetting.Near, j - 1)
-
+    near_total = float(arr_nr[near_trail - 1 : start_idx - 1].sum())
     for i in range(start_idx, len(out)):
         if (
-            ca.real_body_gap_up(i - 1, i - 2)
+            body_lo[i - 1] > body_hi[i - 2]
             and ca.color[i - 1] == 1
             and ca.color[i] == -1
             and ca.open[i] < ca.close[i - 1]
             and ca.open[i] > ca.open[i - 1]
             and ca.close[i] < ca.open[i - 1]
-            and ca.close[i] > max(ca.close[i - 2], ca.open[i - 2])
+            and ca.close[i] > body_hi[i - 2]
             and abs(ca.real_body[i - 1] - ca.real_body[i])
-            < ca.candle_average(CandleSetting.Near, near_total, i - 1)
+            < AVG_FACTOR[CandleSetting.Near] * near_total
         ) or (
-            ca.real_body_gap_down(i - 1, i - 2)
+            body_hi[i - 1] < body_lo[i - 2]
             and ca.color[i - 1] == -1
             and ca.color[i] == 1
             and ca.open[i] < ca.open[i - 1]
             and ca.open[i] > ca.close[i - 1]
             and ca.close[i] > ca.open[i - 1]
-            and ca.close[i] < min(ca.close[i - 2], ca.open[i - 2])
+            and ca.close[i] < body_lo[i - 2]
             and abs(ca.real_body[i - 1] - ca.real_body[i])
-            < ca.candle_average(CandleSetting.Near, near_total, i - 1)
+            < AVG_FACTOR[CandleSetting.Near] * near_total
         ):
             out[i] = ca.color[i - 1] * 100
 
-        near_total += ca.candle_range(CandleSetting.Near, i - 1) - ca.candle_range(
-            CandleSetting.Near, near_trail - 1
-        )
+        near_total += arr_nr[i - 1] - arr_nr[near_trail - 1]
         near_trail += 1
 
 

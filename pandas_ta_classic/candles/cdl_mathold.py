@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -23,6 +24,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+    arr_bs = ca._ranges[CandleSetting.BodyShort]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     body_short_trail = start_idx - body_short_period
     body_long_trail = start_idx - body_long_period
 
@@ -32,15 +38,15 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Seed BodyShort totals for i-3, i-2, i-1
     j = body_short_trail
     while j < start_idx:
-        body_total[3] += ca.candle_range(CandleSetting.BodyShort, j - 3)
-        body_total[2] += ca.candle_range(CandleSetting.BodyShort, j - 2)
-        body_total[1] += ca.candle_range(CandleSetting.BodyShort, j - 1)
+        body_total[3] += arr_bs[j - 3]
+        body_total[2] += arr_bs[j - 2]
+        body_total[1] += arr_bs[j - 1]
         j += 1
 
     # Seed BodyLong total for i-4
     j = body_long_trail
     while j < start_idx:
-        body_total[4] += ca.candle_range(CandleSetting.BodyLong, j - 4)
+        body_total[4] += arr_bl[j - 4]
         j += 1
 
     O = ca.open
@@ -50,20 +56,19 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             # 1st long, then 3 small
-            ca.real_body[i - 4]
-            > ca.candle_average(CandleSetting.BodyLong, body_total[4], i - 4)
+            ca.real_body[i - 4] > AVG_FACTOR[CandleSetting.BodyLong] * body_total[4]
             and ca.real_body[i - 3]
-            < ca.candle_average(CandleSetting.BodyShort, body_total[3], i - 3)
+            < AVG_FACTOR[CandleSetting.BodyShort] * body_total[3]
             and ca.real_body[i - 2]
-            < ca.candle_average(CandleSetting.BodyShort, body_total[2], i - 2)
+            < AVG_FACTOR[CandleSetting.BodyShort] * body_total[2]
             and ca.real_body[i - 1]
-            < ca.candle_average(CandleSetting.BodyShort, body_total[1], i - 1)
+            < AVG_FACTOR[CandleSetting.BodyShort] * body_total[1]
             # white, black, ?, ?, white
             and ca.color[i - 4] == 1
             and ca.color[i - 3] == -1
             and ca.color[i] == 1
             # upside gap 1st to 2nd
-            and ca.real_body_gap_up(i - 3, i - 4)
+            and body_lo[i - 3] > body_hi[i - 4]
             # 3rd to 4th hold within 1st: part of real body within 1st body
             and min(O[i - 2], C[i - 2]) < C[i - 4]
             and min(O[i - 1], C[i - 1]) < C[i - 4]
@@ -81,13 +86,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             out[i] = 100  # Always bullish
 
         # Update totals
-        body_total[4] += ca.candle_range(
-            CandleSetting.BodyLong, i - 4
-        ) - ca.candle_range(CandleSetting.BodyLong, body_long_trail - 4)
+        body_total[4] += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
         for k in range(3, 0, -1):
-            body_total[k] += ca.candle_range(
-                CandleSetting.BodyShort, i - k
-            ) - ca.candle_range(CandleSetting.BodyShort, body_short_trail - k)
+            body_total[k] += arr_bs[i - k] - arr_bs[body_short_trail - k]
         body_short_trail += 1
         body_long_trail += 1
 

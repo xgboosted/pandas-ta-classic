@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,35 +21,26 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+    arr_ss = ca._ranges[CandleSetting.ShadowShort]
+
     body_long_trail = start_idx - body_long_period
     shadow_short_trail = start_idx - shadow_short_period
-
-    body_long_total = 0.0
-    for j in range(body_long_trail, start_idx):
-        body_long_total += ca.candle_range(CandleSetting.BodyLong, j)
-
-    shadow_short_total = 0.0
-    for j in range(shadow_short_trail, start_idx):
-        shadow_short_total += ca.candle_range(CandleSetting.ShadowShort, j)
-
+    body_long_total = float(arr_bl[body_long_trail:start_idx].sum())
+    shadow_short_total = float(arr_ss[shadow_short_trail:start_idx].sum())
     for i in range(start_idx, len(out)):
         if (
-            ca.real_body[i]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total, i)
+            ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and ca.upper_shadow[i]
-            < ca.candle_average(CandleSetting.ShadowShort, shadow_short_total, i)
+            < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
             and ca.lower_shadow[i]
-            < ca.candle_average(CandleSetting.ShadowShort, shadow_short_total, i)
+            < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
         ):
             out[i] = ca.color[i] * 100
 
         # Update trailing windows
-        body_long_total += ca.candle_range(CandleSetting.BodyLong, i) - ca.candle_range(
-            CandleSetting.BodyLong, body_long_trail
-        )
-        shadow_short_total += ca.candle_range(
-            CandleSetting.ShadowShort, i
-        ) - ca.candle_range(CandleSetting.ShadowShort, shadow_short_trail)
+        body_long_total += arr_bl[i] - arr_bl[body_long_trail]
+        shadow_short_total += arr_ss[i] - arr_ss[shadow_short_trail]
         body_long_trail += 1
         shadow_short_trail += 1
 

@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,37 +21,28 @@ def _detect(ca, out, **kwargs):
     if start_idx >= len(out):
         return
 
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+    arr_eq = ca._ranges[CandleSetting.Equal]
+
     equal_trail = start_idx - 1 - equal_period
     body_long_trail = start_idx - 1 - body_long_period
-
-    equal_total = 0.0
-    for j in range(equal_trail, start_idx - 1):
-        equal_total += ca.candle_range(CandleSetting.Equal, j)
-
-    body_long_total = 0.0
-    for j in range(body_long_trail, start_idx - 1):
-        body_long_total += ca.candle_range(CandleSetting.BodyLong, j)
-
+    equal_total = float(arr_eq[equal_trail : start_idx - 1].sum())
+    body_long_total = float(arr_bl[body_long_trail : start_idx - 1].sum())
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == -1
             and ca.real_body[i - 1]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total, i - 1)
+            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and ca.color[i] == 1
             and ca.open[i] < ca.low[i - 1]
             and ca.close[i]
-            > ca.close[i - 1]
-            + ca.candle_average(CandleSetting.Equal, equal_total, i - 1)
+            > ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
             and ca.close[i] <= ca.open[i - 1] - ca.real_body[i - 1] * 0.5
         ):
             out[i] = -100
 
-        equal_total += ca.candle_range(CandleSetting.Equal, i - 1) - ca.candle_range(
-            CandleSetting.Equal, equal_trail
-        )
-        body_long_total += ca.candle_range(
-            CandleSetting.BodyLong, i - 1
-        ) - ca.candle_range(CandleSetting.BodyLong, body_long_trail)
+        equal_total += arr_eq[i - 1] - arr_eq[equal_trail]
+        body_long_total += arr_bl[i - 1] - arr_bl[body_long_trail]
         equal_trail += 1
         body_long_trail += 1
 

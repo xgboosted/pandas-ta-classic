@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,15 +21,13 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_nr = ca._ranges[CandleSetting.Near]
+
     near_trail = start_idx - near_period
 
     # Seed Near totals for i-3 and i-2 (indices 3, 2)
-    near_total_3 = 0.0
-    near_total_2 = 0.0
-    for j in range(near_trail, start_idx):
-        near_total_3 += ca.candle_range(CandleSetting.Near, j - 3)
-        near_total_2 += ca.candle_range(CandleSetting.Near, j - 2)
-
+    near_total_3 = float(arr_nr[near_trail - 3 : start_idx - 3].sum())
+    near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
     O = ca.open
     C = ca.close
 
@@ -41,18 +40,14 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i] == -ca.color[i - 1]
             # 2nd opens within/near 1st real body
             and O[i - 2]
-            >= min(O[i - 3], C[i - 3])
-            - ca.candle_average(CandleSetting.Near, near_total_3, i - 3)
+            >= min(O[i - 3], C[i - 3]) - AVG_FACTOR[CandleSetting.Near] * near_total_3
             and O[i - 2]
-            <= max(O[i - 3], C[i - 3])
-            + ca.candle_average(CandleSetting.Near, near_total_3, i - 3)
+            <= max(O[i - 3], C[i - 3]) + AVG_FACTOR[CandleSetting.Near] * near_total_3
             # 3rd opens within/near 2nd real body
             and O[i - 1]
-            >= min(O[i - 2], C[i - 2])
-            - ca.candle_average(CandleSetting.Near, near_total_2, i - 2)
+            >= min(O[i - 2], C[i - 2]) - AVG_FACTOR[CandleSetting.Near] * near_total_2
             and O[i - 1]
-            <= max(O[i - 2], C[i - 2])
-            + ca.candle_average(CandleSetting.Near, near_total_2, i - 2)
+            <= max(O[i - 2], C[i - 2]) + AVG_FACTOR[CandleSetting.Near] * near_total_2
             and (
                 (
                     # If three white
@@ -81,12 +76,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             out[i] = ca.color[i - 1] * 100
 
         # Update totals: add current range, subtract trailing range
-        near_total_3 += ca.candle_range(CandleSetting.Near, i - 3) - ca.candle_range(
-            CandleSetting.Near, near_trail - 3
-        )
-        near_total_2 += ca.candle_range(CandleSetting.Near, i - 2) - ca.candle_range(
-            CandleSetting.Near, near_trail - 2
-        )
+        near_total_3 += arr_nr[i - 3] - arr_nr[near_trail - 3]
+        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
         near_trail += 1
 
 

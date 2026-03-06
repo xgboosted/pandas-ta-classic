@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -24,6 +25,12 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bd = ca._ranges[CandleSetting.BodyDoji]
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+    arr_bs = ca._ranges[CandleSetting.BodyShort]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     # Trailing indices
     # BodyLong at offset i-2: trail = startIdx - 2 - period
     body_long_trail = start_idx - 2 - body_long_period
@@ -33,46 +40,29 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_short_trail = start_idx - body_short_period
 
     # Seed totals
-    body_long_total = 0.0
-    for j in range(body_long_trail, start_idx - 2):
-        body_long_total += ca.candle_range(CandleSetting.BodyLong, j)
-
-    body_doji_total = 0.0
-    for j in range(body_doji_trail, start_idx - 1):
-        body_doji_total += ca.candle_range(CandleSetting.BodyDoji, j)
-
-    body_short_total = 0.0
-    for j in range(body_short_trail, start_idx):
-        body_short_total += ca.candle_range(CandleSetting.BodyShort, j)
-
+    body_long_total = float(arr_bl[body_long_trail : start_idx - 2].sum())
+    body_doji_total = float(arr_bd[body_doji_trail : start_idx - 1].sum())
+    body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
     for i in range(start_idx, len(out)):
         if (
             # 1st: long black
-            ca.real_body[i - 2]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total, i - 2)
+            ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and ca.color[i - 2] == -1
             # 2nd: doji gapping down
             and ca.real_body[i - 1]
-            <= ca.candle_average(CandleSetting.BodyDoji, body_doji_total, i - 1)
-            and ca.real_body_gap_down(i - 1, i - 2)
+            <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
+            and body_hi[i - 1] < body_lo[i - 2]
             # 3rd: longer than short, white, closing well within 1st rb
-            and ca.real_body[i]
-            > ca.candle_average(CandleSetting.BodyShort, body_short_total, i)
+            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
             and ca.color[i] == 1
             and ca.close[i] > ca.close[i - 2] + ca.real_body[i - 2] * penetration
         ):
             out[i] = 100
 
         # Update trailing windows
-        body_long_total += ca.candle_range(
-            CandleSetting.BodyLong, i - 2
-        ) - ca.candle_range(CandleSetting.BodyLong, body_long_trail)
-        body_doji_total += ca.candle_range(
-            CandleSetting.BodyDoji, i - 1
-        ) - ca.candle_range(CandleSetting.BodyDoji, body_doji_trail)
-        body_short_total += ca.candle_range(
-            CandleSetting.BodyShort, i
-        ) - ca.candle_range(CandleSetting.BodyShort, body_short_trail)
+        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
+        body_doji_total += arr_bd[i - 1] - arr_bd[body_doji_trail]
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
         body_long_trail += 1
         body_doji_trail += 1
         body_short_trail += 1

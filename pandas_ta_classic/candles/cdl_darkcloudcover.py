@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -21,19 +22,21 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+
     body_long_trail = start_idx - body_long_period
 
     body_long_total = 0.0
     i = body_long_trail
     while i < start_idx:
-        body_long_total += ca.candle_range(CandleSetting.BodyLong, i - 1)
+        body_long_total += arr_bl[i - 1]
         i += 1
 
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == 1  # 1st: white
             and ca.real_body[i - 1]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total, i - 1)  # long
+            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total  # long
             and ca.color[i] == -1  # 2nd: black
             and ca.open[i] > ca.high[i - 1]  # open above prior high
             and ca.close[i] > ca.open[i - 1]  # close within prior body
@@ -41,9 +44,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ):
             out[i] = -100
 
-        body_long_total += ca.candle_range(
-            CandleSetting.BodyLong, i - 1
-        ) - ca.candle_range(CandleSetting.BodyLong, body_long_trail - 1)
+        body_long_total += arr_bl[i - 1] - arr_bl[body_long_trail - 1]
         body_long_trail += 1
 
 

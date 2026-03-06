@@ -17,17 +17,20 @@ def _detect(ca, out, **kwargs):
     if start_idx >= len(out):
         return
 
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 2] == ca.color[i - 1]
             and ca.color[i - 1] == -ca.color[i]
-            and ca.open[i] < max(ca.close[i - 1], ca.open[i - 1])
-            and ca.open[i] > min(ca.close[i - 1], ca.open[i - 1])
-            and ca.close[i] < max(ca.close[i - 2], ca.open[i - 2])
-            and ca.close[i] > min(ca.close[i - 2], ca.open[i - 2])
+            and ca.open[i] < body_hi[i - 1]
+            and ca.open[i] > body_lo[i - 1]
+            and ca.close[i] < body_hi[i - 2]
+            and ca.close[i] > body_lo[i - 2]
             and (
-                (ca.color[i - 2] == 1 and ca.real_body_gap_up(i - 1, i - 2))
-                or (ca.color[i - 2] == -1 and ca.real_body_gap_down(i - 1, i - 2))
+                (ca.color[i - 2] == 1 and body_lo[i - 1] > body_hi[i - 2])
+                or (ca.color[i - 2] == -1 and body_hi[i - 1] < body_lo[i - 2])
             )
         ):
             out[i] = ca.color[i - 2] * 100

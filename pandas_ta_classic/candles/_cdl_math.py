@@ -60,6 +60,20 @@ CANDLE_DEFAULTS = {
 
 
 # ---------------------------------------------------------------------------
+# Pre-computed average parameters (module-level for direct access in _detect)
+# ---------------------------------------------------------------------------
+
+AVG_PERIOD = {s: CANDLE_DEFAULTS[s][1] for s in CandleSetting}
+
+AVG_FACTOR = {}
+for _s in CandleSetting:
+    _rt, _ap, _f = CANDLE_DEFAULTS[_s]
+    _d = 2.0 if _rt == RangeType.Shadows else 1.0
+    AVG_FACTOR[_s] = _f / (_ap * _d) if _ap != 0 else _f / _d
+del _s, _rt, _ap, _f, _d
+
+
+# ---------------------------------------------------------------------------
 # CandleArrays — pre-computed numpy arrays + TA-Lib macro equivalents
 # ---------------------------------------------------------------------------
 
@@ -77,7 +91,11 @@ class CandleArrays:
         "upper_shadow",
         "lower_shadow",
         "hl_range",
+        "shadow_range",
+        "body_high",
+        "body_low",
         "color",
+        "_ranges",
     )
 
     def __init__(
@@ -92,22 +110,28 @@ class CandleArrays:
         self.low = low
         self.close = close
 
+        self.body_high = np.maximum(close, open_)
+        self.body_low = np.minimum(close, open_)
         self.real_body = np.abs(close - open_)
-        self.upper_shadow = high - np.maximum(close, open_)
-        self.lower_shadow = np.minimum(close, open_) - low
+        self.upper_shadow = high - self.body_high
+        self.lower_shadow = self.body_low - low
         self.hl_range = high - low
+        self.shadow_range = self.upper_shadow + self.lower_shadow
         # +1 = bullish (close >= open), -1 = bearish
         self.color = np.where(close >= open_, 1, -1)
 
+        # Pre-computed range array for each CandleSetting (eliminates
+        # per-call branching in candle_range).
+        _rt_arrays = {
+            RangeType.RealBody: self.real_body,
+            RangeType.HighLow: self.hl_range,
+            RangeType.Shadows: self.shadow_range,
+        }
+        self._ranges = {s: _rt_arrays[CANDLE_DEFAULTS[s][0]] for s in CandleSetting}
+
     # -- TA-Lib macro: TA_CANDLERANGE --
     def candle_range(self, setting: CandleSetting, i: int) -> float:
-        rt = CANDLE_DEFAULTS[setting][0]
-        if rt == RangeType.RealBody:
-            return self.real_body[i]
-        elif rt == RangeType.HighLow:
-            return self.hl_range[i]
-        else:  # Shadows
-            return self.upper_shadow[i] + self.lower_shadow[i]
+        return self._ranges[setting][i]
 
     # -- TA-Lib macro: TA_CANDLEAVERAGE --
     def candle_average(
@@ -119,21 +143,18 @@ class CandleArrays:
         When ``avgPeriod == 0``, uses ``candle_range(setting, i)`` instead of
         ``sum/period``.
         """
-        rt, avg_period, factor = CANDLE_DEFAULTS[setting]
-        if avg_period != 0:
-            avg = period_total / avg_period
-        else:
-            avg = self.candle_range(setting, i)
-        divisor = 2.0 if rt == RangeType.Shadows else 1.0
-        return factor * avg / divisor
+        ap = AVG_PERIOD[setting]
+        if ap != 0:
+            return AVG_FACTOR[setting] * period_total
+        return AVG_FACTOR[setting] * self._ranges[setting][i]
 
     # -- TA-Lib macro: TA_REALBODYGAPUP --
     def real_body_gap_up(self, i2: int, i1: int) -> bool:
-        return min(self.close[i2], self.open[i2]) > max(self.close[i1], self.open[i1])
+        return self.body_low[i2] > self.body_high[i1]
 
     # -- TA-Lib macro: TA_REALBODYGAPDOWN --
     def real_body_gap_down(self, i2: int, i1: int) -> bool:
-        return max(self.close[i2], self.open[i2]) < min(self.close[i1], self.open[i1])
+        return self.body_high[i2] < self.body_low[i1]
 
     # -- TA-Lib macro: TA_CANDLEGAPUP --
     def candle_gap_up(self, i2: int, i1: int) -> bool:

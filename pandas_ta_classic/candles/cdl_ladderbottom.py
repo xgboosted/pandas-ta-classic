@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,13 +21,12 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
+
     svs_trail = start_idx - svs_period
 
     # Seed ShadowVeryShort total: applied to bar i-1
-    svs_total = 0.0
-    for j in range(svs_trail, start_idx):
-        svs_total += ca.candle_range(CandleSetting.ShadowVeryShort, j - 1)
-
+    svs_total = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
     O = ca.open
     H = ca.high
     C = ca.close
@@ -46,7 +46,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 4th: black with an upper shadow
             and ca.color[i - 1] == -1
             and ca.upper_shadow[i - 1]
-            > ca.candle_average(CandleSetting.ShadowVeryShort, svs_total, i - 1)
+            > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
             # 5th: white
             and ca.color[i] == 1
             # That opens above prior candle's body (open, since bearish)
@@ -57,9 +57,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             out[i] = 100
 
         # Update total: add current range, subtract trailing range
-        svs_total += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i - 1
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail - 1)
+        svs_total += arr_svs[i - 1] - arr_svs[svs_trail - 1]
         svs_trail += 1
 
 

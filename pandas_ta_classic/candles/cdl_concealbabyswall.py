@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,14 +21,18 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     svs_trail = start_idx - svs_period
 
     # Seed totals for candles at i-3, i-2, i-1
     svs_total = [0.0, 0.0, 0.0, 0.0]  # indexed [0..3], use [1],[2],[3]
     for j in range(svs_trail, start_idx):
-        svs_total[3] += ca.candle_range(CandleSetting.ShadowVeryShort, j - 3)
-        svs_total[2] += ca.candle_range(CandleSetting.ShadowVeryShort, j - 2)
-        svs_total[1] += ca.candle_range(CandleSetting.ShadowVeryShort, j - 1)
+        svs_total[3] += arr_svs[j - 3]
+        svs_total[2] += arr_svs[j - 2]
+        svs_total[1] += arr_svs[j - 1]
 
     H = ca.high
     L = ca.low
@@ -42,19 +47,19 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i] == -1
             # 1st: marubozu (very short shadows)
             and ca.lower_shadow[i - 3]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total[3], i - 3)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[3]
             and ca.upper_shadow[i - 3]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total[3], i - 3)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[3]
             # 2nd: marubozu (very short shadows)
             and ca.lower_shadow[i - 2]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total[2], i - 2)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[2]
             and ca.upper_shadow[i - 2]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total[2], i - 2)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[2]
             # 3rd: opens gapping down
-            and ca.real_body_gap_down(i - 1, i - 2)
+            and body_hi[i - 1] < body_lo[i - 2]
             # 3rd: HAS an upper shadow
             and ca.upper_shadow[i - 1]
-            > ca.candle_average(CandleSetting.ShadowVeryShort, svs_total[1], i - 1)
+            > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[1]
             # 3rd upper shadow extends into the prior body
             and H[i - 1] > C[i - 2]
             # 4th: engulfs the 3rd including the shadows
@@ -65,9 +70,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
         # Update totals
         for k in range(3, 0, -1):
-            svs_total[k] += ca.candle_range(
-                CandleSetting.ShadowVeryShort, i - k
-            ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail - k)
+            svs_total[k] += arr_svs[i - k] - arr_svs[svs_trail - k]
         svs_trail += 1
 
 

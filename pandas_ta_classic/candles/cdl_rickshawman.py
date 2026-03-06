@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -21,55 +22,42 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bd = ca._ranges[CandleSetting.BodyDoji]
+    arr_nr = ca._ranges[CandleSetting.Near]
+    arr_sl = ca._ranges[CandleSetting.ShadowLong]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     body_doji_trail = start_idx - body_doji_period
     shadow_long_trail = start_idx - shadow_long_period
     near_trail = start_idx - near_period
-
-    body_doji_total = 0.0
-    for j in range(body_doji_trail, start_idx):
-        body_doji_total += ca.candle_range(CandleSetting.BodyDoji, j)
-
-    shadow_long_total = 0.0
-    for j in range(shadow_long_trail, start_idx):
-        shadow_long_total += ca.candle_range(CandleSetting.ShadowLong, j)
-
-    near_total = 0.0
-    for j in range(near_trail, start_idx):
-        near_total += ca.candle_range(CandleSetting.Near, j)
-
+    body_doji_total = float(arr_bd[body_doji_trail:start_idx].sum())
+    shadow_long_total = float(arr_sl[shadow_long_trail:start_idx].sum())
+    near_total = float(arr_nr[near_trail:start_idx].sum())
     for i in range(start_idx, len(out)):
         if (
-            ca.real_body[i]
-            <= ca.candle_average(CandleSetting.BodyDoji, body_doji_total, i)
-            and ca.lower_shadow[i]
-            > ca.candle_average(CandleSetting.ShadowLong, shadow_long_total, i)
-            and ca.upper_shadow[i]
-            > ca.candle_average(CandleSetting.ShadowLong, shadow_long_total, i)
+            ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
+            and ca.lower_shadow[i] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i]
+            and ca.upper_shadow[i] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i]
             and (
-                min(ca.open[i], ca.close[i])
+                body_lo[i]
                 <= ca.low[i]
                 + ca.hl_range[i] / 2.0
-                + ca.candle_average(CandleSetting.Near, near_total, i)
+                + AVG_FACTOR[CandleSetting.Near] * near_total
             )
             and (
-                max(ca.open[i], ca.close[i])
+                body_hi[i]
                 >= ca.low[i]
                 + ca.hl_range[i] / 2.0
-                - ca.candle_average(CandleSetting.Near, near_total, i)
+                - AVG_FACTOR[CandleSetting.Near] * near_total
             )
         ):
             out[i] = 100
 
         # Update trailing windows
-        body_doji_total += ca.candle_range(CandleSetting.BodyDoji, i) - ca.candle_range(
-            CandleSetting.BodyDoji, body_doji_trail
-        )
-        shadow_long_total += ca.candle_range(
-            CandleSetting.ShadowLong, i
-        ) - ca.candle_range(CandleSetting.ShadowLong, shadow_long_trail)
-        near_total += ca.candle_range(CandleSetting.Near, i) - ca.candle_range(
-            CandleSetting.Near, near_trail
-        )
+        body_doji_total += arr_bd[i] - arr_bd[body_doji_trail]
+        shadow_long_total += arr_sl[i] - arr_sl[shadow_long_trail]
+        near_total += arr_nr[i] - arr_nr[near_trail]
         body_doji_trail += 1
         shadow_long_trail += 1
         near_trail += 1

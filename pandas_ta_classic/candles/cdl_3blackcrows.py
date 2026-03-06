@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,17 +21,14 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
+
     svs_trail = start_idx - svs_period
 
     # Seed ShadowVeryShort totals for i-2, i-1, i (indices 2, 1, 0)
-    svs_total_2 = 0.0
-    svs_total_1 = 0.0
-    svs_total_0 = 0.0
-    for j in range(svs_trail, start_idx):
-        svs_total_2 += ca.candle_range(CandleSetting.ShadowVeryShort, j - 2)
-        svs_total_1 += ca.candle_range(CandleSetting.ShadowVeryShort, j - 1)
-        svs_total_0 += ca.candle_range(CandleSetting.ShadowVeryShort, j)
-
+    svs_total_2 = float(arr_svs[svs_trail - 2 : start_idx - 2].sum())
+    svs_total_1 = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
+    svs_total_0 = float(arr_svs[svs_trail:start_idx].sum())
     O = ca.open
     H = ca.high
     C = ca.close
@@ -43,17 +41,17 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i - 2] == -1
             # very short lower shadow
             and ca.lower_shadow[i - 2]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total_2, i - 2)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
             # 2nd black
             and ca.color[i - 1] == -1
             # very short lower shadow
             and ca.lower_shadow[i - 1]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total_1, i - 1)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
             # 3rd black
             and ca.color[i] == -1
             # very short lower shadow
             and ca.lower_shadow[i]
-            < ca.candle_average(CandleSetting.ShadowVeryShort, svs_total_0, i)
+            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
             # 2nd black opens within 1st black's real body
             and O[i - 1] < O[i - 2]
             and O[i - 1] > C[i - 2]
@@ -69,15 +67,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             out[i] = -100
 
         # Update totals: add current range, subtract trailing range
-        svs_total_2 += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i - 2
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail - 2)
-        svs_total_1 += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i - 1
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail - 1)
-        svs_total_0 += ca.candle_range(
-            CandleSetting.ShadowVeryShort, i
-        ) - ca.candle_range(CandleSetting.ShadowVeryShort, svs_trail)
+        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
+        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
+        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
         svs_trail += 1
 
 

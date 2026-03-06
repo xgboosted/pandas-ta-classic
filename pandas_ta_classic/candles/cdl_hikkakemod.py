@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,6 +21,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_nr = ca._ranges[CandleSetting.Near]
+
     H = ca.high
     L = ca.low
     C = ca.close
@@ -32,7 +35,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     near_total = 0.0
     j = near_trail
     while j < start_idx - 3:
-        near_total += ca.candle_range(CandleSetting.Near, j - 2)
+        near_total += arr_nr[j - 2]
         j += 1
 
     pattern_idx = 0
@@ -54,8 +57,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and L[i] < L[i - 1]
                     # (bull) 2nd: close near the low
                     and C[i - 2]
-                    <= L[i - 2]
-                    + ca.candle_average(CandleSetting.Near, near_total, i - 2)
+                    <= L[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total
                 )
                 or (
                     # (bear) 4th: higher high and higher low
@@ -63,8 +65,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and L[i] > L[i - 1]
                     # (bear) 2nd: close near the top
                     and C[i - 2]
-                    >= H[i - 2]
-                    - ca.candle_average(CandleSetting.Near, near_total, i - 2)
+                    >= H[i - 2] - AVG_FACTOR[CandleSetting.Near] * near_total
                 )
             )
         ):
@@ -78,9 +79,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             ):
                 pattern_idx = 0
 
-        near_total += ca.candle_range(CandleSetting.Near, i - 2) - ca.candle_range(
-            CandleSetting.Near, near_trail - 2
-        )
+        near_total += arr_nr[i - 2] - arr_nr[near_trail - 2]
         near_trail += 1
 
     # Main loop
@@ -99,8 +98,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and L[i] < L[i - 1]
                     # (bull) 2nd: close near the low
                     and C[i - 2]
-                    <= L[i - 2]
-                    + ca.candle_average(CandleSetting.Near, near_total, i - 2)
+                    <= L[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total
                 )
                 or (
                     # (bear) 4th: higher high and higher low
@@ -108,8 +106,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and L[i] > L[i - 1]
                     # (bear) 2nd: close near the top
                     and C[i - 2]
-                    >= H[i - 2]
-                    - ca.candle_average(CandleSetting.Near, near_total, i - 2)
+                    >= H[i - 2] - AVG_FACTOR[CandleSetting.Near] * near_total
                 )
             )
         ):
@@ -123,9 +120,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             out[i] = pattern_result + 100 * (1 if pattern_result > 0 else -1)
             pattern_idx = 0
 
-        near_total += ca.candle_range(CandleSetting.Near, i - 2) - ca.candle_range(
-            CandleSetting.Near, near_trail - 2
-        )
+        near_total += arr_nr[i - 2] - arr_nr[near_trail - 2]
         near_trail += 1
 
 

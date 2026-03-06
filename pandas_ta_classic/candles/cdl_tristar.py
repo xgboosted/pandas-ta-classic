@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -19,33 +20,29 @@ def _detect(ca, out, **kwargs):
     if start_idx >= len(out):
         return
 
+    arr_bd = ca._ranges[CandleSetting.BodyDoji]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     body_trail = start_idx - 2 - body_doji_period
-
-    body_total = 0.0
-    for j in range(body_trail, start_idx - 2):
-        body_total += ca.candle_range(CandleSetting.BodyDoji, j)
-
+    body_total = float(arr_bd[body_trail : start_idx - 2].sum())
     for i in range(start_idx, len(out)):
         if (
-            ca.real_body[i - 2]
-            <= ca.candle_average(CandleSetting.BodyDoji, body_total, i - 2)
-            and ca.real_body[i - 1]
-            <= ca.candle_average(CandleSetting.BodyDoji, body_total, i - 2)
-            and ca.real_body[i]
-            <= ca.candle_average(CandleSetting.BodyDoji, body_total, i - 2)
+            ca.real_body[i - 2] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_total
+            and ca.real_body[i - 1] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_total
+            and ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_total
         ):
-            if ca.real_body_gap_up(i - 1, i - 2) and max(ca.open[i], ca.close[i]) < max(
+            if body_lo[i - 1] > body_hi[i - 2] and body_hi[i] < max(
                 ca.open[i - 1], ca.close[i - 1]
             ):
                 out[i] = -100
-            if ca.real_body_gap_down(i - 1, i - 2) and min(
-                ca.open[i], ca.close[i]
-            ) > min(ca.open[i - 1], ca.close[i - 1]):
+            if (
+                body_hi[i - 1] < body_lo[i - 2]
+                and min(ca.open[i], ca.close[i]) > body_lo[i - 1]
+            ):
                 out[i] = 100
 
-        body_total += ca.candle_range(CandleSetting.BodyDoji, i - 2) - ca.candle_range(
-            CandleSetting.BodyDoji, body_trail
-        )
+        body_total += arr_bd[i - 2] - arr_bd[body_trail]
         body_trail += 1
 
 

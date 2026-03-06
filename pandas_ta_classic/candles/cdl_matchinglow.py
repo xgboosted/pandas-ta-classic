@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -19,28 +20,22 @@ def _detect(ca, out, **kwargs):
     if start_idx >= len(out):
         return
 
+    arr_eq = ca._ranges[CandleSetting.Equal]
+
     equal_trail = start_idx - 1 - equal_period
-
-    equal_total = 0.0
-    for j in range(equal_trail, start_idx - 1):
-        equal_total += ca.candle_range(CandleSetting.Equal, j)
-
+    equal_total = float(arr_eq[equal_trail : start_idx - 1].sum())
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == -1
             and ca.color[i] == -1
             and ca.close[i]
-            <= ca.close[i - 1]
-            + ca.candle_average(CandleSetting.Equal, equal_total, i - 1)
+            <= ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
             and ca.close[i]
-            >= ca.close[i - 1]
-            - ca.candle_average(CandleSetting.Equal, equal_total, i - 1)
+            >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
         ):
             out[i] = 100
 
-        equal_total += ca.candle_range(CandleSetting.Equal, i - 1) - ca.candle_range(
-            CandleSetting.Equal, equal_trail
-        )
+        equal_total += arr_eq[i - 1] - arr_eq[equal_trail]
         equal_trail += 1
 
 

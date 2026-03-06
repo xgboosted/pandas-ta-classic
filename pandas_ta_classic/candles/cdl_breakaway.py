@@ -4,6 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
+    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
     candle_avg_period,
@@ -20,15 +21,16 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
+    arr_bl = ca._ranges[CandleSetting.BodyLong]
+    body_hi = ca.body_high
+    body_lo = ca.body_low
+
     # Trailing index for BodyLong setting applied to i-4
     body_long_trail = start_idx - body_long_period
 
     # Seed BodyLong total: sum candle_range(BodyLong, i-4)
     # for i from body_long_trail to start_idx-1
-    body_long_total = 0.0
-    for j in range(body_long_trail, start_idx):
-        body_long_total += ca.candle_range(CandleSetting.BodyLong, j - 4)
-
+    body_long_total = float(arr_bl[body_long_trail - 4 : start_idx - 4].sum())
     O = ca.open
     H = ca.high
     L = ca.low
@@ -37,8 +39,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             # 1st: long body
-            ca.real_body[i - 4]
-            > ca.candle_average(CandleSetting.BodyLong, body_long_total, i - 4)
+            ca.real_body[i - 4] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             # 1st, 2nd, 4th same color; 5th opposite
             and ca.color[i - 4] == ca.color[i - 3]
             and ca.color[i - 3] == ca.color[i - 1]
@@ -48,7 +49,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     # When 1st is black:
                     ca.color[i - 4] == -1
                     # 2nd gaps down
-                    and ca.real_body_gap_down(i - 3, i - 4)
+                    and body_hi[i - 3] < body_lo[i - 4]
                     # 3rd has lower high and low than 2nd
                     and H[i - 2] < H[i - 3]
                     and L[i - 2] < L[i - 3]
@@ -63,7 +64,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     # When 1st is white:
                     ca.color[i - 4] == 1
                     # 2nd gaps up
-                    and ca.real_body_gap_up(i - 3, i - 4)
+                    and body_lo[i - 3] > body_hi[i - 4]
                     # 3rd has higher high and low than 2nd
                     and H[i - 2] > H[i - 3]
                     and L[i - 2] > L[i - 3]
@@ -79,9 +80,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             out[i] = ca.color[i] * 100
 
         # Update: add current, subtract trailing (both reference i-4)
-        body_long_total += ca.candle_range(
-            CandleSetting.BodyLong, i - 4
-        ) - ca.candle_range(CandleSetting.BodyLong, body_long_trail - 4)
+        body_long_total += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
         body_long_trail += 1
 
 
