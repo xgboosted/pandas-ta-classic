@@ -36,7 +36,7 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -65,7 +65,7 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -122,7 +122,7 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -171,7 +171,7 @@ jobs:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -222,7 +222,7 @@ jobs:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
 
@@ -352,7 +352,7 @@ jobs:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
