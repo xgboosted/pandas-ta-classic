@@ -48,6 +48,33 @@ class TestStatistics(TestCase):
     def tearDown(self):
         pass
 
+    def test_beta(self):
+        # Use high as a pseudo-benchmark
+        result = pandas_ta.beta(self.close, benchmark=self.high, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "BETA_30")
+        pandas_ta.beta(self.close, benchmark=self.high, talib=False, fillna=0)
+        pandas_ta.beta(
+            self.close, benchmark=self.high, talib=False, fill_method="ffill"
+        )
+        pandas_ta.beta(
+            self.close, benchmark=self.high, talib=False, fill_method="bfill"
+        )
+        self.assertIsNone(pandas_ta.beta(None))
+
+    def test_correl(self):
+        result = pandas_ta.correl(self.close, benchmark=self.high, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "CORREL_30")
+        pandas_ta.correl(self.close, benchmark=self.high, talib=False, fillna=0)
+        pandas_ta.correl(
+            self.close, benchmark=self.high, talib=False, fill_method="ffill"
+        )
+        pandas_ta.correl(
+            self.close, benchmark=self.high, talib=False, fill_method="bfill"
+        )
+        self.assertIsNone(pandas_ta.correl(None))
+
     def test_entropy(self):
         result = pandas_ta.entropy(self.close)
         self.assertIsInstance(result, Series)
