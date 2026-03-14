@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from .beta import beta
 from .entropy import entropy
 from .kurtosis import kurtosis
 from .mad import mad
