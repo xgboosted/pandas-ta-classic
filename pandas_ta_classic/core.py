@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import logging
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple
 from warnings import simplefilter
+
+logger = logging.getLogger(__name__)
 
 import pandas as pd
 from numpy import log10 as npLog10
@@ -469,10 +472,13 @@ class AnalysisIndicators(BasePandasObject):
                 # misspelled.
                 matches = df.columns.str.match(series, case=False)
                 match = [i for i, x in enumerate(matches) if x]
-                # If found, awesome.  Return it or return the 'series'.
+                if len(match):
+                    return df.iloc[:, match[0]]
                 cols = ", ".join(list(df.columns))
-                NOT_FOUND = f"[X] Ooops!!! It's {series not in df.columns}, the series '{series}' was not found in {cols}"
-                return df.iloc[:, match[0]] if len(match) else print(NOT_FOUND)
+                logger.warning(
+                    f"[X] Column '{series}' not found." f" Available columns: {cols}"
+                )
+                return None
 
     def _indicators_by_category(self, name: str) -> Optional[list]:
         """Returns indicators by Categorical name."""
