@@ -7,6 +7,7 @@ from pandas import Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._core import _sliding_weighted_ma
 
 
 def alma(
@@ -35,23 +36,11 @@ def alma(
     # Pre-Calculations
     m = distribution_offset * (length - 1)
     s = length / sigma
-    wtd = list(range(length))
-    for i in range(0, length):
-        wtd[i] = npExp(-1 * ((i - m) * (i - m)) / (2 * s * s))
+    w = np.array([npExp(-1 * ((i - m) * (i - m)) / (2 * s * s)) for i in range(length)])
+    w_norm = w / w.sum()
 
-    # Calculate Result
-    result = [npNaN for _ in range(0, length - 1)]
-    for i in range(length - 1, close.size):
-        window_sum = 0
-        cum_sum = 0
-        for j in range(0, length):
-            window_sum = window_sum + wtd[j] * close.iloc[i - j]
-            cum_sum = cum_sum + wtd[j]
-
-        almean = window_sum / cum_sum
-        result.append(almean)
-
-    alma = Series(result, index=close.index)
+    # Calculate Result — vectorised via sliding_window_view
+    alma = _sliding_weighted_ma(close, length, w_norm[::-1])
 
     # Offset
     if offset != 0:

@@ -4,7 +4,8 @@ from typing import Any, Optional
 from numpy import pi as npPi
 from numpy import sin as npSin
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series, weights
+from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._core import _sliding_weighted_ma
 
 
 def sinwma(
@@ -23,10 +24,12 @@ def sinwma(
         return None
 
     # Calculate Result
-    sines = Series([npSin((i + 1) * npPi / (length + 1)) for i in range(0, length)])
+    import numpy as np
+
+    sines = np.array([npSin((i + 1) * npPi / (length + 1)) for i in range(length)])
     w = sines / sines.sum()
 
-    sinwma = close.rolling(length, min_periods=length).apply(weights(w), raw=True)
+    sinwma = _sliding_weighted_ma(close, length, w)
 
     # Offset
     if offset != 0:
