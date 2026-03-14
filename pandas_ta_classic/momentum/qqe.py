@@ -41,6 +41,8 @@ def qqe(
     rsi_ = rsi(close, length)
     _mode = mamode.lower()[0] if mamode != "ema" else ""
     rsi_ma = ma(mamode, rsi_, length=smooth)
+    if rsi_ma is None:
+        return None
 
     # RSI MA True Range
     rsi_ma_tr = rsi_ma.diff(drift).abs()
@@ -163,9 +165,11 @@ def qqe(
     data = {
         qqe.name: qqe,
         rsi_ma.name: rsi_ma,
-        # long.name: long, short.name: short
         qqe_long.name: qqe_long,
         qqe_short.name: qqe_short,
+        f"QQEb_l{_props}": long,
+        f"QQEb_s{_props}": short,
+        f"QQEd{_props}": trend,
     }
     df = DataFrame(data)
     df.name = f"QQE{_props}"
@@ -203,5 +207,7 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: QQE, RSI_MA (basis), QQEl (long), and QQEs (short) columns.
+    pd.DataFrame: QQE, RSI_MA (basis), QQEl (sparse long signal),
+        QQEs (sparse short signal), QQEb_l (continuous long band),
+        QQEb_s (continuous short band), and QQEd (trend direction) columns.
 """
