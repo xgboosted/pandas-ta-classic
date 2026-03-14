@@ -2,8 +2,6 @@
 # Quantitative Qualitative Estimation (QQE)
 from typing import Any, Optional
 import numpy as np
-from numpy import maximum as npMaximum
-from numpy import minimum as npMinimum
 from pandas import DataFrame, Series
 
 npNaN = np.nan
@@ -48,56 +46,75 @@ def qqe(
     # Double Smooth the RSI MA True Range using Wilder's Length with a default
     # width of 4.236.
     smoothed_rsi_tr_ma = ma("ema", rsi_ma_tr, length=wilders_length)
-    dar = factor * ma("ema", smoothed_rsi_tr_ma, length=wilders_length)
+    if smoothed_rsi_tr_ma is None:
+        return None
+    _dar_ma = ma("ema", smoothed_rsi_tr_ma, length=wilders_length)
+    if _dar_ma is None:
+        return None
+    dar = factor * _dar_ma
 
     # Create the Upper and Lower Bands around RSI MA.
     upperband = rsi_ma + dar
     lowerband = rsi_ma - dar
 
     m = close.size
-    long = Series(0, index=close.index)
-    short = Series(0, index=close.index)
-    trend = Series(1, index=close.index)
-    qqe = Series(rsi_ma.iloc[0], index=close.index)
-    qqe_long = Series(npNaN, index=close.index)
-    qqe_short = Series(npNaN, index=close.index)
+    rsi_arr = rsi_ma.to_numpy()
+    ub_arr = upperband.to_numpy()
+    lb_arr = lowerband.to_numpy()
+
+    long_arr = np.zeros(m)
+    short_arr = np.zeros(m)
+    trend_arr = np.ones(m)
+    qqe_arr = np.empty(m)
+    qqe_arr[0] = rsi_arr[0]
+    qqe_long_arr = np.full(m, npNaN)
+    qqe_short_arr = np.full(m, npNaN)
 
     for i in range(1, m):
-        c_rsi, p_rsi = rsi_ma.iloc[i], rsi_ma.iloc[i - 1]
-        c_long, p_long = long.iloc[i - 1], long.iloc[i - 2]
-        c_short, p_short = short.iloc[i - 1], short.iloc[i - 2]
+        c_rsi = rsi_arr[i]
+        p_rsi = rsi_arr[i - 1]
+        c_long = long_arr[i - 1]
+        c_short = short_arr[i - 1]
+        p_long = long_arr[i - 2] if i >= 2 else 0.0
+        p_short = short_arr[i - 2] if i >= 2 else 0.0
 
         # Long Line
         if p_rsi > c_long and c_rsi > c_long:
-            long.iloc[i] = npMaximum(c_long, lowerband.iloc[i])
+            long_arr[i] = max(c_long, lb_arr[i])
         else:
-            long.iloc[i] = lowerband.iloc[i]
+            long_arr[i] = lb_arr[i]
 
         # Short Line
         if p_rsi < c_short and c_rsi < c_short:
-            short.iloc[i] = npMinimum(c_short, upperband.iloc[i])
+            short_arr[i] = min(c_short, ub_arr[i])
         else:
-            short.iloc[i] = upperband.iloc[i]
+            short_arr[i] = ub_arr[i]
 
         # Trend & QQE Calculation
-        # Long: Current RSI_MA value Crosses the Prior Short Line Value
-        # Short: Current RSI_MA Crosses the Prior Long Line Value
         if (c_rsi > c_short and p_rsi < p_short) or (
             c_rsi <= c_short and p_rsi >= p_short
         ):
-            trend.iloc[i] = 1
-            qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+            trend_arr[i] = 1.0
+            qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
         elif (c_rsi > c_long and p_rsi < p_long) or (
             c_rsi <= c_long and p_rsi >= p_long
         ):
-            trend.iloc[i] = -1
-            qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
+            trend_arr[i] = -1.0
+            qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
         else:
-            trend.iloc[i] = trend.iloc[i - 1]
-            if trend.iloc[i] == 1:
-                qqe.iloc[i] = qqe_long.iloc[i] = long.iloc[i]
+            trend_arr[i] = trend_arr[i - 1]
+            if trend_arr[i] == 1.0:
+                qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
             else:
-                qqe.iloc[i] = qqe_short.iloc[i] = short.iloc[i]
+                qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
+
+    idx = close.index
+    long = Series(long_arr, index=idx)
+    short = Series(short_arr, index=idx)
+    trend = Series(trend_arr, index=idx)
+    qqe = Series(qqe_arr, index=idx)
+    qqe_long = Series(qqe_long_arr, index=idx)
+    qqe_short = Series(qqe_short_arr, index=idx)
 
     # Offset
     if offset != 0:
