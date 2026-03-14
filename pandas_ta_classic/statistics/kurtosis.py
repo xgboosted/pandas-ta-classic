@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Kurtosis (KURTOSIS)
 from typing import Any, Optional
+
+import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+from pandas_ta_classic.utils import get_offset, np_rolling_moments, verify_series
 
 
 def kurtosis(
@@ -25,8 +28,15 @@ def kurtosis(
     if close is None:
         return None
 
-    # Calculate Result
-    kurtosis = close.rolling(length, min_periods=min_periods).kurt()
+    # Pure numpy rolling excess kurtosis (Fisher) for cross-version determinism.
+    m2, m4 = np_rolling_moments(close.values, length, 2, 4)
+    nf = np.float64(length)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        numer = nf * (nf + 1) * (nf - 1) * m4
+        denom = (nf - 2) * (nf - 3) * m2**2
+        adj = 3.0 * (nf - 1) ** 2 / ((nf - 2) * (nf - 3))
+        result = numer / denom - adj
+    kurtosis = Series(result, index=close.index, dtype=np.float64)
 
     # Offset
     if offset != 0:

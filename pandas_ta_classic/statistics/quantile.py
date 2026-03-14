@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 # Quantile (QUANTILE)
 from typing import Any, Optional
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
+
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -27,8 +31,14 @@ def quantile(
     if close is None:
         return None
 
-    # Calculate Result
-    quantile = close.rolling(length, min_periods=min_periods).quantile(q)
+    # Pure numpy for cross-version determinism.
+    values = close.values.astype(np.float64)
+    windows = sliding_window_view(values, length)
+    qtl = np.quantile(windows, q, axis=1)
+    result_arr = np.empty(len(values), dtype=np.float64)
+    result_arr[: length - 1] = np.nan
+    result_arr[length - 1 :] = qtl
+    quantile = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
     if offset != 0:

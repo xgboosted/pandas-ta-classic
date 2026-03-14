@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 # Median (MEDIAN)
 from typing import Any, Optional
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
+
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -25,8 +29,14 @@ def median(
     if close is None:
         return None
 
-    # Calculate Result
-    median = close.rolling(length, min_periods=min_periods).median()
+    # Pure numpy for cross-version determinism.
+    values = close.values.astype(np.float64)
+    windows = sliding_window_view(values, length)
+    med = np.median(windows, axis=1)
+    result_arr = np.empty(len(values), dtype=np.float64)
+    result_arr[: length - 1] = np.nan
+    result_arr[length - 1 :] = med
+    median = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
     if offset != 0:

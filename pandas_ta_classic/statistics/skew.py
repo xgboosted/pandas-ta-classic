@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Skew (SKEW)
 from typing import Any, Optional
+
+import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+
+from pandas_ta_classic.utils import get_offset, np_rolling_moments, verify_series
 
 
 def skew(
@@ -25,8 +28,13 @@ def skew(
     if close is None:
         return None
 
-    # Calculate Result
-    skew = close.rolling(length, min_periods=min_periods).skew()
+    # Pure numpy rolling skewness (adjusted Fisher-Pearson) for cross-version
+    # determinism.
+    m2, m3 = np_rolling_moments(close.values, length, 2, 3)
+    nf = np.float64(length)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        result = nf * np.sqrt(nf - 1) / (nf - 2) * m3 / m2**1.5
+    skew = Series(result, index=close.index, dtype=np.float64)
 
     # Offset
     if offset != 0:
