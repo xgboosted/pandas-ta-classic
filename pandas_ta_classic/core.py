@@ -55,11 +55,9 @@ class Strategy:
     # Helpful. More descriptive version or notes or w/e.
     description: str = "TA Description"
     # Optional. Gets Exchange Time and Local Time execution time
-    created: Optional[str] = get_time(to_string=True)
+    created: Optional[str] = field(default_factory=lambda: get_time(to_string=True))
 
     def __post_init__(self):
-        has_name = True
-        is_ta = False
         required_args = ["[X] Strategy requires the following argument(s):"]
 
         name_is_str = isinstance(self.name, str)
@@ -69,23 +67,18 @@ class Strategy:
             required_args.append(
                 ' - name. Must be a string. Example: "My TA". Note: "all" is reserved.'
             )
-            has_name != has_name
 
         if self.ta is None:
             self.ta = None
-        elif self.ta is not None and ta_is_list and self.total_ta() > 0:
-            # Check that all elements of the list are dicts.
-            # Does not check if the dicts values are valid indicator kwargs
-            # User must check indicator documentation for all indicators args.
-            is_ta = all([isinstance(_, dict) and len(_.keys()) > 0 for _ in self.ta])
+        elif ta_is_list:
+            pass  # Valid ta list (may be empty); element validation left to indicator calls
         else:
             s = " - ta. Format is a list of dicts. Example: [{'kind': 'sma', 'length': 10}]"
             s += "\n       Check the indicator for the correct arguments if you receive this error."
             required_args.append(s)
 
         if len(required_args) > 1:
-            [print(_) for _ in required_args]
-            return None
+            raise ValueError("\n".join(required_args))
 
     def total_ta(self):
         return len(self.ta) if self.ta is not None else 0
