@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
+import logging
 from pandas import DataFrame
 from pandas_ta_classic import Imports, RATE, version
 
 # from .._core import _camelCase2Title
 # from .._time import ytd_df
 
+logger = logging.getLogger(__name__)
+
 
 def av(ticker: str, **kwargs):
-    print(f"[!] kwargs: {kwargs}")
+    logger.debug(f"kwargs: {kwargs}")
     verbose = kwargs.pop("verbose", False)
     kind = kwargs.pop("kind", "history")
     kind = kind.lower()
@@ -40,18 +43,18 @@ def av(ticker: str, **kwargs):
 
         if kind in _all + ["history", "h"]:
             if verbose:
-                print(
-                    "\n====  Chart History       "
-                    + div
-                    + f"\n[*] Pandas TA v{version} & alphaVantage-api"
-                )
-                print(
-                    f"[+] Downloading {ticker}[{interval}:{period}] from {av.API_NAME} (https://www.alphavantage.co/)"
+                logger.info("Chart History: Pandas TA v%s & alphaVantage-api", version)
+                logger.info(
+                    "Downloading %s[%s:%s] from %s",
+                    ticker,
+                    interval,
+                    period,
+                    av.API_NAME,
                 )
             df = av.data(ticker, interval)
             df.name = ticker
             if show is not None and isinstance(show, int) and show > 0:
-                print(f"\n{df.name}\n{df.tail(show)}\n")
+                logger.info(f"\n{df.name}\n{df.tail(show)}\n")
             return df
 
     return DataFrame()

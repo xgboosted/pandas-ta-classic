@@ -61,8 +61,6 @@ def dm(
     }
 
     dmdf = DataFrame(data)
-    # print(dmdf.head(20))
-    # print()
     dmdf.name = f"DM{_params}"
     dmdf.category = "trend"
 

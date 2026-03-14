@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import logging
 from typing import Any, Optional
 
 from pandas import DataFrame, Series
 
 from ._core import get_offset, verify_series
 from ._math import zero
+
+logger = logging.getLogger(__name__)
 
 
 def _above_below(
@@ -62,7 +65,7 @@ def above_value(
     **kwargs: Any,
 ) -> Optional[Series]:
     if not isinstance(value, (int, float, complex)):
-        print("[X] value is not a number")
+        logger.warning("value is not a number")
         return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
 
@@ -91,7 +94,7 @@ def below_value(
     **kwargs: Any,
 ) -> Optional[Series]:
     if not isinstance(value, (int, float, complex)):
-        print("[X] value is not a number")
+        logger.warning("value is not a number")
         return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
     return _above_below(
