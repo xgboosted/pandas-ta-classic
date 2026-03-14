@@ -36,7 +36,7 @@ def variance(
 
         variance = VAR(close, length)
     else:
-        variance = close.rolling(length, min_periods=min_periods).var(ddof)
+        variance = close.rolling(length, min_periods=min_periods).var(ddof=ddof)
 
     # Offset
     if offset != 0:

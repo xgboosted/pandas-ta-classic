@@ -28,6 +28,35 @@ from pandas_ta_classic import Imports
 from ._core import verify_series
 
 
+def np_rolling_moments(
+    values: npNdArray, length: int, *orders: int
+) -> Tuple[npNdArray, ...]:
+    """Rolling central moments using pure numpy.
+
+    Returns one float64 array per *order*, each of ``len(values)`` elements
+    with the first ``length - 1`` values set to NaN.
+
+    Using numpy instead of ``pandas.rolling`` ensures cross-version
+    determinism (pandas 2.x vs 3.x can round higher-order moments
+    differently).
+    """
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    arr = values.astype(np.float64)
+    windows = sliding_window_view(arr, length)
+    mean = windows.mean(axis=1, keepdims=True)
+    dev = windows - mean
+
+    results: List[npNdArray] = []
+    for k in orders:
+        mk = (dev**k).sum(axis=1)
+        out = np.empty(len(arr), dtype=np.float64)
+        out[: length - 1] = np.nan
+        out[length - 1 :] = mk
+        results.append(out)
+    return tuple(results)
+
+
 def combination(**kwargs: Any) -> int:
     """https://stackoverflow.com/questions/4941753/is-there-a-math-ncr-function-in-python"""
     n = int(npFabs(kwargs.pop("n", 1)))
