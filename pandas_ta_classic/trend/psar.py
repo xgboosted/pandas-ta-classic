@@ -27,6 +27,9 @@ def psar(
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
 
+    if high is None or low is None:
+        return None
+
     def _falling(high: Series, low: Series, drift: int = 1) -> bool:
         """Returns the last -DM value"""
         # Not to be confused with ta.falling()
@@ -36,13 +39,13 @@ def psar(
         return _dmn > 0
 
     # Falling if the first NaN -DM is positive
-    falling = _falling(high.iloc[:2], low.iloc[:2])
+    falling = _falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if falling:
         sar = high.iloc[0]
-        ep = low.iloc[0]
+        ep = low.iloc[1] if len(low) > 1 else low.iloc[0]
     else:
         sar = low.iloc[0]
-        ep = high.iloc[0]
+        ep = high.iloc[1] if len(high) > 1 else high.iloc[0]
 
     if close is not None:
         close = verify_series(close)
