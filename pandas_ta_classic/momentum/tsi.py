@@ -47,6 +47,8 @@ def tsi(
 
     tsi = scalar * fast_slow_ema / abs_fast_slow_ema
     tsi_signal = ma(mamode, tsi, length=signal)
+    if tsi_signal is None:
+        return None
 
     # Offset
     if offset != 0:

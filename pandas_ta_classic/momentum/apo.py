@@ -37,7 +37,11 @@ def apo(
         apo = APO(close, fast, slow, tal_ma(mamode))
     else:
         fastma = ma(mamode, close, length=fast)
+        if fastma is None:
+            return None
         slowma = ma(mamode, close, length=slow)
+        if slowma is None:
+            return None
         apo = fastma - slowma
 
     # Offset

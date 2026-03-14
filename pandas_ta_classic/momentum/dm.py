@@ -47,8 +47,14 @@ def dm(
 
         # TA-Lib outputs the Wilder-smoothed *sum* (not average), so
         # we multiply the RMA (average) by ``length`` to match.
-        pos = ma(mamode, pos_, length=length) * length
-        neg = ma(mamode, neg_, length=length) * length
+        pos = ma(mamode, pos_, length=length)
+        if pos is None:
+            return None
+        pos = pos * length
+        neg = ma(mamode, neg_, length=length)
+        if neg is None:
+            return None
+        neg = neg * length
 
     # Offset
     if offset != 0:

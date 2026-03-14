@@ -41,6 +41,8 @@ def thermo(
     thermo.index = high.index
 
     thermo_ma = ma(mamode, thermo, length=length)
+    if thermo_ma is None:
+        return None
 
     # Create signals
     thermo_long = thermo < (thermo_ma * long)

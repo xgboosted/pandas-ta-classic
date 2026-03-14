@@ -25,7 +25,9 @@ def entropy(
 
     # Calculate Result
     p = close / close.rolling(length).sum()
-    entropy = (-p * npLog(p) / npLog(base)).rolling(length).sum()
+    # Shannon entropy convention: 0 * log(0) = 0
+    safe_log_p = npLog(p.where(p > 0, 1))
+    entropy = (-p * safe_log_p / npLog(base)).rolling(length).sum()
 
     # Offset
     if offset != 0:

@@ -39,7 +39,11 @@ def stochrsi(
     stoch /= non_zero_range(highest_rsi, lowest_rsi)
 
     stochrsi_k = ma(mamode, stoch, length=k)
+    if stochrsi_k is None:
+        return None
     stochrsi_d = ma(mamode, stochrsi_k, length=d)
+    if stochrsi_d is None:
+        return None
 
     # Offset
     if offset != 0:

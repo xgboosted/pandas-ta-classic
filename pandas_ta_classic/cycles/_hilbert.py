@@ -9,7 +9,7 @@ The leading underscore keeps ``_meta.py`` from registering this file as an
 indicator.
 """
 
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from pandas import Series
@@ -265,7 +265,7 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
     )
 
 
-def hilbert_result(close: Series, ht_start: int = 12) -> dict:
+def hilbert_result(close: Series, ht_start: int = 12) -> Dict[str, np.ndarray]:
     """Run the Hilbert Transform and return all intermediate arrays.
 
     Args:
