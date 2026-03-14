@@ -2,7 +2,8 @@
 # Pascal Weighted Moving Average (PWMA)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, pascals_triangle, verify_series, weights
+from pandas_ta_classic.utils import get_offset, pascals_triangle, verify_series
+from pandas_ta_classic.utils._core import _sliding_weighted_ma
 
 
 def pwma(
@@ -24,7 +25,7 @@ def pwma(
 
     # Calculate Result
     triangle = pascals_triangle(n=length - 1, weighted=True)
-    pwma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
+    pwma = _sliding_weighted_ma(close, length, triangle)
 
     # Offset
     if offset != 0:
