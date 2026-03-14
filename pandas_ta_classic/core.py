@@ -55,7 +55,7 @@ class Strategy:
     # Helpful. More descriptive version or notes or w/e.
     description: str = "TA Description"
     # Optional. Gets Exchange Time and Local Time execution time
-    created: Optional[str] = get_time(to_string=True)
+    created: Optional[str] = field(default_factory=lambda: get_time(to_string=True))
 
     def __post_init__(self):
         has_name = True
