@@ -26,7 +26,7 @@ def percent_return(
     if cumulative:
         pct_return = (close / close.iloc[0]) - 1
     else:
-        pct_return = close.pct_change(length)  # (close / close.shift(length)) - 1
+        pct_return = close / close.shift(length) - 1
 
     # Offset
     if offset != 0:
