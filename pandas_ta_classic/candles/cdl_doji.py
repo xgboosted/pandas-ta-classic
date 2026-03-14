@@ -35,13 +35,15 @@ def cdl_doji(
         return None
 
     # Calculate Result
+    # TA-Lib averages the HL range of the *previous* ``length`` bars
+    # (excluding the current bar), so shift the SMA by 1.
     body = real_body(open_, close).abs()
     hl_range = high_low_range(high, low).abs()
-    hl_range_avg = sma(hl_range, length)
-    doji = body < 0.01 * factor * hl_range_avg
+    hl_range_avg = sma(hl_range, length).shift(1)
+    doji = body <= 0.01 * factor * hl_range_avg
 
     if naive:
-        doji.iloc[:length] = body < 0.01 * factor * hl_range
+        doji.iloc[:length] = body <= 0.01 * factor * hl_range
     if asint:
         doji = scalar * doji.astype(int)
 
