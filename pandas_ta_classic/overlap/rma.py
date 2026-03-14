@@ -21,8 +21,14 @@ def rma(
     if close is None:
         return None
 
-    # Calculate Result
-    rma = close.ewm(alpha=alpha, min_periods=length).mean()
+    # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
+    import numpy as np
+
+    close = close.copy()
+    sma_nth = close[0:length].mean()
+    close[: length - 1] = np.nan
+    close.iloc[length - 1] = sma_nth
+    rma = close.ewm(alpha=alpha, adjust=False).mean()
 
     # Offset
     if offset != 0:
@@ -56,9 +62,11 @@ Sources:
 Calculation:
     Default Inputs:
         length=10
-    EMA = Exponential Moving Average
     alpha = 1 / length
-    RMA = EMA(close, alpha=alpha)
+    SMA_nth = SMA(close, length)
+    close[:length - 1] = NaN
+    close[length - 1] = SMA_nth
+    RMA = EWM(close, alpha=alpha, adjust=False)
 
 Args:
     close (pd.Series): Series of 'close's
