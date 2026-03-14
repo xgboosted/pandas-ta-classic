@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import logging
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple
 from warnings import simplefilter
+
+logger = logging.getLogger(__name__)
 
 import pandas as pd
 from numpy import log10 as npLog10
@@ -84,7 +87,7 @@ class Strategy:
             required_args.append(s)
 
         if len(required_args) > 1:
-            [print(_) for _ in required_args]
+            logger.error("\n".join(required_args))
             return None
 
     def total_ta(self):
@@ -273,7 +276,7 @@ class AnalysisIndicators(BasePandasObject):
         **kwargs,
     ):
         if version:
-            print(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
+            logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
         try:
             if isinstance(kind, str):
                 kind = kind.lower()
@@ -290,7 +293,7 @@ class AnalysisIndicators(BasePandasObject):
 
                 if timed:
                     result.timed = final_time(stime)
-                    print(f"[+] {kind}: {result.timed}")
+                    logger.info(f"{kind}: {result.timed}")
 
                 return result
             else:
@@ -427,8 +430,8 @@ class AnalysisIndicators(BasePandasObject):
                             ):
                                 df[ind_name] = result.loc[:, col]
                         else:
-                            print(
-                                f"Not enough col_names were specified : got {len(kwargs['col_names'])}, expected {len(result.columns)}."
+                            logger.error(
+                                f"Not enough col_names were specified: got {len(kwargs['col_names'])}, expected {len(result.columns)}."
                             )
                             return
                     else:
@@ -469,10 +472,13 @@ class AnalysisIndicators(BasePandasObject):
                 # misspelled.
                 matches = df.columns.str.match(series, case=False)
                 match = [i for i, x in enumerate(matches) if x]
-                # If found, awesome.  Return it or return the 'series'.
+                if len(match):
+                    return df.iloc[:, match[0]]
                 cols = ", ".join(list(df.columns))
-                NOT_FOUND = f"[X] Ooops!!! It's {series not in df.columns}, the series '{series}' was not found in {cols}"
-                return df.iloc[:, match[0]] if len(match) else print(NOT_FOUND)
+                logger.warning(
+                    f"[X] Column '{series}' not found." f" Available columns: {cols}"
+                )
+                return None
 
     def _indicators_by_category(self, name: str) -> Optional[list]:
         """Returns indicators by Categorical name."""
@@ -495,7 +501,7 @@ class AnalysisIndicators(BasePandasObject):
         verbose = kwargs.pop("verbose", False)
         if not isinstance(result, (pd.Series, pd.DataFrame)):
             if verbose:
-                print(f"[X] Oops! The result was not a Series or DataFrame.")
+                logger.error("The result was not a Series or DataFrame.")
             return self._df
         else:
             # Append only specific columns to the dataframe (via
@@ -635,11 +641,11 @@ class AnalysisIndicators(BasePandasObject):
         header = f"Pandas TA - Technical Analysis Indicators - v{self.version}"
         s = f"{header}\nTotal Indicators & Utilities: {total_indicators + len(ALL_PATTERNS)}\n"
         if total_indicators > 0:
-            print(
+            logger.info(
                 f"{s}Abbreviations:\n    {', '.join(ta_indicators)}\n\nCandle Patterns:\n    {', '.join(ALL_PATTERNS)}"
             )
         else:
-            print(s)
+            logger.info(s)
 
     def strategy(self, *args, **kwargs):
         """Strategy Method
@@ -712,7 +718,7 @@ class AnalysisIndicators(BasePandasObject):
         elif mode["all"]:
             ta = self.indicators(as_list=True, exclude=excluded)
         else:
-            print(f"[X] Not an available strategy.")
+            logger.error("Not an available strategy.")
             return None
 
         # Remove Custom indicators with "length" keyword when larger than the DataFrame
@@ -730,10 +736,10 @@ class AnalysisIndicators(BasePandasObject):
 
         verbose = kwargs.pop("verbose", False)
         if verbose:
-            print(f"[+] Strategy: {name}\n[i] Indicator arguments: {kwargs}")
+            logger.info(f"Strategy: {name}\nIndicator arguments: {kwargs}")
             if mode["all"] or mode["category"]:
                 excluded_str = ", ".join(excluded)
-                print(f"[i] Excluded[{len(excluded)}]: {excluded_str}")
+                logger.info(f"Excluded[{len(excluded)}]: {excluded_str}")
 
         timed = kwargs.pop("timed", False)
         results: Any = []
@@ -774,8 +780,8 @@ class AnalysisIndicators(BasePandasObject):
                     else int(npLog10(_total_ta)) + 1
                 )
                 if verbose:
-                    print(
-                        f"[i] Multiprocessing {_total_ta} indicators with {_chunksize} chunks and {self.cores}/{cpu_count()} cpus."
+                    logger.info(
+                        f"Multiprocessing {_total_ta} indicators with {_chunksize} chunks and {self.cores}/{cpu_count()} cpus."
                     )
 
                 results = None
@@ -820,7 +826,7 @@ class AnalysisIndicators(BasePandasObject):
                                 self._mp_worker, default_ta, _chunksize
                             )  # Speed over Order
                 if results is None:
-                    print(f"[X] ta.strategy('{name}') has no results.")
+                    logger.warning(f"ta.strategy('{name}') has no results.")
                     return
 
                 pool.close()
@@ -835,7 +841,7 @@ class AnalysisIndicators(BasePandasObject):
                     _col_msg = (
                         f"[i] No mulitproccessing support for 'col_names' option."
                     )
-                print(_col_msg)
+                logger.info(_col_msg)
 
             if mode["custom"]:
                 if Imports["tqdm"] and verbose:
@@ -869,11 +875,13 @@ class AnalysisIndicators(BasePandasObject):
         [self._post_process(r, **kwargs) for r in results]
 
         if verbose:
-            print(f"[i] Total indicators: {len(ta)}")
-            print(f"[i] Columns added: {len(self._df.columns) - initial_column_count}")
-            print(f"[i] Last Run: {self._last_run}")
+            logger.info(f"Total indicators: {len(ta)}")
+            logger.info(
+                f"Columns added: {len(self._df.columns) - initial_column_count}"
+            )
+            logger.info(f"Last Run: {self._last_run}")
         if timed:
-            print(f"[i] Runtime: {final_time(stime)}")
+            logger.info(f"Runtime: {final_time(stime)}")
 
         if returns:
             return self._df
@@ -930,7 +938,7 @@ class AnalysisIndicators(BasePandasObject):
         if df is None:
             return
         elif df.empty:
-            print(f"[X] DataFrame is empty: {df.shape}")
+            logger.error(f"DataFrame is empty: {df.shape}")
             return
         else:
             if kwargs.pop("lc_cols", False):

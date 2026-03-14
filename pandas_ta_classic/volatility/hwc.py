@@ -53,7 +53,6 @@ def hwc(
             chan_width.append(upper[i] - lower[i])
             # channel percentage price position
             chan_pct_width.append((close.iloc[i] - lower[i]) / (upper[i] - lower[i]))
-            # print('channel_eval (width|percentageWidth):', chan_width[i], chan_pct_width[i])
 
         # update values
         last_price = close.iloc[i]
