@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 # Candle Pattern (CDL_PATTERN)
-from typing import Any, Optional, Sequence, Union
+import importlib
+import logging
+import os
+from collections.abc import Sequence
+from typing import Any, Optional, Union
+
+logger = logging.getLogger(__name__)
 from pandas import Series, DataFrame
 
 from . import cdl_doji, cdl_inside
@@ -73,6 +79,32 @@ ALL_PATTERNS = [
 ]
 
 
+def _discover_native_patterns() -> dict:
+    """Auto-discover native cdl_*.py pattern implementations."""
+    skip = {"cdl_pattern", "cdl_z", "cdl_inside", "cdl_doji"}
+    native = {}
+    pkg_dir = os.path.dirname(__file__)
+    for fname in os.listdir(pkg_dir):
+        if not fname.startswith("cdl_") or not fname.endswith(".py"):
+            continue
+        mod_name = fname[:-3]  # strip .py
+        if mod_name in skip:
+            continue
+        pattern_name = mod_name[4:]  # strip cdl_
+        try:
+            mod = importlib.import_module(f".{mod_name}", package=__package__)
+            func = getattr(mod, mod_name, None)
+            if callable(func):
+                native[pattern_name] = func
+        except Exception:
+            pass
+    return native
+
+
+# Pre-built dict of native pattern name -> callable
+_NATIVE_PATTERNS = _discover_native_patterns()
+
+
 def cdl_pattern(
     open_: Series,
     high: Series,
@@ -89,10 +121,14 @@ def cdl_pattern(
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
+
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     offset = get_offset(offset)
     scalar = float(scalar) if scalar else 100
 
-    # Patterns that implemented in pandas-ta
+    # Patterns with custom implementations (non-standard signatures)
     pta_patterns = {
         "doji": cdl_doji,
         "inside": cdl_inside,
@@ -109,19 +145,25 @@ def cdl_pattern(
     result = {}
     for n in name:
         if n not in ALL_PATTERNS:
-            print(f"[X] There is no candle pattern named {n} available!")
+            logger.warning("There is no candle pattern named %s available!", n)
             continue
+
+        col_name = f"CDL_{n.upper()}"
 
         if n in pta_patterns:
             pattern_result = pta_patterns[n](
                 open_, high, low, close, offset=offset, scalar=scalar, **kwargs
             )
             result[pattern_result.name] = pattern_result
-        else:
-            if not Imports["talib"]:
-                print(f"[X] Please install TA-Lib to use {n}. (pip install TA-Lib)")
-                continue
-
+        elif n in _NATIVE_PATTERNS:
+            # Use native implementation (no TA-Lib required)
+            pattern_result = _NATIVE_PATTERNS[n](
+                open_, high, low, close, scalar=scalar, offset=offset, **kwargs
+            )
+            if pattern_result is not None:
+                result[col_name] = pattern_result
+        elif Imports["talib"]:
+            # Fall back to TA-Lib
             pattern_func = tala.Function(f"CDL{n.upper()}")
             pattern_result = Series(
                 pattern_func(open_, high, low, close, **kwargs) / 100 * scalar
@@ -136,19 +178,17 @@ def cdl_pattern(
             if "fillna" in kwargs:
                 pattern_result.fillna(kwargs["fillna"], inplace=True)
             if "fill_method" in kwargs:
-                if "fill_method" in kwargs:
+                if kwargs["fill_method"] == "ffill":
+                    pattern_result.ffill(inplace=True)
+                elif kwargs["fill_method"] == "bfill":
+                    pattern_result.bfill(inplace=True)
 
-                    if kwargs["fill_method"] == "ffill":
+            result[col_name] = pattern_result
+        else:
+            logger.warning("Please install TA-Lib to use %s. (pip install TA-Lib)", n)
+            continue
 
-                        pattern_result.ffill(inplace=True)
-
-                    elif kwargs["fill_method"] == "bfill":
-
-                        pattern_result.bfill(inplace=True)
-
-            result[f"CDL_{n.upper()}"] = pattern_result
-
-    if len(result) == 0:
+    if not result:
         return None
 
     # Prepare DataFrame to return
