@@ -4,6 +4,7 @@
 Underscore prefix ensures ``_build_category_dict()`` in ``_meta.py`` ignores this
 file during auto-discovery.
 """
+
 from typing import Any, Callable, Optional
 
 from enum import IntEnum
