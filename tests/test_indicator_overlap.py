@@ -286,6 +286,16 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "FWMA_15")
 
+    def test_mama(self):
+        result = pandas_ta.mama(self.close, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "MAMA_0.5_0.05")
+        self.assertListEqual(list(result.columns), ["MAMA_0.5_0.05", "FAMA_0.5_0.05"])
+        pandas_ta.mama(self.close, talib=False, fillna=0)
+        pandas_ta.mama(self.close, talib=False, fill_method="ffill")
+        pandas_ta.mama(self.close, talib=False, fill_method="bfill")
+        self.assertIsNone(pandas_ta.mama(None))
+
     def test_mcgd(self):
         result = pandas_ta.mcgd(self.close)
         self.assertIsInstance(result, Series)
