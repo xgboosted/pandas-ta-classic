@@ -8,6 +8,83 @@ npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series, zero
 
 
+def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
+    long_arr = np.full(m, np.nan)
+    short_arr = np.full(m, np.nan)
+    af_arr = np.full(m, np.nan)
+    reversal_arr = np.zeros(m)
+    af_arr[0] = af0
+    af = af0
+    if m < 2:
+        return long_arr, short_arr, af_arr, reversal_arr
+    is_long = not falling
+    new_high = h_arr[1]
+    new_low = l_arr[1]
+    for row in range(1, m):
+        prev_low = new_low
+        prev_high = new_high
+        new_low = l_arr[row]
+        new_high = h_arr[row]
+        reverse = False
+        if is_long:
+            if new_low <= sar:
+                reverse = True
+                is_long = False
+                sar = ep
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+                short_arr[row] = sar
+                af = af0
+                ep = new_low
+                sar = sar + af * (ep - sar)
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+            else:
+                long_arr[row] = sar
+                if new_high > ep:
+                    ep = new_high
+                    af = min(af + af0, max_af)
+                sar = sar + af * (ep - sar)
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+        else:
+            if new_high >= sar:
+                reverse = True
+                is_long = True
+                sar = ep
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+                long_arr[row] = sar
+                af = af0
+                ep = new_high
+                sar = sar + af * (ep - sar)
+                if sar > prev_low:
+                    sar = prev_low
+                if sar > new_low:
+                    sar = new_low
+            else:
+                short_arr[row] = sar
+                if new_low < ep:
+                    ep = new_low
+                    af = min(af + af0, max_af)
+                sar = sar + af * (ep - sar)
+                if sar < prev_high:
+                    sar = prev_high
+                if sar < new_high:
+                    sar = new_high
+        af_arr[row] = af
+        reversal_arr[row] = 1.0 if reverse else 0.0
+    return long_arr, short_arr, af_arr, reversal_arr
+
+
 def psar(
     high: Series,
     low: Series,
@@ -51,53 +128,17 @@ def psar(
         close = verify_series(close)
         sar = close.iloc[0]
 
-    long = Series(npNaN, index=high.index)
-    short = long.copy()
-    reversal = Series(0, index=high.index)
-    _af = long.copy()
-    _af.iloc[0:2] = af0
-
     # Calculate Result
     m = high.shape[0]
-    for row in range(1, m):
-        high_ = high.iloc[row]
-        low_ = low.iloc[row]
-
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = high_ > _sar
-
-            if low_ < ep:
-                ep = low_
-                af = min(af + af0, max_af)
-
-            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
-        else:
-            _sar = sar + af * (ep - sar)
-            reverse = low_ < _sar
-
-            if high_ > ep:
-                ep = high_
-                af = min(af + af0, max_af)
-
-            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
-
-        if reverse:
-            _sar = ep
-            af = af0
-            falling = not falling  # Must come before next line
-            ep = low_ if falling else high_
-
-        sar = _sar  # Update SAR
-
-        # Seperate long/short sar based on falling
-        if falling:
-            short.iloc[row] = sar
-        else:
-            long.iloc[row] = sar
-
-        _af.iloc[row] = af
-        reversal.iloc[row] = int(reverse)
+    h_arr = high.to_numpy(dtype=float)
+    l_arr = low.to_numpy(dtype=float)
+    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
+        h_arr, l_arr, m, falling, sar, ep, af0, max_af
+    )
+    long = Series(long_arr, index=high.index)
+    short = Series(short_arr, index=high.index)
+    _af = Series(af_arr, index=high.index)
+    reversal = Series(reversal_arr, index=high.index)
 
     # Offset
     if offset != 0:
