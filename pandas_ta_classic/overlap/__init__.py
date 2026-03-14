@@ -7,6 +7,7 @@ from .hilo import hilo
 from .hl2 import hl2
 from .hlc3 import hlc3
 from .hma import hma
+from .ht_trendline import ht_trendline
 from .hwma import hwma
 from .ichimoku import ichimoku
 from .jma import jma
