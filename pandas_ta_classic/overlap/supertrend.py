@@ -10,6 +10,31 @@ from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
+def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
+    dir_ = np.ones(m)
+    trend = np.zeros(m)
+    long = np.full(m, np.nan)
+    short = np.full(m, np.nan)
+    for i in range(1, m):
+        if c_arr[i] > ub_arr[i - 1]:
+            dir_[i] = 1.0
+        elif c_arr[i] < lb_arr[i - 1]:
+            dir_[i] = -1.0
+        else:
+            dir_[i] = dir_[i - 1]
+            if dir_[i] > 0 and lb_arr[i] < lb_arr[i - 1]:
+                lb_arr[i] = lb_arr[i - 1]
+            if dir_[i] < 0 and ub_arr[i] > ub_arr[i - 1]:
+                ub_arr[i] = ub_arr[i - 1]
+        if dir_[i] > 0:
+            trend[i] = lb_arr[i]
+            long[i] = lb_arr[i]
+        else:
+            trend[i] = ub_arr[i]
+            short[i] = ub_arr[i]
+    return dir_, trend, long, short
+
+
 def supertrend(
     high: Series,
     low: Series,
@@ -33,30 +58,16 @@ def supertrend(
 
     # Calculate Results
     m = close.size
-    dir_, trend = [1] * m, [0] * m
-    long, short = [npNaN] * m, [npNaN] * m
 
     hl2_ = hl2(high, low)
     matr = multiplier * atr(high, low, close, length)
     upperband = hl2_ + matr
     lowerband = hl2_ - matr
 
-    for i in range(1, m):
-        if close.iloc[i] > upperband.iloc[i - 1]:
-            dir_[i] = 1
-        elif close.iloc[i] < lowerband.iloc[i - 1]:
-            dir_[i] = -1
-        else:
-            dir_[i] = dir_[i - 1]
-            if dir_[i] > 0 and lowerband.iloc[i] < lowerband.iloc[i - 1]:
-                lowerband.iloc[i] = lowerband.iloc[i - 1]
-            if dir_[i] < 0 and upperband.iloc[i] > upperband.iloc[i - 1]:
-                upperband.iloc[i] = upperband.iloc[i - 1]
-
-        if dir_[i] > 0:
-            trend[i] = long[i] = lowerband.iloc[i]
-        else:
-            trend[i] = short[i] = upperband.iloc[i]
+    c_arr = close.to_numpy(dtype=float)
+    ub_arr = upperband.to_numpy(dtype=float)
+    lb_arr = lowerband.to_numpy(dtype=float)
+    dir_, trend, long, short = _supertrend_loop(c_arr, ub_arr, lb_arr, m)
 
     # Prepare DataFrame to return
     _props = f"_{length}_{multiplier}"

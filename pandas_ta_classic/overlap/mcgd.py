@@ -1,9 +1,24 @@
 # -*- coding: utf-8 -*-
 # McGinley Dynamic (MCGD)
 from typing import Any, Optional
+import numpy as np
 import pandas as pd
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+
+
+def _mcgd_loop(c_arr, n, c, length):
+    result = np.empty(n)
+    result[0] = c_arr[0]
+    for i in range(1, n):
+        if result[i - 1] != 0:
+            denom = c * length * (c_arr[i] / result[i - 1]) ** 4
+            if denom < 1e-10:
+                denom = 1e-10
+            result[i] = result[i - 1] + (c_arr[i] - result[i - 1]) / denom
+        else:
+            result[i] = c_arr[i]
+    return result
 
 
 def mcgd(
@@ -24,15 +39,10 @@ def mcgd(
         return None
 
     # Calculate Result
-    close = close.copy()
-
-    def mcg_(series: Series) -> float:
-        denom = c * length * (series.iloc[1] / series.iloc[0]) ** 4
-        series.iloc[1] = series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom)
-        return series.iloc[1]
-
-    mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
-    mcg_ds = pd.concat([close[:1], mcg_cell[1:]])
+    c_arr = close.to_numpy(dtype=float)
+    n = len(c_arr)
+    result = _mcgd_loop(c_arr, n, c, length)
+    mcg_ds = Series(result, index=close.index)
 
     # Offset
     if offset != 0:
