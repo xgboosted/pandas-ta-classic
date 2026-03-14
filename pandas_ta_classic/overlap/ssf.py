@@ -41,7 +41,7 @@ def ssf(
         c2 = c0 + b0  # e^(-2x) + 2e^(-x)*cos(3^(.5) * x)
         c1 = 1 - c2 - c3 - c4
 
-        for i in range(0, m):
+        for i in range(3, m):
             ssf.iloc[i] = (
                 c1 * close.iloc[i]
                 + c2 * ssf.iloc[i - 1]
@@ -56,7 +56,7 @@ def ssf(
         b1 = 2 * a0 * npCos(x)  # 2e^(-x)*cos(x)
         c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
 
-        for i in range(0, m):
+        for i in range(2, m):
             ssf.iloc[i] = (
                 c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
             )
