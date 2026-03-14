@@ -1934,6 +1934,11 @@ class AnalysisIndicators(BasePandasObject):
         result = trima(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def tsf(self, length=None, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = tsf(close=close, length=length, talib=talib, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def vidya(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = vidya(close=close, length=length, offset=offset, **kwargs)
