@@ -1979,6 +1979,18 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def correl(self, benchmark=None, length=None, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = correl(
+            close=close,
+            benchmark=benchmark,
+            length=length,
+            talib=talib,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
     def entropy(self, length=None, base=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = entropy(close=close, length=length, base=base, offset=offset, **kwargs)
