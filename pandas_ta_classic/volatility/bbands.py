@@ -42,6 +42,8 @@ def bbands(
         # deviations = std * standard_deviation.loc[standard_deviation.first_valid_index():,]
 
         mid = ma(mamode, close, length=length, **kwargs)
+        if mid is None:
+            return None
         lower = mid - deviations
         upper = mid + deviations
 
@@ -55,7 +57,7 @@ def bbands(
         mid = mid.shift(offset)
         upper = upper.shift(offset)
         bandwidth = bandwidth.shift(offset)
-        percent = bandwidth.shift(offset)
+        percent = percent.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
