@@ -68,8 +68,8 @@ def supertrend(
     lowerband = hl2_ - matr
 
     c_arr = close.to_numpy(dtype=float)
-    ub_arr = upperband.to_numpy(dtype=float)
-    lb_arr = lowerband.to_numpy(dtype=float)
+    ub_arr = upperband.to_numpy(dtype=float, copy=True)
+    lb_arr = lowerband.to_numpy(dtype=float, copy=True)
     dir_, trend, long, short = _supertrend_loop(c_arr, ub_arr, lb_arr, m)
 
     # Prepare DataFrame to return
