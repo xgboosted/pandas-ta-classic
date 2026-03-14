@@ -39,8 +39,8 @@ def stoch(
     stoch = 100 * (close - lowest_low)
     stoch /= non_zero_range(highest_high, lowest_low)
 
-    stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index() :,], length=smooth_k)
-    stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index() :,], length=d)
+    stoch_k = ma(mamode, stoch, length=smooth_k)
+    stoch_d = ma(mamode, stoch_k, length=d)
 
     # Offset
     if offset != 0:
