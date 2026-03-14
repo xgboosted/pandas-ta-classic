@@ -1046,6 +1046,31 @@ class AnalysisIndicators(BasePandasObject):
         result = ebsw(close=close, length=length, bars=bars, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def ht_dcperiod(self, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_dcperiod(close=close, talib=talib, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_dcphase(self, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_dcphase(close=close, talib=talib, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_phasor(self, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_phasor(close=close, talib=talib, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_sine(self, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_sine(close=close, talib=talib, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_trendmode(self, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_trendmode(close=close, talib=talib, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     # Momentum
     def ao(self, fast=None, slow=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
