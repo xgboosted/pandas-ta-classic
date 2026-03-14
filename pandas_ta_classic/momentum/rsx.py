@@ -8,65 +8,18 @@ npNaN = np.nan
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series, signals
 
 
-def rsx(
-    close: Series,
-    length: Optional[int] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
-    **kwargs: Any,
-) -> Optional[Union[Series, DataFrame]]:
-    """Indicator: Relative Strength Xtra (inspired by Jurik RSX)"""
-    # Validate arguments
-    length = int(length) if length and length > 0 else 14
-    close = verify_series(close, length)
-    drift = get_drift(drift)
-    offset = get_offset(offset)
-
-    if close is None:
-        return None
-
-    # variables
-    vC: float = 0
-    v1C: float = 0
-    v4: float = 0
-    v8: float = 0
-    v10: float = 0
-    v14: float = 0
-    v18: float = 0
-    v20: float = 0
-
-    f0: float = 0
-    f8: float = 0
-    f10: float = 0
-    f18: float = 0
-    f20: float = 0
-    f28: float = 0
-    f30: float = 0
-    f38: float = 0
-    f40: float = 0
-    f48: float = 0
-    f50: float = 0
-    f58: float = 0
-    f60: float = 0
-    f68: float = 0
-    f70: float = 0
-    f78: float = 0
-    f80: float = 0
-    f88: float = 0
-    f90: float = 0
-
-    # Calculate Result
-    m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+def _rsx_loop(c_arr, length, m):
+    result = np.full(m, np.nan)
+    result[length - 1] = 0.0
+    vC = v1C = v4 = v8 = v10 = v14 = v18 = v20 = 0.0
+    f0 = f8 = f10 = f18 = f20 = f28 = f30 = f38 = f40 = 0.0
+    f48 = f50 = f58 = f60 = f68 = f70 = f78 = f80 = f88 = f90 = 0.0
     for i in range(length, m):
         if f90 == 0:
             f90 = 1.0
             f0 = 0.0
-            if length - 1.0 >= 5:
-                f88 = length - 1.0
-            else:
-                f88 = 5.0
-            f8 = 100.0 * close.iloc[i]
+            f88 = length - 1.0 if length - 1.0 >= 5 else 5.0
+            f8 = 100.0 * c_arr[i]
             f18 = 3.0 / (length + 2.0)
             f20 = 1.0 - f18
         else:
@@ -75,7 +28,7 @@ def rsx(
             else:
                 f90 = f90 + 1
             f10 = f8
-            f8 = 100 * close.iloc[i]
+            f8 = 100.0 * c_arr[i]
             v8 = f8 - f10
             f28 = f20 * f28 + f18 * v8
             f30 = f18 * f28 + f20 * f30
@@ -95,12 +48,10 @@ def rsx(
             f78 = f20 * f78 + f18 * v1C
             f80 = f18 * f78 + f20 * f80
             v20 = 1.5 * f78 - 0.5 * f80
-
             if f88 >= f90 and f8 != f10:
                 f0 = 1.0
             if f88 == f90 and f0 == 0.0:
                 f90 = 0.0
-
         if f88 < f90 and v20 > 0.0000000001:
             v4 = (v14 / v20 + 1.0) * 50.0
             if v4 > 100.0:
@@ -109,8 +60,31 @@ def rsx(
                 v4 = 0.0
         else:
             v4 = 50.0
-        result.append(v4)
-    rsx = Series(result, index=close.index)
+        result[i] = v4
+    return result
+
+
+def rsx(
+    close: Series,
+    length: Optional[int] = None,
+    drift: Optional[int] = None,
+    offset: Optional[int] = None,
+    **kwargs: Any,
+) -> Optional[Union[Series, DataFrame]]:
+    """Indicator: Relative Strength Xtra (inspired by Jurik RSX)"""
+    # Validate arguments
+    length = int(length) if length and length > 0 else 14
+    close = verify_series(close, length)
+    drift = get_drift(drift)
+    offset = get_offset(offset)
+
+    if close is None:
+        return None
+
+    # Calculate Result
+    m = close.size
+    c_arr = close.to_numpy(dtype=float)
+    rsx = Series(_rsx_loop(c_arr, length, m), index=close.index)
 
     # Offset
     if offset != 0:

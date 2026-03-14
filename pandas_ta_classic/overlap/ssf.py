@@ -1,12 +1,30 @@
 # -*- coding: utf-8 -*-
 # Super Smoother Filter (SSF)
 from typing import Any, Optional
+import numpy as np
 from numpy import cos as npCos
 from numpy import exp as npExp
 from numpy import pi as npPi
 from numpy import sqrt as npSqrt
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+
+
+def _ssf2_loop(c_arr, ssf_arr, m, c1, b1, a1):
+    for i in range(2, m):
+        ssf_arr[i] = c1 * c_arr[i] + b1 * ssf_arr[i - 1] + a1 * ssf_arr[i - 2]
+    return ssf_arr
+
+
+def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
+    for i in range(3, m):
+        ssf_arr[i] = (
+            c1 * c_arr[i]
+            + c2 * ssf_arr[i - 1]
+            + c3 * ssf_arr[i - 2]
+            + c4 * ssf_arr[i - 3]
+        )
+    return ssf_arr
 
 
 def ssf(
@@ -28,7 +46,8 @@ def ssf(
 
     # Calculate Result
     m = close.size
-    ssf = close.copy()
+    c_arr = close.to_numpy(dtype=float)
+    ssf_arr = c_arr.copy()
 
     if poles == 3:
         x = npPi / length  # x = PI / n
@@ -41,13 +60,7 @@ def ssf(
         c2 = c0 + b0  # e^(-2x) + 2e^(-x)*cos(3^(.5) * x)
         c1 = 1 - c2 - c3 - c4
 
-        for i in range(0, m):
-            ssf.iloc[i] = (
-                c1 * close.iloc[i]
-                + c2 * ssf.iloc[i - 1]
-                + c3 * ssf.iloc[i - 2]
-                + c4 * ssf.iloc[i - 3]
-            )
+        _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4)
 
     else:  # poles == 2
         x = npPi * npSqrt(2) / length  # x = PI * 2^(.5) / n
@@ -56,10 +69,9 @@ def ssf(
         b1 = 2 * a0 * npCos(x)  # 2e^(-x)*cos(x)
         c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
 
-        for i in range(0, m):
-            ssf.iloc[i] = (
-                c1 * close.iloc[i] + b1 * ssf.iloc[i - 1] + a1 * ssf.iloc[i - 2]
-            )
+        _ssf2_loop(c_arr, ssf_arr, m, c1, b1, a1)
+
+    ssf = Series(ssf_arr, index=close.index)
 
     # Offset
     if offset != 0:
