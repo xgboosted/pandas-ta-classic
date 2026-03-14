@@ -1,9 +1,24 @@
 # -*- coding: utf-8 -*-
 # Laguerre Relative Strength Index (Laguerre RSI)
 from typing import Any, Optional
+import numpy as np
 from numpy import maximum, where, zeros
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+
+
+def _lrsi_loop(c_arr, n, gamma):
+    l0 = np.empty(n)
+    l1 = np.empty(n)
+    l2 = np.empty(n)
+    l3 = np.empty(n)
+    l0[0] = l1[0] = l2[0] = l3[0] = c_arr[0]
+    for i in range(1, n):
+        l0[i] = (1 - gamma) * c_arr[i] + gamma * l0[i - 1]
+        l1[i] = -gamma * l0[i] + l0[i - 1] + gamma * l1[i - 1]
+        l2[i] = -gamma * l1[i] + l1[i - 1] + gamma * l2[i - 1]
+        l3[i] = -gamma * l2[i] + l2[i - 1] + gamma * l3[i - 1]
+    return l0, l1, l2, l3
 
 
 def lrsi(
@@ -24,28 +39,15 @@ def lrsi(
         return None
 
     # Calculate Result
-    # Convert to numpy arrays for faster iteration
-    close_arr = close.values
+    c_arr = close.to_numpy(dtype=float)
     n = len(close)
 
-    # Initialize Laguerre filter components as numpy arrays
-    l0 = close_arr.copy()
-    l1 = close_arr.copy()
-    l2 = close_arr.copy()
-    l3 = close_arr.copy()
+    l0, l1, l2, l3 = _lrsi_loop(c_arr, n, gamma)
 
-    # Apply Laguerre filter (state-dependent, requires iteration)
-    for i in range(1, n):
-        l0[i] = (1 - gamma) * close_arr[i] + gamma * l0[i - 1]
-        l1[i] = -gamma * l0[i] + l0[i - 1] + gamma * l1[i - 1]
-        l2[i] = -gamma * l1[i] + l1[i - 1] + gamma * l2[i - 1]
-        l3[i] = -gamma * l2[i] + l2[i - 1] + gamma * l3[i - 1]
-
-    # Calculate Laguerre RSI components (can be vectorized)
+    # Calculate Laguerre RSI components (vectorized)
     cu = zeros(n)
     cd = zeros(n)
 
-    # Vectorized calculation of up/down moves between filter stages
     cu += maximum(l0 - l1, 0)
     cd += maximum(l1 - l0, 0)
     cu += maximum(l1 - l2, 0)
@@ -53,9 +55,7 @@ def lrsi(
     cu += maximum(l2 - l3, 0)
     cd += maximum(l3 - l2, 0)
 
-    # Calculate LRSI with division by zero protection
     denominator = cu + cd
-    # Replace zeros with 1 to avoid division by zero (result will be 0 anyway since cu=0 when denominator=0)
     denominator = where(denominator == 0, 1, denominator)
     lrsi = Series(100 * cu / denominator, index=close.index)
 
