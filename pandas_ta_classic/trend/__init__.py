@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from .adx import adx
+from .adxr import adxr
 from .amat import amat
 from .aroon import aroon
 from .chop import chop

@@ -69,6 +69,20 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
 
+    def test_adxr(self):
+        result = pandas_ta.adxr(self.high, self.low, self.close, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "ADXR_14")
+        self.assertListEqual(list(result.columns), ["ADXR_14", "DMP_14", "DMN_14"])
+        pandas_ta.adxr(self.high, self.low, self.close, talib=False, fillna=0)
+        pandas_ta.adxr(
+            self.high, self.low, self.close, talib=False, fill_method="ffill"
+        )
+        pandas_ta.adxr(
+            self.high, self.low, self.close, talib=False, fill_method="bfill"
+        )
+        self.assertIsNone(pandas_ta.adxr(None, self.low, self.close))
+
     def test_amat(self):
         result = pandas_ta.amat(self.close)
         self.assertIsInstance(result, DataFrame)
