@@ -14,7 +14,6 @@ from pandas import Series
 
 from pandas_ta_classic.utils import get_offset, verify_series
 
-
 # ---------------------------------------------------------------------------
 # Enums (mirror TA-Lib ta_defs.h)
 # ---------------------------------------------------------------------------
