@@ -44,7 +44,7 @@ def kama(
     sc = x * x
 
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = [npNaN for _ in range(0, length - 1)] + [close.iloc[length - 1]]
     for i in range(length, m):
         result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
 
