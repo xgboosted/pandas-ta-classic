@@ -1865,6 +1865,18 @@ class AnalysisIndicators(BasePandasObject):
         result = ma(kind=kind, close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def mama(self, fastlimit=None, slowlimit=None, talib=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = mama(
+            close=close,
+            fastlimit=fastlimit,
+            slowlimit=slowlimit,
+            talib=talib,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
     def sma(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = sma(close=close, length=length, offset=offset, **kwargs)
