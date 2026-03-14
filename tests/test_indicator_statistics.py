@@ -62,6 +62,19 @@ class TestStatistics(TestCase):
         )
         self.assertIsNone(pandas_ta.beta(None))
 
+    def test_correl(self):
+        result = pandas_ta.correl(self.close, benchmark=self.high, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "CORREL_30")
+        pandas_ta.correl(self.close, benchmark=self.high, talib=False, fillna=0)
+        pandas_ta.correl(
+            self.close, benchmark=self.high, talib=False, fill_method="ffill"
+        )
+        pandas_ta.correl(
+            self.close, benchmark=self.high, talib=False, fill_method="bfill"
+        )
+        self.assertIsNone(pandas_ta.correl(None))
+
     def test_entropy(self):
         result = pandas_ta.entropy(self.close)
         self.assertIsInstance(result, Series)
