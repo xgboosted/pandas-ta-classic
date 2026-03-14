@@ -153,6 +153,15 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HMA_10")
 
+    def test_ht_trendline(self):
+        result = pandas_ta.ht_trendline(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "HT_TRENDLINE")
+        pandas_ta.ht_trendline(self.close, talib=False, fillna=0)
+        pandas_ta.ht_trendline(self.close, talib=False, fill_method="ffill")
+        pandas_ta.ht_trendline(self.close, talib=False, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_trendline(None))
+
     def test_hwma(self):
         result = pandas_ta.hwma(self.close)
         self.assertIsInstance(result, Series)
