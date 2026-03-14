@@ -42,7 +42,11 @@ def aobv(
     # Calculate Result
     obv_ = obv(close=close, volume=volume, **kwargs)
     maf = ma(mamode, obv_, length=fast, **kwargs)
+    if maf is None:
+        return None
     mas = ma(mamode, obv_, length=slow, **kwargs)
+    if mas is None:
+        return None
 
     # When MAs are long and short
     obv_long = long_run(maf, mas, length=run_length)

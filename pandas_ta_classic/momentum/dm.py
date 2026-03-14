@@ -47,7 +47,11 @@ def dm(
 
         # Not the same values as TA Lib's -+DM (Good First Issue)
         pos = ma(mamode, pos_, length=length)
+        if pos is None:
+            return None
         neg = ma(mamode, neg_, length=length)
+        if neg is None:
+            return None
 
     # Offset
     if offset != 0:

@@ -40,8 +40,8 @@ def vwap(
 
     # Calculate Result
     wp = typical_price * volume
-    vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
-    vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
+    vwap = wp.groupby(wp.index.to_period(anchor), observed=True).cumsum()
+    vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
 
     # Offset
     if offset != 0:

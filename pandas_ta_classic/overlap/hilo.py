@@ -40,7 +40,11 @@ def hilo(
     short = Series(npNaN, index=close.index)
 
     high_ma = ma(mamode, high, length=high_length)
+    if high_ma is None:
+        return None
     low_ma = ma(mamode, low, length=low_length)
+    if low_ma is None:
+        return None
 
     for i in range(1, m):
         if close.iloc[i] > high_ma.iloc[i - 1]:

@@ -37,6 +37,8 @@ def pmax(
 
     # Calculate moving average of close
     ma_value = ma(mamode, close, length=length)
+    if ma_value is None:
+        return None
 
     # Calculate PMAX bands
     pmax_up = ma_value - (multiplier * atr_value)
