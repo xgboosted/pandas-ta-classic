@@ -39,6 +39,7 @@ def macd(
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
     else:
+
         def _ema_aligned(arr, m, period, seed_end):
             """EMA with SMA seed at a specific index, matching TA-Lib."""
             result = np.full(m, np.nan)

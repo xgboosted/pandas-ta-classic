@@ -47,7 +47,7 @@ def cdl_doji(
         # so the naive fallback must cover that full range. Use .to_numpy() on
         # the RHS so pandas doesn't complain about mismatched slice lengths.
         naive_vals = (body <= 0.01 * factor * hl_range).to_numpy()
-        doji.iloc[:length + 1] = naive_vals[:length + 1]
+        doji.iloc[: length + 1] = naive_vals[: length + 1]
     if asint:
         doji = scalar * doji.astype(int)
 
