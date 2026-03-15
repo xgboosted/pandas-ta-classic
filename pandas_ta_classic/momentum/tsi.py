@@ -106,7 +106,7 @@ Calculation:
     diff = close.diff(drift)
 
     slow_ema = EMA(diff, slow)
-    fast_slow_ema = EMA(slow_ema, slow)
+    fast_slow_ema = EMA(slow_ema, fast)
 
     abs_diff_slow_ema = absolute_diff_ema = EMA(ABS(diff), slow)
     abema = abs_diff_fast_slow_ema = EMA(abs_diff_slow_ema, fast)

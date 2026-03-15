@@ -252,7 +252,7 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
 
         m = x.size
         r_mix = m * (x * y).sum() - x_sum * y_sum
-        b = r_mix // (m * (x * x).sum() - x_sum * x_sum)
+        b = r_mix / (m * (x * x).sum() - x_sum * x_sum)
         a = y.mean() - b * x.mean()
         line = a + b * x
 
