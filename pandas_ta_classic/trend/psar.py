@@ -27,6 +27,9 @@ def psar(
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
 
+    if high is None or low is None:
+        return None
+
     def _falling(high: Series, low: Series, drift: int = 1) -> bool:
         """Returns the last -DM value"""
         # Not to be confused with ta.falling()
@@ -36,13 +39,13 @@ def psar(
         return _dmn > 0
 
     # Falling if the first NaN -DM is positive
-    falling = _falling(high.iloc[:2], low.iloc[:2])
+    falling = _falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if falling:
         sar = high.iloc[0]
-        ep = low.iloc[0]
+        ep = low.iloc[1] if len(low) > 1 else low.iloc[0]
     else:
         sar = low.iloc[0]
-        ep = high.iloc[0]
+        ep = high.iloc[1] if len(high) > 1 else high.iloc[0]
 
     if close is not None:
         close = verify_series(close)
@@ -68,7 +71,8 @@ def psar(
                 ep = low_
                 af = min(af + af0, max_af)
 
-            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = max(high.iloc[row - 1], high.iloc[max(0, row - 2)], _sar)
         else:
             _sar = sar + af * (ep - sar)
             reverse = low_ < _sar
@@ -77,7 +81,8 @@ def psar(
                 ep = high_
                 af = min(af + af0, max_af)
 
-            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = min(low.iloc[row - 1], low.iloc[max(0, row - 2)], _sar)
 
         if reverse:
             _sar = ep
