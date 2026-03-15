@@ -534,6 +534,8 @@ class TestNoneGuards(TestCase):
 
     def test_none_guard_supertrend(self):
         self.assertIsNone(pandas_ta.supertrend(self.h, self.l, self.c))
+
+
 class TestNpRollingMoments(TestCase):
     """Unit tests for the np_rolling_moments helper added in the numpy-
     determinism PR (utils/_math.py)."""
