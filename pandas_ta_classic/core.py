@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
@@ -772,8 +773,7 @@ class AnalysisIndicators(BasePandasObject):
             # pickles self._df (which grows as indicators are appended),
             # causing pandas BlockManager integrity errors in workers and
             # pool deadlocks.
-            slim = self.__class__.__new__(self.__class__)
-            slim.__dict__.update(self.__dict__)
+            slim = copy(self)
             slim._df = self._df[self._df.columns[:initial_column_count]].copy()
 
             pool = Pool(self.cores)
@@ -831,12 +831,16 @@ class AnalysisIndicators(BasePandasObject):
                             )  # Speed over Order
                 if results is None:
                     print(f"[X] ta.strategy('{name}') has no results.")
+                    pool.terminate()
                     return
 
                 # Consume the lazy iterator while the pool is still alive.
                 [self._post_process(r, **kwargs) for r in results]
-            finally:
+                pool.close()
+            except Exception:
                 pool.terminate()
+                raise
+            finally:
                 pool.join()
 
             del slim
