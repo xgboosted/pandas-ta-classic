@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Wilder's Moving Average (RMA)
 from typing import Any, Optional
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
 
@@ -22,11 +23,9 @@ def rma(
         return None
 
     # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
-    import numpy as np
-
     close = close.copy()
-    sma_nth = close[0:length].mean()
-    close[: length - 1] = np.nan
+    sma_nth = close.iloc[0:length].mean()
+    close.iloc[: length - 1] = np.nan
     close.iloc[length - 1] = sma_nth
     rma = close.ewm(alpha=alpha, adjust=False).mean()
 
