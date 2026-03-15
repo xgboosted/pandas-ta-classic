@@ -41,7 +41,7 @@ def natr(
         natr = NATR(high, low, close, length)
     else:
         natr = scalar / close
-        natr *= atr(
+        _atr = atr(
             high=high,
             low=low,
             close=close,
@@ -51,6 +51,9 @@ def natr(
             offset=offset,
             **kwargs,
         )
+        if _atr is None:
+            return None
+        natr *= _atr
 
     # Offset
     if offset != 0:

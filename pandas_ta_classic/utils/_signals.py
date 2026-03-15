@@ -5,9 +5,9 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 
 from ._core import get_offset, verify_series
+from ._math import zero
 
 logger = logging.getLogger(__name__)
-from ._math import zero
 
 
 def _above_below(
@@ -115,7 +115,7 @@ def cross_value(
     asint: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Series:
+) -> Optional[Series]:
     series_a = verify_series(series_a)
     if series_a is None:
         return None

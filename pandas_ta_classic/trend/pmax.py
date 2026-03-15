@@ -34,6 +34,8 @@ def pmax(
     # Calculate Result
     # Calculate ATR
     atr_value = atr(high, low, close, length=length)
+    if atr_value is None:
+        return None
 
     # Calculate moving average of close
     ma_value = ma(mamode, close, length=length)

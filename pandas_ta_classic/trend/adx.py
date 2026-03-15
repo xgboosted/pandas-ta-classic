@@ -36,6 +36,8 @@ def adx(
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=length)
+    if atr_ is None:
+        return None
 
     up = high - high.shift(drift)  # high.diff(drift)
     dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
