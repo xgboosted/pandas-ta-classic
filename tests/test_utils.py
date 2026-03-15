@@ -534,3 +534,119 @@ class TestNoneGuards(TestCase):
 
     def test_none_guard_supertrend(self):
         self.assertIsNone(pandas_ta.supertrend(self.h, self.l, self.c))
+class TestNpRollingMoments(TestCase):
+    """Unit tests for the np_rolling_moments helper added in the numpy-
+    determinism PR (utils/_math.py)."""
+
+    def setUp(self):
+        from pandas_ta_classic.utils import np_rolling_moments
+
+        self.fn = np_rolling_moments
+        # Simple increasing array: [0, 1, 2, 3, 4]
+        self.arr = np.arange(5, dtype=float)
+
+    # ------------------------------------------------------------------
+    # Return-type / shape
+    # ------------------------------------------------------------------
+
+    def test_returns_tuple_of_arrays(self):
+        result = self.fn(self.arr, 3, 2)
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 1)
+        self.assertIsInstance(result[0], np.ndarray)
+
+    def test_output_length_matches_input(self):
+        (m2,) = self.fn(self.arr, 3, 2)
+        self.assertEqual(len(m2), len(self.arr))
+
+    def test_multiple_orders(self):
+        m2, m3, m4 = self.fn(self.arr, 3, 2, 3, 4)
+        for arr in (m2, m3, m4):
+            self.assertEqual(len(arr), len(self.arr))
+
+    def test_output_dtype_is_float64(self):
+        (m2,) = self.fn(self.arr, 3, 2)
+        self.assertEqual(m2.dtype, np.float64)
+
+    # ------------------------------------------------------------------
+    # Default min_periods == length: first (length-1) slots are NaN
+    # ------------------------------------------------------------------
+
+    def test_default_min_periods_leading_nans(self):
+        length = 3
+        (m2,) = self.fn(self.arr, length, 2)
+        self.assertTrue(np.all(np.isnan(m2[: length - 1])))
+
+    def test_default_min_periods_no_trailing_nans(self):
+        length = 3
+        (m2,) = self.fn(self.arr, length, 2)
+        self.assertFalse(np.any(np.isnan(m2[length - 1 :])))
+
+    # ------------------------------------------------------------------
+    # Correctness of computed sums (order-2 == sum of squared deviations)
+    # ------------------------------------------------------------------
+
+    def test_order2_known_window(self):
+        # window [1, 2, 3]: mean=2, deviations=[-1,0,1], sum = 2
+        (m2,) = self.fn(np.array([1.0, 2.0, 3.0, 4.0, 5.0]), 3, 2)
+        npt.assert_allclose(m2[2], 2.0)  # first full window [1,2,3]
+        npt.assert_allclose(m2[3], 2.0)  # [2,3,4]
+        npt.assert_allclose(m2[4], 2.0)  # [3,4,5]
+
+    def test_order2_constant_series_is_zero(self):
+        arr = np.ones(6)
+        (m2,) = self.fn(arr, 3, 2)
+        npt.assert_allclose(m2[2:], 0.0, atol=1e-12)
+
+    def test_order3_sign(self):
+        # Positively skewed window: [1, 2, 10] - third central moment > 0
+        arr = np.array([1.0, 2.0, 10.0])
+        (m3,) = self.fn(arr, 3, 3)
+        self.assertGreater(m3[2], 0)
+
+    # ------------------------------------------------------------------
+    # min_periods < length  (partial-window behaviour)
+    # ------------------------------------------------------------------
+
+    def test_min_periods_position_below_min_is_nan(self):
+        # min_periods=2 -> position 0 (only 1 value) must be NaN
+        # length is positional so the order value (2) lands in *orders
+        (m2,) = self.fn(self.arr, 4, 2, min_periods=2)
+        self.assertTrue(np.isnan(m2[0]))
+
+    def test_min_periods_first_valid_position(self):
+        # min_periods=2 -> position 1 uses window [0, 1]: deviations [-0.5, 0.5]
+        # sum of squares = 0.5
+        (m2,) = self.fn(self.arr, 4, 2, min_periods=2)
+        npt.assert_allclose(m2[1], 0.5)
+
+    def test_min_periods_full_window_unchanged(self):
+        # Positions >= length-1 must be identical regardless of min_periods
+        m2_default = self.fn(self.arr, 3, 2)[0]
+        m2_partial = self.fn(self.arr, 3, 2, min_periods=2)[0]
+        npt.assert_array_equal(m2_default[2:], m2_partial[2:])
+
+    def test_min_periods_equal_to_length_same_as_default(self):
+        m2_default = self.fn(self.arr, 3, 2)[0]
+        m2_explicit = self.fn(self.arr, 3, 2, min_periods=3)[0]
+        npt.assert_array_equal(m2_default, m2_explicit)
+
+    # ------------------------------------------------------------------
+    # Edge cases
+    # ------------------------------------------------------------------
+
+    def test_series_shorter_than_length_all_nan(self):
+        arr = np.array([1.0, 2.0])
+        (m2,) = self.fn(arr, 5, 2)
+        self.assertTrue(np.all(np.isnan(m2)))
+
+    def test_empty_array(self):
+        arr = np.array([], dtype=float)
+        (m2,) = self.fn(arr, 3, 2)
+        self.assertEqual(len(m2), 0)
+
+    def test_single_element_series(self):
+        arr = np.array([42.0])
+        (m2,) = self.fn(arr, 1, 2)
+        # Window of size 1: deviation is 0, sum = 0
+        npt.assert_allclose(m2[0], 0.0, atol=1e-12)

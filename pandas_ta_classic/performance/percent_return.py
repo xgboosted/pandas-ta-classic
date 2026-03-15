@@ -26,7 +26,7 @@ def percent_return(
     if cumulative:
         pct_return = (close / close.iloc[0]) - 1
     else:
-        pct_return = close.pct_change(length)  # (close / close.shift(length)) - 1
+        pct_return = (close / close.shift(length)) - 1
 
     # Offset
     if offset != 0:
@@ -64,7 +64,7 @@ Sources:
 Calculation:
     Default Inputs:
         length=1, cumulative=False
-    PCTRET = close.pct_change(length)
+    PCTRET = close / close.shift(length) - 1
     CUMPCTRET = PCTRET.cumsum() if cumulative
 
 Args:

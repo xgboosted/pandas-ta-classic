@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## **[Unreleased]**
 
+### Changed
+* **`linreg` breaking default change**: The `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib's convention. Any caller using `linreg(close, angle=True)` without explicitly passing `degrees=False` will now receive degrees instead of radians.
+* **`stdev`/`variance` breaking default change**: The `ddof` parameter now defaults to `0` (population std/variance, was `1` sample std/variance) to match TA-Lib. Callers relying on the default sample variance must now pass `ddof=1` explicitly.
+
 ### Added
 * **9 New Technical Indicators**: Added high-demand indicators from Issue #29 analysis:
   - **LRSI** (Laguerre Relative Strength Index) - Momentum indicator with reduced lag using gamma parameter

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Z Score (ZSCORE)
 from typing import Any, Optional
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.overlap.sma import sma
-from .stdev import stdev
 from pandas_ta_classic.utils import get_offset, verify_series
 
 

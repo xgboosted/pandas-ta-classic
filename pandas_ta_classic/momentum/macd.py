@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Moving Average Convergence Divergence (MACD)
 from typing import Any, Optional
+import numpy as np
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
@@ -38,8 +39,6 @@ def macd(
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
     else:
-        fastma = ema(close, length=fast)
-        slowma = ema(close, length=slow)
 
         macd = fastma - slowma
         signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Triangular Moving Average (TRIMA)
+from math import ceil, floor
 from typing import Any, Optional
 from pandas import Series
 from .sma import sma
@@ -77,9 +78,10 @@ Calculation:
     Default Inputs:
         length=10
     SMA = Simple Moving Average
-    half_length = round(0.5 * (length + 1))
-    SMA1 = SMA(close, half_length)
-    TRIMA = SMA(SMA1, half_length)
+    first_window = ceil(length / 2)
+    second_window = floor(length / 2) + 1
+    SMA1 = SMA(close, first_window)
+    TRIMA = SMA(SMA1, second_window)
 
 Args:
     close (pd.Series): Series of 'close's

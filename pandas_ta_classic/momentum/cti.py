@@ -30,7 +30,7 @@ def cti(
 
     # Handle fills
     if "fillna" in kwargs:
-        cti.fillna(method=kwargs["fillna"], inplace=True)
+        cti.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         if "fill_method" in kwargs:
 

@@ -95,9 +95,14 @@ Calculation:
         pos_ = pos_.apply(zero)
         neg_ = neg_.apply(zero)
 
-        # Not the same values as TA Lib's -+DM
-        pos = ma(mamode, pos_, length=length)
-        neg = ma(mamode, neg_, length=length)
+        # For RMA (default), multiply by length to get the Wilder-smoothed sum
+        # matching TA-Lib. Other MA modes are returned as-is.
+        if mamode == "rma":
+            pos = ma(mamode, pos_, length=length) * length
+            neg = ma(mamode, neg_, length=length) * length
+        else:
+            pos = ma(mamode, pos_, length=length)
+            neg = ma(mamode, neg_, length=length)
 
 Args:
     high (pd.Series): Series of 'high's

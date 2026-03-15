@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Entropy (ENTROPY)
 from typing import Any, Optional
-from numpy import log as npLog
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
 
