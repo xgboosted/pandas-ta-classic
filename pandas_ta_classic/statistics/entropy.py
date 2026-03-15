@@ -25,23 +25,11 @@ def entropy(
     if close is None:
         return None
 
-    # Pure numpy for cross-version determinism.
-    # Each window's probabilities share the same denominator (the window sum),
-    # so they form a valid distribution and the result is proper Shannon entropy.
-    values = close.values.astype(np.float64)
-    n = len(values)
-    result_arr = np.full(n, np.nan, dtype=np.float64)
-    if n >= length:
-        windows = sliding_window_view(values, length)  # (n-length+1, length)
-        window_sums = windows.sum(axis=1)  # (n-length+1,)
-        valid = window_sums != 0
-        with np.errstate(divide="ignore", invalid="ignore"):
-            p = np.where(valid[:, None], windows / window_sums[:, None], np.nan)
-            p_term = -p * np.log(p) / np.log(base)
-        # np.nansum treats 0*log(0)=NaN as 0, consistent with Shannon convention
-        entropy_vals = np.where(valid, np.nansum(p_term, axis=1), np.nan)
-        result_arr[length - 1 :] = entropy_vals
-    entropy = Series(result_arr, index=close.index, dtype=np.float64)
+    # Calculate Result
+    p = close / close.rolling(length).sum()
+    # Shannon entropy convention: 0 * log(0) = 0
+    safe_log_p = npLog(p.where(p > 0, 1))
+    entropy = (-p * safe_log_p / npLog(base)).rolling(length).sum()
 
     # Offset
     if offset != 0:

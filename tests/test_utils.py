@@ -393,6 +393,149 @@ class TestUtilities(TestCase):
         print(f"\nPandas TA v{result}")
 
 
+class TestNoneGuards(TestCase):
+    """Regression tests for PR #95 – None-guard coverage.
+
+    Each patched indicator must return None (not raise) when given a Series
+    shorter than its minimum required length.  A 4-row Series is used because
+    the smallest default length among the patched indicators is 5 (t3, bbands),
+    so 4 < 5 guarantees verify_series rejects the input for every indicator
+    in this suite.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        idx = pd.date_range("2020-01-01", periods=4, freq="D")
+        cls.c = Series([10.0, 11.0, 10.5, 11.5], index=idx)
+        cls.o = Series([9.5, 10.5, 10.0, 11.0], index=idx)
+        cls.h = Series([10.5, 11.5, 11.0, 12.0], index=idx)
+        cls.l = Series([9.0, 10.0, 9.5, 10.5], index=idx)
+        cls.v = Series([1e6, 1.1e6, 9e5, 1.2e6], index=idx)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.c, cls.o, cls.h, cls.l, cls.v
+
+    # ---- verify_series (core utility) ----
+
+    def test_verify_series_none_when_too_short(self):
+        result = pandas_ta.utils.verify_series(self.c, 10)
+        self.assertIsNone(result)
+
+    def test_verify_series_ok_when_long_enough(self):
+        result = pandas_ta.utils.verify_series(self.c, 4)
+        self.assertIsInstance(result, Series)
+
+    # ---- candles ----
+
+    def test_none_guard_cdl_doji(self):
+        self.assertIsNone(pandas_ta.cdl_doji(self.o, self.h, self.l, self.c))
+
+    # ---- cycles ----
+
+    def test_none_guard_dsp(self):
+        self.assertIsNone(pandas_ta.dsp(self.c))
+
+    # ---- momentum ----
+
+    def test_none_guard_ao(self):
+        self.assertIsNone(pandas_ta.ao(self.h, self.l))
+
+    def test_none_guard_cci(self):
+        self.assertIsNone(pandas_ta.cci(self.h, self.l, self.c))
+
+    def test_none_guard_cfo(self):
+        self.assertIsNone(pandas_ta.cfo(self.c))
+
+    def test_none_guard_coppock(self):
+        self.assertIsNone(pandas_ta.coppock(self.c))
+
+    def test_none_guard_cti(self):
+        self.assertIsNone(pandas_ta.cti(self.c))
+
+    def test_none_guard_eri(self):
+        self.assertIsNone(pandas_ta.eri(self.h, self.l, self.c))
+
+    def test_none_guard_inertia(self):
+        self.assertIsNone(pandas_ta.inertia(self.c))
+
+    def test_none_guard_kdj(self):
+        self.assertIsNone(pandas_ta.kdj(self.h, self.l, self.c))
+
+    def test_none_guard_macd(self):
+        self.assertIsNone(pandas_ta.macd(self.c))
+
+    def test_none_guard_po(self):
+        self.assertIsNone(pandas_ta.po(self.c))
+
+    def test_none_guard_qqe(self):
+        self.assertIsNone(pandas_ta.qqe(self.c))
+
+    def test_none_guard_smi(self):
+        self.assertIsNone(pandas_ta.smi(self.c))
+
+    def test_none_guard_squeeze(self):
+        self.assertIsNone(pandas_ta.squeeze(self.h, self.l, self.c))
+
+    def test_none_guard_squeeze_pro(self):
+        self.assertIsNone(pandas_ta.squeeze_pro(self.h, self.l, self.c))
+
+    def test_none_guard_trix(self):
+        self.assertIsNone(pandas_ta.trix(self.c))
+
+    # ---- overlap ----
+
+    def test_none_guard_dema(self):
+        self.assertIsNone(pandas_ta.dema(self.c))
+
+    def test_none_guard_hma(self):
+        self.assertIsNone(pandas_ta.hma(self.c))
+
+    def test_none_guard_mmar(self):
+        self.assertIsNone(pandas_ta.mmar(self.c))
+
+    def test_none_guard_t3(self):
+        # default length=5; 4-row series is shorter than 5
+        self.assertIsNone(pandas_ta.t3(self.c))
+
+    def test_none_guard_tema(self):
+        self.assertIsNone(pandas_ta.tema(self.c))
+
+    def test_none_guard_trima(self):
+        self.assertIsNone(pandas_ta.trima(self.c))
+
+    def test_none_guard_zlma(self):
+        self.assertIsNone(pandas_ta.zlma(self.c))
+
+    # ---- statistics ----
+
+    def test_none_guard_stdev(self):
+        self.assertIsNone(pandas_ta.stdev(self.c))
+
+    def test_none_guard_zscore(self):
+        self.assertIsNone(pandas_ta.zscore(self.c))
+
+    # ---- trend ----
+
+    def test_none_guard_dpo(self):
+        self.assertIsNone(pandas_ta.dpo(self.c))
+
+    def test_none_guard_qstick(self):
+        self.assertIsNone(pandas_ta.qstick(self.o, self.c))
+
+    # ---- volatility ----
+
+    def test_none_guard_bbands(self):
+        # default length=5; 4-row series is shorter than 5
+        self.assertIsNone(pandas_ta.bbands(self.c))
+
+    def test_none_guard_massi(self):
+        self.assertIsNone(pandas_ta.massi(self.h, self.l))
+
+    def test_none_guard_supertrend(self):
+        self.assertIsNone(pandas_ta.supertrend(self.h, self.l, self.c))
+
+
 class TestNpRollingMoments(TestCase):
     """Unit tests for the np_rolling_moments helper added in the numpy-
     determinism PR (utils/_math.py)."""

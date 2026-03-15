@@ -24,6 +24,8 @@ def dsp(
     # Calculate Result
     # Calculate EMA
     ema_value = ema(close, length=length)
+    if ema_value is None:
+        return None
 
     # Detrend by subtracting EMA
     dsp = close - ema_value

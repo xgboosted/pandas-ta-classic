@@ -28,6 +28,9 @@ def vwap(
     )
     offset = get_offset(offset)
 
+    if high is None or low is None or close is None or volume is None:
+        return None
+
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(
@@ -40,8 +43,8 @@ def vwap(
 
     # Calculate Result
     wp = typical_price * volume
-    vwap = wp.groupby(wp.index.to_period(anchor)).cumsum()
-    vwap /= volume.groupby(volume.index.to_period(anchor)).cumsum()
+    vwap = wp.groupby(wp.index.to_period(anchor), observed=True).cumsum()
+    vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
 
     # Offset
     if offset != 0:

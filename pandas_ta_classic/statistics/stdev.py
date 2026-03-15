@@ -33,10 +33,10 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        var = variance(close=close, length=length, ddof=ddof, talib=False)
-        if var is None:
+        _variance = variance(close=close, length=length, ddof=ddof)
+        if _variance is None:
             return None
-        stdev = npsqrt(var)
+        stdev = _variance.apply(npsqrt)
 
     # Offset
     if offset != 0:

@@ -29,6 +29,8 @@ def coppock(
     # Calculate Result
     total_roc = roc(close, fast) + roc(close, slow)
     coppock = wma(total_roc, length)
+    if coppock is None:
+        return None
 
     # Offset
     if offset != 0:

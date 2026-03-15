@@ -25,19 +25,15 @@ def zscore(
     if close is None:
         return None
 
-    # Pure numpy for cross-version determinism.
-    values = close.values.astype(np.float64)
-    n = len(values)
-    result_arr = np.full(n, np.nan, dtype=np.float64)
-    if n >= length:
-        windows = sliding_window_view(values, length)
-        window_mean = windows.mean(axis=1)
-        window_std = windows.std(axis=1, ddof=1)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (
-                std * window_std
-            )
-    zscore = Series(result_arr, index=close.index, dtype=np.float64)
+    # Calculate Result
+    _stdev = stdev(close=close, length=length, **kwargs)
+    if _stdev is None:
+        return None
+    std *= _stdev
+    mean = sma(close=close, length=length, **kwargs)
+    if mean is None:
+        return None
+    zscore = (close - mean) / std
 
     # Offset
     if offset != 0:
