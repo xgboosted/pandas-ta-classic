@@ -29,12 +29,20 @@ def kurtosis(
         return None
 
     # Pure numpy rolling excess kurtosis (Fisher) for cross-version determinism.
-    m2, m4 = np_rolling_moments(close.values, length, 2, 4)
-    nf = np.float64(length)
+    m2, m4 = np_rolling_moments(close.values, length, 2, 4, min_periods=min_periods)
+    # n_eff[i] is the actual window size used at position i.  When
+    # min_periods == length (the default) every position uses length, so a
+    # scalar is sufficient and avoids the array-allocation overhead.
+    if min_periods < length:
+        n_eff = np.full(len(close), np.float64(length))
+        for pos in range(min_periods - 1, min(length - 1, len(close))):
+            n_eff[pos] = pos + 1
+    else:
+        n_eff = np.float64(length)
     with np.errstate(divide="ignore", invalid="ignore"):
-        numer = nf * (nf + 1) * (nf - 1) * m4
-        denom = (nf - 2) * (nf - 3) * m2**2
-        adj = 3.0 * (nf - 1) ** 2 / ((nf - 2) * (nf - 3))
+        numer = n_eff * (n_eff + 1) * (n_eff - 1) * m4
+        denom = (n_eff - 2) * (n_eff - 3) * m2**2
+        adj = 3.0 * (n_eff - 1) ** 2 / ((n_eff - 2) * (n_eff - 3))
         result = numer / denom - adj
     kurtosis = Series(result, index=close.index, dtype=np.float64)
 

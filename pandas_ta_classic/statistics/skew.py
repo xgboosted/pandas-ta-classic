@@ -30,10 +30,17 @@ def skew(
 
     # Pure numpy rolling skewness (adjusted Fisher-Pearson) for cross-version
     # determinism.
-    m2, m3 = np_rolling_moments(close.values, length, 2, 3)
-    nf = np.float64(length)
+    m2, m3 = np_rolling_moments(close.values, length, 2, 3, min_periods=min_periods)
+    # n_eff[i] is the actual window size at position i (scalar for the common
+    # case where min_periods == length).
+    if min_periods < length:
+        n_eff = np.full(len(close), np.float64(length))
+        for pos in range(min_periods - 1, min(length - 1, len(close))):
+            n_eff[pos] = pos + 1
+    else:
+        n_eff = np.float64(length)
     with np.errstate(divide="ignore", invalid="ignore"):
-        result = nf * np.sqrt(nf - 1) / (nf - 2) * m3 / m2**1.5
+        result = n_eff * np.sqrt(n_eff - 1) / (n_eff - 2) * m3 / m2**1.5
     skew = Series(result, index=close.index, dtype=np.float64)
 
     # Offset

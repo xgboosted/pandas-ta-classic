@@ -33,11 +33,14 @@ def quantile(
 
     # Pure numpy for cross-version determinism.
     values = close.values.astype(np.float64)
-    windows = sliding_window_view(values, length)
-    qtl = np.quantile(windows, q, axis=1)
-    result_arr = np.empty(len(values), dtype=np.float64)
-    result_arr[: length - 1] = np.nan
-    result_arr[length - 1 :] = qtl
+    n = len(values)
+    result_arr = np.full(n, np.nan, dtype=np.float64)
+    if n >= length:
+        windows = sliding_window_view(values, length)
+        result_arr[length - 1 :] = np.quantile(windows, q, axis=1)
+    if min_periods < length:
+        for pos in range(min_periods - 1, min(length - 1, n)):
+            result_arr[pos] = np.quantile(values[: pos + 1], q)
     quantile = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
