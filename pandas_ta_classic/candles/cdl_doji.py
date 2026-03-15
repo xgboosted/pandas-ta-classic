@@ -38,6 +38,8 @@ def cdl_doji(
     body = real_body(open_, close).abs()
     hl_range = high_low_range(high, low).abs()
     hl_range_avg = sma(hl_range, length)
+    if hl_range_avg is None:
+        return None
     doji = body < 0.01 * factor * hl_range_avg
 
     if naive:

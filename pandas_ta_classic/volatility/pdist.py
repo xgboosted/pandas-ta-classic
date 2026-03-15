@@ -23,6 +23,9 @@ def pdist(
     drift = get_drift(drift)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
     pdist = 2 * non_zero_range(high, low)
     pdist += non_zero_range(open_, close.shift(drift)).abs()

@@ -39,6 +39,8 @@ def cdl_z(
     z_high = zscore(high, length=length, ddof=ddof)
     z_low = zscore(low, length=length, ddof=ddof)
     z_close = zscore(close, length=length, ddof=ddof)
+    if z_open is None or z_high is None or z_low is None or z_close is None:
+        return None
 
     _full = "a" if full else ""
     _props = _full if full else f"_{length}_{ddof}"

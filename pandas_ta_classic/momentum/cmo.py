@@ -41,6 +41,8 @@ def cmo(
         if mode_tal:
             pos_ = rma(positive, length)
             neg_ = rma(negative, length)
+            if pos_ is None or neg_ is None:
+                return None
         else:
             pos_ = positive.rolling(length).sum()
             neg_ = negative.rolling(length).sum()

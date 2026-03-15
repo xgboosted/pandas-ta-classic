@@ -27,6 +27,8 @@ def dpo(
     # Calculate Result
     t = int(0.5 * length) + 1
     ma = sma(close, length)
+    if ma is None:
+        return None
 
     dpo = close - ma.shift(t)
     if centered:

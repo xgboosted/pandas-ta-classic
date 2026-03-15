@@ -203,7 +203,7 @@ def pure_profit_score(close: Series) -> Union[float, int]:
     close_index = Series(0, index=close.reset_index().index)
 
     r = linear_regression(close_index, close)["r"]
-    if r is not npNaN:
+    if not np.isnan(r):
         return r * cagr(close)
     return 0
 

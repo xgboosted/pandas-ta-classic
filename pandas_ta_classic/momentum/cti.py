@@ -21,6 +21,8 @@ def cti(
         return None
 
     cti = linreg(close, length=length, r=True)
+    if cti is None:
+        return None
 
     # Offset
     if offset != 0:

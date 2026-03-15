@@ -32,7 +32,11 @@ def trima(
     else:
         half_length = round(0.5 * (length + 1))
         sma1 = sma(close, length=half_length)
+        if sma1 is None:
+            return None
         trima = sma(sma1, length=half_length)
+        if trima is None:
+            return None
 
     # Offset
     if offset != 0:

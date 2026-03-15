@@ -28,6 +28,9 @@ def vwap(
     )
     offset = get_offset(offset)
 
+    if high is None or low is None or close is None or volume is None:
+        return None
+
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
         print(

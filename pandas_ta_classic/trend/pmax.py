@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Price Max (PMAX)
 from typing import Any, Optional
-from numpy import maximum, minimum
+from numpy import nan as npNaN
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
@@ -54,7 +54,7 @@ def pmax(
     # Initialize arrays
     n = len(close)
     trend_arr = [1] * n  # Start with uptrend
-    pmax_arr = [0.0] * n
+    pmax_arr = [npNaN] + [0.0] * (n - 1)
 
     # Iterate using numpy arrays (much faster than pandas .iloc)
     for i in range(1, n):

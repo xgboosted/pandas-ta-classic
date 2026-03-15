@@ -43,6 +43,8 @@ def t3(
         e4 = ema(close=e3, length=length, **kwargs)
         e5 = ema(close=e4, length=length, **kwargs)
         e6 = ema(close=e5, length=length, **kwargs)
+        if e1 is None or e2 is None or e3 is None or e4 is None or e5 is None or e6 is None:
+            return None
         t3 = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
 
     # Offset

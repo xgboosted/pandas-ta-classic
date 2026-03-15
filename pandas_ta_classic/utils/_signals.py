@@ -17,13 +17,16 @@ def _above_below(
     asint: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Series:
+) -> Optional[Series]:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
     offset = get_offset(offset)
 
-    series_a.apply(zero)
-    series_b.apply(zero)
+    if series_a is None or series_b is None:
+        return None
+
+    series_a = series_a.apply(zero)
+    series_b = series_b.apply(zero)
 
     # Calculate Result
     if above:
@@ -131,13 +134,16 @@ def cross(
     asint: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Series:
+) -> Optional[Series]:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
     offset = get_offset(offset)
 
-    series_a.apply(zero)
-    series_b.apply(zero)
+    if series_a is None or series_b is None:
+        return None
+
+    series_a = series_a.apply(zero)
+    series_b = series_b.apply(zero)
 
     # Calculate Result
     current = series_a > series_b  # current is above

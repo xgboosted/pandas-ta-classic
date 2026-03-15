@@ -32,6 +32,8 @@ def ao(
     median_price = 0.5 * (high + low)
     fast_sma = sma(median_price, fast)
     slow_sma = sma(median_price, slow)
+    if fast_sma is None or slow_sma is None:
+        return None
     ao = fast_sma - slow_sma
 
     # Offset

@@ -64,17 +64,29 @@ def rvi(
     _mode = ""
     if refined:
         high_rvi = _rvi(high, length, scalar, mamode, drift)
+        if high_rvi is None:
+            return None
         low_rvi = _rvi(low, length, scalar, mamode, drift)
+        if low_rvi is None:
+            return None
         rvi = 0.5 * (high_rvi + low_rvi)
         _mode = "r"
     elif thirds:
         high_rvi = _rvi(high, length, scalar, mamode, drift)
+        if high_rvi is None:
+            return None
         low_rvi = _rvi(low, length, scalar, mamode, drift)
+        if low_rvi is None:
+            return None
         close_rvi = _rvi(close, length, scalar, mamode, drift)
+        if close_rvi is None:
+            return None
         rvi = (high_rvi + low_rvi + close_rvi) / 3.0
         _mode = "t"
     else:
         rvi = _rvi(close, length, scalar, mamode, drift)
+        if rvi is None:
+            return None
 
     # Offset
     if offset != 0:

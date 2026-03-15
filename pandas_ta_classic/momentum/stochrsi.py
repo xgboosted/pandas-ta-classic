@@ -32,6 +32,8 @@ def stochrsi(
 
     # Calculate Result
     rsi_ = rsi(close, length=rsi_length)
+    if rsi_ is None:
+        return None
     lowest_rsi = rsi_.rolling(length).min()
     highest_rsi = rsi_.rolling(length).max()
 

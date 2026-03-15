@@ -25,8 +25,13 @@ def zscore(
         return None
 
     # Calculate Result
-    std *= stdev(close=close, length=length, **kwargs)
+    _stdev = stdev(close=close, length=length, **kwargs)
+    if _stdev is None:
+        return None
+    std *= _stdev
     mean = sma(close=close, length=length, **kwargs)
+    if mean is None:
+        return None
     zscore = (close - mean) / std
 
     # Offset

@@ -51,6 +51,9 @@ def zlma(
     else:
         zlma = ema(close_, length=length, **kwargs)  # "ema"
 
+    if zlma is None:
+        return None
+
     # Offset
     if offset != 0:
         zlma = zlma.shift(offset)
