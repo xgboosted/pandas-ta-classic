@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # Variance (VARIANCE)
 from typing import Any, Optional
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
@@ -36,7 +39,18 @@ def variance(
 
         variance = VAR(close, length)
     else:
-        variance = close.rolling(length, min_periods=min_periods).var(ddof)
+        # Pure numpy for cross-version determinism.
+        values = close.values.astype(np.float64)
+        n = len(values)
+        result_arr = np.full(n, np.nan, dtype=np.float64)
+        if n >= length:
+            windows = sliding_window_view(values, length)
+            result_arr[length - 1 :] = windows.var(axis=1, ddof=ddof)
+        if min_periods < length:
+            for pos in range(min_periods - 1, min(length - 1, n)):
+                w = values[: pos + 1]
+                result_arr[pos] = w.var(ddof=ddof) if len(w) > ddof else np.nan
+        variance = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
     if offset != 0:
