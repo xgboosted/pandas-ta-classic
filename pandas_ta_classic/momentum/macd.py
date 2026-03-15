@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Moving Average Convergence Divergence (MACD)
 from typing import Any, Optional
+import numpy as np
 from pandas import concat, DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
@@ -38,8 +39,6 @@ def macd(
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
     else:
-        import numpy as np
-
         def _ema_aligned(arr, m, period, seed_end):
             """EMA with SMA seed at a specific index, matching TA-Lib."""
             result = np.full(m, np.nan)
@@ -54,9 +53,13 @@ def macd(
 
         c_arr = close.to_numpy(dtype=float)
         m = c_arr.shape[0]
+        # TA-Lib seeds the fast EMA at its own lookback (fast-1) and the slow
+        # EMA at slow-1; by slow-1 the fast EMA has already been running for
+        # (slow - fast) additional bars, not reseeded with a fresh SMA.
+        fast_start = fast - 1
         slow_start = slow - 1
+        fast_ema = _ema_aligned(c_arr, m, fast, fast_start)
         slow_ema = _ema_aligned(c_arr, m, slow, slow_start)
-        fast_ema = _ema_aligned(c_arr, m, fast, slow_start)
         macd_arr = fast_ema - slow_ema
         sig_start = slow_start + signal - 1
         sig_ema = _ema_aligned(macd_arr, m, signal, sig_start)

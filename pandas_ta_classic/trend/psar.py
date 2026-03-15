@@ -71,7 +71,8 @@ def psar(
                 ep = low_
                 af = min(af + af0, max_af)
 
-            _sar = max(high.iloc[row - 1], high.iloc[row - 2], _sar)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = max(high.iloc[row - 1], high.iloc[max(0, row - 2)], _sar)
         else:
             _sar = sar + af * (ep - sar)
             reverse = low_ < _sar
@@ -80,7 +81,8 @@ def psar(
                 ep = high_
                 af = min(af + af0, max_af)
 
-            _sar = min(low.iloc[row - 1], low.iloc[row - 2], _sar)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = min(low.iloc[row - 1], low.iloc[max(0, row - 2)], _sar)
 
         if reverse:
             _sar = ep

@@ -4,7 +4,6 @@ from typing import Any, Optional
 from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
