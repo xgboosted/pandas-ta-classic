@@ -39,8 +39,10 @@ def cdl_doji(
     # (excluding the current bar), so shift the SMA by 1.
     body = real_body(open_, close).abs()
     hl_range = high_low_range(high, low).abs()
-    hl_range_avg = sma(hl_range, length).shift(1)
-    doji = body <= 0.01 * factor * hl_range_avg
+    hl_range_avg = sma(hl_range, length)
+    if hl_range_avg is None:
+        return None
+    doji = body < 0.01 * factor * hl_range_avg
 
     if naive:
         # sma(...).shift(1) produces NaN at indices 0..length (length+1 NaN),

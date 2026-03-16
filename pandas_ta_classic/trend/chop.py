@@ -39,6 +39,8 @@ def chop(
     diff = high.rolling(length).max() - low.rolling(length).min()
 
     atr_ = atr(high=high, low=low, close=close, length=atr_length)
+    if atr_ is None:
+        return None
     atr_sum = atr_.rolling(length).sum()
 
     chop = scalar

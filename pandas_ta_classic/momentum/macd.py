@@ -72,6 +72,8 @@ def macd(
     if as_mode:
         macd = macd - signalma
         signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        if signalma is None:
+            return None
         histogram = macd - signalma
 
     # Offset

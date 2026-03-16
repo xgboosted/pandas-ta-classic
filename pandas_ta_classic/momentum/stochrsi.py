@@ -32,6 +32,8 @@ def stochrsi(
 
     # Calculate Result
     rsi_ = rsi(close, length=rsi_length)
+    if rsi_ is None:
+        return None
     lowest_rsi = rsi_.rolling(length).min()
     highest_rsi = rsi_.rolling(length).max()
 
@@ -39,7 +41,11 @@ def stochrsi(
     stoch /= non_zero_range(highest_rsi, lowest_rsi)
 
     stochrsi_k = ma(mamode, stoch, length=k)
+    if stochrsi_k is None:
+        return None
     stochrsi_d = ma(mamode, stochrsi_k, length=d)
+    if stochrsi_d is None:
+        return None
 
     # Offset
     if offset != 0:

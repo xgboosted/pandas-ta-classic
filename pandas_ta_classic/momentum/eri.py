@@ -27,6 +27,8 @@ def eri(
 
     # Calculate Result
     ema_ = ema(close, length)
+    if ema_ is None:
+        return None
     bull = high - ema_
     bear = low - ema_
 

@@ -23,6 +23,9 @@ def cdl_inside(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
     inside = (high.diff() < 0) & (low.diff() > 0)
 

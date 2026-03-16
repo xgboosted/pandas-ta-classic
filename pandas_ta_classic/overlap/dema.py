@@ -32,6 +32,8 @@ def dema(
     else:
         ema1 = ema(close=close, length=length)
         ema2 = ema(close=ema1, length=length)
+        if ema1 is None or ema2 is None:
+            return None
         dema = 2 * ema1 - ema2
 
     # Offset

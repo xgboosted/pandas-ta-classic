@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Price Max (PMAX)
 from typing import Any, Optional
-from numpy import maximum, minimum
+from numpy import nan as npNaN
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
@@ -34,9 +34,13 @@ def pmax(
     # Calculate Result
     # Calculate ATR
     atr_value = atr(high, low, close, length=length)
+    if atr_value is None:
+        return None
 
     # Calculate moving average of close
     ma_value = ma(mamode, close, length=length)
+    if ma_value is None:
+        return None
 
     # Calculate PMAX bands
     pmax_up = ma_value - (multiplier * atr_value)
@@ -50,7 +54,7 @@ def pmax(
     # Initialize arrays
     n = len(close)
     trend_arr = [1] * n  # Start with uptrend
-    pmax_arr = [0.0] * n
+    pmax_arr = [npNaN] + [0.0] * (n - 1)
 
     # Iterate using numpy arrays (much faster than pandas .iloc)
     for i in range(1, n):

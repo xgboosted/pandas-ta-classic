@@ -30,6 +30,8 @@ def efi(
     # Calculate Result
     pv_diff = close.diff(drift) * volume
     efi = ma(mamode, pv_diff, length=length)
+    if efi is None:
+        return None
 
     # Offset
     if offset != 0:

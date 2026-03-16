@@ -62,6 +62,8 @@ def squeeze(
     kch = kc(
         high, low, close, length=kc_length, scalar=kc_scalar, mamode=mamode, tr=use_tr
     )
+    if bbd is None or kch is None:
+        return None
 
     # Simplify KC and BBAND column names for dynamic access
     bbd.columns = simplify_columns(bbd)
@@ -80,6 +82,9 @@ def squeeze(
             squeeze = ema(momo, length=mom_smooth)
         else:  # "sma"
             squeeze = sma(momo, length=mom_smooth)
+
+    if squeeze is None:
+        return None
 
     # Classify Squeezes
     squeeze_on = (bbd.l > kch.l) & (bbd.u < kch.u)

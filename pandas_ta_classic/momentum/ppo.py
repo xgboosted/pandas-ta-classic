@@ -41,11 +41,17 @@ def ppo(
         ppo = PPO(close, fast, slow, tal_ma(mamode))
     else:
         fastma = ma(mamode, close, length=fast)
+        if fastma is None:
+            return None
         slowma = ma(mamode, close, length=slow)
+        if slowma is None:
+            return None
         ppo = scalar * (fastma - slowma)
         ppo /= slowma
 
     signalma = ma("ema", ppo, length=signal)
+    if signalma is None:
+        return None
     histogram = ppo - signalma
 
     # Offset

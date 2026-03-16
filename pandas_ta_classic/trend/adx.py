@@ -36,6 +36,8 @@ def adx(
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=length)
+    if atr_ is None:
+        return None
 
     up = high - high.shift(drift)  # high.diff(drift)
     dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
@@ -47,11 +49,19 @@ def adx(
     neg = neg.apply(zero)
 
     k = scalar / atr_
-    dmp = k * ma(mamode, pos, length=length)
-    dmn = k * ma(mamode, neg, length=length)
+    _dmp_ma = ma(mamode, pos, length=length)
+    if _dmp_ma is None:
+        return None
+    _dmn_ma = ma(mamode, neg, length=length)
+    if _dmn_ma is None:
+        return None
+    dmp = k * _dmp_ma
+    dmn = k * _dmn_ma
 
     dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
     adx = ma(mamode, dx, length=lensig)
+    if adx is None:
+        return None
 
     # Offset
     if offset != 0:

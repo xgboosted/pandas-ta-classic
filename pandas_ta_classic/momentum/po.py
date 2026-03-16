@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import get_offset, verify_series
 
 
 def po(
@@ -24,11 +24,11 @@ def po(
     # Calculate Result
     # Linear regression
     lr = linreg(close, length=length)
+    if lr is None:
+        return None
 
-    # Projection oscillator as percentage
-    # Use non_zero_range to avoid division by zero
-    lr = non_zero_range(lr, lr)
-    po = 100 * (close - lr) / lr
+    # Projection oscillator as percentage (protect against lr=0)
+    po = 100 * (close - lr) / lr.replace(0, float("nan"))
 
     # Offset
     if offset != 0:

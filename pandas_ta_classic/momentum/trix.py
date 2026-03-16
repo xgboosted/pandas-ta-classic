@@ -31,7 +31,9 @@ def trix(
     ema1 = ema(close=close, length=length, **kwargs)
     ema2 = ema(close=ema1, length=length, **kwargs)
     ema3 = ema(close=ema2, length=length, **kwargs)
-    trix = scalar * (ema3 / ema3.shift(drift) - 1)
+    if ema1 is None or ema2 is None or ema3 is None:
+        return None
+    trix = scalar * ema3.pct_change(drift)
 
     trix_signal = trix.rolling(signal).mean()
 
