@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from functools import reduce
 from math import floor as mfloor
 from operator import mul
@@ -6,6 +7,8 @@ from sys import float_info as sflt
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 from numpy import ones, triu
 from numpy import all as npAll
 from numpy import append as npAppend
@@ -167,8 +170,8 @@ def linear_regression(x: Series, y: Series) -> dict:
     m, n = x.size, y.size
 
     if m != n:
-        print(
-            f"[X] Linear Regression X and y have unequal total observations: {m} != {n}"
+        logger.error(
+            "Linear Regression X and y have unequal total observations: %d != %d", m, n
         )
         return {}
 

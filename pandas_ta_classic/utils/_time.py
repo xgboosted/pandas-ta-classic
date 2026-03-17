@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from datetime import datetime
 from time import localtime, perf_counter
 from typing import Optional, Tuple, Union
@@ -6,6 +7,8 @@ from typing import Optional, Tuple, Union
 from pandas import DataFrame, Timestamp, to_datetime
 
 from pandas_ta_classic._meta import EXCHANGE_TZ, RATE
+
+logger = logging.getLogger(__name__)
 
 
 def df_dates(
@@ -82,7 +85,7 @@ def get_time(exchange: str = "NYSE", full: bool = True, to_string: bool = False)
         s = f"{date}, {exchange}: {exchange_time}"
 
     if not to_string:
-        print(s)
+        logger.debug(s)
     return s
 
 
