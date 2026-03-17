@@ -17,6 +17,8 @@ def tsignals(
     """Indicator: Trend Signals"""
     # Validate Arguments
     trend = verify_series(trend)
+    if trend is None:
+        return None
     asbool = bool(asbool) if isinstance(asbool, bool) else False
     trend_reset = (
         int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
@@ -29,7 +31,7 @@ def tsignals(
     offset = get_offset(offset)
 
     # Calculate Result
-    trends = trend.astype(int)
+    trends = trend.fillna(0).astype(int)
     trades = trends.diff(drift).shift(trade_offset).fillna(0).astype(int)
     entries = (trades > 0).astype(int)
     exits = (trades < 0).abs().astype(int)

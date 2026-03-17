@@ -3,7 +3,6 @@
 from typing import Any, Optional
 from numpy import arange as npArange
 from numpy import array_split as npArraySplit
-from numpy import mean
 from pandas import cut, concat, DataFrame, Series
 from pandas_ta_classic.utils import signed_series, verify_series
 
@@ -49,12 +48,13 @@ def vp(
     if sort_close:
         vp[mean_price_col] = vp[close_col]
         vpdf = vp.groupby(
-            cut(vp[close_col], width, include_lowest=True, precision=2)
+            cut(vp[close_col], width, include_lowest=True, precision=2),
+            observed=True,
         ).agg(
             {
-                mean_price_col: mean,
-                pos_volume_col: sum,
-                neg_volume_col: sum,
+                mean_price_col: "mean",
+                pos_volume_col: "sum",
+                neg_volume_col: "sum",
             }
         )
         vpdf[low_price_col] = [x.left for x in vpdf.index]

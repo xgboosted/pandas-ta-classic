@@ -90,7 +90,7 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
     returns = verify_series(returns)
     benchmark_returns = verify_series(benchmark_returns)
 
-    benchmark_returns.interpolate(inplace=True)
+    benchmark_returns = benchmark_returns.interpolate()
     return linear_regression(benchmark_returns, returns)["a"]
 
 
@@ -187,7 +187,7 @@ def pure_profit_score(close: Series) -> Union[float, int]:
     close_index = Series(0, index=close.reset_index().index)
 
     r = linear_regression(close_index, close)["r"]
-    if r is not npNaN:
+    if not np.isnan(r):
         return r * cagr(close)
     return 0
 
