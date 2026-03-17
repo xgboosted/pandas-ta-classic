@@ -286,3 +286,48 @@ class TestStrategyMethods(TestCase):
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         self.data.ta.cores = cores
+
+
+class TestStrategyDataclass(TestCase):
+    """Unit tests for Strategy dataclass construction and validation."""
+
+    def test_valid_name_and_ta_list(self):
+        s = pandas_ta.Strategy("MyStrat", ta=[{"kind": "sma", "length": 10}])
+        self.assertEqual(s.name, "MyStrat")
+        self.assertIsInstance(s.ta, list)
+        self.assertEqual(s.total_ta(), 1)
+
+    def test_empty_ta_list_accepted(self):
+        """Strategy(ta=[]) must be accepted (PR #96 behavior change)."""
+        s = pandas_ta.Strategy("EmptyStrat", ta=[])
+        self.assertEqual(s.name, "EmptyStrat")
+        self.assertIsInstance(s.ta, list)
+        self.assertEqual(s.total_ta(), 0)
+
+    def test_ta_none_accepted(self):
+        """ta=None is valid; used by AllStrategy to mean 'run all'."""
+        s = pandas_ta.Strategy("AllStrat", ta=None)
+        self.assertIsNone(s.ta)
+        self.assertEqual(s.total_ta(), 0)
+
+    def test_invalid_name_raises_value_error(self):
+        """Strategy(name=123) must raise ValueError (PR #96 breaking change)."""
+        with self.assertRaises(ValueError):
+            pandas_ta.Strategy(name=123)
+
+    def test_invalid_ta_type_raises_value_error(self):
+        """Non-list ta must raise ValueError."""
+        with self.assertRaises(ValueError):
+            pandas_ta.Strategy(name="MyStrat", ta="not_a_list")
+
+    def test_created_uses_default_factory(self):
+        """Verify created uses field(default_factory=...) so each instance gets its own timestamp."""
+        import dataclasses
+        field_info = pandas_ta.Strategy.__dataclass_fields__["created"]
+        self.assertIsNot(field_info.default_factory, dataclasses.MISSING)
+        self.assertIs(field_info.default, dataclasses.MISSING)
+
+    def test_created_is_string(self):
+        s = pandas_ta.Strategy("TestStrat", ta=[])
+        self.assertIsInstance(s.created, str)
+        self.assertGreater(len(s.created), 0)

@@ -68,11 +68,7 @@ class Strategy:
                 ' - name. Must be a string. Example: "My TA". Note: "all" is reserved.'
             )
 
-        if self.ta is None:
-            self.ta = None
-        elif ta_is_list:
-            pass  # Valid ta list (may be empty); element validation left to indicator calls
-        else:
+        if self.ta is not None and not ta_is_list:
             s = " - ta. Format is a list of dicts. Example: [{'kind': 'sma', 'length': 10}]"
             s += "\n       Check the indicator for the correct arguments if you receive this error."
             required_args.append(s)
