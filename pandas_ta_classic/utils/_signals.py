@@ -26,9 +26,6 @@ def _above_below(
 
     offset = get_offset(offset)
 
-    if series_a is None or series_b is None:
-        return None
-
     series_a = series_a.apply(zero)
     series_b = series_b.apply(zero)
 
@@ -146,9 +143,6 @@ def cross(
         return None
 
     offset = get_offset(offset)
-
-    if series_a is None or series_b is None:
-        return None
 
     series_a = series_a.apply(zero)
     series_b = series_b.apply(zero)

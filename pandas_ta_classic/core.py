@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
