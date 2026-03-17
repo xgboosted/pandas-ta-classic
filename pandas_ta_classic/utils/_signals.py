@@ -20,6 +20,10 @@ def _above_below(
 ) -> Series:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
+
+    if series_a is None or series_b is None:
+        return None
+
     offset = get_offset(offset)
 
     series_a = series_a.apply(zero)
@@ -134,6 +138,10 @@ def cross(
 ) -> Series:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
+
+    if series_a is None or series_b is None:
+        return None
+
     offset = get_offset(offset)
 
     series_a = series_a.apply(zero)
