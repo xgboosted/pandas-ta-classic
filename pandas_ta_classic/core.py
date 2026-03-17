@@ -827,6 +827,7 @@ class AnalysisIndicators(BasePandasObject):
                             )  # Speed over Order
                 if results is None:
                     logger.warning(f"ta.strategy('{name}') has no results.")
+                    pool.terminate()
                     return
 
                 pool.close()
