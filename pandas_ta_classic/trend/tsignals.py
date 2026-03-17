@@ -19,6 +19,7 @@ def tsignals(
     trend = verify_series(trend)
     if trend is None:
         return None
+
     asbool = bool(asbool) if isinstance(asbool, bool) else False
     trend_reset = (
         int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
