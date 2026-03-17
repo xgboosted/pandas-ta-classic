@@ -37,6 +37,8 @@ def cksp(
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=p, mamode=mamode)
+    if atr_ is None:
+        return None
 
     long_stop_ = high.rolling(p).max() - x * atr_
     long_stop = long_stop_.rolling(q).max()

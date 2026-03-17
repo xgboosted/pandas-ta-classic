@@ -34,6 +34,8 @@ def massi(
     high_low_range = non_zero_range(high, low)
     hl_ema1 = ema(close=high_low_range, length=fast, **kwargs)
     hl_ema2 = ema(close=hl_ema1, length=fast, **kwargs)
+    if hl_ema1 is None or hl_ema2 is None:
+        return None
 
     hl_ratio = hl_ema1 / hl_ema2
     massi = hl_ratio.rolling(slow, min_periods=slow).sum()

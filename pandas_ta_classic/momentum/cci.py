@@ -41,6 +41,8 @@ def cci(
         typical_price = hlc3(high=high, low=low, close=close)
         mean_typical_price = sma(typical_price, length=length)
         mad_typical_price = mad(typical_price, length=length)
+        if mean_typical_price is None or mad_typical_price is None:
+            return None
 
         cci = typical_price - mean_typical_price
         cci /= c * mad_typical_price

@@ -25,6 +25,8 @@ def bias(
 
     # Calculate Result
     bma = ma(mamode, close, length=length, **kwargs)
+    if bma is None:
+        return None
     bias = (close / bma) - 1
 
     # Offset

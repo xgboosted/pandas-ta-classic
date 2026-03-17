@@ -6,7 +6,6 @@ from numpy import arange as npArange
 from numpy import polyfit as npPolyfit
 from numpy import std as npStd
 from pandas import DataFrame, DatetimeIndex, Series
-from .stdev import stdev as stdev
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -25,7 +24,6 @@ def tos_stdevall(
         return None
     if not all(i < j for i, j in zip(stds, stds[1:])):
         stds = stds[::-1]
-    ddof = int(ddof) if ddof and ddof >= 0 and ddof < length else 1
     offset = get_offset(offset)
 
     _props = f"TOS_STDEVALL"
@@ -35,6 +33,8 @@ def tos_stdevall(
         length = int(length) if isinstance(length, int) and length > 2 else 30
         close = close.iloc[-length:]
         _props = f"{_props}_{length}"
+
+    ddof = int(ddof) if ddof and ddof >= 0 and ddof < length else 1
 
     close = verify_series(close, length)
 

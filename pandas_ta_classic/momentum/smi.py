@@ -32,6 +32,8 @@ def smi(
 
     # Calculate Result
     tsi_df = tsi(close, fast=fast, slow=slow, signal=signal, scalar=scalar)
+    if tsi_df is None:
+        return None
     smi = tsi_df.iloc[:, 0]
     signalma = tsi_df.iloc[:, 1]
     osc = smi - signalma

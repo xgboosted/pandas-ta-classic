@@ -40,17 +40,16 @@ def alma(
         wtd[i] = npExp(-1 * ((i - m) * (i - m)) / (2 * s * s))
 
     # Calculate Result
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, close.size):
+    result = [npNaN for _ in range(0, length - 1)]
+    for i in range(length - 1, close.size):
         window_sum = 0
         cum_sum = 0
         for j in range(0, length):
-            # wtd = math.exp(-1 * ((j - m) * (j - m)) / (2 * s * s))        # moved to pre-calc for efficiency
             window_sum = window_sum + wtd[j] * close.iloc[i - j]
             cum_sum = cum_sum + wtd[j]
 
         almean = window_sum / cum_sum
-        result.append(npNaN) if i == length else result.append(almean)
+        result.append(almean)
 
     alma = Series(result, index=close.index)
 

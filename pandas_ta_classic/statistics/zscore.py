@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Z Score (ZSCORE)
 from typing import Any, Optional
+
+import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.overlap.sma import sma
-from .stdev import stdev
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -24,10 +25,19 @@ def zscore(
     if close is None:
         return None
 
-    # Calculate Result
-    std *= stdev(close=close, length=length, **kwargs)
-    mean = sma(close=close, length=length, **kwargs)
-    zscore = (close - mean) / std
+    # Pure numpy for cross-version determinism.
+    values = close.values.astype(np.float64)
+    n = len(values)
+    result_arr = np.full(n, np.nan, dtype=np.float64)
+    if n >= length:
+        windows = sliding_window_view(values, length)
+        window_mean = windows.mean(axis=1)
+        window_std = windows.std(axis=1, ddof=1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (
+                std * window_std
+            )
+    zscore = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
     if offset != 0:

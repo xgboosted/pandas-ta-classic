@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 # Candle Pattern (CDL_PATTERN)
+import logging
 from typing import Any, Optional, Sequence, Union
 from pandas import Series, DataFrame
 
 from . import cdl_doji, cdl_inside
 from pandas_ta_classic.utils import get_offset, verify_series
 from pandas_ta_classic import Imports
+
+logger = logging.getLogger(__name__)
 
 ALL_PATTERNS = [
     "2crows",
@@ -109,7 +112,7 @@ def cdl_pattern(
     result = {}
     for n in name:
         if n not in ALL_PATTERNS:
-            print(f"[X] There is no candle pattern named {n} available!")
+            logger.warning(f"There is no candle pattern named {n} available!")
             continue
 
         if n in pta_patterns:
@@ -119,7 +122,9 @@ def cdl_pattern(
             result[pattern_result.name] = pattern_result
         else:
             if not Imports["talib"]:
-                print(f"[X] Please install TA-Lib to use {n}. (pip install TA-Lib)")
+                logger.warning(
+                    f"Please install TA-Lib to use {n}. (pip install TA-Lib)"
+                )
                 continue
 
             pattern_func = tala.Function(f"CDL{n.upper()}")

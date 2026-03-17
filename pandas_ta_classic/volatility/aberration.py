@@ -32,6 +32,8 @@ def aberration(
 
     # Calculate Result
     atr_ = atr(high=high, low=low, close=close, length=atr_length)
+    if atr_ is None:
+        return None
     jg = hlc3(high=high, low=low, close=close)
 
     zg = sma(jg, length)

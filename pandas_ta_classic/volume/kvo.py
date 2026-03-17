@@ -40,8 +40,16 @@ def kvo(
     # Calculate Result
     signed_volume = volume * signed_series(hlc3(high, low, close), 1)
     sv = signed_volume.loc[signed_volume.first_valid_index() :,]
-    kvo = ma(mamode, sv, length=fast) - ma(mamode, sv, length=slow)
+    _kvo_fast = ma(mamode, sv, length=fast)
+    if _kvo_fast is None:
+        return None
+    _kvo_slow = ma(mamode, sv, length=slow)
+    if _kvo_slow is None:
+        return None
+    kvo = _kvo_fast - _kvo_slow
     kvo_signal = ma(mamode, kvo.loc[kvo.first_valid_index() :,], length=signal)
+    if kvo_signal is None:
+        return None
 
     # Offset
     if offset != 0:
