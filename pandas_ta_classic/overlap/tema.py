@@ -33,6 +33,8 @@ def tema(
         ema1 = ema(close=close, length=length, **kwargs)
         ema2 = ema(close=ema1, length=length, **kwargs)
         ema3 = ema(close=ema2, length=length, **kwargs)
+        if ema1 is None or ema2 is None or ema3 is None:
+            return None
         tema = 3 * (ema1 - ema2) + ema3
 
     # Offset

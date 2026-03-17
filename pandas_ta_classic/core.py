@@ -772,7 +772,17 @@ class AnalysisIndicators(BasePandasObject):
 
         if use_multiprocessing:
             _total_ta = len(ta)
-            with Pool(self.cores) as pool:
+
+            # Create a lightweight copy of self that contains only the
+            # original OHLCV columns.  Without this, each imap() call
+            # pickles self._df (which grows as indicators are appended),
+            # causing pandas BlockManager integrity errors in workers and
+            # pool deadlocks.
+            slim = copy(self)
+            slim._df = self._df[self._df.columns[:initial_column_count]].copy()
+
+            pool = Pool(self.cores)
+            try:
                 # Some magic to optimize chunksize for speed based on total ta indicators
                 _chunksize = (
                     mp_chunksize - 1
@@ -800,39 +810,46 @@ class AnalysisIndicators(BasePandasObject):
                         for ind in ta
                     ]
                     # Custom multiprocessing pool. Must be ordered for Chained Strategies
-                    # May fix this to cpus if Chaining/Composition if it remains
-                    results = pool.imap(self._mp_worker, custom_ta, _chunksize)
+                    results = pool.imap(slim._mp_worker, custom_ta, _chunksize)
                 else:
                     default_ta: list = [(ind, tuple(), kwargs) for ind in ta]
                     # All and Categorical multiprocessing pool.
                     if all_ordered:
                         if Imports["tqdm"]:
                             results = tqdm(
-                                pool.imap(self._mp_worker, default_ta, _chunksize)
+                                pool.imap(slim._mp_worker, default_ta, _chunksize)
                             )  # Order over Speed
                         else:
                             results = pool.imap(
-                                self._mp_worker, default_ta, _chunksize
+                                slim._mp_worker, default_ta, _chunksize
                             )  # Order over Speed
                     else:
                         if Imports["tqdm"]:
                             results = tqdm(
                                 pool.imap_unordered(
-                                    self._mp_worker, default_ta, _chunksize
+                                    slim._mp_worker, default_ta, _chunksize
                                 )
                             )  # Speed over Order
                         else:
                             results = pool.imap_unordered(
-                                self._mp_worker, default_ta, _chunksize
+                                slim._mp_worker, default_ta, _chunksize
                             )  # Speed over Order
                 if results is None:
                     logger.warning(f"ta.strategy('{name}') has no results.")
                     pool.terminate()
                     return
 
+                # Consume the lazy iterator while the pool is still alive.
+                [self._post_process(r, **kwargs) for r in results]
                 pool.close()
+            except Exception:
+                pool.terminate()
+                raise
+            finally:
                 pool.join()
-                self._last_run = get_time(self.exchange, to_string=True)
+
+            del slim
+            self._last_run = get_time(self.exchange, to_string=True)
 
         else:
             # Without multiprocessing:
@@ -871,9 +888,6 @@ class AnalysisIndicators(BasePandasObject):
                     for ind in ta:
                         getattr(self, ind)(*tuple(), **kwargs)
                 self._last_run = get_time(self.exchange, to_string=True)
-
-        # Apply prefixes/suffixes and appends indicator results to the  DataFrame
-        [self._post_process(r, **kwargs) for r in results]
 
         if verbose:
             logger.info(f"Total indicators: {len(ta)}")

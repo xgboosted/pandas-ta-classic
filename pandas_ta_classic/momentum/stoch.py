@@ -40,7 +40,11 @@ def stoch(
     stoch /= non_zero_range(highest_high, lowest_low)
 
     stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index() :,], length=smooth_k)
+    if stoch_k is None:
+        return None
     stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index() :,], length=d)
+    if stoch_d is None:
+        return None
 
     # Offset
     if offset != 0:

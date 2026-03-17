@@ -28,7 +28,11 @@ def hma(
 
     wmaf = wma(close=close, length=half_length)
     wmas = wma(close=close, length=length)
+    if wmaf is None or wmas is None:
+        return None
     hma = wma(close=2 * wmaf - wmas, length=sqrt_length)
+    if hma is None:
+        return None
 
     # Offset
     if offset != 0:

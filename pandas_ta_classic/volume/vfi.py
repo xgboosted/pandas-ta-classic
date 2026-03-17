@@ -56,6 +56,8 @@ def vfi(
 
     # Smooth VFI
     vfi = ma(mamode, vfi, length=3)
+    if vfi is None:
+        return None
 
     # Offset
     if offset != 0:

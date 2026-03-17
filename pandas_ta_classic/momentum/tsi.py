@@ -39,14 +39,24 @@ def tsi(
     # Calculate Result
     diff = close.diff(drift)
     slow_ema = ema(close=diff, length=slow, **kwargs)
+    if slow_ema is None:
+        return None
     fast_slow_ema = ema(close=slow_ema, length=fast, **kwargs)
+    if fast_slow_ema is None:
+        return None
 
     abs_diff = diff.abs()
     abs_slow_ema = ema(close=abs_diff, length=slow, **kwargs)
+    if abs_slow_ema is None:
+        return None
     abs_fast_slow_ema = ema(close=abs_slow_ema, length=fast, **kwargs)
+    if abs_fast_slow_ema is None:
+        return None
 
     tsi = scalar * fast_slow_ema / abs_fast_slow_ema
     tsi_signal = ma(mamode, tsi, length=signal)
+    if tsi_signal is None:
+        return None
 
     # Offset
     if offset != 0:
@@ -106,7 +116,7 @@ Calculation:
     diff = close.diff(drift)
 
     slow_ema = EMA(diff, slow)
-    fast_slow_ema = EMA(slow_ema, slow)
+    fast_slow_ema = EMA(slow_ema, fast)
 
     abs_diff_slow_ema = absolute_diff_ema = EMA(ABS(diff), slow)
     abema = abs_diff_fast_slow_ema = EMA(abs_diff_slow_ema, fast)

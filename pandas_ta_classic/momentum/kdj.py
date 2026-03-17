@@ -35,7 +35,11 @@ def kdj(
     fastk = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
 
     k = rma(fastk, length=signal)
+    if k is None:
+        return None
     d = rma(k, length=signal)
+    if d is None:
+        return None
     j = 3 * k - 2 * d
 
     # Offset

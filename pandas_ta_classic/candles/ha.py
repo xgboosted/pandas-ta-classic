@@ -21,6 +21,9 @@ def ha(
     close = verify_series(close)
     offset = get_offset(offset)
 
+    if open_ is None or high is None or low is None or close is None:
+        return None
+
     # Calculate Result
     m = close.size
     df = DataFrame(

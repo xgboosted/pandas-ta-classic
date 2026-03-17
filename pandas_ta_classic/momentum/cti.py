@@ -21,6 +21,8 @@ def cti(
         return None
 
     cti = linreg(close, length=length, r=True)
+    if cti is None:
+        return None
 
     # Offset
     if offset != 0:
@@ -28,7 +30,7 @@ def cti(
 
     # Handle fills
     if "fillna" in kwargs:
-        cti.fillna(method=kwargs["fillna"], inplace=True)
+        cti.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         if "fill_method" in kwargs:
 

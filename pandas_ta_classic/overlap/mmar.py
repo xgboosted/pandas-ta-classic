@@ -30,6 +30,8 @@ def mmar(
     for i in range(num_ribbons):
         period = length + (i * step)
         ema_value = ema(close, length=period)
+        if ema_value is None:
+            return None
         ribbons[f"MMAR_{period}"] = ema_value
 
     # Create DataFrame

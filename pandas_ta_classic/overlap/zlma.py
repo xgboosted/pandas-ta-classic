@@ -2,7 +2,18 @@
 # Zero Lag Moving Average (ZLMA)
 from typing import Any, Optional
 from pandas import Series
-from . import dema, ema, hma, linreg, rma, sma, swma, t3, tema, trima, vidya, wma
+from .dema import dema
+from .ema import ema
+from .hma import hma
+from .linreg import linreg
+from .rma import rma
+from .sma import sma
+from .swma import swma
+from .t3 import t3
+from .tema import tema
+from .trima import trima
+from .vidya import vidya
+from .wma import wma
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -50,6 +61,9 @@ def zlma(
         zlma = wma(close_, length=length, **kwargs)
     else:
         zlma = ema(close_, length=length, **kwargs)  # "ema"
+
+    if zlma is None:
+        return None
 
     # Offset
     if offset != 0:
