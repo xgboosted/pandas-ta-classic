@@ -5,6 +5,7 @@ When numba is installed (``pip install numba``), re-exports the real
 ``njit``.  Otherwise provides a no-op decorator so that the same
 ``@njit(cache=True)`` syntax works everywhere without ImportError.
 """
+
 try:
     from numba import njit
 except ImportError:
