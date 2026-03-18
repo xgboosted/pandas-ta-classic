@@ -5,8 +5,10 @@ import numpy as np
 from numpy import maximum, where, zeros
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _lrsi_loop(c_arr, n, gamma):
     l0 = np.empty(n)
     l1 = np.empty(n)

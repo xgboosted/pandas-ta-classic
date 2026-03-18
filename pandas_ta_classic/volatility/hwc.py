@@ -4,8 +4,10 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _hwc_loop(c_arr, m, na, nb, nc, nd, scalar):
     result_arr = np.empty(m)
     upper_arr = np.empty(m)

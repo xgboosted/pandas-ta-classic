@@ -8,8 +8,10 @@ npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
     dir_ = np.ones(m)
     trend = np.zeros(m)
