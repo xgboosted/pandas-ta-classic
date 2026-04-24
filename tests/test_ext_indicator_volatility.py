@@ -48,6 +48,11 @@ class TestVolatilityExtension(TestCase):
             ["BBL_5_2.0", "BBM_5_2.0", "BBU_5_2.0", "BBB_5_2.0", "BBP_5_2.0"],
         )
 
+    def test_ce_ext(self):
+        self.data.ta.ce(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["CE_L_22_3.0", "CE_S_22_3.0"])
+
     def test_donchian_ext(self):
         self.data.ta.donchian(append=True)
         self.assertIsInstance(self.data, DataFrame)
