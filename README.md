@@ -43,7 +43,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 ### 🎯 Key Features
 
 - **224 Unique Indicators & Patterns**: 164 Category indicators + 62 CDL patterns via `cdl_pattern()` = 224 unique (doji and inside appear in both counts; all work without TA-Lib)
-- **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — TA-Lib is never used for them, even if installed
+- **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — native implementations are used by default; TA-Lib is only a fallback when a native implementation is unavailable
 - **Optional TA-Lib Acceleration**: 34 core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) automatically use TA-Lib when installed; pass `talib=False` to force native
 - **Optional Performance Boost**: Install `numba` for 6–230× speedups on hot-loop indicators (QQE, RSX, HWMA, SSF, PSAR, Supertrend, MCGD)
 - **Automatic Versioning**: Version management via git tags using setuptools-scm
