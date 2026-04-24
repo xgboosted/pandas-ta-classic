@@ -2,7 +2,6 @@
 # Beta (BETA)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -10,7 +9,6 @@ def beta(
     close: Series,
     benchmark: Optional[Series] = None,
     length: Optional[int] = None,
-    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -25,7 +23,6 @@ def beta(
     close = verify_series(close, max(length, min_periods))
     benchmark = verify_series(benchmark, max(length, min_periods))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if close is None or benchmark is None:
         return None
@@ -36,16 +33,9 @@ def beta(
     close_ret = close / close.shift(1) - 1
     bench_ret = benchmark / benchmark.shift(1) - 1
 
-    if Imports["talib"] and mode_tal:
-        from talib import BETA as taBETA
-
-        # TA-Lib BETA(A, B) = Cov(A_ret, B_ret) / Var(A_ret), so the
-        # benchmark (independent variable) must be passed as the first arg.
-        result = Series(taBETA(benchmark, close, timeperiod=length), index=close.index)
-    else:
-        cov = close_ret.rolling(length, min_periods=min_periods).cov(bench_ret)
-        var = bench_ret.rolling(length, min_periods=min_periods).var()
-        result = cov / var
+    cov = close_ret.rolling(length, min_periods=min_periods).cov(bench_ret)
+    var = bench_ret.rolling(length, min_periods=min_periods).var()
+    result = cov / var
 
     # Offset
     if offset != 0:
@@ -79,17 +69,16 @@ Sources:
 Calculation:
     Default Inputs:
         length=30
-    BETA = COV(close, benchmark, length) / VAR(benchmark, length)
+    BETA = COV(close_ret, bench_ret, length) / VAR(bench_ret, length)
 
 Args:
     close (pd.Series): Series of 'close's
     benchmark (pd.Series): Series of benchmark 'close's
-    length (int): It's period. Default: 30 (TA-Lib default: 5)
-    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+    length (int): The period. Default: 30
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
+    min_periods (int): Minimum observations required. Default: length
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

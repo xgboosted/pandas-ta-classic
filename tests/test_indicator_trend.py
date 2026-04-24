@@ -69,6 +69,16 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
 
+    def test_adxr(self):
+        result = pandas_ta.adxr(self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "ADXR_14")
+        self.assertListEqual(list(result.columns), ["ADXR_14", "DMP_14", "DMN_14"])
+        pandas_ta.adxr(self.high, self.low, self.close, fillna=0)
+        pandas_ta.adxr(self.high, self.low, self.close, fill_method="ffill")
+        pandas_ta.adxr(self.high, self.low, self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.adxr(None, self.low, self.close))
+
     def test_amat(self):
         result = pandas_ta.amat(self.close)
         self.assertIsInstance(result, DataFrame)
@@ -139,6 +149,162 @@ class TestTrend(TestCase):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_1_9")
+
+    def test_cpr_basic(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, levels="basic"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "CPR")
+        self.assertIn("CPR_TC", result.columns)
+        self.assertIn("CPR_PIVOT", result.columns)
+        self.assertIn("CPR_BC", result.columns)
+
+    def test_cpr_classic_standard(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="classic",
+            levels="standard",
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R1", result.columns)
+        self.assertIn("CPR_R2", result.columns)
+        self.assertIn("CPR_S1", result.columns)
+        self.assertIn("CPR_S2", result.columns)
+
+    def test_cpr_classic_extended(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="classic",
+            levels="extended",
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R3", result.columns)
+        self.assertIn("CPR_R4", result.columns)
+        self.assertIn("CPR_S3", result.columns)
+        self.assertIn("CPR_S4", result.columns)
+
+    def test_cpr_camarilla(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, method="camarilla", levels="all"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R4", result.columns)
+        self.assertIn("CPR_S4", result.columns)
+
+    def test_cpr_fibonacci(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, method="fibonacci", levels="all"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R3", result.columns)
+        self.assertIn("CPR_S3", result.columns)
+
+    def test_cpr_woodie(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            method="woodie",
+            levels="standard",
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R2", result.columns)
+        self.assertIn("CPR_S2", result.columns)
+
+    def test_cpr_width_analysis(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, width_analysis=True
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_WIDTH", result.columns)
+        self.assertIn("CPR_WIDTH_PCT", result.columns)
+        self.assertIn("CPR_WIDTH_CLASS", result.columns)
+
+    def test_cpr_price_position(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, price_position=True
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_POSITION", result.columns)
+
+    def test_cpr_virgin_detection(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            virgin_cpr=True,
+            virgin_lookforward=5,
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_VIRGIN", result.columns)
+        virgin_values = result["CPR_VIRGIN"].dropna()
+        if len(virgin_values) > 0:
+            self.assertTrue(virgin_values.dtype == bool)
+
+    def test_cpr_virgin_disabled(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, virgin_cpr=False
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertNotIn("CPR_VIRGIN", result.columns)
+
+    def test_cpr_virgin_custom_lookforward(self):
+        result = pandas_ta.cpr(
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            virgin_cpr=True,
+            virgin_lookforward=10,
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_VIRGIN", result.columns)
+
+    def test_cpr_invalid_method(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, method="invalid_method"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_TC", result.columns)
+
+    def test_cpr_invalid_timeframe(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, timeframe="invalid_timeframe"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_TC", result.columns)
+
+    def test_cpr_invalid_levels(self):
+        result = pandas_ta.cpr(
+            self.open, self.high, self.low, self.close, levels="invalid_levels"
+        )
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_R1", result.columns)
+
+    def test_cpr_empty_series(self):
+        from pandas import Series
+
+        empty_series = Series(dtype=float)
+        result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
+        self.assertIsNone(result)
+
+    def test_cpr_with_nans(self):
+        import numpy as np
+
+        open_with_nan = self.open.copy()
+        open_with_nan.iloc[0:5] = np.nan
+        result = pandas_ta.cpr(open_with_nan, self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_TC", result.columns)
 
     def test_decay(self):
         result = pandas_ta.decay(self.close)

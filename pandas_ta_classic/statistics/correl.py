@@ -2,7 +2,6 @@
 # Pearson Correlation Coefficient (CORREL)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -10,7 +9,6 @@ def correl(
     close: Series,
     benchmark: Optional[Series] = None,
     length: Optional[int] = None,
-    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -25,20 +23,12 @@ def correl(
     close = verify_series(close, max(length, min_periods))
     benchmark = verify_series(benchmark, max(length, min_periods))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if close is None or benchmark is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
-        from talib import CORREL as taCORREL
-
-        result = Series(
-            taCORREL(close, benchmark, timeperiod=length), index=close.index
-        )
-    else:
-        result = close.rolling(length, min_periods=min_periods).corr(benchmark)
+    result = close.rolling(length, min_periods=min_periods).corr(benchmark)
 
     # Offset
     if offset != 0:
@@ -77,12 +67,11 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     benchmark (pd.Series): Series of benchmark 'close's
-    length (int): It's period. Default: 30
-    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+    length (int): The period. Default: 30
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
+    min_periods (int): Minimum observations required. Default: length
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
