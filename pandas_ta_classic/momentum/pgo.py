@@ -28,8 +28,11 @@ def pgo(
         return None
 
     # Calculate Result
+    _atr = atr(high, low, close, length)
+    if _atr is None:
+        return None
     pgo = close - sma(close, length)
-    pgo /= ema(atr(high, low, close, length), length)
+    pgo /= ema(_atr, length)
 
     # Offset
     if offset != 0:

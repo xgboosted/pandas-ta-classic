@@ -19,7 +19,7 @@ def stdev(
     """Indicator: Standard Deviation"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 1
+    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 0
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
@@ -33,7 +33,10 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        stdev = variance(close=close, length=length, ddof=ddof).apply(npsqrt)
+        _variance = variance(close=close, length=length, ddof=ddof)
+        if _variance is None:
+            return None
+        stdev = _variance.apply(npsqrt)
 
     # Offset
     if offset != 0:
@@ -75,7 +78,7 @@ Args:
     length (int): It's period. Default: 30
     ddof (int): Delta Degrees of Freedom.
                 The divisor used in calculations is N - ddof,
-                where N represents the number of elements. Default: 1
+                where N represents the number of elements. Default: 0
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

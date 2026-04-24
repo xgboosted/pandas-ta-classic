@@ -1,8 +1,27 @@
 # -*- coding: utf-8 -*-
 # Holt-Winter Moving Average (HWMA)
 from typing import Any, Optional
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _hwma_loop(c_arr, m, na, nb, nc):
+    result = np.empty(m)
+    last_a = 0.0
+    last_v = 0.0
+    last_f = c_arr[0]
+    for i in range(m):
+        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * c_arr[i]
+        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
+        A = (1.0 - nc) * last_a + nc * (V - last_v)
+        result[i] = F + V + 0.5 * A
+        last_a = A
+        last_f = F
+        last_v = V
+    return result
 
 
 def hwma(
@@ -22,18 +41,9 @@ def hwma(
     offset = get_offset(offset)
 
     # Calculate Result
-    last_a = last_v = 0
-    last_f = close.iloc[0]
-
-    result = []
     m = close.size
-    for i in range(m):
-        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * close.iloc[i]
-        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
-        A = (1.0 - nc) * last_a + nc * (V - last_v)
-        result.append((F + V + 0.5 * A))
-        last_a, last_f, last_v = A, F, V  # update values
-
+    c_arr = close.to_numpy(dtype=float)
+    result = _hwma_loop(c_arr, m, na, nb, nc)
     hwma = Series(result, index=close.index)
 
     # Offset

@@ -4,7 +4,6 @@ from typing import Any, Optional
 from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
@@ -43,10 +42,26 @@ def adosc(
 
         adosc = ADOSC(high, low, close, volume, fast, slow)
     else:
+        import numpy as np
+
         ad_ = ad(high=high, low=low, close=close, volume=volume, open_=open_)
-        fast_ad = ema(close=ad_, length=fast, **kwargs)
-        slow_ad = ema(close=ad_, length=slow, **kwargs)
-        adosc = fast_ad - slow_ad
+        ad_arr = ad_.to_numpy(dtype=float)
+        m = ad_arr.shape[0]
+
+        # TA-Lib ADOSC: seed both EMAs with AD[0] (scalar seed, not SMA)
+        fastk = 2.0 / (fast + 1)
+        slowk = 2.0 / (slow + 1)
+        fast_ema = ad_arr[0]
+        slow_ema = ad_arr[0]
+        result = np.full(m, np.nan)
+
+        for i in range(1, m):
+            fast_ema = fastk * ad_arr[i] + (1 - fastk) * fast_ema
+            slow_ema = slowk * ad_arr[i] + (1 - slowk) * slow_ema
+            if i >= slow - 1:
+                result[i] = fast_ema - slow_ema
+
+        adosc = Series(result, index=close.index)
 
     # Offset
     if offset != 0:

@@ -43,12 +43,15 @@ def vidya(
     m = close.size
     alpha = 2 / (length + 1)
     abs_cmo = _cmo(close, length, drift).abs()
-    vidya = Series(0.0, index=close.index)
+    vidya_arr = np.full(m, npNaN)
+    vidya_arr[length - 1] = close.iloc[:length].mean()  # SMA seed
+    cmo_arr = abs_cmo.to_numpy()
+    c_arr = close.to_numpy()
     for i in range(length, m):
-        vidya.iloc[i] = alpha * abs_cmo.iloc[i] * close.iloc[i] + vidya.iloc[i - 1] * (
-            1 - alpha * abs_cmo.iloc[i]
+        vidya_arr[i] = alpha * cmo_arr[i] * c_arr[i] + vidya_arr[i - 1] * (
+            1 - alpha * cmo_arr[i]
         )
-    vidya.replace({0: npNaN}, inplace=True)
+    vidya = Series(vidya_arr, index=close.index)
 
     # Offset
     if offset != 0:

@@ -31,12 +31,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -60,12 +60,12 @@ jobs:
     needs: validate-structure
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -117,12 +117,12 @@ jobs:
       python-versions: ${{ steps.versions.outputs.python-versions }}
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
@@ -159,7 +159,7 @@ jobs:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.python-versions) }}
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
@@ -171,7 +171,7 @@ jobs:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -217,12 +217,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
 
@@ -250,7 +250,7 @@ jobs:
         pip install TA-Lib
     
     - name: Setup Pages
-      uses: actions/configure-pages@v4
+      uses: actions/configure-pages@v5
     
     - name: Install Sphinx dependencies
       run: |
@@ -271,7 +271,7 @@ jobs:
         fi
           
     - name: Upload Pages artifact (Sphinx)
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4
       with:
         path: docs/_build/html
 
@@ -299,7 +299,7 @@ jobs:
       url: https://pypi.org/project/pandas-ta-classic/
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
@@ -352,7 +352,7 @@ jobs:
         PYTHON_VERSIONS: ${{ needs.generate-matrix.outputs.python-versions }}
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     

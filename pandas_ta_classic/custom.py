@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import importlib
+import logging
 import os
 import sys
 import types
@@ -9,6 +10,8 @@ from glob import glob
 
 import pandas_ta_classic
 from pandas_ta_classic import AnalysisIndicators
+
+logger = logging.getLogger(__name__)
 
 
 def bind(function_name, function, method):
@@ -41,7 +44,7 @@ def create_dir(path, create_categories=True, verbose=True):
     if not exists(path):
         os.makedirs(path)
         if verbose:
-            print(f"[i] Created main directory '{path}'.")
+            logger.info("Created main directory '%s'.", path)
 
     # list the contents of the directory
     # dirs = glob(abspath(join(path, '*')))
@@ -54,7 +57,7 @@ def create_dir(path, create_categories=True, verbose=True):
                 os.makedirs(d)
                 if verbose:
                     dirname = basename(d)
-                    print(f"[i] Created an empty sub-directory '{dirname}'.")
+                    logger.info("Created an empty sub-directory '%s'.", dirname)
 
 
 def get_module_functions(module):
@@ -83,7 +86,7 @@ def get_module_functions(module):
 def import_dir(path, verbose=True):
     # ensure that the passed directory exists / is readable
     if not exists(path):
-        print(f"[X] Unable to read the directory '{path}'.")
+        logger.error("Unable to read the directory '%s'.", path)
         return
 
     # list the contents of the directory
@@ -96,8 +99,9 @@ def import_dir(path, verbose=True):
         # only look in directories which are valid pandas_ta_classic categories
         if dirname not in [*pandas_ta_classic.Category]:
             if verbose:
-                print(
-                    f"[i] Skipping the sub-directory '{dirname}' since it's not a valid pandas_ta_classic category."
+                logger.info(
+                    "Skipping the sub-directory '%s' since it's not a valid pandas_ta_classic category.",
+                    dirname,
                 )
             continue
 
@@ -116,15 +120,19 @@ def import_dir(path, verbose=True):
             fcn_callable = module_functions.get(module_name, None)
             fcn_method_callable = module_functions.get(f"{module_name}_method", None)
 
-            if fcn_callable == None:
-                print(
-                    f"[X] Unable to find a function named '{module_name}' in the module '{module_name}.py'."
+            if fcn_callable is None:
+                logger.error(
+                    "Unable to find a function named '%s' in the module '%s.py'.",
+                    module_name,
+                    module_name,
                 )
                 continue
-            if fcn_method_callable == None:
+            if fcn_method_callable is None:
                 missing_method = f"{module_name}_method"
-                print(
-                    f"[X] Unable to find a method function named '{missing_method}' in the module '{module_name}.py'."
+                logger.error(
+                    "Unable to find a method function named '%s' in the module '%s.py'.",
+                    missing_method,
+                    module_name,
                 )
                 continue
 
@@ -134,8 +142,10 @@ def import_dir(path, verbose=True):
 
             bind(module_name, fcn_callable, fcn_method_callable)
             if verbose:
-                print(
-                    f"[i] Successfully imported the custom indicator '{module}' into category '{dirname}'."
+                logger.info(
+                    "Successfully imported the custom indicator '%s' into category '%s'.",
+                    module,
+                    dirname,
                 )
 
 
@@ -225,7 +235,9 @@ def load_indicator_module(name):
     try:
         module = importlib.import_module(name)
     except Exception as ex:
-        print(f"[X] An error occurred when attempting to load module {name}: {ex}")
+        logger.error(
+            "An error occurred when attempting to load module %s: %s", name, ex
+        )
         sys.exit(1)
 
     # reload to refresh previously loaded module

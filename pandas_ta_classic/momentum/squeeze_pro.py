@@ -101,6 +101,8 @@ def squeeze_pro(
         mamode=mamode,
         tr=use_tr,
     )
+    if bbd is None or kch_wide is None or kch_normal is None or kch_narrow is None:
+        return None
 
     # Simplify KC and BBAND column names for dynamic access
     bbd.columns = simplify_columns(bbd)

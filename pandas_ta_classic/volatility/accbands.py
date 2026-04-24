@@ -39,8 +39,14 @@ def accbands(
     _upper = high * (1 + hl_ratio)
 
     lower = ma(mamode, _lower, length=length)
+    if lower is None:
+        return None
     mid = ma(mamode, close, length=length)
+    if mid is None:
+        return None
     upper = ma(mamode, _upper, length=length)
+    if upper is None:
+        return None
 
     # Offset
     if offset != 0:

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from typing import Any, List, Optional, Tuple, Union
 
 import re as re_
@@ -9,6 +10,8 @@ from numpy import argmax, argmin
 from pandas import DataFrame, Series
 from pandas.api.types import is_datetime64_any_dtype
 from pandas_ta_classic import Imports
+
+logger = logging.getLogger(__name__)
 
 
 def _camelCase2Title(x: str) -> str:
@@ -149,5 +152,33 @@ def verify_series(
     """If a Pandas Series and it meets the min_length of the indicator return it."""
     has_length = min_length is not None and isinstance(min_length, int)
     if series is not None and isinstance(series, Series):
-        return None if has_length and series.size < min_length else series
+        if has_length and series.size < min_length:
+            logger.warning(
+                f"[X] Series has {series.size} rows but indicator requires"
+                f" at least {min_length}. Returning None."
+            )
+            return None
+        return series
     return None
+
+
+def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
+    """Vectorised weighted MA via sliding_window_view.
+
+    Args:
+        close: The input series.
+        length: Window length (must equal ``len(weights)``).
+        weights: 1-D weight array whose orientation matches the window layout.
+
+    Returns:
+        A Series aligned with *close*, with ``NaN`` for the first
+        ``length - 1`` positions.
+    """
+    import numpy as np
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    arr = close.to_numpy(dtype=float)
+    windows = sliding_window_view(arr, length)
+    result = np.full(len(arr), np.nan)
+    result[length - 1 :] = windows @ weights
+    return Series(result, index=close.index)

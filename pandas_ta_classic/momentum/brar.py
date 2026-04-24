@@ -48,7 +48,7 @@ def brar(
     # Offset
     if offset != 0:
         ar = ar.shift(offset)
-        br = ar.shift(offset)
+        br = br.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:

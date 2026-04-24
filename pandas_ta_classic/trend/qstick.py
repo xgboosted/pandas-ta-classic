@@ -38,6 +38,9 @@ def qstick(
     else:  # "sma"
         qstick = sma(diff, length=length)
 
+    if qstick is None:
+        return None
+
     # Offset
     if offset != 0:
         qstick = qstick.shift(offset)

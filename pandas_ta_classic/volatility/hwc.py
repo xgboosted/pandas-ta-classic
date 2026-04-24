@@ -1,9 +1,41 @@
 # -*- coding: utf-8 -*-
 # Holt-Winter Channel (HWC)
 from typing import Any, Optional
-from numpy import sqrt as npSqrt
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _hwc_loop(c_arr, m, na, nb, nc, nd, scalar):
+    result_arr = np.empty(m)
+    upper_arr = np.empty(m)
+    lower_arr = np.empty(m)
+    last_a = 0.0
+    last_v = 0.0
+    last_var = 0.0
+    last_f = c_arr[0]
+    last_price = c_arr[0]
+    last_result = c_arr[0]
+    for i in range(m):
+        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * c_arr[i]
+        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
+        A = (1.0 - nc) * last_a + nc * (V - last_v)
+        result_arr[i] = F + V + 0.5 * A
+        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
+            last_price - last_result
+        )
+        stddev = last_var**0.5
+        upper_arr[i] = result_arr[i] + scalar * stddev
+        lower_arr[i] = result_arr[i] - scalar * stddev
+        last_price = c_arr[i]
+        last_a = A
+        last_f = F
+        last_v = V
+        last_var = var
+        last_result = result_arr[i]
+    return result_arr, upper_arr, lower_arr
 
 
 def hwc(
@@ -29,47 +61,19 @@ def hwc(
     offset = get_offset(offset)
 
     # Calculate Result
-    last_a = last_v = last_var = 0
-    last_f = last_price = last_result = close.iloc[0]
-    lower, result, upper = [], [], []
-    chan_pct_width, chan_width = [], []
-
     m = close.size
-    for i in range(m):
-        F = (1.0 - na) * (last_f + last_v + 0.5 * last_a) + na * close.iloc[i]
-        V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
-        A = (1.0 - nc) * last_a + nc * (V - last_v)
-        result.append((F + V + 0.5 * A))
-
-        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
-            last_price - last_result
-        )
-        stddev = npSqrt(last_var)
-        upper.append(result[i] + scalar * stddev)
-        lower.append(result[i] - scalar * stddev)
-
-        if channel_eval:
-            # channel width
-            chan_width.append(upper[i] - lower[i])
-            # channel percentage price position
-            chan_pct_width.append((close.iloc[i] - lower[i]) / (upper[i] - lower[i]))
-            # print('channel_eval (width|percentageWidth):', chan_width[i], chan_pct_width[i])
-
-        # update values
-        last_price = close.iloc[i]
-        last_a = A
-        last_f = F
-        last_v = V
-        last_var = var
-        last_result = result[i]
+    c_arr = close.to_numpy(dtype=float)
+    result_arr, upper_arr, lower_arr = _hwc_loop(c_arr, m, na, nb, nc, nd, scalar)
 
     # Aggregate
-    hwc = Series(result, index=close.index)
-    hwc_upper = Series(upper, index=close.index)
-    hwc_lower = Series(lower, index=close.index)
+    hwc = Series(result_arr, index=close.index)
+    hwc_upper = Series(upper_arr, index=close.index)
+    hwc_lower = Series(lower_arr, index=close.index)
     if channel_eval:
-        hwc_width = Series(chan_width, index=close.index)
-        hwc_pctwidth = Series(chan_pct_width, index=close.index)
+        hwc_width = Series(upper_arr - lower_arr, index=close.index)
+        hwc_pctwidth = Series(
+            (c_arr - lower_arr) / (upper_arr - lower_arr), index=close.index
+        )
 
     # Offset
     if offset != 0:

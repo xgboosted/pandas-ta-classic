@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 ## **[Unreleased]**
 
 ### Added
+* **Chandelier Exit (CE)**: New volatility indicator (`ce`) implementing the classic Chuck Le Beau trailing stop. Computes `CE Long = rolling_max(high, length) - multiplier * ATR` and `CE Short = rolling_min(low, length) + multiplier * ATR`. Supports `mamode` for ATR smoothing, `offset`, and standard `fillna`/`fill_method` kwargs. Default parameters: `length=22`, `multiplier=3.0`. Available as both standalone `ta.ce(high, low, close)` and DataFrame extension `df.ta.ce(append=True)`. Returns a DataFrame with columns `CE_L_{length}_{multiplier}` and `CE_S_{length}_{multiplier}`.
+* **Updated Indicator Counts**: Increased from 150 to 151 indicators, raising total count from 212 to 213 (151 indicators + 62 TA-Lib patterns).
+
+### Changed
+* **`linreg` breaking default change**: The `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib's convention. Any caller using `linreg(close, angle=True)` without explicitly passing `degrees=False` will now receive degrees instead of radians.
+* **`stdev`/`variance` breaking default change**: The `ddof` parameter now defaults to `0` (population std/variance, was `1` sample std/variance) to match TA-Lib. Callers relying on the default sample variance must now pass `ddof=1` explicitly.
+
+### Added
 * **9 New Technical Indicators**: Added high-demand indicators from Issue #29 analysis:
   - **LRSI** (Laguerre Relative Strength Index) - Momentum indicator with reduced lag using gamma parameter
   - **PMAX** (Price Max) - Trend indicator combining moving average with ATR

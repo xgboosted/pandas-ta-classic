@@ -67,7 +67,11 @@ def inertia(
     else:
         _mode, rvi_ = "", rvi(close, length=rvi_length, scalar=scalar, mamode=mamode)
 
+    if rvi_ is None:
+        return None
     inertia = linreg(rvi_, length=length)
+    if inertia is None:
+        return None
 
     # Offset
     if offset != 0:

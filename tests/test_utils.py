@@ -391,3 +391,264 @@ class TestUtilities(TestCase):
         result = pandas_ta.version
         self.assertIsInstance(result, str)
         print(f"\nPandas TA v{result}")
+
+
+class TestNoneGuards(TestCase):
+    """Regression tests for PR #95 – None-guard coverage.
+
+    Each patched indicator must return None (not raise) when given a Series
+    shorter than its minimum required length.  A 4-row Series is used because
+    the smallest default length among the patched indicators is 5 (t3, bbands),
+    so 4 < 5 guarantees verify_series rejects the input for every indicator
+    in this suite.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        idx = pd.date_range("2020-01-01", periods=4, freq="D")
+        cls.c = Series([10.0, 11.0, 10.5, 11.5], index=idx)
+        cls.o = Series([9.5, 10.5, 10.0, 11.0], index=idx)
+        cls.h = Series([10.5, 11.5, 11.0, 12.0], index=idx)
+        cls.l = Series([9.0, 10.0, 9.5, 10.5], index=idx)
+        cls.v = Series([1e6, 1.1e6, 9e5, 1.2e6], index=idx)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.c, cls.o, cls.h, cls.l, cls.v
+
+    # ---- verify_series (core utility) ----
+
+    def test_verify_series_none_when_too_short(self):
+        result = pandas_ta.utils.verify_series(self.c, 10)
+        self.assertIsNone(result)
+
+    def test_verify_series_ok_when_long_enough(self):
+        result = pandas_ta.utils.verify_series(self.c, 4)
+        self.assertIsInstance(result, Series)
+
+    # ---- candles ----
+
+    def test_none_guard_cdl_doji(self):
+        self.assertIsNone(pandas_ta.cdl_doji(self.o, self.h, self.l, self.c))
+
+    # ---- cycles ----
+
+    def test_none_guard_dsp(self):
+        self.assertIsNone(pandas_ta.dsp(self.c))
+
+    # ---- momentum ----
+
+    def test_none_guard_ao(self):
+        self.assertIsNone(pandas_ta.ao(self.h, self.l))
+
+    def test_none_guard_cci(self):
+        self.assertIsNone(pandas_ta.cci(self.h, self.l, self.c))
+
+    def test_none_guard_cfo(self):
+        self.assertIsNone(pandas_ta.cfo(self.c))
+
+    def test_none_guard_coppock(self):
+        self.assertIsNone(pandas_ta.coppock(self.c))
+
+    def test_none_guard_cti(self):
+        self.assertIsNone(pandas_ta.cti(self.c))
+
+    def test_none_guard_eri(self):
+        self.assertIsNone(pandas_ta.eri(self.h, self.l, self.c))
+
+    def test_none_guard_inertia(self):
+        self.assertIsNone(pandas_ta.inertia(self.c))
+
+    def test_none_guard_kdj(self):
+        self.assertIsNone(pandas_ta.kdj(self.h, self.l, self.c))
+
+    def test_none_guard_macd(self):
+        self.assertIsNone(pandas_ta.macd(self.c))
+
+    def test_none_guard_po(self):
+        self.assertIsNone(pandas_ta.po(self.c))
+
+    def test_none_guard_qqe(self):
+        self.assertIsNone(pandas_ta.qqe(self.c))
+
+    def test_none_guard_smi(self):
+        self.assertIsNone(pandas_ta.smi(self.c))
+
+    def test_none_guard_squeeze(self):
+        self.assertIsNone(pandas_ta.squeeze(self.h, self.l, self.c))
+
+    def test_none_guard_squeeze_pro(self):
+        self.assertIsNone(pandas_ta.squeeze_pro(self.h, self.l, self.c))
+
+    def test_none_guard_trix(self):
+        self.assertIsNone(pandas_ta.trix(self.c))
+
+    # ---- overlap ----
+
+    def test_none_guard_dema(self):
+        self.assertIsNone(pandas_ta.dema(self.c))
+
+    def test_none_guard_hma(self):
+        self.assertIsNone(pandas_ta.hma(self.c))
+
+    def test_none_guard_mmar(self):
+        self.assertIsNone(pandas_ta.mmar(self.c))
+
+    def test_none_guard_t3(self):
+        # default length=5; 4-row series is shorter than 5
+        self.assertIsNone(pandas_ta.t3(self.c))
+
+    def test_none_guard_tema(self):
+        self.assertIsNone(pandas_ta.tema(self.c))
+
+    def test_none_guard_trima(self):
+        self.assertIsNone(pandas_ta.trima(self.c))
+
+    def test_none_guard_zlma(self):
+        self.assertIsNone(pandas_ta.zlma(self.c))
+
+    # ---- statistics ----
+
+    def test_none_guard_stdev(self):
+        self.assertIsNone(pandas_ta.stdev(self.c))
+
+    def test_none_guard_zscore(self):
+        self.assertIsNone(pandas_ta.zscore(self.c))
+
+    # ---- trend ----
+
+    def test_none_guard_dpo(self):
+        self.assertIsNone(pandas_ta.dpo(self.c))
+
+    def test_none_guard_qstick(self):
+        self.assertIsNone(pandas_ta.qstick(self.o, self.c))
+
+    # ---- volatility ----
+
+    def test_none_guard_bbands(self):
+        # default length=5; 4-row series is shorter than 5
+        self.assertIsNone(pandas_ta.bbands(self.c))
+
+    def test_none_guard_massi(self):
+        self.assertIsNone(pandas_ta.massi(self.h, self.l))
+
+    def test_none_guard_supertrend(self):
+        self.assertIsNone(pandas_ta.supertrend(self.h, self.l, self.c))
+
+
+class TestNpRollingMoments(TestCase):
+    """Unit tests for the np_rolling_moments helper added in the numpy-
+    determinism PR (utils/_math.py)."""
+
+    def setUp(self):
+        from pandas_ta_classic.utils import np_rolling_moments
+
+        self.fn = np_rolling_moments
+        # Simple increasing array: [0, 1, 2, 3, 4]
+        self.arr = np.arange(5, dtype=float)
+
+    # ------------------------------------------------------------------
+    # Return-type / shape
+    # ------------------------------------------------------------------
+
+    def test_returns_tuple_of_arrays(self):
+        result = self.fn(self.arr, 3, 2)
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 1)
+        self.assertIsInstance(result[0], np.ndarray)
+
+    def test_output_length_matches_input(self):
+        (m2,) = self.fn(self.arr, 3, 2)
+        self.assertEqual(len(m2), len(self.arr))
+
+    def test_multiple_orders(self):
+        m2, m3, m4 = self.fn(self.arr, 3, 2, 3, 4)
+        for arr in (m2, m3, m4):
+            self.assertEqual(len(arr), len(self.arr))
+
+    def test_output_dtype_is_float64(self):
+        (m2,) = self.fn(self.arr, 3, 2)
+        self.assertEqual(m2.dtype, np.float64)
+
+    # ------------------------------------------------------------------
+    # Default min_periods == length: first (length-1) slots are NaN
+    # ------------------------------------------------------------------
+
+    def test_default_min_periods_leading_nans(self):
+        length = 3
+        (m2,) = self.fn(self.arr, length, 2)
+        self.assertTrue(np.all(np.isnan(m2[: length - 1])))
+
+    def test_default_min_periods_no_trailing_nans(self):
+        length = 3
+        (m2,) = self.fn(self.arr, length, 2)
+        self.assertFalse(np.any(np.isnan(m2[length - 1 :])))
+
+    # ------------------------------------------------------------------
+    # Correctness of computed sums (order-2 == sum of squared deviations)
+    # ------------------------------------------------------------------
+
+    def test_order2_known_window(self):
+        # window [1, 2, 3]: mean=2, deviations=[-1,0,1], sum = 2
+        (m2,) = self.fn(np.array([1.0, 2.0, 3.0, 4.0, 5.0]), 3, 2)
+        npt.assert_allclose(m2[2], 2.0)  # first full window [1,2,3]
+        npt.assert_allclose(m2[3], 2.0)  # [2,3,4]
+        npt.assert_allclose(m2[4], 2.0)  # [3,4,5]
+
+    def test_order2_constant_series_is_zero(self):
+        arr = np.ones(6)
+        (m2,) = self.fn(arr, 3, 2)
+        npt.assert_allclose(m2[2:], 0.0, atol=1e-12)
+
+    def test_order3_sign(self):
+        # Positively skewed window: [1, 2, 10] - third central moment > 0
+        arr = np.array([1.0, 2.0, 10.0])
+        (m3,) = self.fn(arr, 3, 3)
+        self.assertGreater(m3[2], 0)
+
+    # ------------------------------------------------------------------
+    # min_periods < length  (partial-window behaviour)
+    # ------------------------------------------------------------------
+
+    def test_min_periods_position_below_min_is_nan(self):
+        # min_periods=2 -> position 0 (only 1 value) must be NaN
+        # length is positional so the order value (2) lands in *orders
+        (m2,) = self.fn(self.arr, 4, 2, min_periods=2)
+        self.assertTrue(np.isnan(m2[0]))
+
+    def test_min_periods_first_valid_position(self):
+        # min_periods=2 -> position 1 uses window [0, 1]: deviations [-0.5, 0.5]
+        # sum of squares = 0.5
+        (m2,) = self.fn(self.arr, 4, 2, min_periods=2)
+        npt.assert_allclose(m2[1], 0.5)
+
+    def test_min_periods_full_window_unchanged(self):
+        # Positions >= length-1 must be identical regardless of min_periods
+        m2_default = self.fn(self.arr, 3, 2)[0]
+        m2_partial = self.fn(self.arr, 3, 2, min_periods=2)[0]
+        npt.assert_array_equal(m2_default[2:], m2_partial[2:])
+
+    def test_min_periods_equal_to_length_same_as_default(self):
+        m2_default = self.fn(self.arr, 3, 2)[0]
+        m2_explicit = self.fn(self.arr, 3, 2, min_periods=3)[0]
+        npt.assert_array_equal(m2_default, m2_explicit)
+
+    # ------------------------------------------------------------------
+    # Edge cases
+    # ------------------------------------------------------------------
+
+    def test_series_shorter_than_length_all_nan(self):
+        arr = np.array([1.0, 2.0])
+        (m2,) = self.fn(arr, 5, 2)
+        self.assertTrue(np.all(np.isnan(m2)))
+
+    def test_empty_array(self):
+        arr = np.array([], dtype=float)
+        (m2,) = self.fn(arr, 3, 2)
+        self.assertEqual(len(m2), 0)
+
+    def test_single_element_series(self):
+        arr = np.array([42.0])
+        (m2,) = self.fn(arr, 1, 2)
+        # Window of size 1: deviation is 0, sum = 0
+        npt.assert_allclose(m2[0], 0.0, atol=1e-12)

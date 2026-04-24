@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import logging
 from typing import Any, Optional
 
 from pandas import DataFrame, Series
 
 from ._core import get_offset, verify_series
 from ._math import zero
+
+logger = logging.getLogger(__name__)
 
 
 def _above_below(
@@ -14,13 +17,17 @@ def _above_below(
     asint: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Series:
+) -> Optional[Series]:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
+
+    if series_a is None or series_b is None:
+        return None
+
     offset = get_offset(offset)
 
-    series_a.apply(zero)
-    series_b.apply(zero)
+    series_a = series_a.apply(zero)
+    series_b = series_b.apply(zero)
 
     # Calculate Result
     if above:
@@ -62,7 +69,10 @@ def above_value(
     **kwargs: Any,
 ) -> Optional[Series]:
     if not isinstance(value, (int, float, complex)):
-        print("[X] value is not a number")
+        logger.error("value is not a number")
+        return None
+    series_a = verify_series(series_a)
+    if series_a is None:
         return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
 
@@ -91,7 +101,10 @@ def below_value(
     **kwargs: Any,
 ) -> Optional[Series]:
     if not isinstance(value, (int, float, complex)):
-        print("[X] value is not a number")
+        logger.error("value is not a number")
+        return None
+    series_a = verify_series(series_a)
+    if series_a is None:
         return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
     return _above_below(
@@ -106,7 +119,10 @@ def cross_value(
     asint: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Series:
+) -> Optional[Series]:
+    series_a = verify_series(series_a)
+    if series_a is None:
+        return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
 
     return cross(series_a, series_b, above, asint, offset, **kwargs)
@@ -119,13 +135,17 @@ def cross(
     asint: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Series:
+) -> Optional[Series]:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
+
+    if series_a is None or series_b is None:
+        return None
+
     offset = get_offset(offset)
 
-    series_a.apply(zero)
-    series_b.apply(zero)
+    series_a = series_a.apply(zero)
+    series_b = series_b.apply(zero)
 
     # Calculate Result
     current = series_a > series_b  # current is above

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from functools import reduce
 from math import floor as mfloor
 from operator import mul
@@ -6,6 +7,8 @@ from sys import float_info as sflt
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 from numpy import ones, triu
 from numpy import all as npAll
 from numpy import append as npAppend
@@ -26,6 +29,56 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from ._core import verify_series
+
+
+def np_rolling_moments(
+    values: npNdArray, length: int, *orders: int, min_periods: Optional[int] = None
+) -> Tuple[npNdArray, ...]:
+    """Rolling raw central-moment sums using pure numpy.
+
+    Returns one float64 array per *order*, each of ``len(values)`` elements.
+    Positions with fewer than ``min_periods`` (default: ``length``) valid
+    observations are set to NaN.
+
+    Each returned array contains **raw sums** of mean-centred deviations::
+
+        result[i] = sum((window - mean(window)) ** k)
+
+    These are *not* normalised statistical moments.  Callers such as
+    ``kurtosis`` and ``skew`` apply the bias-correction factors themselves.
+
+    Using numpy instead of ``pandas.rolling`` ensures cross-version
+    determinism (pandas 2.x vs 3.x can round higher-order moments
+    differently).
+    """
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    if min_periods is None:
+        min_periods = length
+
+    arr = values.astype(np.float64)
+    n = len(arr)
+
+    # Pre-allocate output arrays filled with NaN.
+    results: List[npNdArray] = [np.full(n, np.nan, dtype=np.float64) for _ in orders]
+
+    # Vectorised computation over all full-length windows.
+    if n >= length:
+        windows = sliding_window_view(arr, length)
+        mean = windows.mean(axis=1, keepdims=True)
+        dev = windows - mean
+        for i, k in enumerate(orders):
+            results[i][length - 1 :] = (dev**k).sum(axis=1)
+
+    # Scalar computation for partial windows when min_periods < length.
+    if min_periods < length:
+        for pos in range(min_periods - 1, min(length - 1, n)):
+            window = arr[: pos + 1]
+            dev = window - window.mean()
+            for i, k in enumerate(orders):
+                results[i][pos] = (dev**k).sum()
+
+    return tuple(results)
 
 
 def combination(**kwargs: Any) -> int:
@@ -117,8 +170,8 @@ def linear_regression(x: Series, y: Series) -> dict:
     m, n = x.size, y.size
 
     if m != n:
-        print(
-            f"[X] Linear Regression X and y have unequal total observations: {m} != {n}"
+        logger.error(
+            "Linear Regression X and y have unequal total observations: %d != %d", m, n
         )
         return {}
 
@@ -252,7 +305,7 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
 
         m = x.size
         r_mix = m * (x * y).sum() - x_sum * y_sum
-        b = r_mix // (m * (x * x).sum() - x_sum * x_sum)
+        b = r_mix / (m * (x * x).sum() - x_sum * x_sum)
         a = y.mean() - b * x.mean()
         line = a + b * x
 

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 from pandas import DataFrame
 from pandas_ta_classic import Imports, RATE, version
 from .._core import _camelCase2Title
 from .._time import ytd
+
+logger = logging.getLogger(__name__)
 
 
 def yf(ticker: str, **kwargs):
@@ -79,7 +82,9 @@ def yf(ticker: str, **kwargs):
     show = kwargs.pop("show", None)
 
     if not Imports["yfinance"]:
-        print(f"[X] Please install yfinance to use this method. (pip install yfinance)")
+        logger.error(
+            "Please install yfinance to use this method. (pip install yfinance)"
+        )
         return None
     if Imports["yfinance"] and ticker is not None:
         import yfinance as yfra
@@ -108,11 +113,10 @@ def yf(ticker: str, **kwargs):
         try:
             ticker_info = yfd.info
         except KeyError as ke:
-            print(f"[X] Ticker '{ticker}' not found.")
+            logger.error(f"Ticker '{ticker}' not found.")
             return None
 
         filtered = {k: v for k, v in ticker_info.items() if v is not None}
-        # print(f"\n{type(ticker_info)}\n{ticker_info}\n{ticker_info.items()}")
         ticker_info.clear()
         ticker_info.update(filtered)
 
@@ -180,7 +184,6 @@ def yf(ticker: str, **kwargs):
                 and "industry" in ticker_info
                 and len(ticker_info["industry"])
             ):
-                # print(f"Sector: {ticker_info['sector']}".ljust(39), f"Industry: {ticker_info['industry']}".rjust(40))
                 print(
                     f"Sector | Industry".ljust(29),
                     f"{ticker_info['sector']} | {ticker_info['industry']}".rjust(50),
@@ -620,14 +623,12 @@ def yf(ticker: str, **kwargs):
 
             if icdf.empty or bsdf.empty or cfdf.empty:
                 if yfra.__version__ <= "0.1.54":
-                    print(f"[!] Best choice: update yfinance to the latest version.")
-                    print(
-                        f"[!] Ignore if aleady patched. Some tickers do not have financials."
+                    logger.warning(
+                        "Best choice: update yfinance to the latest version. "
+                        "Ignore if already patched. Some tickers do not have financials. "
+                        "Otherwise see yfinance Issue #517 patch: "
+                        "https://github.com/ranaroussi/yfinance/pull/517/files"
                     )
-                    print(
-                        f"[!] Otherwise to enable Company Financials, see yfinance Issue #517 patch."
-                    )
-                    print(f"[!] https://github.com/ranaroussi/yfinance/pull/517/files")
             else:
                 print("\n====  Company Financials   " + div)
                 if not icdf.empty:
@@ -731,7 +732,6 @@ def yf(ticker: str, **kwargs):
             print(f"\n{df.name}\n{df.tail(show)}\n")
         if verbose:
             print("=" * 80 + "\n")
-        # else: print()
         return df
 
     else:

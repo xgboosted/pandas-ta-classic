@@ -38,7 +38,11 @@ def kc(
         range_ = high_low_range(high, low)
 
     basis = ma(mamode, close, length=length)
+    if basis is None:
+        return None
     band = ma(mamode, range_, length=length)
+    if band is None:
+        return None
 
     lower = basis - scalar * band
     upper = basis + scalar * band
