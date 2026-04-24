@@ -75,18 +75,17 @@ class TestCandle(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_DOJI_10_0.1")
 
-        if HAS_TALIB:
+        try:
+            expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
             try:
-                expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                try:
-                    corr = pandas_ta.utils.df_error_analysis(
-                        result, expected, col=CORRELATION
-                    )
-                    self.assertGreater(corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result, CORRELATION, ex)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
 
     def test_cdl_inside(self):
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close)

@@ -101,18 +101,17 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
 
-        if HAS_TALIB:
+        try:
+            expected = tal.STDDEV(self.close, 30)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
             try:
-                expected = tal.STDDEV(self.close, 30)
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                try:
-                    corr = pandas_ta.utils.df_error_analysis(
-                        result, expected, col=CORRELATION
-                    )
-                    self.assertGreater(corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result, CORRELATION, ex)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.stdev(self.close)
         self.assertIsInstance(result, Series)
@@ -139,18 +138,17 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
 
-        if HAS_TALIB:
+        try:
+            expected = tal.VAR(self.close, 30)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
             try:
-                expected = tal.VAR(self.close, 30)
-                pdt.assert_series_equal(result, expected, check_names=False)
-            except AssertionError:
-                try:
-                    corr = pandas_ta.utils.df_error_analysis(
-                        result, expected, col=CORRELATION
-                    )
-                    self.assertGreater(corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result, CORRELATION, ex)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.variance(self.close)
         self.assertIsInstance(result, Series)

@@ -53,18 +53,17 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
 
-        if HAS_TALIB:
+        try:
+            expected = tal.ADX(self.high, self.low, self.close)
+            pdt.assert_series_equal(result.iloc[:, 0], expected)
+        except AssertionError:
             try:
-                expected = tal.ADX(self.high, self.low, self.close)
-                pdt.assert_series_equal(result.iloc[:, 0], expected)
-            except AssertionError:
-                try:
-                    corr = pandas_ta.utils.df_error_analysis(
-                        result.iloc[:, 0], expected, col=CORRELATION
-                    )
-                    self.assertGreater(corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result, CORRELATION, ex)
+                corr = pandas_ta.utils.df_error_analysis(
+                    result.iloc[:, 0], expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.adx(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
@@ -90,27 +89,26 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
 
-        if HAS_TALIB:
+        try:
+            expected = tal.AROON(self.high, self.low)
+            expecteddf = DataFrame({"AROOND_14": expected[0], "AROONU_14": expected[1]})
+            pdt.assert_frame_equal(result, expecteddf)
+        except AssertionError:
             try:
-                expected = tal.AROON(self.high, self.low)
-                expecteddf = DataFrame({"AROOND_14": expected[0], "AROONU_14": expected[1]})
-                pdt.assert_frame_equal(result, expecteddf)
-            except AssertionError:
-                try:
-                    aroond_corr = pandas_ta.utils.df_error_analysis(
-                        result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                    )
-                    self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result.iloc[:, 0], CORRELATION, ex)
+                aroond_corr = pandas_ta.utils.df_error_analysis(
+                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
+                )
+                self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result.iloc[:, 0], CORRELATION, ex)
 
-                try:
-                    aroonu_corr = pandas_ta.utils.df_error_analysis(
-                        result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                    )
-                    self.assertGreater(aroonu_corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
+            try:
+                aroonu_corr = pandas_ta.utils.df_error_analysis(
+                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
+                )
+                self.assertGreater(aroonu_corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
 
         result = pandas_ta.aroon(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
@@ -121,18 +119,17 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
 
-        if HAS_TALIB:
+        try:
+            expected = tal.AROONOSC(self.high, self.low)
+            pdt.assert_series_equal(result.iloc[:, 2], expected)
+        except AssertionError:
             try:
-                expected = tal.AROONOSC(self.high, self.low)
-                pdt.assert_series_equal(result.iloc[:, 2], expected)
-            except AssertionError:
-                try:
-                    aroond_corr = pandas_ta.utils.df_error_analysis(
-                        result.iloc[:, 2], expected, col=CORRELATION
-                    )
-                    self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(result.iloc[:, 0], CORRELATION, ex)
+                aroond_corr = pandas_ta.utils.df_error_analysis(
+                    result.iloc[:, 2], expected, col=CORRELATION
+                )
+                self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result.iloc[:, 0], CORRELATION, ex)
 
     def test_chop(self):
         result = pandas_ta.chop(self.high, self.low, self.close, ln=False)
@@ -356,18 +353,17 @@ class TestTrend(TestCase):
         psar = psar[psar.columns[0]] + psar[psar.columns[1]]
         psar.name = result.name
 
-        if HAS_TALIB:
+        try:
+            expected = tal.SAR(self.high, self.low)
+            pdt.assert_series_equal(psar, expected)
+        except AssertionError:
             try:
-                expected = tal.SAR(self.high, self.low)
-                pdt.assert_series_equal(psar, expected)
-            except AssertionError:
-                try:
-                    psar_corr = pandas_ta.utils.df_error_analysis(
-                        psar, expected, col=CORRELATION
-                    )
-                    self.assertGreater(psar_corr, CORRELATION_THRESHOLD)
-                except Exception as ex:
-                    error_analysis(psar, CORRELATION, ex)
+                psar_corr = pandas_ta.utils.df_error_analysis(
+                    psar, expected, col=CORRELATION
+                )
+                self.assertGreater(psar_corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(psar, CORRELATION, ex)
 
     def test_qstick(self):
         result = pandas_ta.qstick(self.open, self.close)
