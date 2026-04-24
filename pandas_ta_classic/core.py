@@ -1764,6 +1764,11 @@ class AnalysisIndicators(BasePandasObject):
         result = hma(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def ht_trendline(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_trendline(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hwma(self, na=None, nb=None, nc=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = hwma(close=close, na=na, nb=nb, nc=nc, offset=offset, **kwargs)
@@ -1871,6 +1876,17 @@ class AnalysisIndicators(BasePandasObject):
     def ma(self, kind=None, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = ma(kind=kind, close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def mama(self, fastlimit=None, slowlimit=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = mama(
+            close=close,
+            fastlimit=fastlimit,
+            slowlimit=slowlimit,
+            offset=offset,
+            **kwargs,
+        )
         return self._post_process(result, **kwargs)
 
     def sma(self, length=None, offset=None, **kwargs):
