@@ -60,17 +60,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DEMA_10")
 
-        try:
-            expected = tal.DEMA(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.DEMA(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.dema(self.close)
         self.assertIsInstance(result, Series)
@@ -81,32 +82,34 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EMA_10")
 
-        try:
-            expected = tal.EMA(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.EMA(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.ema(self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EMA_10")
 
-        try:
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.ema(self.close)
         self.assertIsInstance(result, Series)
@@ -132,17 +135,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HLC3")
 
-        try:
-            expected = tal.TYPPRICE(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.TYPPRICE(self.high, self.low, self.close)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.hlc3(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
@@ -189,17 +193,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LR_14")
 
-        try:
-            expected = tal.LINEARREG(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.LINEARREG(self.close)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.linreg(self.close)
         self.assertIsInstance(result, Series)
@@ -210,17 +215,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRa_14")
 
-        try:
-            expected = tal.LINEARREG_ANGLE(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.LINEARREG_ANGLE(self.close)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.linreg(self.close, angle=True)
         self.assertIsInstance(result, Series)
@@ -231,17 +237,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRb_14")
 
-        try:
-            expected = tal.LINEARREG_INTERCEPT(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.LINEARREG_INTERCEPT(self.close)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.linreg(self.close, intercept=True)
         self.assertIsInstance(result, Series)
@@ -257,17 +264,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRm_14")
 
-        try:
-            expected = tal.LINEARREG_SLOPE(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.LINEARREG_SLOPE(self.close)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.linreg(self.close, slope=True)
         self.assertIsInstance(result, Series)
@@ -306,17 +314,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MIDPOINT_2")
 
-        try:
-            expected = tal.MIDPOINT(self.close, 2)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.MIDPOINT(self.close, 2)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.midpoint(self.close)
         self.assertIsInstance(result, Series)
@@ -327,17 +336,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MIDPRICE_2")
 
-        try:
-            expected = tal.MIDPRICE(self.high, self.low, 2)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.MIDPRICE(self.high, self.low, 2)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.midprice(self.high, self.low)
         self.assertIsInstance(result, Series)
@@ -368,17 +378,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SMA_10")
 
-        try:
-            expected = tal.SMA(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.SMA(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.sma(self.close)
         self.assertIsInstance(result, Series)
@@ -408,17 +419,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "T3_10_0.7")
 
-        try:
-            expected = tal.T3(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.T3(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.t3(self.close)
         self.assertIsInstance(result, Series)
@@ -429,17 +441,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TEMA_10")
 
-        try:
-            expected = tal.TEMA(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.TEMA(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.tema(self.close)
         self.assertIsInstance(result, Series)
@@ -450,17 +463,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRIMA_10")
 
-        try:
-            expected = tal.TRIMA(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.TRIMA(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.trima(self.close)
         self.assertIsInstance(result, Series)
@@ -495,17 +509,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WCP")
 
-        try:
-            expected = tal.WCLPRICE(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.WCLPRICE(self.high, self.low, self.close)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.wcp(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
@@ -516,17 +531,18 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WMA_10")
 
-        try:
-            expected = tal.WMA(self.close, 10)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
+        if HAS_TALIB:
             try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+                expected = tal.WMA(self.close, 10)
+                pdt.assert_series_equal(result, expected, check_names=False)
+            except AssertionError:
+                try:
+                    corr = pandas_ta.utils.df_error_analysis(
+                        result, expected, col=CORRELATION
+                    )
+                    self.assertGreater(corr, CORRELATION_THRESHOLD)
+                except Exception as ex:
+                    error_analysis(result, CORRELATION, ex)
 
         result = pandas_ta.wma(self.close)
         self.assertIsInstance(result, Series)

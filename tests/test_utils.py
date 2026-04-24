@@ -1,8 +1,15 @@
 from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
-from unittest import skip, TestCase
+from unittest import skip, skipUnless, TestCase
 from unittest.mock import patch
+
+try:
+    import talib as tal
+    HAS_TALIB = True
+except ImportError:
+    HAS_TALIB = False
+    tal = None
 
 import numpy as np
 import numpy.testing as npt
@@ -323,6 +330,7 @@ class TestUtilities(TestCase):
             self.utils.symmetric_triangle(n=5, weighted=True), array_5w
         )
 
+    @skipUnless(HAS_TALIB, "requires TA-Lib")
     def test_tal_ma(self):
         self.assertEqual(self.utils.tal_ma("sma"), 0)
         self.assertEqual(self.utils.tal_ma("Sma"), 0)
