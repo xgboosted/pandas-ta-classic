@@ -160,3 +160,25 @@ def verify_series(
             return None
         return series
     return None
+
+
+def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
+    """Vectorised weighted MA via sliding_window_view.
+
+    Args:
+        close: The input series.
+        length: Window length (must equal ``len(weights)``).
+        weights: 1-D weight array whose orientation matches the window layout.
+
+    Returns:
+        A Series aligned with *close*, with ``NaN`` for the first
+        ``length - 1`` positions.
+    """
+    import numpy as np
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    arr = close.to_numpy(dtype=float)
+    windows = sliding_window_view(arr, length)
+    result = np.full(len(arr), np.nan)
+    result[length - 1 :] = windows @ weights
+    return Series(result, index=close.index)

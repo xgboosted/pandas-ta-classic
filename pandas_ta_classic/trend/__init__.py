@@ -5,6 +5,7 @@ from .amat import amat
 from .aroon import aroon
 from .chop import chop
 from .cksp import cksp
+from .cpr import cpr
 from .decay import decay
 from .decreasing import decreasing
 from .dpo import dpo

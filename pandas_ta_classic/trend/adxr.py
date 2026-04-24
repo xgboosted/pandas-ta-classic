@@ -2,7 +2,6 @@
 # Average Directional Movement Index Rating (ADXR)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic import Imports
 from pandas_ta_classic.trend.adx import adx
 from pandas_ta_classic.utils import get_offset, verify_series
 
@@ -16,7 +15,6 @@ def adxr(
     scalar: Optional[float] = None,
     mamode: Optional[str] = None,
     drift: Optional[int] = None,
-    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -28,54 +26,29 @@ def adxr(
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
-        from talib import ADXR as taADXR
+    adx_df = adx(
+        high,
+        low,
+        close,
+        length=length,
+        lensig=lensig,
+        scalar=scalar,
+        mamode=mamode,
+        drift=drift,
+    )
+    if adx_df is None:
+        return None
 
-        adxr_series = Series(
-            taADXR(high, low, close, timeperiod=length), index=close.index
-        )
-        # Also compute DMP/DMN via native adx for the DataFrame
-        adx_df = adx(
-            high,
-            low,
-            close,
-            length=length,
-            lensig=lensig,
-            scalar=scalar,
-            mamode=mamode,
-            drift=drift,
-            talib=False,
-            **kwargs,
-        )
-        if adx_df is None:
-            return None
-        dmp = adx_df.iloc[:, 1]
-        dmn = adx_df.iloc[:, 2]
-    else:
-        adx_df = adx(
-            high,
-            low,
-            close,
-            length=length,
-            lensig=lensig,
-            scalar=scalar,
-            mamode=mamode,
-            drift=drift,
-            talib=False,
-            **kwargs,
-        )
-        if adx_df is None:
-            return None
-        adx_series = adx_df.iloc[:, 0]
-        dmp = adx_df.iloc[:, 1]
-        dmn = adx_df.iloc[:, 2]
-        adxr_series = (adx_series + adx_series.shift(length - 1)) / 2
+    adx_series = adx_df.iloc[:, 0]
+    dmp = adx_df.iloc[:, 1]
+    dmn = adx_df.iloc[:, 2]
+
+    adxr_series = (adx_series + adx_series.shift(length - 1)) / 2
 
     # Offset
     if offset != 0:
@@ -114,7 +87,7 @@ def adxr(
 adxr.__doc__ = """Average Directional Movement Index Rating (ADXR)
 
 ADXR is the average of the current ADX and the ADX from one period
-(length) ago.  It smooths the ADX and is used to confirm trend strength.
+(length - 1) ago. It smooths the ADX and is used to confirm trend strength.
 
 Sources:
     https://www.investopedia.com/terms/a/adxr.asp
@@ -124,19 +97,17 @@ Calculation:
     Default Inputs:
         length=14
     ADX = Average Directional Index
-    ADXR = (ADX + ADX.shift(length)) / 2
+    ADXR = (ADX + ADX.shift(length - 1)) / 2
 
 Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 14
-    lensig (int): Signal Length. Default: length
+    length (int): The period. Default: 14
+    lensig (int): Signal length. Default: length
     scalar (float): How much to magnify. Default: 100
     mamode (str): See ``help(ta.ma)``. Default: 'rma'
     drift (int): The difference period. Default: 1
-    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

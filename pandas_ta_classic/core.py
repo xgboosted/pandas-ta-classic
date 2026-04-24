@@ -715,10 +715,11 @@ class AnalysisIndicators(BasePandasObject):
         # Possible to have other indicator main window lengths to be included
         removal = []
         for kwds in ta:
-            _ = False
-            if "length" in kwds and kwds["length"] > self._df.shape[0]:
-                _ = True
-            if _:
+            if (
+                isinstance(kwds, dict)
+                and "length" in kwds
+                and kwds["length"] > self._df.shape[0]
+            ):
                 removal.append(kwds)
         if len(removal) > 0:
             for x in removal:
@@ -1045,6 +1046,31 @@ class AnalysisIndicators(BasePandasObject):
     def ebsw(self, close=None, length=None, bars=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = ebsw(close=close, length=length, bars=bars, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_dcperiod(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_dcperiod(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_dcphase(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_dcphase(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_phasor(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_phasor(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_sine(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_sine(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ht_trendmode(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_trendmode(close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     # Momentum
@@ -1739,6 +1765,11 @@ class AnalysisIndicators(BasePandasObject):
         result = hma(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def ht_trendline(self, close=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ht_trendline(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def hwma(self, na=None, nb=None, nc=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = hwma(close=close, na=na, nb=nb, nc=nc, offset=offset, **kwargs)
@@ -1848,6 +1879,17 @@ class AnalysisIndicators(BasePandasObject):
         result = ma(kind=kind, close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def mama(self, fastlimit=None, slowlimit=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = mama(
+            close=close,
+            fastlimit=fastlimit,
+            slowlimit=slowlimit,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
     def sma(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = sma(close=close, length=length, offset=offset, **kwargs)
@@ -1891,6 +1933,11 @@ class AnalysisIndicators(BasePandasObject):
     def trima(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = trima(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def tsf(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = tsf(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def vidya(self, length=None, offset=None, **kwargs):
@@ -1980,6 +2027,28 @@ class AnalysisIndicators(BasePandasObject):
         return self._post_process(result, **kwargs)
 
     # Statistics
+    def beta(self, benchmark=None, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = beta(
+            close=close,
+            benchmark=benchmark,
+            length=length,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
+    def correl(self, benchmark=None, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = correl(
+            close=close,
+            benchmark=benchmark,
+            length=length,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
     def entropy(self, length=None, base=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = entropy(close=close, length=length, base=base, offset=offset, **kwargs)
@@ -2067,7 +2136,6 @@ class AnalysisIndicators(BasePandasObject):
         mamode=None,
         scalar=None,
         drift=None,
-        talib=None,
         offset=None,
         **kwargs,
     ):
@@ -2083,7 +2151,6 @@ class AnalysisIndicators(BasePandasObject):
             mamode=mamode,
             scalar=scalar,
             drift=drift,
-            talib=talib,
             offset=offset,
             **kwargs,
         )
@@ -2149,6 +2216,41 @@ class AnalysisIndicators(BasePandasObject):
             x=x,
             q=q,
             mamode=mamode,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
+    def cpr(
+        self,
+        method="classic",
+        timeframe="daily",
+        interval=None,
+        levels="standard",
+        width_analysis=True,
+        price_position=True,
+        virgin_cpr=False,
+        offset=None,
+        **kwargs,
+    ):
+        open = self._get_column(kwargs.pop("open", "open"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        volume = self._get_column(kwargs.pop("volume", "volume"))
+        result = cpr(
+            open=open,
+            high=high,
+            low=low,
+            close=close,
+            volume=volume,
+            method=method,
+            timeframe=timeframe,
+            interval=interval,
+            levels=levels,
+            width_analysis=width_analysis,
+            price_position=price_position,
+            virgin_cpr=virgin_cpr,
             offset=offset,
             **kwargs,
         )
@@ -2417,6 +2519,22 @@ class AnalysisIndicators(BasePandasObject):
         close = self._get_column(kwargs.pop("close", "close"))
         result = bbands(
             close=close, length=length, std=std, mamode=mamode, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
+    def ce(self, length=None, multiplier=None, mamode=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ce(
+            high=high,
+            low=low,
+            close=close,
+            length=length,
+            multiplier=multiplier,
+            mamode=mamode,
+            offset=offset,
+            **kwargs,
         )
         return self._post_process(result, **kwargs)
 
