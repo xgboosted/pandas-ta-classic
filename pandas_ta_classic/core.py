@@ -2221,6 +2221,41 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def cpr(
+        self,
+        method="classic",
+        timeframe="daily",
+        interval=None,
+        levels="standard",
+        width_analysis=True,
+        price_position=True,
+        virgin_cpr=False,
+        offset=None,
+        **kwargs,
+    ):
+        open = self._get_column(kwargs.pop("open", "open"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        volume = self._get_column(kwargs.pop("volume", "volume"))
+        result = cpr(
+            open=open,
+            high=high,
+            low=low,
+            close=close,
+            volume=volume,
+            method=method,
+            timeframe=timeframe,
+            interval=interval,
+            levels=levels,
+            width_analysis=width_analysis,
+            price_position=price_position,
+            virgin_cpr=virgin_cpr,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
     def decay(self, length=None, mode=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = decay(close=close, length=length, mode=mode, offset=offset, **kwargs)
