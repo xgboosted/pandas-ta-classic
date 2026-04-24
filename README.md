@@ -179,7 +179,7 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 ```python
 # CDL patterns — always native, no TA-Lib needed
 df.ta.cdl_pattern(name="all")          # run all 62 patterns
-df.ta.cdl_engulfing()                  # individual pattern
+df.ta.cdl_pattern(name="engulfing")    # individual pattern
 
 # Core indicators — TA-Lib used if installed (default)
 df.ta.ema(length=20)                   # TA-Lib EMA when available
