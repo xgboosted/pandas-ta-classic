@@ -715,10 +715,11 @@ class AnalysisIndicators(BasePandasObject):
         # Possible to have other indicator main window lengths to be included
         removal = []
         for kwds in ta:
-            _ = False
-            if "length" in kwds and kwds["length"] > self._df.shape[0]:
-                _ = True
-            if _:
+            if (
+                isinstance(kwds, dict)
+                and "length" in kwds
+                and kwds["length"] > self._df.shape[0]
+            ):
                 removal.append(kwds)
         if len(removal) > 0:
             for x in removal:

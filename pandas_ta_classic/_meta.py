@@ -104,13 +104,18 @@ def _build_category_dict():
             continue
 
         # Find all .py files in this category (excluding __init__.py and
-        # private helper modules that start with _)
+        # internal helpers).  For candles, individual cdl_* pattern files
+        # (e.g. cdl_engulfing) are sub-patterns accessed via cdl_pattern()
+        # and should not appear as top-level indicators.
+        _candle_top = {"cdl_doji", "cdl_inside", "cdl_pattern", "cdl_z", "ha"}
         indicators = []
         for file_path in category_path.glob("*.py"):
             if file_path.name.startswith("_"):
                 continue
-            # Remove .py extension to get the indicator name
-            indicators.append(file_path.stem)
+            stem = file_path.stem
+            if category_name == "candles" and stem not in _candle_top:
+                continue
+            indicators.append(stem)
 
         # Sort indicators alphabetically for consistency
         if indicators:
