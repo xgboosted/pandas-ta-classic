@@ -57,3 +57,52 @@ class TestCycles(TestCase):
         result = pandas_ta.ebsw(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EBSW_40_10")
+
+    def test_ht_dcperiod(self):
+        result = pandas_ta.ht_dcperiod(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "HT_DCPERIOD")
+        pandas_ta.ht_dcperiod(self.close, fillna=0)
+        pandas_ta.ht_dcperiod(self.close, fill_method="ffill")
+        pandas_ta.ht_dcperiod(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_dcperiod(None))
+
+    def test_ht_dcphase(self):
+        result = pandas_ta.ht_dcphase(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "HT_DCPHASE")
+        pandas_ta.ht_dcphase(self.close, fillna=0)
+        pandas_ta.ht_dcphase(self.close, fill_method="ffill")
+        pandas_ta.ht_dcphase(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_dcphase(None))
+
+    def test_ht_phasor(self):
+        result = pandas_ta.ht_phasor(self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "HT_PHASOR")
+        self.assertListEqual(
+            list(result.columns), ["HT_PHASOR_INPHASE", "HT_PHASOR_QUAD"]
+        )
+        pandas_ta.ht_phasor(self.close, fillna=0)
+        pandas_ta.ht_phasor(self.close, fill_method="ffill")
+        pandas_ta.ht_phasor(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_phasor(None))
+
+    def test_ht_sine(self):
+        result = pandas_ta.ht_sine(self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "HT_SINE")
+        self.assertListEqual(list(result.columns), ["HT_SINE", "HT_LEADSINE"])
+        pandas_ta.ht_sine(self.close, fillna=0)
+        pandas_ta.ht_sine(self.close, fill_method="ffill")
+        pandas_ta.ht_sine(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_sine(None))
+
+    def test_ht_trendmode(self):
+        result = pandas_ta.ht_trendmode(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "HT_TRENDMODE")
+        pandas_ta.ht_trendmode(self.close, fillna=0)
+        pandas_ta.ht_trendmode(self.close, fill_method="ffill")
+        pandas_ta.ht_trendmode(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.ht_trendmode(None))

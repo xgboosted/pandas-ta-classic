@@ -103,12 +103,14 @@ def _build_category_dict():
         if category_name not in valid_categories:
             continue
 
-        # Find all .py files in this category (excluding __init__.py)
+        # Find all .py files in this category (excluding __init__.py and
+        # private helper modules that start with _)
         indicators = []
         for file_path in category_path.glob("*.py"):
-            if file_path.name != "__init__.py":
-                # Remove .py extension to get the indicator name
-                indicators.append(file_path.stem)
+            if file_path.name.startswith("_"):
+                continue
+            # Remove .py extension to get the indicator name
+            indicators.append(file_path.stem)
 
         # Sort indicators alphabetically for consistency
         if indicators:
