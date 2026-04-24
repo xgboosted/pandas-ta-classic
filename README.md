@@ -20,7 +20,7 @@
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/images/TA_Chart.png)
 
-> **Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **151 indicators and utility functions** and **62 TA Lib candlestick patterns** (**213 total**). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
+> **Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **164 indicators and utility functions** and **62 native candlestick patterns** (**224 total** — no TA-Lib required). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
@@ -42,8 +42,10 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 ### 🎯 Key Features
 
-- **213 Technical Indicators**: 151 indicators + 62 TA-Lib candlestick patterns
-- **Native Candlestick Patterns**: 5 patterns (cdl_doji, cdl_inside, cdl_z, cdl_pattern, ha) work without TA-Lib
+- **224 Unique Indicators & Patterns**: 164 Category indicators + 62 CDL patterns via `cdl_pattern()` = 224 unique (doji and inside appear in both counts; all work without TA-Lib)
+- **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — native implementations are used by default; TA-Lib is only a fallback when a native implementation is unavailable
+- **Optional TA-Lib Acceleration**: 34 core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) automatically use TA-Lib when installed; pass `talib=False` to force native
+- **Optional Performance Boost**: Install `numba` for 6–230× speedups on hot-loop indicators (QQE, RSX, HWMA, SSF, PSAR, Supertrend, MCGD)
 - **Automatic Versioning**: Version management via git tags using setuptools-scm
 - **Modern Package Management**: Full support for both `uv` and `pip`
 - **Production Ready**: Stable status with comprehensive test coverage
@@ -132,10 +134,11 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 ## 📊 Features
 
-- **150 Technical Indicators & Utilities** across 9 categories (Candles, Momentum, Overlap, Trend, Volume, etc.)
-- **62 TA Lib Candlestick Patterns** for comprehensive pattern recognition
-- **212 Total Indicators & Patterns** - the most comprehensive Python TA library
+- **164 Technical Indicators & Utilities** across 9 categories (Candles, Cycles, Momentum, Overlap, Trend, Volume, etc.)
+- **62 Native Candlestick Patterns** — all patterns natively implemented, no TA-Lib required
+- **224 Total Indicators & Patterns** - the most comprehensive Python TA library
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
+- **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
 - **TA Lib Integration** - automatically uses TA Lib versions when available
@@ -156,7 +159,7 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 **Reference Documentation:**
 - 📖 [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
 - 🏗️ [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing  
-- 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 151 indicators & 62 patterns
+- 📊 [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 164 indicators & 62 CDL patterns
 - 🔧 [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - 📈 [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis
 
@@ -166,9 +169,34 @@ df.ta.strategy("CommonStrategy")         # Runs commonly used indicators
 
 > **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
 
-**Note:** _TA Lib_ installation enables all candlestick patterns:
-- Using `uv`: `uv pip install TA-Lib`
-- Using `pip`: `pip install TA-Lib`
+**TA-Lib is fully optional.** Its effect depends on which indicators you use:
+
+| Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
+|------|--------------------------|----------------------|
+| CDL patterns (62) | Native Python — always used | Still native — TA-Lib **not** used for patterns |
+| Core indicators (34) | Native Python | TA-Lib version used by default; pass `talib=False` to force native |
+
+```python
+# CDL patterns — always native, no TA-Lib needed
+df.ta.cdl_pattern(name="all")          # run all 62 patterns
+df.ta.cdl_pattern(name="engulfing")    # individual pattern
+
+# Core indicators — TA-Lib used if installed (default)
+df.ta.ema(length=20)                   # TA-Lib EMA when available
+df.ta.ema(length=20, talib=False)      # force native implementation
+```
+
+Installing TA-Lib (optional):
+```bash
+# uv
+uv pip install TA-Lib
+# pip
+pip install TA-Lib
+```
+
+**Performance boost:** Install `numba` for 6–230× speedups on computation-heavy indicators:
+- Using `uv`: `uv pip install pandas-ta-classic[performance]`
+- Using `pip`: `pip install pandas-ta-classic[performance]`
 
 ## 🤝 Contributing
 

@@ -1,7 +1,7 @@
 Pandas TA Classic Documentation
 ===============================
 
-**Pandas TA Classic** is an easy to use library that leverages the Pandas package with **151 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (213 total). This is the **community maintained version** of the popular pandas-ta library.
+**Pandas TA Classic** is an easy to use library that leverages the Pandas package with **164 indicators and utility functions** plus **62 native candlestick patterns** (224 total). All CDL patterns are natively implemented — no TA-Lib required. This is the **community maintained version** of the popular pandas-ta library.
 
 .. note::
    The library features **dynamic configuration management**:

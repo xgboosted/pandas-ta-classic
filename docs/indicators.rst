@@ -1,16 +1,15 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 151 indicators and utility functions plus 62 TA-Lib candlestick patterns (213 total) organized into the following categories:
+**Pandas TA Classic** includes 164 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (224 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
-* **Candles** (67) - Candlestick patterns for market sentiment analysis (5 native + 62 TA-Lib patterns)  
-* **Cycles** (2) - Cycle-based technical indicators  
-* **Momentum** (46) - Momentum and oscillator indicators
-* **Overlap** (36) - Moving averages and trend-following indicators
+* **Candles** (67) - 62 CDL patterns via ``cdl_pattern()`` + ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``, ``cdl_pattern`` as Category entries (``cdl_doji`` and ``cdl_inside`` appear in both counts)
+* **Cycles** (7) - Cycle-based and Hilbert Transform indicators  
+* **Momentum** (45) - Momentum and oscillator indicators
+* **Overlap** (39) - Moving averages and trend-following indicators
 * **Performance** (3) - Performance and return metrics
-* **Statistics** (10) - Statistical analysis functions
-* **Trend** (19) - Trend identification and direction indicators
-* **Utility** (10) - Helper and utility functions
+* **Statistics** (12) - Statistical analysis functions
+* **Trend** (22) - Trend identification and direction indicators
 * **Volatility** (15) - Volatility and range-based indicators
 * **Volume** (16) - Volume analysis indicators
 
@@ -20,21 +19,27 @@ Indicators Reference
 Candles (67)
 ------------
 
-Candlestick patterns for identifying market sentiment and potential reversals. This includes 5 native patterns (**cdl_doji**, **cdl_inside**, **cdl_pattern**, **cdl_z**, **ha**) plus 62 TA-Lib patterns. Patterns that are **not bold** require TA-Lib to be installed:
+Candlestick patterns for identifying market sentiment and potential reversals.
 
-- Using ``uv``: ``uv pip install TA-Lib``
-- Using ``pip``: ``pip install TA-Lib``
+All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib fallback → warning**. Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
 
 .. code-block:: python
 
-    # Get all candle patterns (This is the default behaviour)
+    # All 62 patterns at once (native only, no TA-Lib needed)
     df = df.ta.cdl_pattern(name="all")
 
-    # Get only one pattern
-    df = df.ta.cdl_pattern(name="doji")
+    # Single pattern
+    df = df.ta.cdl_pattern(name="engulfing")
 
-    # Get some patterns
-    df = df.ta.cdl_pattern(name=["doji", "inside"])
+    # Multiple patterns
+    df = df.ta.cdl_pattern(name=["hammer", "morningstar", "engulfing"])
+
+    # Dedicated accessor methods (only these two have them)
+    result = df.ta.cdl_doji()
+    result = df.ta.cdl_inside()
+
+.. note::
+   Native implementations take priority in ``cdl_pattern()``'s dispatch chain. TA-Lib is only used as a fallback for any pattern that lacks a native implementation — which is none of the 62 patterns in ``ALL_PATTERNS``.
 
 Available patterns:
 
@@ -47,19 +52,44 @@ Available patterns:
 * mathold, morningdojistar, morningstar, onneck, piercing, rickshawman, risefall3methods
 * separatinglines, shootingstar, shortline, spinningtop, stalledpattern, sticksandwich
 * takuri, tasukigap, thrusting, tristar, unique3river, upsidegap2crows, xsidegap3methods
-* *Heikin-Ashi*: **ha**
-* *Z Score*: **cdl_z**
 
 .. note::
-   **Bold patterns** are native implementations. Use ``df.ta.cdl_doji()`` or ``df.ta.cdl_inside()`` to access the native doji and inside bar patterns directly.
+   ``cdl_doji()`` and ``cdl_inside()`` have dedicated implementations accessible as ``df.ta.cdl_doji()`` and ``df.ta.cdl_inside()``.
 
-Cycles (2)
+Other candle indicators:
+
+* *Heikin-Ashi*: **ha** — ``df.ta.ha()`` — not a CDL pattern, not valid as ``cdl_pattern(name=...)``
+* *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern
+
+.. note::
+   **TA-Lib and core indicators**: For 34 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), TA-Lib’s implementation is used **by default** when TA-Lib is installed, for numerical consistency with TA-Lib-based workflows. Every such indicator accepts a ``talib=False`` kwarg to force the native implementation:
+
+   .. code-block:: python
+
+       # Uses TA-Lib EMA if installed (default behaviour)
+       ema = df.ta.ema(length=20)
+
+       # Force native implementation regardless of TA-Lib
+       ema = df.ta.ema(length=20, talib=False)
+
+       # Indicators with TA-Lib passthrough:
+       # ad, adosc, apo, aroon, atr, bbands, bop, cci, cmo, dema, dm,
+       # ema, hlc3, macd, mfi, midpoint, midprice, mom, natr, obv, ppo,
+       # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
+       # variance, wcp, willr, wma
+
+Cycles (7)
 ----------
 
 * *Detrended Synthetic Price*: **dsp**
 * *Even Better Sinewave*: **ebsw**
+* *Hilbert Transform — Dominant Cycle Period*: **ht_dcperiod**
+* *Hilbert Transform — Dominant Cycle Phase*: **ht_dcphase**
+* *Hilbert Transform — Phasor Components*: **ht_phasor** (returns InPhase + Quadrature)
+* *Hilbert Transform — SineWave*: **ht_sine** (returns Sine + LeadSine)
+* *Hilbert Transform — Trend vs Cycle Mode*: **ht_trendmode**
 
-Momentum (46)
+Momentum (45)
 -------------
 
 Momentum and oscillator indicators for measuring the speed of price changes:
@@ -90,7 +120,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Percentage Price Oscillator*: **ppo**
 * *Psychological Line*: **psl**
 * *Percentage Volume Oscillator*: **pvo**
-* *Quantitative Qualitative Estimation*: **qqe**
+* *Quantitative Qualitative Estimation*: **qqe** (returns QQE, QQEs, QQEl, QQEb_l, QQEb_s, QQEd)
 * *Rate of Change*: **roc**
 * *Relative Strength Index*: **rsi**
 * *Relative Strength Xtra*: **rsx**
@@ -110,7 +140,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Volume Weighted MACD*: **vwmacd**
 * *Williams %R*: **willr**
 
-Overlap (36)
+Overlap (39)
 ------------
 
 Moving averages and trend-following indicators:
@@ -123,12 +153,14 @@ Moving averages and trend-following indicators:
 * *High-Low Average*: **hl2**
 * *High-Low-Close Average*: **hlc3** (Commonly known as 'Typical Price')
 * *Hull Exponential Moving Average*: **hma**
+* *Hilbert Transform Instantaneous Trendline*: **ht_trendline**
 * *Holt-Winter Moving Average*: **hwma**
 * *Ichimoku Kinkō Hyō*: **ichimoku** (Returns two DataFrames. ``lookahead=False`` drops the Chikou Span Column)
 * *Jurik Moving Average*: **jma**
 * *Kaufman's Adaptive Moving Average*: **kama**
 * *Linear Regression*: **linreg**
 * *Moving Average*: **ma** (Generic moving average selector)
+* *MESA Adaptive Moving Average*: **mama** (returns MAMA + FAMA)
 * *Madrid Moving Average Ribbon*: **mmar**
 * *McGinley Dynamic*: **mcgd**
 * *Midpoint*: **midpoint**
@@ -144,6 +176,7 @@ Moving averages and trend-following indicators:
 * *Symmetric Weighted Moving Average*: **swma**
 * *T3 Moving Average*: **t3**
 * *Triple Exponential Moving Average*: **tema**
+* *Time Series Forecast*: **tsf**
 * *Triangular Moving Average*: **trima**
 * *Variable Index Dynamic Average*: **vidya**
 * *Volume Weighted Average Price*: **vwap** (**Requires** the DataFrame index to be a DatetimeIndex)
@@ -161,11 +194,13 @@ Performance and return metrics. Use parameter ``cumulative=True`` for cumulative
 * *Log Return*: **log_return**
 * *Percent Return*: **percent_return**
 
-Statistics (10)
+Statistics (12)
 ---------------
 
 Statistical analysis functions:
 
+* *Beta*: **beta** (asset volatility relative to a benchmark series)
+* *Pearson Correlation Coefficient*: **correl**
 * *Entropy*: **entropy**
 * *Kurtosis*: **kurtosis**  
 * *Mean Absolute Deviation*: **mad**
@@ -177,16 +212,18 @@ Statistical analysis functions:
 * *Variance*: **variance**
 * *Z Score*: **zscore**
 
-Trend (19)
+Trend (22)
 ----------
 
 Trend identification and direction indicators:
 
 * *Average Directional Movement Index*: **adx** (Also includes **dmp** and **dmn**)
+* *Average Directional Movement Index Rating*: **adxr**
 * *Archer Moving Averages Trends*: **amat**
 * *Aroon & Aroon Oscillator*: **aroon**
 * *Choppiness Index*: **chop**
 * *Chande Kroll Stop*: **cksp**
+* *Central Pivot Range*: **cpr** / **cpr_option** (4 pivot methods: standard, camarilla, fibonacci, woodie)
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
@@ -201,22 +238,6 @@ Trend identification and direction indicators:
 * *Vertical Horizontal Filter*: **vhf**
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**
-
-Utility (10)
-------------
-
-Helper and utility functions:
-
-* *Above*: **above**
-* *Above Value*: **above_value**
-* *Below*: **below**
-* *Below Value*: **below_value**
-* *Cross*: **cross**
-* *Cross Value*: **cross_value**
-* *Decreasing*: **decreasing**
-* *Increasing*: **increasing**
-* *Long Run*: **long_run**
-* *Short Run*: **short_run**
 
 Volatility (15)
 ---------------

@@ -18,7 +18,7 @@ Optional Dependencies
 
 For enhanced functionality, consider installing:
 
-- **TA-Lib**: Enables all 60+ candlestick patterns
+- **TA-Lib**: Optional — all 62 CDL patterns work natively without it (see :ref:`Installing TA-Lib` below)
 - **yfinance**: For downloading stock data with ``df.ta.ticker()``
 - **vectorbt**: For backtesting integration
 
@@ -107,9 +107,29 @@ Using ``pip``:
 Installing TA-Lib
 ------------------
 
-To use all candlestick patterns, install TA-Lib:
+TA-Lib is **fully optional**. The two areas affected are different:
 
-**Windows/macOS/Linux**:
+**Candlestick patterns (CDL family)**
+   All 62 CDL patterns have native Python implementations. Native implementations are used by default and always take priority; TA-Lib is only used as a fallback when a native implementation is unavailable.
+
+**34 core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
+   When TA-Lib is installed, these indicators use TA-Lib's implementation by default for numerical consistency with TA-Lib-based workflows. Pass ``talib=False`` to any call to force the native implementation instead.
+
+   .. code-block:: python
+
+       import pandas_ta_classic as ta
+
+       # Uses TA-Lib EMA (if TA-Lib installed) — default behaviour
+       ema = df.ta.ema(length=20)
+
+       # Force native implementation regardless of TA-Lib
+       ema = df.ta.ema(length=20, talib=False)
+
+       # CDL patterns — always native, talib= kwarg has no effect here
+       df = df.ta.cdl_pattern(name="engulfing")       # native
+       result = df.ta.cdl_pattern(name="hammer")      # native
+
+Installing TA-Lib:
 
 Using ``uv``:
 
@@ -140,7 +160,10 @@ Using ``uv``:
     # For backtesting
     uv pip install vectorbt
     
-    # For enhanced performance (if available for your system)
+    # For enhanced performance (optional — provides 6–230× speedups on hot-loop indicators)
+    uv pip install pandas-ta-classic[performance]
+    
+    # Or install numba directly
     uv pip install numba
     
     # Install all optional dependencies at once
@@ -156,7 +179,10 @@ Using ``pip``:
     # For backtesting
     pip install vectorbt
     
-    # For enhanced performance (if available for your system)
+    # For enhanced performance (optional — provides 6–230× speedups on hot-loop indicators)
+    pip install pandas-ta-classic[performance]
+    
+    # Or install numba directly
     pip install numba
     
     # Install all optional dependencies at once
