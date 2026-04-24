@@ -110,7 +110,7 @@ Installing TA-Lib
 TA-Lib is **fully optional**. The two areas affected are different:
 
 **Candlestick patterns (CDL family)**
-   All 62 CDL patterns have native Python implementations. TA-Lib is **never** used for candlestick patterns, even when installed. Native implementations always take priority.
+   All 62 CDL patterns have native Python implementations. Native implementations are used by default and always take priority; TA-Lib is only used as a fallback when a native implementation is unavailable.
 
 **34 core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
    When TA-Lib is installed, these indicators use TA-Lib's implementation by default for numerical consistency with TA-Lib-based workflows. Pass ``talib=False`` to any call to force the native implementation instead.
