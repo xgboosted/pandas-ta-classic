@@ -127,6 +127,13 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BBANDS_5_2.0")
 
+    def test_ce(self):
+        result = pandas_ta.ce(self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "CE_22_3.0")
+        self.assertIn("CE_L_22_3.0", result.columns)
+        self.assertIn("CE_S_22_3.0", result.columns)
+
     def test_donchian(self):
         result = pandas_ta.donchian(self.high, self.low)
         self.assertIsInstance(result, DataFrame)

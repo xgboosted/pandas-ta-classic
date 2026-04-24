@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+# Chandelier Exit (CE)
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .atr import atr
 from pandas_ta_classic.utils import get_offset, verify_series
+
 
 def ce(
     high: Series,
@@ -10,12 +12,12 @@ def ce(
     close: Series,
     length: Optional[int] = None,
     multiplier: Optional[float] = None,
+    mamode: Optional[str] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
-
 ) -> Optional[DataFrame]:
-    """  Indicator: Chandelier Exit (CE)"""
-    
+    """Indicator: Chandelier Exit (CE)"""
+    # Validate arguments
     length = int(length) if length and length > 0 else 22
     multiplier = float(multiplier) if multiplier and multiplier > 0 else 3.0
 
@@ -27,11 +29,10 @@ def ce(
     if high is None or low is None or close is None:
         return None
 
-    atr_ = atr(high=high, low=low, close=close, length=length)
+    # Calculate Result
+    atr_ = atr(high=high, low=low, close=close, length=length, mamode=mamode)
     if atr_ is None:
         return None
-    if isinstance(atr_, DataFrame):
-        atr_ = atr_.iloc[:, 0]
 
     highest_high = high.rolling(length, min_periods=length).max()
     lowest_low = low.rolling(length, min_periods=length).min()
@@ -45,9 +46,11 @@ def ce(
     }
     df = DataFrame(data, index=close.index)
 
+    # Offset
     if offset != 0:
         df = df.shift(offset)
 
+    # Handle fills
     if "fillna" in kwargs:
         df.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
@@ -56,6 +59,7 @@ def ce(
         elif kwargs["fill_method"] == "bfill":
             df.bfill(inplace=True)
 
+    # Name and Categorize it
     df.name = f"CE_{length}_{multiplier}"
     df.category = "volatility"
 
@@ -88,6 +92,7 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): Lookback period for High/Low and ATR. Default: 22
     multiplier (float): ATR multiplier. Default: 3.0
+    mamode (str): See ``help(ta.ma)``. Default: 'rma'
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
@@ -101,10 +106,10 @@ Examples:
     >>> import pandas as pd
     >>> import pandas_ta_classic as ta
     >>> df = pd.DataFrame({
-    ...     "high": [10,11,12,13,14,15,16,17,18,19],
-    ...     "low": [5,6,7,8,9,10,11,12,13,14],
-    ...     "close": [7,8,9,10,11,12,13,14,15,16]
+    ...     "high":  [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+    ...     "low":   [5,  6,  7,  8,  9,  10, 11, 12, 13, 14],
+    ...     "close": [7,  8,  9,  10, 11, 12, 13, 14, 15, 16],
     ... })
-    >>> result = ta.ce(high=df["high"], low=df["low"], close=df["close"])
+    >>> result = ta.ce(high=df["high"], low=df["low"], close=df["close"], length=5)
     >>> result.tail()
 """
