@@ -250,7 +250,7 @@ jobs:
         pip install TA-Lib
     
     - name: Setup Pages
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6
     
     - name: Install Sphinx dependencies
       run: |
@@ -271,13 +271,13 @@ jobs:
         fi
           
     - name: Upload Pages artifact (Sphinx)
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v5
       with:
         path: docs/_build/html
 
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v4
+      uses: actions/deploy-pages@v5
         
     - name: Output deployment URL
       run: |
