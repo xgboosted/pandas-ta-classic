@@ -15,71 +15,35 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
     reversal_arr = np.zeros(m)
     af_arr[0] = af0
     af = af0
-    if m < 2:
-        return long_arr, short_arr, af_arr, reversal_arr
-    is_long = not falling
-    new_high = h_arr[1]
-    new_low = l_arr[1]
     for row in range(1, m):
-        prev_low = new_low
-        prev_high = new_high
-        new_low = l_arr[row]
-        new_high = h_arr[row]
-        reverse = False
-        if is_long:
-            if new_low <= sar:
-                reverse = True
-                is_long = False
-                sar = ep
-                if sar < prev_high:
-                    sar = prev_high
-                if sar < new_high:
-                    sar = new_high
-                short_arr[row] = sar
-                af = af0
-                ep = new_low
-                sar = sar + af * (ep - sar)
-                if sar < prev_high:
-                    sar = prev_high
-                if sar < new_high:
-                    sar = new_high
-            else:
-                long_arr[row] = sar
-                if new_high > ep:
-                    ep = new_high
-                    af = min(af + af0, max_af)
-                sar = sar + af * (ep - sar)
-                if sar > prev_low:
-                    sar = prev_low
-                if sar > new_low:
-                    sar = new_low
+        h_ = h_arr[row]
+        l_ = l_arr[row]
+        if falling:
+            _sar = sar + af * (ep - sar)
+            reverse = h_ > _sar
+            if l_ < ep:
+                ep = l_
+                af = min(af + af0, max_af)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = max(h_arr[row - 1], h_arr[max(0, row - 2)], _sar)
         else:
-            if new_high >= sar:
-                reverse = True
-                is_long = True
-                sar = ep
-                if sar > prev_low:
-                    sar = prev_low
-                if sar > new_low:
-                    sar = new_low
-                long_arr[row] = sar
-                af = af0
-                ep = new_high
-                sar = sar + af * (ep - sar)
-                if sar > prev_low:
-                    sar = prev_low
-                if sar > new_low:
-                    sar = new_low
-            else:
-                short_arr[row] = sar
-                if new_low < ep:
-                    ep = new_low
-                    af = min(af + af0, max_af)
-                sar = sar + af * (ep - sar)
-                if sar < prev_high:
-                    sar = prev_high
-                if sar < new_high:
-                    sar = new_high
+            _sar = sar + af * (ep - sar)
+            reverse = l_ < _sar
+            if h_ > ep:
+                ep = h_
+                af = min(af + af0, max_af)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = min(l_arr[row - 1], l_arr[max(0, row - 2)], _sar)
+        if reverse:
+            _sar = ep
+            af = af0
+            falling = not falling  # Must come before next line
+            ep = l_ if falling else h_
+        sar = _sar  # Update SAR
+        if falling:
+            short_arr[row] = sar
+        else:
+            long_arr[row] = sar
         af_arr[row] = af
         reversal_arr[row] = 1.0 if reverse else 0.0
     return long_arr, short_arr, af_arr, reversal_arr

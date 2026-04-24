@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Sine Weighted Moving Average (SINWMA)
 from typing import Any, Optional
+import numpy as np
 from numpy import pi as npPi
 from numpy import sin as npSin
 from pandas import Series
@@ -24,8 +25,6 @@ def sinwma(
         return None
 
     # Calculate Result
-    import numpy as np
-
     sines = np.array([npSin((i + 1) * npPi / (length + 1)) for i in range(length)])
     w = sines / sines.sum()
 
