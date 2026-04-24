@@ -3,6 +3,7 @@ from .aberration import aberration
 from .accbands import accbands
 from .atr import atr
 from .bbands import bbands
+from .ce import ce
 from .donchian import donchian
 from .hwc import hwc
 from .kc import kc

@@ -5,15 +5,15 @@ title: Pandas TA Classic - Technical Analysis Library
 
 # Pandas TA Classic
 
-**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **150 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (**212 total**). This is the **community maintained version** of the popular pandas-ta library.
+**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **151 indicators and utility functions** plus **62 TA-Lib candlestick patterns** (**213 total**). This is the **community maintained version** of the popular pandas-ta library.
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/images/TA_Chart.png)
 
 ## Features
 
-* **150 indicators and utility functions** across 9 categories
+* **151 indicators and utility functions** across 9 categories
 * **62 TA-Lib candlestick patterns** for comprehensive pattern recognition
-* **212 total indicators and patterns**
+* **213 total indicators and patterns**
 * Dynamic category discovery - automatically detects available indicators
 * Tightly correlated with TA-Lib indicators
 * Supports both standalone and DataFrame extension usage
@@ -73,7 +73,7 @@ For detailed documentation, examples, and the complete list of indicators, pleas
 - **Overlap** (34): Moving averages, Bollinger Bands, etc.
 - **Trend** (18): ADX, Aroon, Parabolic SAR, etc.
 - **Volume** (15): OBV, Money Flow, etc.
-- **Volatility** (14): ATR, Bollinger Bands, etc.
+- **Volatility** (15): ATR, Bollinger Bands, Chandelier Exit, etc.
 - **Statistics** (10): Z-Score, Standard Deviation, etc.
 - **Performance** (3): Returns, Drawdown analysis
 - **Cycles** (1): Even Better Sinewave

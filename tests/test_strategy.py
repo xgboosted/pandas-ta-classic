@@ -323,6 +323,7 @@ class TestStrategyDataclass(TestCase):
     def test_created_uses_default_factory(self):
         """Verify created uses field(default_factory=...) so each instance gets its own timestamp."""
         import dataclasses
+
         field_info = pandas_ta.Strategy.__dataclass_fields__["created"]
         self.assertIsNot(field_info.default_factory, dataclasses.MISSING)
         self.assertIs(field_info.default, dataclasses.MISSING)
