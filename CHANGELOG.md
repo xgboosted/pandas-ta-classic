@@ -5,8 +5,26 @@ All notable changes to this project will be documented in this file.
 ## **[Unreleased]**
 
 ### Added
+* **60 new native CDL pattern files** (PR #87): Added `candles/cdl_*.py` implementations for 60 patterns (the PR commit message says 59 — off by one due to `cdl_dojistar` being missed by a grep filter). Combined with the pre-existing `cdl_doji` and `cdl_inside`, the total accessible via `cdl_pattern()` is **62** (the `ALL_PATTERNS` list). TA-Lib is **never** used for CDL patterns — native implementations take priority in the dispatch chain regardless of whether TA-Lib is installed. Patterns are accessible via `df.ta.cdl_pattern(name=...)` or individually (e.g. `df.ta.cdl_engulfing()`). Added shared `_cdl_math.py` helper for body/shadow calculations.
+* **5 Hilbert Transform cycle indicators** (PR #83): `ht_dcperiod`, `ht_dcphase`, `ht_phasor`, `ht_sine`, `ht_trendmode` — matching TA-Lib's HT family. All use a shared `_hilbert.py` helper module. Cycles category grows from 2 to 7.
+* **MAMA / FAMA** (PR #84): MESA Adaptive Moving Average with FAMA output. Uses Ehlers' adaptive phase computation.
+* **HT_TRENDLINE** (PR #84): Hilbert Transform Instantaneous Trendline. Added to overlap category.
+* **TSF** (PR #85): Time Series Forecast indicator — linear regression projected one period ahead. Matches TA-Lib TSF.
+* **Beta** (PR #86): Asset volatility relative to a benchmark series. Matches TA-Lib BETA.
+* **CORREL** (PR #86): Pearson Correlation Coefficient between two series. Matches TA-Lib CORREL.
+* **ADXR** (PR #89): Average Directional Movement Index Rating — smoothed average of ADX. Matches TA-Lib ADXR.
+* **CPR / cpr_option** (PR #77): Central Pivot Range with 4 calculation methods (standard, camarilla, fibonacci, woodie).
+
+### Changed
+* **QQE output columns** (PR #97): `qqe()` now returns 6 columns instead of 3. New columns: `QQEb_l` (long band), `QQEb_s` (short band), `QQEd` (±1 trend direction). **Breaking change**: code relying on a fixed column count or positional indexing of the QQE DataFrame must be updated.
+* **Updated indicator counts**: 164 indicators in Category (was 151); total 224 with native CDL patterns (was 213 with TA-Lib patterns).
+
+### Performance
+* **numpy vectorization** (PR #88): 15 indicators (QQE, PSAR, HWC, HT_TRENDLINE, SSF, squeeze, squeeze_pro, RVGI, TD_SEQ, TOS_STDEVALL, ALMA, SINWMA, SWMA, TRIMA, VIDYA) now use `numpy` arrays and `sliding_window_view` instead of pandas `.iloc` loops. Adds shared `_sliding_weighted_ma()` utility.
+* **numba JIT acceleration** (PR #99): 10 indicators (SSF, MCGD, HWMA, RSX, PSAR, Supertrend, QQE, and 3 more) gain optional `@njit(cache=True)` JIT compilation via `numba`. A graceful no-op fallback in `utils/_njit.py` ensures identical results without numba. Enable with `pip install pandas-ta-classic[performance]`. Measured speedups: RSX 230×, HWMA 70×, MCGD 43×, SSF 42×, Supertrend 13×, QQE 10×, PSAR 6×.
+
+### Added
 * **Chandelier Exit (CE)**: New volatility indicator (`ce`) implementing the classic Chuck Le Beau trailing stop. Computes `CE Long = rolling_max(high, length) - multiplier * ATR` and `CE Short = rolling_min(low, length) + multiplier * ATR`. Supports `mamode` for ATR smoothing, `offset`, and standard `fillna`/`fill_method` kwargs. Default parameters: `length=22`, `multiplier=3.0`. Available as both standalone `ta.ce(high, low, close)` and DataFrame extension `df.ta.ce(append=True)`. Returns a DataFrame with columns `CE_L_{length}_{multiplier}` and `CE_S_{length}_{multiplier}`.
-* **Updated Indicator Counts**: Increased from 150 to 151 indicators, raising total count from 212 to 213 (151 indicators + 62 TA-Lib patterns).
 
 ### Changed
 * **`linreg` breaking default change**: The `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib's convention. Any caller using `linreg(close, angle=True)` without explicitly passing `degrees=False` will now receive degrees instead of radians.
