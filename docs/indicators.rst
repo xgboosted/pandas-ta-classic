@@ -1,7 +1,7 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 150 indicators and utility functions plus 62 TA-Lib candlestick patterns (212 total) organized into the following categories:
+**Pandas TA Classic** includes 151 indicators and utility functions plus 62 TA-Lib candlestick patterns (213 total) organized into the following categories:
 
 * **Candles** (67) - Candlestick patterns for market sentiment analysis (5 native + 62 TA-Lib patterns)  
 * **Cycles** (2) - Cycle-based technical indicators  
@@ -11,7 +11,7 @@ Indicators Reference
 * **Statistics** (10) - Statistical analysis functions
 * **Trend** (19) - Trend identification and direction indicators
 * **Utility** (10) - Helper and utility functions
-* **Volatility** (14) - Volatility and range-based indicators
+* **Volatility** (15) - Volatility and range-based indicators
 * **Volume** (16) - Volume analysis indicators
 
 .. note::
@@ -218,7 +218,7 @@ Helper and utility functions:
 * *Long Run*: **long_run**
 * *Short Run*: **short_run**
 
-Volatility (14)
+Volatility (15)
 ---------------
 
 Volatility and range-based indicators:
@@ -227,6 +227,7 @@ Volatility and range-based indicators:
 * *Acceleration Bands*: **accbands**
 * *Average True Range*: **atr**
 * *Bollinger Bands*: **bbands**
+* *Chandelier Exit*: **ce**
 * *Donchian Channel*: **donchian**
 * *Holt-Winter Channel*: **hwc**
 * *Keltner Channel*: **kc**
