@@ -127,7 +127,7 @@ TA-Lib is **fully optional**. The two areas affected are different:
 
        # CDL patterns — always native, talib= kwarg has no effect here
        df = df.ta.cdl_pattern(name="engulfing")       # native
-       result = df.ta.cdl_hammer()                    # native
+       result = df.ta.cdl_pattern(name="hammer")      # native
 
 Installing TA-Lib:
 
