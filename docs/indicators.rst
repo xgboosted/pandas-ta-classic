@@ -3,7 +3,7 @@ Indicators Reference
 
 **Pandas TA Classic** includes 164 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (224 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
-* **Candles** (5 + 62 via cdl_pattern) - 62 CDL patterns (all native, no TA-Lib required) + cdl_z, ha as standalone indicators  
+* **Candles** (67) - 62 CDL patterns via ``cdl_pattern()`` + ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``, ``cdl_pattern`` as Category entries (``cdl_doji`` and ``cdl_inside`` appear in both counts)
 * **Cycles** (7) - Cycle-based and Hilbert Transform indicators  
 * **Momentum** (45) - Momentum and oscillator indicators
 * **Overlap** (39) - Moving averages and trend-following indicators
@@ -16,12 +16,12 @@ Indicators Reference
 .. note::
    The category system now uses **dynamic discovery** - indicators are automatically detected from the package structure, ensuring the list is always up-to-date with available indicators.
 
-Candles (65)
+Candles (67)
 ------------
 
 Candlestick patterns for identifying market sentiment and potential reversals.
 
-All 62 CDL patterns have native Python implementations — **TA-Lib is not used, even if installed**. Native implementations take priority in the dispatch chain inside ``cdl_pattern()``. Patterns are accessible via ``cdl_pattern(name=...)`` or as individual indicator calls (e.g. ``df.ta.cdl_engulfing()``).
+All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib fallback → warning**. Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
 
 .. code-block:: python
 
@@ -34,12 +34,12 @@ All 62 CDL patterns have native Python implementations — **TA-Lib is not used,
     # Multiple patterns
     df = df.ta.cdl_pattern(name=["hammer", "morningstar", "engulfing"])
 
-    # Direct indicator call
-    result = df.ta.cdl_engulfing()
-    result = df.ta.cdl_hammer()
+    # Dedicated accessor methods (only these two have them)
+    result = df.ta.cdl_doji()
+    result = df.ta.cdl_inside()
 
 .. note::
-   TA-Lib is never used for CDL patterns regardless of whether it is installed.
+   Native implementations take priority in ``cdl_pattern()``'s dispatch chain. TA-Lib is only used as a fallback for any pattern that lacks a native implementation — which is none of the 62 patterns in ``ALL_PATTERNS``.
 
 Available patterns:
 
@@ -52,11 +52,14 @@ Available patterns:
 * mathold, morningdojistar, morningstar, onneck, piercing, rickshawman, risefall3methods
 * separatinglines, shootingstar, shortline, spinningtop, stalledpattern, sticksandwich
 * takuri, tasukigap, thrusting, tristar, unique3river, upsidegap2crows, xsidegap3methods
-* *Heikin-Ashi*: **ha**
-* *Z Score*: **cdl_z**
 
 .. note::
    ``cdl_doji()`` and ``cdl_inside()`` have dedicated implementations accessible as ``df.ta.cdl_doji()`` and ``df.ta.cdl_inside()``.
+
+Other candle indicators:
+
+* *Heikin-Ashi*: **ha** — ``df.ta.ha()`` — not a CDL pattern, not valid as ``cdl_pattern(name=...)``
+* *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern
 
 .. note::
    **TA-Lib and core indicators**: For 34 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), TA-Lib’s implementation is used **by default** when TA-Lib is installed, for numerical consistency with TA-Lib-based workflows. Every such indicator accepts a ``talib=False`` kwarg to force the native implementation:

@@ -13,24 +13,8 @@ All notable changes to this project will be documented in this file.
 * **Beta** (PR #86): Asset volatility relative to a benchmark series. Matches TA-Lib BETA.
 * **CORREL** (PR #86): Pearson Correlation Coefficient between two series. Matches TA-Lib CORREL.
 * **ADXR** (PR #89): Average Directional Movement Index Rating — smoothed average of ADX. Matches TA-Lib ADXR.
-* **CPR / cpr_option** (PR #77): Central Pivot Range with 4 calculation methods (standard, camarilla, fibonacci, woodie).
-
-### Changed
-* **QQE output columns** (PR #97): `qqe()` now returns 6 columns instead of 3. New columns: `QQEb_l` (long band), `QQEb_s` (short band), `QQEd` (±1 trend direction). **Breaking change**: code relying on a fixed column count or positional indexing of the QQE DataFrame must be updated.
-* **Updated indicator counts**: 164 indicators in Category (was 151); total 224 with native CDL patterns (was 213 with TA-Lib patterns).
-
-### Performance
-* **numpy vectorization** (PR #88): 15 indicators (QQE, PSAR, HWC, HT_TRENDLINE, SSF, squeeze, squeeze_pro, RVGI, TD_SEQ, TOS_STDEVALL, ALMA, SINWMA, SWMA, TRIMA, VIDYA) now use `numpy` arrays and `sliding_window_view` instead of pandas `.iloc` loops. Adds shared `_sliding_weighted_ma()` utility.
-* **numba JIT acceleration** (PR #99): 10 indicators (SSF, MCGD, HWMA, RSX, PSAR, Supertrend, QQE, and 3 more) gain optional `@njit(cache=True)` JIT compilation via `numba`. A graceful no-op fallback in `utils/_njit.py` ensures identical results without numba. Enable with `pip install pandas-ta-classic[performance]`. Measured speedups: RSX 230×, HWMA 70×, MCGD 43×, SSF 42×, Supertrend 13×, QQE 10×, PSAR 6×.
-
-### Added
+* **CPR** (PR #77): Central Pivot Range with 4 calculation methods (classic, camarilla, fibonacci, woodie).
 * **Chandelier Exit (CE)**: New volatility indicator (`ce`) implementing the classic Chuck Le Beau trailing stop. Computes `CE Long = rolling_max(high, length) - multiplier * ATR` and `CE Short = rolling_min(low, length) + multiplier * ATR`. Supports `mamode` for ATR smoothing, `offset`, and standard `fillna`/`fill_method` kwargs. Default parameters: `length=22`, `multiplier=3.0`. Available as both standalone `ta.ce(high, low, close)` and DataFrame extension `df.ta.ce(append=True)`. Returns a DataFrame with columns `CE_L_{length}_{multiplier}` and `CE_S_{length}_{multiplier}`.
-
-### Changed
-* **`linreg` breaking default change**: The `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib's convention. Any caller using `linreg(close, angle=True)` without explicitly passing `degrees=False` will now receive degrees instead of radians.
-* **`stdev`/`variance` breaking default change**: The `ddof` parameter now defaults to `0` (population std/variance, was `1` sample std/variance) to match TA-Lib. Callers relying on the default sample variance must now pass `ddof=1` explicitly.
-
-### Added
 * **9 New Technical Indicators**: Added high-demand indicators from Issue #29 analysis:
   - **LRSI** (Laguerre Relative Strength Index) - Momentum indicator with reduced lag using gamma parameter
   - **PMAX** (Price Max) - Trend indicator combining moving average with ATR
@@ -42,30 +26,30 @@ All notable changes to this project will be documented in this file.
   - **TRIXH** (TRIX Histogram) - Enhanced TRIX with signal line and histogram
   - **VWMACD** (Volume Weighted MACD) - MACD variant using volume-weighted moving averages
 * **Full Indicator Name Comments**: All 150 indicator files now include full indicator names as comments on line 2 for improved code readability and documentation (format: `# Full Indicator Name (ABBREVIATION)`).
+* **UV Package Manager Support**: All documentation now includes installation instructions for both `uv` (recommended for faster installs) and traditional `pip`. This includes README.md, CONTRIBUTING.md, docs/installation.rst, docs/index.rst, index.md, and docs/indicators.rst.
+* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.dev` suffix (e.g., `0.3.36.dev1`), while tagged releases use the tag version exactly (e.g., `0.4.0`). See the Version Management section in CONTRIBUTING.md for comprehensive documentation.
+* **Native Candlestick Patterns**: Added native implementations of `cdl_doji` and `cdl_inside` patterns that don't require TA-Lib installation. These can be accessed directly via `df.ta.cdl_doji()` and `df.ta.cdl_inside()`, or through the unified `df.ta.cdl_pattern()` interface. Native patterns join `cdl_z` and `ha` to provide 5 total TA-Lib-free candlestick indicators.
 
 ### Changed
-* **Updated Indicator Counts**: Increased from 141 to 150 indicators (9 new additions), raising total count from 203 to 212 (150 indicators + 62 TA-Lib patterns).
+* **QQE output columns** (PR #97): `qqe()` now returns 6 columns instead of 3. New columns: `QQEb_l` (long band), `QQEb_s` (short band), `QQEd` (±1 trend direction). **Breaking change**: code relying on a fixed column count or positional indexing of the QQE DataFrame must be updated.
+* **Updated indicator counts**: 164 indicators in Category (was 151); total 224 with native CDL patterns (was 213 with TA-Lib patterns).
+* **`linreg` breaking default change**: The `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib's convention. Any caller using `linreg(close, angle=True)` without explicitly passing `degrees=False` will now receive degrees instead of radians.
+* **`stdev`/`variance` breaking default change**: The `ddof` parameter now defaults to `0` (population std/variance, was `1` sample std/variance) to match TA-Lib. Callers relying on the default sample variance must now pass `ddof=1` explicitly.
 * **Enhanced RVGI**: Relative Vigor Index now includes histogram column (RVGI - Signal) in addition to RVGI and Signal columns.
+* **Dynamic Category Discovery**: The `Category` dictionary in `_meta.py` is now built dynamically by scanning the filesystem structure. This eliminates manual maintenance, ensures it stays in sync with available indicators, and automatically discovered several previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
+* **Documentation Updates**: Updated README.md, docs/indicators.rst, and CONTRIBUTING.md to reflect dynamic discovery and correct indicator counts.
+* **Python Version Support**: Updated to Python (the latest stable plus the prior 4 versions) following a rolling 5-version support policy. Version requirements are now dynamically managed via CI/CD workflows (`LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`).
+* **Development Status**: Changed from Beta to Production/Stable in `pyproject.toml` to reflect library maturity.
+
+### Performance
+* **numpy vectorization** (PR #88): 15 indicators (QQE, PSAR, HWC, HT_TRENDLINE, SSF, squeeze, squeeze_pro, RVGI, TD_SEQ, TOS_STDEVALL, ALMA, SINWMA, SWMA, TRIMA, VIDYA) now use `numpy` arrays and `sliding_window_view` instead of pandas `.iloc` loops. Adds shared `_sliding_weighted_ma()` utility.
+* **numba JIT acceleration** (PR #99): 10 indicators (SSF, MCGD, HWMA, RSX, PSAR, Supertrend, QQE, and 3 more) gain optional `@njit(cache=True)` JIT compilation via `numba`. A graceful no-op fallback in `utils/_njit.py` ensures identical results without numba. Enable with `pip install pandas-ta-classic[performance]`. Measured speedups: RSX 230×, HWMA 70×, MCGD 43×, SSF 42×, Supertrend 13×, QQE 10×, PSAR 6×.
 
 ### Fixed
 * **Code of Conduct Contact Information**: Updated enforcement contact from original maintainer's email to GitHub Issues link, making it maintainer-agnostic and easier to manage as the project evolves.
 * **PyPI Release Version**: Fixed CI/CD workflow to use exact release tag version by setting `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable. This prevents development versions (`.dev0`) from being published when `pyproject.toml` is modified during the build process. Releases now correctly use the clean tag version (e.g., `0.3.35` instead of `0.3.36.dev0`).
 * **Version Scheme Optimization**: Changed from `post-release` to default version scheme to avoid `.post0` suffix on tagged releases. Tagged releases now get clean version numbers (e.g., `0.3.35`), while commits after tags get development versions (e.g., `0.3.36.dev1`). This provides clearer distinction between releases and development builds.
 * **PyPI Image Display**: Updated README.md to use absolute GitHub URLs for images instead of relative paths, ensuring logo and example charts display correctly on PyPI package page.
-
-### Added
-* **UV Package Manager Support**: All documentation now includes installation instructions for both `uv` (recommended for faster installs) and traditional `pip`. This includes README.md, CONTRIBUTING.md, docs/installation.rst, docs/index.rst, index.md, and docs/indicators.rst.
-* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.dev` suffix (e.g., `0.3.36.dev1`), while tagged releases use the tag version exactly (e.g., `0.4.0`). See the Version Management section in CONTRIBUTING.md for comprehensive documentation.
-* **Native Candlestick Patterns**: Added native implementations of `cdl_doji` and `cdl_inside` patterns that don't require TA-Lib installation. These can be accessed directly via `df.ta.cdl_doji()` and `df.ta.cdl_inside()`, or through the unified `df.ta.cdl_pattern()` interface. Native patterns join `cdl_z` and `ha` to provide 5 total TA-Lib-free candlestick indicators.
-
-### Changed
-* **Dynamic Category Discovery**: The `Category` dictionary in `_meta.py` is now built dynamically by scanning the filesystem structure. This eliminates manual maintenance, ensures it stays in sync with available indicators, and automatically discovered several previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
-* **Updated Indicator Counts**: Corrected total indicator count from 143 to 141 indicators, and total count from 205 to 203 (141 indicators + 62 TA-Lib patterns) to reflect actual available indicators. Candle patterns now show: 5 native + 62 TA-Lib = 67 total.
-* **Documentation Updates**: Updated README.md, docs/indicators.rst, and CONTRIBUTING.md to reflect dynamic discovery and correct indicator counts.
-* **Python Version Support**: Updated to Python (the latest stable plus the prior 4 versions) following a rolling 5-version support policy. Version requirements are now dynamically managed via CI/CD workflows (`LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`).
-* **Development Status**: Changed from Beta to Production/Stable in `pyproject.toml` to reflect library maturity.
-
-### Fixed
 * **CI/CD Shallow Clone Issue**: Added `fetch-depth: 0` to all GitHub Actions checkout steps to ensure full git history is available for setuptools-scm. This prevents version detection failures in CI/CD pipelines.
 * **Version Fallback Compatibility**: Changed fallback version from `0.0.0.dev0` to `0.0.0` in both `pyproject.toml` and `_meta.py` to prevent invalid version strings that violate PEP 440. The clean `0.0.0` fallback is compatible with all version schemes.
 
