@@ -154,12 +154,12 @@ class TestOverlap(TestCase):
         self.assertEqual(result.name, "HMA_10")
 
     def test_ht_trendline(self):
-        result = pandas_ta.ht_trendline(self.close, talib=False)
+        result = pandas_ta.ht_trendline(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HT_TRENDLINE")
-        pandas_ta.ht_trendline(self.close, talib=False, fillna=0)
-        pandas_ta.ht_trendline(self.close, talib=False, fill_method="ffill")
-        pandas_ta.ht_trendline(self.close, talib=False, fill_method="bfill")
+        pandas_ta.ht_trendline(self.close, fillna=0)
+        pandas_ta.ht_trendline(self.close, fill_method="ffill")
+        pandas_ta.ht_trendline(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.ht_trendline(None))
 
     def test_hwma(self):
@@ -287,13 +287,13 @@ class TestOverlap(TestCase):
         self.assertEqual(result.name, "FWMA_15")
 
     def test_mama(self):
-        result = pandas_ta.mama(self.close, talib=False)
+        result = pandas_ta.mama(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "MAMA_0.5_0.05")
         self.assertListEqual(list(result.columns), ["MAMA_0.5_0.05", "FAMA_0.5_0.05"])
-        pandas_ta.mama(self.close, talib=False, fillna=0)
-        pandas_ta.mama(self.close, talib=False, fill_method="ffill")
-        pandas_ta.mama(self.close, talib=False, fill_method="bfill")
+        pandas_ta.mama(self.close, fillna=0)
+        pandas_ta.mama(self.close, fill_method="ffill")
+        pandas_ta.mama(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.mama(None))
 
     def test_mcgd(self):
@@ -465,6 +465,15 @@ class TestOverlap(TestCase):
         result = pandas_ta.trima(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRIMA_10")
+
+    def test_tsf(self):
+        result = pandas_ta.tsf(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "TSF_14")
+        pandas_ta.tsf(self.close, fillna=0)
+        pandas_ta.tsf(self.close, fill_method="ffill")
+        pandas_ta.tsf(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.tsf(None))
 
     def test_vidya(self):
         result = pandas_ta.vidya(self.close)

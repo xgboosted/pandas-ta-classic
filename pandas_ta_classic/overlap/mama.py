@@ -3,11 +3,10 @@
 from typing import Any, Optional, Tuple
 import numpy as np
 from pandas import DataFrame, Series
-from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
-def _mama_talib_loop(
+def _mama_loop(
     close_arr: np.ndarray,
     m: int,
     fastlimit: float,
@@ -247,7 +246,6 @@ def mama(
     close: Series,
     fastlimit: Optional[float] = None,
     slowlimit: Optional[float] = None,
-    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -257,24 +255,16 @@ def mama(
     slowlimit = float(slowlimit) if slowlimit and slowlimit > 0 else 0.05
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
-        from talib import MAMA as taMAMA
-
-        mama_arr, fama_arr = taMAMA(close, fastlimit=fastlimit, slowlimit=slowlimit)
-        mama_s = Series(mama_arr, index=close.index)
-        fama_s = Series(fama_arr, index=close.index)
-    else:
-        c_arr = close.to_numpy(dtype=float)
-        m = c_arr.shape[0]
-        mama_out, fama_out = _mama_talib_loop(c_arr, m, fastlimit, slowlimit)
-        mama_s = Series(mama_out, index=close.index)
-        fama_s = Series(fama_out, index=close.index)
+    c_arr = close.to_numpy(dtype=float)
+    m = c_arr.shape[0]
+    mama_arr, fama_arr = _mama_loop(c_arr, m, fastlimit, slowlimit)
+    mama_s = Series(mama_arr, index=close.index)
+    fama_s = Series(fama_arr, index=close.index)
 
     # Offset
     if offset != 0:
@@ -327,8 +317,6 @@ Args:
     close (pd.Series): Series of 'close's
     fastlimit (float): Upper bound for the adaptive alpha. Default: 0.5
     slowlimit (float): Lower bound for the adaptive alpha. Default: 0.05
-    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

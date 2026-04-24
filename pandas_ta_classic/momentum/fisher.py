@@ -2,12 +2,27 @@
 # Fisher Transform (FISHER)
 from typing import Any, Optional
 import numpy as np
-from numpy import log as nplog
 from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _fisher_loop(pos_arr, m, length):
+    result = np.full(m, np.nan)
+    result[length - 1] = 0.0
+    v = 0.0
+    for i in range(length, m):
+        v = 0.66 * pos_arr[i] + 0.67 * v
+        if v < -0.99:
+            v = -0.999
+        elif v > 0.99:
+            v = 0.999
+        result[i] = 0.5 * (np.log((1 + v) / (1 - v)) + result[i - 1])
+    return result
 
 
 def fisher(
@@ -38,19 +53,12 @@ def fisher(
     hlr = high_low_range(highest_hl2, lowest_hl2)
     hlr[hlr < 0.001] = 0.001
 
-    position = ((hl2_ - lowest_hl2) / hlr) - 0.5
-
-    v: float = 0
+    hl_range = hlr
     m = high.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
-    for i in range(length, m):
-        v = 0.66 * position.iloc[i] + 0.67 * v
-        if v < -0.99:
-            v = -0.999
-        if v > 0.99:
-            v = 0.999
-        result.append(0.5 * (nplog((1 + v) / (1 - v)) + result[i - 1]))
-    fisher = Series(result, index=high.index)
+
+    pos_arr = ((hl2_ - lowest_hl2) / hl_range - 0.5).to_numpy()
+    fisher_arr = _fisher_loop(pos_arr, m, length)
+    fisher = Series(fisher_arr, index=high.index)
     signalma = fisher.shift(signal)
 
     # Offset
