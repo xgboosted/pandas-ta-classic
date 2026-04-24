@@ -4,8 +4,10 @@ from typing import Any, Optional
 import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _hwma_loop(c_arr, m, na, nb, nc):
     result = np.empty(m)
     last_a = 0.0

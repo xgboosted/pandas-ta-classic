@@ -6,8 +6,10 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
     long_arr = np.full(m, np.nan)
     short_arr = np.full(m, np.nan)

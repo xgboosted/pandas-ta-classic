@@ -8,14 +8,17 @@ from numpy import pi as npPi
 from numpy import sqrt as npSqrt
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _ssf2_loop(c_arr, ssf_arr, m, c1, b1, a1):
     for i in range(2, m):
         ssf_arr[i] = c1 * c_arr[i] + b1 * ssf_arr[i - 1] + a1 * ssf_arr[i - 2]
     return ssf_arr
 
 
+@njit(cache=True)
 def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
     for i in range(3, m):
         ssf_arr[i] = (

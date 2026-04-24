@@ -9,6 +9,58 @@ npNaN = np.nan
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _qqe_loop(rsi_arr, ub_arr, lb_arr, m):
+    long_arr = np.zeros(m)
+    short_arr = np.zeros(m)
+    trend_arr = np.ones(m)
+    qqe_arr = np.empty(m)
+    qqe_arr[0] = rsi_arr[0]
+    qqe_long_arr = np.full(m, np.nan)
+    qqe_short_arr = np.full(m, np.nan)
+
+    for i in range(1, m):
+        c_rsi = rsi_arr[i]
+        p_rsi = rsi_arr[i - 1]
+        c_long = long_arr[i - 1]
+        c_short = short_arr[i - 1]
+        p_long = long_arr[i - 2] if i >= 2 else 0.0
+        p_short = short_arr[i - 2] if i >= 2 else 0.0
+
+        # Long Line
+        if p_rsi > c_long and c_rsi > c_long:
+            long_arr[i] = max(c_long, lb_arr[i])
+        else:
+            long_arr[i] = lb_arr[i]
+
+        # Short Line
+        if p_rsi < c_short and c_rsi < c_short:
+            short_arr[i] = min(c_short, ub_arr[i])
+        else:
+            short_arr[i] = ub_arr[i]
+
+        # Trend & QQE Calculation
+        if (c_rsi > c_short and p_rsi < p_short) or (
+            c_rsi <= c_short and p_rsi >= p_short
+        ):
+            trend_arr[i] = 1.0
+            qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
+        elif (c_rsi > c_long and p_rsi < p_long) or (
+            c_rsi <= c_long and p_rsi >= p_long
+        ):
+            trend_arr[i] = -1.0
+            qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
+        else:
+            trend_arr[i] = trend_arr[i - 1]
+            if trend_arr[i] == 1.0:
+                qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
+            else:
+                qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
+
+    return long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr
 
 
 def qqe(
@@ -66,51 +118,9 @@ def qqe(
     ub_arr = upperband.to_numpy()
     lb_arr = lowerband.to_numpy()
 
-    long_arr = np.zeros(m)
-    short_arr = np.zeros(m)
-    trend_arr = np.ones(m)
-    qqe_arr = np.empty(m)
-    qqe_arr[0] = rsi_arr[0]
-    qqe_long_arr = np.full(m, npNaN)
-    qqe_short_arr = np.full(m, npNaN)
-
-    for i in range(1, m):
-        c_rsi = rsi_arr[i]
-        p_rsi = rsi_arr[i - 1]
-        c_long = long_arr[i - 1]
-        c_short = short_arr[i - 1]
-        p_long = long_arr[i - 2] if i >= 2 else 0.0
-        p_short = short_arr[i - 2] if i >= 2 else 0.0
-
-        # Long Line
-        if p_rsi > c_long and c_rsi > c_long:
-            long_arr[i] = max(c_long, lb_arr[i])
-        else:
-            long_arr[i] = lb_arr[i]
-
-        # Short Line
-        if p_rsi < c_short and c_rsi < c_short:
-            short_arr[i] = min(c_short, ub_arr[i])
-        else:
-            short_arr[i] = ub_arr[i]
-
-        # Trend & QQE Calculation
-        if (c_rsi > c_short and p_rsi < p_short) or (
-            c_rsi <= c_short and p_rsi >= p_short
-        ):
-            trend_arr[i] = 1.0
-            qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
-        elif (c_rsi > c_long and p_rsi < p_long) or (
-            c_rsi <= c_long and p_rsi >= p_long
-        ):
-            trend_arr[i] = -1.0
-            qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
-        else:
-            trend_arr[i] = trend_arr[i - 1]
-            if trend_arr[i] == 1.0:
-                qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
-            else:
-                qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
+    long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr = _qqe_loop(
+        rsi_arr, ub_arr, lb_arr, m
+    )
 
     idx = close.index
     long = Series(long_arr, index=idx)

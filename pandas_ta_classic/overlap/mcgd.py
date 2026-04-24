@@ -5,8 +5,10 @@ import numpy as np
 import pandas as pd
 from pandas import Series
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _mcgd_loop(c_arr, n, c, length):
     result = np.empty(n)
     result[0] = c_arr[0]

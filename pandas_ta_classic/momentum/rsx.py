@@ -6,8 +6,10 @@ from pandas import concat, DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_drift, get_offset, verify_series, signals
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _rsx_loop(c_arr, length, m):
     result = np.full(m, np.nan)
     result[length - 1] = 0.0

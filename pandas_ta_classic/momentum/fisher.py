@@ -7,8 +7,10 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _fisher_loop(pos_arr, m, length):
     result = np.full(m, np.nan)
     result[length - 1] = 0.0
