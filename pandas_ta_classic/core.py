@@ -2396,8 +2396,14 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         result = ce(
-            high=high, low=low, close=close, length=length,
-            multiplier=multiplier, mamode=mamode, offset=offset, **kwargs
+            high=high,
+            low=low,
+            close=close,
+            length=length,
+            multiplier=multiplier,
+            mamode=mamode,
+            offset=offset,
+            **kwargs,
         )
         return self._post_process(result, **kwargs)
 
