@@ -6,6 +6,49 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
+    long_arr = np.full(m, np.nan)
+    short_arr = np.full(m, np.nan)
+    af_arr = np.full(m, np.nan)
+    reversal_arr = np.zeros(m)
+    af_arr[0] = af0
+    af = af0
+    for row in range(1, m):
+        h_ = h_arr[row]
+        l_ = l_arr[row]
+        if falling:
+            _sar = sar + af * (ep - sar)
+            reverse = h_ > _sar
+            if l_ < ep:
+                ep = l_
+                af = min(af + af0, max_af)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = max(h_arr[row - 1], h_arr[max(0, row - 2)], _sar)
+        else:
+            _sar = sar + af * (ep - sar)
+            reverse = l_ < _sar
+            if h_ > ep:
+                ep = h_
+                af = min(af + af0, max_af)
+            # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            _sar = min(l_arr[row - 1], l_arr[max(0, row - 2)], _sar)
+        if reverse:
+            _sar = ep
+            af = af0
+            falling = not falling  # Must come before next line
+            ep = l_ if falling else h_
+        sar = _sar  # Update SAR
+        if falling:
+            short_arr[row] = sar
+        else:
+            long_arr[row] = sar
+        af_arr[row] = af
+        reversal_arr[row] = 1.0 if reverse else 0.0
+    return long_arr, short_arr, af_arr, reversal_arr
 
 
 def psar(
@@ -51,55 +94,17 @@ def psar(
         close = verify_series(close)
         sar = close.iloc[0]
 
-    long = Series(npNaN, index=high.index)
-    short = long.copy()
-    reversal = Series(0, index=high.index)
-    _af = long.copy()
-    _af.iloc[0:2] = af0
-
     # Calculate Result
     m = high.shape[0]
-    for row in range(1, m):
-        high_ = high.iloc[row]
-        low_ = low.iloc[row]
-
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = high_ > _sar
-
-            if low_ < ep:
-                ep = low_
-                af = min(af + af0, max_af)
-
-            # Guard row==1: row-2 would be -1 (last element) without the clamp.
-            _sar = max(high.iloc[row - 1], high.iloc[max(0, row - 2)], _sar)
-        else:
-            _sar = sar + af * (ep - sar)
-            reverse = low_ < _sar
-
-            if high_ > ep:
-                ep = high_
-                af = min(af + af0, max_af)
-
-            # Guard row==1: row-2 would be -1 (last element) without the clamp.
-            _sar = min(low.iloc[row - 1], low.iloc[max(0, row - 2)], _sar)
-
-        if reverse:
-            _sar = ep
-            af = af0
-            falling = not falling  # Must come before next line
-            ep = low_ if falling else high_
-
-        sar = _sar  # Update SAR
-
-        # Seperate long/short sar based on falling
-        if falling:
-            short.iloc[row] = sar
-        else:
-            long.iloc[row] = sar
-
-        _af.iloc[row] = af
-        reversal.iloc[row] = int(reverse)
+    h_arr = high.to_numpy(dtype=float)
+    l_arr = low.to_numpy(dtype=float)
+    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
+        h_arr, l_arr, m, falling, sar, ep, af0, max_af
+    )
+    long = Series(long_arr, index=high.index)
+    short = Series(short_arr, index=high.index)
+    _af = Series(af_arr, index=high.index)
+    reversal = Series(reversal_arr, index=high.index)
 
     # Offset
     if offset != 0:
