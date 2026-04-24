@@ -447,6 +447,15 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRIMA_10")
 
+    def test_tsf(self):
+        result = pandas_ta.tsf(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "TSF_14")
+        pandas_ta.tsf(self.close, fillna=0)
+        pandas_ta.tsf(self.close, fill_method="ffill")
+        pandas_ta.tsf(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.tsf(None))
+
     def test_vidya(self):
         result = pandas_ta.vidya(self.close)
         self.assertIsInstance(result, Series)
