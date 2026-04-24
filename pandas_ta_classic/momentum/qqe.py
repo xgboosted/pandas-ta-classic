@@ -114,6 +114,7 @@ def qqe(
         qqe = qqe.shift(offset)
         long = long.shift(offset)
         short = short.shift(offset)
+        trend = trend.shift(offset)
 
     # Handle fills
     if "fillna" in kwargs:
@@ -121,6 +122,9 @@ def qqe(
         qqe.fillna(kwargs["fillna"], inplace=True)
         qqe_long.fillna(kwargs["fillna"], inplace=True)
         qqe_short.fillna(kwargs["fillna"], inplace=True)
+        long.fillna(kwargs["fillna"], inplace=True)
+        short.fillna(kwargs["fillna"], inplace=True)
+        trend.fillna(kwargs["fillna"], inplace=True)
     if "fill_method" in kwargs:
         if "fill_method" in kwargs:
 
