@@ -8,5 +8,5 @@ theme: null
 
 # Project metadata (for reference only - not used by Sphinx)
 title: "Pandas TA Classic"
-description: "Technical Analysis Library with 140+ indicators for Python"
+description: "Technical Analysis Library for Python"
 url: "https://xgboosted.github.io/pandas-ta-classic"

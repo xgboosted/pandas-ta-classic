@@ -55,7 +55,7 @@ Basic usage:
    df.ta.macd(append=True)
 
 .. note::
-   **New to Pandas TA Classic?** Check out our :doc:`quickstart` guide for a comprehensive introduction, or explore the :doc:`usage` guide for detailed programming conventions.
+   **New to Pandas TA Classic?** Check out our :doc:`QUICKSTART` guide for a comprehensive introduction, or explore the :doc:`usage` guide for detailed programming conventions.
 
 Table of Contents
 -----------------
@@ -64,7 +64,8 @@ Table of Contents
    :maxdepth: 2
    :caption: Getting Started:
 
-   quickstart
+   QUICKSTART
+   TUTORIALS
    installation
    usage
 

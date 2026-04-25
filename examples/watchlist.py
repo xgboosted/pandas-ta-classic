@@ -393,7 +393,7 @@ if __name__ == "__main__":
     # Check if local sample data exists
     from pathlib import Path
 
-    sample_data_path = Path("data/SPY_D.csv")
+    sample_data_path = Path("examples/data/SPY_D.csv")
 
     if sample_data_path.exists():
         print(f"Using local sample data: {sample_data_path}")

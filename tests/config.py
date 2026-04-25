@@ -14,7 +14,7 @@ CORRELATION_THRESHOLD = 0.99  # Less than 0.99 is undesirable
 @lru_cache(maxsize=1)
 def _read_sample_csv():
     df = read_csv(
-        "data/SPY_D.csv",
+        "examples/data/SPY_D.csv",
         index_col="date",
         parse_dates=True,
     )

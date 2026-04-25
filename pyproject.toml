@@ -133,7 +133,7 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-"*" = ["data/*.csv"]
+"*" = ["examples/data/*.csv"]
 
 [tool.setuptools_scm]
 # Automatically determine version from git tags

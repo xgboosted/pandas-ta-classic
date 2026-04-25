@@ -1,8 +1,8 @@
-# 📚 Pandas TA Classic - Tutorials
+# Pandas TA Classic - Tutorials
 
 Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Tutorial 1: Creating a Moving Average Crossover Strategy](#tutorial-1-creating-a-moving-average-crossover-strategy)
 - [Tutorial 2: Building a Custom Indicator Strategy](#tutorial-2-building-a-custom-indicator-strategy)
@@ -77,12 +77,12 @@ plt.plot(df.index, df['SMA_slow'], label='SMA 50 (Slow)', alpha=0.7)
 # Plot buy signals
 buy_signals = df[df['position'] == 2]
 plt.scatter(buy_signals.index, buy_signals['Close'], 
-            color='green', marker='^', s=100, label='Buy Signal')
+ color='green', marker='^', s=100, label='Buy Signal')
 
 # Plot sell signals
 sell_signals = df[df['position'] == -2]
 plt.scatter(sell_signals.index, sell_signals['Close'], 
-            color='red', marker='v', s=100, label='Sell Signal')
+ color='red', marker='v', s=100, label='Sell Signal')
 
 plt.title('Moving Average Crossover Strategy - AAPL')
 plt.xlabel('Date')
@@ -119,25 +119,25 @@ df = yf.download("SPY", start="2023-01-01", end="2024-01-01")
 
 # Create custom strategy
 my_strategy = ta.Strategy(
-    name="TrendMomentumVolatility",
-    description="Combines trend, momentum, and volatility indicators",
-    ta=[
-        # Trend Indicators
-        {"kind": "sma", "length": 20},
-        {"kind": "sma", "length": 50},
-        {"kind": "ema", "length": 12},
-        {"kind": "ema", "length": 26},
-        
-        # Momentum Indicators
-        {"kind": "rsi", "length": 14},
-        {"kind": "macd", "fast": 12, "slow": 26, "signal": 9},
-        {"kind": "stoch", "k": 14, "d": 3},
-        
-        # Volatility Indicators
-        {"kind": "bbands", "length": 20, "std": 2},
-        {"kind": "atr", "length": 14},
-        {"kind": "kc", "length": 20},
-    ]
+ name="TrendMomentumVolatility",
+ description="Combines trend, momentum, and volatility indicators",
+ ta=[
+ # Trend Indicators
+ {"kind": "sma", "length": 20},
+ {"kind": "sma", "length": 50},
+ {"kind": "ema", "length": 12},
+ {"kind": "ema", "length": 26},
+ 
+ # Momentum Indicators
+ {"kind": "rsi", "length": 14},
+ {"kind": "macd", "fast": 12, "slow": 26, "signal": 9},
+ {"kind": "stoch", "k": 14, "d": 3},
+ 
+ # Volatility Indicators
+ {"kind": "bbands", "length": 20, "std": 2},
+ {"kind": "atr", "length": 14},
+ {"kind": "kc", "length": 20},
+ ]
 )
 
 print(f"Strategy: {my_strategy.name}")
@@ -161,18 +161,18 @@ print(new_columns)
 ```python
 # Define bullish conditions
 bullish_conditions = (
-    (df['Close'] > df['SMA_20']) &           # Price above 20 SMA
-    (df['SMA_20'] > df['SMA_50']) &          # Short MA above long MA
-    (df['RSI_14'] > 30) & (df['RSI_14'] < 70) &  # RSI in neutral zone
-    (df['Close'] > df['BBL_20_2.0'])         # Price above lower Bollinger Band
+ (df['Close'] > df['SMA_20']) & # Price above 20 SMA
+ (df['SMA_20'] > df['SMA_50']) & # Short MA above long MA
+ (df['RSI_14'] > 30) & (df['RSI_14'] < 70) & # RSI in neutral zone
+ (df['Close'] > df['BBL_20_2.0']) # Price above lower Bollinger Band
 )
 
 # Define bearish conditions
 bearish_conditions = (
-    (df['Close'] < df['SMA_20']) &           # Price below 20 SMA
-    (df['SMA_20'] < df['SMA_50']) &          # Short MA below long MA
-    (df['RSI_14'] > 30) & (df['RSI_14'] < 70) &  # RSI in neutral zone
-    (df['Close'] < df['BBU_20_2.0'])         # Price below upper Bollinger Band
+ (df['Close'] < df['SMA_20']) & # Price below 20 SMA
+ (df['SMA_20'] < df['SMA_50']) & # Short MA below long MA
+ (df['RSI_14'] > 30) & (df['RSI_14'] < 70) & # RSI in neutral zone
+ (df['Close'] < df['BBU_20_2.0']) # Price below upper Bollinger Band
 )
 
 # Create signals
@@ -230,7 +230,7 @@ df.ta.sma(length=50, append=True)
 
 # Generate signals
 df['position'] = 0
-df.loc[df['SMA_20'] > df['SMA_50'], 'position'] = 1  # Long position
+df.loc[df['SMA_20'] > df['SMA_50'], 'position'] = 1 # Long position
 
 # Calculate returns
 df['returns'] = df['Close'].pct_change()
@@ -249,12 +249,12 @@ print(f"Strategy Return: {(df['cumulative_strategy_returns'].iloc[-1] - 1) * 100
 ```python
 # Use pandas-ta-classic's performance utilities
 from pandas_ta_classic import (
-    percent_return, 
-    log_return, 
-    cagr,
-    calmar_ratio,
-    sharpe_ratio,
-    sortino_ratio
+ percent_return, 
+ log_return, 
+ cagr,
+ calmar_ratio,
+ sharpe_ratio,
+ sortino_ratio
 )
 
 # Calculate metrics on strategy equity curve
@@ -374,15 +374,15 @@ print(df[['Close', 'SMA_20', 'SMA_50', 'RSI_14']].tail())
 ```python
 # Generate entry signals (MA crossover + RSI confirmation)
 entries = (
-    (df['SMA_20'] > df['SMA_50']) &  # Fast MA above slow MA
-    (df['RSI_14'] > 30) &             # RSI above oversold
-    (df['RSI_14'] < 70)               # RSI below overbought
+ (df['SMA_20'] > df['SMA_50']) & # Fast MA above slow MA
+ (df['RSI_14'] > 30) & # RSI above oversold
+ (df['RSI_14'] < 70) # RSI below overbought
 )
 
 # Generate exit signals
 exits = (
-    (df['SMA_20'] < df['SMA_50']) |   # Fast MA below slow MA
-    (df['RSI_14'] > 80)                # RSI extremely overbought
+ (df['SMA_20'] < df['SMA_50']) | # Fast MA below slow MA
+ (df['RSI_14'] > 80) # RSI extremely overbought
 )
 ```
 
@@ -391,12 +391,12 @@ exits = (
 ```python
 # Create portfolio
 portfolio = vbt.Portfolio.from_signals(
-    df['Close'],
-    entries,
-    exits,
-    init_cash=10000,
-    fees=0.001,  # 0.1% trading fees
-    freq='1D'
+ df['Close'],
+ entries,
+ exits,
+ init_cash=10000,
+ fees=0.001, # 0.1% trading fees
+ freq='1D'
 )
 
 # Display results
@@ -479,9 +479,9 @@ df_daily['date'] = df_daily.index.date
 
 # Merge daily trend into hourly data
 df_hourly = df_hourly.merge(
-    df_daily[['date', 'daily_trend']], 
-    on='date', 
-    how='left'
+ df_daily[['date', 'daily_trend']], 
+ on='date', 
+ how='left'
 )
 
 print("\nHourly data with daily trend:")
@@ -494,16 +494,16 @@ print(df_hourly[['Close', 'RSI_14', 'daily_trend']].tail())
 # Only take trades aligned with higher timeframe
 # Bullish hourly signal when daily trend is bullish
 hourly_bullish = (
-    (df_hourly['daily_trend'] == 'bullish') &  # Daily uptrend
-    (df_hourly['RSI_14'] < 40) &                # Hourly oversold
-    (df_hourly['MACDh_12_26_9'] > 0)           # MACD histogram positive
+ (df_hourly['daily_trend'] == 'bullish') & # Daily uptrend
+ (df_hourly['RSI_14'] < 40) & # Hourly oversold
+ (df_hourly['MACDh_12_26_9'] > 0) # MACD histogram positive
 )
 
-# Bearish hourly signal when daily trend is bearish  
+# Bearish hourly signal when daily trend is bearish 
 hourly_bearish = (
-    (df_hourly['daily_trend'] == 'bearish') &  # Daily downtrend
-    (df_hourly['RSI_14'] > 60) &                # Hourly overbought
-    (df_hourly['MACDh_12_26_9'] < 0)           # MACD histogram negative
+ (df_hourly['daily_trend'] == 'bearish') & # Daily downtrend
+ (df_hourly['RSI_14'] > 60) & # Hourly overbought
+ (df_hourly['MACDh_12_26_9'] < 0) # MACD histogram negative
 )
 
 df_hourly['mtf_signal'] = 0
@@ -537,38 +537,38 @@ import pandas_ta_classic as ta
 import numpy as np
 
 def trend_strength(high, low, close, length=14):
-    """
-    Custom Trend Strength Indicator
-    Combines ADX, RSI, and price position in Bollinger Bands
-    Returns a score from -100 to +100
-    """
-    # Calculate components
-    adx_df = ta.adx(high, low, close, length=length)
-    rsi = ta.rsi(close, length=length)
-    bbands = ta.bbands(close, length=length)
-    
-    # ADX component (0 to 25 scale)
-    adx_score = (adx_df[f'ADX_{length}'] / 100) * 25
-    
-    # RSI component (-25 to +25 scale)
-    rsi_score = ((rsi - 50) / 50) * 25
-    
-    # Bollinger Band position component (-50 to +50 scale)
-    bb_position = (close - bbands[f'BBM_{length}_2.0']) / (bbands[f'BBU_{length}_2.0'] - bbands[f'BBL_{length}_2.0'])
-    bb_score = bb_position * 50
-    
-    # Combine scores
-    trend_score = adx_score + rsi_score + bb_score
-    
-    # Create result DataFrame
-    result = pd.DataFrame({
-        f'TREND_STRENGTH_{length}': trend_score,
-        f'TS_ADX_{length}': adx_score,
-        f'TS_RSI_{length}': rsi_score,
-        f'TS_BB_{length}': bb_score
-    }, index=close.index)
-    
-    return result
+ """
+ Custom Trend Strength Indicator
+ Combines ADX, RSI, and price position in Bollinger Bands
+ Returns a score from -100 to +100
+ """
+ # Calculate components
+ adx_df = ta.adx(high, low, close, length=length)
+ rsi = ta.rsi(close, length=length)
+ bbands = ta.bbands(close, length=length)
+ 
+ # ADX component (0 to 25 scale)
+ adx_score = (adx_df[f'ADX_{length}'] / 100) * 25
+ 
+ # RSI component (-25 to +25 scale)
+ rsi_score = ((rsi - 50) / 50) * 25
+ 
+ # Bollinger Band position component (-50 to +50 scale)
+ bb_position = (close - bbands[f'BBM_{length}_2.0']) / (bbands[f'BBU_{length}_2.0'] - bbands[f'BBL_{length}_2.0'])
+ bb_score = bb_position * 50
+ 
+ # Combine scores
+ trend_score = adx_score + rsi_score + bb_score
+ 
+ # Create result DataFrame
+ result = pd.DataFrame({
+ f'TREND_STRENGTH_{length}': trend_score,
+ f'TS_ADX_{length}': adx_score,
+ f'TS_RSI_{length}': rsi_score,
+ f'TS_BB_{length}': bb_score
+ }, index=close.index)
+ 
+ return result
 ```
 
 ### Step 2: Test Your Custom Indicator
@@ -608,9 +608,9 @@ ax2.axhline(y=0, color='black', linestyle='--', linewidth=1)
 ax2.axhline(y=50, color='green', linestyle=':', linewidth=1, alpha=0.5)
 ax2.axhline(y=-50, color='red', linestyle=':', linewidth=1, alpha=0.5)
 ax2.fill_between(df.index, 0, df['TREND_STRENGTH_14'], 
-                  where=(df['TREND_STRENGTH_14'] > 0), color='green', alpha=0.3)
+ where=(df['TREND_STRENGTH_14'] > 0), color='green', alpha=0.3)
 ax2.fill_between(df.index, 0, df['TREND_STRENGTH_14'], 
-                  where=(df['TREND_STRENGTH_14'] < 0), color='red', alpha=0.3)
+ where=(df['TREND_STRENGTH_14'] < 0), color='red', alpha=0.3)
 ax2.set_ylabel('Trend Strength')
 ax2.set_xlabel('Date')
 ax2.legend()
@@ -625,8 +625,8 @@ plt.show()
 ```python
 # Generate signals based on custom indicator
 df['signal'] = 0
-df.loc[df['TREND_STRENGTH_14'] > 50, 'signal'] = 1   # Strong bullish
-df.loc[df['TREND_STRENGTH_14'] < -50, 'signal'] = -1  # Strong bearish
+df.loc[df['TREND_STRENGTH_14'] > 50, 'signal'] = 1 # Strong bullish
+df.loc[df['TREND_STRENGTH_14'] < -50, 'signal'] = -1 # Strong bearish
 
 # Count signals
 print(f"Bullish signals: {(df['signal'] == 1).sum()}")
@@ -667,17 +667,17 @@ df.ta.rsi(length=14, append=True)
 
 ```python
 # Pandas TA Classic native patterns (no TA-Lib required)
-df.ta.cdl_doji(append=True)        # Doji pattern
-df.ta.cdl_inside(append=True)      # Inside bar
-df.ta.ha(append=True)              # Heikin Ashi
+df.ta.cdl_doji(append=True) # Doji pattern
+df.ta.cdl_inside(append=True) # Inside bar
+df.ta.ha(append=True) # Heikin Ashi
 
 # If TA-Lib is installed, you can use all patterns
 # Example: Hammer, Shooting Star, Engulfing, etc.
 if ta.Imports['talib']:
-    df.ta.cdl_pattern(name="hammer", append=True)
-    df.ta.cdl_pattern(name="engulfing", append=True)
-    df.ta.cdl_pattern(name="morningstar", append=True)
-    df.ta.cdl_pattern(name="eveningstar", append=True)
+ df.ta.cdl_pattern(name="hammer", append=True)
+ df.ta.cdl_pattern(name="engulfing", append=True)
+ df.ta.cdl_pattern(name="morningstar", append=True)
+ df.ta.cdl_pattern(name="eveningstar", append=True)
 
 print("Patterns detected:")
 pattern_cols = [col for col in df.columns if col.startswith('CDL_')]
@@ -693,25 +693,25 @@ downtrend = df['Close'] < df['SMA_50']
 
 # Bullish setups: bullish pattern + uptrend + oversold RSI
 if 'CDL_HAMMER' in df.columns:
-    bullish_setup = (
-        (df['CDL_HAMMER'] > 0) &  # Hammer pattern detected
-        uptrend &                  # In uptrend
-        (df['RSI_14'] < 50)       # RSI in lower half
-    )
-    
-    df['bullish_pattern_signal'] = bullish_setup.astype(int)
-    print(f"Bullish pattern signals: {bullish_setup.sum()}")
+ bullish_setup = (
+ (df['CDL_HAMMER'] > 0) & # Hammer pattern detected
+ uptrend & # In uptrend
+ (df['RSI_14'] < 50) # RSI in lower half
+ )
+ 
+ df['bullish_pattern_signal'] = bullish_setup.astype(int)
+ print(f"Bullish pattern signals: {bullish_setup.sum()}")
 
 # Bearish setups: bearish pattern + downtrend + overbought RSI
 if 'CDL_SHOOTINGSTAR' in df.columns:
-    bearish_setup = (
-        (df['CDL_SHOOTINGSTAR'] > 0) &  # Shooting star detected
-        downtrend &                      # In downtrend
-        (df['RSI_14'] > 50)             # RSI in upper half
-    )
-    
-    df['bearish_pattern_signal'] = bearish_setup.astype(int)
-    print(f"Bearish pattern signals: {bearish_setup.sum()}")
+ bearish_setup = (
+ (df['CDL_SHOOTINGSTAR'] > 0) & # Shooting star detected
+ downtrend & # In downtrend
+ (df['RSI_14'] > 50) # RSI in upper half
+ )
+ 
+ df['bearish_pattern_signal'] = bearish_setup.astype(int)
+ print(f"Bearish pattern signals: {bearish_setup.sum()}")
 ```
 
 ### Step 4: Pattern Statistics
@@ -719,15 +719,15 @@ if 'CDL_SHOOTINGSTAR' in df.columns:
 ```python
 # Analyze pattern effectiveness
 if 'CDL_DOJI' in df.columns:
-    doji_days = df[df['CDL_DOJI'] != 0].copy()
-    
-    # What happens 5 days after a doji?
-    doji_days['future_return'] = df['Close'].shift(-5) / df['Close'] - 1
-    
-    print("\nDoji Pattern Analysis:")
-    print(f"Total Doji patterns: {len(doji_days)}")
-    print(f"Average return after 5 days: {doji_days['future_return'].mean() * 100:.2f}%")
-    print(f"Win rate: {(doji_days['future_return'] > 0).sum() / len(doji_days) * 100:.2f}%")
+ doji_days = df[df['CDL_DOJI'] != 0].copy()
+ 
+ # What happens 5 days after a doji?
+ doji_days['future_return'] = df['Close'].shift(-5) / df['Close'] - 1
+ 
+ print("\nDoji Pattern Analysis:")
+ print(f"Total Doji patterns: {len(doji_days)}")
+ print(f"Average return after 5 days: {doji_days['future_return'].mean() * 100:.2f}%")
+ print(f"Win rate: {(doji_days['future_return'] > 0).sum() / len(doji_days) * 100:.2f}%")
 ```
 
 ### Step 5: Visualize Patterns
@@ -745,14 +745,14 @@ ax.plot(df.index, df['SMA_50'], label='SMA 50', linewidth=2, alpha=0.7)
 
 # Mark pattern occurrences
 if 'CDL_DOJI' in df.columns:
-    doji_mask = df['CDL_DOJI'] != 0
-    ax.scatter(df[doji_mask].index, df[doji_mask]['Close'], 
-               color='blue', marker='o', s=100, label='Doji', zorder=5)
+ doji_mask = df['CDL_DOJI'] != 0
+ ax.scatter(df[doji_mask].index, df[doji_mask]['Close'], 
+ color='blue', marker='o', s=100, label='Doji', zorder=5)
 
 if 'CDL_HAMMER' in df.columns:
-    hammer_mask = df['CDL_HAMMER'] > 0
-    ax.scatter(df[hammer_mask].index, df[hammer_mask]['Close'], 
-               color='green', marker='^', s=150, label='Hammer', zorder=5)
+ hammer_mask = df['CDL_HAMMER'] > 0
+ ax.scatter(df[hammer_mask].index, df[hammer_mask]['Close'], 
+ color='green', marker='^', s=150, label='Hammer', zorder=5)
 
 ax.set_title('Candlestick Patterns on SPY')
 ax.set_xlabel('Date')
@@ -771,7 +771,7 @@ plt.show()
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 You've completed the tutorials! Here's what to explore next:
 
@@ -781,11 +781,11 @@ You've completed the tutorials! Here's what to explore next:
 4. **Read the Docs** - Deep dive into the [full documentation](https://xgboosted.github.io/pandas-ta-classic/)
 5. **Join the Community** - Share your strategies in [Discussions](https://github.com/xgboosted/pandas-ta-classic/discussions)
 
-## 📚 Additional Resources
+## Additional Resources
 
-- [QUICKSTART.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/QUICKSTART.md) - Quick reference guide
+- [QUICKSTART.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/QUICKSTART.md) - Quick reference guide
 - [Examples Directory](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) - Jupyter notebooks
 - [Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - All indicators
 - [Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Advanced strategies
 
-Happy Trading! 📈
+Happy Trading! 

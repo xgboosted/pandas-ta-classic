@@ -6,7 +6,7 @@
 # Package manager detection (prefer uv if available, fallback to pip)
 PIP := $(shell command -v uv pip 2> /dev/null || echo pip)
 
-.PHONY: all help clean install install-dev install-all test test-ext test-metrics test-strats test-ta test-utils docs validate
+.PHONY: all help clean install install-dev install-all test test-ext test-metrics test-strats test-ta test-utils docs
 
 # Default target
 all: test
@@ -35,7 +35,6 @@ help:
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean            Remove Python cache files"
-	@echo "  make validate         Validate package structure"
 	@echo "  make lint             Run code quality checks"
 	@echo "  make format           Format code with black"
 	@echo ""
@@ -97,10 +96,6 @@ clean:
 caches:
 	@echo "Finding Python cache files..."
 	find . -type f -name '*.pyc' -o -type d -name '__pycache__'
-
-validate:
-	@echo "Validating package structure..."
-	python validate_structure.py
 
 lint:
 	@echo "Running flake8..."
