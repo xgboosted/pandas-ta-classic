@@ -12,34 +12,7 @@ Welcome to **Pandas TA Classic**! This guide will help you get started quickly w
 
 ## Installation
 
-### Quick Install
-
-The fastest way to get started:
-
-```bash
-pip install pandas-ta-classic
-```
-
-Or using `uv` (faster):
-
-```bash
-uv pip install pandas-ta-classic
-```
-
-### With Optional Dependencies
-
-For full functionality including TA-Lib candlestick patterns:
-
-```bash
-pip install pandas-ta-classic TA-Lib
-```
-
-### Verify Installation
-
-```python
-import pandas_ta_classic as ta
-print(ta.version)
-```
+See the [Installation](installation.rst) page for full installation instructions, optional dependencies (TA-Lib, yfinance, numba), and development setup.
 
 ## Your First Indicators
 

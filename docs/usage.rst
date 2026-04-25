@@ -65,29 +65,3 @@ A **Pandas TA Classic** Strategy is a named group of indicators to be run by the
     
     # Run the Strategy
     df.ta.strategy(MyStrategy)
-
-Quick Start
------------
-
-.. code-block:: python
-
-    import pandas as pd
-    import pandas_ta_classic as ta
-
-    # Load your data
-    df = pd.read_csv("path/to/symbol.csv", sep=",")
-    # OR if you have yfinance installed
-    df = df.ta.ticker("aapl")
-
-    # VWAP requires the DataFrame index to be a DatetimeIndex
-    df.set_index(pd.DatetimeIndex(df["datetime"]), inplace=True)
-
-    # Calculate Returns and append to the df DataFrame
-    df.ta.log_return(cumulative=True, append=True)
-    df.ta.percent_return(cumulative=True, append=True)
-
-    # Check new columns
-    df.columns
-
-    # Take a look
-    df.tail()

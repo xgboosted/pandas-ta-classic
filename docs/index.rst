@@ -64,10 +64,10 @@ Table of Contents
    :maxdepth: 2
    :caption: Getting Started:
 
-   QUICKSTART
-   TUTORIALS
    installation
+   QUICKSTART
    usage
+   TUTORIALS
 
 .. toctree::
    :maxdepth: 2
