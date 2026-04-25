@@ -85,7 +85,7 @@ jobs:
   # Job 3: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
   # These versions are used for:
-  #   - test-matrix job: testing across all supported Python versions
+  #   - testing job: testing across all supported Python versions
   #   - pypi-publish job: replacing {{LATEST-N}} placeholders in pyproject.toml
   generate-matrix:
     runs-on: ubuntu-latest
@@ -126,8 +126,8 @@ jobs:
         echo "Generated Python versions: $versions"
 
 
-  # Job 4: Test matrix - Run tests on all dynamically generated Python versions
-  test-matrix:
+  # Job 4: Testing - Run tests on all dynamically generated Python versions
+  testing:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix]
     strategy:
@@ -187,7 +187,7 @@ jobs:
   # Job 5: Documentation - Build and deploy documentation (independent deployment)
   documentation:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix, test-matrix]
+    needs: [code-quality, generate-matrix, testing]
     if: github.event_name == 'push'
     environment: 
       name: docs-production
@@ -264,7 +264,7 @@ jobs:
   #   4. Preserves Development Status :: 5 - Production/Stable and all other classifiers
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix, test-matrix]
+    needs: [code-quality, generate-matrix, testing]
     if: github.event_name == 'release' && github.event.action == 'published'
     environment:
       name: pypi-production
