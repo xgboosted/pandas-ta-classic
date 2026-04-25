@@ -149,6 +149,8 @@ class Watchlist(object):
                     "yfinance not available. Please install with: pip install yfinance"
                 )
             self.ds = yf
+            self.file_path = Path(__file__).resolve().parent / "data"
+            self.file_path.mkdir(parents=True, exist_ok=True)
 
     def _drop_columns(self, df: pd.DataFrame, cols: list = None) -> pd.DataFrame:
         if cols is None or not isinstance(cols, list):
@@ -256,7 +258,21 @@ class Watchlist(object):
             if self.ds_name in ["av", "yahoo"]:
                 df = pd.read_csv(current_file, index_col=0)
                 if not df.ta.datetime_ordered:
-                    df = df.set_index(pd.DatetimeIndex(df.index))
+                    # Prefer an explicit date/datetime column over a raw integer index
+                    date_col = next(
+                        (c for c in df.columns if c.lower() in ("date", "datetime", "timestamp", "time")),
+                        None,
+                    )
+                    if date_col is not None:
+                        df = df.set_index(
+                            pd.to_datetime(df[date_col], utc=True).dt.tz_convert(None)
+                        )
+                        df.index.name = date_col
+                        df.drop(columns=[date_col], errors="ignore", inplace=True)
+                    else:
+                        df = df.set_index(
+                            pd.to_datetime(df.index, utc=True).tz_convert(None)
+                        )
                 print(file_loaded)
             else:
                 print(f"[X] {filename_} not found in {Path(self.file_path)}")
@@ -393,7 +409,7 @@ if __name__ == "__main__":
     # Check if local sample data exists
     from pathlib import Path
 
-    sample_data_path = Path("examples/data/SPY_D.csv")
+    sample_data_path = Path(__file__).resolve().parent / "data" / "SPY_D.csv"
 
     if sample_data_path.exists():
         print(f"Using local sample data: {sample_data_path}")

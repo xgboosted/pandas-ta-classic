@@ -80,6 +80,8 @@ def yf(ticker: str, **kwargs):
     interval = kwargs.pop("interval", "1d")
     proxy = kwargs.pop("proxy", {})
     show = kwargs.pop("show", None)
+    kwargs.pop("lc_cols", None)
+    kwargs.pop("ds", None)
 
     if not Imports["yfinance"]:
         logger.error(
@@ -89,22 +91,16 @@ def yf(ticker: str, **kwargs):
     if Imports["yfinance"] and ticker is not None:
         import yfinance as yfra
 
-        yfra.pdr_override()
+        if hasattr(yfra, "pdr_override"):
+            yfra.pdr_override()
 
         # Ticker Info & Chart History
         yfd = yfra.Ticker(ticker)
 
         try:
-            df = yfd.history(period=period, interval=interval, proxy=proxy, **kwargs)
-        except:
-            if yfra.__version__ == "0.1.60":
-                print(
-                    f"[!] If history is not downloading, see yfinance Issue #760 by user djl0."
-                )
-                print(
-                    f"[!] https://github.com/ranaroussi/yfinance/issues/760#issuecomment-877355832"
-                )
-                return None
+            df = yfd.history(period=period, interval=interval, **kwargs)
+        except Exception:
+            return None
 
         if df.empty:
             return None
