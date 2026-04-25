@@ -67,12 +67,9 @@ jobs:
     - name: Install dependencies and quality tools
       run: |
         python -m pip install --upgrade pip
-        # Install package with dependencies from pyproject.toml
-        pip install -e .
-        # Install TA-Lib for candlestick patterns
+        pip install -e ".[lint]"
+        # Install TA-Lib for candlestick patterns (requires system C library pre-installed above)
         pip install TA-Lib
-        # Install code quality tools
-        pip install flake8 black
     
     - name: Check code formatting with black
       run: |
@@ -224,17 +221,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install package with dependencies from pyproject.toml
-        pip install -e .
-        # Install TA-Lib for candlestick patterns
+        pip install -e ".[docs]"
+        # Install TA-Lib for candlestick patterns (requires system C library pre-installed above)
         pip install TA-Lib
     
     - name: Setup Pages
       uses: actions/configure-pages@v6
-    
-    - name: Install Sphinx dependencies
-      run: |
-        pip install sphinx sphinx-rtd-theme
           
     - name: Build Sphinx documentation
       run: |
@@ -439,7 +431,7 @@ jobs:
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine setuptools-scm
+        pip install ".[publish]"
     
     - name: Build package
       run: python -m build --wheel

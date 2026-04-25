@@ -52,6 +52,19 @@ optional = [
     "tqdm",
 ]
 
+# CI code quality tools
+lint = [
+    "flake8>=6.0.0",
+    "black>=23.0.0",
+]
+
+# PyPI publishing tools
+publish = [
+    "build>=0.10.0",
+    "twine>=4.0.0",
+    "setuptools-scm>=7.0.0",
+]
+
 # Development tools (code quality, linting, building)
 dev = [
     # Include testing dependencies
@@ -59,16 +72,14 @@ dev = [
     
     # Include documentation dependencies  
     "pandas-ta-classic[docs]",
+
+    # Include lint and publish tools
+    "pandas-ta-classic[lint]",
+    "pandas-ta-classic[publish]",
     
     # Type checking and linting
     "mypy>=1.0.0",
-    "black>=23.0.0",
-    "flake8>=6.0.0", 
     "isort>=5.0.0",
-    
-    # Build tools
-    "build>=0.10.0",
-    "twine>=4.0.0",
     
     # Pre-commit hooks
     "pre-commit>=3.0.0",
