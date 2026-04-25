@@ -1,4 +1,4 @@
-# Pandas TA Classic - Quickstart Guide
+# Quickstart
 
 Welcome to **Pandas TA Classic**! This guide will help you get started quickly with calculating technical indicators for your financial data analysis.
 
@@ -121,6 +121,7 @@ print(df.tail())
 ### Using Built-in Ticker Method
 
 ```python
+import pandas as pd
 import pandas_ta_classic as ta
 
 # Create empty DataFrame
@@ -214,14 +215,14 @@ df.ta.ad(append=True)
 
 ### 5. Support & Resistance
 
-Find key price levels:
+Find key price levels using the Parabolic SAR and Donchian Channel:
 
 ```python
-# Pivot Points
-df.ta.pivot(append=True)
+# Parabolic Stop and Reverse
+df.ta.psar(append=True)
 
-# Fibonacci Retracement (on a subset)
-fib = ta.fib(df['high'], df['low'])
+# Donchian Channel (high/low price channels)
+df.ta.donchian(lower_length=20, upper_length=20, append=True)
 ```
 
 ## Understanding Indicator Output
@@ -398,8 +399,8 @@ pip install TA_Lib-0.4.XX-cpXX-cpXX-win_amd64.whl
 Now that you've got the basics, explore more:
 
 1. **[Full Documentation](https://xgboosted.github.io/pandas-ta-classic/)** - Complete API reference
-2. **[Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/TUTORIALS.md)** - Step-by-step guides for common tasks
-3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - All 203 indicators
+2. **[Tutorials](https://xgboosted.github.io/pandas-ta-classic/tutorials.html)** - Step-by-step guides for common tasks
+3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - All 224 indicators
 4. **[Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html)** - Advanced strategy system
 5. **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
 

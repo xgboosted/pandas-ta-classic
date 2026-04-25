@@ -1,4 +1,4 @@
-# Pandas TA Classic - Tutorials
+# Tutorials
 
 Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 
@@ -337,6 +337,8 @@ print(f"{'='*50}")
 ## Tutorial 4: Integrating with VectorBT
 
 Use pandas-ta-classic indicators with the VectorBT backtesting framework.
+
+> **See also:** The [Performance Metrics](performance.rst) page covers `ta.tsignals` and includes a brief VectorBT integration example. This tutorial goes further with a full end-to-end backtest workflow.
 
 ### Goal
 Backtest strategies efficiently using VectorBT's vectorized approach.
