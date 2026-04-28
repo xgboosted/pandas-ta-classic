@@ -306,9 +306,11 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         np.isnan(_c_gt_prev),
         np.nan,
         np.where(
-            (_c_gt_prev == 1) & (_v_gt_prev == 1), 1.0,
+            (_c_gt_prev == 1) & (_v_gt_prev == 1),
+            1.0,
             np.where(
-                (_c_gt_prev == 1) & (_v_gt_prev == 0), 2.0,
+                (_c_gt_prev == 1) & (_v_gt_prev == 0),
+                2.0,
                 np.where((_c_gt_prev == 0) & (_v_gt_prev == 1), 3.0, 4.0),
             ),
         ),
@@ -365,7 +367,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     # ALMA_10: Arnaud Legoux Gaussian weights  m=0.85*9=7.65, s=10/6
     _alma10_m, _alma10_s = 0.85 * 9.0, 10.0 / 6.0
     _alma10_raw = np.array(
-        [np.exp(-((i - _alma10_m) ** 2) / (2 * _alma10_s ** 2)) for i in range(10)]
+        [np.exp(-((i - _alma10_m) ** 2) / (2 * _alma10_s**2)) for i in range(10)]
     )
     _alma10_ref = _wma_r(cv, _alma10_raw[::-1] / _alma10_raw.sum())
 
@@ -419,7 +421,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     # UI_14: sqrt(mean(dd_pct²,14))  where dd_pct=(close-rollmax)/rollmax*100
     _ui_rmax = c.rolling(14).max()
     _ui14_dd = (c - _ui_rmax) / _ui_rmax * 100
-    _ui14_ref = np.sqrt((_ui14_dd ** 2).rolling(14).mean())
+    _ui14_ref = np.sqrt((_ui14_dd**2).rolling(14).mean())
 
     # ---- Performance ----------------------------------------------------
     # DRAWDOWN: cummax-based arithmetic
