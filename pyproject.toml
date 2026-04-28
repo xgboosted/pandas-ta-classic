@@ -54,7 +54,7 @@ optional = [
 
 # CI code quality tools
 lint = [
-    "flake8>=6.0.0",
+    "ruff>=0.6.0",
     "black>=23.0.0",
 ]
 
@@ -126,6 +126,14 @@ Homepage = "https://github.com/xgboosted/pandas-ta-classic"
 Repository = "https://github.com/xgboosted/pandas-ta-classic.git"
 Documentation = "https://xgboosted.github.io/pandas-ta-classic/"
 "Bug Tracker" = "https://github.com/xgboosted/pandas-ta-classic/issues"
+
+[tool.pytest.ini_options]
+markers = [
+    "regression: snapshot regression tests — run with -m regression",
+]
+
+[tool.ruff]
+line-length = 127
 
 [tool.setuptools]
 packages = [

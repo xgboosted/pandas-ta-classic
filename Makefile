@@ -4,9 +4,9 @@
 # Python version: the latest stable plus the prior 4 versions (dynamically managed via CI/CD)
 
 # Package manager detection (prefer uv if available, fallback to pip)
-PIP := $(shell command -v uv pip 2> /dev/null || echo pip)
+PIP := $(shell if command -v uv >/dev/null 2>&1; then echo "uv pip"; else echo "pip"; fi)
 
-.PHONY: all help clean install install-dev install-all test test-ext test-metrics test-strats test-ta test-utils docs
+.PHONY: all help clean caches install install-dev install-all init test test-ext test-metrics test-strats test-ta test-utils docs docs-serve lint format
 
 # Default target
 all: test
@@ -95,12 +95,12 @@ clean:
 
 caches:
 	@echo "Finding Python cache files..."
-	find . -type f -name '*.pyc' -o -type d -name '__pycache__'
+	find . \( -type f -name '*.pyc' \) -o \( -type d -name '__pycache__' \)
 
 lint:
-	@echo "Running flake8..."
-	flake8 pandas_ta_classic --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 pandas_ta_classic --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=pandas_ta_classic/__init__.py
+	@echo "Running ruff..."
+	ruff check pandas_ta_classic --select E9,F63,F7,F82
+	ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 
 format:
 	@echo "Formatting code with black..."

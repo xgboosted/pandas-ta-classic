@@ -260,7 +260,11 @@ class Watchlist(object):
                 if not df.ta.datetime_ordered:
                     # Prefer an explicit date/datetime column over a raw integer index
                     date_col = next(
-                        (c for c in df.columns if c.lower() in ("date", "datetime", "timestamp", "time")),
+                        (
+                            c
+                            for c in df.columns
+                            if c.lower() in ("date", "datetime", "timestamp", "time")
+                        ),
                         None,
                     )
                     if date_col is not None:
