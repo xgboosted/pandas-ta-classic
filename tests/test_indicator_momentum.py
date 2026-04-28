@@ -316,6 +316,30 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "MACDAS_12_26_9")
 
+    def test_macdext(self):
+        # EMA-based should closely match regular MACD
+        result = pandas_ta.macdext(self.close, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "MACDEXT_12_26_9")
+        self.assertListEqual(
+            list(result.columns),
+            ["MACDEXT_12_26_9", "MACDEXTs_12_26_9", "MACDEXTh_12_26_9"],
+        )
+        # SMA-based should give different values
+        result_sma = pandas_ta.macdext(
+            self.close, fastmatype=0, slowmatype=0, signalmatype=0, talib=False
+        )
+        self.assertIsInstance(result_sma, DataFrame)
+        self.assertFalse(
+            result["MACDEXT_12_26_9"].equals(result_sma["MACDEXT_12_26_9"])
+        )
+        # With talib
+        result_tal = pandas_ta.macdext(self.close)
+        self.assertIsInstance(result_tal, DataFrame)
+        self.assertEqual(result_tal.name, "MACDEXT_12_26_9")
+        pandas_ta.macdext(self.close, fillna=0)
+        pandas_ta.macdext(self.close, fill_method="ffill")
+
     def test_mom(self):
         result = pandas_ta.mom(self.close, talib=False)
         self.assertIsInstance(result, Series)

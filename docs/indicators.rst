@@ -1,11 +1,11 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 178 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (238 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
+**Pandas TA Classic** includes 180 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (240 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
 * **Candles** (67) - 62 CDL patterns via ``cdl_pattern()`` + ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``, ``cdl_pattern`` as Category entries (``cdl_doji`` and ``cdl_inside`` appear in both counts)
-* **Cycles** (7) - Cycle-based and Hilbert Transform indicators  
-* **Momentum** (51) - Momentum and oscillator indicators
+* **Cycles** (8) - Cycle-based and Hilbert Transform indicators  
+* **Momentum** (52) - Momentum and oscillator indicators
 * **Overlap** (40) - Moving averages and trend-following indicators
 * **Performance** (3) - Performance and return metrics
 * **Statistics** (13) - Statistical analysis functions
@@ -78,7 +78,7 @@ Other candle indicators:
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
        # variance, wcp, willr, wma
 
-Cycles (7)
+Cycles (8)
 ----------
 
 * *Detrended Synthetic Price*: **dsp**
@@ -88,8 +88,9 @@ Cycles (7)
 * *Hilbert Transform — Phasor Components*: **ht_phasor** (returns InPhase + Quadrature)
 * *Hilbert Transform — SineWave*: **ht_sine** (returns Sine + LeadSine)
 * *Hilbert Transform — Trend vs Cycle Mode*: **ht_trendmode**
+* *Mesa Sine Wave*: **msw** (returns MSW_SINE + MSW_LEAD; period-based DFT cycle detector)
 
-Momentum (51)
+Momentum (52)
 -------------
 
 Momentum and oscillator indicators for measuring the speed of price changes:
@@ -115,6 +116,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *KST Oscillator*: **kst**
 * *Linear Regression RSI*: **lrsi**
 * *Moving Average Convergence Divergence*: **macd**
+* *MACD Extended*: **macdext** (MACD with controllable MA type per line; MA types: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
 * *Momentum*: **mom**
 * *Pretty Good Oscillator*: **pgo**
 * *Projection Oscillator*: **po**

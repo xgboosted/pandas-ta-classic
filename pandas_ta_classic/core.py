@@ -1073,6 +1073,11 @@ class AnalysisIndicators(BasePandasObject):
         result = ht_trendmode(close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def msw(self, period=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = msw(close=close, period=period, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     # Momentum
     def ao(self, fast=None, slow=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
@@ -1307,6 +1312,31 @@ class AnalysisIndicators(BasePandasObject):
         close = self._get_column(kwargs.pop("close", "close"))
         result = macd(
             close=close, fast=fast, slow=slow, signal=signal, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
+    def macdext(
+        self,
+        fast=None,
+        slow=None,
+        signal=None,
+        fastmatype=None,
+        slowmatype=None,
+        signalmatype=None,
+        offset=None,
+        **kwargs,
+    ):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = macdext(
+            close=close,
+            fast=fast,
+            slow=slow,
+            signal=signal,
+            fastmatype=fastmatype,
+            slowmatype=slowmatype,
+            signalmatype=signalmatype,
+            offset=offset,
+            **kwargs,
         )
         return self._post_process(result, **kwargs)
 
