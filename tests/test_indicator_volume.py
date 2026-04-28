@@ -124,6 +124,14 @@ class TestVolume(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KVO_34_55_13")
 
+    def test_marketfi(self):
+        result = pandas_ta.marketfi(self.high, self.low, self.volume_)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "MARKETFI")
+        self.assertIsNone(pandas_ta.marketfi(None, self.low, self.volume_))
+        self.assertIsNone(pandas_ta.marketfi(self.high, None, self.volume_))
+        self.assertIsNone(pandas_ta.marketfi(self.high, self.low, None))
+
     def test_mfi(self):
         result = pandas_ta.mfi(
             self.high, self.low, self.close, self.volume_, talib=False
@@ -207,3 +215,17 @@ class TestVolume(TestCase):
         result = pandas_ta.vfi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VFI_130")
+
+    def test_vosc(self):
+        result = pandas_ta.vosc(self.volume_)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "VOSC_14_28")
+        self.assertIsNone(pandas_ta.vosc(None))
+
+    def test_wad(self):
+        result = pandas_ta.wad(self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "WAD")
+        self.assertIsNone(pandas_ta.wad(None, self.low, self.close))
+        self.assertIsNone(pandas_ta.wad(self.high, None, self.close))
+        self.assertIsNone(pandas_ta.wad(self.high, self.low, None))

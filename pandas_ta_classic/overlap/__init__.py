@@ -15,6 +15,7 @@ from .kama import kama
 from .linreg import linreg
 from .ma import ma
 from .mama import mama
+from .mavp import mavp
 from .mcgd import mcgd
 from .midpoint import midpoint
 from .midprice import midprice

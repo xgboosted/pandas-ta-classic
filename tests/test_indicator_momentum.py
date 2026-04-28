@@ -238,6 +238,12 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "FISHERT_9_1")
 
+    def test_fosc(self):
+        result = pandas_ta.fosc(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "FOSC_14")
+        self.assertIsNone(pandas_ta.fosc(None))
+
     def test_inertia(self):
         result = pandas_ta.inertia(self.close)
         self.assertIsInstance(result, Series)
@@ -393,6 +399,69 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ROC_10")
 
+    def test_rocp(self):
+        result = pandas_ta.rocp(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "ROCP_10")
+
+        try:
+            expected = tal.ROCP(self.close)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        result = pandas_ta.rocp(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "ROCP_10")
+
+    def test_rocr(self):
+        result = pandas_ta.rocr(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "ROCR_10")
+
+        try:
+            expected = tal.ROCR(self.close)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        result = pandas_ta.rocr(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "ROCR_10")
+
+    def test_rocr100(self):
+        result = pandas_ta.rocr100(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "ROCR100_10")
+
+        try:
+            expected = tal.ROCR100(self.close)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        result = pandas_ta.rocr100(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "ROCR100_10")
+
     def test_rsi(self):
         result = pandas_ta.rsi(self.close, talib=False)
         self.assertIsInstance(result, Series)
@@ -524,6 +593,38 @@ class TestMomentum(TestCase):
                 self.assertGreater(stochd_corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
+
+    def test_stochf(self):
+        result = pandas_ta.stochf(self.high, self.low, self.close, talib=False)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "STOCHF_5_3")
+
+        try:
+            expected = tal.STOCHF(self.high, self.low, self.close, 5, 3, 0)
+            expecteddf = DataFrame(
+                {"STOCHFk_5_3": expected[0], "STOCHFd_5_3": expected[1]}
+            )
+            pdt.assert_frame_equal(result, expecteddf)
+        except AssertionError:
+            try:
+                stochfk_corr = pandas_ta.utils.df_error_analysis(
+                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
+                )
+                self.assertGreater(stochfk_corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result.iloc[:, 0], CORRELATION, ex)
+
+            try:
+                stochfd_corr = pandas_ta.utils.df_error_analysis(
+                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
+                )
+                self.assertGreater(stochfd_corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
+
+        result = pandas_ta.stochf(self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "STOCHF_5_3")
 
     def test_stochrsi(self):
         # TV Correlation

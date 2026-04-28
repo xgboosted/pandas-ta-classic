@@ -14,6 +14,7 @@ from .dm import dm
 from .er import er
 from .eri import eri
 from .fisher import fisher
+from .fosc import fosc
 from .inertia import inertia
 from .kdj import kdj
 from .kst import kst
@@ -27,6 +28,9 @@ from .psl import psl
 from .pvo import pvo
 from .qqe import qqe
 from .roc import roc
+from .rocp import rocp
+from .rocr import rocr
+from .rocr100 import rocr100
 from .rsi import rsi
 from .rsx import rsx
 from .rvgi import rvgi
@@ -36,6 +40,7 @@ from .squeeze import squeeze
 from .squeeze_pro import squeeze_pro
 from .stc import stc
 from .stoch import stoch
+from .stochf import stochf
 from .stochrsi import stochrsi
 from .td_seq import td_seq
 from .trix import trix

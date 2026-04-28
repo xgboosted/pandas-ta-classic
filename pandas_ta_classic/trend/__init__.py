@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .adx import adx
 from .adxr import adxr
+from .dx import dx
 from .amat import amat
 from .aroon import aroon
 from .chop import chop
@@ -14,6 +15,7 @@ from .long_run import long_run
 from .pmax import pmax
 from .psar import psar
 from .qstick import qstick
+from .sarext import sarext
 from .short_run import short_run
 from .tsignals import tsignals
 from .ttm_trend import ttm_trend

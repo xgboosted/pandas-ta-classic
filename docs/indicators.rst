@@ -1,17 +1,17 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 164 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (224 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
+**Pandas TA Classic** includes 178 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (238 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
 * **Candles** (67) - 62 CDL patterns via ``cdl_pattern()`` + ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``, ``cdl_pattern`` as Category entries (``cdl_doji`` and ``cdl_inside`` appear in both counts)
 * **Cycles** (7) - Cycle-based and Hilbert Transform indicators  
-* **Momentum** (45) - Momentum and oscillator indicators
-* **Overlap** (39) - Moving averages and trend-following indicators
+* **Momentum** (51) - Momentum and oscillator indicators
+* **Overlap** (40) - Moving averages and trend-following indicators
 * **Performance** (3) - Performance and return metrics
-* **Statistics** (12) - Statistical analysis functions
-* **Trend** (22) - Trend identification and direction indicators
-* **Volatility** (15) - Volatility and range-based indicators
-* **Volume** (16) - Volume analysis indicators
+* **Statistics** (13) - Statistical analysis functions
+* **Trend** (24) - Trend identification and direction indicators
+* **Volatility** (17) - Volatility and range-based indicators
+* **Volume** (19) - Volume analysis indicators
 
 .. note::
    The category system now uses **dynamic discovery** - indicators are automatically detected from the package structure, ensuring the list is always up-to-date with available indicators.
@@ -89,7 +89,7 @@ Cycles (7)
 * *Hilbert Transform — SineWave*: **ht_sine** (returns Sine + LeadSine)
 * *Hilbert Transform — Trend vs Cycle Mode*: **ht_trendmode**
 
-Momentum (45)
+Momentum (51)
 -------------
 
 Momentum and oscillator indicators for measuring the speed of price changes:
@@ -109,6 +109,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Efficiency Ratio*: **er**
 * *Elder Ray Index*: **eri**
 * *Fisher Transform*: **fisher**
+* *Forecast Oscillator*: **fosc**
 * *Inertia*: **inertia**
 * *KDJ*: **kdj**
 * *KST Oscillator*: **kst**
@@ -122,6 +123,9 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Percentage Volume Oscillator*: **pvo**
 * *Quantitative Qualitative Estimation*: **qqe** (returns QQE, QQEs, QQEl, QQEb_l, QQEb_s, QQEd)
 * *Rate of Change*: **roc**
+* *Rate of Change Percentage*: **rocp**
+* *Rate of Change Ratio*: **rocr**
+* *Rate of Change Ratio * 100*: **rocr100**
 * *Relative Strength Index*: **rsi**
 * *Relative Strength Xtra*: **rsx**
 * *Relative Vigor Index*: **rvgi**
@@ -131,6 +135,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Squeeze*: **squeeze** (Default is John Carter's. Enable Lazybear's with ``lazybear=True``)
 * *Squeeze Pro*: **squeeze_pro**
 * *Stochastic Oscillator*: **stoch**
+* *Stochastic Fast*: **stochf**
 * *Stochastic RSI*: **stochrsi**
 * *TD Sequential*: **td_seq** (Excluded from ``df.ta.strategy()``)
 * *Trix*: **trix**
@@ -140,7 +145,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Volume Weighted MACD*: **vwmacd**
 * *Williams %R*: **willr**
 
-Overlap (39)
+Overlap (40)
 ------------
 
 Moving averages and trend-following indicators:
@@ -161,6 +166,7 @@ Moving averages and trend-following indicators:
 * *Linear Regression*: **linreg**
 * *Moving Average*: **ma** (Generic moving average selector)
 * *MESA Adaptive Moving Average*: **mama** (returns MAMA + FAMA)
+* *Moving Average with Variable Period*: **mavp**
 * *Madrid Moving Average Ribbon*: **mmar**
 * *McGinley Dynamic*: **mcgd**
 * *Midpoint*: **midpoint**
@@ -194,7 +200,7 @@ Performance and return metrics. Use parameter ``cumulative=True`` for cumulative
 * *Log Return*: **log_return**
 * *Percent Return*: **percent_return**
 
-Statistics (12)
+Statistics (13)
 ---------------
 
 Statistical analysis functions:
@@ -208,11 +214,12 @@ Statistical analysis functions:
 * *Quantile*: **quantile**
 * *Skew*: **skew**
 * *Standard Deviation*: **stdev**
+* *Standard Error*: **stderr**
 * *Think or Swim Standard Deviation All*: **tos_stdevall**
 * *Variance*: **variance**
 * *Z Score*: **zscore**
 
-Trend (22)
+Trend (24)
 ----------
 
 Trend identification and direction indicators:
@@ -227,11 +234,13 @@ Trend identification and direction indicators:
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
+* *Directional Index*: **dx**
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
 * *Parabolic Stop and Reverse*: **psar**
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick**
+* *Parabolic SAR Extended*: **sarext**
 * *Short Run*: **short_run**
 * *Trend Signals*: **tsignals**
 * *TTM Trend*: **ttm_trend**
@@ -239,7 +248,7 @@ Trend identification and direction indicators:
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**
 
-Volatility (15)
+Volatility (17)
 ---------------
 
 Volatility and range-based indicators:
@@ -249,7 +258,9 @@ Volatility and range-based indicators:
 * *Average True Range*: **atr**
 * *Bollinger Bands*: **bbands**
 * *Chandelier Exit*: **ce**
+* *Chaikins Volatility*: **cvi**
 * *Donchian Channel*: **donchian**
+* *Historical Volatility*: **hvol** (Annualized; ``annualization=252`` by default)
 * *Holt-Winter Channel*: **hwc**
 * *Keltner Channel*: **kc**
 * *Mass Index*: **massi**
@@ -260,7 +271,7 @@ Volatility and range-based indicators:
 * *True Range*: **true_range**
 * *Ulcer Index*: **ui**
 
-Volume (16)
+Volume (19)
 -----------
 
 Volume analysis indicators:
@@ -272,6 +283,7 @@ Volume analysis indicators:
 * *Elder's Force Index*: **efi**
 * *Ease of Movement*: **eom**
 * *Klinger Volume Oscillator*: **kvo**
+* *Market Facilitation Index*: **marketfi**
 * *Money Flow Index*: **mfi**
 * *Negative Volume Index*: **nvi**
 * *On-Balance Volume*: **obv**
@@ -280,4 +292,6 @@ Volume analysis indicators:
 * *Price Volume Rank*: **pvr**
 * *Price Volume Trend*: **pvt**
 * *Volume Flow Indicator*: **vfi**
+* *Volume Oscillator*: **vosc**
 * *Volume Profile*: **vp**
+* *Williams Accumulation/Distribution*: **wad**

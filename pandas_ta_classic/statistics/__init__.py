@@ -7,6 +7,7 @@ from .mad import mad
 from .median import median
 from .quantile import quantile
 from .skew import skew
+from .stderr import stderr
 from .stdev import stdev
 from .tos_stdevall import tos_stdevall
 from .variance import variance
