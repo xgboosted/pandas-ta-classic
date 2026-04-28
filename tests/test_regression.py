@@ -11,10 +11,7 @@ series (e.g. EMA initialisation, window boundary handling) — complementing
 test_indicator_values.py which checks only the last value and non-NaN count.
 
 Run the full suite:
-    pytest tests/test_regression.py
-
-Run only regression tests across the whole project:
-    pytest -m regression
+    python -m unittest tests/test_regression.py
 """
 
 import json
@@ -23,7 +20,6 @@ from pathlib import Path
 from unittest import TestCase
 
 import pandas as pd
-import pytest
 
 import pandas_ta_classic as ta
 
@@ -117,7 +113,6 @@ def _approx_equal(actual: float, expected: float) -> bool:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.regression
 class TestRegressionSnapshots(TestCase):
     """Spot-check indicator values at five interior positions across SPY_D.csv."""
 
