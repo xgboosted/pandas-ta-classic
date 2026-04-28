@@ -1,33 +1,20 @@
 ---
 name: Indicator Request
-about: Be as detailed as possible with links please.
+about: Request a new technical indicator.
 title: ''
 labels: enhancement
 assignees: ''
 
 ---
 
-**Which version are you running? The lastest version is on Github. Pip is for major releases.**
-```python
-import pandas_ta_classic as ta
-print(ta.version)
-```
+**Indicator name**
+What is the indicator called?
 
-**Upgrade.**
-```sh
-$ pip install -U git+https://github.com/xgboosted/pandas-ta-classic
-```
+**Description**
+Briefly describe what it does and why it would be useful.
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
-
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Reference links**
+Links to papers, documentation, or other implementations (the more the better).
 
 **Additional context**
-Add any other context, web links, or screenshots about the feature request here.
-
-Thanks for using Pandas TA Classic!
+Formula, screenshots, or any other relevant details.

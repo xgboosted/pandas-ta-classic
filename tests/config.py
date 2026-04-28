@@ -1,5 +1,5 @@
-import os
 from functools import lru_cache
+from pathlib import Path
 from pandas import read_csv
 
 VERBOSE = True
@@ -13,8 +13,9 @@ CORRELATION_THRESHOLD = 0.99  # Less than 0.99 is undesirable
 
 @lru_cache(maxsize=1)
 def _read_sample_csv():
+    csv_path = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
     df = read_csv(
-        "data/SPY_D.csv",
+        csv_path,
         index_col="date",
         parse_dates=True,
     )

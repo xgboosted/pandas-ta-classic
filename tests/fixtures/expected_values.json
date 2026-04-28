@@ -1,0 +1,2132 @@
+{
+  "sma_20": {
+    "SMA_20": {
+      "last_value": 338.22,
+      "non_nan_count": 5222
+    }
+  },
+  "ema_20": {
+    "EMA_20": {
+      "last_value": 338.51818584,
+      "non_nan_count": 5222
+    }
+  },
+  "dema_10": {
+    "DEMA_10": {
+      "last_value": 348.69759792,
+      "non_nan_count": 5223
+    }
+  },
+  "tema_10": {
+    "TEMA_10": {
+      "last_value": 349.70796434,
+      "non_nan_count": 5214
+    }
+  },
+  "wma_10": {
+    "WMA_10": {
+      "last_value": 344.81981818,
+      "non_nan_count": 5232
+    }
+  },
+  "midpoint_14": {
+    "MIDPOINT_14": {
+      "last_value": 341.69,
+      "non_nan_count": 5228
+    }
+  },
+  "midprice_14": {
+    "MIDPRICE_14": {
+      "last_value": 341.365,
+      "non_nan_count": 5228
+    }
+  },
+  "t3_10": {
+    "T3_10_0.7": {
+      "last_value": 342.39105819,
+      "non_nan_count": 5187
+    }
+  },
+  "wcp": {
+    "WCP": {
+      "last_value": 350.0075,
+      "non_nan_count": 5241
+    }
+  },
+  "hl2": {
+    "HL2": {
+      "last_value": 349.435,
+      "non_nan_count": 5241
+    }
+  },
+  "hlc3": {
+    "HLC3": {
+      "last_value": 349.81666667,
+      "non_nan_count": 5241
+    }
+  },
+  "ohlc4": {
+    "OHLC4": {
+      "last_value": 349.7225,
+      "non_nan_count": 5241
+    }
+  },
+  "hma_10": {
+    "HMA_10": {
+      "last_value": 349.62139394,
+      "non_nan_count": 5230
+    }
+  },
+  "vwma_10": {
+    "VWMA_10": {
+      "last_value": 342.62447142,
+      "non_nan_count": 5232
+    }
+  },
+  "rsi_14": {
+    "RSI_14": {
+      "last_value": 79.70056716,
+      "non_nan_count": 5228
+    }
+  },
+  "macd_12_26_9": {
+    "MACD_12_26_9": {
+      "last_value": 6.44272055,
+      "non_nan_count": 5216
+    },
+    "MACDh_12_26_9": {
+      "last_value": 0.70026855,
+      "non_nan_count": 5208
+    },
+    "MACDs_12_26_9": {
+      "last_value": 5.742452,
+      "non_nan_count": 5208
+    }
+  },
+  "stoch": {
+    "STOCHk_14_3_3": {
+      "last_value": 96.21541054,
+      "non_nan_count": 5226
+    },
+    "STOCHd_14_3_3": {
+      "last_value": 97.12899538,
+      "non_nan_count": 5224
+    }
+  },
+  "cci_14": {
+    "CCI_14_0.015": {
+      "last_value": 155.92596803,
+      "non_nan_count": 5228
+    }
+  },
+  "roc_10": {
+    "ROC_10": {
+      "last_value": 4.07908799,
+      "non_nan_count": 5231
+    }
+  },
+  "willr_14": {
+    "WILLR_14": {
+      "last_value": -0.74826296,
+      "non_nan_count": 5228
+    }
+  },
+  "apo": {
+    "APO_12_26": {
+      "last_value": 6.74275641,
+      "non_nan_count": 5216
+    }
+  },
+  "bop": {
+    "BOP": {
+      "last_value": 0.44357977,
+      "non_nan_count": 5241
+    }
+  },
+  "mom_10": {
+    "MOM_10": {
+      "last_value": 13.74,
+      "non_nan_count": 5231
+    }
+  },
+  "uo": {
+    "UO_7_14_28": {
+      "last_value": 78.73046901,
+      "non_nan_count": 5214
+    }
+  },
+  "ao": {
+    "AO_5_34": {
+      "last_value": 14.35674294,
+      "non_nan_count": 5208
+    }
+  },
+  "bias_10": {
+    "BIAS_SMA_10": {
+      "last_value": 0.02357331,
+      "non_nan_count": 5232
+    }
+  },
+  "cfo_10": {
+    "CFO_10": {
+      "last_value": -0.11694906,
+      "non_nan_count": 5232
+    }
+  },
+  "er": {
+    "ER_10": {
+      "last_value": 0.82971014,
+      "non_nan_count": 5231
+    }
+  },
+  "po": {
+    "PO_14": {
+      "last_value": 0.69169482,
+      "non_nan_count": 5228
+    }
+  },
+  "pvo": {
+    "PVO_12_26_9": {
+      "last_value": -8.11152181,
+      "non_nan_count": 5216
+    },
+    "PVOh_12_26_9": {
+      "last_value": 2.47514961,
+      "non_nan_count": 5208
+    },
+    "PVOs_12_26_9": {
+      "last_value": -10.58667142,
+      "non_nan_count": 5208
+    }
+  },
+  "pvol": {
+    "PVOL": {
+      "last_value": 17034310585.199999,
+      "non_nan_count": 5241
+    }
+  },
+  "atr_14": {
+    "ATRr_14": {
+      "last_value": 3.38808635,
+      "non_nan_count": 5228
+    }
+  },
+  "bbands_20": {
+    "BBL_20_2.0": {
+      "last_value": 326.69360421,
+      "non_nan_count": 5222
+    },
+    "BBM_20_2.0": {
+      "last_value": 338.22,
+      "non_nan_count": 5222
+    },
+    "BBU_20_2.0": {
+      "last_value": 349.74639579,
+      "non_nan_count": 5222
+    },
+    "BBB_20_2.0": {
+      "last_value": 6.81591615,
+      "non_nan_count": 5222
+    },
+    "BBP_20_2.0": {
+      "last_value": 1.03616066,
+      "non_nan_count": 5222
+    }
+  },
+  "natr_14": {
+    "NATR_14": {
+      "last_value": 0.96642317,
+      "non_nan_count": 5227
+    }
+  },
+  "true_range": {
+    "TRUERANGE_1": {
+      "last_value": 2.57,
+      "non_nan_count": 5240
+    }
+  },
+  "donchian_20": {
+    "DCL_20_20": {
+      "last_value": 327.73,
+      "non_nan_count": 5222
+    },
+    "DCM_20_20": {
+      "last_value": 339.225,
+      "non_nan_count": 5222
+    },
+    "DCU_20_20": {
+      "last_value": 350.72,
+      "non_nan_count": 5222
+    }
+  },
+  "kc_20": {
+    "KCLe_20_2": {
+      "last_value": 332.16228385,
+      "non_nan_count": 5221
+    },
+    "KCBe_20_2": {
+      "last_value": 338.51818584,
+      "non_nan_count": 5222
+    },
+    "KCUe_20_2": {
+      "last_value": 344.87408782,
+      "non_nan_count": 5221
+    }
+  },
+  "massi": {
+    "MASSI_9_25": {
+      "last_value": 23.35693611,
+      "non_nan_count": 5201
+    }
+  },
+  "pdist": {
+    "PDIST": {
+      "last_value": 5.11,
+      "non_nan_count": 5240
+    }
+  },
+  "accbands": {
+    "ACCBL_20": {
+      "last_value": 330.4658626,
+      "non_nan_count": 5222
+    },
+    "ACCBM_20": {
+      "last_value": 338.22,
+      "non_nan_count": 5222
+    },
+    "ACCBU_20": {
+      "last_value": 344.7300126,
+      "non_nan_count": 5222
+    }
+  },
+  "adx_14": {
+    "ADX_14": {
+      "last_value": 40.06595307,
+      "non_nan_count": 5227
+    },
+    "DMP_14": {
+      "last_value": 39.40418792,
+      "non_nan_count": 5227
+    },
+    "DMN_14": {
+      "last_value": 8.31166673,
+      "non_nan_count": 5227
+    }
+  },
+  "aroon_14": {
+    "AROOND_14": {
+      "last_value": 7.14285714,
+      "non_nan_count": 5227
+    },
+    "AROONU_14": {
+      "last_value": 100.0,
+      "non_nan_count": 5227
+    },
+    "AROONOSC_14": {
+      "last_value": 92.85714286,
+      "non_nan_count": 5227
+    }
+  },
+  "decreasing": {
+    "DEC_1": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "increasing": {
+    "INC_1": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "chop": {
+    "CHOP_14_1_100": {
+      "last_value": 31.64705239,
+      "non_nan_count": 5227
+    }
+  },
+  "dpo_14": {
+    "DPO_14": {
+      "last_value": -2.00071429,
+      "non_nan_count": 5228
+    }
+  },
+  "qstick": {
+    "QS_10": {
+      "last_value": 0.809,
+      "non_nan_count": 5232
+    }
+  },
+  "vhf": {
+    "VHF_28": {
+      "last_value": 0.55482907,
+      "non_nan_count": 5213
+    }
+  },
+  "vortex": {
+    "VTXP_14": {
+      "last_value": 1.3499942,
+      "non_nan_count": 5227
+    },
+    "VTXM_14": {
+      "last_value": 0.65107695,
+      "non_nan_count": 5227
+    }
+  },
+  "obv": {
+    "OBV": {
+      "last_value": 9937691999.0,
+      "non_nan_count": 5241
+    }
+  },
+  "mfi_14": {
+    "MFI_14": {
+      "last_value": 67.71539291,
+      "non_nan_count": 5228
+    }
+  },
+  "ad": {
+    "AD": {
+      "last_value": 37734695573.99337,
+      "non_nan_count": 5241
+    }
+  },
+  "adosc": {
+    "ADOSC_3_10": {
+      "last_value": 89746999.72124481,
+      "non_nan_count": 5232
+    }
+  },
+  "cmf_20": {
+    "CMF_20": {
+      "last_value": 0.44256696,
+      "non_nan_count": 5222
+    }
+  },
+  "efi": {
+    "EFI_13": {
+      "last_value": 68470601.65167013,
+      "non_nan_count": 5228
+    }
+  },
+  "eom": {
+    "EOM_14_100000000": {
+      "last_value": 6.48218124,
+      "non_nan_count": 5227
+    }
+  },
+  "kvo": {
+    "KVO_34_55_13": {
+      "last_value": 4969756.02721119,
+      "non_nan_count": 5187
+    },
+    "KVOs_34_55_13": {
+      "last_value": 3544044.53162474,
+      "non_nan_count": 5175
+    }
+  },
+  "nvi": {
+    "NVI_1": {
+      "last_value": 1538.32227414,
+      "non_nan_count": 5241
+    }
+  },
+  "pvi": {
+    "PVI_1": {
+      "last_value": 597.86467164,
+      "non_nan_count": 5241
+    }
+  },
+  "pvr": {
+    "PVR": {
+      "last_value": 2.0,
+      "non_nan_count": 5241
+    }
+  },
+  "pvt": {
+    "PVT": {
+      "last_value": -44026206885.840126,
+      "non_nan_count": 5240
+    }
+  },
+  "stdev_20": {
+    "STDEV_20": {
+      "last_value": 5.7631979,
+      "non_nan_count": 5222
+    }
+  },
+  "variance_20": {
+    "VAR_20": {
+      "last_value": 33.21445,
+      "non_nan_count": 5222
+    }
+  },
+  "ht_dcperiod": {
+    "HT_DCPERIOD": {
+      "last_value": 25.52929044,
+      "non_nan_count": 5241
+    }
+  },
+  "ht_dcphase": {
+    "HT_DCPHASE": {
+      "last_value": 191.18202694,
+      "non_nan_count": 5204
+    }
+  },
+  "ht_phasor": {
+    "HT_PHASOR_INPHASE": {
+      "last_value": 2.10316245,
+      "non_nan_count": 5229
+    },
+    "HT_PHASOR_QUAD": {
+      "last_value": 7.16467137,
+      "non_nan_count": 5229
+    }
+  },
+  "ht_sine": {
+    "HT_SINE": {
+      "last_value": -0.19392663,
+      "non_nan_count": 5204
+    },
+    "HT_LEADSINE": {
+      "last_value": -0.83080992,
+      "non_nan_count": 5204
+    }
+  },
+  "ht_trendmode": {
+    "HT_TRENDMODE": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "ht_trendline": {
+    "HT_TRENDLINE": {
+      "last_value": 334.58340235,
+      "non_nan_count": 5204
+    }
+  },
+  "log_return": {
+    "LOGRET_1": {
+      "last_value": 0.00643862,
+      "non_nan_count": 5240
+    }
+  },
+  "percent_return": {
+    "PCTRET_1": {
+      "last_value": 0.00645939,
+      "non_nan_count": 5240
+    }
+  },
+  "drawdown": {
+    "DD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "DD_PCT": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "DD_LOG": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "kama": {
+    "KAMA_10_2_30": {
+      "last_value": 345.26325066,
+      "non_nan_count": 5232
+    }
+  },
+  "mama": {
+    "MAMA_0.5_0.05": {
+      "last_value": 347.59906259,
+      "non_nan_count": 5209
+    },
+    "FAMA_0.5_0.05": {
+      "last_value": 337.99217373,
+      "non_nan_count": 5209
+    }
+  },
+  "linreg_14": {
+    "LR_14": {
+      "last_value": 348.17171429,
+      "non_nan_count": 5228
+    }
+  },
+  "tsf_14": {
+    "TSF_14": {
+      "last_value": 349.33032967,
+      "non_nan_count": 5228
+    }
+  },
+  "trima_10": {
+    "TRIMA_10": {
+      "last_value": 341.30027778,
+      "non_nan_count": 5231
+    }
+  },
+  "swma": {
+    "SWMA_10": {
+      "last_value": 341.94766667,
+      "non_nan_count": 5232
+    }
+  },
+  "pwma_10": {
+    "PWMA_10": {
+      "last_value": 341.46097656,
+      "non_nan_count": 5232
+    }
+  },
+  "sinwma_14": {
+    "SINWMA_14": {
+      "last_value": 340.08562817,
+      "non_nan_count": 5228
+    }
+  },
+  "fwma_10": {
+    "FWMA_10": {
+      "last_value": 347.58223776,
+      "non_nan_count": 5232
+    }
+  },
+  "alma_10": {
+    "ALMA_10_6.0_0.85": {
+      "last_value": 338.2871409,
+      "non_nan_count": 5232
+    }
+  },
+  "rma": {
+    "RMA_10": {
+      "last_value": 338.96885629,
+      "non_nan_count": 5232
+    }
+  },
+  "ma_ema_20": {
+    "EMA_20": {
+      "last_value": 338.51818584,
+      "non_nan_count": 5222
+    }
+  },
+  "stochrsi": {
+    "STOCHRSIk_14_14_3_3": {
+      "last_value": 100.0,
+      "non_nan_count": 5212
+    },
+    "STOCHRSId_14_14_3_3": {
+      "last_value": 100.0,
+      "non_nan_count": 5210
+    }
+  },
+  "ppo": {
+    "PPO_12_26_9": {
+      "last_value": 2.01385674,
+      "non_nan_count": 5216
+    },
+    "PPOs_12_26_9": {
+      "last_value": 1.8919788,
+      "non_nan_count": 5208
+    },
+    "PPOh_12_26_9": {
+      "last_value": 0.12187794,
+      "non_nan_count": 5208
+    }
+  },
+  "trix": {
+    "TRIX_30_9": {
+      "last_value": 0.20925129,
+      "non_nan_count": 5153
+    },
+    "TRIXs_30_9": {
+      "last_value": 0.20199622,
+      "non_nan_count": 5145
+    }
+  },
+  "cmo_14": {
+    "CMO_14": {
+      "last_value": 61.04107361,
+      "non_nan_count": 5227
+    }
+  },
+  "coppock": {
+    "COPC_11_14_10": {
+      "last_value": 7.0529042,
+      "non_nan_count": 5218
+    }
+  },
+  "cg": {
+    "CG_10": {
+      "last_value": -5.46284445,
+      "non_nan_count": 5232
+    }
+  },
+  "pgo_14": {
+    "PGO_14": {
+      "last_value": 2.65362211,
+      "non_nan_count": 5214
+    }
+  },
+  "eri": {
+    "BULLP_13": {
+      "last_value": 8.84889581,
+      "non_nan_count": 5229
+    },
+    "BEARP_13": {
+      "last_value": 6.27889581,
+      "non_nan_count": 5229
+    }
+  },
+  "tsi": {
+    "TSI_13_25_13": {
+      "last_value": 45.35735258,
+      "non_nan_count": 5204
+    },
+    "TSIs_13_25_13": {
+      "last_value": 36.16925861,
+      "non_nan_count": 5192
+    }
+  },
+  "adxr": {
+    "ADXR_14": {
+      "last_value": 30.87566884,
+      "non_nan_count": 5214
+    },
+    "DMP_14": {
+      "last_value": 39.40418792,
+      "non_nan_count": 5227
+    },
+    "DMN_14": {
+      "last_value": 8.31166673,
+      "non_nan_count": 5227
+    }
+  },
+  "psar": {
+    "PSARl_0.02_0.2": {
+      "last_value": 338.28691638,
+      "non_nan_count": 3064
+    },
+    "PSARs_0.02_0.2": {
+      "last_value": 339.61,
+      "non_nan_count": 2176
+    }
+  },
+  "zscore_20": {
+    "ZS_20": {
+      "last_value": 2.09033908,
+      "non_nan_count": 5222
+    }
+  },
+  "kurtosis_20": {
+    "KURT_20": {
+      "last_value": -0.10015487,
+      "non_nan_count": 5222
+    }
+  },
+  "skew_20": {
+    "SKEW_20": {
+      "last_value": 0.607668,
+      "non_nan_count": 5222
+    }
+  },
+  "median_14": {
+    "MEDIAN_14": {
+      "last_value": 338.46,
+      "non_nan_count": 5228
+    }
+  },
+  "quantile_14": {
+    "QTL_14_0.5": {
+      "last_value": 338.46,
+      "non_nan_count": 5228
+    }
+  },
+  "mad_10": {
+    "MAD_10": {
+      "last_value": 4.198,
+      "non_nan_count": 5232
+    }
+  },
+  "entropy_10": {
+    "ENTP_10": {
+      "last_value": 3.32179403,
+      "non_nan_count": 5232
+    }
+  },
+  "correl": {
+    "CORREL_30": {
+      "last_value": 0.97749218,
+      "non_nan_count": 5212
+    }
+  },
+  "slope": {
+    "SLOPE_1": {
+      "last_value": 2.25,
+      "non_nan_count": 5240
+    }
+  },
+  "beta": {
+    "BETA_30": {
+      "last_value": 0.09299151,
+      "non_nan_count": 5211
+    }
+  },
+  "ui": {
+    "UI_14": {
+      "last_value": 0.25778556,
+      "non_nan_count": 5215
+    }
+  },
+  "ha": {
+    "HA_open": {
+      "last_value": 346.11661082,
+      "non_nan_count": 5241
+    },
+    "HA_high": {
+      "last_value": 350.72,
+      "non_nan_count": 5241
+    },
+    "HA_low": {
+      "last_value": 346.11661082,
+      "non_nan_count": 5241
+    },
+    "HA_close": {
+      "last_value": 349.7225,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_2crows": {
+    "CDL_2CROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_3blackcrows": {
+    "CDL_3BLACKCROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_3inside": {
+    "CDL_3INSIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_3linestrike": {
+    "CDL_3LINESTRIKE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_3outside": {
+    "CDL_3OUTSIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_3whitesoldiers": {
+    "CDL_3WHITESOLDIERS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_advanceblock": {
+    "CDL_ADVANCEBLOCK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_belthold": {
+    "CDL_BELTHOLD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_closingmarubozu": {
+    "CDL_CLOSINGMARUBOZU": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_counterattack": {
+    "CDL_COUNTERATTACK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_darkcloudcover": {
+    "CDL_DARKCLOUDCOVER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_dojistar": {
+    "CDL_DOJISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_dragonflydoji": {
+    "CDL_DRAGONFLYDOJI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_engulfing": {
+    "CDL_ENGULFING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_eveningdojistar": {
+    "CDL_EVENINGDOJISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_eveningstar": {
+    "CDL_EVENINGSTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_gapsidesidewhite": {
+    "CDL_GAPSIDESIDEWHITE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_gravestonedoji": {
+    "CDL_GRAVESTONEDOJI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_hammer": {
+    "CDL_HAMMER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_hangingman": {
+    "CDL_HANGINGMAN": {
+      "last_value": -100.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_harami": {
+    "CDL_HARAMI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_haramicross": {
+    "CDL_HARAMICROSS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_highwave": {
+    "CDL_HIGHWAVE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_hikkake": {
+    "CDL_HIKKAKE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_hikkakemod": {
+    "CDL_HIKKAKEMOD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_homingpigeon": {
+    "CDL_HOMINGPIGEON": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_identical3crows": {
+    "CDL_IDENTICAL3CROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_inneck": {
+    "CDL_INNECK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_invertedhammer": {
+    "CDL_INVERTEDHAMMER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_ladderbottom": {
+    "CDL_LADDERBOTTOM": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_longleggeddoji": {
+    "CDL_LONGLEGGEDDOJI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_longline": {
+    "CDL_LONGLINE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_marubozu": {
+    "CDL_MARUBOZU": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_matchinglow": {
+    "CDL_MATCHINGLOW": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_morningdojistar": {
+    "CDL_MORNINGDOJISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_morningstar": {
+    "CDL_MORNINGSTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_onneck": {
+    "CDL_ONNECK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_piercing": {
+    "CDL_PIERCING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_rickshawman": {
+    "CDL_RICKSHAWMAN": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_separatinglines": {
+    "CDL_SEPARATINGLINES": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_shootingstar": {
+    "CDL_SHOOTINGSTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_shortline": {
+    "CDL_SHORTLINE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_spinningtop": {
+    "CDL_SPINNINGTOP": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_stalledpattern": {
+    "CDL_STALLEDPATTERN": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_sticksandwich": {
+    "CDL_STICKSANDWICH": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_takuri": {
+    "CDL_TAKURI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_tasukigap": {
+    "CDL_TASUKIGAP": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_thrusting": {
+    "CDL_THRUSTING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_tristar": {
+    "CDL_TRISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_unique3river": {
+    "CDL_UNIQUE3RIVER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_upsidegap2crows": {
+    "CDL_UPSIDEGAP2CROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_xsidegap3methods": {
+    "CDL_XSIDEGAP3METHODS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_3starsinsouth": {
+    "CDL_3STARSINSOUTH": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_abandonedbaby": {
+    "CDL_ABANDONEDBABY": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_breakaway": {
+    "CDL_BREAKAWAY": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_concealbabyswall": {
+    "CDL_CONCEALBABYSWALL": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_kicking": {
+    "CDL_KICKING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_kickingbylength": {
+    "CDL_KICKINGBYLENGTH": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_mathold": {
+    "CDL_MATHOLD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_risefall3methods": {
+    "CDL_RISEFALL3METHODS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "hilo": {
+    "HILO_13_21": {
+      "last_value": 335.43832381,
+      "non_nan_count": 5218
+    },
+    "HILOl_13_21": {
+      "last_value": 335.43832381,
+      "non_nan_count": 3638
+    },
+    "HILOs_13_21": {
+      "last_value": 314.41004762,
+      "non_nan_count": 2636
+    }
+  },
+  "hwma": {
+    "HWMA_0.2_0.1_0.1": {
+      "last_value": 348.76224224,
+      "non_nan_count": 5241
+    }
+  },
+  "jma": {
+    "JMA_7_0": {
+      "last_value": 346.72405562,
+      "non_nan_count": 5235
+    }
+  },
+  "mcgd": {
+    "MCGD_10": {
+      "last_value": 337.76564849,
+      "non_nan_count": 5241
+    }
+  },
+  "mmar": {
+    "MMAR_10": {
+      "last_value": 343.50754456,
+      "non_nan_count": 5232
+    },
+    "MMAR_15": {
+      "last_value": 340.85977104,
+      "non_nan_count": 5227
+    },
+    "MMAR_20": {
+      "last_value": 338.51818584,
+      "non_nan_count": 5222
+    },
+    "MMAR_25": {
+      "last_value": 336.36783127,
+      "non_nan_count": 5217
+    },
+    "MMAR_30": {
+      "last_value": 334.35506398,
+      "non_nan_count": 5212
+    },
+    "MMAR_35": {
+      "last_value": 332.45340431,
+      "non_nan_count": 5207
+    }
+  },
+  "rainbow": {
+    "RAINBOW_1": {
+      "last_value": 349.455,
+      "non_nan_count": 5240
+    },
+    "RAINBOW_2": {
+      "last_value": 348.7025,
+      "non_nan_count": 5239
+    },
+    "RAINBOW_3": {
+      "last_value": 347.8,
+      "non_nan_count": 5238
+    },
+    "RAINBOW_4": {
+      "last_value": 346.795,
+      "non_nan_count": 5237
+    },
+    "RAINBOW_5": {
+      "last_value": 345.7253125,
+      "non_nan_count": 5236
+    },
+    "RAINBOW_6": {
+      "last_value": 344.61671875,
+      "non_nan_count": 5235
+    },
+    "RAINBOW_7": {
+      "last_value": 343.50414063,
+      "non_nan_count": 5234
+    },
+    "RAINBOW_8": {
+      "last_value": 342.43554688,
+      "non_nan_count": 5233
+    },
+    "RAINBOW_9": {
+      "last_value": 341.46097656,
+      "non_nan_count": 5232
+    },
+    "RAINBOW_10": {
+      "last_value": 340.61741211,
+      "non_nan_count": 5231
+    }
+  },
+  "ssf_10": {
+    "SSF_10_2": {
+      "last_value": 347.83859018,
+      "non_nan_count": 5241
+    }
+  },
+  "supertrend": {
+    "SUPERT_7_3.0": {
+      "last_value": 340.40094842,
+      "non_nan_count": 5235
+    },
+    "SUPERTd_7_3.0": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "SUPERTl_7_3.0": {
+      "last_value": 340.40094842,
+      "non_nan_count": 2974
+    },
+    "SUPERTs_7_3.0": {
+      "last_value": 321.86438238,
+      "non_nan_count": 2260
+    }
+  },
+  "vidya": {
+    "VIDYA_14": {
+      "last_value": 334.03194351,
+      "non_nan_count": 5228
+    }
+  },
+  "vwap": {
+    "VWAP_D": {
+      "last_value": 349.81666667,
+      "non_nan_count": 5241
+    }
+  },
+  "zlma_10": {
+    "ZL_EMA_10": {
+      "last_value": 349.21741195,
+      "non_nan_count": 5228
+    }
+  },
+  "brar": {
+    "AR_26": {
+      "last_value": 108.37285657,
+      "non_nan_count": 5216
+    },
+    "BR_26": {
+      "last_value": 145.55764821,
+      "non_nan_count": 5215
+    }
+  },
+  "cti": {
+    "CTI_12": {
+      "last_value": 0.93275167,
+      "non_nan_count": 5230
+    }
+  },
+  "dm_14": {
+    "DMP_14": {
+      "last_value": 1.33504791,
+      "non_nan_count": 5228
+    },
+    "DMN_14": {
+      "last_value": 0.28160645,
+      "non_nan_count": 5228
+    }
+  },
+  "fisher": {
+    "FISHERT_9_1": {
+      "last_value": 4.28001376,
+      "non_nan_count": 5233
+    },
+    "FISHERTs_9_1": {
+      "last_value": 3.89537224,
+      "non_nan_count": 5232
+    }
+  },
+  "inertia": {
+    "INERTIA_20_14": {
+      "last_value": 80.0799629,
+      "non_nan_count": 5196
+    }
+  },
+  "kdj": {
+    "K_9_3": {
+      "last_value": 95.23999192,
+      "non_nan_count": 5233
+    },
+    "D_9_3": {
+      "last_value": 93.39051158,
+      "non_nan_count": 5233
+    },
+    "J_9_3": {
+      "last_value": 98.93895261,
+      "non_nan_count": 5233
+    }
+  },
+  "kst": {
+    "KST_10_15_20_30_10_10_10_15": {
+      "last_value": 6188.29754852,
+      "non_nan_count": 5197
+    },
+    "KSTs_9": {
+      "last_value": 5865.95012245,
+      "non_nan_count": 5189
+    }
+  },
+  "lrsi": {
+    "LRSI_14": {
+      "last_value": 100.0,
+      "non_nan_count": 5241
+    }
+  },
+  "psl": {
+    "PSL_12": {
+      "last_value": 75.0,
+      "non_nan_count": 5230
+    }
+  },
+  "qqe": {
+    "QQE_14_5_4.236": {
+      "last_value": 72.15838921,
+      "non_nan_count": 5170
+    },
+    "QQE_14_5_4.236_RSIMA": {
+      "last_value": 76.38435782,
+      "non_nan_count": 5223
+    },
+    "QQEl_14_5_4.236": {
+      "last_value": 72.15838921,
+      "non_nan_count": 2874
+    },
+    "QQEs_14_5_4.236": {
+      "last_value": 55.49501182,
+      "non_nan_count": 2296
+    },
+    "QQEb_l_14_5_4.236": {
+      "last_value": 72.15838921,
+      "non_nan_count": 5171
+    },
+    "QQEb_s_14_5_4.236": {
+      "last_value": 77.344922,
+      "non_nan_count": 5171
+    },
+    "QQEd_14_5_4.236": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "rsx": {
+    "RSX_14": {
+      "last_value": 85.45272549,
+      "non_nan_count": 5228
+    }
+  },
+  "rvgi": {
+    "RVGIh_14_4": {
+      "last_value": -0.01896519,
+      "non_nan_count": 5222
+    },
+    "RVGI_14_4": {
+      "last_value": 0.16144365,
+      "non_nan_count": 5225
+    },
+    "RVGIs_14_4": {
+      "last_value": 0.18040884,
+      "non_nan_count": 5222
+    }
+  },
+  "smi": {
+    "SMI_5_20_5": {
+      "last_value": 0.60926282,
+      "non_nan_count": 5217
+    },
+    "SMIs_5_20_5": {
+      "last_value": 0.53654941,
+      "non_nan_count": 5213
+    },
+    "SMIo_5_20_5": {
+      "last_value": 0.07271341,
+      "non_nan_count": 5213
+    }
+  },
+  "squeeze": {
+    "SQZ_20_2.0_20_1.5": {
+      "last_value": 11.03,
+      "non_nan_count": 5224
+    },
+    "SQZ_ON": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "SQZ_OFF": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "SQZ_NO": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "squeeze_pro": {
+    "SQZPRO_20_2.0_20_2_1.5_1": {
+      "last_value": 11.03,
+      "non_nan_count": 5224
+    },
+    "SQZPRO_ON_WIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "SQZPRO_ON_NORMAL": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "SQZPRO_ON_NARROW": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "SQZPRO_OFF": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "SQZPRO_NO": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "stc": {
+    "STC_10_12_26_0.5": {
+      "last_value": 85.51701283,
+      "non_nan_count": 5241
+    },
+    "STCmacd_10_12_26_0.5": {
+      "last_value": 6.44272055,
+      "non_nan_count": 5216
+    },
+    "STCstoch_10_12_26_0.5": {
+      "last_value": 95.92991142,
+      "non_nan_count": 5241
+    }
+  },
+  "td_seq": {
+    "TD_SEQ_UPa": {
+      "last_value": 13.0,
+      "non_nan_count": 2945
+    },
+    "TD_SEQ_DNa": {
+      "last_value": 3.0,
+      "non_nan_count": 2286
+    }
+  },
+  "trixh": {
+    "TRIX_18_9": {
+      "last_value": 0.23974808,
+      "non_nan_count": 5189
+    },
+    "TRIXs_18_9": {
+      "last_value": 0.22845532,
+      "non_nan_count": 5181
+    },
+    "TRIXh_18_9": {
+      "last_value": 0.01129276,
+      "non_nan_count": 5181
+    }
+  },
+  "vwmacd": {
+    "VWMACD_12_26_9": {
+      "last_value": 7.5758309,
+      "non_nan_count": 5216
+    },
+    "VWMACDh_12_26_9": {
+      "last_value": 0.55661023,
+      "non_nan_count": 5208
+    },
+    "VWMACDs_12_26_9": {
+      "last_value": 7.01922067,
+      "non_nan_count": 5208
+    }
+  },
+  "aberration": {
+    "ABER_ZG_5_15": {
+      "last_value": 345.98536,
+      "non_nan_count": 5237
+    },
+    "ABER_SG_5_15": {
+      "last_value": 349.43688262,
+      "non_nan_count": 5226
+    },
+    "ABER_XG_5_15": {
+      "last_value": 342.53383738,
+      "non_nan_count": 5226
+    },
+    "ABER_ATR_5_15": {
+      "last_value": 3.45152262,
+      "non_nan_count": 5226
+    }
+  },
+  "ce": {
+    "CE_L_22_3.0": {
+      "last_value": 339.01041871,
+      "non_nan_count": 5219
+    },
+    "CE_S_22_3.0": {
+      "last_value": 331.34958129,
+      "non_nan_count": 5219
+    }
+  },
+  "hwc": {
+    "HWM": {
+      "last_value": 348.76224224,
+      "non_nan_count": 5241
+    },
+    "HWU": {
+      "last_value": 351.85164473,
+      "non_nan_count": 5241
+    },
+    "HWL": {
+      "last_value": 345.67283974,
+      "non_nan_count": 5241
+    }
+  },
+  "rvi_vol": {
+    "RVI_14": {
+      "last_value": 86.90364378,
+      "non_nan_count": 5215
+    }
+  },
+  "thermo": {
+    "THERMO_20_2_0.5": {
+      "last_value": 1.62,
+      "non_nan_count": 5240
+    },
+    "THERMOma_20_2_0.5": {
+      "last_value": 2.16261843,
+      "non_nan_count": 5221
+    },
+    "THERMOl_20_2_0.5": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "THERMOs_20_2_0.5": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "amat": {
+    "AMATe_LR_8_21_2": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "AMATe_SR_8_21_2": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cksp": {
+    "CKSPl_10_3_20": {
+      "last_value": 341.26857647,
+      "non_nan_count": 5212
+    },
+    "CKSPs_10_3_20": {
+      "last_value": 330.81462706,
+      "non_nan_count": 5212
+    }
+  },
+  "cpr": {
+    "CPR_TC": {
+      "last_value": 348.29166667,
+      "non_nan_count": 5240
+    },
+    "CPR_PIVOT": {
+      "last_value": 348.25333333,
+      "non_nan_count": 5240
+    },
+    "CPR_BC": {
+      "last_value": 348.215,
+      "non_nan_count": 5240
+    },
+    "CPR_R1": {
+      "last_value": 349.97666667,
+      "non_nan_count": 5240
+    },
+    "CPR_R2": {
+      "last_value": 351.62333333,
+      "non_nan_count": 5240
+    },
+    "CPR_S1": {
+      "last_value": 346.60666667,
+      "non_nan_count": 5240
+    },
+    "CPR_S2": {
+      "last_value": 344.88333333,
+      "non_nan_count": 5240
+    },
+    "CPR_WIDTH": {
+      "last_value": 0.07666667,
+      "non_nan_count": 5240
+    },
+    "CPR_WIDTH_PCT": {
+      "last_value": 0.02201463,
+      "non_nan_count": 5240
+    }
+  },
+  "decay": {
+    "LDECAY_5": {
+      "last_value": 350.58,
+      "non_nan_count": 5241
+    }
+  },
+  "long_run": {
+    "LR_2": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "pmax": {
+    "PMAX_E_10_3.0": {
+      "last_value": 334.05612104,
+      "non_nan_count": 5231
+    }
+  },
+  "short_run": {
+    "SR_2": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "ttm_trend": {
+    "TTM_TRND_6": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "aobv": {
+    "OBV": {
+      "last_value": 9937691999.0,
+      "non_nan_count": 5241
+    },
+    "OBV_min_2": {
+      "last_value": 9889103059.0,
+      "non_nan_count": 5240
+    },
+    "OBV_max_2": {
+      "last_value": 9937691999.0,
+      "non_nan_count": 5240
+    },
+    "OBVe_4": {
+      "last_value": 9864553456.8781,
+      "non_nan_count": 5238
+    },
+    "OBVe_12": {
+      "last_value": 9733684656.744045,
+      "non_nan_count": 5230
+    },
+    "AOBV_LR_2": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "AOBV_SR_2": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "vfi": {
+    "VFI_130": {
+      "last_value": 0.0,
+      "non_nan_count": 4980
+    }
+  },
+  "tos_stdevall": {
+    "TOS_STDEVALL_30_LR": {
+      "last_value": 346.70305376,
+      "non_nan_count": 30
+    },
+    "TOS_STDEVALL_30_L_1": {
+      "last_value": 338.29881102,
+      "non_nan_count": 30
+    },
+    "TOS_STDEVALL_30_U_1": {
+      "last_value": 355.10729651,
+      "non_nan_count": 30
+    },
+    "TOS_STDEVALL_30_L_2": {
+      "last_value": 329.89456828,
+      "non_nan_count": 30
+    },
+    "TOS_STDEVALL_30_U_2": {
+      "last_value": 363.51153925,
+      "non_nan_count": 30
+    },
+    "TOS_STDEVALL_30_L_3": {
+      "last_value": 321.49032553,
+      "non_nan_count": 30
+    },
+    "TOS_STDEVALL_30_U_3": {
+      "last_value": 371.91578199,
+      "non_nan_count": 30
+    }
+  },
+  "dsp": {
+    "DSP_14": {
+      "last_value": 9.2210784,
+      "non_nan_count": 5228
+    }
+  },
+  "ebsw": {
+    "EBSW_40_10": {
+      "last_value": 0.99930303,
+      "non_nan_count": 5202
+    }
+  },
+  "cdl_doji": {
+    "CDL_DOJI_10_0.1": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_inside": {
+    "CDL_INSIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "cdl_z": {
+    "open_Z_30_1": {
+      "last_value": 1.9894207,
+      "non_nan_count": 5212
+    },
+    "high_Z_30_1": {
+      "last_value": 1.99544679,
+      "non_nan_count": 5212
+    },
+    "low_Z_30_1": {
+      "last_value": 1.99762274,
+      "non_nan_count": 5212
+    },
+    "close_Z_30_1": {
+      "last_value": 2.03460726,
+      "non_nan_count": 5212
+    }
+  },
+  "cdl_pattern": {
+    "CDL_2CROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_3BLACKCROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_3INSIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_3LINESTRIKE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_3OUTSIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_3STARSINSOUTH": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_3WHITESOLDIERS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_ABANDONEDBABY": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_ADVANCEBLOCK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_BELTHOLD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_BREAKAWAY": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_CLOSINGMARUBOZU": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_CONCEALBABYSWALL": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_COUNTERATTACK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_DARKCLOUDCOVER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_DOJI_10_0.1": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_DOJISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_DRAGONFLYDOJI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_ENGULFING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_EVENINGDOJISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_EVENINGSTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_GAPSIDESIDEWHITE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_GRAVESTONEDOJI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HAMMER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HANGINGMAN": {
+      "last_value": -100.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HARAMI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HARAMICROSS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HIGHWAVE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HIKKAKE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HIKKAKEMOD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_HOMINGPIGEON": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_IDENTICAL3CROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_INNECK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_INSIDE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_INVERTEDHAMMER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_KICKING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_KICKINGBYLENGTH": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_LADDERBOTTOM": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_LONGLEGGEDDOJI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_LONGLINE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_MARUBOZU": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_MATCHINGLOW": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_MATHOLD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_MORNINGDOJISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_MORNINGSTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_ONNECK": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_PIERCING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_RICKSHAWMAN": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_RISEFALL3METHODS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_SEPARATINGLINES": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_SHOOTINGSTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_SHORTLINE": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_SPINNINGTOP": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_STALLEDPATTERN": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_STICKSANDWICH": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_TAKURI": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_TASUKIGAP": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_THRUSTING": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_TRISTAR": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_UNIQUE3RIVER": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_UPSIDEGAP2CROWS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "CDL_XSIDEGAP3METHODS": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "ichimoku": {
+    "ISA_9": {
+      "last_value": 316.3475,
+      "non_nan_count": 5190
+    },
+    "ISB_26": {
+      "last_value": 300.11,
+      "non_nan_count": 5164
+    },
+    "ITS_9": {
+      "last_value": 342.97,
+      "non_nan_count": 5233
+    },
+    "IKS_26": {
+      "last_value": 334.983,
+      "non_nan_count": 5216
+    },
+    "ICS_26": {
+      "last_value": 350.58,
+      "non_nan_count": 5215
+    }
+  },
+  "tsignals": {
+    "TS_Trends": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "TS_Trades": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "TS_Entries": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "TS_Exits": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "xsignals": {
+    "TS_Trends": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    },
+    "TS_Trades": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "TS_Entries": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "TS_Exits": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "vp": {
+    "low_close": {
+      "last_value": 222.95,
+      "non_nan_count": 10
+    },
+    "mean_close": {
+      "last_value": 293.05086393,
+      "non_nan_count": 10
+    },
+    "high_close": {
+      "last_value": 350.58,
+      "non_nan_count": 10
+    },
+    "pos_volume": {
+      "last_value": 24128120202.0,
+      "non_nan_count": 10
+    },
+    "neg_volume": {
+      "last_value": 23087144410.0,
+      "non_nan_count": 10
+    },
+    "total_volume": {
+      "last_value": 47215264612.0,
+      "non_nan_count": 10
+    }
+  }
+}

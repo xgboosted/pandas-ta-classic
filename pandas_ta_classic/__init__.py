@@ -16,6 +16,11 @@ from pandas_ta_classic._meta import (
 # Import core functionality
 from pandas_ta_classic.core import *
 
+# Re-expose the volatility subpackage under its own name.
+# The utils.metrics.volatility() function (same name) would otherwise shadow it
+# after the wildcard import above.
+from . import volatility  # noqa: F811
+
 __version__ = version
 __description__ = (
     "An easy to use Python 3 Pandas Extension with 130+ Technical Analysis Indicators. "

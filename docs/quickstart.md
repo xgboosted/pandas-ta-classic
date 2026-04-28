@@ -1,8 +1,8 @@
-# 🚀 Pandas TA Classic - Quickstart Guide
+# Quickstart
 
 Welcome to **Pandas TA Classic**! This guide will help you get started quickly with calculating technical indicators for your financial data analysis.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Installation](#installation)
 - [Your First Indicators](#your-first-indicators)
@@ -10,38 +10,11 @@ Welcome to **Pandas TA Classic**! This guide will help you get started quickly w
 - [Common Use Cases](#common-use-cases)
 - [Next Steps](#next-steps)
 
-## 🔧 Installation
+## Installation
 
-### Quick Install
+See the [Installation](installation.rst) page for full installation instructions, optional dependencies (TA-Lib, yfinance, numba), and development setup.
 
-The fastest way to get started:
-
-```bash
-pip install pandas-ta-classic
-```
-
-Or using `uv` (faster):
-
-```bash
-uv pip install pandas-ta-classic
-```
-
-### With Optional Dependencies
-
-For full functionality including TA-Lib candlestick patterns:
-
-```bash
-pip install pandas-ta-classic TA-Lib
-```
-
-### Verify Installation
-
-```python
-import pandas_ta_classic as ta
-print(ta.version)
-```
-
-## 🎯 Your First Indicators
+## Your First Indicators
 
 ### Method 1: Standard Approach (Explicit)
 
@@ -53,11 +26,11 @@ import pandas_ta_classic as ta
 
 # Create sample data
 df = pd.DataFrame({
-    'open': [100, 101, 102, 103, 104],
-    'high': [105, 106, 107, 108, 109],
-    'low': [99, 100, 101, 102, 103],
-    'close': [104, 105, 106, 107, 108],
-    'volume': [1000, 1100, 1200, 1300, 1400]
+ 'open': [100, 101, 102, 103, 104],
+ 'high': [105, 106, 107, 108, 109],
+ 'low': [99, 100, 101, 102, 103],
+ 'close': [104, 105, 106, 107, 108],
+ 'volume': [1000, 1100, 1200, 1300, 1400]
 })
 
 # Calculate a Simple Moving Average
@@ -70,7 +43,7 @@ print(rsi_14)
 
 # Calculate MACD
 macd = ta.macd(df['close'])
-print(macd)  # Returns a DataFrame with MACD, signal, and histogram
+print(macd) # Returns a DataFrame with MACD, signal, and histogram
 ```
 
 ### Method 2: DataFrame Extension (Convenient)
@@ -85,10 +58,10 @@ import pandas_ta_classic as ta
 df = pd.read_csv('your_data.csv')
 
 # Calculate and append indicators directly
-df.ta.sma(length=20, append=True)         # Adds SMA_20 column
-df.ta.rsi(length=14, append=True)         # Adds RSI_14 column
-df.ta.macd(append=True)                   # Adds MACD columns
-df.ta.bbands(length=20, append=True)      # Adds Bollinger Bands
+df.ta.sma(length=20, append=True) # Adds SMA_20 column
+df.ta.rsi(length=14, append=True) # Adds RSI_14 column
+df.ta.macd(append=True) # Adds MACD columns
+df.ta.bbands(length=20, append=True) # Adds Bollinger Bands
 
 # View your DataFrame with new indicators
 print(df.tail())
@@ -109,22 +82,22 @@ df.ta.strategy("CommonStrategy")
 
 # Or create your own custom strategy
 my_strategy = ta.Strategy(
-    name="MyStrategy",
-    ta=[
-        {"kind": "sma", "length": 20},
-        {"kind": "sma", "length": 50},
-        {"kind": "rsi", "length": 14},
-        {"kind": "macd", "fast": 12, "slow": 26, "signal": 9},
-        {"kind": "bbands", "length": 20},
-    ]
+ name="MyStrategy",
+ ta=[
+ {"kind": "sma", "length": 20},
+ {"kind": "sma", "length": 50},
+ {"kind": "rsi", "length": 14},
+ {"kind": "macd", "fast": 12, "slow": 26, "signal": 9},
+ {"kind": "bbands", "length": 20},
+ ]
 )
 
 # Run your strategy
 df.ta.strategy(my_strategy)
-print(df.columns)  # See all new indicator columns
+print(df.columns) # See all new indicator columns
 ```
 
-## 📊 Working with Real Data
+## Working with Real Data
 
 ### Using yfinance (Recommended)
 
@@ -148,6 +121,7 @@ print(df.tail())
 ### Using Built-in Ticker Method
 
 ```python
+import pandas as pd
 import pandas_ta_classic as ta
 
 # Create empty DataFrame
@@ -175,10 +149,10 @@ df.columns = [col.lower() for col in df.columns]
 
 # Calculate indicators
 df.ta.sma(length=20, append=True)
-df.ta.atr(length=14, append=True)  # Average True Range
+df.ta.atr(length=14, append=True) # Average True Range
 ```
 
-## 💡 Common Use Cases
+## Common Use Cases
 
 ### 1. Trend Following
 
@@ -186,12 +160,12 @@ Identify the trend direction:
 
 ```python
 # Moving averages for trend
-df.ta.sma(length=20, append=True)   # Short-term
-df.ta.sma(length=50, append=True)   # Medium-term  
-df.ta.sma(length=200, append=True)  # Long-term
+df.ta.sma(length=20, append=True) # Short-term
+df.ta.sma(length=50, append=True) # Medium-term 
+df.ta.sma(length=200, append=True) # Long-term
 
 # Trend indicator
-df.ta.adx(length=14, append=True)   # Average Directional Index
+df.ta.adx(length=14, append=True) # Average Directional Index
 ```
 
 ### 2. Momentum Trading
@@ -241,17 +215,17 @@ df.ta.ad(append=True)
 
 ### 5. Support & Resistance
 
-Find key price levels:
+Find key price levels using the Parabolic SAR and Donchian Channel:
 
 ```python
-# Pivot Points
-df.ta.pivot(append=True)
+# Parabolic Stop and Reverse
+df.ta.psar(append=True)
 
-# Fibonacci Retracement (on a subset)
-fib = ta.fib(df['high'], df['low'])
+# Donchian Channel (high/low price channels)
+df.ta.donchian(lower_length=20, upper_length=20, append=True)
 ```
 
-## 🎓 Understanding Indicator Output
+## Understanding Indicator Output
 
 ### Single Column Output
 
@@ -260,8 +234,8 @@ Some indicators return a single Series:
 ```python
 # Returns a Series
 sma = df.ta.sma(length=20)
-print(type(sma))  # pandas.Series
-print(sma.name)   # 'SMA_20'
+print(type(sma)) # pandas.Series
+print(sma.name) # 'SMA_20'
 ```
 
 ### Multiple Column Output
@@ -271,8 +245,8 @@ Others return a DataFrame with multiple columns:
 ```python
 # Returns a DataFrame
 bbands = df.ta.bbands(length=20)
-print(type(bbands))     # pandas.DataFrame
-print(bbands.columns)   # ['BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0']
+print(type(bbands)) # pandas.DataFrame
+print(bbands.columns) # ['BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0']
 
 # Access individual bands
 lower_band = bbands['BBL_20_2.0']
@@ -294,7 +268,7 @@ df.ta.ema(close=df['high'], length=20, suffix="High", append=True)
 # Creates column: EMA_20_High
 ```
 
-## 🔍 Exploring Available Indicators
+## Exploring Available Indicators
 
 ### List All Indicators
 
@@ -305,11 +279,11 @@ import pandas_ta_classic as ta
 print(ta.Category)
 
 # List indicators by category
-print(ta.momentum)  # All momentum indicators
-print(ta.overlap)   # All overlap indicators
-print(ta.trend)     # All trend indicators
-print(ta.volatility)  # All volatility indicators
-print(ta.volume)    # All volume indicators
+print(ta.momentum) # All momentum indicators
+print(ta.overlap) # All overlap indicators
+print(ta.trend) # All trend indicators
+print(ta.volatility) # All volatility indicators
+print(ta.volume) # All volume indicators
 ```
 
 ### Get Help on Indicators
@@ -324,7 +298,7 @@ help(ta.rsi)
 print(ta.sma.__doc__)
 ```
 
-## ⚡ Performance Tips
+## Performance Tips
 
 ### 1. Use append=True Carefully
 
@@ -345,15 +319,15 @@ df.ta.strategy("CommonStrategy")
 ```python
 # Automatically parallelized
 my_strategy = ta.Strategy(
-    name="FastStrategy",
-    ta=[
-        {"kind": "sma", "length": 20},
-        {"kind": "ema", "length": 20},
-        {"kind": "rsi", "length": 14},
-        {"kind": "macd"},
-    ]
+ name="FastStrategy",
+ ta=[
+ {"kind": "sma", "length": 20},
+ {"kind": "ema", "length": 20},
+ {"kind": "rsi", "length": 14},
+ {"kind": "macd"},
+ ]
 )
-df.ta.strategy(my_strategy)  # Runs in parallel
+df.ta.strategy(my_strategy) # Runs in parallel
 ```
 
 ### 3. Preprocess Data
@@ -367,7 +341,7 @@ df['volume'] = pd.to_numeric(df['volume'], errors='coerce')
 df = df.dropna()
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: "KeyError: 'close'"
 
@@ -390,11 +364,11 @@ df.ta.sma(close=df['price'], length=20)
 
 ```python
 # Most indicators need minimum data
-print(len(df))  # Should be > indicator length
+print(len(df)) # Should be > indicator length
 
 # Example: SMA(20) needs at least 20 data points
 if len(df) >= 20:
-    df.ta.sma(length=20, append=True)
+ df.ta.sma(length=20, append=True)
 ```
 
 ### Issue: "Import Error: No module named 'pandas_ta_classic'"
@@ -417,20 +391,20 @@ pip install TA-Lib
 
 # On Windows, download wheel from:
 # https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
-pip install TA_Lib‑0.4.XX‑cpXX‑cpXX‑win_amd64.whl
+pip install TA_Lib-0.4.XX-cpXX-cpXX-win_amd64.whl
 ```
 
-## 📚 Next Steps
+## Next Steps
 
 Now that you've got the basics, explore more:
 
 1. **[Full Documentation](https://xgboosted.github.io/pandas-ta-classic/)** - Complete API reference
-2. **[Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/TUTORIALS.md)** - Step-by-step guides for common tasks
-3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - All 203 indicators
+2. **[Tutorials](https://xgboosted.github.io/pandas-ta-classic/tutorials.html)** - Step-by-step guides for common tasks
+3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - All 224 indicators
 4. **[Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html)** - Advanced strategy system
 5. **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
 
-## 🎯 Quick Reference Card
+## Quick Reference Card
 
 | Task | Code |
 |------|------|
@@ -443,10 +417,10 @@ Now that you've got the basics, explore more:
 | Get help | `help(ta.sma)` |
 | Fetch data | `df.ta.ticker("AAPL")` |
 
-## 💬 Need Help?
+## Need Help?
 
 - **Issues**: [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/xgboosted/pandas-ta-classic/discussions)
 - **Examples**: Check the [examples directory](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)
 
-Happy Trading! 📈
+Happy Trading! 

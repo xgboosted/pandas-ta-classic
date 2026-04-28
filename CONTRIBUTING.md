@@ -13,50 +13,50 @@ We welcome contributions to pandas-ta-classic! This document provides guidelines
 ### Development Setup
 
 1. **Fork and Clone**
-   ```bash
-   git clone https://github.com/your-username/pandas-ta-classic.git
-   cd pandas-ta-classic
-   ```
+ ```bash
+ git clone https://github.com/your-username/pandas-ta-classic.git
+ cd pandas-ta-classic
+ ```
 
 2. **Create Virtual Environment**
-   
-   Using `uv` (recommended):
-   ```bash
-   uv venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-   
-   Using `venv`:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+ 
+ Using `uv` (recommended):
+ ```bash
+ uv venv
+ source .venv/bin/activate # On Windows: .venv\Scripts\activate
+ ```
+ 
+ Using `venv`:
+ ```bash
+ python -m venv venv
+ source venv/bin/activate # On Windows: venv\Scripts\activate
+ ```
 
 3. **Install Dependencies**
-   
-   Using `uv` (faster):
-   ```bash
-   # Install package in development mode with all dependencies
-   uv pip install -e ".[all]"
-   
-   # Or install specific dependency groups as needed:
-   uv pip install -e ".[dev]"        # Development dependencies
-   uv pip install -e ".[test]"       # Testing dependencies only
-   uv pip install -e ".[docs]"       # Documentation dependencies
-   uv pip install -e ".[optional]"   # Optional runtime dependencies
-   ```
-   
-   Using `pip`:
-   ```bash
-   # Install package in development mode with all dependencies
-   pip install -e ".[all]"
-   
-   # Or install specific dependency groups as needed:
-   pip install -e ".[dev]"        # Development dependencies
-   pip install -e ".[test]"       # Testing dependencies only
-   pip install -e ".[docs]"       # Documentation dependencies
-   pip install -e ".[optional]"   # Optional runtime dependencies
-   ```
+ 
+ Using `uv` (faster):
+ ```bash
+ # Install package in development mode with all dependencies
+ uv pip install -e ".[all]"
+ 
+ # Or install specific dependency groups as needed:
+ uv pip install -e ".[dev]" # Development dependencies
+ uv pip install -e ".[test]" # Testing dependencies only
+ uv pip install -e ".[docs]" # Documentation dependencies
+ uv pip install -e ".[optional]" # Optional runtime dependencies
+ ```
+ 
+ Using `pip`:
+ ```bash
+ # Install package in development mode with all dependencies
+ pip install -e ".[all]"
+ 
+ # Or install specific dependency groups as needed:
+ pip install -e ".[dev]" # Development dependencies
+ pip install -e ".[test]" # Testing dependencies only
+ pip install -e ".[docs]" # Documentation dependencies
+ pip install -e ".[optional]" # Optional runtime dependencies
+ ```
 
 ## How to Contribute
 
@@ -104,16 +104,16 @@ pytest --cov=pandas_ta_classic --cov-report=html
 #### Test Structure
 ```python
 def test_indicator_name():
-    """Test indicator_name with normal inputs."""
-    # Arrange
-    data = sample_data()
-    
-    # Act
-    result = indicator_name(data)
-    
-    # Assert
-    assert result is not None
-    assert len(result) == len(data)
+ """Test indicator_name with normal inputs."""
+ # Arrange
+ data = sample_data()
+ 
+ # Act
+ result = indicator_name(data)
+ 
+ # Assert
+ assert result is not None
+ assert len(result) == len(data)
 ```
 
 ### 3. Documentation
@@ -121,25 +121,25 @@ def test_indicator_name():
 #### Docstring Format
 ```python
 def indicator_name(close: pd.Series, length: int = 20) -> pd.Series:
-    """
-    Brief description of the indicator.
-    
-    Longer description if needed, including mathematical formula
-    or algorithm explanation.
-    
-    Args:
-        close (pd.Series): Series of closing prices
-        length (int, optional): Lookback period. Defaults to 20.
-    
-    Returns:
-        pd.Series: Calculated indicator values
-        
-    Example:
-        >>> import pandas as pd
-        >>> import pandas_ta_classic as ta
-        >>> data = pd.read_csv('data.csv')
-        >>> result = ta.indicator_name(data['close'])
-    """
+ """
+ Brief description of the indicator.
+ 
+ Longer description if needed, including mathematical formula
+ or algorithm explanation.
+ 
+ Args:
+ close (pd.Series): Series of closing prices
+ length (int, optional): Lookback period. Defaults to 20.
+ 
+ Returns:
+ pd.Series: Calculated indicator values
+ 
+ Example:
+ >>> import pandas as pd
+ >>> import pandas_ta_classic as ta
+ >>> data = pd.read_csv('data.csv')
+ >>> result = ta.indicator_name(data['close'])
+ """
 ```
 
 #### README Updates
@@ -197,32 +197,32 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `perf`
 #### Pull Request Process
 
 1. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/new-indicator
-   ```
+ ```bash
+ git checkout -b feature/new-indicator
+ ```
 
 2. **Make Changes**
-   - Write code with tests
-   - Update documentation
-   - Run tests and linting
+ - Write code with tests
+ - Update documentation
+ - Run tests and linting
 
 3. **Commit Changes**
-   ```bash
-   git add .
-   git commit -m "feat(momentum): add new RSI variant"
-   ```
+ ```bash
+ git add .
+ git commit -m "feat(momentum): add new RSI variant"
+ ```
 
 4. **Push and Create PR**
-   ```bash
-   git push origin feature/new-indicator
-   ```
+ ```bash
+ git push origin feature/new-indicator
+ ```
 
 5. **PR Requirements**
-   - [ ] Tests pass
-   - [ ] Code coverage maintained/improved
-   - [ ] Documentation updated
-   - [ ] Type hints included
-   - [ ] No linting errors
+ - [ ] Tests pass
+ - [ ] Code coverage maintained/improved
+ - [ ] Documentation updated
+ - [ ] Type hints included
+ - [ ] No linting errors
 
 ## Version Management
 
@@ -239,9 +239,9 @@ Version numbers are automatically determined from git tags and commit history:
 
 We use the default `guess-next-dev` version scheme:
 ```
-0.3.35         # Clean release from tag 0.3.35
-0.3.36.dev1    # 1 commit after tag 0.3.35 (developing towards 0.3.36)
-0.3.36.dev2    # 2 commits after tag 0.3.35
+0.3.35 # Clean release from tag 0.3.35
+0.3.36.dev1 # 1 commit after tag 0.3.35 (developing towards 0.3.36)
+0.3.36.dev2 # 2 commits after tag 0.3.35
 ```
 
 This scheme provides clean version numbers on tagged releases (no `.post0` suffix) and uses `.devN` for development builds, clearly indicating work-in-progress towards the next release.
@@ -254,49 +254,49 @@ When working on the repository:
 - Development builds show `.dev` suffix (e.g., `0.3.36.dev1` = developing towards 0.3.36)
 - Clone with full history (not shallow): `git clone https://github.com/xgboosted/pandas-ta-classic.git`
 - Check current version:
-  ```python
-  import pandas_ta_classic as ta
-  print(ta.version)  # Should show something like 0.3.36.dev1
-  ```
+ ```python
+ import pandas_ta_classic as ta
+ print(ta.version) # Should show something like 0.3.36.dev1
+ ```
 
 ### For Maintainers
 
 #### Creating a Release
 
 1. **Update CHANGELOG.md**
-   - Move items from "Unreleased" to new version section
-   - Add release date
-   - Follow [Keep a Changelog](https://keepachangelog.com/) format
+ - Move items from "Unreleased" to new version section
+ - Add release date
+ - Follow [Keep a Changelog](https://keepachangelog.com/) format
 
 2. **Ensure all tests pass**
-   - Check CI/CD status
-   - Run tests locally: `pytest`
+ - Check CI/CD status
+ - Run tests locally: `pytest`
 
 3. **Create and push git tag**
-   ```bash
-   # Ensure you're on main branch
-   git checkout main
-   git pull
-   
-   # Create annotated tag
-   git tag -a 0.4.0 -m "Release version 0.4.0"
-   
-   # Push tag to GitHub
-   git push origin 0.4.0
-   ```
+ ```bash
+ # Ensure you're on main branch
+ git checkout main
+ git pull
+ 
+ # Create annotated tag
+ git tag -a 0.4.0 -m "Release version 0.4.0"
+ 
+ # Push tag to GitHub
+ git push origin 0.4.0
+ ```
 
 4. **Create GitHub Release**
-   - Go to repository's Releases page
-   - Click "Draft a new release"
-   - Select the tag you just created
-   - Copy relevant CHANGELOG.md entries
-   - Publish the release
-   
+ - Go to repository's Releases page
+ - Click "Draft a new release"
+ - Select the tag you just created
+ - Copy relevant CHANGELOG.md entries
+ - Publish the release
+ 
 5. **Automated Publishing**
-   - CI/CD workflow automatically publishes to PyPI when GitHub Release is published
-   - Version is automatically set to tag name (e.g., `0.4.0`)
-   - No manual version updates needed in any files
-   - Verify on PyPI that package appears with correct version
+ - CI/CD workflow automatically publishes to PyPI when GitHub Release is published
+ - Version is automatically set to tag name (e.g., `0.4.0`)
+ - No manual version updates needed in any files
+ - Verify on PyPI that package appears with correct version
 
 #### Version Resolution
 
@@ -333,8 +333,8 @@ GitHub Actions by default performs shallow clones (only the latest commit), whic
 
 ```yaml
 - uses: actions/checkout@v4
-  with:
-    fetch-depth: 0  # Full history needed for setuptools-scm
+ with:
+ fetch-depth: 0 # Full history needed for setuptools-scm
 ```
 
 Without `fetch-depth: 0`, setuptools-scm will fall back to `0.0.0`.
@@ -345,13 +345,13 @@ When building releases in CI/CD that modify files (like `pyproject.toml`), the w
 
 ```yaml
 - name: Set version environment variable
-  run: |
-    RELEASE_TAG="${{ github.event.release.tag_name }}"
-    VERSION="${RELEASE_TAG#v}"
-    echo "SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION" >> $GITHUB_ENV
+ run: |
+ RELEASE_TAG="${{ github.event.release.tag_name }}"
+ VERSION="${RELEASE_TAG#v}"
+ echo "SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION" >> $GITHUB_ENV
 
 - name: Build package
-  run: python -m build --wheel
+ run: python -m build --wheel
 ```
 
 This ensures the exact release tag version is used, even if files are modified during the build process.
@@ -403,18 +403,18 @@ If git is not available (e.g., building from a source tarball), the version fall
 ```
 pandas_ta_classic/
 ├── __init__.py
-├── core.py              # Core functionality
-├── custom.py            # Custom indicators
-├── candles/            # Candlestick patterns
-├── cycles/             # Cycle indicators  
-├── momentum/           # Momentum indicators
-├── overlap/            # Overlap studies
-├── performance/        # Performance metrics
-├── statistics/         # Statistical functions
-├── trend/              # Trend indicators
-├── utils/              # Utility functions
-├── volatility/         # Volatility indicators
-└── volume/             # Volume indicators
+├── core.py # Core functionality
+├── custom.py # Custom indicators
+├── candles/ # Candlestick patterns
+├── cycles/ # Cycle indicators 
+├── momentum/ # Momentum indicators
+├── overlap/ # Overlap studies
+├── performance/ # Performance metrics
+├── statistics/ # Statistical functions
+├── trend/ # Trend indicators
+├── utils/ # Utility functions
+├── volatility/ # Volatility indicators
+└── volume/ # Volume indicators
 ```
 
 ## Current Roadmap
@@ -426,7 +426,7 @@ See our [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues) f
 - Standardized error handling
 - Comprehensive test coverage
 
-### Phase 2: Performance  
+### Phase 2: Performance 
 - Numba optimization
 - Lazy loading
 - Performance benchmarks
@@ -481,4 +481,4 @@ Feel free to:
 - Start a discussion for questions or ideas
 - Contact maintainers for sensitive issues
 
-Thank you for contributing to pandas-ta-classic! 🚀
+Thank you for contributing to pandas-ta-classic! 

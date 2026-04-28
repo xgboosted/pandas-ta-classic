@@ -26,38 +26,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Job 1: Basic structure validation (fast, runs first)
-  validate-structure:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0  # Full history needed for setuptools-scm
-    
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ env.LATEST_PYTHON_VERSION }}
-    
-    - name: Display package version from git
-      run: |
-        pip install -e .
-        VERSION=$(python -c "import pandas_ta_classic as ta; print(ta.version)")
-        echo "📦 Package Version: $VERSION"
-        echo "### 📦 Package Version" >> $GITHUB_STEP_SUMMARY
-        echo "**$VERSION**" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-    
-    - name: Validate package structure
-      run: |
-        python validate_structure.py
-
-
-  # Job 2: Code quality checks (linting and formatting)
+  # Job 1: Code quality checks (linting and formatting)
   code-quality:
     runs-on: ubuntu-latest
-    needs: validate-structure
     
     steps:
     - uses: actions/checkout@v6
@@ -84,31 +55,37 @@ jobs:
         sudo make install
         sudo ldconfig
 
+    - name: Display package version from git
+      run: |
+        pip install -e .
+        VERSION=$(python -c "import pandas_ta_classic as ta; print(ta.version)")
+        echo "Package Version: $VERSION"
+        echo "### Package Version" >> $GITHUB_STEP_SUMMARY
+        echo "**$VERSION**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
     - name: Install dependencies and quality tools
       run: |
         python -m pip install --upgrade pip
-        # Install package with dependencies from pyproject.toml
-        pip install -e .
-        # Install TA-Lib for candlestick patterns
+        pip install -e ".[lint]"
+        # Install TA-Lib for candlestick patterns (requires system C library pre-installed above)
         pip install TA-Lib
-        # Install code quality tools
-        pip install flake8 black
     
     - name: Check code formatting with black
       run: |
         black --check --diff pandas_ta_classic/
     
-    - name: Run flake8 linting
+    - name: Run Ruff linting
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 pandas_ta_classic --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings for non-critical issues
-        flake8 pandas_ta_classic --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=pandas_ta_classic/__init__.py
+        ruff check pandas_ta_classic --select E9,F63,F7,F82
+        # report broader lint issues without failing this non-critical pass
+        ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 
   # Job 3: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
   # These versions are used for:
-  #   - test-matrix job: testing across all supported Python versions
+  #   - testing job: testing across all supported Python versions
   #   - pypi-publish job: replacing {{LATEST-N}} placeholders in pyproject.toml
   generate-matrix:
     runs-on: ubuntu-latest
@@ -149,8 +126,8 @@ jobs:
         echo "Generated Python versions: $versions"
 
 
-  # Job 4: Test matrix - Run tests on all dynamically generated Python versions
-  test-matrix:
+  # Job 4: Testing - Run tests on all dynamically generated Python versions
+  testing:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix]
     strategy:
@@ -210,7 +187,7 @@ jobs:
   # Job 5: Documentation - Build and deploy documentation (independent deployment)
   documentation:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix, test-matrix]
+    needs: [code-quality, generate-matrix, testing]
     if: github.event_name == 'push'
     environment: 
       name: docs-production
@@ -244,17 +221,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install package with dependencies from pyproject.toml
-        pip install -e .
-        # Install TA-Lib for candlestick patterns
+        pip install -e ".[docs]"
+        # Install TA-Lib for candlestick patterns (requires system C library pre-installed above)
         pip install TA-Lib
     
     - name: Setup Pages
       uses: actions/configure-pages@v6
-    
-    - name: Install Sphinx dependencies
-      run: |
-        pip install sphinx sphinx-rtd-theme
           
     - name: Build Sphinx documentation
       run: |
@@ -292,7 +264,7 @@ jobs:
   #   4. Preserves Development Status :: 5 - Production/Stable and all other classifiers
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix, test-matrix]
+    needs: [code-quality, generate-matrix, testing]
     if: github.event_name == 'release' && github.event.action == 'published'
     environment:
       name: pypi-production
@@ -327,7 +299,7 @@ jobs:
           '.[] | select(.tag_name == $version and (.id | tostring) != $current_id) | .tag_name')
         
         if [ -n "$DUPLICATE_VERSION" ]; then
-          echo "❌ Error: Version $RELEASE_TAG already exists in another release!"
+          echo "Error: Version $RELEASE_TAG already exists in another release!"
           echo "Please use a unique version number."
           exit 1
         fi
@@ -338,12 +310,12 @@ jobs:
           jq -r '.releases | keys[]' 2>/dev/null || echo "")
         
         if echo "$PYPI_VERSIONS" | grep -q "^$NEW_VERSION$"; then
-          echo "❌ Error: Version $NEW_VERSION already exists on PyPI!"
+          echo "Error: Version $NEW_VERSION already exists on PyPI!"
           echo "Please use a unique version number."
           exit 1
         fi
         
-        echo "✅ Version $NEW_VERSION is unique and ready for release!"
+        echo "Version $NEW_VERSION is unique and ready for release!"
     
     - name: Show Python versions from generate-matrix
       run: |
@@ -429,7 +401,7 @@ jobs:
         with open('pyproject.toml', 'w') as f:
             f.writelines(updated_lines)
         
-        print("✅ pyproject.toml Python version placeholders replaced successfully!")
+        print("pyproject.toml Python version placeholders replaced successfully!")
         
         # Verify the changes - show Python-related lines
         print("\nVerifying Python classifiers and requires-python:")
@@ -454,16 +426,12 @@ jobs:
         RELEASE_TAG="${{ github.event.release.tag_name }}"
         VERSION="${RELEASE_TAG#v}"
         echo "SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION" >> $GITHUB_ENV
-        echo "📌 Will build with version: $VERSION"
-    
-    - name: Validate package structure
-      run: |
-        python validate_structure.py
+        echo "Will build with version: $VERSION"
     
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine setuptools-scm
+        pip install ".[publish]"
     
     - name: Build package
       run: python -m build --wheel

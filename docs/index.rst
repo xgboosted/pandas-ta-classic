@@ -25,21 +25,7 @@ Pandas TA Classic Documentation
 Quick Start
 -----------
 
-**Pandas TA Classic** supports both modern ``uv`` and traditional ``pip`` package managers.
-
-Using ``uv`` (recommended - faster):
-
-.. code-block:: bash
-
-   uv pip install pandas-ta-classic
-
-Using ``pip``:
-
-.. code-block:: bash
-
-   pip install pandas-ta-classic
-
-Basic usage:
+**Pandas TA Classic** is simple to use — import the library and start calculating indicators directly on your DataFrame:
 
 .. code-block:: python
 
@@ -55,7 +41,7 @@ Basic usage:
    df.ta.macd(append=True)
 
 .. note::
-   **New to Pandas TA Classic?** Check out our :doc:`quickstart` guide for a comprehensive introduction, or explore the :doc:`usage` guide for detailed programming conventions.
+   **New to Pandas TA Classic?** Check out our :doc:`quickstart` guide for a comprehensive introduction, or explore the :doc:`dataframe_api` guide for detailed programming conventions.
 
 Table of Contents
 -----------------
@@ -64,9 +50,9 @@ Table of Contents
    :maxdepth: 2
    :caption: Getting Started:
 
-   quickstart
    installation
-   usage
+   quickstart
+   tutorials
 
 .. toctree::
    :maxdepth: 2

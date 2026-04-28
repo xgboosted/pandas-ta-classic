@@ -1,7 +1,7 @@
 Performance Metrics
 ==================
 
-**BETA** - Performance Metrics are a **new** addition to the package and are likely unreliable. **Use at your own risk.** These metrics return a *float* and are *not* part of the *DataFrame* Extension. They are called the Standard way.
+Performance Metrics return a *float* and are *not* part of the *DataFrame* Extension. They are called the Standard way. The DataFrame must have a **DatetimeIndex** for time-based metrics such as ``cagr``.
 
 .. code-block:: python
 
@@ -25,7 +25,7 @@ Available Metrics
 Backtesting with vectorbt
 -------------------------
 
-For **easier** integration with **vectorbt**'s Portfolio ``from_signals`` method, the ``ta.trend_return`` method has been replaced with ``ta.tsignals`` method to simplify the generation of trading signals.
+Use ``ta.tsignals`` to generate trading signals for integration with **vectorbt**'s ``Portfolio.from_signals`` method.
 
 For a comprehensive example, see the example Jupyter Notebook `VectorBT Backtest with Pandas TA <https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/VectorBT_Backtest_with_Pandas_TA.ipynb>`_ in the examples directory.
 
