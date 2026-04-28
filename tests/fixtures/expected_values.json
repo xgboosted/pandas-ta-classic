@@ -71,6 +71,18 @@
       "non_nan_count": 5241
     }
   },
+  "hma_10": {
+    "HMA_10": {
+      "last_value": 349.62139394,
+      "non_nan_count": 5230
+    }
+  },
+  "vwma_10": {
+    "VWMA_10": {
+      "last_value": 342.62447142,
+      "non_nan_count": 5232
+    }
+  },
   "rsi_14": {
     "RSI_14": {
       "last_value": 79.70056716,
@@ -143,6 +155,56 @@
       "non_nan_count": 5214
     }
   },
+  "ao": {
+    "AO_5_34": {
+      "last_value": 14.35674294,
+      "non_nan_count": 5208
+    }
+  },
+  "bias_10": {
+    "BIAS_SMA_10": {
+      "last_value": 0.02357331,
+      "non_nan_count": 5232
+    }
+  },
+  "cfo_10": {
+    "CFO_10": {
+      "last_value": -0.11694906,
+      "non_nan_count": 5232
+    }
+  },
+  "er": {
+    "ER_10": {
+      "last_value": 0.82971014,
+      "non_nan_count": 5231
+    }
+  },
+  "po": {
+    "PO_14": {
+      "last_value": 0.69169482,
+      "non_nan_count": 5228
+    }
+  },
+  "pvo": {
+    "PVO_12_26_9": {
+      "last_value": -8.11152181,
+      "non_nan_count": 5216
+    },
+    "PVOh_12_26_9": {
+      "last_value": 2.47514961,
+      "non_nan_count": 5208
+    },
+    "PVOs_12_26_9": {
+      "last_value": -10.58667142,
+      "non_nan_count": 5208
+    }
+  },
+  "pvol": {
+    "PVOL": {
+      "last_value": 17034310585.199999,
+      "non_nan_count": 5241
+    }
+  },
   "atr_14": {
     "ATRr_14": {
       "last_value": 3.38808635,
@@ -183,6 +245,60 @@
       "non_nan_count": 5240
     }
   },
+  "donchian_20": {
+    "DCL_20_20": {
+      "last_value": 327.73,
+      "non_nan_count": 5222
+    },
+    "DCM_20_20": {
+      "last_value": 339.225,
+      "non_nan_count": 5222
+    },
+    "DCU_20_20": {
+      "last_value": 350.72,
+      "non_nan_count": 5222
+    }
+  },
+  "kc_20": {
+    "KCLe_20_2": {
+      "last_value": 332.16228385,
+      "non_nan_count": 5221
+    },
+    "KCBe_20_2": {
+      "last_value": 338.51818584,
+      "non_nan_count": 5222
+    },
+    "KCUe_20_2": {
+      "last_value": 344.87408782,
+      "non_nan_count": 5221
+    }
+  },
+  "massi": {
+    "MASSI_9_25": {
+      "last_value": 23.35693611,
+      "non_nan_count": 5201
+    }
+  },
+  "pdist": {
+    "PDIST": {
+      "last_value": 5.11,
+      "non_nan_count": 5240
+    }
+  },
+  "accbands": {
+    "ACCBL_20": {
+      "last_value": 330.4658626,
+      "non_nan_count": 5222
+    },
+    "ACCBM_20": {
+      "last_value": 338.22,
+      "non_nan_count": 5222
+    },
+    "ACCBU_20": {
+      "last_value": 344.7300126,
+      "non_nan_count": 5222
+    }
+  },
   "adx_14": {
     "ADX_14": {
       "last_value": 40.06595307,
@@ -211,6 +327,52 @@
       "non_nan_count": 5227
     }
   },
+  "decreasing": {
+    "DEC_1": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
+  "increasing": {
+    "INC_1": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
+    }
+  },
+  "chop": {
+    "CHOP_14_1_100": {
+      "last_value": 31.64705239,
+      "non_nan_count": 5227
+    }
+  },
+  "dpo_14": {
+    "DPO_14": {
+      "last_value": -2.00071429,
+      "non_nan_count": 5228
+    }
+  },
+  "qstick": {
+    "QS_10": {
+      "last_value": 0.809,
+      "non_nan_count": 5232
+    }
+  },
+  "vhf": {
+    "VHF_28": {
+      "last_value": 0.55482907,
+      "non_nan_count": 5213
+    }
+  },
+  "vortex": {
+    "VTXP_14": {
+      "last_value": 1.3499942,
+      "non_nan_count": 5227
+    },
+    "VTXM_14": {
+      "last_value": 0.65107695,
+      "non_nan_count": 5227
+    }
+  },
   "obv": {
     "OBV": {
       "last_value": 9937691999.0,
@@ -233,6 +395,58 @@
     "ADOSC_3_10": {
       "last_value": 89746999.72124481,
       "non_nan_count": 5232
+    }
+  },
+  "cmf_20": {
+    "CMF_20": {
+      "last_value": 0.44256696,
+      "non_nan_count": 5222
+    }
+  },
+  "efi": {
+    "EFI_13": {
+      "last_value": 68470601.65167013,
+      "non_nan_count": 5228
+    }
+  },
+  "eom": {
+    "EOM_14_100000000": {
+      "last_value": 6.48218124,
+      "non_nan_count": 5227
+    }
+  },
+  "kvo": {
+    "KVO_34_55_13": {
+      "last_value": 4969756.02721119,
+      "non_nan_count": 5187
+    },
+    "KVOs_34_55_13": {
+      "last_value": 3544044.53162474,
+      "non_nan_count": 5175
+    }
+  },
+  "nvi": {
+    "NVI_1": {
+      "last_value": 1538.32227414,
+      "non_nan_count": 5241
+    }
+  },
+  "pvi": {
+    "PVI_1": {
+      "last_value": 597.86467164,
+      "non_nan_count": 5241
+    }
+  },
+  "pvr": {
+    "PVR": {
+      "last_value": 2.0,
+      "non_nan_count": 5241
+    }
+  },
+  "pvt": {
+    "PVT": {
+      "last_value": -44026206885.840126,
+      "non_nan_count": 5240
     }
   },
   "stdev_20": {
@@ -303,6 +517,20 @@
       "non_nan_count": 5240
     }
   },
+  "drawdown": {
+    "DD": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "DD_PCT": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    },
+    "DD_LOG": {
+      "last_value": 0.0,
+      "non_nan_count": 5241
+    }
+  },
   "kama": {
     "KAMA_10_2_30": {
       "last_value": 345.26325066,
@@ -329,6 +557,54 @@
     "TSF_14": {
       "last_value": 349.33032967,
       "non_nan_count": 5228
+    }
+  },
+  "trima_10": {
+    "TRIMA_10": {
+      "last_value": 341.30027778,
+      "non_nan_count": 5231
+    }
+  },
+  "swma": {
+    "SWMA_10": {
+      "last_value": 341.94766667,
+      "non_nan_count": 5232
+    }
+  },
+  "pwma_10": {
+    "PWMA_10": {
+      "last_value": 341.46097656,
+      "non_nan_count": 5232
+    }
+  },
+  "sinwma_14": {
+    "SINWMA_14": {
+      "last_value": 340.08562817,
+      "non_nan_count": 5228
+    }
+  },
+  "fwma_10": {
+    "FWMA_10": {
+      "last_value": 347.58223776,
+      "non_nan_count": 5232
+    }
+  },
+  "alma_10": {
+    "ALMA_10_6.0_0.85": {
+      "last_value": 338.2871409,
+      "non_nan_count": 5232
+    }
+  },
+  "rma": {
+    "RMA_10": {
+      "last_value": 338.96885629,
+      "non_nan_count": 5232
+    }
+  },
+  "ma_ema_20": {
+    "EMA_20": {
+      "last_value": 338.51818584,
+      "non_nan_count": 5222
     }
   },
   "stochrsi": {
@@ -363,6 +639,50 @@
     "TRIXs_30_9": {
       "last_value": 0.20199622,
       "non_nan_count": 5145
+    }
+  },
+  "cmo_14": {
+    "CMO_14": {
+      "last_value": 61.04107361,
+      "non_nan_count": 5227
+    }
+  },
+  "coppock": {
+    "COPC_11_14_10": {
+      "last_value": 7.0529042,
+      "non_nan_count": 5218
+    }
+  },
+  "cg": {
+    "CG_10": {
+      "last_value": -5.46284445,
+      "non_nan_count": 5232
+    }
+  },
+  "pgo_14": {
+    "PGO_14": {
+      "last_value": 2.65362211,
+      "non_nan_count": 5214
+    }
+  },
+  "eri": {
+    "BULLP_13": {
+      "last_value": 8.84889581,
+      "non_nan_count": 5229
+    },
+    "BEARP_13": {
+      "last_value": 6.27889581,
+      "non_nan_count": 5229
+    }
+  },
+  "tsi": {
+    "TSI_13_25_13": {
+      "last_value": 45.35735258,
+      "non_nan_count": 5204
+    },
+    "TSIs_13_25_13": {
+      "last_value": 36.16925861,
+      "non_nan_count": 5192
     }
   },
   "adxr": {
@@ -441,6 +761,36 @@
     "SLOPE_1": {
       "last_value": 2.25,
       "non_nan_count": 5240
+    }
+  },
+  "beta": {
+    "BETA_30": {
+      "last_value": 0.09299151,
+      "non_nan_count": 5211
+    }
+  },
+  "ui": {
+    "UI_14": {
+      "last_value": 0.25778556,
+      "non_nan_count": 5215
+    }
+  },
+  "ha": {
+    "HA_open": {
+      "last_value": 346.11661082,
+      "non_nan_count": 5241
+    },
+    "HA_high": {
+      "last_value": 350.72,
+      "non_nan_count": 5241
+    },
+    "HA_low": {
+      "last_value": 346.11661082,
+      "non_nan_count": 5241
+    },
+    "HA_close": {
+      "last_value": 349.7225,
+      "non_nan_count": 5241
     }
   },
   "cdl_2crows": {
@@ -803,30 +1153,6 @@
       "non_nan_count": 5241
     }
   },
-  "hma_10": {
-    "HMA_10": {
-      "last_value": 349.62139394,
-      "non_nan_count": 5230
-    }
-  },
-  "alma_10": {
-    "ALMA_10_6.0_0.85": {
-      "last_value": 338.2871409,
-      "non_nan_count": 5232
-    }
-  },
-  "trima_10": {
-    "TRIMA_10": {
-      "last_value": 341.30027778,
-      "non_nan_count": 5231
-    }
-  },
-  "fwma_10": {
-    "FWMA_10": {
-      "last_value": 347.58223776,
-      "non_nan_count": 5232
-    }
-  },
   "hilo": {
     "HILO_13_21": {
       "last_value": 335.43832381,
@@ -885,12 +1211,6 @@
       "non_nan_count": 5207
     }
   },
-  "pwma_10": {
-    "PWMA_10": {
-      "last_value": 341.46097656,
-      "non_nan_count": 5232
-    }
-  },
   "rainbow": {
     "RAINBOW_1": {
       "last_value": 349.455,
@@ -933,18 +1253,6 @@
       "non_nan_count": 5231
     }
   },
-  "rma": {
-    "RMA_10": {
-      "last_value": 338.96885629,
-      "non_nan_count": 5232
-    }
-  },
-  "sinwma_14": {
-    "SINWMA_14": {
-      "last_value": 340.08562817,
-      "non_nan_count": 5228
-    }
-  },
   "ssf_10": {
     "SSF_10_2": {
       "last_value": 347.83859018,
@@ -969,12 +1277,6 @@
       "non_nan_count": 2260
     }
   },
-  "swma": {
-    "SWMA_10": {
-      "last_value": 341.94766667,
-      "non_nan_count": 5232
-    }
-  },
   "vidya": {
     "VIDYA_14": {
       "last_value": 334.03194351,
@@ -987,28 +1289,10 @@
       "non_nan_count": 5241
     }
   },
-  "vwma_10": {
-    "VWMA_10": {
-      "last_value": 342.62447142,
-      "non_nan_count": 5232
-    }
-  },
   "zlma_10": {
     "ZL_EMA_10": {
       "last_value": 349.21741195,
       "non_nan_count": 5228
-    }
-  },
-  "ao": {
-    "AO_5_34": {
-      "last_value": 14.35674294,
-      "non_nan_count": 5208
-    }
-  },
-  "bias_10": {
-    "BIAS_SMA_10": {
-      "last_value": 0.02357331,
-      "non_nan_count": 5232
     }
   },
   "brar": {
@@ -1019,30 +1303,6 @@
     "BR_26": {
       "last_value": 145.55764821,
       "non_nan_count": 5215
-    }
-  },
-  "cfo_10": {
-    "CFO_10": {
-      "last_value": -0.11694906,
-      "non_nan_count": 5232
-    }
-  },
-  "cg": {
-    "CG_10": {
-      "last_value": -5.46284445,
-      "non_nan_count": 5232
-    }
-  },
-  "cmo_14": {
-    "CMO_14": {
-      "last_value": 61.04107361,
-      "non_nan_count": 5227
-    }
-  },
-  "coppock": {
-    "COPC_11_14_10": {
-      "last_value": 7.0529042,
-      "non_nan_count": 5218
     }
   },
   "cti": {
@@ -1059,22 +1319,6 @@
     "DMN_14": {
       "last_value": 0.28160645,
       "non_nan_count": 5228
-    }
-  },
-  "er": {
-    "ER_10": {
-      "last_value": 0.82971014,
-      "non_nan_count": 5231
-    }
-  },
-  "eri": {
-    "BULLP_13": {
-      "last_value": 8.84889581,
-      "non_nan_count": 5229
-    },
-    "BEARP_13": {
-      "last_value": 6.27889581,
-      "non_nan_count": 5229
     }
   },
   "fisher": {
@@ -1123,36 +1367,10 @@
       "non_nan_count": 5241
     }
   },
-  "pgo_14": {
-    "PGO_14": {
-      "last_value": 2.65362211,
-      "non_nan_count": 5214
-    }
-  },
-  "po": {
-    "PO_14": {
-      "last_value": 0.69169482,
-      "non_nan_count": 5228
-    }
-  },
   "psl": {
     "PSL_12": {
       "last_value": 75.0,
       "non_nan_count": 5230
-    }
-  },
-  "pvo": {
-    "PVO_12_26_9": {
-      "last_value": -8.11152181,
-      "non_nan_count": 5216
-    },
-    "PVOh_12_26_9": {
-      "last_value": 2.47514961,
-      "non_nan_count": 5208
-    },
-    "PVOs_12_26_9": {
-      "last_value": -10.58667142,
-      "non_nan_count": 5208
     }
   },
   "qqe": {
@@ -1301,16 +1519,6 @@
       "non_nan_count": 5181
     }
   },
-  "tsi": {
-    "TSI_13_25_13": {
-      "last_value": 45.35735258,
-      "non_nan_count": 5204
-    },
-    "TSIs_13_25_13": {
-      "last_value": 36.16925861,
-      "non_nan_count": 5192
-    }
-  },
   "vwmacd": {
     "VWMACD_12_26_9": {
       "last_value": 7.5758309,
@@ -1323,34 +1531,6 @@
     "VWMACDs_12_26_9": {
       "last_value": 7.01922067,
       "non_nan_count": 5208
-    }
-  },
-  "donchian_20": {
-    "DCL_20_20": {
-      "last_value": 327.73,
-      "non_nan_count": 5222
-    },
-    "DCM_20_20": {
-      "last_value": 339.225,
-      "non_nan_count": 5222
-    },
-    "DCU_20_20": {
-      "last_value": 350.72,
-      "non_nan_count": 5222
-    }
-  },
-  "kc_20": {
-    "KCLe_20_2": {
-      "last_value": 332.16228385,
-      "non_nan_count": 5221
-    },
-    "KCBe_20_2": {
-      "last_value": 338.51818584,
-      "non_nan_count": 5222
-    },
-    "KCUe_20_2": {
-      "last_value": 344.87408782,
-      "non_nan_count": 5221
     }
   },
   "aberration": {
@@ -1369,20 +1549,6 @@
     "ABER_ATR_5_15": {
       "last_value": 3.45152262,
       "non_nan_count": 5226
-    }
-  },
-  "accbands": {
-    "ACCBL_20": {
-      "last_value": 330.4658626,
-      "non_nan_count": 5222
-    },
-    "ACCBM_20": {
-      "last_value": 338.22,
-      "non_nan_count": 5222
-    },
-    "ACCBU_20": {
-      "last_value": 344.7300126,
-      "non_nan_count": 5222
     }
   },
   "ce": {
@@ -1409,18 +1575,6 @@
       "non_nan_count": 5241
     }
   },
-  "massi": {
-    "MASSI_9_25": {
-      "last_value": 23.35693611,
-      "non_nan_count": 5201
-    }
-  },
-  "pdist": {
-    "PDIST": {
-      "last_value": 5.11,
-      "non_nan_count": 5240
-    }
-  },
   "rvi_vol": {
     "RVI_14": {
       "last_value": 86.90364378,
@@ -1445,24 +1599,6 @@
       "non_nan_count": 5241
     }
   },
-  "ui": {
-    "UI_14": {
-      "last_value": 0.25778556,
-      "non_nan_count": 5215
-    }
-  },
-  "decreasing": {
-    "DEC_1": {
-      "last_value": 0.0,
-      "non_nan_count": 5241
-    }
-  },
-  "increasing": {
-    "INC_1": {
-      "last_value": 1.0,
-      "non_nan_count": 5241
-    }
-  },
   "amat": {
     "AMATe_LR_8_21_2": {
       "last_value": 1.0,
@@ -1471,12 +1607,6 @@
     "AMATe_SR_8_21_2": {
       "last_value": 0.0,
       "non_nan_count": 5241
-    }
-  },
-  "chop": {
-    "CHOP_14_1_100": {
-      "last_value": 31.64705239,
-      "non_nan_count": 5227
     }
   },
   "cksp": {
@@ -1533,12 +1663,6 @@
       "non_nan_count": 5241
     }
   },
-  "dpo_14": {
-    "DPO_14": {
-      "last_value": -2.00071429,
-      "non_nan_count": 5228
-    }
-  },
   "long_run": {
     "LR_2": {
       "last_value": 1.0,
@@ -1551,12 +1675,6 @@
       "non_nan_count": 5231
     }
   },
-  "qstick": {
-    "QS_10": {
-      "last_value": 0.809,
-      "non_nan_count": 5232
-    }
-  },
   "short_run": {
     "SR_2": {
       "last_value": 0.0,
@@ -1567,28 +1685,6 @@
     "TTM_TRND_6": {
       "last_value": 1.0,
       "non_nan_count": 5241
-    }
-  },
-  "vhf": {
-    "VHF_28": {
-      "last_value": 0.55482907,
-      "non_nan_count": 5213
-    }
-  },
-  "vortex": {
-    "VTXP_14": {
-      "last_value": 1.3499942,
-      "non_nan_count": 5227
-    },
-    "VTXM_14": {
-      "last_value": 0.65107695,
-      "non_nan_count": 5227
-    }
-  },
-  "cmf_20": {
-    "CMF_20": {
-      "last_value": 0.44256696,
-      "non_nan_count": 5222
     }
   },
   "aobv": {
@@ -1621,68 +1717,10 @@
       "non_nan_count": 5241
     }
   },
-  "efi": {
-    "EFI_13": {
-      "last_value": 68470601.65167013,
-      "non_nan_count": 5228
-    }
-  },
-  "eom": {
-    "EOM_14_100000000": {
-      "last_value": 6.48218124,
-      "non_nan_count": 5227
-    }
-  },
-  "kvo": {
-    "KVO_34_55_13": {
-      "last_value": 4969756.02721119,
-      "non_nan_count": 5187
-    },
-    "KVOs_34_55_13": {
-      "last_value": 3544044.53162474,
-      "non_nan_count": 5175
-    }
-  },
-  "nvi": {
-    "NVI_1": {
-      "last_value": 1538.32227414,
-      "non_nan_count": 5241
-    }
-  },
-  "pvi": {
-    "PVI_1": {
-      "last_value": 597.86467164,
-      "non_nan_count": 5241
-    }
-  },
-  "pvol": {
-    "PVOL": {
-      "last_value": 17034310585.199999,
-      "non_nan_count": 5241
-    }
-  },
-  "pvr": {
-    "PVR": {
-      "last_value": 2.0,
-      "non_nan_count": 5241
-    }
-  },
-  "pvt": {
-    "PVT": {
-      "last_value": -44026206885.840126,
-      "non_nan_count": 5240
-    }
-  },
   "vfi": {
     "VFI_130": {
       "last_value": 0.0,
       "non_nan_count": 4980
-    }
-  },
-  "beta": {
-    "BETA_30": {
-      "last_value": 0.09299151,
-      "non_nan_count": 5211
     }
   },
   "tos_stdevall": {
@@ -1725,38 +1763,6 @@
     "EBSW_40_10": {
       "last_value": 0.99930303,
       "non_nan_count": 5202
-    }
-  },
-  "drawdown": {
-    "DD": {
-      "last_value": 0.0,
-      "non_nan_count": 5241
-    },
-    "DD_PCT": {
-      "last_value": 0.0,
-      "non_nan_count": 5241
-    },
-    "DD_LOG": {
-      "last_value": 0.0,
-      "non_nan_count": 5241
-    }
-  },
-  "ha": {
-    "HA_open": {
-      "last_value": 346.11661082,
-      "non_nan_count": 5241
-    },
-    "HA_high": {
-      "last_value": 350.72,
-      "non_nan_count": 5241
-    },
-    "HA_low": {
-      "last_value": 346.11661082,
-      "non_nan_count": 5241
-    },
-    "HA_close": {
-      "last_value": 349.7225,
-      "non_nan_count": 5241
     }
   },
   "cdl_doji": {
@@ -2059,12 +2065,6 @@
     "ICS_26": {
       "last_value": 350.58,
       "non_nan_count": 5215
-    }
-  },
-  "ma_ema_20": {
-    "EMA_20": {
-      "last_value": 338.51818584,
-      "non_nan_count": 5222
     }
   },
   "tsignals": {

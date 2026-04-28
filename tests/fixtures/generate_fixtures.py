@@ -12,7 +12,7 @@ Reference strategy
 ------------------
 Fixtures are split into two categories:
 
-REFERENCE (121 indicators)
+REFERENCE (168 indicators)
     Expected values are computed from the TA-Lib C library (``import talib``)
     or from direct arithmetic — both are entirely independent of the
     pandas-ta-classic code under test.  A test failure here means the native
@@ -25,7 +25,7 @@ REFERENCE (121 indicators)
     pure pandas/numpy rolling formulas.  correl uses talib.CORREL; slope uses
     talib.LINEARREG_SLOPE.
 
-REGRESSION (102 indicators)
+REGRESSION (55 indicators)
     No independent reference implementation exists for these purely-native
     indicators.  Their expected values ARE computed from pandas-ta-classic
     itself.  These tests detect *unintended changes* between releases, but
@@ -33,9 +33,6 @@ REGRESSION (102 indicators)
     Regenerate after any intentional algorithm change.
 
     Notes on excluded TA-Lib candidates:
-      TRIMA   — TA-Lib and pandas-ta use different (both valid) weighting
-                formulas (~0.19% divergence).
-      CMO     — native formula differs from TA-Lib (~2.8% divergence).
       DM      — native normalisation produces very different values from TA-Lib.
       PSARaf  — no TA-Lib equivalent; PSARr has off-by-one vs TA-Lib.
       beta    — algorithm differs from TA-Lib BETA (18.4% divergence).
@@ -48,6 +45,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import talib
+import tulipy as ti
 
 import pandas_ta_classic as ta
 
@@ -142,6 +140,294 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
 
     _entropy_ref = _rolling_entropy(c, 10)
 
+    # ------------------------------------------------------------------
+    # Pre-computes for indicators upgraded from REGRESSION → REFERENCE
+    # ------------------------------------------------------------------
+
+    # ---- Shared intermediates ----------------------------------------
+    # HL2 (used by: ao)
+    _hl2_arr = (hv + lv) / 2.0
+    # True Range (used by: chop, vortex, kc_20)
+    _tr_arr = talib.TRANGE(hv, lv, cv)
+    # |close.diff(1)| (used by: er, vhf)
+    _c_abs_diff1 = np.concatenate([[np.nan], np.abs(np.diff(cv))])
+
+    # ---- Overlap --------------------------------------------------------
+    # oracle: TA-Lib WMA (nested)
+    # HMA_10: WMA(2 * WMA(close, 5) - WMA(close, 10), 3)
+    _hma10_inner = 2.0 * talib.WMA(cv, 5) - talib.WMA(cv, 10)
+    _hma10_ref = talib.WMA(_hma10_inner, 3)
+
+    # oracle: TA-Lib SUM
+    # VWMA_10: SUM(close * volume, 10) / SUM(volume, 10)
+    _vwma10_ref = talib.SUM(cv * vv, 10) / talib.SUM(vv, 10)
+
+    # ---- Momentum -------------------------------------------------------
+    # oracle: TA-Lib SMA
+    # AO: SMA(HL2, 5) - SMA(HL2, 34)
+    _ao_ref = talib.SMA(_hl2_arr, 5) - talib.SMA(_hl2_arr, 34)
+
+    # oracle: TA-Lib SMA
+    # BIAS_10: (close - SMA(close, 10)) / SMA(close, 10)
+    _bias10_ref = (cv - talib.SMA(cv, 10)) / talib.SMA(cv, 10)
+
+    # oracle: TA-Lib TSF
+    # CFO_10: 100 * (close - TSF(close, 10)) / close
+    _cfo10_ref = 100.0 * (cv - talib.TSF(cv, 10)) / cv
+
+    # oracle: TA-Lib SUM + pure numpy
+    # ER_10: |close.diff(10)| / SUM(|close.diff(1)|, 10)
+    _c_shift10 = np.concatenate([np.full(10, np.nan), cv[:-10]])
+    _er_ref = np.abs(cv - _c_shift10) / talib.SUM(_c_abs_diff1, 10)
+
+    # oracle: TA-Lib LINEARREG
+    # PO_14: 100 * (close - LINEARREG(close, 14)) / LINEARREG(close, 14)
+    _linreg14 = talib.LINEARREG(cv, 14)
+    _po_ref = 100.0 * (cv - _linreg14) / _linreg14
+
+    # oracle: TA-Lib EMA
+    # PVO: (EMA(v,12) - EMA(v,26)) / EMA(v,26) * 100; signal = EMA(line,9)
+    _pvo_ema12 = talib.EMA(vv, 12)
+    _pvo_ema26 = talib.EMA(vv, 26)
+    _pvo_line_ref = (_pvo_ema12 - _pvo_ema26) / _pvo_ema26 * 100.0
+    _pvo_sig_ref = talib.EMA(_pvo_line_ref, 9)
+    _pvo_hist_ref = _pvo_line_ref - _pvo_sig_ref
+
+    # oracle: pure arithmetic
+    # PVOL: close * volume
+    _pvol_ref = cv * vv
+
+    # ---- Volatility -----------------------------------------------------
+    # oracle: TA-Lib MAX / MIN + pure arithmetic
+    # DONCHIAN_20
+    _don_upper = talib.MAX(hv, 20)
+    _don_lower = talib.MIN(lv, 20)
+    _don_mid = (_don_upper + _don_lower) / 2.0
+
+    # oracle: TA-Lib EMA (basis + EMA of TR as band)
+    # KC_20: EMA(close,20) ± 2 * EMA(TR,20)
+    _kc_basis = talib.EMA(cv, 20)
+    _kc_band_arr = talib.EMA(_tr_arr, 20)
+    _kc_upper = _kc_basis + 2.0 * _kc_band_arr
+    _kc_lower = _kc_basis - 2.0 * _kc_band_arr
+
+    # oracle: TA-Lib EMA + SUM
+    # MASSI: SUM(EMA(H-L,9) / EMA(EMA(H-L,9),9), 25)
+    _hl_ema9 = talib.EMA(hv - lv, 9)
+    _massi_ref = talib.SUM(_hl_ema9 / talib.EMA(_hl_ema9, 9), 25)
+
+    # oracle: pure arithmetic
+    # PDIST: 2*(H-L) + |O - C.prev| - |C - O|
+    _c_prev1 = np.concatenate([[np.nan], cv[:-1]])
+    _pdist_ref = 2.0 * (hv - lv) + np.abs(ov - _c_prev1) - np.abs(cv - ov)
+
+    # ---- Trend ----------------------------------------------------------
+    # oracle: pure pandas comparison
+    # DECREASING / INCREASING
+    _decreasing_ref = (c < c.shift(1)).astype(float)
+    _increasing_ref = (c > c.shift(1)).astype(float)
+
+    # oracle: TA-Lib SUM / MAX / MIN + log10
+    # CHOP_14: 100 * log10(SUM(TR,14) / (MAX(H,14) - MIN(L,14))) / log10(14)
+    _chop_ref = (
+        100.0
+        * np.log10(talib.SUM(_tr_arr, 14) / (talib.MAX(hv, 14) - talib.MIN(lv, 14)))
+        / np.log10(14)
+    )
+
+    # oracle: TA-Lib SMA + pure shift (centered lookahead)
+    # DPO_14 (centered): close[i] - SMA14[i+8]  (t = int(0.5*14)+1 = 8)
+    _dpo14_arr = cv - pd.Series(talib.SMA(cv, 14), index=idx).shift(-8).values
+
+    # oracle: TA-Lib SMA
+    # QSTICK_10: SMA(close - open, 10)
+    _qstick_ref = talib.SMA(cv - ov, 10)
+
+    # oracle: TA-Lib MAX / MIN / SUM
+    # VHF_28: (MAX(c,28) - MIN(c,28)) / SUM(|c.diff(1)|, 28)
+    _vhf_ref = (talib.MAX(cv, 28) - talib.MIN(cv, 28)) / talib.SUM(_c_abs_diff1, 28)
+
+    # oracle: TA-Lib SUM + pure numpy (VM movements)
+    # VORTEX: VTX+P = SUM(|H-L.prev|,14)/SUM(TR,14)
+    #         VTX-M = SUM(|L-H.prev|,14)/SUM(TR,14)
+    _vm_plus = np.concatenate([[np.nan], np.abs(hv[1:] - lv[:-1])])
+    _vm_minus = np.concatenate([[np.nan], np.abs(lv[1:] - hv[:-1])])
+    _vtx_p = talib.SUM(_vm_plus, 14) / talib.SUM(_tr_arr, 14)
+    _vtx_m = talib.SUM(_vm_minus, 14) / talib.SUM(_tr_arr, 14)
+
+    # ---- Volume ---------------------------------------------------------
+    # oracle: TA-Lib SUM
+    # CMF_20: SUM((2C-H-L)/(H-L)*V, 20) / SUM(V, 20)
+    _clv_cmf = (2.0 * cv - hv - lv) / (hv - lv)
+    _cmf20_ref = talib.SUM(_clv_cmf * vv, 20) / talib.SUM(vv, 20)
+
+    # oracle: TA-Lib EMA
+    # EFI_13: EMA(close.diff(1) * volume, 13)
+    _c_diff1_efi = np.concatenate([[np.nan], np.diff(cv)])
+    _efi_ref = talib.EMA(_c_diff1_efi * vv, 13)
+
+    # oracle: TA-Lib SMA
+    # EOM_14: SMA(dm / (volume / (H-L) / 100_000_000), 14)
+    _eom_mid = (hv + lv) / 2.0
+    _eom_dm = np.concatenate([[np.nan], _eom_mid[1:] - _eom_mid[:-1]])
+    _eom_br = vv / (hv - lv) / 100_000_000.0
+    _eom_ref = talib.SMA(_eom_dm / _eom_br, 14)
+
+    # oracle: TA-Lib EMA
+    # KVO: signed_volume = v * sign(diff(HLC3)); KVO = EMA(sv,34) - EMA(sv,55)
+    _kvo_sv = vv * np.sign(np.concatenate([[np.nan], np.diff((hv + lv + cv) / 3.0)]))
+    _kvo_fast = talib.EMA(_kvo_sv, 34)
+    _kvo_slow = talib.EMA(_kvo_sv, 55)
+    _kvo_line = _kvo_fast - _kvo_slow
+    _kvo_sig = talib.EMA(_kvo_line, 13)
+
+    # oracle: TA-Lib ROC + pure cumsum
+    # NVI: initial=1000, accumulate ROC(close,1) only when volume decreases
+    # PVI: initial=1000, accumulate ROC(close,1) only when volume increases
+    # PVT: cumsum(ROC(close,1) * volume)
+    _roc1 = talib.ROC(cv, 1)
+    _vol_down_nvi = np.concatenate([[False], vv[1:] < vv[:-1]])
+    _nvi_contr = np.where(_vol_down_nvi, np.where(np.isnan(_roc1), 0.0, _roc1), 0.0)
+    _nvi_contr[0] = 1000.0
+    _nvi_ref = np.cumsum(_nvi_contr)
+    _vol_up_pvi = np.concatenate([[False], vv[1:] > vv[:-1]])
+    _pvi_contr = np.where(_vol_up_pvi, np.where(np.isnan(_roc1), 0.0, _roc1), 0.0)
+    _pvi_contr[0] = 1000.0
+    _pvi_ref = np.cumsum(_pvi_contr)
+    _pvt_ref = np.nancumsum(_roc1 * vv)
+
+    # oracle: pure arithmetic (4-way comparison)
+    # PVR: 1=c↑v↑, 2=c↑v↓, 3=c↓v↑, 4=c↓v↓
+    _c_gt_prev = (cv > np.roll(cv, 1)).astype(float)
+    _v_gt_prev = (vv > np.roll(vv, 1)).astype(float)
+    _c_gt_prev[0] = np.nan
+    _v_gt_prev[0] = np.nan
+    _pvr_ref = np.where(
+        np.isnan(_c_gt_prev),
+        np.nan,
+        np.where(
+            (_c_gt_prev == 1) & (_v_gt_prev == 1), 1.0,
+            np.where(
+                (_c_gt_prev == 1) & (_v_gt_prev == 0), 2.0,
+                np.where((_c_gt_prev == 0) & (_v_gt_prev == 1), 3.0, 4.0),
+            ),
+        ),
+    )
+
+    # ---- Candles --------------------------------------------------------
+    # oracle: pure recursive arithmetic
+    # HA: close=(O+H+L+C)/4; open=avg(prev_open, prev_close); high/low=max/min
+    _ha_close_arr = (ov + hv + lv + cv) / 4.0
+    _ha_open_arr = np.empty(len(cv))
+    _ha_open_arr[0] = (ov[0] + cv[0]) / 2.0
+    for _i in range(1, len(cv)):
+        _ha_open_arr[_i] = (_ha_open_arr[_i - 1] + _ha_close_arr[_i - 1]) / 2.0
+    _ha_high_arr = np.maximum(hv, np.maximum(_ha_open_arr, _ha_close_arr))
+    _ha_low_arr = np.minimum(lv, np.minimum(_ha_open_arr, _ha_close_arr))
+
+    # ------------------------------------------------------------------
+    # Pre-computes for weighted-MA / formula indicators upgraded to REFERENCE
+    # ------------------------------------------------------------------
+
+    # Helper: sliding weighted dot product (oldest-first window · weights).
+    def _wma_r(arr, w):
+        _n = len(w)
+        _out = np.full(len(arr), np.nan)
+        for _ii in range(_n - 1, len(arr)):
+            _out[_ii] = float(np.dot(w, arr[_ii - _n + 1 : _ii + 1]))
+        return _out
+
+    # ---- Overlap --------------------------------------------------------
+    # TRIMA_10: SMA(SMA(close, half), half)  half = round(0.5*(10+1)) = 6
+    _trima10_half = round(0.5 * (10 + 1))  # 6
+    _trima10_ref = talib.SMA(talib.SMA(cv, _trima10_half), _trima10_half)
+
+    # SWMA_10: symmetric-triangle weights
+    from pandas_ta_classic.utils import symmetric_triangle as _sym_tri
+
+    _swma10_ref = _wma_r(cv, np.array(_sym_tri(10, weighted=True)))
+
+    # PWMA_10: Pascal-triangle weights  (row n=9 of Pascal's triangle)
+    from pandas_ta_classic.utils import pascals_triangle as _pasc_tri
+
+    _pw10 = np.array(_pasc_tri(n=9), dtype=float)
+    _pwma10_ref = _wma_r(cv, _pw10 / _pw10.sum())
+
+    # SINWMA_14: sine-weighted  w[i] = sin((i+1)*pi/15)
+    _sinw14 = np.array([np.sin((i + 1) * np.pi / 15) for i in range(14)])
+    _sinwma14_ref = _wma_r(cv, _sinw14 / _sinw14.sum())
+
+    # FWMA_10: Fibonacci-weighted
+    from pandas_ta_classic.utils import fibonacci as _fib
+
+    _fwma10_ref = _wma_r(cv, np.array(_fib(n=10, weighted=True)))
+
+    # ALMA_10: Arnaud Legoux Gaussian weights  m=0.85*9=7.65, s=10/6
+    _alma10_m, _alma10_s = 0.85 * 9.0, 10.0 / 6.0
+    _alma10_raw = np.array(
+        [np.exp(-((i - _alma10_m) ** 2) / (2 * _alma10_s ** 2)) for i in range(10)]
+    )
+    _alma10_ref = _wma_r(cv, _alma10_raw[::-1] / _alma10_raw.sum())
+
+    # RMA_10: SMA-seeded Wilder MA  alpha = 1/10
+    _rma10 = np.full(len(cv), np.nan)
+    _rma10[9] = cv[:10].mean()
+    for _ii in range(10, len(cv)):
+        _rma10[_ii] = (cv[_ii] + 9.0 * _rma10[_ii - 1]) / 10.0
+    _rma10_ref = _rma10
+
+    # ---- Momentum -------------------------------------------------------
+    # CMO_14: Tulip C library (direct rolling sum — matches pta talib=False)
+    _ti_cmo14 = ti.cmo(cv, 14)
+    _cmo14_ref = np.concatenate([np.full(len(cv) - len(_ti_cmo14), np.nan), _ti_cmo14])
+
+    # COPPOCK: WMA(ROC(14) + ROC(11), 10)
+    _coppock_ref = talib.WMA(talib.ROC(cv, 14) + talib.ROC(cv, 11), 10)
+
+    # CG_10: -SUM(close[i]*(10-i), 10) / SUM(close, 10)
+    _cg_coeffs = np.arange(10.0, 0.0, -1.0)  # [10, 9, ..., 1]
+    _cg10_ref = -_wma_r(cv, _cg_coeffs) / talib.SUM(cv, 10)
+
+    # ERI_13: bull = high - EMA(close,13),  bear = low - EMA(close,13)
+    _eri_ema13 = talib.EMA(cv, 13)
+    _eri_bull_ref = hv - _eri_ema13
+    _eri_bear_ref = lv - _eri_ema13
+
+    # PGO_14: (close - SMA(close,14)) / EMA(ATR(14), 14)
+    _pgo14_ref = (cv - talib.SMA(cv, 14)) / talib.EMA(talib.ATR(hv, lv, cv, 14), 14)
+
+    # TSI_13_25_13: 100 * EMA(EMA(diff1,25),13) / EMA(EMA(|diff1|,25),13)
+    _tsi_diff1 = np.concatenate([[np.nan], np.diff(cv)])
+    _tsi_slow = talib.EMA(_tsi_diff1, 25)
+    _tsi_abs_slow = talib.EMA(np.abs(_tsi_diff1), 25)
+    _tsi_line_ref = 100.0 * talib.EMA(_tsi_slow, 13) / talib.EMA(_tsi_abs_slow, 13)
+    _tsi_sig_ref = talib.EMA(_tsi_line_ref, 13)
+
+    # ---- Volatility -----------------------------------------------------
+    # ACCBANDS_20: SMA(H*(1+4*(H-L)/(H+L)), 20), SMA(C,20), SMA(L*(1-4*(H-L)/(H+L)), 20)
+    _acc_hl_ratio = np.where(hv + lv != 0, 4.0 * (hv - lv) / (hv + lv), 0.0)
+    _accbands_upper_ref = talib.SMA(hv * (1.0 + _acc_hl_ratio), 20)
+    _accbands_mid_ref = talib.SMA(cv, 20)
+    _accbands_lower_ref = talib.SMA(lv * (1.0 - _acc_hl_ratio), 20)
+
+    # ---- Statistics -----------------------------------------------------
+    # BETA_30: rolling Cov(c_ret, o_ret) / Var(o_ret) over 30 bars
+    _c_ret = c / c.shift(1) - 1
+    _o_ret = o / o.shift(1) - 1
+    _beta30_ref = _c_ret.rolling(30).cov(_o_ret) / _o_ret.rolling(30).var()
+
+    # UI_14: sqrt(mean(dd_pct²,14))  where dd_pct=(close-rollmax)/rollmax*100
+    _ui_rmax = c.rolling(14).max()
+    _ui14_dd = (c - _ui_rmax) / _ui_rmax * 100
+    _ui14_ref = np.sqrt((_ui14_dd ** 2).rolling(14).mean())
+
+    # ---- Performance ----------------------------------------------------
+    # DRAWDOWN: cummax-based arithmetic
+    _dd_cummax = c.cummax()
+    _dd_abs_ref = _dd_cummax - c
+    _dd_pct_ref = 1.0 - c / _dd_cummax
+    _dd_log_ref = np.log(_dd_cummax) - np.log(c)
+
     # Pre-compute pandas-ta results used as count_ref for reference indicators.
     _ema_fast = ta.ema(c, length=8, talib=False)
     _ema_slow = ta.ema(c, length=21, talib=False)
@@ -189,6 +475,8 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("hl2", _s((hv + lv) / 2, "HL2"), ta.hl2(h, l)),
         ("hlc3", _s((hv + lv + cv) / 3, "HLC3"), ta.hlc3(h, l, c, talib=False)),
         ("ohlc4", _s((ov + hv + lv + cv) / 4, "OHLC4"), ta.ohlc4(o, h, l, c)),
+        ("hma_10", _s(_hma10_ref, "HMA_10"), ta.hma(c, length=10)),
+        ("vwma_10", _s(_vwma10_ref, "VWMA_10"), ta.vwma(c, v, length=10)),
         # ---- Momentum ----
         ("rsi_14", _s(talib.RSI(cv, 14), "RSI_14"), ta.rsi(c, length=14, talib=False)),
         (
@@ -228,6 +516,23 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             _s(talib.ULTOSC(hv, lv, cv, 7, 14, 28), "UO_7_14_28"),
             ta.uo(h, l, c, talib=False),
         ),
+        ("ao", _s(_ao_ref, "AO_5_34"), ta.ao(h, l)),
+        ("bias_10", _s(_bias10_ref, "BIAS_SMA_10"), ta.bias(c, length=10)),
+        ("cfo_10", _s(_cfo10_ref, "CFO_10"), ta.cfo(c, length=10)),
+        ("er", _s(_er_ref, "ER_10"), ta.er(c)),
+        ("po", _s(_po_ref, "PO_14"), ta.po(c)),
+        (
+            "pvo",
+            _df(
+                **{
+                    "PVO_12_26_9": _pvo_line_ref,
+                    "PVOh_12_26_9": _pvo_hist_ref,
+                    "PVOs_12_26_9": _pvo_sig_ref,
+                }
+            ),
+            ta.pvo(v),
+        ),
+        ("pvol", _s(_pvol_ref, "PVOL"), ta.pvol(c, v)),
         # ---- Volatility ----
         (
             "atr_14",
@@ -257,6 +562,41 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             _s(talib.TRANGE(hv, lv, cv), "TRUERANGE_1"),
             ta.true_range(h, l, c, talib=False),
         ),
+        (
+            "donchian_20",
+            _df(
+                **{
+                    "DCL_20_20": _don_lower,
+                    "DCM_20_20": _don_mid,
+                    "DCU_20_20": _don_upper,
+                }
+            ),
+            ta.donchian(h, l, lower_length=20, upper_length=20),
+        ),
+        (
+            "kc_20",
+            _df(
+                **{
+                    "KCLe_20_2": _kc_lower,
+                    "KCBe_20_2": _kc_basis,
+                    "KCUe_20_2": _kc_upper,
+                }
+            ),
+            ta.kc(h, l, c, length=20),
+        ),
+        ("massi", _s(_massi_ref, "MASSI_9_25"), ta.massi(h, l)),
+        ("pdist", _s(_pdist_ref, "PDIST"), ta.pdist(o, h, l, c)),
+        (
+            "accbands",
+            _df(
+                **{
+                    "ACCBL_20": _accbands_lower_ref,
+                    "ACCBM_20": _accbands_mid_ref,
+                    "ACCBU_20": _accbands_upper_ref,
+                }
+            ),
+            ta.accbands(h, l, c),
+        ),
         # ---- Trend ----
         (
             "adx_14",
@@ -267,6 +607,17 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             "aroon_14",
             _df(AROOND_14=_aroon_dn, AROONU_14=_aroon_up, AROONOSC_14=_aroon_osc),
             ta.aroon(h, l, length=14, talib=False),
+        ),
+        ("decreasing", _s(_decreasing_ref, "DEC_1"), ta.decreasing(c)),
+        ("increasing", _s(_increasing_ref, "INC_1"), ta.increasing(c)),
+        ("chop", _s(_chop_ref, "CHOP_14_1_100"), ta.chop(h, l, c)),
+        ("dpo_14", _s(_dpo14_arr, "DPO_14"), ta.dpo(c, length=14)),
+        ("qstick", _s(_qstick_ref, "QS_10"), ta.qstick(o, c)),
+        ("vhf", _s(_vhf_ref, "VHF_28"), ta.vhf(c)),
+        (
+            "vortex",
+            _df(**{"VTXP_14": _vtx_p, "VTXM_14": _vtx_m}),
+            ta.vortex(h, l, c),
         ),
         # ---- Volume ----
         ("obv", _s(talib.OBV(cv, vv), "OBV"), ta.obv(c, v, talib=False)),
@@ -281,6 +632,18 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             _s(talib.ADOSC(hv, lv, cv, vv, 3, 10), "ADOSC_3_10"),
             ta.adosc(h, l, c, v, talib=False),
         ),
+        ("cmf_20", _s(_cmf20_ref, "CMF_20"), ta.cmf(h, l, c, v, length=20)),
+        ("efi", _s(_efi_ref, "EFI_13"), ta.efi(c, v)),
+        ("eom", _s(_eom_ref, "EOM_14_100000000"), ta.eom(h, l, c, v)),
+        (
+            "kvo",
+            _df(**{"KVO_34_55_13": _kvo_line, "KVOs_34_55_13": _kvo_sig}),
+            ta.kvo(h, l, c, v),
+        ),
+        ("nvi", _s(_nvi_ref, "NVI_1"), ta.nvi(c, v)),
+        ("pvi", _s(_pvi_ref, "PVI_1"), ta.pvi(c, v)),
+        ("pvr", _s(_pvr_ref, "PVR"), ta.pvr(c, v)),
+        ("pvt", _s(_pvt_ref, "PVT"), ta.pvt(c, v)),
         # ---- Statistics ----
         (
             "stdev_20",
@@ -322,6 +685,17 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             _s(np.concatenate([[np.nan], (cv[1:] - cv[:-1]) / cv[:-1]]), "PCTRET_1"),
             ta.percent_return(c),
         ),
+        (
+            "drawdown",
+            _df(
+                **{
+                    "DD": _dd_abs_ref,
+                    "DD_PCT": _dd_pct_ref,
+                    "DD_LOG": _dd_log_ref,
+                }
+            ),
+            ta.drawdown(c),
+        ),
         # ---- Overlap (additional) ----
         ("kama", _s(talib.KAMA(cv, 10), "KAMA_10_2_30"), ta.kama(c)),
         (
@@ -336,6 +710,14 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ),
         ("linreg_14", _s(talib.LINEARREG(cv, 14), "LR_14"), ta.linreg(c, 14)),
         ("tsf_14", _s(talib.TSF(cv, 14), "TSF_14"), ta.tsf(c, 14)),
+        ("trima_10", _s(_trima10_ref, "TRIMA_10"), ta.trima(c, length=10, talib=False)),
+        ("swma", _s(_swma10_ref, "SWMA_10"), ta.swma(c)),
+        ("pwma_10", _s(_pwma10_ref, "PWMA_10"), ta.pwma(c, length=10)),
+        ("sinwma_14", _s(_sinwma14_ref, "SINWMA_14"), ta.sinwma(c, length=14)),
+        ("fwma_10", _s(_fwma10_ref, "FWMA_10"), ta.fwma(c, length=10)),
+        ("alma_10", _s(_alma10_ref, "ALMA_10_6.0_0.85"), ta.alma(c, length=10)),
+        ("rma", _s(_rma10_ref, "RMA_10"), ta.rma(c)),
+        ("ma_ema_20", _s(talib.EMA(cv, 20), "EMA_20"), ta.ma("ema", c, length=20)),
         # ---- Momentum (additional) ----
         (
             "stochrsi",
@@ -359,6 +741,20 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             ta.ppo(c),
         ),
         ("trix", _df(**{"TRIX_30_9": _trix_line, "TRIXs_30_9": _trix_sig}), ta.trix(c)),
+        ("cmo_14", _s(_cmo14_ref, "CMO_14"), ta.cmo(c, length=14, talib=False)),
+        ("coppock", _s(_coppock_ref, "COPC_11_14_10"), ta.coppock(c)),
+        ("cg", _s(_cg10_ref, "CG_10"), ta.cg(c)),
+        ("pgo_14", _s(_pgo14_ref, "PGO_14"), ta.pgo(h, l, c, length=14)),
+        (
+            "eri",
+            _df(**{"BULLP_13": _eri_bull_ref, "BEARP_13": _eri_bear_ref}),
+            ta.eri(h, l, c),
+        ),
+        (
+            "tsi",
+            _df(**{"TSI_13_25_13": _tsi_line_ref, "TSIs_13_25_13": _tsi_sig_ref}),
+            ta.tsi(c),
+        ),
         # ---- Trend (additional) ----
         (
             "adxr",
@@ -385,6 +781,21 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("entropy_10", _s(_entropy_ref, "ENTP_10"), ta.entropy(c, length=10)),
         ("correl", _s(talib.CORREL(cv, ov, 30), "CORREL_30"), ta.correl(c, o)),
         ("slope", _s(talib.LINEARREG_SLOPE(cv, 2), "SLOPE_1"), ta.slope(c)),
+        ("beta", _s(_beta30_ref.values, "BETA_30"), ta.beta(c, o)),
+        ("ui", _s(_ui14_ref.values, "UI_14"), ta.ui(c)),
+        # ---- Candles ----
+        (
+            "ha",
+            _df(
+                **{
+                    "HA_open": _ha_open_arr,
+                    "HA_high": _ha_high_arr,
+                    "HA_low": _ha_low_arr,
+                    "HA_close": _ha_close_arr,
+                }
+            ),
+            ta.ha(o, h, l, c),
+        ),
         # ---- CDL patterns — 52 exact TA-Lib matches ----
         (
             "cdl_2crows",
@@ -762,47 +1173,27 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     # ==================================================================
     reg_indicators: list[tuple] = [
         # ---- Overlap ----
-        ("hma_10", ta.hma(c, length=10), None),
-        ("alma_10", ta.alma(c, length=10), None),
-        ("trima_10", ta.trima(c, length=10, talib=False), None),
-        ("fwma_10", ta.fwma(c, length=10), None),
         ("hilo", ta.hilo(h, l, c), None),
         ("hwma", ta.hwma(c), None),
         ("jma", ta.jma(c), None),
         ("mcgd", ta.mcgd(c), None),
         ("mmar", ta.mmar(c), None),
-        ("pwma_10", ta.pwma(c, length=10), None),
         ("rainbow", ta.rainbow(c), None),
-        ("rma", ta.rma(c), None),
-        ("sinwma_14", ta.sinwma(c, length=14), None),
         ("ssf_10", ta.ssf(c, length=10), None),
         ("supertrend", ta.supertrend(h, l, c), None),
-        ("swma", ta.swma(c), None),
         ("vidya", ta.vidya(c), None),
         ("vwap", ta.vwap(h, l, c, v), None),
-        ("vwma_10", ta.vwma(c, v, length=10), None),
         ("zlma_10", ta.zlma(c, length=10), None),
         # ---- Momentum ----
-        ("ao", ta.ao(h, l), None),
-        ("bias_10", ta.bias(c, length=10), None),
         ("brar", ta.brar(o, h, l, c), None),
-        ("cfo_10", ta.cfo(c, length=10), None),
-        ("cg", ta.cg(c), None),
-        ("cmo_14", ta.cmo(c, length=14, talib=False), None),
-        ("coppock", ta.coppock(c), None),
         ("cti", ta.cti(c), None),
         ("dm_14", ta.dm(h, l, length=14, talib=False), None),
-        ("er", ta.er(c), None),
-        ("eri", ta.eri(h, l, c), None),
         ("fisher", ta.fisher(h, l), None),
         ("inertia", ta.inertia(c, h, l), None),
         ("kdj", ta.kdj(h, l, c), None),
         ("kst", ta.kst(c), None),
         ("lrsi", ta.lrsi(c), None),
-        ("pgo_14", ta.pgo(h, l, c, length=14), None),
-        ("po", ta.po(c), None),
         ("psl", ta.psl(c, o), None),
-        ("pvo", ta.pvo(v), None),
         ("qqe", ta.qqe(c), None),
         ("rsx", ta.rsx(c), None),
         ("rvgi", ta.rvgi(o, h, l, c), None),
@@ -812,58 +1203,32 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("stc", ta.stc(c), None),
         ("td_seq", ta.td_seq(c), None),
         ("trixh", ta.trixh(c), None),
-        ("tsi", ta.tsi(c), None),
         ("vwmacd", ta.vwmacd(c, v), None),
         # ---- Volatility ----
-        ("donchian_20", ta.donchian(h, l, lower_length=20, upper_length=20), None),
-        ("kc_20", ta.kc(h, l, c, length=20), None),
         ("aberration", ta.aberration(h, l, c), None),
-        ("accbands", ta.accbands(h, l, c), None),
         ("ce", ta.ce(h, l, c), None),
         ("hwc", ta.hwc(c), None),
-        ("massi", ta.massi(h, l), None),
-        ("pdist", ta.pdist(o, h, l, c), None),
         ("rvi_vol", ta.rvi(c, h, l), None),
         ("thermo", ta.thermo(h, l), None),
-        ("ui", ta.ui(c), None),
         # ---- Trend ----
-        ("decreasing", ta.decreasing(c), None),
-        ("increasing", ta.increasing(c), None),
         ("amat", ta.amat(c, fast=8, slow=21), None),
-        ("chop", ta.chop(h, l, c), None),
         ("cksp", ta.cksp(h, l, c), None),
         ("cpr", ta.cpr(o, h, l, c), None),
         ("decay", ta.decay(c), None),
-        ("dpo_14", ta.dpo(c, length=14), None),
         ("long_run", ta.long_run(_ema_fast, _ema_slow), None),
         ("pmax", ta.pmax(h, l, c), None),
-        ("qstick", ta.qstick(o, c), None),
         ("short_run", ta.short_run(_ema_fast, _ema_slow), None),
         ("ttm_trend", ta.ttm_trend(h, l, c), None),
-        ("vhf", ta.vhf(c), None),
-        ("vortex", ta.vortex(h, l, c), None),
         # ---- Volume ----
-        ("cmf_20", ta.cmf(h, l, c, v, length=20), None),
         ("aobv", ta.aobv(c, v), None),
-        ("efi", ta.efi(c, v), None),
-        ("eom", ta.eom(h, l, c, v), None),
-        ("kvo", ta.kvo(h, l, c, v), None),
-        ("nvi", ta.nvi(c, v), None),
-        ("pvi", ta.pvi(c, v), None),
-        ("pvol", ta.pvol(c, v), None),
-        ("pvr", ta.pvr(c, v), None),
-        ("pvt", ta.pvt(c, v), None),
         ("vfi", ta.vfi(c, v), None),
         # ---- Statistics ----
-        ("beta", ta.beta(c, o), None),
         ("tos_stdevall", ta.tos_stdevall(c, length=30), None),
         # ---- Cycles ----
         ("dsp", ta.dsp(c), None),
         ("ebsw", ta.ebsw(c), None),
         # ---- Performance ----
-        ("drawdown", ta.drawdown(c), None),
         # ---- Candles ----
-        ("ha", ta.ha(o, h, l, c), None),
         ("cdl_doji", ta.cdl_doji(o, h, l, c), None),
         # cdl_doji uses custom bodyPercent/lookback params that differ from TA-Lib
         ("cdl_inside", ta.cdl_inside(o, h, l, c), None),
@@ -873,7 +1238,6 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("cdl_pattern", ta.cdl_pattern(o, h, l, c), None),
         # ---- Overlap (additional) ----
         ("ichimoku", ta.ichimoku(h, l, c)[0], None),
-        ("ma_ema_20", ta.ma("ema", c, length=20), None),
         # ---- Trend (additional) ----
         ("tsignals", ta.tsignals(_trend_bool), None),
         ("xsignals", ta.xsignals(_rsi_14_sig, 70, 30), None),
