@@ -96,6 +96,12 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SKEW_30")
 
+    def test_stderr(self):
+        result = pandas_ta.stderr(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "STDERR_14")
+        self.assertIsNone(pandas_ta.stderr(None))
+
     def test_stdev(self):
         result = pandas_ta.stdev(self.close, talib=False)
         self.assertIsInstance(result, Series)

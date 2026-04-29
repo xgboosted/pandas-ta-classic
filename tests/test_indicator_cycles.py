@@ -106,3 +106,16 @@ class TestCycles(TestCase):
         pandas_ta.ht_trendmode(self.close, fill_method="ffill")
         pandas_ta.ht_trendmode(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.ht_trendmode(None))
+
+    def test_msw(self):
+        result = pandas_ta.msw(self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "MSW_5")
+        self.assertListEqual(list(result.columns), ["MSW_SINE_5", "MSW_LEAD_5"])
+        result_p10 = pandas_ta.msw(self.close, period=10)
+        self.assertEqual(result_p10.name, "MSW_10")
+        self.assertListEqual(list(result_p10.columns), ["MSW_SINE_10", "MSW_LEAD_10"])
+        pandas_ta.msw(self.close, fillna=0)
+        pandas_ta.msw(self.close, fill_method="ffill")
+        pandas_ta.msw(self.close, fill_method="bfill")
+        self.assertIsNone(pandas_ta.msw(None))

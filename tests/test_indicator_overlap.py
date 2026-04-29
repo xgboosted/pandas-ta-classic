@@ -296,6 +296,12 @@ class TestOverlap(TestCase):
         pandas_ta.mama(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.mama(None))
 
+    def test_mavp(self):
+        result = pandas_ta.mavp(self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "MAVP_2_30")
+        self.assertIsNone(pandas_ta.mavp(None))
+
     def test_mcgd(self):
         result = pandas_ta.mcgd(self.close)
         self.assertIsInstance(result, Series)
