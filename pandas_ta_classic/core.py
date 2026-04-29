@@ -2428,7 +2428,6 @@ class AnalysisIndicators(BasePandasObject):
     def dx(
         self,
         length=None,
-        lensig=None,
         scalar=None,
         mamode=None,
         drift=None,
@@ -2443,7 +2442,6 @@ class AnalysisIndicators(BasePandasObject):
             low=low,
             close=close,
             length=length,
-            lensig=lensig,
             scalar=scalar,
             mamode=mamode,
             drift=drift,

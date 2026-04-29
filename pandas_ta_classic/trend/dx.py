@@ -14,7 +14,6 @@ def dx(
     low: Series,
     close: Series,
     length: Optional[int] = None,
-    lensig: Optional[int] = None,
     scalar: Optional[float] = None,
     mamode: Optional[str] = None,
     talib: Optional[bool] = None,
@@ -25,13 +24,11 @@ def dx(
     """Indicator: Directional Index (DX)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 14
-    lensig = int(lensig) if lensig and lensig > 0 else length
     scalar = float(scalar) if scalar and scalar > 0 else 100
     mamode = mamode.lower() if isinstance(mamode, str) else "rma"
-    _length = max(length, lensig)
-    high = verify_series(high, _length)
-    low = verify_series(low, _length)
-    close = verify_series(close, _length)
+    high = verify_series(high, length)
+    low = verify_series(low, length)
+    close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
@@ -56,21 +53,10 @@ def dx(
         pos = pos.apply(zero)
         neg = neg.apply(zero)
 
-        k = high - low
-        tr = k.copy()
-        prev_close = close.shift(drift)
-        tr_hl = k
-        tr_hpc = (high - prev_close).abs()
-        tr_lpc = (low - prev_close).abs()
-        import pandas as pd
-
-        tr = pd.concat([tr_hl, tr_hpc, tr_lpc], axis=1).max(axis=1)
-
-        atr = ma(mamode, tr, length=length)
         dmp = ma(mamode, pos, length=length)
         dmn = ma(mamode, neg, length=length)
 
-        if atr is None or dmp is None or dmn is None:
+        if dmp is None or dmn is None:
             return None
 
         dx_ = scalar * (dmp - dmn).abs() / non_zero_range(dmp, -dmn)
@@ -110,7 +96,6 @@ Args:
     low (pd.Series): Low price series.
     close (pd.Series): Close price series.
     length (int): The period. Default: 14
-    lensig (int): Signal length. Default: length
     scalar (float): Scalar multiplier. Default: 100
     mamode (str): Smoothing mode. Default: 'rma'
     talib (bool): Use TA-Lib if installed. Default: True

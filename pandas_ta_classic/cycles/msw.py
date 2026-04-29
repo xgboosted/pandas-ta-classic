@@ -5,7 +5,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-from pandas_ta_classic._meta import Imports
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
 
 

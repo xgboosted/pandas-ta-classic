@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Moving Average with Variable Period (MAVP)
+import warnings
 from typing import Any, Optional
 
 import numpy as np
@@ -57,6 +58,14 @@ def mavp(
         )
     else:
         # Native: simple moving average with per-bar variable window
+        # Only SMA (mamode=0) is supported natively; other MA types require TA-Lib
+        if mamode != 0:
+            warnings.warn(
+                f"MAVP native fallback only supports SMA (mamode=0); "
+                f"mamode={mamode} requires TA-Lib. Results will use SMA.",
+                UserWarning,
+                stacklevel=2,
+            )
         close_arr = close.to_numpy(dtype=float)
         per_arr = np.clip(
             periods.to_numpy(dtype=float).round().astype(int), minperiod, maxperiod

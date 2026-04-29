@@ -45,9 +45,13 @@ def stochf(
         highest_high = high.rolling(fastk).max()
 
         fastk_ = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
-        fastd_ = ma(mamode, fastk_.loc[fastk_.first_valid_index() :,], length=fastd)
-        if fastd_ is None:
-            return None
+        fastk_first_valid = fastk_.first_valid_index()
+        if fastk_first_valid is None:
+            fastd_ = fastk_.copy()
+        else:
+            fastd_ = ma(mamode, fastk_.loc[fastk_first_valid:,], length=fastd)
+            if fastd_ is None:
+                return None
 
     # Offset
     if offset != 0:

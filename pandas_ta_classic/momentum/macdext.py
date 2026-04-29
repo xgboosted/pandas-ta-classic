@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # MACD Extended (MACDEXT)
+import warnings
 from typing import Any, Optional
 
 import numpy as np
 from pandas import DataFrame, Series
 
-from pandas_ta_classic._meta import Imports
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series
 
 # TA-Lib MA type integer → string kind for native fallback
@@ -73,6 +74,19 @@ def macdext(
         )
     else:
         from pandas_ta_classic.overlap.ma import ma
+
+        # matypes 6 (KAMA) and 7 (MAMA) are not implemented natively;
+        # they silently fall back to EMA inside ma(). Warn the caller.
+        _unsupported = {6: "kama", 7: "mama"}
+        for _mt, _name in _unsupported.items():
+            if _mt in (fastmatype, slowmatype, signalmatype):
+                warnings.warn(
+                    f"MACDEXT native fallback does not support matype={_mt} ({_name}); "
+                    f"EMA will be used instead. Pass talib=True (with TA-Lib installed) "
+                    f"to get the correct {_name.upper()} behaviour.",
+                    UserWarning,
+                    stacklevel=2,
+                )
 
         fast_kind = _MATYPE_TO_KIND.get(fastmatype, "ema")
         slow_kind = _MATYPE_TO_KIND.get(slowmatype, "ema")
