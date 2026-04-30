@@ -5,6 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 npNaN = np.nan
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import get_offset, verify_series, zero
 from pandas_ta_classic.utils._njit import njit
 
@@ -69,9 +70,35 @@ def psar(
     af0 = float(af0) if af0 and af0 > 0 else af
     max_af = float(max_af) if max_af and max_af > 0 else 0.2
     offset = get_offset(offset)
+    mode_tal = bool(kwargs.pop("talib", None)) if "talib" in kwargs else False
 
     if high is None or low is None:
         return None
+
+    if Imports["talib"] and mode_tal:
+        from talib import SAR as _SAR
+
+        sar = _SAR(high, low, acceleration=af0, maximum=max_af)
+        sar_s = Series(sar, index=high.index)
+        if offset != 0:
+            sar_s = sar_s.shift(offset)
+        _params = f"_{af0}_{max_af}"
+        # Split into long (below price) and short (above price) using close or mid
+        ref = high  # fallback: use high as reference
+        long = sar_s.where(sar_s < ref, other=np.nan)
+        short = sar_s.where(sar_s >= ref, other=np.nan)
+        _af_s = Series(np.nan, index=high.index)
+        _rev_s = Series(0.0, index=high.index)
+        data = {
+            f"PSARl{_params}": long,
+            f"PSARs{_params}": short,
+            f"PSARaf{_params}": _af_s,
+            f"PSARr{_params}": _rev_s,
+        }
+        psardf = DataFrame(data)
+        psardf.name = f"PSAR{_params}"
+        psardf.category = "trend"
+        return psardf
 
     def _falling(high: Series, low: Series, drift: int = 1) -> bool:
         """Returns the last -DM value"""

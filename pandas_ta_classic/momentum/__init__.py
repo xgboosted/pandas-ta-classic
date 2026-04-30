@@ -21,6 +21,7 @@ from .kst import kst
 from .lrsi import lrsi
 from .macd import macd
 from .macdext import macdext
+from .macdfix import macdfix
 from .mom import mom
 from .pgo import pgo
 from .po import po

@@ -222,3 +222,82 @@ def signals(
         df[cross_serie_below.name] = cross_serie_below
 
     return df
+
+
+def crossover(
+    series_a: Series,
+    series_b: Series,
+    asint: bool = True,
+    offset: Optional[int] = None,
+    **kwargs: Any,
+) -> Optional[Series]:
+    """Crossover: series_a crosses above series_b (tulipy: CROSSOVER).
+
+    Returns 1 on bars where series_a crosses from below to above series_b,
+    0 otherwise.  Equivalent to cross(series_a, series_b, above=True).
+    """
+    result = cross(series_a, series_b, above=True, asint=asint, offset=offset)
+    if result is None:
+        return None
+    result.name = f"{series_a.name}_XA_{series_b.name}"
+    result.category = "utility"
+    return result
+
+
+def crossany(
+    series_a: Series,
+    series_b: Series,
+    asint: bool = True,
+    offset: Optional[int] = None,
+    **kwargs: Any,
+) -> Optional[Series]:
+    """Cross in either direction (tulipy: CROSSANY).
+
+    Returns 1 on any bar where series_a and series_b cross (either up or
+    down), 0 otherwise.
+    """
+    series_a = verify_series(series_a)
+    series_b = verify_series(series_b)
+    if series_a is None or series_b is None:
+        return None
+    offset = get_offset(offset)
+
+    xa = cross(series_a, series_b, above=True, asint=False)
+    xb = cross(series_a, series_b, above=False, asint=False)
+    result = xa | xb
+    if asint:
+        result = result.astype(int)
+
+    if offset != 0:
+        result = result.shift(offset)
+
+    result.name = f"{series_a.name}_X_{series_b.name}"
+    result.category = "utility"
+    return result
+
+
+def lag(
+    close: Series,
+    period: Optional[int] = None,
+    offset: Optional[int] = None,
+    **kwargs: Any,
+) -> Optional[Series]:
+    """Lag / Shift (tulipy: LAG).
+
+    Returns close shifted back by *period* bars.  Equivalent to
+    close.shift(period).
+    """
+    period = int(period) if period and period > 0 else 1
+    close = verify_series(close)
+    offset = get_offset(offset)
+    if close is None:
+        return None
+
+    result = close.shift(period)
+
+    if offset != 0:
+        result = result.shift(offset)
+
+    result.name = f"LAG_{period}"
+    result.category = "utility"
+    return result
