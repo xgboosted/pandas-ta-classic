@@ -40,6 +40,11 @@ jobs:
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     
+    - name: Install dependencies and quality tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[lint]"
+
     - name: Display package version from git
       run: |
         VERSION=$(python -c "import pandas_ta_classic as ta; print(ta.version)")
@@ -47,11 +52,6 @@ jobs:
         echo "### Package Version" >> $GITHUB_STEP_SUMMARY
         echo "**$VERSION**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-
-    - name: Install dependencies and quality tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[lint]"
     
     - name: Check code formatting with black
       run: |
