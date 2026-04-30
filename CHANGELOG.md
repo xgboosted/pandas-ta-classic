@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## **[Unreleased]**
 
 ### Added
+* **TA-Lib / tulipy parity indicator set** (PR #104): Added wrappers and native implementations for `msw`, `fosc`, `macdext`, `macdfix`, `rocp`, `rocr`, `rocr100`, `stochf`, `avgprice`, `medprice`, `typprice`, `linregangle`, `linregintercept`, `linregslope`, `mavp`, `md`, `stderr`, `dx`, `edecay`, `plus_dm`, `minus_dm`, `sarext`, `avolume`, `cvi`, `hvol`, `emv`, `marketfi`, `vosc`, and `wad`.
+* **Math operator namespace**: Added `pandas_ta_classic/math/__init__.py` exposing arithmetic operators (`add`, `sub`, `mult`, `div`), rolling operators (`rolling_max`, `rolling_min`, `rolling_sum`), and math transforms for TA-Lib/tulipy compatibility.
+* **Oracle parity suites**: Added `tests/test_oracle_talib.py` and `tests/test_oracle_tulipy.py` for cross-library validation on shared SPY fixtures.
 * **60 new native CDL pattern files** (PR #87): Added `candles/cdl_*.py` implementations for 60 patterns (the PR commit message says 59 — off by one due to `cdl_dojistar` being missed by a grep filter). Combined with the pre-existing `cdl_doji` and `cdl_inside`, the total accessible via `cdl_pattern()` is **62** (the `ALL_PATTERNS` list). TA-Lib is **never** used for CDL patterns — native implementations take priority in the dispatch chain regardless of whether TA-Lib is installed. Patterns are accessible via `df.ta.cdl_pattern(name=...)` (e.g. `df.ta.cdl_pattern(name="engulfing")`). Added shared `_cdl_math.py` helper for body/shadow calculations.
 * **5 Hilbert Transform cycle indicators** (PR #83): `ht_dcperiod`, `ht_dcphase`, `ht_phasor`, `ht_sine`, `ht_trendmode` — matching TA-Lib's HT family. All use a shared `_hilbert.py` helper module. Cycles category grows from 2 to 7.
 * **MAMA / FAMA** (PR #84): MESA Adaptive Moving Average with FAMA output. Uses Ehlers' adaptive phase computation.
@@ -46,6 +49,9 @@ All notable changes to this project will be documented in this file.
 * **numba JIT acceleration** (PR #99): 10 indicators (SSF, MCGD, HWMA, RSX, PSAR, Supertrend, QQE, and 3 more) gain optional `@njit(cache=True)` JIT compilation via `numba`. A graceful no-op fallback in `utils/_njit.py` ensures identical results without numba. Enable with `pip install pandas-ta-classic[performance]`. Measured speedups: RSX 230×, HWMA 70×, MCGD 43×, SSF 42×, Supertrend 13×, QQE 10×, PSAR 6×.
 
 ### Fixed
+* **Oracle test policy**: Removed skip-based oracle tests and replaced them with explicit assertions for either value equivalence or expected, documented formula/seeding divergence. Test suite now runs with zero skipped tests.
+* **TA-Lib compatibility paths**: Added/updated `talib=True` compatibility behavior for `macdfix`, `psar`, `stochrsi`, `plus_dm`, `minus_dm`, and related oracle validations.
+* **Indicator formula parity**: Corrected `edecay` (multiplicative exponential decay), `emv` scaling (`divisor=10000` compatibility), and associated oracle expectations.
 * **Code of Conduct Contact Information**: Updated enforcement contact from original maintainer's email to GitHub Issues link, making it maintainer-agnostic and easier to manage as the project evolves.
 * **PyPI Release Version**: Fixed CI/CD workflow to use exact release tag version by setting `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable. This prevents development versions (`.dev0`) from being published when `pyproject.toml` is modified during the build process. Releases now correctly use the clean tag version (e.g., `0.3.35` instead of `0.3.36.dev0`).
 * **Version Scheme Optimization**: Changed from `post-release` to default version scheme to avoid `.post0` suffix on tagged releases. Tagged releases now get clean version numbers (e.g., `0.3.35`), while commits after tags get development versions (e.g., `0.3.36.dev1`). This provides clearer distinction between releases and development builds.

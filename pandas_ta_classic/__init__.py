@@ -1,5 +1,9 @@
 name = "pandas-ta-classic"
 
+import logging
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 # Import metadata from _meta module to avoid circular imports
 from pandas_ta_classic._meta import (
     Category,

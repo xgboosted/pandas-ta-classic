@@ -294,7 +294,15 @@ class TestTrend(TestCase):
         from pandas import Series
 
         empty_series = Series(dtype=float)
-        result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
+        with self.assertLogs("pandas_ta_classic.utils._core", level="WARNING") as cm:
+            result = pandas_ta.cpr(
+                empty_series, empty_series, empty_series, empty_series
+            )
+        self.assertGreaterEqual(len(cm.output), 1)
+        self.assertTrue(
+            any("Series has 0 rows" in message for message in cm.output),
+            f"Expected empty-series validation warning in logs: {cm.output}",
+        )
         self.assertIsNone(result)
 
     def test_cpr_with_nans(self):

@@ -2,7 +2,7 @@
 import logging
 from copy import copy
 from dataclasses import dataclass, field
-from multiprocessing import cpu_count, Pool
+from multiprocessing import cpu_count, get_context
 from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple
@@ -811,7 +811,9 @@ class AnalysisIndicators(BasePandasObject):
             slim = copy(self)
             slim._df = self._df[self._df.columns[:initial_column_count]].copy()
 
-            pool = Pool(self.cores)
+            # Python 3.12 warns when forking from a multi-threaded process.
+            # Use spawn context explicitly to avoid unsafe fork behavior.
+            pool = get_context("spawn").Pool(self.cores)
             try:
                 # Some magic to optimize chunksize for speed based on total ta indicators
                 _chunksize = (
@@ -845,7 +847,7 @@ class AnalysisIndicators(BasePandasObject):
                     default_ta: list = [(ind, tuple(), kwargs) for ind in ta]
                     # All and Categorical multiprocessing pool.
                     if all_ordered:
-                        if Imports["tqdm"]:
+                        if Imports["tqdm"] and verbose:
                             results = tqdm(
                                 pool.imap(slim._mp_worker, default_ta, _chunksize)
                             )  # Order over Speed
@@ -854,7 +856,7 @@ class AnalysisIndicators(BasePandasObject):
                                 slim._mp_worker, default_ta, _chunksize
                             )  # Order over Speed
                     else:
-                        if Imports["tqdm"]:
+                        if Imports["tqdm"] and verbose:
                             results = tqdm(
                                 pool.imap_unordered(
                                     slim._mp_worker, default_ta, _chunksize
