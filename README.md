@@ -6,17 +6,17 @@
 
 # Pandas TA Classic - Technical Analysis Library
 
-[![license](https://img.shields.io/github/license/xgboosted/pandas-ta-classic)](#license)
-[![Build Status](https://github.com/xgboosted/pandas-ta-classic/workflows/CI/badge.svg)](https://github.com/xgboosted/pandas-ta-classic/actions)
+[![License](https://img.shields.io/github/license/xgboosted/pandas-ta-classic?style=flat)](https://github.com/xgboosted/pandas-ta-classic/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/xgboosted/pandas-ta-classic/ci.yml?branch=main&style=flat)](https://github.com/xgboosted/pandas-ta-classic/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://xgboosted.github.io/pandas-ta-classic/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
-[![PyPi Version](https://img.shields.io/pypi/v/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
+[![PyPI Version](https://img.shields.io/pypi/v/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
 [![Package Status](https://img.shields.io/pypi/status/pandas-ta-classic?style=flat)](https://pypi.org/project/pandas-ta-classic/)
 [![Downloads](https://img.shields.io/pypi/dm/pandas-ta-classic?style=flat)](https://pypistats.org/packages/pandas-ta-classic)
-[![Stars](https://img.shields.io/github/stars/xgboosted/pandas-ta-classic?style=flat)](#stars)
-[![Forks](https://img.shields.io/github/forks/xgboosted/pandas-ta-classic?style=flat)](#forks)
-[![Used By](https://img.shields.io/badge/used_by-170-orange.svg?style=flat)](#usedby)
-[![Contributors](https://img.shields.io/github/contributors/xgboosted/pandas-ta-classic?style=flat)](#contributors)
+[![Stars](https://img.shields.io/github/stars/xgboosted/pandas-ta-classic?style=flat)](https://github.com/xgboosted/pandas-ta-classic/stargazers)
+[![Forks](https://img.shields.io/github/forks/xgboosted/pandas-ta-classic?style=flat)](https://github.com/xgboosted/pandas-ta-classic/forks)
+[![Dependents](https://img.shields.io/librariesio/dependents/pypi/pandas-ta-classic?style=flat)](https://libraries.io/pypi/pandas-ta-classic/dependents)
+[![Contributors](https://img.shields.io/github/contributors/xgboosted/pandas-ta-classic?style=flat)](https://github.com/xgboosted/pandas-ta-classic/graphs/contributors)
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/docs/images/TA_Chart.png)
 
@@ -28,8 +28,8 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 **Get started quickly with our comprehensive guides:**
 
-- **[Quickstart Guide](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/QUICKSTART.md)** - Installation, your first indicators, and common workflows
-- **[Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/TUTORIALS.md)** - Step-by-step tutorials for real-world use cases:
+- **[Quickstart Guide](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/quickstart.md)** - Installation, your first indicators, and common workflows
+- **[Tutorials](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/tutorials.md)** - Step-by-step tutorials for real-world use cases:
  - Moving Average Crossover Strategy
  - Building Custom Indicator Strategies 
  - Backtesting with Performance Metrics
@@ -135,14 +135,14 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 ## Features
 
-- **180 Technical Indicators & Utilities** across 9 categories (Candles, Cycles, Momentum, Overlap, Trend, Volume, etc.)
+- **192 Technical Indicators & Utilities** across 9 categories (Candles, Cycles, Momentum, Overlap, Trend, Volume, etc.)
 - **62 Native Candlestick Patterns** — all patterns natively implemented, no TA-Lib required
-- **240 Total Indicators & Patterns** - the most comprehensive Python TA library
+- **252 Unique Indicators & Patterns** - 192 category indicators plus 62 CDL patterns via `cdl_pattern()`
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
-- **TA Lib Integration** - automatically uses TA Lib versions when available
+- **TA-Lib Integration** - automatically uses TA-Lib versions when available
 - **Vectorbt Integration** - compatible with popular backtesting framework
 - **Custom Indicators** - easily create and chain your own indicators
 
@@ -153,14 +153,14 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 ### Learning Resources
 
 **Start Here:**
-- [**Quickstart Guide**](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/QUICKSTART.md) - Get up and running in minutes
-- [**Tutorials**](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/TUTORIALS.md) - Step-by-step guides for common workflows
+- [**Quickstart Guide**](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/quickstart.md) - Get up and running in minutes
+- [**Tutorials**](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/tutorials.md) - Step-by-step guides for common workflows
 - [**Examples**](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) - Jupyter notebooks with real examples
 
 **Reference Documentation:**
 - [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
 - [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing 
-- [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of all 164 indicators & 62 CDL patterns
+- [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of 192 indicators plus 62 CDL patterns (252 unique total)
 - [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis
 

@@ -769,7 +769,7 @@ plt.show()
 - Candlestick patterns work best with trend confirmation
 - Combine patterns with momentum indicators
 - Backtest pattern effectiveness on your specific instrument
-- Some patterns require TA-Lib, others are built-in
+- All 62 candlestick patterns are natively implemented (TA-Lib optional for selected core indicators)
 
 ---
 
@@ -785,7 +785,7 @@ You've completed the tutorials! Here's what to explore next:
 
 ## Additional Resources
 
-- [QUICKSTART.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/QUICKSTART.md) - Quick reference guide
+- [quickstart.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/docs/quickstart.md) - Quick reference guide
 - [Examples Directory](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples) - Jupyter notebooks
 - [Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - All indicators
 - [Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Advanced strategies
