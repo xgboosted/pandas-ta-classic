@@ -390,7 +390,6 @@ class TestUtilities(TestCase):
     def test_version(self):
         result = pandas_ta.version
         self.assertIsInstance(result, str)
-        print(f"\nPandas TA v{result}")
 
 
 class TestNoneGuards(TestCase):

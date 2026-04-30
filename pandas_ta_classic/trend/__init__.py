@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .adx import adx
 from .adxr import adxr
+from .dx import dx
 from .amat import amat
 from .aroon import aroon
 from .chop import chop
@@ -9,11 +10,15 @@ from .cpr import cpr
 from .decay import decay
 from .decreasing import decreasing
 from .dpo import dpo
+from .edecay import edecay
 from .increasing import increasing
 from .long_run import long_run
+from .minus_dm import minus_dm
 from .pmax import pmax
+from .plus_dm import plus_dm
 from .psar import psar
 from .qstick import qstick
+from .sarext import sarext
 from .short_run import short_run
 from .tsignals import tsignals
 from .ttm_trend import ttm_trend

@@ -1,6 +1,8 @@
 # Contributing to pandas-ta-classic
 
-We welcome contributions to pandas-ta-classic! This document provides guidelines and information for contributors.
+**pandas-ta-classic** is the community-maintained fork of the original pandas-ta library. Its goal is to provide a stable, actively-maintained, and comprehensive technical analysis library for pandas DataFrames.
+
+We welcome contributions from the community! This document provides guidelines and information for contributors.
 
 ## Getting Started
 
@@ -85,10 +87,16 @@ We welcome contributions to pandas-ta-classic! This document provides guidelines
 
 #### Running Tests
 ```bash
-# Run all tests
+# Run all tests (primary — matches CI)
+python -m unittest discover tests/ -v
+
+# Run a specific test module
+python -m unittest tests.test_indicator_momentum -v
+
+# Alternatively, with pytest (also supported)
 pytest
 
-# Run specific test file
+# Run specific test file with pytest
 pytest tests/test_indicator_momentum.py
 
 # Run with coverage

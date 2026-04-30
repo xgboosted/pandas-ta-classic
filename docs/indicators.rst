@@ -1,25 +1,29 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 164 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (224 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
+**Pandas TA Classic** includes 192 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (252 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
-* **Candles** (67) - 62 CDL patterns via ``cdl_pattern()`` + ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``, ``cdl_pattern`` as Category entries (``cdl_doji`` and ``cdl_inside`` appear in both counts)
-* **Cycles** (7) - Cycle-based and Hilbert Transform indicators  
-* **Momentum** (45) - Momentum and oscillator indicators
-* **Overlap** (39) - Moving averages and trend-following indicators
+* **Candles** (5 wrappers + 62 native CDL patterns) - Category count includes wrapper/accessor indicators (``cdl_pattern``, ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``). The 62 pattern names are exposed through ``cdl_pattern()``.
+* **Cycles** (8) - Cycle-based and Hilbert Transform indicators  
+* **Momentum** (52) - Momentum and oscillator indicators
+* **Overlap** (46) - Moving averages and trend-following indicators
 * **Performance** (3) - Performance and return metrics
-* **Statistics** (12) - Statistical analysis functions
-* **Trend** (22) - Trend identification and direction indicators
-* **Volatility** (15) - Volatility and range-based indicators
-* **Volume** (16) - Volume analysis indicators
+* **Statistics** (14) - Statistical analysis functions
+* **Trend** (26) - Trend identification and direction indicators
+* **Volatility** (18) - Volatility and range-based indicators
+* **Volume** (20) - Volume analysis indicators
+* **Math** (28) - Element-wise math operators and transforms
 
 .. note::
    The category system now uses **dynamic discovery** - indicators are automatically detected from the package structure, ensuring the list is always up-to-date with available indicators.
 
-Candles (67)
-------------
+Candles (5 Wrappers + 62 Native Patterns)
+------------------------------------------
 
 Candlestick patterns for identifying market sentiment and potential reversals.
+
+The **category count is 5** because dynamic discovery tracks callable indicator entries,
+while the **62 native CDL patterns** are selectable names handled by ``cdl_pattern()``.
 
 All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib fallback → warning**. Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
 
@@ -58,6 +62,9 @@ Available patterns:
 
 Other candle indicators:
 
+* *CDL Pattern Dispatcher*: **cdl_pattern** — unified candlestick pattern accessor (supports 62 pattern names)
+* *CDL Doji (Dedicated Accessor)*: **cdl_doji** — convenience wrapper for ``doji`` pattern
+* *CDL Inside (Dedicated Accessor)*: **cdl_inside** — convenience wrapper for ``inside`` pattern
 * *Heikin-Ashi*: **ha** — ``df.ta.ha()`` — not a CDL pattern, not valid as ``cdl_pattern(name=...)``
 * *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern
 
@@ -78,7 +85,7 @@ Other candle indicators:
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
        # variance, wcp, willr, wma
 
-Cycles (7)
+Cycles (8)
 ----------
 
 * *Detrended Synthetic Price*: **dsp**
@@ -88,8 +95,9 @@ Cycles (7)
 * *Hilbert Transform — Phasor Components*: **ht_phasor** (returns InPhase + Quadrature)
 * *Hilbert Transform — SineWave*: **ht_sine** (returns Sine + LeadSine)
 * *Hilbert Transform — Trend vs Cycle Mode*: **ht_trendmode**
+* *Mesa Sine Wave*: **msw** (returns MSW_SINE + MSW_LEAD; period-based DFT cycle detector)
 
-Momentum (45)
+Momentum (52)
 -------------
 
 Momentum and oscillator indicators for measuring the speed of price changes:
@@ -109,11 +117,14 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Efficiency Ratio*: **er**
 * *Elder Ray Index*: **eri**
 * *Fisher Transform*: **fisher**
+* *Forecast Oscillator*: **fosc**
 * *Inertia*: **inertia**
 * *KDJ*: **kdj**
 * *KST Oscillator*: **kst**
 * *Linear Regression RSI*: **lrsi**
 * *Moving Average Convergence Divergence*: **macd**
+* *MACD Extended*: **macdext** (MACD with controllable MA type per line; MA types: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+* *MACD Fixed*: **macdfix** (MACD with fixed 12/26 periods; only signal period is configurable; uses TA-Lib ``MACDFIX`` when available)
 * *Momentum*: **mom**
 * *Pretty Good Oscillator*: **pgo**
 * *Projection Oscillator*: **po**
@@ -122,6 +133,9 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Percentage Volume Oscillator*: **pvo**
 * *Quantitative Qualitative Estimation*: **qqe** (returns QQE, QQEs, QQEl, QQEb_l, QQEb_s, QQEd)
 * *Rate of Change*: **roc**
+* *Rate of Change Percentage*: **rocp**
+* *Rate of Change Ratio*: **rocr**
+* *Rate of Change Ratio * 100*: **rocr100**
 * *Relative Strength Index*: **rsi**
 * *Relative Strength Xtra*: **rsx**
 * *Relative Vigor Index*: **rvgi**
@@ -131,6 +145,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Squeeze*: **squeeze** (Default is John Carter's. Enable Lazybear's with ``lazybear=True``)
 * *Squeeze Pro*: **squeeze_pro**
 * *Stochastic Oscillator*: **stoch**
+* *Stochastic Fast*: **stochf**
 * *Stochastic RSI*: **stochrsi**
 * *TD Sequential*: **td_seq** (Excluded from ``df.ta.strategy()``)
 * *Trix*: **trix**
@@ -140,12 +155,13 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Volume Weighted MACD*: **vwmacd**
 * *Williams %R*: **willr**
 
-Overlap (39)
+Overlap (46)
 ------------
 
 Moving averages and trend-following indicators:
 
 * *Arnaud Legoux Moving Average*: **alma**
+* *Average Price (OHLC/4)*: **avgprice** (arithmetic mean of open, high, low, close; equivalent to TA-Lib ``AVGPRICE`` and tulipy ``avgprice``)
 * *Double Exponential Moving Average*: **dema**
 * *Exponential Moving Average*: **ema**
 * *Fibonacci's Weighted Moving Average*: **fwma**
@@ -159,9 +175,14 @@ Moving averages and trend-following indicators:
 * *Jurik Moving Average*: **jma**
 * *Kaufman's Adaptive Moving Average*: **kama**
 * *Linear Regression*: **linreg**
+* *Linear Regression Angle*: **linregangle** (angle in degrees of the linear regression slope)
+* *Linear Regression Intercept*: **linregintercept** (y-intercept of the linear regression line)
+* *Linear Regression Slope*: **linregslope** (slope of the linear regression line)
 * *Moving Average*: **ma** (Generic moving average selector)
 * *MESA Adaptive Moving Average*: **mama** (returns MAMA + FAMA)
+* *Moving Average with Variable Period*: **mavp**
 * *Madrid Moving Average Ribbon*: **mmar**
+* *Median Price (H+L)/2*: **medprice** (arithmetic mean of high and low; equivalent to TA-Lib ``MEDPRICE`` and tulipy ``medprice``)
 * *McGinley Dynamic*: **mcgd**
 * *Midpoint*: **midpoint**
 * *Midprice*: **midprice**
@@ -178,6 +199,7 @@ Moving averages and trend-following indicators:
 * *Triple Exponential Moving Average*: **tema**
 * *Time Series Forecast*: **tsf**
 * *Triangular Moving Average*: **trima**
+* *Typical Price (H+L+C)/3*: **typprice** (arithmetic mean of high, low, close; equivalent to TA-Lib ``TYPPRICE`` and tulipy ``typprice``)
 * *Variable Index Dynamic Average*: **vidya**
 * *Volume Weighted Average Price*: **vwap** (**Requires** the DataFrame index to be a DatetimeIndex)
 * *Volume Weighted Moving Average*: **vwma**
@@ -194,7 +216,7 @@ Performance and return metrics. Use parameter ``cumulative=True`` for cumulative
 * *Log Return*: **log_return**
 * *Percent Return*: **percent_return**
 
-Statistics (12)
+Statistics (14)
 ---------------
 
 Statistical analysis functions:
@@ -204,15 +226,17 @@ Statistical analysis functions:
 * *Entropy*: **entropy**
 * *Kurtosis*: **kurtosis**  
 * *Mean Absolute Deviation*: **mad**
+* *Mean Deviation*: **md** (equivalent to tulipy ``md``; rolling mean absolute deviation from mean)
 * *Median*: **median**
 * *Quantile*: **quantile**
 * *Skew*: **skew**
 * *Standard Deviation*: **stdev**
+* *Standard Error*: **stderr**
 * *Think or Swim Standard Deviation All*: **tos_stdevall**
 * *Variance*: **variance**
 * *Z Score*: **zscore**
 
-Trend (22)
+Trend (26)
 ----------
 
 Trend identification and direction indicators:
@@ -227,11 +251,16 @@ Trend identification and direction indicators:
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
+* *Directional Index*: **dx**
+* *Exponential Decay*: **edecay** (multiplicative exponential decay; equivalent to tulipy ``edecay``)
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
-* *Parabolic Stop and Reverse*: **psar**
+* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; uses TA-Lib ``MINUS_DM`` by default)
+* *Parabolic Stop and Reverse*: **psar** (pass ``talib=True`` for exact TA-Lib ``SAR`` output)
+* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; uses TA-Lib ``PLUS_DM`` by default)
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick**
+* *Parabolic SAR Extended*: **sarext**
 * *Short Run*: **short_run**
 * *Trend Signals*: **tsignals**
 * *TTM Trend*: **ttm_trend**
@@ -239,17 +268,20 @@ Trend identification and direction indicators:
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**
 
-Volatility (15)
+Volatility (18)
 ---------------
 
 Volatility and range-based indicators:
 
 * *Aberration*: **aberration**
 * *Acceleration Bands*: **accbands**
+* *Annualised Volatility*: **avolume** (rolling annualised log-return standard deviation; ``length * sqrt(252)``-scaled)
 * *Average True Range*: **atr**
 * *Bollinger Bands*: **bbands**
 * *Chandelier Exit*: **ce**
+* *Chaikins Volatility*: **cvi**
 * *Donchian Channel*: **donchian**
+* *Historical Volatility*: **hvol** (Annualized; ``annualization=252`` by default)
 * *Holt-Winter Channel*: **hwc**
 * *Keltner Channel*: **kc**
 * *Mass Index*: **massi**
@@ -260,7 +292,7 @@ Volatility and range-based indicators:
 * *True Range*: **true_range**
 * *Ulcer Index*: **ui**
 
-Volume (16)
+Volume (20)
 -----------
 
 Volume analysis indicators:
@@ -271,7 +303,9 @@ Volume analysis indicators:
 * *Chaikin Money Flow*: **cmf**
 * *Elder's Force Index*: **efi**
 * *Ease of Movement*: **eom**
+* *Ease of Movement (EMV)*: **emv** (equivalent to tulipy ``emv``; uses ``divisor=10000`` for scale; rolling-averaged variant with ``length`` parameter)
 * *Klinger Volume Oscillator*: **kvo**
+* *Market Facilitation Index*: **marketfi**
 * *Money Flow Index*: **mfi**
 * *Negative Volume Index*: **nvi**
 * *On-Balance Volume*: **obv**
@@ -280,4 +314,56 @@ Volume analysis indicators:
 * *Price Volume Rank*: **pvr**
 * *Price Volume Trend*: **pvt**
 * *Volume Flow Indicator*: **vfi**
+* *Volume Oscillator*: **vosc**
 * *Volume Profile*: **vp**
+* *Williams Accumulation/Distribution*: **wad**
+
+Math (28)
+---------
+
+Element-wise arithmetic operators, rolling aggregation, and mathematical transforms.
+All functions are available via ``df.ta.<name>()``.
+
+Element-wise binary operators:
+
+* *Add*: **add** — element-wise addition of two series
+* *Subtract*: **sub** — element-wise subtraction of two series
+* *Multiply*: **mult** — element-wise multiplication of two series
+* *Divide*: **div** — element-wise division of two series
+
+Rolling aggregation operators:
+
+* *Rolling Maximum*: **rolling_max** — rolling maximum over a window
+* *Rolling Minimum*: **rolling_min** — rolling minimum over a window
+* *Rolling Sum*: **rolling_sum** — rolling sum over a window
+
+Mathematical transforms (wrapping NumPy / SciPy math, TA-Lib ``MATH TRANSFORM`` and ``MATH OPERATORS`` group, and tulipy equivalents):
+
+* *Inverse Sine*: **asin**
+* *Inverse Cosine*: **acos**
+* *Inverse Tangent*: **atan**
+* *Ceiling*: **ceil**
+* *Cosine*: **cos**
+* *Hyperbolic Cosine*: **cosh**
+* *Exponential*: **exp**
+* *Floor*: **floor**
+* *Natural Logarithm*: **ln**
+* *Logarithm Base 10*: **log10**
+* *Sine*: **sin**
+* *Hyperbolic Sine*: **sinh**
+* *Square Root*: **sqrt**
+* *Tangent*: **tan**
+* *Hyperbolic Tangent*: **tanh**
+
+Utility / signal functions (accessible directly or via ``df.ta``):
+
+* *Crossover*: **crossover** (returns Boolean Series that is True on the bar where ``a`` crosses above ``b``)
+* *Crossany*: **crossany** (returns Boolean Series that is True on any bar where ``a`` and ``b`` cross in either direction)
+* *Lag*: **lag** (returns a Series offset by ``n`` periods; equivalent to tulipy ``lag``)
+
+Compatibility Matrix
+--------------------
+
+The full per-indicator compatibility table (Native / TA-Lib / tulipy) is maintained here:
+
+.. include:: indicator_support_matrix.rst

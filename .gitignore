@@ -120,16 +120,6 @@ env/**
 # Original Source (Dev)
 pandas_ta/_wrapper.py
 
-# twopirllc stuff
-notes.md
-setup.cfg
-doc.py
-pandas_pips
-reqs.txt
-driver.py
-qd.py
-tdseq.py
-
 # Local package installs
 ta-lib/
 AlphaVantageAPI/

@@ -177,58 +177,51 @@ class TestTooShortInput(TestCase):
 
     def test_sma_too_short(self):
         c, *_ = self._short(5)
-        self.assertIsNone(
-            ta.sma(c, length=20), "sma should return None when len < length"
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.sma(c, length=20)
+        self.assertIsNone(result, "sma should return None when len < length")
 
     def test_ema_too_short(self):
         c, *_ = self._short(5)
-        self.assertIsNone(
-            ta.ema(c, length=20, talib=False),
-            "ema should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.ema(c, length=20, talib=False)
+        self.assertIsNone(result, "ema should return None when len < length")
 
     def test_rsi_too_short(self):
         c, *_ = self._short(5)
-        self.assertIsNone(
-            ta.rsi(c, length=14, talib=False),
-            "rsi should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.rsi(c, length=14, talib=False)
+        self.assertIsNone(result, "rsi should return None when len < length")
 
     def test_atr_too_short(self):
         c, h, l, _ = self._short(5)
-        self.assertIsNone(
-            ta.atr(h, l, c, length=14, talib=False),
-            "atr should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.atr(h, l, c, length=14, talib=False)
+        self.assertIsNone(result, "atr should return None when len < length")
 
     def test_roc_too_short(self):
         c, *_ = self._short(5)
-        self.assertIsNone(
-            ta.roc(c, length=10, talib=False),
-            "roc should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.roc(c, length=10, talib=False)
+        self.assertIsNone(result, "roc should return None when len < length")
 
     def test_stdev_too_short(self):
         c, *_ = self._short(5)
-        self.assertIsNone(
-            ta.stdev(c, length=20, talib=False),
-            "stdev should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.stdev(c, length=20, talib=False)
+        self.assertIsNone(result, "stdev should return None when len < length")
 
     def test_bbands_too_short(self):
         c, *_ = self._short(5)
-        self.assertIsNone(
-            ta.bbands(c, length=20, talib=False),
-            "bbands should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.bbands(c, length=20, talib=False)
+        self.assertIsNone(result, "bbands should return None when len < length")
 
     def test_adx_too_short(self):
         c, h, l, _ = self._short(5)
-        self.assertIsNone(
-            ta.adx(h, l, c, length=14, talib=False),
-            "adx should return None when len < length",
-        )
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.adx(h, l, c, length=14, talib=False)
+        self.assertIsNone(result, "adx should return None when len < length")
 
 
 # ---------------------------------------------------------------------------

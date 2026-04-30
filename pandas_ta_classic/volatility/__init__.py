@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from .aberration import aberration
 from .accbands import accbands
+from .avolume import avolume
+from .cvi import cvi
 from .atr import atr
 from .bbands import bbands
 from .ce import ce
 from .donchian import donchian
+from .hvol import hvol
 from .hwc import hwc
 from .kc import kc
 from .massi import massi

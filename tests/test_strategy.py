@@ -14,7 +14,7 @@ cores = cpu_count()
 cumulative = False
 speed_table = False
 strategy_timed = False
-timed = True
+timed = False
 verbose = False
 
 
@@ -131,8 +131,6 @@ class TestStrategyMethods(TestCase):
     # @skip
     def test_custom_a(self):
         self.category = "Custom A"
-        print()
-        print(self.category)
 
         momo_bands_sma_ta = [
             {"kind": "cdl_pattern", "name": "tristar"},  # 1

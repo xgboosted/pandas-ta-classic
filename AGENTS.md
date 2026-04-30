@@ -1,4 +1,4 @@
-# Agents.md
+# AGENTS.md
 
 ## Purpose
 This file documents the use of AI coding agents and assistants for the pandas-ta-classic repository. It ensures all contributors follow consistent standards when submitting code, regardless of the agent or tool used.

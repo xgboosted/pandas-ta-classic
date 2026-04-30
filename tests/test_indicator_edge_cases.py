@@ -227,25 +227,29 @@ class TestMismatchedLengths(TestCase):
 
     def test_atr_h_too_short_returns_none(self):
         """atr with h shorter than the minimum requirement must return None."""
-        result = ta.atr(_H.iloc[:5], _L, _C, length=14, talib=False)
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.atr(_H.iloc[:5], _L, _C, length=14, talib=False)
         self.assertIsNone(
             result, "atr should return None when h is shorter than required"
         )
 
     def test_atr_l_too_short_returns_none(self):
-        result = ta.atr(_H, _L.iloc[:5], _C, length=14, talib=False)
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.atr(_H, _L.iloc[:5], _C, length=14, talib=False)
         self.assertIsNone(
             result, "atr should return None when l is shorter than required"
         )
 
     def test_atr_c_too_short_returns_none(self):
-        result = ta.atr(_H, _L, _C.iloc[:5], length=14, talib=False)
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.atr(_H, _L, _C.iloc[:5], length=14, talib=False)
         self.assertIsNone(
             result, "atr should return None when c is shorter than required"
         )
 
     def test_adx_h_too_short_returns_none(self):
-        result = ta.adx(_H.iloc[:5], _L, _C, length=14, talib=False)
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.adx(_H.iloc[:5], _L, _C, length=14, talib=False)
         self.assertIsNone(
             result, "adx should return None when h is shorter than required"
         )

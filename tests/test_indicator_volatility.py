@@ -53,6 +53,19 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ABER_5_15")
 
+    def test_cvi(self):
+        result = pandas_ta.cvi(self.high, self.low)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "CVI_10")
+        self.assertIsNone(pandas_ta.cvi(None, self.low))
+        self.assertIsNone(pandas_ta.cvi(self.high, None))
+
+    def test_hvol(self):
+        result = pandas_ta.hvol(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "HVOL_20")
+        self.assertIsNone(pandas_ta.hvol(None))
+
     def test_accbands(self):
         result = pandas_ta.accbands(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)

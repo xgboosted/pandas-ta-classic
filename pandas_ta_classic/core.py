@@ -2,7 +2,7 @@
 import logging
 from copy import copy
 from dataclasses import dataclass, field
-from multiprocessing import cpu_count, Pool
+from multiprocessing import cpu_count, get_context
 from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple
@@ -19,6 +19,45 @@ from pandas_ta_classic._meta import Category, Imports, version
 from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 from pandas_ta_classic.candles import *
 from pandas_ta_classic.cycles import *
+from pandas_ta_classic.math import (
+    add,
+    sub,
+    div,
+    mult,
+    rolling_max,
+    rolling_min,
+    rolling_sum,
+    maxindex,
+    minindex,
+    minmax,
+    minmaxindex,
+    acos,
+    asin,
+    atan,
+    ceil,
+    cos,
+    cosh,
+    exp,
+    floor,
+    ln,
+    log10,
+    sin,
+    sinh,
+    sqrt,
+    tan,
+    tanh,
+    npabs,
+    npround,
+    trunc,
+    todeg,
+    torad,
+)
+
+# TA-Lib-compatible aliases for rolling operators (avoid shadowing Python builtins
+# in this module; users access them as ta.rolling_max / ta.max etc.)
+rolling_max = rolling_max  # noqa: F811
+rolling_min = rolling_min  # noqa: F811
+rolling_sum = rolling_sum  # noqa: F811
 from pandas_ta_classic.momentum import *
 from pandas_ta_classic.overlap import *
 from pandas_ta_classic.performance import *
@@ -772,7 +811,9 @@ class AnalysisIndicators(BasePandasObject):
             slim = copy(self)
             slim._df = self._df[self._df.columns[:initial_column_count]].copy()
 
-            pool = Pool(self.cores)
+            # Python 3.12 warns when forking from a multi-threaded process.
+            # Use spawn context explicitly to avoid unsafe fork behavior.
+            pool = get_context("spawn").Pool(self.cores)
             try:
                 # Some magic to optimize chunksize for speed based on total ta indicators
                 _chunksize = (
@@ -806,7 +847,7 @@ class AnalysisIndicators(BasePandasObject):
                     default_ta: list = [(ind, tuple(), kwargs) for ind in ta]
                     # All and Categorical multiprocessing pool.
                     if all_ordered:
-                        if Imports["tqdm"]:
+                        if Imports["tqdm"] and verbose:
                             results = tqdm(
                                 pool.imap(slim._mp_worker, default_ta, _chunksize)
                             )  # Order over Speed
@@ -815,7 +856,7 @@ class AnalysisIndicators(BasePandasObject):
                                 slim._mp_worker, default_ta, _chunksize
                             )  # Order over Speed
                     else:
-                        if Imports["tqdm"]:
+                        if Imports["tqdm"] and verbose:
                             results = tqdm(
                                 pool.imap_unordered(
                                     slim._mp_worker, default_ta, _chunksize
@@ -1073,6 +1114,11 @@ class AnalysisIndicators(BasePandasObject):
         result = ht_trendmode(close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def msw(self, period=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = msw(close=close, period=period, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     # Momentum
     def ao(self, fast=None, slow=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
@@ -1201,6 +1247,11 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def fosc(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = fosc(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def inertia(
         self,
         length=None,
@@ -1305,6 +1356,36 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def macdext(
+        self,
+        fast=None,
+        slow=None,
+        signal=None,
+        fastmatype=None,
+        slowmatype=None,
+        signalmatype=None,
+        offset=None,
+        **kwargs,
+    ):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = macdext(
+            close=close,
+            fast=fast,
+            slow=slow,
+            signal=signal,
+            fastmatype=fastmatype,
+            slowmatype=slowmatype,
+            signalmatype=signalmatype,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
+    def macdfix(self, signal=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = macdfix(close=close, signal=signal, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def mom(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = mom(close=close, length=length, offset=offset, **kwargs)
@@ -1390,6 +1471,21 @@ class AnalysisIndicators(BasePandasObject):
     def roc(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = roc(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def rocp(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = rocp(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def rocr(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = rocr(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def rocr100(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = rocr100(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def rsi(self, length=None, scalar=None, drift=None, offset=None, **kwargs):
@@ -1538,6 +1634,22 @@ class AnalysisIndicators(BasePandasObject):
             fast=fast,
             slow=slow,
             factor=factor,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
+    def stochf(self, fastk=None, fastd=None, mamode=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = stochf(
+            high=high,
+            low=low,
+            close=close,
+            fastk=fastk,
+            fastd=fastd,
+            mamode=mamode,
             offset=offset,
             **kwargs,
         )
@@ -1699,6 +1811,166 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    # Math Operators & Transforms
+    def add(self, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", None) or kwargs.pop("series_a", "close"))
+        b = self._get_column(kwargs.pop("b", None) or kwargs.pop("series_b", "close"))
+        result = add(series_a=a, series_b=b, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def sub(self, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", None) or kwargs.pop("series_a", "close"))
+        b = self._get_column(kwargs.pop("b", None) or kwargs.pop("series_b", "close"))
+        result = sub(series_a=a, series_b=b, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def div(self, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", None) or kwargs.pop("series_a", "close"))
+        b = self._get_column(kwargs.pop("b", None) or kwargs.pop("series_b", "close"))
+        result = div(series_a=a, series_b=b, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def mult(self, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", None) or kwargs.pop("series_a", "close"))
+        b = self._get_column(kwargs.pop("b", None) or kwargs.pop("series_b", "close"))
+        result = mult(series_a=a, series_b=b, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def rolling_max(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = rolling_max(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def rolling_min(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = rolling_min(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def rolling_sum(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = rolling_sum(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def maxindex(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = maxindex(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def minindex(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = minindex(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def minmax(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = minmax(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def minmaxindex(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = minmaxindex(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def acos(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = acos(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def asin(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = asin(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def atan(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = atan(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ceil(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ceil(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def cos(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = cos(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def cosh(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = cosh(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def exp(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = exp(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def floor(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = floor(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def ln(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = ln(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def log10(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = log10(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def sin(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = sin(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def sinh(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = sinh(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def sqrt(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = sqrt(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def tan(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = tan(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def tanh(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = tanh(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def npabs(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = npabs(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def npround(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = npround(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def trunc(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = trunc(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def todeg(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = todeg(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def torad(self, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = torad(close=close, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     # Overlap
     def alma(
         self, length=None, sigma=None, distribution_offset=None, offset=None, **kwargs
@@ -1751,6 +2023,12 @@ class AnalysisIndicators(BasePandasObject):
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         result = hl2(high=high, low=low, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def medprice(self, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = medprice(high=high, low=low, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def hlc3(self, offset=None, **kwargs):
@@ -1823,6 +2101,21 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def linregangle(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = linregangle(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def linregintercept(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = linregintercept(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def linregslope(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = linregslope(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def mcgd(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = mcgd(close=close, length=length, offset=offset, **kwargs)
@@ -1852,6 +2145,23 @@ class AnalysisIndicators(BasePandasObject):
         result = ohlc4(
             open_=open_, high=high, low=low, close=close, offset=offset, **kwargs
         )
+        return self._post_process(result, **kwargs)
+
+    def avgprice(self, offset=None, **kwargs):
+        open_ = self._get_column(kwargs.pop("open", "open"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = avgprice(
+            open_=open_, high=high, low=low, close=close, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
+    def typprice(self, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = typprice(high=high, low=low, close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def pwma(self, length=None, offset=None, **kwargs):
@@ -1885,6 +2195,27 @@ class AnalysisIndicators(BasePandasObject):
             close=close,
             fastlimit=fastlimit,
             slowlimit=slowlimit,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
+    def mavp(
+        self,
+        periods=None,
+        minperiod=None,
+        maxperiod=None,
+        mamode=None,
+        offset=None,
+        **kwargs,
+    ):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = mavp(
+            close=close,
+            periods=periods,
+            minperiod=minperiod,
+            maxperiod=maxperiod,
+            mamode=mamode,
             offset=offset,
             **kwargs,
         )
@@ -2064,6 +2395,11 @@ class AnalysisIndicators(BasePandasObject):
         result = mad(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def md(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = md(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def median(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = median(close=close, length=length, offset=offset, **kwargs)
@@ -2082,6 +2418,11 @@ class AnalysisIndicators(BasePandasObject):
     def stdev(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = stdev(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def stderr(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = stderr(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def tos_stdevall(self, length=None, stds=None, offset=None, **kwargs):
@@ -2261,6 +2602,11 @@ class AnalysisIndicators(BasePandasObject):
         result = decay(close=close, length=length, mode=mode, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
+    def edecay(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = edecay(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
     def decreasing(self, length=None, strict=None, asint=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = decreasing(
@@ -2333,11 +2679,67 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def dx(
+        self,
+        length=None,
+        scalar=None,
+        mamode=None,
+        drift=None,
+        offset=None,
+        **kwargs,
+    ):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = dx(
+            high=high,
+            low=low,
+            close=close,
+            length=length,
+            scalar=scalar,
+            mamode=mamode,
+            drift=drift,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
     def qstick(self, length=None, offset=None, **kwargs):
         open_ = self._get_column(kwargs.pop("open", "open"))
         close = self._get_column(kwargs.pop("close", "close"))
         result = qstick(
             open_=open_, close=close, length=length, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
+    def sarext(
+        self,
+        startvalue=None,
+        offsetonreverse=None,
+        accelerationinitlong=None,
+        accelerationlong=None,
+        accelerationmaxlong=None,
+        accelerationinitshort=None,
+        accelerationshort=None,
+        accelerationmaxshort=None,
+        offset=None,
+        **kwargs,
+    ):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = sarext(
+            high=high,
+            low=low,
+            startvalue=startvalue,
+            offsetonreverse=offsetonreverse,
+            accelerationinitlong=accelerationinitlong,
+            accelerationlong=accelerationlong,
+            accelerationmaxlong=accelerationmaxlong,
+            accelerationinitshort=accelerationinitshort,
+            accelerationshort=accelerationshort,
+            accelerationmaxshort=accelerationmaxshort,
+            offset=offset,
+            **kwargs,
         )
         return self._post_process(result, **kwargs)
 
@@ -2392,6 +2794,22 @@ class AnalysisIndicators(BasePandasObject):
         close = self._get_column(kwargs.pop("close", "close"))
         result = vortex(
             high=high, low=low, close=close, drift=drift, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
+    def plus_dm(self, length=None, drift=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = plus_dm(
+            high=high, low=low, length=length, drift=drift, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
+    def minus_dm(self, length=None, drift=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = minus_dm(
+            high=high, low=low, length=length, drift=drift, offset=offset, **kwargs
         )
         return self._post_process(result, **kwargs)
 
@@ -2458,6 +2876,23 @@ class AnalysisIndicators(BasePandasObject):
         result = cross(
             series_a=a, series_b=b, above=above, asint=asint, offset=offset, **kwargs
         )
+        return self._post_process(result, **kwargs)
+
+    def crossover(self, asint=True, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", None) or kwargs.pop("close", "close"))
+        b = self._get_column(kwargs.pop("b", None) or kwargs.pop("signal", "close"))
+        result = crossover(series_a=a, series_b=b, asint=asint, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def crossany(self, asint=True, offset=None, **kwargs):
+        a = self._get_column(kwargs.pop("a", None) or kwargs.pop("close", "close"))
+        b = self._get_column(kwargs.pop("b", None) or kwargs.pop("signal", "close"))
+        result = crossany(series_a=a, series_b=b, asint=asint, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def lag(self, period=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = lag(close=close, period=period, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def cross_value(self, value=None, above=True, asint=True, offset=None, **kwargs):
@@ -2549,6 +2984,28 @@ class AnalysisIndicators(BasePandasObject):
             offset=offset,
             **kwargs,
         )
+        return self._post_process(result, **kwargs)
+
+    def cvi(self, length=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        result = cvi(high=high, low=low, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def hvol(self, length=None, annualization=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = hvol(
+            close=close,
+            length=length,
+            annualization=annualization,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
+
+    def avolume(self, length=None, offset=None, **kwargs):
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = avolume(close=close, length=length, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 
     def hwc(
@@ -2810,6 +3267,15 @@ class AnalysisIndicators(BasePandasObject):
         )
         return self._post_process(result, **kwargs)
 
+    def emv(self, drift=None, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        volume = self._get_column(kwargs.pop("volume", "volume"))
+        result = emv(
+            high=high, low=low, volume=volume, drift=drift, offset=offset, **kwargs
+        )
+        return self._post_process(result, **kwargs)
+
     def kvo(
         self,
         fast=None,
@@ -2929,4 +3395,23 @@ class AnalysisIndicators(BasePandasObject):
         close = self._get_column(kwargs.pop("close", "close"))
         volume = self._get_column(kwargs.pop("volume", "volume"))
         result = vp(close=close, volume=volume, width=width, percent=percent, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def marketfi(self, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        volume = self._get_column(kwargs.pop("volume", "volume"))
+        result = marketfi(high=high, low=low, volume=volume, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def vosc(self, fast=None, slow=None, offset=None, **kwargs):
+        volume = self._get_column(kwargs.pop("volume", "volume"))
+        result = vosc(volume=volume, fast=fast, slow=slow, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def wad(self, offset=None, **kwargs):
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = wad(high=high, low=low, close=close, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)

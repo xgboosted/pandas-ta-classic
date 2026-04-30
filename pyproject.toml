@@ -48,8 +48,13 @@ optional = [
     "scikit-learn",
     "statsmodels",
     "stochastic",
-    "talib",
     "tqdm",
+]
+
+# External oracle libraries for parity tests
+oracle = [
+    "ta-lib",
+    "tulipy",
 ]
 
 # CI code quality tools
@@ -118,7 +123,7 @@ integration = [
 
 # Complete environment with all features
 all = [
-    "pandas-ta-classic[optional,dev,test,docs,performance,integration]"
+    "pandas-ta-classic[optional,oracle,dev,test,docs,performance,integration]"
 ]
 
 [project.urls]

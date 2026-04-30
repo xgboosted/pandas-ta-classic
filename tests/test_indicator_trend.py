@@ -294,7 +294,15 @@ class TestTrend(TestCase):
         from pandas import Series
 
         empty_series = Series(dtype=float)
-        result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
+        with self.assertLogs("pandas_ta_classic.utils._core", level="WARNING") as cm:
+            result = pandas_ta.cpr(
+                empty_series, empty_series, empty_series, empty_series
+            )
+        self.assertGreaterEqual(len(cm.output), 1)
+        self.assertTrue(
+            any("Series has 0 rows" in message for message in cm.output),
+            f"Expected empty-series validation warning in logs: {cm.output}",
+        )
         self.assertIsNone(result)
 
     def test_cpr_with_nans(self):
@@ -343,6 +351,27 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LR_2")
 
+    def test_dx(self):
+        result = pandas_ta.dx(self.high, self.low, self.close, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "DX_14")
+
+        try:
+            expected = tal.DX(self.high, self.low, self.close)
+            pdt.assert_series_equal(result, expected, check_names=False)
+        except AssertionError:
+            try:
+                corr = pandas_ta.utils.df_error_analysis(
+                    result, expected, col=CORRELATION
+                )
+                self.assertGreater(corr, CORRELATION_THRESHOLD)
+            except Exception as ex:
+                error_analysis(result, CORRELATION, ex)
+
+        result = pandas_ta.dx(self.high, self.low, self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "DX_14")
+
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
@@ -369,6 +398,16 @@ class TestTrend(TestCase):
         result = pandas_ta.qstick(self.open, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "QS_10")
+
+    def test_sarext(self):
+        result = pandas_ta.sarext(self.high, self.low, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "SAREXT")
+        self.assertIsNone(pandas_ta.sarext(None, self.low))
+
+        result = pandas_ta.sarext(self.high, self.low)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "SAREXT")
 
     def test_short_run(self):
         result = pandas_ta.short_run(self.close, self.open)
