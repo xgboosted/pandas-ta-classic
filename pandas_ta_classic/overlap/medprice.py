@@ -47,6 +47,10 @@ Args:
     low (pd.Series): Series of 'low' prices
     offset (int): Periods to offset. Default: 0
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.Series
 """

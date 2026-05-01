@@ -117,6 +117,10 @@ Args:
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.DataFrame: DMP (+DM) and DMN (-DM) columns.
 """

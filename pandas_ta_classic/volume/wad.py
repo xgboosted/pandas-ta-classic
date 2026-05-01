@@ -79,6 +79,10 @@ Args:
     close (pd.Series): Close price series.
     offset (int): Result offset. Default: 0
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.Series: WAD values.
 """

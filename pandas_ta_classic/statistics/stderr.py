@@ -57,6 +57,10 @@ Args:
     ddof (int): Degrees of freedom for std. Default: 1
     offset (int): Result offset. Default: 0
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.Series: STDERR values.
 """

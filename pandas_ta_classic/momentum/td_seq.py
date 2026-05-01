@@ -92,6 +92,7 @@ Args:
 Kwargs:
     show_all (bool): Show 1 - 13. If set to False, show 6 - 9. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: New feature generated.

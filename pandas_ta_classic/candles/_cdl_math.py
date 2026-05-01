@@ -204,7 +204,11 @@ def run_pattern(
         offset: How many periods to shift the result.
         **kwargs: Forwarded for fillna / fill_method handling.
 
-    Returns:
+    Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
         A pandas Series with the pattern result, or None if validation fails.
     """
     open_ = verify_series(open_)

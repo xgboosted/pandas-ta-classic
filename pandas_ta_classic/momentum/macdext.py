@@ -157,6 +157,10 @@ Args:
     talib (bool): Use TA-Lib if available. Default: True.
     offset (int): Number of periods to offset. Default: 0.
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.DataFrame: Columns MACDEXT_{f}_{s}_{sig}, MACDEXTs_{f}_{s}_{sig},
                   MACDEXTh_{f}_{s}_{sig}.

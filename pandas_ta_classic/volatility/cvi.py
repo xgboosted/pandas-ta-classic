@@ -66,6 +66,10 @@ Args:
     length (int): EMA period and lookback. Default: 10
     offset (int): Result offset. Default: 0
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.Series: CVI values.
 """

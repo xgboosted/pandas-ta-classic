@@ -58,6 +58,10 @@ Args:
     length (int): Period. Default: 5.
     offset (int): Number of periods to offset the result. Default: 0.
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.Series: Exponential decay series.
 """
@@ -75,6 +79,10 @@ Args:
     close (pd.Series): Series of 'close' prices
     length (int): Decay period. Default: 5
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

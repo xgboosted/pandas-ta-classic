@@ -83,6 +83,10 @@ Args:
     talib (bool): Use TA-Lib if available. Default: True.
     offset (int): Number of periods to offset the result. Default: 0.
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.DataFrame: DataFrame with MACDFIX line, histogram, signal columns.
 """
@@ -100,6 +104,10 @@ Args:
     signal (int): Signal period. Default: 9
     talib (bool): Use TA-Lib C library if installed. Default: True
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: macdfix, histogram, signal columns.

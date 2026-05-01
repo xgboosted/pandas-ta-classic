@@ -117,6 +117,10 @@ Args:
     period (int): Lookback period. Default: 5.
     offset (int): Number of periods to offset. Default: 0.
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.DataFrame: Columns MSW_SINE_{period}, MSW_LEAD_{period}.
 
