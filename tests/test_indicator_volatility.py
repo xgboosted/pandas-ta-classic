@@ -140,6 +140,16 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BBANDS_5_2.0")
 
+        self.assertIsNone(pandas_ta.bbands(None))
+        result = pandas_ta.bbands(self.close, offset=1)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.bbands(self.close, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.bbands(self.close, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.bbands(self.close, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)
+
     def test_ce(self):
         result = pandas_ta.ce(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
@@ -158,6 +168,17 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "DC_20_5")
 
+        self.assertIsNone(pandas_ta.donchian(None, self.low))
+        self.assertIsNone(pandas_ta.donchian(self.high, None))
+        result = pandas_ta.donchian(self.high, self.low, offset=1)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.donchian(self.high, self.low, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.donchian(self.high, self.low, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.donchian(self.high, self.low, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)
+
     def test_kc(self):
         result = pandas_ta.kc(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
@@ -166,6 +187,18 @@ class TestVolatility(TestCase):
         result = pandas_ta.kc(self.high, self.low, self.close, mamode="sma")
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KCs_20_2")
+
+        self.assertIsNone(pandas_ta.kc(None, self.low, self.close))
+        result = pandas_ta.kc(self.high, self.low, self.close, tr=False)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.kc(self.high, self.low, self.close, offset=1)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.kc(self.high, self.low, self.close, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.kc(self.high, self.low, self.close, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.kc(self.high, self.low, self.close, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)
 
     def test_massi(self):
         result = pandas_ta.massi(self.high, self.low)
@@ -215,6 +248,16 @@ class TestVolatility(TestCase):
         result = pandas_ta.thermo(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "THERMO_20_2_0.5")
+
+        self.assertIsNone(pandas_ta.thermo(None, self.low))
+        result = pandas_ta.thermo(self.high, self.low, offset=1)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.thermo(self.high, self.low, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.thermo(self.high, self.low, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+        result = pandas_ta.thermo(self.high, self.low, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)
 
     def test_true_range(self):
         result = pandas_ta.true_range(self.high, self.low, self.close, talib=False)
