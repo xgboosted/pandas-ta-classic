@@ -3,6 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.utils import (
+    apply_fill,
     apply_offset,
     get_drift,
     get_offset,
@@ -45,6 +46,7 @@ def emv(
 
     # Offset
     result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = "EMV"
     result.category = "volume"

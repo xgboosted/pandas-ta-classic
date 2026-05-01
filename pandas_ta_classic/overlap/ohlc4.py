@@ -2,7 +2,7 @@
 # OHLC4 (OHLC4)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ohlc4(
@@ -29,6 +29,7 @@ def ohlc4(
 
     # Offset
     ohlc4 = apply_offset(ohlc4, offset)
+    ohlc4 = apply_fill(ohlc4, **kwargs)
 
     # Name & Category
     ohlc4.name = "OHLC4"

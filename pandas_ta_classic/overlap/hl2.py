@@ -2,7 +2,7 @@
 # HL2 (HL2)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def hl2(
@@ -19,6 +19,7 @@ def hl2(
 
     # Offset
     hl2 = apply_offset(hl2, offset)
+    hl2 = apply_fill(hl2, **kwargs)
 
     # Name & Category
     hl2.name = "HL2"

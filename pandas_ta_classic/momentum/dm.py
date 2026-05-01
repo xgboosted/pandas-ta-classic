@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
+    apply_fill,
     apply_offset,
     get_drift,
     get_offset,
@@ -61,6 +62,7 @@ def dm(
 
     # Offset
     pos, neg = apply_offset([pos, neg], offset)
+    pos, neg = apply_fill([pos, neg], **kwargs)
 
     _params = f"_{length}"
     data = {

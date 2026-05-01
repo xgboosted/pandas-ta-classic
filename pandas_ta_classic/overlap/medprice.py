@@ -2,7 +2,7 @@
 # Median Price (MEDPRICE)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def medprice(
@@ -29,6 +29,7 @@ def medprice(
 
     # Offset
     result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = "MEDPRICE"
     result.category = "overlap"
