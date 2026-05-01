@@ -214,16 +214,21 @@ class TestOverlapExtension(TestCase):
     def test_mmar_ext(self):
         self.data.ta.mmar(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        # MMAR returns multiple columns, check if any MMAR columns were added
-        mmar_cols = [col for col in self.data.columns if col.startswith("MMAR_")]
-        self.assertTrue(len(mmar_cols) > 0)
+        self.assertEqual(
+            list(self.data.columns[-6:]),
+            ["MMAR_10", "MMAR_15", "MMAR_20", "MMAR_25", "MMAR_30", "MMAR_35"],
+        )
 
     def test_rainbow_ext(self):
         self.data.ta.rainbow(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        # RAINBOW returns multiple columns, check if any RAINBOW columns were added
-        rainbow_cols = [col for col in self.data.columns if col.startswith("RAINBOW_")]
-        self.assertTrue(len(rainbow_cols) > 0)
+        self.assertEqual(
+            list(self.data.columns[-10:]),
+            [
+                "RAINBOW_1", "RAINBOW_2", "RAINBOW_3", "RAINBOW_4", "RAINBOW_5",
+                "RAINBOW_6", "RAINBOW_7", "RAINBOW_8", "RAINBOW_9", "RAINBOW_10",
+            ],
+        )
 
     def test_avgprice_ext(self):
         self.data.ta.avgprice(append=True)

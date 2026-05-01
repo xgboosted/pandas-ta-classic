@@ -127,9 +127,7 @@ class TestVolatilityExtension(TestCase):
     def test_hwc_ext(self):
         self.data.ta.hwc(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        # HWC returns 3 columns: HWM, HWU, HWL
-        hwc_cols = [col for col in self.data.columns if col.startswith("HW")]
-        self.assertTrue(len(hwc_cols) >= 3)
+        self.assertEqual(list(self.data.columns[-3:]), ["HWM", "HWU", "HWL"])
 
     def test_avolume_ext(self):
         self.data.ta.avolume(append=True)
