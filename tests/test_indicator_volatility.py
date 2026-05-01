@@ -250,3 +250,20 @@ class TestVolatility(TestCase):
         result = pandas_ta.hwc(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "HWC")
+
+        result = pandas_ta.hwc(self.close, channel_eval=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("HWW", result.columns)
+        self.assertIn("HWPCT", result.columns)
+
+        result = pandas_ta.hwc(self.close, offset=1)
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.hwc(self.close, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.hwc(self.close, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.hwc(self.close, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)

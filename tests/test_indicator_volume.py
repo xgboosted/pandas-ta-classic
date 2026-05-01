@@ -104,6 +104,15 @@ class TestVolume(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AOBVe_4_12_2_2_2")
 
+        result = pandas_ta.aobv(self.close, self.volume_, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.aobv(self.close, self.volume_, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.aobv(self.close, self.volume_, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)
+
     def test_cmf(self):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
@@ -113,6 +122,12 @@ class TestVolume(TestCase):
         result = pandas_ta.efi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EFI_13")
+
+    def test_emv(self):
+        result = pandas_ta.emv(self.high, self.low, self.volume_)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "EMV")
+        self.assertIsNone(pandas_ta.emv(None, self.low, self.volume_))
 
     def test_eom(self):
         result = pandas_ta.eom(self.high, self.low, self.close, self.volume_)

@@ -51,3 +51,15 @@ class TestPerformace(TestCase):
         result = pandas_ta.drawdown(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "DD")
+
+        result = pandas_ta.drawdown(self.close, offset=1)
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.drawdown(self.close, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.drawdown(self.close, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.drawdown(self.close, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)

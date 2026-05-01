@@ -323,6 +323,17 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EXPDECAY_5")
 
+    def test_edecay(self):
+        result = pandas_ta.edecay(self.close)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "EDECAY_5")
+
+        result = pandas_ta.edecay(self.close, length=10)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "EDECAY_10")
+
+        self.assertIsNone(pandas_ta.edecay(None))
+
     def test_decreasing(self):
         result = pandas_ta.decreasing(self.close)
         self.assertIsInstance(result, Series)
@@ -372,6 +383,18 @@ class TestTrend(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DX_14")
 
+    def test_minus_dm(self):
+        result = pandas_ta.minus_dm(self.high, self.low, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "MINUS_DM_14")
+        self.assertIsNone(pandas_ta.minus_dm(None, self.low))
+
+    def test_plus_dm(self):
+        result = pandas_ta.plus_dm(self.high, self.low, talib=False)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "PLUS_DM_14")
+        self.assertIsNone(pandas_ta.plus_dm(None, self.low))
+
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
@@ -393,6 +416,15 @@ class TestTrend(TestCase):
                 self.assertGreater(psar_corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(psar, CORRELATION, ex)
+
+        result = pandas_ta.psar(self.high, self.low, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.psar(self.high, self.low, fill_method="ffill")
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.psar(self.high, self.low, fill_method="bfill")
+        self.assertIsInstance(result, DataFrame)
 
     def test_qstick(self):
         result = pandas_ta.qstick(self.open, self.close)
