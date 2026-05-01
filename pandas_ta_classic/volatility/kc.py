@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .true_range import true_range
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    high_low_range,
+    verify_series,
+)
 
 
 def kc(
@@ -48,44 +54,9 @@ def kc(
     upper = basis + scalar * band
 
     # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        basis = basis.shift(offset)
-        upper = upper.shift(offset)
+    lower, basis, upper = apply_offset([lower, basis, upper], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        basis.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                basis.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                basis.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
+    lower, basis, upper = apply_fill([lower, basis, upper], **kwargs)
 
     # Name and Categorize it
     _props = f"{mamode.lower()[0] if len(mamode) else ''}_{length}_{scalar}"

@@ -5,7 +5,7 @@ from typing import Any, Optional
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def zscore(
@@ -40,22 +40,9 @@ def zscore(
     zscore = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
-    if offset != 0:
-        zscore = zscore.shift(offset)
+    zscore = apply_offset(zscore, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        zscore.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                zscore.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                zscore.bfill(inplace=True)
+    zscore = apply_fill(zscore, **kwargs)
 
     # Name & Category
     zscore.name = f"ZS_{length}"

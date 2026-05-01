@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def rocr100(
@@ -34,18 +34,9 @@ def rocr100(
         rocr100_ = 100 * (close / close.shift(length))
 
     # Offset
-    if offset != 0:
-        rocr100_ = rocr100_.shift(offset)
+    rocr100_ = apply_offset(rocr100_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        rocr100_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                rocr100_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                rocr100_.bfill(inplace=True)
+    rocr100_ = apply_fill(rocr100_, **kwargs)
 
     # Name and Categorize it
     rocr100_.name = f"ROCR100_{length}"

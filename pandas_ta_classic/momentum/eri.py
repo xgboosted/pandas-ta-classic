@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def eri(
@@ -33,33 +33,9 @@ def eri(
     bear = low - ema_
 
     # Offset
-    if offset != 0:
-        bull = bull.shift(offset)
-        bear = bear.shift(offset)
+    bull, bear = apply_offset([bull, bear], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        bull.fillna(kwargs["fillna"], inplace=True)
-        bear.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bull.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bull.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bear.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bear.bfill(inplace=True)
+    bull, bear = apply_fill([bull, bear], **kwargs)
 
     # Name and Categorize it
     bull.name = f"BULLP_{length}"

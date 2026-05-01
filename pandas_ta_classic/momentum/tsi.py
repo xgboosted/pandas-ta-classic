@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def tsi(
@@ -59,33 +65,9 @@ def tsi(
         return None
 
     # Offset
-    if offset != 0:
-        tsi = tsi.shift(offset)
-        tsi_signal = tsi_signal.shift(offset)
+    tsi, tsi_signal = apply_offset([tsi, tsi_signal], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        tsi.fillna(kwargs["fillna"], inplace=True)
-        tsi_signal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                tsi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                tsi.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                tsi_signal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                tsi_signal.bfill(inplace=True)
+    tsi, tsi_signal = apply_fill([tsi, tsi_signal], **kwargs)
 
     # Name and Categorize it
     tsi.name = f"TSI_{fast}_{slow}_{signal}"

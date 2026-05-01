@@ -2,7 +2,7 @@
 # Median Price (MEDPRICE)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def medprice(
@@ -27,8 +27,8 @@ def medprice(
 
     result = 0.5 * (high + low)
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
 
     result.name = "MEDPRICE"
     result.category = "overlap"

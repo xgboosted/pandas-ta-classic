@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .decreasing import decreasing
 from .increasing import increasing
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def long_run(
@@ -34,22 +34,9 @@ def long_run(
     long_run = pb | bi
 
     # Offset
-    if offset != 0:
-        long_run = long_run.shift(offset)
+    long_run = apply_offset(long_run, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        long_run.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long_run.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long_run.bfill(inplace=True)
+    long_run = apply_fill(long_run, **kwargs)
 
     # Name and Categorize it
     long_run.name = f"LR_{length}"

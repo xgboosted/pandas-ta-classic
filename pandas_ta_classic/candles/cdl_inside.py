@@ -2,7 +2,7 @@
 # Candle Inside (CDL_INSIDE)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import candle_color, get_offset
+from pandas_ta_classic.utils import apply_fill, apply_offset, candle_color, get_offset
 from pandas_ta_classic.utils import verify_series
 
 
@@ -33,22 +33,9 @@ def cdl_inside(
         inside *= candle_color(open_, close)
 
     # Offset
-    if offset != 0:
-        inside = inside.shift(offset)
+    inside = apply_offset(inside, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        inside.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                inside.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                inside.bfill(inplace=True)
+    inside = apply_fill(inside, **kwargs)
 
     # Name and Categorize it
     inside.name = f"CDL_INSIDE"

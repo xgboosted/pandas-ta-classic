@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import sqrt as npSqrt
 from pandas import Series
 from .wma import wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def hma(
@@ -35,22 +35,9 @@ def hma(
         return None
 
     # Offset
-    if offset != 0:
-        hma = hma.shift(offset)
+    hma = apply_offset(hma, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        hma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hma.bfill(inplace=True)
+    hma = apply_fill(hma, **kwargs)
 
     # Name & Category
     hma.name = f"HMA_{length}"

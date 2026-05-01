@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def tema(
@@ -38,22 +38,9 @@ def tema(
         tema = 3 * (ema1 - ema2) + ema3
 
     # Offset
-    if offset != 0:
-        tema = tema.shift(offset)
+    tema = apply_offset(tema, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        tema.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                tema.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                tema.bfill(inplace=True)
+    tema = apply_fill(tema, **kwargs)
 
     # Name & Category
     tema.name = f"TEMA_{length}"

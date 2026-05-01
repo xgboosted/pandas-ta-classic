@@ -6,7 +6,7 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def quantile(
@@ -44,22 +44,9 @@ def quantile(
     quantile = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
-    if offset != 0:
-        quantile = quantile.shift(offset)
+    quantile = apply_offset(quantile, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        quantile.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                quantile.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                quantile.bfill(inplace=True)
+    quantile = apply_fill(quantile, **kwargs)
 
     # Name & Category
     quantile.name = f"QTL_{length}_{q}"

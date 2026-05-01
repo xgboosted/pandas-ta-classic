@@ -3,7 +3,7 @@
 from typing import Any, Optional, Tuple
 import numpy as np
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def _mama_loop(
@@ -267,21 +267,10 @@ def mama(
     fama_s = Series(fama_arr, index=close.index)
 
     # Offset
-    if offset != 0:
-        mama_s = mama_s.shift(offset)
-        fama_s = fama_s.shift(offset)
+    mama_s, fama_s = apply_offset([mama_s, fama_s], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        mama_s.fillna(kwargs["fillna"], inplace=True)
-        fama_s.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            mama_s.ffill(inplace=True)
-            fama_s.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            mama_s.bfill(inplace=True)
-            fama_s.bfill(inplace=True)
+    mama_s, fama_s = apply_fill([mama_s, fama_s], **kwargs)
 
     # Name and Categorize it
     _params = f"_{fastlimit}_{slowlimit}"

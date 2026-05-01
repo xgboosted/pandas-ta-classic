@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def dpo(
@@ -35,22 +35,9 @@ def dpo(
         dpo = (close.shift(t) - ma).shift(-t)
 
     # Offset
-    if offset != 0:
-        dpo = dpo.shift(offset)
+    dpo = apply_offset(dpo, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        dpo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dpo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dpo.bfill(inplace=True)
+    dpo = apply_fill(dpo, **kwargs)
 
     # Name and Categorize it
     dpo.name = f"DPO_{length}"

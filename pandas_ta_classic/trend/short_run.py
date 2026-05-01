@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .decreasing import decreasing
 from .increasing import increasing
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def short_run(
@@ -32,22 +32,9 @@ def short_run(
     short_run = pt | bd
 
     # Offset
-    if offset != 0:
-        short_run = short_run.shift(offset)
+    short_run = apply_offset(short_run, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        short_run.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short_run.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short_run.bfill(inplace=True)
+    short_run = apply_fill(short_run, **kwargs)
 
     # Name and Categorize it
     short_run.name = f"SR_{length}"

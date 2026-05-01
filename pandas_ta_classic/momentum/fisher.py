@@ -6,7 +6,13 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
-from pandas_ta_classic.utils import get_offset, high_low_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    high_low_range,
+    verify_series,
+)
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -62,33 +68,9 @@ def fisher(
     signalma = fisher.shift(signal)
 
     # Offset
-    if offset != 0:
-        fisher = fisher.shift(offset)
-        signalma = signalma.shift(offset)
+    fisher, signalma = apply_offset([fisher, signalma], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        fisher.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                fisher.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                fisher.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
+    fisher, signalma = apply_fill([fisher, signalma], **kwargs)
 
     # Name and Categorize it
     _props = f"_{length}_{signal}"

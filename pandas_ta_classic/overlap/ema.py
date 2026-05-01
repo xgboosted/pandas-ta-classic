@@ -6,7 +6,7 @@ from pandas import Series
 from pandas_ta_classic import Imports
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ema(
@@ -42,22 +42,8 @@ def ema(
         ema = close.ewm(span=length, adjust=adjust).mean()
 
     # Offset
-    if offset != 0:
-        ema = ema.shift(offset)
-
-    # Handle fills
-    if "fillna" in kwargs:
-        ema.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ema.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ema.bfill(inplace=True)
+    ema = apply_offset(ema, offset)
+    ema = apply_fill(ema, **kwargs)
 
     # Name & Category
     ema.name = f"EMA_{length}"

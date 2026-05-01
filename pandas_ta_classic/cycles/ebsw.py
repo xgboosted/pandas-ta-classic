@@ -10,7 +10,7 @@ from numpy import sqrt as npSqrt
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ebsw(
@@ -74,22 +74,9 @@ def ebsw(
     ebsw = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        ebsw = ebsw.shift(offset)
+    ebsw = apply_offset(ebsw, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        ebsw.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ebsw.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ebsw.bfill(inplace=True)
+    ebsw = apply_fill(ebsw, **kwargs)
 
     # Name and Categorize it
     ebsw.name = f"EBSW_{length}_{bars}"

@@ -2,7 +2,13 @@
 # Chaikin Money Flow (CMF)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def cmf(
@@ -45,22 +51,9 @@ def cmf(
     cmf /= volume.rolling(length, min_periods=min_periods).sum()
 
     # Offset
-    if offset != 0:
-        cmf = cmf.shift(offset)
+    cmf = apply_offset(cmf, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        cmf.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cmf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cmf.bfill(inplace=True)
+    cmf = apply_fill(cmf, **kwargs)
 
     # Name and Categorize it
     cmf.name = f"CMF_{length}"

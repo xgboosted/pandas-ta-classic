@@ -6,7 +6,13 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    verify_series,
+    zero,
+)
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -80,8 +86,7 @@ def psar(
 
         sar = _SAR(high, low, acceleration=af0, maximum=max_af)
         sar_s = Series(sar, index=high.index)
-        if offset != 0:
-            sar_s = sar_s.shift(offset)
+        sar_s = apply_offset(sar_s, offset)
         _params = f"_{af0}_{max_af}"
         # Split into long (below price) and short (above price) using close or mid
         ref = high  # fallback: use high as reference
@@ -134,55 +139,9 @@ def psar(
     reversal = Series(reversal_arr, index=high.index)
 
     # Offset
-    if offset != 0:
-        _af = _af.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
-        reversal = reversal.shift(offset)
+    _af, long, short, reversal = apply_offset([_af, long, short, reversal], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        _af.fillna(kwargs["fillna"], inplace=True)
-        long.fillna(kwargs["fillna"], inplace=True)
-        short.fillna(kwargs["fillna"], inplace=True)
-        reversal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                _af.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                _af.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                short.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                reversal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                reversal.bfill(inplace=True)
+    _af, long, short, reversal = apply_fill([_af, long, short, reversal], **kwargs)
 
     # Prepare DataFrame to return
     _params = f"_{af0}_{max_af}"

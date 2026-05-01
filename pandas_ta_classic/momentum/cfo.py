@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def cfo(
@@ -33,22 +39,9 @@ def cfo(
     cfo /= close
 
     # Offset
-    if offset != 0:
-        cfo = cfo.shift(offset)
+    cfo = apply_offset(cfo, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        cfo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cfo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cfo.bfill(inplace=True)
+    cfo = apply_fill(cfo, **kwargs)
 
     # Name and Categorize it
     cfo.name = f"CFO_{length}"

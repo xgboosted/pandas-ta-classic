@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .roc import roc
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def kst(
@@ -52,33 +58,9 @@ def kst(
     kst_signal = kst.rolling(signal).mean()
 
     # Offset
-    if offset != 0:
-        kst = kst.shift(offset)
-        kst_signal = kst_signal.shift(offset)
+    kst, kst_signal = apply_offset([kst, kst_signal], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        kst.fillna(kwargs["fillna"], inplace=True)
-        kst_signal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kst.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kst.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kst_signal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kst_signal.bfill(inplace=True)
+    kst, kst_signal = apply_fill([kst, kst_signal], **kwargs)
 
     # Name and Categorize it
     kst.name = f"KST_{roc1}_{roc2}_{roc3}_{roc4}_{sma1}_{sma2}_{sma3}_{sma4}"

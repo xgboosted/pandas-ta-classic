@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from .tsignals import tsignals
 from pandas_ta_classic.utils._signals import cross_value
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
 
 
 def xsignals(
@@ -56,19 +56,7 @@ def xsignals(
     # Offset handled by tsignals
     DataFrame({f"XS_LONG": df.TS_Trends, f"XS_SHORT": 1 - df.TS_Trends})
 
-    # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
+    df = apply_fill(df, **kwargs)
 
     # Name & Category
     df.name = f"XS"

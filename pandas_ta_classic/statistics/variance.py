@@ -6,7 +6,7 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def variance(
@@ -53,22 +53,9 @@ def variance(
         variance = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
-    if offset != 0:
-        variance = variance.shift(offset)
+    variance = apply_offset(variance, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        variance.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                variance.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                variance.bfill(inplace=True)
+    variance = apply_fill(variance, **kwargs)
 
     # Name & Category
     variance.name = f"VAR_{length}"

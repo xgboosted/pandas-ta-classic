@@ -5,7 +5,14 @@ import numpy as np
 from pandas import concat, DataFrame, Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, signals
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    signals,
+    verify_series,
+)
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -89,22 +96,9 @@ def rsx(
     rsx = Series(_rsx_loop(c_arr, length, m), index=close.index)
 
     # Offset
-    if offset != 0:
-        rsx = rsx.shift(offset)
+    rsx = apply_offset(rsx, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        rsx.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                rsx.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                rsx.bfill(inplace=True)
+    rsx = apply_fill(rsx, **kwargs)
 
     # Name and Categorize it
     rsx.name = f"RSX_{length}"

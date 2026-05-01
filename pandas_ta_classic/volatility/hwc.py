@@ -3,7 +3,7 @@
 from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -76,70 +76,14 @@ def hwc(
         )
 
     # Offset
-    if offset != 0:
-        hwc = hwc.shift(offset)
-        hwc_upper = hwc_upper.shift(offset)
-        hwc_lower = hwc_lower.shift(offset)
-        if channel_eval:
-            hwc_width = hwc_width.shift(offset)
-            hwc_pctwidth = hwc_pctwidth.shift(offset)
+    hwc, hwc_upper, hwc_lower = apply_offset([hwc, hwc_upper, hwc_lower], offset)
+    if channel_eval:
+        hwc_width, hwc_pctwidth = apply_offset([hwc_width, hwc_pctwidth], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        hwc.fillna(kwargs["fillna"], inplace=True)
-        hwc_upper.fillna(kwargs["fillna"], inplace=True)
-        hwc_lower.fillna(kwargs["fillna"], inplace=True)
-        if channel_eval:
-            hwc_width.fillna(kwargs["fillna"], inplace=True)
-            hwc_pctwidth.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwc.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwc_upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwc_upper.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwc_lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwc_lower.bfill(inplace=True)
-        if channel_eval:
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    hwc_width.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    hwc_width.bfill(inplace=True)
-            if "fill_method" in kwargs:
-
-                if kwargs["fill_method"] == "ffill":
-
-                    hwc_pctwidth.ffill(inplace=True)
-
-                elif kwargs["fill_method"] == "bfill":
-
-                    hwc_pctwidth.bfill(inplace=True)
+    hwc, hwc_upper, hwc_lower = apply_fill([hwc, hwc_upper, hwc_lower], **kwargs)
+    if channel_eval:
+        hwc_width, hwc_pctwidth = apply_fill([hwc_width, hwc_pctwidth], **kwargs)
 
     # Name and Categorize it
     # suffix = f'{str(na).replace(".", "")}-{str(nb).replace(".", "")}-{str(nc).replace(".", "")}'

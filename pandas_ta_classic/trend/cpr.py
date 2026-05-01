@@ -3,7 +3,7 @@
 from typing import Any, Optional
 
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._cpr import (
     get_previous_period_ohlcv,
     calculate_cpr_width,
@@ -107,68 +107,46 @@ def cpr(
         virgin = detect_virgin_cpr(high, low, tc, bc, lookforward=virgin_lookforward)
 
     # Offset
-    if offset != 0:
-        tc = tc.shift(offset)
-        pivot = pivot.shift(offset)
-        bc = bc.shift(offset)
-        if "r1" in pivot_result:
-            for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-                if key in pivot_result:
-                    pivot_result[key] = pivot_result[key].shift(offset)
-        if width_analysis:
-            width = width.shift(offset)
-            width_pct = width_pct.shift(offset)
-            width_class = width_class.shift(offset)
-        if price_position:
-            position = position.shift(offset)
-        if virgin_cpr:
-            virgin = virgin.shift(offset)
+    tc, pivot, bc = apply_offset([tc, pivot, bc], offset)
+    for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
+        if key in pivot_result:
+            pivot_result[key] = apply_offset(pivot_result[key], offset)
+    if width_analysis:
+        width, width_pct, width_class = apply_offset(
+            [width, width_pct, width_class], offset
+        )
+    if price_position:
+        position = apply_offset(position, offset)
+    if virgin_cpr:
+        virgin = apply_offset(virgin, offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        tc.fillna(kwargs["fillna"], inplace=True)
-        pivot.fillna(kwargs["fillna"], inplace=True)
-        bc.fillna(kwargs["fillna"], inplace=True)
-        for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-            if key in pivot_result:
-                pivot_result[key].fillna(kwargs["fillna"], inplace=True)
-        if width_analysis:
-            width.fillna(kwargs["fillna"], inplace=True)
-            width_pct.fillna(kwargs["fillna"], inplace=True)
-        if price_position and position is not None:
-            position.fillna(kwargs["fillna"], inplace=True)
-        if virgin_cpr and virgin is not None:
-            virgin.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            tc.ffill(inplace=True)
-            pivot.ffill(inplace=True)
-            bc.ffill(inplace=True)
-            for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-                if key in pivot_result:
-                    pivot_result[key].ffill(inplace=True)
-            if width_analysis:
-                width.ffill(inplace=True)
-                width_pct.ffill(inplace=True)
-            if price_position and position is not None:
-                position.ffill(inplace=True)
-            if virgin_cpr and virgin is not None:
-                virgin.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            tc.bfill(inplace=True)
-            pivot.bfill(inplace=True)
-            bc.bfill(inplace=True)
-            for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-                if key in pivot_result:
-                    pivot_result[key].bfill(inplace=True)
-            if width_analysis:
-                width.bfill(inplace=True)
-                width_pct.bfill(inplace=True)
-            if price_position and position is not None:
-                position.bfill(inplace=True)
-            if virgin_cpr and virgin is not None:
-                virgin.bfill(inplace=True)
+    _fill_all = [tc, pivot, bc]
+    for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
+        if key in pivot_result:
+            _fill_all.append(pivot_result[key])
+    if width_analysis:
+        _fill_all.extend([width, width_pct])
+    if price_position and position is not None:
+        _fill_all.append(position)
+    if virgin_cpr and virgin is not None:
+        _fill_all.append(virgin)
+    _filled = apply_fill(_fill_all, **kwargs)
+    # Unpack back (apply_fill modifies in-place, but reassign for clarity)
+    tc, pivot, bc = _filled[0], _filled[1], _filled[2]
+    _idx = 3
+    for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
+        if key in pivot_result:
+            pivot_result[key] = _filled[_idx]
+            _idx += 1
+    if width_analysis:
+        width, width_pct = _filled[_idx], _filled[_idx + 1]
+        _idx += 2
+    if price_position and position is not None:
+        position = _filled[_idx]
+        _idx += 1
+    if virgin_cpr and virgin is not None:
+        virgin = _filled[_idx]
 
     # Name and Categorize it
     tc.name = f"CPR_TC"

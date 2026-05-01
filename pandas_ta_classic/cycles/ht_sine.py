@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.cycles._hilbert import hilbert_result
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ht_sine(
@@ -25,21 +25,10 @@ def ht_sine(
     lead_sine = Series(ht["lead_sine"], index=close.index)
 
     # Offset
-    if offset != 0:
-        sine = sine.shift(offset)
-        lead_sine = lead_sine.shift(offset)
+    sine, lead_sine = apply_offset([sine, lead_sine], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        sine.fillna(kwargs["fillna"], inplace=True)
-        lead_sine.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            sine.ffill(inplace=True)
-            lead_sine.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            sine.bfill(inplace=True)
-            lead_sine.bfill(inplace=True)
+    sine, lead_sine = apply_fill([sine, lead_sine], **kwargs)
 
     # Name and Categorize it
     sine.name = "HT_SINE"

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import exp as npExp, maximum
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def edecay(
@@ -37,8 +37,8 @@ def edecay(
 
     result = Series(result, index=close.index)
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
 
     result.name = f"EDECAY_{length}"
     result.category = "trend"

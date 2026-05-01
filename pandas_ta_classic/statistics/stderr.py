@@ -5,7 +5,7 @@ from typing import Any, Optional
 from numpy import sqrt as npSqrt
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def stderr(
@@ -29,18 +29,9 @@ def stderr(
     stderr_ = close.rolling(length).std(ddof=ddof) / npSqrt(length)
 
     # Offset
-    if offset != 0:
-        stderr_ = stderr_.shift(offset)
+    stderr_ = apply_offset(stderr_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        stderr_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                stderr_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                stderr_.bfill(inplace=True)
+    stderr_ = apply_fill(stderr_, **kwargs)
 
     # Name and Categorize it
     stderr_.name = f"STDERR_{length}"

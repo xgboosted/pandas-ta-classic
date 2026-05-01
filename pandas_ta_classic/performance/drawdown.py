@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import log as nplog
 from numpy import seterr
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def drawdown(
@@ -26,44 +26,9 @@ def drawdown(
     seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
 
     # Offset
-    if offset != 0:
-        dd = dd.shift(offset)
-        dd_pct = dd_pct.shift(offset)
-        dd_log = dd_log.shift(offset)
+    dd, dd_pct, dd_log = apply_offset([dd, dd_pct, dd_log], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        dd.fillna(kwargs["fillna"], inplace=True)
-        dd_pct.fillna(kwargs["fillna"], inplace=True)
-        dd_log.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dd.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dd.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dd_pct.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dd_pct.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                dd_log.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                dd_log.bfill(inplace=True)
+    dd, dd_pct, dd_log = apply_fill([dd, dd_pct, dd_log], **kwargs)
 
     # Name and Categorize it
     dd.name = "DD"

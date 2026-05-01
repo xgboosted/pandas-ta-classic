@@ -4,7 +4,13 @@ from typing import Any, Optional
 
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def marketfi(
@@ -28,18 +34,9 @@ def marketfi(
     marketfi_ = non_zero_range(high, low) / volume
 
     # Offset
-    if offset != 0:
-        marketfi_ = marketfi_.shift(offset)
+    marketfi_ = apply_offset(marketfi_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        marketfi_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                marketfi_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                marketfi_.bfill(inplace=True)
+    marketfi_ = apply_fill(marketfi_, **kwargs)
 
     # Name and Categorize it
     marketfi_.name = "MARKETFI"

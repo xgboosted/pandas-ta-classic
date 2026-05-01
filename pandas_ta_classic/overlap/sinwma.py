@@ -5,7 +5,7 @@ import numpy as np
 from numpy import pi as npPi
 from numpy import sin as npSin
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _sliding_weighted_ma
 
 
@@ -31,22 +31,9 @@ def sinwma(
     sinwma = _sliding_weighted_ma(close, length, w)
 
     # Offset
-    if offset != 0:
-        sinwma = sinwma.shift(offset)
+    sinwma = apply_offset(sinwma, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        sinwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                sinwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                sinwma.bfill(inplace=True)
+    sinwma = apply_fill(sinwma, **kwargs)
 
     # Name & Category
     sinwma.name = f"SINWMA_{length}"

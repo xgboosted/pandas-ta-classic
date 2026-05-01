@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def dsp(
@@ -31,17 +31,9 @@ def dsp(
     dsp = close - ema_value
 
     # Offset
-    if offset != 0:
-        dsp = dsp.shift(offset)
+    dsp = apply_offset(dsp, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        dsp.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            dsp.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            dsp.bfill(inplace=True)
+    dsp = apply_fill(dsp, **kwargs)
 
     # Name and Categorize it
     dsp.name = f"DSP_{length}"

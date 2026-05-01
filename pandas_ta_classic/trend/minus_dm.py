@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, zero
+from pandas_ta_classic.utils import (
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+    zero,
+)
 
 
 def minus_dm(
@@ -46,8 +52,8 @@ def minus_dm(
             return None
         result = result * length  # Wilder's raw DM
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
 
     result.name = f"MINUS_DM_{length}"
     result.category = "trend"

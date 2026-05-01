@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def fosc(
@@ -32,18 +32,9 @@ def fosc(
     fosc_ = 100 * (close - forecast) / close
 
     # Offset
-    if offset != 0:
-        fosc_ = fosc_.shift(offset)
+    fosc_ = apply_offset(fosc_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        fosc_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                fosc_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                fosc_.bfill(inplace=True)
+    fosc_ = apply_fill(fosc_, **kwargs)
 
     # Name and Categorize it
     fosc_.name = f"FOSC_{length}"

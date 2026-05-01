@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.momentum.macd import macd
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def macdfix(
@@ -60,8 +60,8 @@ def macdfix(
             new_cols[col] = new_col
         result = result.rename(columns=new_cols)
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
 
     result.name = f"MACDFIX_{signal}"
     result.category = "momentum"

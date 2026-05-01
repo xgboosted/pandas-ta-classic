@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series, get_drift
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def thermo(
@@ -54,55 +60,13 @@ def thermo(
         thermo_short = thermo_short.astype(int)
 
     # Offset
-    if offset != 0:
-        thermo = thermo.shift(offset)
-        thermo_ma = thermo_ma.shift(offset)
-        thermo_long = thermo_long.shift(offset)
-        thermo_short = thermo_short.shift(offset)
+    thermo, thermo_ma, thermo_long, thermo_short = apply_offset(
+        [thermo, thermo_ma, thermo_long, thermo_short], offset
+    )
 
-    # Handle fills
-    if "fillna" in kwargs:
-        thermo.fillna(kwargs["fillna"], inplace=True)
-        thermo_ma.fillna(kwargs["fillna"], inplace=True)
-        thermo_long.fillna(kwargs["fillna"], inplace=True)
-        thermo_short.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo_ma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo_ma.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                thermo_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                thermo_short.bfill(inplace=True)
+    thermo, thermo_ma, thermo_long, thermo_short = apply_fill(
+        [thermo, thermo_ma, thermo_long, thermo_short], **kwargs
+    )
 
     # Name and Categorize it
     _props = f"_{length}_{long}_{short}"

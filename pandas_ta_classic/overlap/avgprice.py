@@ -2,7 +2,7 @@
 # Average Price (AVGPRICE)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_offset, get_offset, verify_series
 
 
 def avgprice(
@@ -29,8 +29,7 @@ def avgprice(
 
     result = 0.25 * (open_ + high + low + close)
 
-    if offset != 0:
-        result = result.shift(offset)
+    result = apply_offset(result, offset)
 
     result.name = "AVGPRICE"
     result.category = "overlap"

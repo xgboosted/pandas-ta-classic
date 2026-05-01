@@ -5,7 +5,7 @@ from numpy import sqrt as npsqrt
 from pandas import Series
 from .variance import variance
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def stdev(
@@ -39,22 +39,9 @@ def stdev(
         stdev = _variance.apply(npsqrt)
 
     # Offset
-    if offset != 0:
-        stdev = stdev.shift(offset)
+    stdev = apply_offset(stdev, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        stdev.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stdev.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stdev.bfill(inplace=True)
+    stdev = apply_fill(stdev, **kwargs)
 
     # Name & Category
     stdev.name = f"STDEV_{length}"

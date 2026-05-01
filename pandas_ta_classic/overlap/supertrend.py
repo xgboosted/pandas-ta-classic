@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -89,24 +89,11 @@ def supertrend(
     df.name = f"SUPERT{_props}"
     df.category = "overlap"
 
-    # Apply offset if needed
-    if offset != 0:
-        df = df.shift(offset)
+    # Offset
+    df = apply_offset(df, offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        df.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                df.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                df.bfill(inplace=True)
+    df = apply_fill(df, **kwargs)
 
     return df
 

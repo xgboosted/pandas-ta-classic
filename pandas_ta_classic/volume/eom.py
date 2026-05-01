@@ -4,7 +4,14 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def eom(
@@ -42,22 +49,9 @@ def eom(
     eom = sma(eom, length=length)
 
     # Offset
-    if offset != 0:
-        eom = eom.shift(offset)
+    eom = apply_offset(eom, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        eom.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                eom.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                eom.bfill(inplace=True)
+    eom = apply_fill(eom, **kwargs)
 
     # Name and Categorize it
     eom.name = f"EOM_{length}_{divisor}"

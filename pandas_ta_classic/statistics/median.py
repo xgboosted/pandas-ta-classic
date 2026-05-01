@@ -6,7 +6,7 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def median(
@@ -42,22 +42,9 @@ def median(
     median = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
-    if offset != 0:
-        median = median.shift(offset)
+    median = apply_offset(median, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        median.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                median.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                median.bfill(inplace=True)
+    median = apply_fill(median, **kwargs)
 
     # Name & Category
     median.name = f"MEDIAN_{length}"

@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def kdj(
@@ -43,44 +49,9 @@ def kdj(
     j = 3 * k - 2 * d
 
     # Offset
-    if offset != 0:
-        k = k.shift(offset)
-        d = d.shift(offset)
-        j = j.shift(offset)
+    k, d, j = apply_offset([k, d, j], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        k.fillna(kwargs["fillna"], inplace=True)
-        d.fillna(kwargs["fillna"], inplace=True)
-        j.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                d.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                j.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                j.bfill(inplace=True)
+    k, d, j = apply_fill([k, d, j], **kwargs)
 
     # Name and Categorize it
     _params = f"_{length}_{signal}"

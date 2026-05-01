@@ -4,7 +4,14 @@ from typing import Any, Optional, Union
 from pandas import DataFrame, Series, concat
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, signals
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    signals,
+    verify_series,
+)
 
 
 def rsi(
@@ -46,22 +53,9 @@ def rsi(
         rsi = scalar * positive_avg / (positive_avg + negative_avg.abs())
 
     # Offset
-    if offset != 0:
-        rsi = rsi.shift(offset)
+    rsi = apply_offset(rsi, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        rsi.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                rsi.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                rsi.bfill(inplace=True)
+    rsi = apply_fill(rsi, **kwargs)
 
     # Name and Categorize it
     rsi.name = f"RSI_{length}"

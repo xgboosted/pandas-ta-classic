@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.momentum import trix
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def trixh(
@@ -44,25 +44,14 @@ def trixh(
     histogram = trix_line - trix_signal
 
     # Offset
-    if offset != 0:
-        trix_line = trix_line.shift(offset)
-        trix_signal = trix_signal.shift(offset)
-        histogram = histogram.shift(offset)
+    trix_line, trix_signal, histogram = apply_offset(
+        [trix_line, trix_signal, histogram], offset
+    )
 
     # Handle fills
-    if "fillna" in kwargs:
-        trix_line.fillna(kwargs["fillna"], inplace=True)
-        trix_signal.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            trix_line.ffill(inplace=True)
-            trix_signal.ffill(inplace=True)
-            histogram.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            trix_line.bfill(inplace=True)
-            trix_signal.bfill(inplace=True)
-            histogram.bfill(inplace=True)
+    trix_line, trix_signal, histogram = apply_fill(
+        [trix_line, trix_signal, histogram], **kwargs
+    )
 
     # Name and Categorize it
     trix_line.name = f"TRIX_{length}_{signal}"

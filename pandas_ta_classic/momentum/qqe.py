@@ -8,7 +8,13 @@ npNaN = np.nan
 
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -131,59 +137,13 @@ def qqe(
     qqe_short = Series(qqe_short_arr, index=idx)
 
     # Offset
-    if offset != 0:
-        rsi_ma = rsi_ma.shift(offset)
-        qqe = qqe.shift(offset)
-        long = long.shift(offset)
-        short = short.shift(offset)
-        trend = trend.shift(offset)
+    rsi_ma, qqe, long, short, trend = apply_offset(
+        [rsi_ma, qqe, long, short, trend], offset
+    )
 
-    # Handle fills
-    if "fillna" in kwargs:
-        rsi_ma.fillna(kwargs["fillna"], inplace=True)
-        qqe.fillna(kwargs["fillna"], inplace=True)
-        qqe_long.fillna(kwargs["fillna"], inplace=True)
-        qqe_short.fillna(kwargs["fillna"], inplace=True)
-        long.fillna(kwargs["fillna"], inplace=True)
-        short.fillna(kwargs["fillna"], inplace=True)
-        trend.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                rsi_ma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                rsi_ma.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qqe.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qqe.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qqe_long.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qqe_long.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                qqe_short.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                qqe_short.bfill(inplace=True)
+    rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_fill(
+        [rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], **kwargs
+    )
 
     # Name and Categorize it
     _props = f"{_mode}_{length}_{smooth}_{factor}"

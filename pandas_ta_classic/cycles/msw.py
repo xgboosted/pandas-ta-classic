@@ -6,7 +6,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def msw(
@@ -48,21 +48,10 @@ def msw(
     lead = Series(lead_arr, index=close.index)
 
     # Offset
-    if offset != 0:
-        sine = sine.shift(offset)
-        lead = lead.shift(offset)
+    sine, lead = apply_offset([sine, lead], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        sine.fillna(kwargs["fillna"], inplace=True)
-        lead.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            sine.ffill(inplace=True)
-            lead.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            sine.bfill(inplace=True)
-            lead.bfill(inplace=True)
+    sine, lead = apply_fill([sine, lead], **kwargs)
 
     # Name and Categorize
     _params = f"_{period}"

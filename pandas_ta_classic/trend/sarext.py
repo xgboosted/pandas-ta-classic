@@ -6,7 +6,13 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series, zero
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    verify_series,
+    zero,
+)
 from pandas_ta_classic.utils._njit import njit
 
 npNaN = np.nan
@@ -203,18 +209,9 @@ def sarext(
         sarext_ = _Series(result, index=high.index)
 
     # Offset
-    if offset != 0:
-        sarext_ = sarext_.shift(offset)
+    sarext_ = apply_offset(sarext_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        sarext_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                sarext_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                sarext_.bfill(inplace=True)
+    sarext_ = apply_fill(sarext_, **kwargs)
 
     # Name and Categorize it
     sarext_.name = "SAREXT"

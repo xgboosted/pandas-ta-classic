@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, signed_series, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    signed_series,
+    verify_series,
+)
 
 
 def obv(
@@ -30,22 +36,9 @@ def obv(
         obv = signed_volume.cumsum()
 
     # Offset
-    if offset != 0:
-        obv = obv.shift(offset)
+    obv = apply_offset(obv, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        obv.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                obv.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                obv.bfill(inplace=True)
+    obv = apply_fill(obv, **kwargs)
 
     # Name and Categorize it
     obv.name = f"OBV"

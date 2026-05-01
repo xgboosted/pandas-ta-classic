@@ -5,7 +5,7 @@ from numpy import nan as npNaN
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def pmax(
@@ -81,17 +81,9 @@ def pmax(
     pmax = Series(pmax_arr, index=close.index)
 
     # Offset
-    if offset != 0:
-        pmax = pmax.shift(offset)
+    pmax = apply_offset(pmax, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        pmax.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            pmax.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            pmax.bfill(inplace=True)
+    pmax = apply_fill(pmax, **kwargs)
 
     # Name and Categorize it
     pmax.name = f"PMAX_{mamode[0].upper()}_{length}_{multiplier}"

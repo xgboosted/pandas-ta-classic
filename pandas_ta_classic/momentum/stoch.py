@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stoch(
@@ -47,33 +53,9 @@ def stoch(
         return None
 
     # Offset
-    if offset != 0:
-        stoch_k = stoch_k.shift(offset)
-        stoch_d = stoch_d.shift(offset)
+    stoch_k, stoch_d = apply_offset([stoch_k, stoch_d], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        stoch_k.fillna(kwargs["fillna"], inplace=True)
-        stoch_d.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stoch_k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stoch_k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stoch_d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stoch_d.bfill(inplace=True)
+    stoch_k, stoch_d = apply_fill([stoch_k, stoch_d], **kwargs)
 
     # Name and Categorize it
     _name = "STOCH"

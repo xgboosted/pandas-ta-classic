@@ -6,7 +6,13 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stochf(
@@ -54,25 +60,9 @@ def stochf(
                 return None
 
     # Offset
-    if offset != 0:
-        fastk_ = fastk_.shift(offset)
-        fastd_ = fastd_.shift(offset)
+    fastk_, fastd_ = apply_offset([fastk_, fastd_], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        fastk_.fillna(kwargs["fillna"], inplace=True)
-        fastd_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                fastk_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                fastk_.bfill(inplace=True)
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                fastd_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                fastd_.bfill(inplace=True)
+    fastk_, fastd_ = apply_fill([fastk_, fastd_], **kwargs)
 
     # Name and Categorize it
     _name = "STOCHF"

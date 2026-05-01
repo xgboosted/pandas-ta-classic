@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def midpoint(
@@ -39,22 +39,9 @@ def midpoint(
         midpoint = 0.5 * (lowest + highest)
 
     # Offset
-    if offset != 0:
-        midpoint = midpoint.shift(offset)
+    midpoint = apply_offset(midpoint, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        midpoint.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                midpoint.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                midpoint.bfill(inplace=True)
+    midpoint = apply_fill(midpoint, **kwargs)
 
     # Name and Categorize it
     midpoint.name = f"MIDPOINT_{length}"

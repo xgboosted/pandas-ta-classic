@@ -3,7 +3,7 @@
 from typing import Any, Callable, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def wma(
@@ -48,22 +48,9 @@ def wma(
         wma = close_.apply(linear(weights), raw=True)
 
     # Offset
-    if offset != 0:
-        wma = wma.shift(offset)
+    wma = apply_offset(wma, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        wma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                wma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                wma.bfill(inplace=True)
+    wma = apply_fill(wma, **kwargs)
 
     # Name & Category
     wma.name = f"WMA_{length}"

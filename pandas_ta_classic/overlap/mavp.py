@@ -7,7 +7,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def mavp(
@@ -79,18 +79,9 @@ def mavp(
         mavp_ = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        mavp_ = mavp_.shift(offset)
+    mavp_ = apply_offset(mavp_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        mavp_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                mavp_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                mavp_.bfill(inplace=True)
+    mavp_ = apply_fill(mavp_, **kwargs)
 
     # Name and Categorize it
     mavp_.name = f"MAVP_{minperiod}_{maxperiod}"

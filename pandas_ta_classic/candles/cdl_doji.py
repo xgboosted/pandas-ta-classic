@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, high_low_range, is_percent
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    high_low_range,
+    is_percent,
+)
 from pandas_ta_classic.utils import real_body, verify_series
 
 
@@ -54,22 +60,9 @@ def cdl_doji(
         doji = scalar * doji.astype(int)
 
     # Offset
-    if offset != 0:
-        doji = doji.shift(offset)
+    doji = apply_offset(doji, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        doji.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                doji.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                doji.bfill(inplace=True)
+    doji = apply_fill(doji, **kwargs)
 
     # Name and Categorize it
     doji.name = f"CDL_DOJI_{length}_{0.01 * factor}"

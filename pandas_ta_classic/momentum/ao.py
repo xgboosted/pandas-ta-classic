@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ao(
@@ -37,22 +37,9 @@ def ao(
     ao = fast_sma - slow_sma
 
     # Offset
-    if offset != 0:
-        ao = ao.shift(offset)
+    ao = apply_offset(ao, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        ao.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ao.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ao.bfill(inplace=True)
+    ao = apply_fill(ao, **kwargs)
 
     # Name and Categorize it
     ao.name = f"AO_{fast}_{slow}"

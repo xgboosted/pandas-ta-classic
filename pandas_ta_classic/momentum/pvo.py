@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def pvo(
@@ -39,44 +39,9 @@ def pvo(
     histogram = pvo - signalma
 
     # Offset
-    if offset != 0:
-        pvo = pvo.shift(offset)
-        histogram = histogram.shift(offset)
-        signalma = signalma.shift(offset)
+    pvo, histogram, signalma = apply_offset([pvo, histogram, signalma], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        pvo.fillna(kwargs["fillna"], inplace=True)
-        histogram.fillna(kwargs["fillna"], inplace=True)
-        signalma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pvo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pvo.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                histogram.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                histogram.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                signalma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                signalma.bfill(inplace=True)
+    pvo, histogram, signalma = apply_fill([pvo, histogram, signalma], **kwargs)
 
     # Name and Categorize it
     _props = f"_{fast}_{slow}_{signal}"

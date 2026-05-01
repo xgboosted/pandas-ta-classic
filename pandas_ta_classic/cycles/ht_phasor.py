@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.cycles._hilbert import hilbert_result
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ht_phasor(
@@ -25,21 +25,10 @@ def ht_phasor(
     quadrature = Series(ht["quadrature"], index=close.index)
 
     # Offset
-    if offset != 0:
-        inphase = inphase.shift(offset)
-        quadrature = quadrature.shift(offset)
+    inphase, quadrature = apply_offset([inphase, quadrature], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        inphase.fillna(kwargs["fillna"], inplace=True)
-        quadrature.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            inphase.ffill(inplace=True)
-            quadrature.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            inphase.bfill(inplace=True)
-            quadrature.bfill(inplace=True)
+    inphase, quadrature = apply_fill([inphase, quadrature], **kwargs)
 
     # Name and Categorize it
     inphase.name = "HT_PHASOR_INPHASE"
