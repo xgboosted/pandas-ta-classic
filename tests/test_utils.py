@@ -392,6 +392,164 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result, str)
 
 
+class TestApplyOffset(TestCase):
+    """Unit tests for apply_offset (utils/_core.py)."""
+
+    def setUp(self):
+        self.s = Series([1.0, 2.0, 3.0, 4.0, 5.0], name="test")
+        self.df = DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+
+    # -- no-op cases --
+
+    def test_offset_zero_returns_same_object(self):
+        result = pandas_ta.utils.apply_offset(self.s, 0)
+        self.assertIs(result, self.s)
+
+    def test_offset_default_zero(self):
+        result = pandas_ta.utils.apply_offset(self.s)
+        self.assertIs(result, self.s)
+
+    # -- single Series --
+
+    def test_positive_offset(self):
+        result = pandas_ta.utils.apply_offset(self.s, 2)
+        self.assertTrue(np.isnan(result.iloc[0]))
+        self.assertTrue(np.isnan(result.iloc[1]))
+        self.assertEqual(result.iloc[2], 1.0)
+        self.assertEqual(result.iloc[4], 3.0)
+
+    def test_negative_offset(self):
+        result = pandas_ta.utils.apply_offset(self.s, -1)
+        self.assertEqual(result.iloc[0], 2.0)
+        self.assertTrue(np.isnan(result.iloc[-1]))
+
+    # -- DataFrame --
+
+    def test_dataframe_offset(self):
+        result = pandas_ta.utils.apply_offset(self.df, 1)
+        self.assertIsInstance(result, DataFrame)
+        self.assertTrue(np.isnan(result["a"].iloc[0]))
+        self.assertEqual(result["a"].iloc[1], 1.0)
+
+    # -- list of Series --
+
+    def test_list_offset(self):
+        s2 = Series([10.0, 20.0, 30.0, 40.0, 50.0])
+        result = pandas_ta.utils.apply_offset([self.s, s2], 1)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 2)
+        self.assertTrue(np.isnan(result[0].iloc[0]))
+        self.assertTrue(np.isnan(result[1].iloc[0]))
+        self.assertEqual(result[0].iloc[1], 1.0)
+        self.assertEqual(result[1].iloc[1], 10.0)
+
+    def test_list_unpack(self):
+        s2 = Series([10.0, 20.0, 30.0])
+        a, b = pandas_ta.utils.apply_offset([self.s, s2], 0)
+        self.assertIs(a, self.s)
+        self.assertIs(b, s2)
+
+
+class TestApplyFill(TestCase):
+    """Unit tests for apply_fill (utils/_core.py)."""
+
+    def setUp(self):
+        self.s = Series([np.nan, 2.0, np.nan, 4.0, np.nan], name="test")
+        self.df = DataFrame({
+            "a": [np.nan, 2.0, np.nan],
+            "b": [1.0, np.nan, 3.0],
+        })
+
+    # -- no-op case --
+
+    def test_no_kwargs_is_noop(self):
+        original_nans = self.s.isna().sum()
+        result = pandas_ta.utils.apply_fill(self.s)
+        self.assertEqual(result.isna().sum(), original_nans)
+
+    # -- fillna --
+
+    def test_fillna_value(self):
+        result = pandas_ta.utils.apply_fill(self.s, fillna=0)
+        self.assertEqual(result.isna().sum(), 0)
+        self.assertEqual(result.iloc[0], 0)
+        self.assertEqual(result.iloc[2], 0)
+
+    def test_fillna_preserves_existing(self):
+        result = pandas_ta.utils.apply_fill(self.s, fillna=-1)
+        self.assertEqual(result.iloc[1], 2.0)
+        self.assertEqual(result.iloc[3], 4.0)
+
+    # -- fill_method ffill --
+
+    def test_ffill(self):
+        s = Series([1.0, np.nan, np.nan, 4.0, np.nan])
+        result = pandas_ta.utils.apply_fill(s, fill_method="ffill")
+        self.assertEqual(result.iloc[1], 1.0)
+        self.assertEqual(result.iloc[2], 1.0)
+        # Leading NaN stays NaN (nothing to forward-fill from)
+        self.assertTrue(np.isnan(pandas_ta.utils.apply_fill(
+            Series([np.nan, 2.0]), fill_method="ffill"
+        ).iloc[0]))
+
+    # -- fill_method bfill --
+
+    def test_bfill(self):
+        s = Series([np.nan, np.nan, 3.0, np.nan, 5.0])
+        result = pandas_ta.utils.apply_fill(s, fill_method="bfill")
+        self.assertEqual(result.iloc[0], 3.0)
+        self.assertEqual(result.iloc[1], 3.0)
+        # Trailing NaN stays NaN (nothing to back-fill from)
+        self.assertTrue(np.isnan(pandas_ta.utils.apply_fill(
+            Series([1.0, np.nan]), fill_method="bfill"
+        ).iloc[-1]))
+
+    # -- unknown fill_method is ignored --
+
+    def test_unknown_fill_method_ignored(self):
+        original_nans = self.s.isna().sum()
+        result = pandas_ta.utils.apply_fill(self.s, fill_method="bogus")
+        self.assertEqual(result.isna().sum(), original_nans)
+
+    # -- fillna + fill_method combined --
+
+    def test_fillna_then_fill_method(self):
+        # fillna runs first, fill_method second — both should work
+        s = Series([np.nan, 2.0, np.nan])
+        result = pandas_ta.utils.apply_fill(s, fillna=0, fill_method="ffill")
+        self.assertEqual(result.isna().sum(), 0)
+        self.assertEqual(result.iloc[0], 0)
+
+    # -- DataFrame --
+
+    def test_dataframe_fillna(self):
+        result = pandas_ta.utils.apply_fill(self.df, fillna=0)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.isna().sum().sum(), 0)
+
+    def test_dataframe_ffill(self):
+        df = DataFrame({"x": [1.0, np.nan, 3.0]})
+        result = pandas_ta.utils.apply_fill(df, fill_method="ffill")
+        self.assertEqual(result["x"].iloc[1], 1.0)
+
+    # -- list of Series --
+
+    def test_list_fillna(self):
+        s2 = Series([np.nan, 10.0])
+        result = pandas_ta.utils.apply_fill([self.s, s2], fillna=0)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].isna().sum(), 0)
+        self.assertEqual(result[1].isna().sum(), 0)
+
+    def test_list_ffill(self):
+        s1 = Series([1.0, np.nan])
+        s2 = Series([np.nan, 2.0])
+        a, b = pandas_ta.utils.apply_fill([s1, s2], fill_method="ffill")
+        self.assertEqual(a.iloc[1], 1.0)
+        self.assertTrue(np.isnan(b.iloc[0]))  # nothing to ffill from
+
+
 class TestNoneGuards(TestCase):
     """Regression tests for PR #95 – None-guard coverage.
 

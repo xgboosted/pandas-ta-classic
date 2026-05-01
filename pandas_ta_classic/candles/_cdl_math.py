@@ -205,10 +205,10 @@ def run_pattern(
         **kwargs: Forwarded for fillna / fill_method handling.
 
     Kwargs:
-    fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
+        fillna (value, optional): pd.DataFrame.fillna(value)
+        fill_method (value, optional): Type of fill method
 
-Returns:
+    Returns:
         A pandas Series with the pattern result, or None if validation fails.
     """
     open_ = verify_series(open_)
