@@ -332,3 +332,49 @@ class TestMomentumExtension(TestCase):
             list(self.data.columns[-3:]),
             ["VWMACD_12_26_9", "VWMACDh_12_26_9", "VWMACDs_12_26_9"],
         )
+
+    def test_dm_ext(self):
+        self.data.ta.dm(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["DMP_14", "DMN_14"])
+
+    def test_fosc_ext(self):
+        self.data.ta.fosc(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "FOSC_14")
+
+    def test_macdext_ext(self):
+        self.data.ta.macdext(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(
+            list(self.data.columns[-3:]),
+            ["MACDEXT_12_26_9", "MACDEXTs_12_26_9", "MACDEXTh_12_26_9"],
+        )
+
+    def test_macdfix_ext(self):
+        self.data.ta.macdfix(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(
+            list(self.data.columns[-3:]),
+            ["MACDFIX_9_9", "MACDFIXh_9_9", "MACDFIXs_9_9"],
+        )
+
+    def test_rocp_ext(self):
+        self.data.ta.rocp(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "ROCP_10")
+
+    def test_rocr_ext(self):
+        self.data.ta.rocr(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "ROCR_10")
+
+    def test_rocr100_ext(self):
+        self.data.ta.rocr100(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "ROCR100_10")
+
+    def test_stochf_ext(self):
+        self.data.ta.stochf(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-2:]), ["STOCHFk_5_3", "STOCHFd_5_3"])

@@ -224,3 +224,55 @@ class TestOverlapExtension(TestCase):
         # RAINBOW returns multiple columns, check if any RAINBOW columns were added
         rainbow_cols = [col for col in self.data.columns if col.startswith("RAINBOW_")]
         self.assertTrue(len(rainbow_cols) > 0)
+
+    def test_avgprice_ext(self):
+        self.data.ta.avgprice(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "AVGPRICE")
+
+    def test_linregangle_ext(self):
+        self.data.ta.linregangle(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "LRa_14")
+
+    def test_linregintercept_ext(self):
+        self.data.ta.linregintercept(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "LRb_14")
+
+    def test_linregslope_ext(self):
+        self.data.ta.linregslope(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "LRm_14")
+
+    def test_mama_ext(self):
+        self.data.ta.mama(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(
+            list(self.data.columns[-2:]), ["MAMA_0.5_0.05", "FAMA_0.5_0.05"]
+        )
+
+    def test_mavp_ext(self):
+        self.data.ta.mavp(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "MAVP_2_30")
+
+    def test_medprice_ext(self):
+        self.data.ta.medprice(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "MEDPRICE")
+
+    def test_tsf_ext(self):
+        self.data.ta.tsf(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "TSF_14")
+
+    def test_typprice_ext(self):
+        self.data.ta.typprice(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "TYPPRICE")
+
+    def test_ht_trendline_ext(self):
+        self.data.ta.ht_trendline(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "HT_TRENDLINE")

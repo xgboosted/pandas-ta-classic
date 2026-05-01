@@ -121,3 +121,23 @@ class TestVolumeExtension(TestCase):
         self.data.ta.vfi(append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "VFI_130")
+
+    def test_emv_ext(self):
+        self.data.ta.emv(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "EMV")
+
+    def test_marketfi_ext(self):
+        self.data.ta.marketfi(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "MARKETFI")
+
+    def test_vosc_ext(self):
+        self.data.ta.vosc(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "VOSC_14_28")
+
+    def test_wad_ext(self):
+        self.data.ta.wad(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "WAD")
