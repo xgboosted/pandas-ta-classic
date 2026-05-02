@@ -24,8 +24,6 @@ def rvgi(
 ) -> Optional[DataFrame]:
     """Indicator: Relative Vigor Index (RVGI)"""
     # Validate Arguments
-    high_low_range = non_zero_range(high, low)
-    close_open_range = non_zero_range(close, open_)
     length = int(length) if length and length > 0 else 14
     swma_length = int(swma_length) if swma_length and swma_length > 0 else 4
     _length = max(length, swma_length)
@@ -37,6 +35,9 @@ def rvgi(
 
     if open_ is None or high is None or low is None or close is None:
         return None
+
+    high_low_range = non_zero_range(high, low)
+    close_open_range = non_zero_range(close, open_)
 
     # Calculate Result
     numerator = swma(close_open_range, length=swma_length).rolling(length).sum()

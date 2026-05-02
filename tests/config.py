@@ -33,3 +33,22 @@ def error_analysis(df, kind, msg, icon=INFO, newline=True):
         if newline:
             s = f"\n{s}"
         print(s)
+
+
+def assert_offset(test_case, func, args, **kwargs):
+    """Verify offset=1 branch executes and returns a result."""
+    test_case.assertIsNotNone(func(*args, offset=1, **kwargs))
+
+
+def assert_fill(test_case, func, args, **kwargs):
+    """Verify fillna and fill_method branches execute and return results."""
+    test_case.assertIsNotNone(func(*args, fillna=0, **kwargs))
+    test_case.assertIsNotNone(func(*args, fill_method="ffill", **kwargs))
+    test_case.assertIsNotNone(func(*args, fill_method="bfill", **kwargs))
+
+
+def assert_none_guard(test_case, func, args, none_arg_idx=0):
+    """Verify function returns None when required arg is None."""
+    none_args = list(args)
+    none_args[none_arg_idx] = None
+    test_case.assertIsNone(func(*none_args))

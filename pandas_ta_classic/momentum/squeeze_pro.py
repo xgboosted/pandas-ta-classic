@@ -115,6 +115,14 @@ def squeeze_pro(
     squeeze_off_wide = (bbd.l < kch_wide.l) & (bbd.u > kch_wide.u)
     no_squeeze = ~squeeze_on_wide & ~squeeze_off_wide
 
+    # Convert bool to int before offset to avoid NaN-to-int errors
+    if asint:
+        squeeze_on_wide = squeeze_on_wide.astype(int)
+        squeeze_on_normal = squeeze_on_normal.astype(int)
+        squeeze_on_narrow = squeeze_on_narrow.astype(int)
+        squeeze_off_wide = squeeze_off_wide.astype(int)
+        no_squeeze = no_squeeze.astype(int)
+
     # Offset
     (
         squeeze,
@@ -161,15 +169,11 @@ def squeeze_pro(
 
     data = {
         squeeze.name: squeeze,
-        f"SQZPRO_ON_WIDE": squeeze_on_wide.astype(int) if asint else squeeze_on_wide,
-        f"SQZPRO_ON_NORMAL": (
-            squeeze_on_normal.astype(int) if asint else squeeze_on_normal
-        ),
-        f"SQZPRO_ON_NARROW": (
-            squeeze_on_narrow.astype(int) if asint else squeeze_on_narrow
-        ),
-        f"SQZPRO_OFF": squeeze_off_wide.astype(int) if asint else squeeze_off_wide,
-        f"SQZPRO_NO": no_squeeze.astype(int) if asint else no_squeeze,
+        f"SQZPRO_ON_WIDE": squeeze_on_wide,
+        f"SQZPRO_ON_NORMAL": squeeze_on_normal,
+        f"SQZPRO_ON_NARROW": squeeze_on_narrow,
+        f"SQZPRO_OFF": squeeze_off_wide,
+        f"SQZPRO_NO": no_squeeze,
     }
     df = DataFrame(data)
     df.name = squeeze.name

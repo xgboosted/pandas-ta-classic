@@ -1,4 +1,7 @@
 from tests.config import (
+    assert_fill,
+    assert_none_guard,
+    assert_offset,
     CORRELATION,
     CORRELATION_THRESHOLD,
     error_analysis,
@@ -54,6 +57,9 @@ class TestOverlap(TestCase):
         )  # , length=None, sigma=None, distribution_offset=)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ALMA_10_6.0_0.85")
+        assert_offset(self, pandas_ta.alma, [self.close])
+        assert_fill(self, pandas_ta.alma, [self.close])
+        assert_none_guard(self, pandas_ta.alma, [self.close])
 
     def test_dema(self):
         result = pandas_ta.dema(self.close, talib=False)
@@ -75,6 +81,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.dema(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DEMA_10")
+        assert_offset(self, pandas_ta.dema, [self.close])
+        assert_fill(self, pandas_ta.dema, [self.close])
+        assert_none_guard(self, pandas_ta.dema, [self.close])
 
     def test_ema(self):
         result = pandas_ta.ema(self.close, presma=False)
@@ -111,21 +120,32 @@ class TestOverlap(TestCase):
         result = pandas_ta.ema(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EMA_10")
+        assert_offset(self, pandas_ta.ema, [self.close])
+        assert_fill(self, pandas_ta.ema, [self.close])
+        assert_none_guard(self, pandas_ta.ema, [self.close])
 
     def test_fwma(self):
         result = pandas_ta.fwma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "FWMA_10")
+        assert_offset(self, pandas_ta.fwma, [self.close])
+        assert_fill(self, pandas_ta.fwma, [self.close])
+        assert_none_guard(self, pandas_ta.fwma, [self.close])
 
     def test_hilo(self):
         result = pandas_ta.hilo(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "HILO_13_21")
+        assert_offset(self, pandas_ta.hilo, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.hilo, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.hilo, [self.high, self.low, self.close])
 
     def test_hl2(self):
         result = pandas_ta.hl2(self.high, self.low)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HL2")
+        assert_offset(self, pandas_ta.hl2, [self.high, self.low])
+        assert_fill(self, pandas_ta.hl2, [self.high, self.low])
 
     def test_hlc3(self):
         result = pandas_ta.hlc3(self.high, self.low, self.close, talib=False)
@@ -147,11 +167,16 @@ class TestOverlap(TestCase):
         result = pandas_ta.hlc3(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HLC3")
+        assert_offset(self, pandas_ta.hlc3, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.hlc3, [self.high, self.low, self.close])
 
     def test_hma(self):
         result = pandas_ta.hma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HMA_10")
+        assert_offset(self, pandas_ta.hma, [self.close])
+        assert_fill(self, pandas_ta.hma, [self.close])
+        assert_none_guard(self, pandas_ta.hma, [self.close])
 
     def test_ht_trendline(self):
         result = pandas_ta.ht_trendline(self.close)
@@ -161,21 +186,31 @@ class TestOverlap(TestCase):
         pandas_ta.ht_trendline(self.close, fill_method="ffill")
         pandas_ta.ht_trendline(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.ht_trendline(None))
+        assert_offset(self, pandas_ta.ht_trendline, [self.close])
+        assert_fill(self, pandas_ta.ht_trendline, [self.close])
 
     def test_hwma(self):
         result = pandas_ta.hwma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "HWMA_0.2_0.1_0.1")
+        assert_offset(self, pandas_ta.hwma, [self.close])
+        assert_fill(self, pandas_ta.hwma, [self.close])
 
     def test_kama(self):
         result = pandas_ta.kama(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "KAMA_10_2_30")
+        assert_offset(self, pandas_ta.kama, [self.close])
+        assert_fill(self, pandas_ta.kama, [self.close])
+        assert_none_guard(self, pandas_ta.kama, [self.close])
 
     def test_jma(self):
         result = pandas_ta.jma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "JMA_7_0")
+        assert_offset(self, pandas_ta.jma, [self.close])
+        assert_fill(self, pandas_ta.jma, [self.close])
+        assert_none_guard(self, pandas_ta.jma, [self.close])
 
     def test_ichimoku(self):
         ichimoku, span = pandas_ta.ichimoku(self.high, self.low, self.close)
@@ -204,6 +239,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.linreg(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LR_14")
+        assert_offset(self, pandas_ta.linreg, [self.close])
+        assert_fill(self, pandas_ta.linreg, [self.close])
+        assert_none_guard(self, pandas_ta.linreg, [self.close])
 
     def test_linreg_angle(self):
         result = pandas_ta.linreg(self.close, angle=True, talib=False)
@@ -225,6 +263,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.linreg(self.close, angle=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRa_14")
+        assert_offset(self, pandas_ta.linreg, [self.close], angle=True)
+        assert_fill(self, pandas_ta.linreg, [self.close], angle=True)
 
     def test_linreg_intercept(self):
         result = pandas_ta.linreg(self.close, intercept=True, talib=False)
@@ -246,11 +286,15 @@ class TestOverlap(TestCase):
         result = pandas_ta.linreg(self.close, intercept=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRb_14")
+        assert_offset(self, pandas_ta.linreg, [self.close], intercept=True)
+        assert_fill(self, pandas_ta.linreg, [self.close], intercept=True)
 
     def test_linreg_r(self):
         result = pandas_ta.linreg(self.close, r=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRr_14")
+        assert_offset(self, pandas_ta.linreg, [self.close], r=True)
+        assert_fill(self, pandas_ta.linreg, [self.close], r=True)
 
     def test_linreg_slope(self):
         result = pandas_ta.linreg(self.close, slope=True, talib=False)
@@ -272,6 +316,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.linreg(self.close, slope=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRm_14")
+        assert_offset(self, pandas_ta.linreg, [self.close], slope=True)
+        assert_fill(self, pandas_ta.linreg, [self.close], slope=True)
 
     def test_ma(self):
         result = pandas_ta.ma()
@@ -295,17 +341,24 @@ class TestOverlap(TestCase):
         pandas_ta.mama(self.close, fill_method="ffill")
         pandas_ta.mama(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.mama(None))
+        assert_offset(self, pandas_ta.mama, [self.close])
+        assert_fill(self, pandas_ta.mama, [self.close])
 
     def test_mavp(self):
         result = pandas_ta.mavp(self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MAVP_2_30")
         self.assertIsNone(pandas_ta.mavp(None))
+        assert_offset(self, pandas_ta.mavp, [self.close])
+        assert_fill(self, pandas_ta.mavp, [self.close])
 
     def test_mcgd(self):
         result = pandas_ta.mcgd(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MCGD_10")
+        assert_offset(self, pandas_ta.mcgd, [self.close])
+        assert_fill(self, pandas_ta.mcgd, [self.close])
+        assert_none_guard(self, pandas_ta.mcgd, [self.close])
 
     def test_midpoint(self):
         result = pandas_ta.midpoint(self.close, talib=False)
@@ -327,6 +380,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.midpoint(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MIDPOINT_2")
+        assert_offset(self, pandas_ta.midpoint, [self.close])
+        assert_fill(self, pandas_ta.midpoint, [self.close])
+        assert_none_guard(self, pandas_ta.midpoint, [self.close])
 
     def test_midprice(self):
         result = pandas_ta.midprice(self.high, self.low, talib=False)
@@ -348,26 +404,40 @@ class TestOverlap(TestCase):
         result = pandas_ta.midprice(self.high, self.low)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MIDPRICE_2")
+        assert_offset(self, pandas_ta.midprice, [self.high, self.low])
+        assert_fill(self, pandas_ta.midprice, [self.high, self.low])
+        assert_none_guard(self, pandas_ta.midprice, [self.high, self.low])
 
     def test_ohlc4(self):
         result = pandas_ta.ohlc4(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "OHLC4")
+        assert_offset(self, pandas_ta.ohlc4, [self.open, self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.ohlc4, [self.open, self.high, self.low, self.close])
 
     def test_pwma(self):
         result = pandas_ta.pwma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PWMA_10")
+        assert_offset(self, pandas_ta.pwma, [self.close])
+        assert_fill(self, pandas_ta.pwma, [self.close])
+        assert_none_guard(self, pandas_ta.pwma, [self.close])
 
     def test_rma(self):
         result = pandas_ta.rma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "RMA_10")
+        assert_offset(self, pandas_ta.rma, [self.close])
+        assert_fill(self, pandas_ta.rma, [self.close])
+        assert_none_guard(self, pandas_ta.rma, [self.close])
 
     def test_sinwma(self):
         result = pandas_ta.sinwma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SINWMA_14")
+        assert_offset(self, pandas_ta.sinwma, [self.close])
+        assert_fill(self, pandas_ta.sinwma, [self.close])
+        assert_none_guard(self, pandas_ta.sinwma, [self.close])
 
     def test_sma(self):
         result = pandas_ta.sma(self.close, talib=False)
@@ -389,6 +459,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.sma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SMA_10")
+        assert_offset(self, pandas_ta.sma, [self.close])
+        assert_fill(self, pandas_ta.sma, [self.close])
+        assert_none_guard(self, pandas_ta.sma, [self.close])
 
     def test_ssf(self):
         result = pandas_ta.ssf(self.close, poles=2)
@@ -398,11 +471,17 @@ class TestOverlap(TestCase):
         result = pandas_ta.ssf(self.close, poles=3)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SSF_10_3")
+        assert_offset(self, pandas_ta.ssf, [self.close])
+        assert_fill(self, pandas_ta.ssf, [self.close])
+        assert_none_guard(self, pandas_ta.ssf, [self.close])
 
     def test_swma(self):
         result = pandas_ta.swma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SWMA_10")
+        assert_offset(self, pandas_ta.swma, [self.close])
+        assert_fill(self, pandas_ta.swma, [self.close])
+        assert_none_guard(self, pandas_ta.swma, [self.close])
 
     def test_supertrend(self):
         result = pandas_ta.supertrend(self.high, self.low, self.close)
@@ -419,6 +498,8 @@ class TestOverlap(TestCase):
 
         result = pandas_ta.supertrend(self.high, self.low, self.close, fill_method="bfill")
         self.assertIsInstance(result, DataFrame)
+        assert_offset(self, pandas_ta.supertrend, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.supertrend, [self.high, self.low, self.close])
 
     def test_t3(self):
         result = pandas_ta.t3(self.close, talib=False)
@@ -440,6 +521,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.t3(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "T3_10_0.7")
+        assert_offset(self, pandas_ta.t3, [self.close])
+        assert_fill(self, pandas_ta.t3, [self.close])
+        assert_none_guard(self, pandas_ta.t3, [self.close])
 
     def test_tema(self):
         result = pandas_ta.tema(self.close, talib=False)
@@ -461,6 +545,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.tema(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TEMA_10")
+        assert_offset(self, pandas_ta.tema, [self.close])
+        assert_fill(self, pandas_ta.tema, [self.close])
+        assert_none_guard(self, pandas_ta.tema, [self.close])
 
     def test_trima(self):
         result = pandas_ta.trima(self.close, talib=False)
@@ -482,6 +569,9 @@ class TestOverlap(TestCase):
         result = pandas_ta.trima(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "TRIMA_10")
+        assert_offset(self, pandas_ta.trima, [self.close])
+        assert_fill(self, pandas_ta.trima, [self.close])
+        assert_none_guard(self, pandas_ta.trima, [self.close])
 
     def test_tsf(self):
         result = pandas_ta.tsf(self.close)
@@ -491,21 +581,31 @@ class TestOverlap(TestCase):
         pandas_ta.tsf(self.close, fill_method="ffill")
         pandas_ta.tsf(self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.tsf(None))
+        assert_offset(self, pandas_ta.tsf, [self.close])
+        assert_fill(self, pandas_ta.tsf, [self.close])
 
     def test_vidya(self):
         result = pandas_ta.vidya(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VIDYA_14")
+        assert_offset(self, pandas_ta.vidya, [self.close])
+        assert_fill(self, pandas_ta.vidya, [self.close])
+        assert_none_guard(self, pandas_ta.vidya, [self.close])
 
     def test_vwap(self):
         result = pandas_ta.vwap(self.high, self.low, self.close, self.volume)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VWAP_D")
+        assert_offset(self, pandas_ta.vwap, [self.high, self.low, self.close, self.volume])
+        assert_fill(self, pandas_ta.vwap, [self.high, self.low, self.close, self.volume])
 
     def test_vwma(self):
         result = pandas_ta.vwma(self.close, self.volume)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VWMA_10")
+        assert_offset(self, pandas_ta.vwma, [self.close, self.volume])
+        assert_fill(self, pandas_ta.vwma, [self.close, self.volume])
+        assert_none_guard(self, pandas_ta.vwma, [self.close, self.volume])
 
     def test_wcp(self):
         result = pandas_ta.wcp(self.high, self.low, self.close, talib=False)
@@ -527,6 +627,8 @@ class TestOverlap(TestCase):
         result = pandas_ta.wcp(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WCP")
+        assert_offset(self, pandas_ta.wcp, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.wcp, [self.high, self.low, self.close])
 
     def test_wma(self):
         result = pandas_ta.wma(self.close, talib=False)
@@ -548,18 +650,28 @@ class TestOverlap(TestCase):
         result = pandas_ta.wma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WMA_10")
+        assert_offset(self, pandas_ta.wma, [self.close])
+        assert_fill(self, pandas_ta.wma, [self.close])
+        assert_none_guard(self, pandas_ta.wma, [self.close])
 
     def test_zlma(self):
         result = pandas_ta.zlma(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ZL_EMA_10")
+        assert_offset(self, pandas_ta.zlma, [self.close])
+        assert_fill(self, pandas_ta.zlma, [self.close])
+        assert_none_guard(self, pandas_ta.zlma, [self.close])
 
     def test_mmar(self):
         result = pandas_ta.mmar(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "MMAR_10_5_6")
+        assert_offset(self, pandas_ta.mmar, [self.close])
+        assert_fill(self, pandas_ta.mmar, [self.close])
 
     def test_rainbow(self):
         result = pandas_ta.rainbow(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "RAINBOW_2_10")
+        assert_offset(self, pandas_ta.rainbow, [self.close])
+        assert_fill(self, pandas_ta.rainbow, [self.close])

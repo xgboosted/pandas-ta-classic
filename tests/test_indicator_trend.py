@@ -1,4 +1,7 @@
 from tests.config import (
+    assert_fill,
+    assert_none_guard,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -68,6 +71,9 @@ class TestTrend(TestCase):
         result = pandas_ta.adx(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ADX_14")
+        assert_offset(self, pandas_ta.adx, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.adx, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.adx, [self.high, self.low, self.close])
 
     def test_adxr(self):
         result = pandas_ta.adxr(self.high, self.low, self.close)
@@ -78,11 +84,16 @@ class TestTrend(TestCase):
         pandas_ta.adxr(self.high, self.low, self.close, fill_method="ffill")
         pandas_ta.adxr(self.high, self.low, self.close, fill_method="bfill")
         self.assertIsNone(pandas_ta.adxr(None, self.low, self.close))
+        assert_offset(self, pandas_ta.adxr, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.adxr, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.adxr, [self.high, self.low, self.close])
 
     def test_amat(self):
         result = pandas_ta.amat(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AMATe_8_21_2")
+        assert_offset(self, pandas_ta.amat, [self.close])
+        assert_fill(self, pandas_ta.amat, [self.close])
 
     def test_aroon(self):
         result = pandas_ta.aroon(self.high, self.low, talib=False)
@@ -113,6 +124,9 @@ class TestTrend(TestCase):
         result = pandas_ta.aroon(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "AROON_14")
+        assert_offset(self, pandas_ta.aroon, [self.high, self.low])
+        assert_fill(self, pandas_ta.aroon, [self.high, self.low])
+        assert_none_guard(self, pandas_ta.aroon, [self.high, self.low])
 
     def test_aroon_osc(self):
         result = pandas_ta.aroon(self.high, self.low)
@@ -139,16 +153,25 @@ class TestTrend(TestCase):
         result = pandas_ta.chop(self.high, self.low, self.close, ln=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CHOPln_14_1_100")
+        assert_offset(self, pandas_ta.chop, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.chop, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.chop, [self.high, self.low, self.close])
 
     def test_cksp(self):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=False)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_3_20")
+        assert_offset(self, pandas_ta.cksp, [self.high, self.low, self.close], tvmode=False)
+        assert_fill(self, pandas_ta.cksp, [self.high, self.low, self.close], tvmode=False)
+        assert_none_guard(self, pandas_ta.cksp, [self.high, self.low, self.close])
 
     def test_cksp_tv(self):
         result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "CKSP_10_1_9")
+        assert_offset(self, pandas_ta.cksp, [self.high, self.low, self.close], tvmode=True)
+        assert_fill(self, pandas_ta.cksp, [self.high, self.low, self.close], tvmode=True)
+        assert_none_guard(self, pandas_ta.cksp, [self.high, self.low, self.close])
 
     def test_cpr_basic(self):
         result = pandas_ta.cpr(
@@ -322,6 +345,9 @@ class TestTrend(TestCase):
         result = pandas_ta.decay(self.close, mode="exp")
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EXPDECAY_5")
+        assert_offset(self, pandas_ta.decay, [self.close])
+        assert_fill(self, pandas_ta.decay, [self.close])
+        assert_none_guard(self, pandas_ta.decay, [self.close])
 
     def test_edecay(self):
         result = pandas_ta.edecay(self.close)
@@ -333,6 +359,8 @@ class TestTrend(TestCase):
         self.assertEqual(result.name, "EDECAY_10")
 
         self.assertIsNone(pandas_ta.edecay(None))
+        assert_offset(self, pandas_ta.edecay, [self.close])
+        assert_fill(self, pandas_ta.edecay, [self.close])
 
     def test_decreasing(self):
         result = pandas_ta.decreasing(self.close)
@@ -342,11 +370,16 @@ class TestTrend(TestCase):
         result = pandas_ta.decreasing(self.close, length=3, strict=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SDEC_3")
+        assert_offset(self, pandas_ta.decreasing, [self.close])
+        assert_fill(self, pandas_ta.decreasing, [self.close])
+        assert_none_guard(self, pandas_ta.decreasing, [self.close])
 
     def test_dpo(self):
         result = pandas_ta.dpo(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DPO_20")
+        assert_offset(self, pandas_ta.dpo, [self.close])
+        assert_fill(self, pandas_ta.dpo, [self.close])
 
     def test_increasing(self):
         result = pandas_ta.increasing(self.close)
@@ -356,11 +389,17 @@ class TestTrend(TestCase):
         result = pandas_ta.increasing(self.close, length=3, strict=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SINC_3")
+        assert_offset(self, pandas_ta.increasing, [self.close])
+        assert_fill(self, pandas_ta.increasing, [self.close])
+        assert_none_guard(self, pandas_ta.increasing, [self.close])
 
     def test_long_run(self):
         result = pandas_ta.long_run(self.close, self.open)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LR_2")
+        assert_offset(self, pandas_ta.long_run, [self.close, self.open])
+        assert_fill(self, pandas_ta.long_run, [self.close, self.open])
+        assert_none_guard(self, pandas_ta.long_run, [self.close, self.open])
 
     def test_dx(self):
         result = pandas_ta.dx(self.high, self.low, self.close, talib=False)
@@ -382,18 +421,25 @@ class TestTrend(TestCase):
         result = pandas_ta.dx(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "DX_14")
+        assert_offset(self, pandas_ta.dx, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.dx, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.dx, [self.high, self.low, self.close])
 
     def test_minus_dm(self):
         result = pandas_ta.minus_dm(self.high, self.low, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MINUS_DM_14")
         self.assertIsNone(pandas_ta.minus_dm(None, self.low))
+        assert_offset(self, pandas_ta.minus_dm, [self.high, self.low])
+        assert_fill(self, pandas_ta.minus_dm, [self.high, self.low])
 
     def test_plus_dm(self):
         result = pandas_ta.plus_dm(self.high, self.low, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PLUS_DM_14")
         self.assertIsNone(pandas_ta.plus_dm(None, self.low))
+        assert_offset(self, pandas_ta.plus_dm, [self.high, self.low])
+        assert_fill(self, pandas_ta.plus_dm, [self.high, self.low])
 
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
@@ -425,11 +471,16 @@ class TestTrend(TestCase):
 
         result = pandas_ta.psar(self.high, self.low, fill_method="bfill")
         self.assertIsInstance(result, DataFrame)
+        assert_offset(self, pandas_ta.psar, [self.high, self.low])
+        assert_fill(self, pandas_ta.psar, [self.high, self.low])
 
     def test_qstick(self):
         result = pandas_ta.qstick(self.open, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "QS_10")
+        assert_offset(self, pandas_ta.qstick, [self.open, self.close])
+        assert_fill(self, pandas_ta.qstick, [self.open, self.close])
+        assert_none_guard(self, pandas_ta.qstick, [self.open, self.close])
 
     def test_sarext(self):
         result = pandas_ta.sarext(self.high, self.low, talib=False)
@@ -440,31 +491,49 @@ class TestTrend(TestCase):
         result = pandas_ta.sarext(self.high, self.low)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SAREXT")
+        assert_offset(self, pandas_ta.sarext, [self.high, self.low])
+        assert_fill(self, pandas_ta.sarext, [self.high, self.low])
+        assert_none_guard(self, pandas_ta.sarext, [self.high, self.low])
 
     def test_short_run(self):
         result = pandas_ta.short_run(self.close, self.open)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SR_2")
+        assert_offset(self, pandas_ta.short_run, [self.close, self.open])
+        assert_fill(self, pandas_ta.short_run, [self.close, self.open])
+        assert_none_guard(self, pandas_ta.short_run, [self.close, self.open])
 
     def test_ttm_trend(self):
         result = pandas_ta.ttm_trend(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TTMTREND_6")
+        assert_offset(self, pandas_ta.ttm_trend, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.ttm_trend, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.ttm_trend, [self.high, self.low, self.close])
 
     def test_vhf(self):
         result = pandas_ta.vhf(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VHF_28")
+        assert_offset(self, pandas_ta.vhf, [self.close])
+        assert_fill(self, pandas_ta.vhf, [self.close])
+        assert_none_guard(self, pandas_ta.vhf, [self.close])
 
     def test_vortex(self):
         result = pandas_ta.vortex(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "VTX_14")
+        assert_offset(self, pandas_ta.vortex, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.vortex, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.vortex, [self.high, self.low, self.close])
 
     def test_pmax(self):
         result = pandas_ta.pmax(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PMAX_E_10_3.0")
+        assert_offset(self, pandas_ta.pmax, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.pmax, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.pmax, [self.high, self.low, self.close])
 
     def test_tsignals(self):
         # Create a simple trend series for testing
@@ -475,6 +544,8 @@ class TestTrend(TestCase):
         result = pandas_ta.tsignals(trend)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TS")
+        assert_offset(self, pandas_ta.tsignals, [trend])
+        assert_fill(self, pandas_ta.tsignals, [trend])
 
     def test_xsignals(self):
         # Create simple signal series for testing
@@ -482,3 +553,5 @@ class TestTrend(TestCase):
         result = pandas_ta.xsignals(signal, xa=70, xb=30)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "XS")
+        assert_offset(self, pandas_ta.xsignals, [signal], xa=70, xb=30)
+        assert_fill(self, pandas_ta.xsignals, [signal], xa=70, xb=30)

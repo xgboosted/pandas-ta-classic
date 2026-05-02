@@ -1,4 +1,7 @@
 from tests.config import (
+    assert_fill,
+    assert_none_guard,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -77,6 +80,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.ao(self.high, self.low)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "AO_5_34")
+        assert_offset(self, pandas_ta.ao, [self.high, self.low])
+        assert_fill(self, pandas_ta.ao, [self.high, self.low])
+        assert_none_guard(self, pandas_ta.ao, [self.high, self.low])
 
     def test_apo(self):
         result = pandas_ta.apo(self.close, talib=False)
@@ -98,11 +104,17 @@ class TestMomentum(TestCase):
         result = pandas_ta.apo(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "APO_12_26")
+        assert_offset(self, pandas_ta.apo, [self.close])
+        assert_fill(self, pandas_ta.apo, [self.close])
+        assert_none_guard(self, pandas_ta.apo, [self.close])
 
     def test_bias(self):
         result = pandas_ta.bias(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "BIAS_SMA_26")
+        assert_offset(self, pandas_ta.bias, [self.close])
+        assert_fill(self, pandas_ta.bias, [self.close])
+        assert_none_guard(self, pandas_ta.bias, [self.close])
 
     def test_bop(self):
         result = pandas_ta.bop(self.open, self.high, self.low, self.close, talib=False)
@@ -124,11 +136,17 @@ class TestMomentum(TestCase):
         result = pandas_ta.bop(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "BOP")
+        assert_offset(self, pandas_ta.bop, [self.open, self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.bop, [self.open, self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.bop, [self.open, self.high, self.low, self.close])
 
     def test_brar(self):
         result = pandas_ta.brar(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BRAR_26")
+        assert_offset(self, pandas_ta.brar, [self.open, self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.brar, [self.open, self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.brar, [self.open, self.high, self.low, self.close])
 
     def test_cci(self):
         result = pandas_ta.cci(self.high, self.low, self.close, talib=False)
@@ -150,16 +168,25 @@ class TestMomentum(TestCase):
         result = pandas_ta.cci(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CCI_14_0.015")
+        assert_offset(self, pandas_ta.cci, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.cci, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.cci, [self.high, self.low, self.close])
 
     def test_cfo(self):
         result = pandas_ta.cfo(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CFO_9")
+        assert_offset(self, pandas_ta.cfo, [self.close])
+        assert_fill(self, pandas_ta.cfo, [self.close])
+        assert_none_guard(self, pandas_ta.cfo, [self.close])
 
     def test_cg(self):
         result = pandas_ta.cg(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CG_10")
+        assert_offset(self, pandas_ta.cg, [self.close])
+        assert_fill(self, pandas_ta.cg, [self.close])
+        assert_none_guard(self, pandas_ta.cg, [self.close])
 
     def test_cmo(self):
         result = pandas_ta.cmo(self.close)
@@ -181,21 +208,33 @@ class TestMomentum(TestCase):
         result = pandas_ta.cmo(self.close, talib=False)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CMO_14")
+        assert_offset(self, pandas_ta.cmo, [self.close])
+        assert_fill(self, pandas_ta.cmo, [self.close])
+        assert_none_guard(self, pandas_ta.cmo, [self.close])
 
     def test_coppock(self):
         result = pandas_ta.coppock(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "COPC_11_14_10")
+        assert_offset(self, pandas_ta.coppock, [self.close])
+        assert_fill(self, pandas_ta.coppock, [self.close])
+        assert_none_guard(self, pandas_ta.coppock, [self.close])
 
     def test_cti(self):
         result = pandas_ta.cti(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CTI_12")
+        assert_offset(self, pandas_ta.cti, [self.close])
+        assert_fill(self, pandas_ta.cti, [self.close])
+        assert_none_guard(self, pandas_ta.cti, [self.close])
 
     def test_er(self):
         result = pandas_ta.er(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ER_10")
+        assert_offset(self, pandas_ta.er, [self.close])
+        assert_fill(self, pandas_ta.er, [self.close])
+        assert_none_guard(self, pandas_ta.er, [self.close])
 
     def test_dm(self):
         result = pandas_ta.dm(self.high, self.low, talib=False)
@@ -227,22 +266,33 @@ class TestMomentum(TestCase):
         result = pandas_ta.dm(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "DM_14")
+        assert_offset(self, pandas_ta.dm, [self.high, self.low])
+        assert_fill(self, pandas_ta.dm, [self.high, self.low])
+        assert_none_guard(self, pandas_ta.dm, [self.high, self.low])
 
     def test_eri(self):
         result = pandas_ta.eri(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ERI_13")
+        assert_offset(self, pandas_ta.eri, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.eri, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.eri, [self.high, self.low, self.close])
 
     def test_fisher(self):
         result = pandas_ta.fisher(self.high, self.low)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "FISHERT_9_1")
+        assert_offset(self, pandas_ta.fisher, [self.high, self.low])
+        assert_fill(self, pandas_ta.fisher, [self.high, self.low])
+        assert_none_guard(self, pandas_ta.fisher, [self.high, self.low])
 
     def test_fosc(self):
         result = pandas_ta.fosc(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "FOSC_14")
         self.assertIsNone(pandas_ta.fosc(None))
+        assert_offset(self, pandas_ta.fosc, [self.close])
+        assert_fill(self, pandas_ta.fosc, [self.close])
 
     def test_inertia(self):
         result = pandas_ta.inertia(self.close)
@@ -256,16 +306,25 @@ class TestMomentum(TestCase):
         result = pandas_ta.inertia(self.close, self.high, self.low, thirds=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "INERTIAt_20_14")
+        assert_offset(self, pandas_ta.inertia, [self.close])
+        assert_fill(self, pandas_ta.inertia, [self.close])
+        assert_none_guard(self, pandas_ta.inertia, [self.close])
 
     def test_kdj(self):
         result = pandas_ta.kdj(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KDJ_9_3")
+        assert_offset(self, pandas_ta.kdj, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.kdj, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.kdj, [self.high, self.low, self.close])
 
     def test_kst(self):
         result = pandas_ta.kst(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KST_10_15_20_30_10_10_10_15_9")
+        assert_offset(self, pandas_ta.kst, [self.close])
+        assert_fill(self, pandas_ta.kst, [self.close])
+        assert_none_guard(self, pandas_ta.kst, [self.close])
 
     def test_macd(self):
         result = pandas_ta.macd(self.close, talib=False)
@@ -310,11 +369,17 @@ class TestMomentum(TestCase):
         result = pandas_ta.macd(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "MACD_12_26_9")
+        assert_offset(self, pandas_ta.macd, [self.close])
+        assert_fill(self, pandas_ta.macd, [self.close])
+        assert_none_guard(self, pandas_ta.macd, [self.close])
 
     def test_macdas(self):
         result = pandas_ta.macd(self.close, asmode=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "MACDAS_12_26_9")
+        assert_offset(self, pandas_ta.macd, [self.close], asmode=True)
+        assert_fill(self, pandas_ta.macd, [self.close], asmode=True)
+        assert_none_guard(self, pandas_ta.macd, [self.close])
 
     def test_macdext(self):
         # EMA-based should closely match regular MACD
@@ -339,6 +404,9 @@ class TestMomentum(TestCase):
         self.assertEqual(result_tal.name, "MACDEXT_12_26_9")
         pandas_ta.macdext(self.close, fillna=0)
         pandas_ta.macdext(self.close, fill_method="ffill")
+        assert_offset(self, pandas_ta.macdext, [self.close])
+        assert_fill(self, pandas_ta.macdext, [self.close])
+        assert_none_guard(self, pandas_ta.macdext, [self.close])
 
     def test_mom(self):
         result = pandas_ta.mom(self.close, talib=False)
@@ -360,11 +428,17 @@ class TestMomentum(TestCase):
         result = pandas_ta.mom(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MOM_10")
+        assert_offset(self, pandas_ta.mom, [self.close])
+        assert_fill(self, pandas_ta.mom, [self.close])
+        assert_none_guard(self, pandas_ta.mom, [self.close])
 
     def test_pgo(self):
         result = pandas_ta.pgo(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PGO_14")
+        assert_offset(self, pandas_ta.pgo, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.pgo, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.pgo, [self.high, self.low, self.close])
 
     def test_ppo(self):
         result = pandas_ta.ppo(self.close, talib=False)
@@ -386,21 +460,31 @@ class TestMomentum(TestCase):
         result = pandas_ta.ppo(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "PPO_12_26_9")
+        assert_offset(self, pandas_ta.ppo, [self.close])
+        assert_fill(self, pandas_ta.ppo, [self.close])
+        assert_none_guard(self, pandas_ta.ppo, [self.close])
 
     def test_psl(self):
         result = pandas_ta.psl(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PSL_12")
+        assert_offset(self, pandas_ta.psl, [self.close])
+        assert_fill(self, pandas_ta.psl, [self.close])
+        assert_none_guard(self, pandas_ta.psl, [self.close])
 
     def test_pvo(self):
         result = pandas_ta.pvo(self.volume)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "PVO_12_26_9")
+        assert_offset(self, pandas_ta.pvo, [self.volume])
+        assert_fill(self, pandas_ta.pvo, [self.volume])
 
     def test_qqe(self):
         result = pandas_ta.qqe(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "QQE_14_5_4.236")
+        assert_offset(self, pandas_ta.qqe, [self.close])
+        assert_fill(self, pandas_ta.qqe, [self.close])
 
     def test_roc(self):
         result = pandas_ta.roc(self.close, talib=False)
@@ -422,6 +506,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.roc(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ROC_10")
+        assert_offset(self, pandas_ta.roc, [self.close])
+        assert_fill(self, pandas_ta.roc, [self.close])
+        assert_none_guard(self, pandas_ta.roc, [self.close])
 
     def test_rocp(self):
         result = pandas_ta.rocp(self.close, talib=False)
@@ -443,6 +530,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.rocp(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ROCP_10")
+        assert_offset(self, pandas_ta.rocp, [self.close])
+        assert_fill(self, pandas_ta.rocp, [self.close])
+        assert_none_guard(self, pandas_ta.rocp, [self.close])
 
     def test_rocr(self):
         result = pandas_ta.rocr(self.close, talib=False)
@@ -464,6 +554,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.rocr(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ROCR_10")
+        assert_offset(self, pandas_ta.rocr, [self.close])
+        assert_fill(self, pandas_ta.rocr, [self.close])
+        assert_none_guard(self, pandas_ta.rocr, [self.close])
 
     def test_rocr100(self):
         result = pandas_ta.rocr100(self.close, talib=False)
@@ -485,6 +578,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.rocr100(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ROCR100_10")
+        assert_offset(self, pandas_ta.rocr100, [self.close])
+        assert_fill(self, pandas_ta.rocr100, [self.close])
+        assert_none_guard(self, pandas_ta.rocr100, [self.close])
 
     def test_rsi(self):
         result = pandas_ta.rsi(self.close, talib=False)
@@ -506,43 +602,66 @@ class TestMomentum(TestCase):
         result = pandas_ta.rsi(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "RSI_14")
+        assert_offset(self, pandas_ta.rsi, [self.close])
+        assert_fill(self, pandas_ta.rsi, [self.close])
+        assert_none_guard(self, pandas_ta.rsi, [self.close])
 
     def test_rsx(self):
         result = pandas_ta.rsx(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "RSX_14")
+        assert_offset(self, pandas_ta.rsx, [self.close])
+        assert_fill(self, pandas_ta.rsx, [self.close])
 
     def test_rvgi(self):
         result = pandas_ta.rvgi(self.open, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "RVGI_14_4")
+        assert_offset(self, pandas_ta.rvgi, [self.open, self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.rvgi, [self.open, self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.rvgi, [self.open, self.high, self.low, self.close])
 
     def test_slope(self):
         result = pandas_ta.slope(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SLOPE_1")
+        assert_offset(self, pandas_ta.slope, [self.close])
+        assert_fill(self, pandas_ta.slope, [self.close])
+        assert_none_guard(self, pandas_ta.slope, [self.close])
 
     def test_slope_as_angle(self):
         result = pandas_ta.slope(self.close, as_angle=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ANGLEr_1")
+        assert_offset(self, pandas_ta.slope, [self.close], as_angle=True)
+        assert_fill(self, pandas_ta.slope, [self.close], as_angle=True)
+        assert_none_guard(self, pandas_ta.slope, [self.close])
 
     def test_slope_as_angle_to_degrees(self):
         result = pandas_ta.slope(self.close, as_angle=True, to_degrees=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ANGLEd_1")
+        assert_offset(self, pandas_ta.slope, [self.close], as_angle=True, to_degrees=True)
+        assert_fill(self, pandas_ta.slope, [self.close], as_angle=True, to_degrees=True)
+        assert_none_guard(self, pandas_ta.slope, [self.close])
 
     def test_smi(self):
         result = pandas_ta.smi(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SMI_5_20_5")
         self.assertEqual(len(result.columns), 3)
+        assert_offset(self, pandas_ta.smi, [self.close])
+        assert_fill(self, pandas_ta.smi, [self.close])
+        assert_none_guard(self, pandas_ta.smi, [self.close])
 
     def test_smi_scalar(self):
         result = pandas_ta.smi(self.close, scalar=10)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SMI_5_20_5_10.0")
         self.assertEqual(len(result.columns), 3)
+        assert_offset(self, pandas_ta.smi, [self.close], scalar=10)
+        assert_fill(self, pandas_ta.smi, [self.close], scalar=10)
+        assert_none_guard(self, pandas_ta.smi, [self.close])
 
     def test_squeeze(self):
         result = pandas_ta.squeeze(self.high, self.low, self.close)
@@ -562,6 +681,9 @@ class TestMomentum(TestCase):
         )
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5_LB")
+        assert_offset(self, pandas_ta.squeeze, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.squeeze, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.squeeze, [self.high, self.low, self.close])
 
     def test_squeeze_pro(self):
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close)
@@ -583,11 +705,17 @@ class TestMomentum(TestCase):
         )
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3.0_2.0_1.0")
+        assert_offset(self, pandas_ta.squeeze_pro, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.squeeze_pro, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.squeeze_pro, [self.high, self.low, self.close])
 
     def test_stc(self):
         result = pandas_ta.stc(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "STC_10_12_26_0.5")
+        assert_offset(self, pandas_ta.stc, [self.close])
+        assert_fill(self, pandas_ta.stc, [self.close])
+        assert_none_guard(self, pandas_ta.stc, [self.close])
 
     def test_stoch(self):
         # TV Correlation
@@ -617,6 +745,9 @@ class TestMomentum(TestCase):
                 self.assertGreater(stochd_corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
+        assert_offset(self, pandas_ta.stoch, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.stoch, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.stoch, [self.high, self.low, self.close])
 
     def test_stochf(self):
         result = pandas_ta.stochf(self.high, self.low, self.close, talib=False)
@@ -649,6 +780,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.stochf(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "STOCHF_5_3")
+        assert_offset(self, pandas_ta.stochf, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.stochf, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.stochf, [self.high, self.low, self.close])
 
     def test_stochrsi(self):
         # TV Correlation
@@ -670,22 +804,33 @@ class TestMomentum(TestCase):
                 self.assertGreater(stochrsid_corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result.iloc[:, 0], CORRELATION, ex, newline=False)
+        assert_offset(self, pandas_ta.stochrsi, [self.close])
+        assert_fill(self, pandas_ta.stochrsi, [self.close])
+        assert_none_guard(self, pandas_ta.stochrsi, [self.close])
 
     def test_td_seq(self):
         """TS Sequential: Working but SLOW implementation"""
         result = pandas_ta.td_seq(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TD_SEQ")
+        assert_offset(self, pandas_ta.td_seq, [self.close])
+        assert_fill(self, pandas_ta.td_seq, [self.close])
 
     def test_trix(self):
         result = pandas_ta.trix(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TRIX_30_9")
+        assert_offset(self, pandas_ta.trix, [self.close])
+        assert_fill(self, pandas_ta.trix, [self.close])
+        assert_none_guard(self, pandas_ta.trix, [self.close])
 
     def test_tsi(self):
         result = pandas_ta.tsi(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TSI_13_25_13")
+        assert_offset(self, pandas_ta.tsi, [self.close])
+        assert_fill(self, pandas_ta.tsi, [self.close])
+        assert_none_guard(self, pandas_ta.tsi, [self.close])
 
     def test_uo(self):
         result = pandas_ta.uo(self.high, self.low, self.close, talib=False)
@@ -707,6 +852,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.uo(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "UO_7_14_28")
+        assert_offset(self, pandas_ta.uo, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.uo, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.uo, [self.high, self.low, self.close])
 
     def test_willr(self):
         result = pandas_ta.willr(self.high, self.low, self.close, talib=False)
@@ -724,21 +872,32 @@ class TestMomentum(TestCase):
                 self.assertGreater(corr, CORRELATION_THRESHOLD)
             except Exception as ex:
                 error_analysis(result, CORRELATION, ex)
+        assert_offset(self, pandas_ta.willr, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.willr, [self.high, self.low, self.close])
+        assert_none_guard(self, pandas_ta.willr, [self.high, self.low, self.close])
 
     def test_lrsi(self):
         result = pandas_ta.lrsi(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "LRSI_14")
+        assert_offset(self, pandas_ta.lrsi, [self.close])
+        assert_fill(self, pandas_ta.lrsi, [self.close])
 
     def test_po(self):
         result = pandas_ta.po(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PO_14")
+        assert_offset(self, pandas_ta.po, [self.close])
+        assert_fill(self, pandas_ta.po, [self.close])
+        assert_none_guard(self, pandas_ta.po, [self.close])
 
     def test_trixh(self):
         result = pandas_ta.trixh(self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TRIXH_18_9")
+        assert_offset(self, pandas_ta.trixh, [self.close])
+        assert_fill(self, pandas_ta.trixh, [self.close])
+        assert_none_guard(self, pandas_ta.trixh, [self.close])
 
     def test_vwmacd(self):
         result = pandas_ta.vwmacd(self.close, self.volume)
@@ -748,3 +907,6 @@ class TestMomentum(TestCase):
         result = pandas_ta.willr(self.high, self.low, self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "WILLR_14")
+        assert_offset(self, pandas_ta.vwmacd, [self.close, self.volume])
+        assert_fill(self, pandas_ta.vwmacd, [self.close, self.volume])
+        assert_none_guard(self, pandas_ta.vwmacd, [self.close, self.volume])

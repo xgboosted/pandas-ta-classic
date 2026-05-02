@@ -1,4 +1,7 @@
 from tests.config import (
+    assert_fill,
+    assert_none_guard,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -70,11 +73,15 @@ class TestVolume(TestCase):
         result = pandas_ta.ad(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "AD")
+        assert_offset(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_])
+        assert_fill(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_])
 
     def test_ad_open(self):
         result = pandas_ta.ad(self.high, self.low, self.close, self.volume_, self.open)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ADo")
+        assert_offset(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_, self.open])
+        assert_fill(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_, self.open])
 
     def test_adosc(self):
         result = pandas_ta.adosc(
@@ -98,6 +105,9 @@ class TestVolume(TestCase):
         result = pandas_ta.adosc(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ADOSC_3_10")
+        assert_offset(self, pandas_ta.adosc, [self.high, self.low, self.close, self.volume_])
+        assert_fill(self, pandas_ta.adosc, [self.high, self.low, self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.adosc, [self.high, self.low, self.close, self.volume_])
 
     def test_aobv(self):
         result = pandas_ta.aobv(self.close, self.volume_)
@@ -112,32 +122,48 @@ class TestVolume(TestCase):
 
         result = pandas_ta.aobv(self.close, self.volume_, fill_method="bfill")
         self.assertIsInstance(result, DataFrame)
+        assert_offset(self, pandas_ta.aobv, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.aobv, [self.close, self.volume_])
 
     def test_cmf(self):
         result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CMF_20")
+        assert_offset(self, pandas_ta.cmf, [self.high, self.low, self.close, self.volume_])
+        assert_fill(self, pandas_ta.cmf, [self.high, self.low, self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.cmf, [self.high, self.low, self.close, self.volume_])
 
     def test_efi(self):
         result = pandas_ta.efi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EFI_13")
+        assert_offset(self, pandas_ta.efi, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.efi, [self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.efi, [self.close, self.volume_])
 
     def test_emv(self):
         result = pandas_ta.emv(self.high, self.low, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EMV")
         self.assertIsNone(pandas_ta.emv(None, self.low, self.volume_))
+        assert_offset(self, pandas_ta.emv, [self.high, self.low, self.volume_])
+        assert_fill(self, pandas_ta.emv, [self.high, self.low, self.volume_])
 
     def test_eom(self):
         result = pandas_ta.eom(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EOM_14_100000000")
+        assert_offset(self, pandas_ta.eom, [self.high, self.low, self.close, self.volume_])
+        assert_fill(self, pandas_ta.eom, [self.high, self.low, self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.eom, [self.high, self.low, self.close, self.volume_])
 
     def test_kvo(self):
         result = pandas_ta.kvo(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "KVO_34_55_13")
+        assert_offset(self, pandas_ta.kvo, [self.high, self.low, self.close, self.volume_])
+        assert_fill(self, pandas_ta.kvo, [self.high, self.low, self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.kvo, [self.high, self.low, self.close, self.volume_])
 
     def test_marketfi(self):
         result = pandas_ta.marketfi(self.high, self.low, self.volume_)
@@ -146,6 +172,8 @@ class TestVolume(TestCase):
         self.assertIsNone(pandas_ta.marketfi(None, self.low, self.volume_))
         self.assertIsNone(pandas_ta.marketfi(self.high, None, self.volume_))
         self.assertIsNone(pandas_ta.marketfi(self.high, self.low, None))
+        assert_offset(self, pandas_ta.marketfi, [self.high, self.low, self.volume_])
+        assert_fill(self, pandas_ta.marketfi, [self.high, self.low, self.volume_])
 
     def test_mfi(self):
         result = pandas_ta.mfi(
@@ -169,11 +197,17 @@ class TestVolume(TestCase):
         result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MFI_14")
+        assert_offset(self, pandas_ta.mfi, [self.high, self.low, self.close, self.volume_])
+        assert_fill(self, pandas_ta.mfi, [self.high, self.low, self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.mfi, [self.high, self.low, self.close, self.volume_])
 
     def test_nvi(self):
         result = pandas_ta.nvi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "NVI_1")
+        assert_offset(self, pandas_ta.nvi, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.nvi, [self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.nvi, [self.close, self.volume_])
 
     def test_obv(self):
         result = pandas_ta.obv(self.close, self.volume_, talib=False)
@@ -195,16 +229,23 @@ class TestVolume(TestCase):
         result = pandas_ta.obv(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "OBV")
+        assert_offset(self, pandas_ta.obv, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.obv, [self.close, self.volume_])
 
     def test_pvi(self):
         result = pandas_ta.pvi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PVI_1")
+        assert_offset(self, pandas_ta.pvi, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.pvi, [self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.pvi, [self.close, self.volume_])
 
     def test_pvol(self):
         result = pandas_ta.pvol(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PVOL")
+        assert_offset(self, pandas_ta.pvol, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.pvol, [self.close, self.volume_])
 
     def test_pvr(self):
         result = pandas_ta.pvr(self.close, self.volume_)
@@ -220,22 +261,31 @@ class TestVolume(TestCase):
         result = pandas_ta.pvt(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "PVT")
+        assert_offset(self, pandas_ta.pvt, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.pvt, [self.close, self.volume_])
 
     def test_vp(self):
         result = pandas_ta.vp(self.close, self.volume_)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "VP_10")
+        assert_offset(self, pandas_ta.vp, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.vp, [self.close, self.volume_])
 
     def test_vfi(self):
         result = pandas_ta.vfi(self.close, self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VFI_130")
+        assert_offset(self, pandas_ta.vfi, [self.close, self.volume_])
+        assert_fill(self, pandas_ta.vfi, [self.close, self.volume_])
+        assert_none_guard(self, pandas_ta.vfi, [self.close, self.volume_])
 
     def test_vosc(self):
         result = pandas_ta.vosc(self.volume_)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VOSC_14_28")
         self.assertIsNone(pandas_ta.vosc(None))
+        assert_offset(self, pandas_ta.vosc, [self.volume_])
+        assert_fill(self, pandas_ta.vosc, [self.volume_])
 
     def test_wad(self):
         result = pandas_ta.wad(self.high, self.low, self.close)
@@ -244,3 +294,5 @@ class TestVolume(TestCase):
         self.assertIsNone(pandas_ta.wad(None, self.low, self.close))
         self.assertIsNone(pandas_ta.wad(self.high, None, self.close))
         self.assertIsNone(pandas_ta.wad(self.high, self.low, None))
+        assert_offset(self, pandas_ta.wad, [self.high, self.low, self.close])
+        assert_fill(self, pandas_ta.wad, [self.high, self.low, self.close])

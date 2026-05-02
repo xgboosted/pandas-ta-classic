@@ -1,4 +1,7 @@
 from tests.config import (
+    assert_fill,
+    assert_none_guard,
+    assert_offset,
     error_analysis,
     get_sample_data,
     CORRELATION,
@@ -56,6 +59,8 @@ class TestStatistics(TestCase):
         pandas_ta.beta(self.close, benchmark=self.high, fill_method="ffill")
         pandas_ta.beta(self.close, benchmark=self.high, fill_method="bfill")
         self.assertIsNone(pandas_ta.beta(None))
+        assert_offset(self, pandas_ta.beta, [self.close], benchmark=self.high)
+        assert_fill(self, pandas_ta.beta, [self.close], benchmark=self.high)
 
     def test_correl(self):
         result = pandas_ta.correl(self.close, benchmark=self.high)
@@ -65,42 +70,65 @@ class TestStatistics(TestCase):
         pandas_ta.correl(self.close, benchmark=self.high, fill_method="ffill")
         pandas_ta.correl(self.close, benchmark=self.high, fill_method="bfill")
         self.assertIsNone(pandas_ta.correl(None))
+        assert_offset(self, pandas_ta.correl, [self.close], benchmark=self.high)
+        assert_fill(self, pandas_ta.correl, [self.close], benchmark=self.high)
 
     def test_entropy(self):
         result = pandas_ta.entropy(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ENTP_10")
+        assert_offset(self, pandas_ta.entropy, [self.close])
+        assert_fill(self, pandas_ta.entropy, [self.close])
+        assert_none_guard(self, pandas_ta.entropy, [self.close])
 
     def test_kurtosis(self):
         result = pandas_ta.kurtosis(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "KURT_30")
+        assert_offset(self, pandas_ta.kurtosis, [self.close])
+        assert_fill(self, pandas_ta.kurtosis, [self.close])
+        assert_none_guard(self, pandas_ta.kurtosis, [self.close])
 
     def test_mad(self):
         result = pandas_ta.mad(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MAD_30")
+        assert_offset(self, pandas_ta.mad, [self.close])
+        assert_fill(self, pandas_ta.mad, [self.close])
+        assert_none_guard(self, pandas_ta.mad, [self.close])
 
     def test_median(self):
         result = pandas_ta.median(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "MEDIAN_30")
+        assert_offset(self, pandas_ta.median, [self.close])
+        assert_fill(self, pandas_ta.median, [self.close])
+        assert_none_guard(self, pandas_ta.median, [self.close])
 
     def test_quantile(self):
         result = pandas_ta.quantile(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "QTL_30_0.5")
+        assert_offset(self, pandas_ta.quantile, [self.close])
+        assert_fill(self, pandas_ta.quantile, [self.close])
+        assert_none_guard(self, pandas_ta.quantile, [self.close])
 
     def test_skew(self):
         result = pandas_ta.skew(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SKEW_30")
+        assert_offset(self, pandas_ta.skew, [self.close])
+        assert_fill(self, pandas_ta.skew, [self.close])
+        assert_none_guard(self, pandas_ta.skew, [self.close])
 
     def test_stderr(self):
         result = pandas_ta.stderr(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDERR_14")
         self.assertIsNone(pandas_ta.stderr(None))
+        assert_offset(self, pandas_ta.stderr, [self.close])
+        assert_fill(self, pandas_ta.stderr, [self.close])
+        assert_none_guard(self, pandas_ta.stderr, [self.close])
 
     def test_stdev(self):
         result = pandas_ta.stdev(self.close, talib=False)
@@ -122,6 +150,9 @@ class TestStatistics(TestCase):
         result = pandas_ta.stdev(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "STDEV_30")
+        assert_offset(self, pandas_ta.stdev, [self.close])
+        assert_fill(self, pandas_ta.stdev, [self.close])
+        assert_none_guard(self, pandas_ta.stdev, [self.close])
 
     def test_tos_sdtevall(self):
         result = pandas_ta.tos_stdevall(self.close)
@@ -138,6 +169,8 @@ class TestStatistics(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "TOS_STDEVALL_30")
         self.assertEqual(len(result.columns), 5)
+        assert_offset(self, pandas_ta.tos_stdevall, [self.close])
+        assert_fill(self, pandas_ta.tos_stdevall, [self.close])
 
     def test_variance(self):
         result = pandas_ta.variance(self.close, talib=False)
@@ -159,8 +192,14 @@ class TestStatistics(TestCase):
         result = pandas_ta.variance(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "VAR_30")
+        assert_offset(self, pandas_ta.variance, [self.close])
+        assert_fill(self, pandas_ta.variance, [self.close])
+        assert_none_guard(self, pandas_ta.variance, [self.close])
 
     def test_zscore(self):
         result = pandas_ta.zscore(self.close)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "ZS_30")
+        assert_offset(self, pandas_ta.zscore, [self.close])
+        assert_fill(self, pandas_ta.zscore, [self.close])
+        assert_none_guard(self, pandas_ta.zscore, [self.close])
