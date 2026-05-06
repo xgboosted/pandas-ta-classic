@@ -455,10 +455,12 @@ class TestApplyFill(TestCase):
 
     def setUp(self):
         self.s = Series([np.nan, 2.0, np.nan, 4.0, np.nan], name="test")
-        self.df = DataFrame({
-            "a": [np.nan, 2.0, np.nan],
-            "b": [1.0, np.nan, 3.0],
-        })
+        self.df = DataFrame(
+            {
+                "a": [np.nan, 2.0, np.nan],
+                "b": [1.0, np.nan, 3.0],
+            }
+        )
 
     # -- no-op case --
 
@@ -488,9 +490,13 @@ class TestApplyFill(TestCase):
         self.assertEqual(result.iloc[1], 1.0)
         self.assertEqual(result.iloc[2], 1.0)
         # Leading NaN stays NaN (nothing to forward-fill from)
-        self.assertTrue(np.isnan(pandas_ta.utils.apply_fill(
-            Series([np.nan, 2.0]), fill_method="ffill"
-        ).iloc[0]))
+        self.assertTrue(
+            np.isnan(
+                pandas_ta.utils.apply_fill(
+                    Series([np.nan, 2.0]), fill_method="ffill"
+                ).iloc[0]
+            )
+        )
 
     # -- fill_method bfill --
 
@@ -500,9 +506,13 @@ class TestApplyFill(TestCase):
         self.assertEqual(result.iloc[0], 3.0)
         self.assertEqual(result.iloc[1], 3.0)
         # Trailing NaN stays NaN (nothing to back-fill from)
-        self.assertTrue(np.isnan(pandas_ta.utils.apply_fill(
-            Series([1.0, np.nan]), fill_method="bfill"
-        ).iloc[-1]))
+        self.assertTrue(
+            np.isnan(
+                pandas_ta.utils.apply_fill(
+                    Series([1.0, np.nan]), fill_method="bfill"
+                ).iloc[-1]
+            )
+        )
 
     # -- unknown fill_method is ignored --
 

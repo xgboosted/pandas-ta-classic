@@ -34,8 +34,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
-            and ca.real_body[i]  # 1st: long
-            <= AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
+            and ca.real_body[i]
+            <= AVG_FACTOR[CandleSetting.BodyShort] * body_short_total  # 1st: long
         ):  # 2nd: short
             hi_i = body_hi[i]
             lo_i = body_lo[i]

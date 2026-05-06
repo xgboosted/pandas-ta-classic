@@ -137,8 +137,29 @@ markers = [
     "regression: snapshot regression tests — run with -m regression",
 ]
 
+[tool.black]
+skip-string-normalization = true
+exclude = '''
+/(
+    \.venv
+  | \.git
+  | __pycache__
+  | \.eggs
+  | .*\.egg-info
+)/
+'''
+
 [tool.ruff]
-line-length = 127
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    ".eggs",
+    "*.egg-info",
+]
+
+[tool.ruff.format]
+quote-style = "preserve"
 
 [tool.setuptools]
 packages = [
