@@ -104,13 +104,32 @@ Using ``pip``:
    - Git tags determine the package version (e.g., ``0.3.36.dev1`` for development, ``0.3.35`` for releases)
    - See the `Version Management section in CONTRIBUTING.md <https://github.com/xgboosted/pandas-ta-classic/blob/main/CONTRIBUTING.md#version-management>`_ for details
 
-Installing TA-Lib
-------------------
+Oracle Libraries (TA-Lib and tulipy)
+-------------------------------------
 
-TA-Lib is **fully optional**. The two areas affected are different:
+Both TA-Lib and tulipy are **fully optional**. They serve different roles:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 20 65
+
+   * - Library
+     - Role
+     - Effect when installed
+   * - TA-Lib
+     - **Acceleration backend + oracle**
+     - 34 core indicators use TA-Lib's C implementation by default; also used by ``test_oracle_talib.py`` for parity checks
+   * - tulipy
+     - **Oracle only**
+     - Never used as computation backend; only ``test_oracle_tulipy.py`` uses it to verify native output
+
+Installing TA-Lib
+^^^^^^^^^^^^^^^^^^
+
+TA-Lib has a **dual role**: acceleration backend for 34 core indicators, and parity oracle. The two behavioural areas affected are:
 
 **Candlestick patterns (CDL family)**
-   All 62 CDL patterns have native Python implementations. Native implementations are used by default and always take priority; TA-Lib is only used as a fallback when a native implementation is unavailable.
+   All 62 CDL patterns have native Python implementations that are always used. TA-Lib is **never** invoked for CDL patterns — the TA-Lib fallback code path in ``cdl_pattern()`` is only retained for hypothetical future patterns without a native implementation.
 
 **34 core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
    When TA-Lib is installed, these indicators use TA-Lib's implementation by default for numerical consistency with TA-Lib-based workflows. Pass ``talib=False`` to any call to force the native implementation instead.
@@ -144,6 +163,39 @@ Using ``pip``:
     pip install TA-Lib
 
 **Note**: If you encounter installation issues with TA-Lib, refer to the `TA-Lib installation guide <https://github.com/mrjbq7/ta-lib#installation>`_.
+
+Installing tulipy
+^^^^^^^^^^^^^^^^^^
+
+tulipy is an **oracle-only** library. It is never used as a computation backend — its sole purpose is ``test_oracle_tulipy.py``, which verifies that native indicator output matches tulipy's reference values.
+
+.. note::
+
+   Installing tulipy has **no effect** on indicator behaviour or performance at runtime. It only enables the tulipy oracle test suite.
+
+Using ``uv``:
+
+.. code-block:: bash
+
+    uv pip install tulipy
+
+Using ``pip``:
+
+.. code-block:: bash
+
+    pip install tulipy
+
+Or install both oracle libraries at once:
+
+.. code-block:: bash
+
+    # uv
+    uv pip install pandas-ta-classic[oracle]
+
+    # pip
+    pip install pandas-ta-classic[oracle]
+
+Both oracle test suites (``test_oracle_talib.py``, ``test_oracle_tulipy.py``) are guarded with ``@unittest.skipUnless`` and skip automatically when the respective library is not installed.
 
 Installing Optional Dependencies
 --------------------------------

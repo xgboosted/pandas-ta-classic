@@ -42,8 +42,8 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 ### Key Features
 
-- **252 Unique Indicators & Patterns**: 192 Category indicators + 62 CDL patterns via `cdl_pattern()` = 252 unique (doji and inside appear in both counts; all work without TA-Lib)
-- **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — native implementations are used by default; TA-Lib is only a fallback when a native implementation is unavailable
+- **252 Unique Indicators & Patterns**: 192 Category indicators + 62 CDL patterns via `cdl_pattern()` = 252 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
+- **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — TA-Lib is never used for CDL patterns
 - **Optional TA-Lib Acceleration**: 34 core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) automatically use TA-Lib when installed; pass `talib=False` to force native
 - **Compatibility Scope Is Explicit**: Not every TA-Lib/tulipy function has a pandas-ta-classic counterpart. Current mapping includes 67 indicators with TA-Lib counterparts, 71 with tulipy counterparts, and 44 covered by both. Full per-indicator matrix: `docs/indicator_support_matrix.rst`
 - **Optional Performance Boost**: Install `numba` for 6–230× speedups on hot-loop indicators (QQE, RSX, HWMA, SSF, PSAR, Supertrend, MCGD)
@@ -95,7 +95,8 @@ uv pip install -e ".[all]"
 
 # Or install specific dependency groups:
 uv pip install -e ".[dev]" # Development tools
-uv pip install -e ".[optional]" # Optional features like TA-Lib
+uv pip install -e ".[optional]" # Optional runtime features
+uv pip install -e ".[oracle]" # Oracle parity libs: TA-Lib + tulipy
 ```
 
 Using `pip`:
@@ -109,7 +110,8 @@ pip install -e ".[all]"
 
 # Or install specific dependency groups:
 pip install -e ".[dev]" # Development tools
-pip install -e ".[optional]" # Optional features like TA-Lib
+pip install -e ".[optional]" # Optional runtime features
+pip install -e ".[oracle]" # Oracle parity libs: TA-Lib + tulipy
 ```
 
 ### Basic Usage
@@ -142,7 +144,8 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
-- **TA-Lib Integration** - automatically uses TA-Lib versions when available
+- **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: 34 core indicators auto-use TA-Lib's C implementation when installed; pass `talib=False` to force native. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
+- **tulipy Integration (oracle only)** - parity test oracle; `test_oracle_tulipy.py` verifies native output against tulipy; never used as computation backend
 - **Vectorbt Integration** - compatible with popular backtesting framework
 - **Custom Indicators** - easily create and chain your own indicators
 
@@ -170,11 +173,16 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 > **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
 
-**TA-Lib is fully optional.** Its effect depends on which indicators you use:
+**TA-Lib and tulipy serve different roles** — both are fully optional and skip gracefully when not installed.
+
+| Library | Role | Effect when installed |
+|---------|------|-----------------------|
+| TA-Lib | **Acceleration backend + oracle** | 34 core indicators use TA-Lib's C implementation by default; also used in `test_oracle_talib.py` for parity checks |
+| tulipy | **Oracle only** | Never used as computation backend; only `test_oracle_tulipy.py` uses it to verify native output |
 
 | Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
 |------|--------------------------|----------------------|
-| CDL patterns (62) | Native Python — always used | Still native — TA-Lib **not** used for patterns |
+| CDL patterns (62) | Native Python — always used | Still native — TA-Lib **never** used for patterns |
 | Core indicators (34) | Native Python | TA-Lib version used by default; pass `talib=False` to force native |
 
 ```python
@@ -187,13 +195,19 @@ df.ta.ema(length=20) # TA-Lib EMA when available
 df.ta.ema(length=20, talib=False) # force native implementation
 ```
 
-Installing TA-Lib (optional):
+Installing oracle libraries:
 ```bash
 # uv
-uv pip install TA-Lib
+uv pip install pandas-ta-classic[oracle] # installs both TA-Lib and tulipy
+uv pip install TA-Lib # TA-Lib only (also enables acceleration backend)
+uv pip install tulipy # tulipy only (oracle test use only)
 # pip
-pip install TA-Lib
+pip install pandas-ta-classic[oracle] # installs both TA-Lib and tulipy
+pip install TA-Lib # TA-Lib only (also enables acceleration backend)
+pip install tulipy # tulipy only (oracle test use only)
 ```
+
+> **Note:** Both oracle test suites (`test_oracle_talib.py`, `test_oracle_tulipy.py`) are guarded with `@unittest.skipUnless` and skip automatically when the respective library is not installed. Neither is required for normal use. Installing TA-Lib additionally activates the C-library acceleration backend for 34 indicators.
 
 **Performance boost:** Install `numba` for 6–230× speedups on computation-heavy indicators:
 - Using `uv`: `uv pip install pandas-ta-classic[performance]`
