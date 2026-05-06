@@ -5,7 +5,13 @@ from typing import Any, Optional
 import numpy as np
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, np_rolling_moments, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    np_rolling_moments,
+    verify_series,
+)
 
 
 def kurtosis(
@@ -47,22 +53,9 @@ def kurtosis(
     kurtosis = Series(result, index=close.index, dtype=np.float64)
 
     # Offset
-    if offset != 0:
-        kurtosis = kurtosis.shift(offset)
+    kurtosis = apply_offset(kurtosis, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        kurtosis.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                kurtosis.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                kurtosis.bfill(inplace=True)
+    kurtosis = apply_fill(kurtosis, **kwargs)
 
     # Name & Category
     kurtosis.name = f"KURT_{length}"

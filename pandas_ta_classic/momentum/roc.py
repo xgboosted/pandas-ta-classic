@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .mom import mom
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def roc(
@@ -35,22 +35,9 @@ def roc(
         roc = scalar * mom(close=close, length=length) / close.shift(length)
 
     # Offset
-    if offset != 0:
-        roc = roc.shift(offset)
+    roc = apply_offset(roc, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        roc.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                roc.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                roc.bfill(inplace=True)
+    roc = apply_fill(roc, **kwargs)
 
     # Name and Categorize it
     roc.name = f"ROC_{length}"

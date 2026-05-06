@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import Series
 from .ema import ema
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def t3(
@@ -55,22 +55,9 @@ def t3(
         t3 = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
 
     # Offset
-    if offset != 0:
-        t3 = t3.shift(offset)
+    t3 = apply_offset(t3, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        t3.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                t3.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                t3.bfill(inplace=True)
+    t3 = apply_fill(t3, **kwargs)
 
     # Name & Category
     t3.name = f"T3_{length}_{a}"

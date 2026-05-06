@@ -8,7 +8,7 @@ from typing import Any, Optional, Union
 from pandas import Series, DataFrame
 
 from . import cdl_doji, cdl_inside
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic import Imports
 
 logger = logging.getLogger(__name__)
@@ -171,17 +171,10 @@ def cdl_pattern(
             pattern_result.index = close.index
 
             # Offset
-            if offset != 0:
-                pattern_result = pattern_result.shift(offset)
+            pattern_result = apply_offset(pattern_result, offset)
 
             # Handle fills
-            if "fillna" in kwargs:
-                pattern_result.fillna(kwargs["fillna"], inplace=True)
-            if "fill_method" in kwargs:
-                if kwargs["fill_method"] == "ffill":
-                    pattern_result.ffill(inplace=True)
-                elif kwargs["fill_method"] == "bfill":
-                    pattern_result.bfill(inplace=True)
+            pattern_result = apply_fill(pattern_result, **kwargs)
 
             result[col_name] = pattern_result
         else:

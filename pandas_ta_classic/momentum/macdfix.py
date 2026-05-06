@@ -4,7 +4,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.momentum.macd import macd
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def macdfix(
@@ -60,8 +60,9 @@ def macdfix(
             new_cols[col] = new_col
         result = result.rename(columns=new_cols)
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = f"MACDFIX_{signal}"
     result.category = "momentum"
@@ -82,6 +83,10 @@ Args:
     talib (bool): Use TA-Lib if available. Default: True.
     offset (int): Number of periods to offset the result. Default: 0.
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.DataFrame: DataFrame with MACDFIX line, histogram, signal columns.
 """
@@ -99,6 +104,10 @@ Args:
     signal (int): Signal period. Default: 9
     talib (bool): Use TA-Lib C library if installed. Default: True
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: macdfix, histogram, signal columns.

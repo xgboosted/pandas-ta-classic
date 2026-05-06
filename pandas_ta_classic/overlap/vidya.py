@@ -5,7 +5,13 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def vidya(
@@ -54,22 +60,9 @@ def vidya(
     vidya = Series(vidya_arr, index=close.index)
 
     # Offset
-    if offset != 0:
-        vidya = vidya.shift(offset)
+    vidya = apply_offset(vidya, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        vidya.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vidya.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vidya.bfill(inplace=True)
+    vidya = apply_fill(vidya, **kwargs)
 
     # Name & Category
     vidya.name = f"VIDYA_{length}"

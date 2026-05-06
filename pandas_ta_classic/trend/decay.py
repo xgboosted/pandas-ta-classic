@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import exp as npExp
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def decay(
@@ -36,22 +36,9 @@ def decay(
     ld = tdf.max(axis=1)
 
     # Offset
-    if offset != 0:
-        ld = ld.shift(offset)
+    ld = apply_offset(ld, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        ld.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ld.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ld.bfill(inplace=True)
+    ld = apply_fill(ld, **kwargs)
 
     # Name and Categorize it
     ld.name = f"{_mode}DECAY_{length}"

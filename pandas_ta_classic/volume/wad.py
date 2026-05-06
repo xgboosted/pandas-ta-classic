@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def wad(
@@ -42,18 +42,9 @@ def wad(
     wad_ = ad_day.cumsum()
 
     # Offset
-    if offset != 0:
-        wad_ = wad_.shift(offset)
+    wad_ = apply_offset(wad_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        wad_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                wad_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                wad_.bfill(inplace=True)
+    wad_ = apply_fill(wad_, **kwargs)
 
     # Name and Categorize it
     wad_.name = "WAD"
@@ -87,6 +78,10 @@ Args:
     low (pd.Series): Low price series.
     close (pd.Series): Close price series.
     offset (int): Result offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series: WAD values.

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def sma(
@@ -37,22 +37,9 @@ def sma(
         sma = close.rolling(length, min_periods=min_periods).mean()
 
     # Offset
-    if offset != 0:
-        sma = sma.shift(offset)
+    sma = apply_offset(sma, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        sma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                sma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                sma.bfill(inplace=True)
+    sma = apply_fill(sma, **kwargs)
 
     # Name & Category
     sma.name = f"SMA_{length}"

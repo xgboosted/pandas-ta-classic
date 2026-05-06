@@ -3,7 +3,7 @@
 from typing import Any, Optional, Tuple
 from pandas import date_range, DataFrame, RangeIndex, Timedelta, Series
 from .midprice import midprice
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ichimoku(
@@ -47,46 +47,11 @@ def ichimoku(
     chikou_span = close.shift(-kijun)
 
     # Offset
-    if offset != 0:
-        tenkan_sen = tenkan_sen.shift(offset)
-        kijun_sen = kijun_sen.shift(offset)
-        span_a = span_a.shift(offset)
-        span_b = span_b.shift(offset)
-        chikou_span = chikou_span.shift(offset)
+    tenkan_sen, kijun_sen, span_a, span_b, chikou_span = apply_offset(
+        [tenkan_sen, kijun_sen, span_a, span_b, chikou_span], offset
+    )
 
-    # Handle fills
-    if "fillna" in kwargs:
-        span_a.fillna(kwargs["fillna"], inplace=True)
-        span_b.fillna(kwargs["fillna"], inplace=True)
-        chikou_span.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                span_a.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                span_a.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                span_b.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                span_b.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                chikou_span.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                chikou_span.bfill(inplace=True)
+    span_a, span_b, chikou_span = apply_fill([span_a, span_b, chikou_span], **kwargs)
 
     # Name and Categorize it
     span_a.name = f"ISA_{tenkan}"

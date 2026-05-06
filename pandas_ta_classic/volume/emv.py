@@ -2,7 +2,14 @@
 # Ease of Movement (EMV)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def emv(
@@ -37,8 +44,9 @@ def emv(
     box_ratio = (volume / divisor) / hl_range
     result = distance / box_ratio
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = "EMV"
     result.category = "volume"
@@ -65,6 +73,10 @@ Args:
     volume (pd.Series): Series of volume
     drift (int): Difference period. Default: 1
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

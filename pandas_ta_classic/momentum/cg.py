@@ -3,7 +3,7 @@
 from typing import Any, Optional
 import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _sliding_weighted_ma
 
 
@@ -28,22 +28,9 @@ def cg(
     cg = numerator / close.rolling(length).sum()
 
     # Offset
-    if offset != 0:
-        cg = cg.shift(offset)
+    cg = apply_offset(cg, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        cg.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                cg.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                cg.bfill(inplace=True)
+    cg = apply_fill(cg, **kwargs)
 
     # Name and Categorize it
     cg.name = f"CG_{length}"

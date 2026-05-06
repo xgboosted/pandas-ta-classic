@@ -5,7 +5,7 @@ from typing import Any, Optional
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def entropy(
@@ -44,22 +44,9 @@ def entropy(
     entropy = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset
-    if offset != 0:
-        entropy = entropy.shift(offset)
+    entropy = apply_offset(entropy, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        entropy.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                entropy.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                entropy.bfill(inplace=True)
+    entropy = apply_fill(entropy, **kwargs)
 
     # Name & Category
     entropy.name = f"ENTP_{length}"

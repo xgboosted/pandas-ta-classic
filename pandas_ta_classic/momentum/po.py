@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def po(
@@ -31,17 +31,9 @@ def po(
     po = 100 * (close - lr) / lr.replace(0, float("nan"))
 
     # Offset
-    if offset != 0:
-        po = po.shift(offset)
+    po = apply_offset(po, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        po.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            po.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            po.bfill(inplace=True)
+    po = apply_fill(po, **kwargs)
 
     # Name and Categorize it
     po.name = f"PO_{length}"

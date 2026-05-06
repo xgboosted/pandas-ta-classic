@@ -4,7 +4,7 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -47,17 +47,9 @@ def mcgd(
     mcg_ds = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        mcg_ds = mcg_ds.shift(offset)
+    mcg_ds = apply_offset(mcg_ds, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        mcg_ds.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            mcg_ds.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            mcg_ds.bfill(inplace=True)
+    mcg_ds = apply_fill(mcg_ds, **kwargs)
 
     # Name & Category
     mcg_ds.name = f"MCGD_{length}"

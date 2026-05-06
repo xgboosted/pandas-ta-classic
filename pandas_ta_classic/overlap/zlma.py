@@ -14,7 +14,7 @@ from .tema import tema
 from .trima import trima
 from .vidya import vidya
 from .wma import wma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def zlma(
@@ -66,22 +66,9 @@ def zlma(
         return None
 
     # Offset
-    if offset != 0:
-        zlma = zlma.shift(offset)
+    zlma = apply_offset(zlma, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        zlma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                zlma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                zlma.bfill(inplace=True)
+    zlma = apply_fill(zlma, **kwargs)
 
     # Name & Category
     zlma.name = f"ZL_{zlma.name}"

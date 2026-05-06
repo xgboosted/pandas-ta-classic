@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def midprice(
@@ -42,22 +42,9 @@ def midprice(
         midprice = 0.5 * (lowest_low + highest_high)
 
     # Offset
-    if offset != 0:
-        midprice = midprice.shift(offset)
+    midprice = apply_offset(midprice, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        midprice.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                midprice.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                midprice.bfill(inplace=True)
+    midprice = apply_fill(midprice, **kwargs)
 
     # Name and Categorize it
     midprice.name = f"MIDPRICE_{length}"

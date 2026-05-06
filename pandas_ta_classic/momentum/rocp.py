@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def rocp(
@@ -34,18 +34,9 @@ def rocp(
         rocp_ = (close - close.shift(length)) / close.shift(length)
 
     # Offset
-    if offset != 0:
-        rocp_ = rocp_.shift(offset)
+    rocp_ = apply_offset(rocp_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        rocp_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                rocp_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                rocp_.bfill(inplace=True)
+    rocp_ = apply_fill(rocp_, **kwargs)
 
     # Name and Categorize it
     rocp_.name = f"ROCP_{length}"
@@ -69,6 +60,10 @@ Args:
     length (int): The period. Default: 10
     talib (bool): Use TA-Lib if installed. Default: True
     offset (int): Result offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series: ROCP values.

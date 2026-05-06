@@ -5,7 +5,7 @@ from typing import Any, Optional
 from numpy import log as npLog, sqrt as npSqrt
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def avolume(
@@ -33,8 +33,9 @@ def avolume(
     log_returns = npLog(close / close.shift(1))
     result = log_returns.rolling(length).std(ddof=0) * npSqrt(252)
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = f"AVOLUME_{length}"
     result.category = "volatility"
@@ -58,6 +59,10 @@ Args:
     close (pd.Series): Series of 'close' prices
     length (int): Lookback period. Default: 20
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

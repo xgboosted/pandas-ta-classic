@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import where as npWhere
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def td_seq(
@@ -53,34 +53,10 @@ def td_seq(
         down_seq = down_seq.astype(int)
 
     # Offset
-    if offset != 0:
-        up_seq = up_seq.shift(offset)
-        down_seq = down_seq.shift(offset)
+    up_seq, down_seq = apply_offset([up_seq, down_seq], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        up_seq.fillna(kwargs["fillna"], inplace=True)
-        down_seq.fillna(kwargs["fillna"], inplace=True)
-
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                up_seq.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                up_seq.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                down_seq.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                down_seq.bfill(inplace=True)
+    up_seq, down_seq = apply_fill([up_seq, down_seq], **kwargs)
 
     # Name & Category
     up_seq.name = f"TD_SEQ_UPa" if show_all else f"TD_SEQ_UP"
@@ -116,6 +92,7 @@ Args:
 Kwargs:
     show_all (bool): Show 1 - 13. If set to False, show 6 - 9. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: New feature generated.

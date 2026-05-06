@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def trix(
@@ -38,33 +44,9 @@ def trix(
     trix_signal = trix.rolling(signal).mean()
 
     # Offset
-    if offset != 0:
-        trix = trix.shift(offset)
-        trix_signal = trix_signal.shift(offset)
+    trix, trix_signal = apply_offset([trix, trix_signal], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        trix.fillna(kwargs["fillna"], inplace=True)
-        trix_signal.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                trix.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                trix.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                trix_signal.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                trix_signal.bfill(inplace=True)
+    trix, trix_signal = apply_fill([trix, trix_signal], **kwargs)
 
     # Name & Category
     trix.name = f"TRIX_{length}_{signal}"

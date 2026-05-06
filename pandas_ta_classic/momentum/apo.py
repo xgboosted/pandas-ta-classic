@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, tal_ma, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    tal_ma,
+    verify_series,
+)
 
 
 def apo(
@@ -45,22 +51,9 @@ def apo(
         apo = fastma - slowma
 
     # Offset
-    if offset != 0:
-        apo = apo.shift(offset)
+    apo = apply_offset(apo, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        apo.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                apo.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                apo.bfill(inplace=True)
+    apo = apply_fill(apo, **kwargs)
 
     # Name and Categorize it
     apo.name = f"APO_{fast}_{slow}"

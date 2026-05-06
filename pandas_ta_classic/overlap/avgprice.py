@@ -2,7 +2,7 @@
 # Average Price (AVGPRICE)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def avgprice(
@@ -29,8 +29,8 @@ def avgprice(
 
     result = 0.25 * (open_ + high + low + close)
 
-    if offset != 0:
-        result = result.shift(offset)
+    result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = "AVGPRICE"
     result.category = "overlap"
@@ -49,6 +49,10 @@ Args:
     low (pd.Series): Series of 'low' prices
     close (pd.Series): Series of 'close' prices
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

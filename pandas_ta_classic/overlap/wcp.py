@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def wcp(
@@ -34,22 +34,9 @@ def wcp(
         wcp = (high + low + 2 * close) / 4
 
     # Offset
-    if offset != 0:
-        wcp = wcp.shift(offset)
+    wcp = apply_offset(wcp, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        wcp.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                wcp.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                wcp.bfill(inplace=True)
+    wcp = apply_fill(wcp, **kwargs)
 
     # Name & Category
     wcp.name = "WCP"

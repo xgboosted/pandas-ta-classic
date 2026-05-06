@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.momentum import roc
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def pvt(
@@ -25,22 +31,9 @@ def pvt(
     pvt = pv.cumsum()
 
     # Offset
-    if offset != 0:
-        pvt = pvt.shift(offset)
+    pvt = apply_offset(pvt, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        pvt.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                pvt.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                pvt.bfill(inplace=True)
+    pvt = apply_fill(pvt, **kwargs)
 
     # Name and Categorize it
     pvt.name = f"PVT"

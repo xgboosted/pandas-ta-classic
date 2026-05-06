@@ -6,7 +6,13 @@ from pandas import Series
 
 logger = logging.getLogger(__name__)
 from .hlc3 import hlc3
-from pandas_ta_classic.utils import get_offset, is_datetime_ordered, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    is_datetime_ordered,
+    verify_series,
+)
 
 
 def vwap(
@@ -50,22 +56,9 @@ def vwap(
     vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
 
     # Offset
-    if offset != 0:
-        vwap = vwap.shift(offset)
+    vwap = apply_offset(vwap, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        vwap.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vwap.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vwap.bfill(inplace=True)
+    vwap = apply_fill(vwap, **kwargs)
 
     # Name & Category
     vwap.name = f"VWAP_{anchor}"

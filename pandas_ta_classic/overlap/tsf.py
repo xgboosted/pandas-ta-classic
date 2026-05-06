@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def tsf(
@@ -25,17 +25,9 @@ def tsf(
     result = linreg(close, length=length, tsf=True)
 
     # Offset
-    if offset != 0:
-        result = result.shift(offset)
+    result = apply_offset(result, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        result.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            result.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            result.bfill(inplace=True)
+    result = apply_fill(result, **kwargs)
 
     # Name and Categorize it
     result.name = f"TSF_{length}"

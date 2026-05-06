@@ -4,7 +4,13 @@ from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.volatility import rvi
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+)
 
 
 def inertia(
@@ -74,22 +80,9 @@ def inertia(
         return None
 
     # Offset
-    if offset != 0:
-        inertia = inertia.shift(offset)
+    inertia = apply_offset(inertia, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        inertia.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                inertia.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                inertia.bfill(inplace=True)
+    inertia = apply_fill(inertia, **kwargs)
 
     # Name & Category
     _props = f"_{length}_{rvi_length}"

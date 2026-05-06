@@ -7,7 +7,7 @@ from numpy import exp as npExp
 from numpy import pi as npPi
 from numpy import sqrt as npSqrt
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -77,22 +77,9 @@ def ssf(
     ssf = Series(ssf_arr, index=close.index)
 
     # Offset
-    if offset != 0:
-        ssf = ssf.shift(offset)
+    ssf = apply_offset(ssf, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        ssf.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ssf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ssf.bfill(inplace=True)
+    ssf = apply_fill(ssf, **kwargs)
 
     # Name & Category
     ssf.name = f"SSF_{length}_{poles}"

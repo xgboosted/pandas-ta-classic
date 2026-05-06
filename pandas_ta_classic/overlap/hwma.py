@@ -3,7 +3,7 @@
 from typing import Any, Optional
 import numpy as np
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -47,22 +47,9 @@ def hwma(
     hwma = Series(result, index=close.index)
 
     # Offset
-    if offset != 0:
-        hwma = hwma.shift(offset)
+    hwma = apply_offset(hwma, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        hwma.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                hwma.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                hwma.bfill(inplace=True)
+    hwma = apply_fill(hwma, **kwargs)
 
     # Name & Category
     suffix = f"{na}_{nb}_{nc}"

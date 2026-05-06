@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.trend.adx import adx
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def adxr(
@@ -51,25 +51,10 @@ def adxr(
     adxr_series = (adx_series + adx_series.shift(length - 1)) / 2
 
     # Offset
-    if offset != 0:
-        adxr_series = adxr_series.shift(offset)
-        dmp = dmp.shift(offset)
-        dmn = dmn.shift(offset)
+    adxr_series, dmp, dmn = apply_offset([adxr_series, dmp, dmn], offset)
 
     # Handle fills
-    if "fillna" in kwargs:
-        adxr_series.fillna(kwargs["fillna"], inplace=True)
-        dmp.fillna(kwargs["fillna"], inplace=True)
-        dmn.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            adxr_series.ffill(inplace=True)
-            dmp.ffill(inplace=True)
-            dmn.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            adxr_series.bfill(inplace=True)
-            dmp.bfill(inplace=True)
-            dmn.bfill(inplace=True)
+    adxr_series, dmp, dmn = apply_fill([adxr_series, dmp, dmn], **kwargs)
 
     # Name and Categorize it
     adxr_series.name = f"ADXR_{lensig}"

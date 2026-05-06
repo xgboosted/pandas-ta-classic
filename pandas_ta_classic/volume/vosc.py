@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def vosc(
@@ -37,18 +37,9 @@ def vosc(
     vosc_ = 100 * (fast_sma - slow_sma) / slow_sma
 
     # Offset
-    if offset != 0:
-        vosc_ = vosc_.shift(offset)
+    vosc_ = apply_offset(vosc_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        vosc_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                vosc_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                vosc_.bfill(inplace=True)
+    vosc_ = apply_fill(vosc_, **kwargs)
 
     # Name and Categorize it
     vosc_.name = f"VOSC_{fast}_{slow}"
@@ -73,6 +64,10 @@ Args:
     fast (int): Fast SMA period. Default: 14
     slow (int): Slow SMA period. Default: 28
     offset (int): Result offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series: VOSC values.

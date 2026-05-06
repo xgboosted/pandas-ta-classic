@@ -3,7 +3,13 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def bop(
@@ -40,22 +46,9 @@ def bop(
         bop = scalar * close_open_range / high_low_range
 
     # Offset
-    if offset != 0:
-        bop = bop.shift(offset)
+    bop = apply_offset(bop, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        bop.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bop.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bop.bfill(inplace=True)
+    bop = apply_fill(bop, **kwargs)
 
     # Name and Categorize it
     bop.name = f"BOP"

@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import arange as npArange
 from numpy import array_split as npArraySplit
 from pandas import cut, concat, DataFrame, Series
-from pandas_ta_classic.utils import signed_series, verify_series
+from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
 
 
 def vp(
@@ -84,19 +84,7 @@ def vp(
         vpdf = DataFrame(result)
     vpdf[total_volume_col] = vpdf[pos_volume_col] + vpdf[neg_volume_col]
 
-    # Handle fills
-    if "fillna" in kwargs:
-        vpdf.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                vpdf.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                vpdf.bfill(inplace=True)
+    vpdf = apply_fill(vpdf, **kwargs)
 
     # Name and Categorize it
     vpdf.name = f"VP_{width}"

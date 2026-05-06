@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from pandas import DataFrame, Series
 
-from ._core import get_offset, verify_series
+from ._core import apply_offset, get_offset, verify_series
 from ._math import zero
 
 logger = logging.getLogger(__name__)
@@ -39,8 +39,7 @@ def _above_below(
         current = current.astype(int)
 
     # Offset
-    if offset != 0:
-        current = current.shift(offset)
+    current = apply_offset(current, offset)
 
     # Name & Category
     current.name = f"{series_a.name}_{'A' if above else 'B'}_{series_b.name}"
@@ -157,8 +156,7 @@ def cross(
         cross = cross.astype(int)
 
     # Offset
-    if offset != 0:
-        cross = cross.shift(offset)
+    cross = apply_offset(cross, offset)
 
     # Name & Category
     cross.name = f"{series_a.name}_{'XA' if above else 'XB'}_{series_b.name}"
@@ -268,8 +266,7 @@ def crossany(
     if asint:
         result = result.astype(int)
 
-    if offset != 0:
-        result = result.shift(offset)
+    result = apply_offset(result, offset)
 
     result.name = f"{series_a.name}_X_{series_b.name}"
     result.category = "utility"
@@ -295,8 +292,7 @@ def lag(
 
     result = close.shift(period)
 
-    if offset != 0:
-        result = result.shift(offset)
+    result = apply_offset(result, offset)
 
     result.name = f"LAG_{period}"
     result.category = "utility"

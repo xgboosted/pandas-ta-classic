@@ -4,7 +4,14 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, verify_series, get_drift, zero
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+    zero,
+)
 
 
 def dm(
@@ -54,9 +61,8 @@ def dm(
             return None
 
     # Offset
-    if offset != 0:
-        pos = pos.shift(offset)
-        neg = neg.shift(offset)
+    pos, neg = apply_offset([pos, neg], offset)
+    pos, neg = apply_fill([pos, neg], **kwargs)
 
     _params = f"_{length}"
     data = {
@@ -110,6 +116,10 @@ Args:
         version. Default: True
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: DMP (+DM) and DMN (-DM) columns.

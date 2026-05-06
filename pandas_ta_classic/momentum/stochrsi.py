@@ -5,7 +5,13 @@ from pandas import DataFrame, Series
 from .rsi import rsi
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.utils import get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def stochrsi(
@@ -40,9 +46,7 @@ def stochrsi(
         )
         stochrsi_k = Series(fastk, index=close.index)
         stochrsi_d = Series(fastd, index=close.index)
-        if offset != 0:
-            stochrsi_k = stochrsi_k.shift(offset)
-            stochrsi_d = stochrsi_d.shift(offset)
+        stochrsi_k, stochrsi_d = apply_offset([stochrsi_k, stochrsi_d], offset)
         _name = "STOCHRSI"
         _props = f"_{length}_{rsi_length}_{k}_{d}"
         stochrsi_k.name = f"{_name}k{_props}"
@@ -72,33 +76,9 @@ def stochrsi(
         return None
 
     # Offset
-    if offset != 0:
-        stochrsi_k = stochrsi_k.shift(offset)
-        stochrsi_d = stochrsi_d.shift(offset)
+    stochrsi_k, stochrsi_d = apply_offset([stochrsi_k, stochrsi_d], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        stochrsi_k.fillna(kwargs["fillna"], inplace=True)
-        stochrsi_d.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stochrsi_k.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stochrsi_k.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                stochrsi_d.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                stochrsi_d.bfill(inplace=True)
+    stochrsi_k, stochrsi_d = apply_fill([stochrsi_k, stochrsi_d], **kwargs)
 
     # Name and Categorize it
     _name = "STOCHRSI"

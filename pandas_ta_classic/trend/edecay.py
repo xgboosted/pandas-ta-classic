@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from numpy import exp as npExp, maximum
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def edecay(
@@ -37,8 +37,9 @@ def edecay(
 
     result = Series(result, index=close.index)
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = f"EDECAY_{length}"
     result.category = "trend"
@@ -57,6 +58,10 @@ Args:
     length (int): Period. Default: 5.
     offset (int): Number of periods to offset the result. Default: 0.
 
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
 Returns:
     pd.Series: Exponential decay series.
 """
@@ -74,6 +79,10 @@ Args:
     close (pd.Series): Series of 'close' prices
     length (int): Decay period. Default: 5
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

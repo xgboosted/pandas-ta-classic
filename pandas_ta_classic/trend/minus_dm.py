@@ -3,7 +3,14 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series, zero
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    verify_series,
+    zero,
+)
 
 
 def minus_dm(
@@ -46,8 +53,9 @@ def minus_dm(
             return None
         result = result * length  # Wilder's raw DM
 
-    if offset != 0:
-        result = result.shift(offset)
+    # Offset
+    result = apply_offset(result, offset)
+    result = apply_fill(result, **kwargs)
 
     result.name = f"MINUS_DM_{length}"
     result.category = "trend"
@@ -67,6 +75,10 @@ Args:
     talib (bool): Use TA-Lib C library if installed. Default: True
     drift (int): Difference period. Default: 1
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

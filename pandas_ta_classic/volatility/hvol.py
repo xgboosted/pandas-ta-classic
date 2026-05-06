@@ -5,7 +5,7 @@ from typing import Any, Optional
 from numpy import log as npLog, sqrt as npSqrt
 from pandas import Series
 
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def hvol(
@@ -31,18 +31,9 @@ def hvol(
     hvol_ = 100 * log_returns.rolling(length).std(ddof=1) * npSqrt(annualization)
 
     # Offset
-    if offset != 0:
-        hvol_ = hvol_.shift(offset)
+    hvol_ = apply_offset(hvol_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        hvol_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                hvol_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                hvol_.bfill(inplace=True)
+    hvol_ = apply_fill(hvol_, **kwargs)
 
     # Name and Categorize it
     hvol_.name = f"HVOL_{length}"
@@ -68,6 +59,10 @@ Args:
     length (int): Lookback period for std dev. Default: 20
     annualization (float): Annualization factor. Default: 252 (trading days/year)
     offset (int): Result offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series: HVOL values (annualized %).

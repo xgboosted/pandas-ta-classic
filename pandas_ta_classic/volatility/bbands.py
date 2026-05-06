@@ -5,7 +5,14 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics import stdev
-from pandas_ta_classic.utils import get_offset, non_zero_range, tal_ma, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_offset,
+    non_zero_range,
+    tal_ma,
+    verify_series,
+)
 
 
 def bbands(
@@ -54,66 +61,13 @@ def bbands(
     percent = non_zero_range(close, lower) / ulr
 
     # Offset
-    if offset != 0:
-        lower = lower.shift(offset)
-        mid = mid.shift(offset)
-        upper = upper.shift(offset)
-        bandwidth = bandwidth.shift(offset)
-        percent = percent.shift(offset)
+    lower, mid, upper, bandwidth, percent = apply_offset(
+        [lower, mid, upper, bandwidth, percent], offset
+    )
 
-    # Handle fills
-    if "fillna" in kwargs:
-        lower.fillna(kwargs["fillna"], inplace=True)
-        mid.fillna(kwargs["fillna"], inplace=True)
-        upper.fillna(kwargs["fillna"], inplace=True)
-        bandwidth.fillna(kwargs["fillna"], inplace=True)
-        percent.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                lower.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                lower.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                mid.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                mid.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                upper.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                upper.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                bandwidth.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                bandwidth.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                percent.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                percent.bfill(inplace=True)
+    lower, mid, upper, bandwidth, percent = apply_fill(
+        [lower, mid, upper, bandwidth, percent], **kwargs
+    )
 
     # Name and Categorize it
     lower.name = f"BBL_{length}_{std}"

@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pandas import Series
 
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def cvi(
@@ -34,18 +34,9 @@ def cvi(
     cvi_ = 100 * (ema_hl - ema_hl.shift(length)) / ema_hl.shift(length)
 
     # Offset
-    if offset != 0:
-        cvi_ = cvi_.shift(offset)
+    cvi_ = apply_offset(cvi_, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        cvi_.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                cvi_.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                cvi_.bfill(inplace=True)
+    cvi_ = apply_fill(cvi_, **kwargs)
 
     # Name and Categorize it
     cvi_.name = f"CVI_{length}"
@@ -74,6 +65,10 @@ Args:
     low (pd.Series): Low price series.
     length (int): EMA period and lookback. Default: 10
     offset (int): Result offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series: CVI values.

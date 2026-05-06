@@ -2,7 +2,14 @@
 # BRAR (Bull and Bear Ratio)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.utils import get_drift, get_offset, non_zero_range, verify_series
+from pandas_ta_classic.utils import (
+    apply_fill,
+    apply_offset,
+    get_drift,
+    get_offset,
+    non_zero_range,
+    verify_series,
+)
 
 
 def brar(
@@ -46,33 +53,9 @@ def brar(
     br /= cyl.rolling(length).sum()
 
     # Offset
-    if offset != 0:
-        ar = ar.shift(offset)
-        br = br.shift(offset)
+    ar, br = apply_offset([ar, br], offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        ar.fillna(kwargs["fillna"], inplace=True)
-        br.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                ar.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                ar.bfill(inplace=True)
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                br.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                br.bfill(inplace=True)
+    ar, br = apply_fill([ar, br], **kwargs)
 
     # Name and Categorize it
     _props = f"_{length}"

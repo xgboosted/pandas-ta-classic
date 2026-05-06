@@ -7,7 +7,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 # TA-Lib MA type integer → string kind for native fallback
 _MATYPE_TO_KIND = {
@@ -103,20 +103,14 @@ def macdext(
     histogram_series = Series(np.array(histogram, dtype=float), index=close.index)
 
     # Offset
-    if offset != 0:
-        macd_series = macd_series.shift(offset)
-        signal_series = signal_series.shift(offset)
-        histogram_series = histogram_series.shift(offset)
+    macd_series, signal_series, histogram_series = apply_offset(
+        [macd_series, signal_series, histogram_series], offset
+    )
 
     # Handle fills
-    for s in (macd_series, signal_series, histogram_series):
-        if "fillna" in kwargs:
-            s.fillna(kwargs["fillna"], inplace=True)
-        if "fill_method" in kwargs:
-            if kwargs["fill_method"] == "ffill":
-                s.ffill(inplace=True)
-            elif kwargs["fill_method"] == "bfill":
-                s.bfill(inplace=True)
+    macd_series, signal_series, histogram_series = apply_fill(
+        [macd_series, signal_series, histogram_series], **kwargs
+    )
 
     # Name and Categorize
     _params = f"_{fast}_{slow}_{signal}"
@@ -162,6 +156,10 @@ Args:
     signalmatype (int): MA type for signal line. Default: 1 (EMA).
     talib (bool): Use TA-Lib if available. Default: True.
     offset (int): Number of periods to offset. Default: 0.
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: Columns MACDEXT_{f}_{s}_{sig}, MACDEXTs_{f}_{s}_{sig},

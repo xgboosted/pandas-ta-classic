@@ -8,7 +8,7 @@ from numpy import pi as npPi
 from pandas import Series
 
 npNaN = np.nan
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def linreg(
@@ -72,17 +72,9 @@ def linreg(
     )
 
     # Offset
-    if offset != 0:
-        linreg = linreg.shift(offset)
+    linreg = apply_offset(linreg, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        linreg.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if kwargs["fill_method"] == "ffill":
-            linreg.ffill(inplace=True)
-        elif kwargs["fill_method"] == "bfill":
-            linreg.bfill(inplace=True)
+    linreg = apply_fill(linreg, **kwargs)
 
     # Name and Categorize it
     name = "LR"

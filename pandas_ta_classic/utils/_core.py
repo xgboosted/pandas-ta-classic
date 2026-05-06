@@ -29,6 +29,51 @@ def category_files(category: str) -> List[str]:
     return files
 
 
+def apply_offset(
+    series: Union[Series, DataFrame, List[Union[Series, DataFrame]]],
+    offset: int = 0,
+) -> Union[Series, DataFrame, List[Union[Series, DataFrame]]]:
+    """Shift one or more Series/DataFrames by *offset* periods.
+
+    Args:
+        series: A single Series/DataFrame, or a list of them.
+        offset: Number of periods to shift. ``0`` means no shift.
+
+    Returns:
+        The shifted object(s), same type structure as *series*.
+    """
+    if isinstance(series, (list, tuple)):
+        return [apply_offset(s, offset) for s in series]
+    return series.shift(offset) if offset != 0 else series
+
+
+def apply_fill(
+    series: Union[Series, DataFrame, List[Union[Series, DataFrame]]],
+    **kwargs: Any,
+) -> Union[Series, DataFrame, List[Union[Series, DataFrame]]]:
+    """Apply fillna and fill_method from kwargs to one or more Series/DataFrames.
+
+    Args:
+        series: A single Series/DataFrame, or a list of them.
+        **kwargs: Recognised keys:
+            ``fillna`` -- value passed to ``Series.fillna()``.
+            ``fill_method`` -- ``"ffill"`` or ``"bfill"``.
+
+    Returns:
+        The processed object(s), same type structure as *series*.
+    """
+    if isinstance(series, (list, tuple)):
+        return [apply_fill(s, **kwargs) for s in series]
+    if "fillna" in kwargs:
+        series.fillna(kwargs["fillna"], inplace=True)
+    fill_method = kwargs.get("fill_method")
+    if fill_method == "ffill":
+        series.ffill(inplace=True)
+    elif fill_method == "bfill":
+        series.bfill(inplace=True)
+    return series
+
+
 def get_drift(x: Optional[int]) -> int:
     """Returns an int if not zero, otherwise defaults to one."""
     return int(x) if isinstance(x, int) and x != 0 else 1

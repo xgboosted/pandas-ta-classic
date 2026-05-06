@@ -4,7 +4,7 @@ from typing import Any, Optional
 from numpy import arctan as npAtan
 from numpy import pi as npPi
 from pandas import Series
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def slope(
@@ -35,22 +35,9 @@ def slope(
             slope *= 180 / npPi
 
     # Offset
-    if offset != 0:
-        slope = slope.shift(offset)
+    slope = apply_offset(slope, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        slope.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        if "fill_method" in kwargs:
-
-            if kwargs["fill_method"] == "ffill":
-
-                slope.ffill(inplace=True)
-
-            elif kwargs["fill_method"] == "bfill":
-
-                slope.bfill(inplace=True)
+    slope = apply_fill(slope, **kwargs)
 
     # Name and Categorize it
     slope.name = (
