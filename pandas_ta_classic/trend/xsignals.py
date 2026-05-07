@@ -54,8 +54,6 @@ def xsignals(
     df = tsignals(trends, **tskwargs)
 
     # Offset handled by tsignals
-    DataFrame({f"XS_LONG": df.TS_Trends, f"XS_SHORT": 1 - df.TS_Trends})
-
     df = apply_fill(df, **kwargs)
 
     # Name & Category

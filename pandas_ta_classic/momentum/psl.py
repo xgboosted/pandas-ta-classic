@@ -35,6 +35,8 @@ def psl(
     # Calculate Result
     if open_ is not None:
         open_ = verify_series(open_)
+        if open_ is None:
+            return None
         diff = npSign(close - open_)
     else:
         diff = npSign(close.diff(drift))
