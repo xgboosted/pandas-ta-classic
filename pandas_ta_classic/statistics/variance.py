@@ -9,6 +9,36 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
+def _numpy_rolling_variance(values, length, ddof, min_periods):
+    """Compute rolling variance using NumPy, respecting *min_periods*.
+
+    For windows of size *length* and beyond the standard
+    :func:`numpy.lib.stride_tricks.sliding_window_view` approach is used.
+    When *min_periods* is smaller than *length* the leading partial windows
+    are filled individually so that they are not left as ``NaN``.
+
+    Args:
+        values (np.ndarray): 1-D float64 price array.
+        length (int): Rolling window size.
+        ddof (int): Delta degrees of freedom passed to ``ndarray.var``.
+        min_periods (int): Minimum number of observations required to produce
+            a non-NaN result.
+
+    Returns:
+        np.ndarray: Rolling variance array of the same length as *values*.
+    """
+    n = len(values)
+    result_arr = np.full(n, np.nan, dtype=np.float64)
+    if n >= length:
+        windows = sliding_window_view(values, length)
+        result_arr[length - 1 :] = windows.var(axis=1, ddof=ddof)
+    if min_periods < length:
+        for pos in range(min_periods - 1, min(length - 1, n)):
+            w = values[: pos + 1]
+            result_arr[pos] = w.var(ddof=ddof) if len(w) > ddof else np.nan
+    return result_arr
+
+
 def variance(
     close: Series,
     length: Optional[int] = None,
@@ -39,17 +69,9 @@ def variance(
 
         variance = VAR(close, length)
     else:
-        # Pure numpy for cross-version determinism.
-        values = close.values.astype(np.float64)
-        n = len(values)
-        result_arr = np.full(n, np.nan, dtype=np.float64)
-        if n >= length:
-            windows = sliding_window_view(values, length)
-            result_arr[length - 1 :] = windows.var(axis=1, ddof=ddof)
-        if min_periods < length:
-            for pos in range(min_periods - 1, min(length - 1, n)):
-                w = values[: pos + 1]
-                result_arr[pos] = w.var(ddof=ddof) if len(w) > ddof else np.nan
+        result_arr = _numpy_rolling_variance(
+            close.values.astype(np.float64), length, ddof, min_periods
+        )
         variance = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset

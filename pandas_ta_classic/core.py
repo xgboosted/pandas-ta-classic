@@ -193,6 +193,22 @@ class BasePandasObject(PandasObject):
         raise NotImplementedError()
 
 
+def _append_dataframe(df, result, kwargs):
+    """Append a DataFrame *result* to *df*, honouring optional col_names in *kwargs*."""
+    if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
+        if len(kwargs["col_names"]) >= len(result.columns):
+            for col, ind_name in zip(result.columns, kwargs["col_names"]):
+                df[ind_name] = result.loc[:, col]
+        else:
+            logger.error(
+                f"Not enough col_names were specified: got {len(kwargs['col_names'])}, expected {len(result.columns)}."
+            )
+            return
+    else:
+        for i, column in enumerate(result.columns):
+            df[column] = result.iloc[:, i]
+
+
 # Pandas TA - DataFrame Analysis Indicators
 @pd.api.extensions.register_dataframe_accessor("ta")
 class AnalysisIndicators(BasePandasObject):
@@ -438,42 +454,23 @@ class AnalysisIndicators(BasePandasObject):
 
     def _append(self, result=None, **kwargs) -> None:
         """Appends a Pandas Series or DataFrame columns to self._df."""
-        if "append" in kwargs and kwargs["append"]:
-            df = self._df
-            if df is None or result is None:
-                return
-            else:
-                simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
-                if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
-                    kwargs["col_names"] = (
-                        kwargs["col_names"],
-                    )  # Note: tuple(kwargs["col_names"]) doesn't work
-
-                if isinstance(result, pd.DataFrame):
-                    # If specified in kwargs, rename the columns.
-                    # If not, use the default names.
-                    if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
-                        if len(kwargs["col_names"]) >= len(result.columns):
-                            for col, ind_name in zip(
-                                result.columns, kwargs["col_names"]
-                            ):
-                                df[ind_name] = result.loc[:, col]
-                        else:
-                            logger.error(
-                                f"Not enough col_names were specified: got {len(kwargs['col_names'])}, expected {len(result.columns)}."
-                            )
-                            return
-                    else:
-                        for i, column in enumerate(result.columns):
-                            df[column] = result.iloc[:, i]
-                else:
-                    ind_name = (
-                        kwargs["col_names"][0]
-                        if "col_names" in kwargs
-                        and isinstance(kwargs["col_names"], tuple)
-                        else result.name
-                    )
-                    df[ind_name] = result
+        if not kwargs.get("append"):
+            return
+        df = self._df
+        if df is None or result is None:
+            return
+        simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+        if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
+            kwargs["col_names"] = (kwargs["col_names"],)
+        if isinstance(result, pd.DataFrame):
+            _append_dataframe(df, result, kwargs)
+        else:
+            ind_name = (
+                kwargs["col_names"][0]
+                if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple)
+                else result.name
+            )
+            df[ind_name] = result
 
     def _check_na_columns(self, stdout: bool = True):
         """Returns the columns in which all it's values are na."""
@@ -549,27 +546,27 @@ class AnalysisIndicators(BasePandasObject):
 
     def _strategy_mode(self, *args) -> tuple:
         """Helper method to determine the mode and name of the strategy. Returns tuple: (name:str, mode:dict)"""
+        if len(args) == 0:
+            return "All", {"all": True, "category": False, "custom": False}
+        return self._resolve_strategy_args(args[0])
+
+    def _resolve_strategy_args(self, arg) -> tuple:
+        """Resolve (name, mode) from a single strategy argument (str or Strategy)."""
         name = "All"
         mode = {"all": False, "category": False, "custom": False}
-
-        if len(args) == 0:
-            mode["all"] = True
-        else:
-            if isinstance(args[0], str):
-                if args[0].lower() == "all":
-                    name, mode["all"] = name, True
-                if args[0].lower() in self.categories:
-                    name, mode["category"] = args[0], True
-
-            if isinstance(args[0], Strategy):
-                strategy_ = args[0]
-                if strategy_.ta is None or strategy_.name.lower() == "all":
-                    name, mode["all"] = name, True
-                elif strategy_.name.lower() in self.categories:
-                    name, mode["category"] = strategy_.name, True
-                else:
-                    name, mode["custom"] = strategy_.name, True
-
+        if isinstance(arg, str):
+            if arg.lower() == "all":
+                name, mode["all"] = name, True
+            if arg.lower() in self.categories:
+                name, mode["category"] = arg, True
+        if isinstance(arg, Strategy):
+            strategy_ = arg
+            if strategy_.ta is None or strategy_.name.lower() == "all":
+                name, mode["all"] = name, True
+            elif strategy_.name.lower() in self.categories:
+                name, mode["category"] = strategy_.name, True
+            else:
+                name, mode["custom"] = strategy_.name, True
         return name, mode
 
     # Public DataFrame Methods

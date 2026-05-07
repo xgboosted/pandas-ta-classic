@@ -15,6 +15,34 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _stochf_native(high, low, close, fastk, fastd, mamode):
+    """Compute Stochastic Fast natively (no TA-Lib).
+
+    Args:
+        high (Series): High price series.
+        low (Series): Low price series.
+        close (Series): Close price series.
+        fastk (int): Fast %K look-back period.
+        fastd (int): Fast %D smoothing period.
+        mamode (str): MA type for %D smoothing.
+
+    Returns:
+        tuple[Series, Series] | None: ``(fastk_, fastd_)`` or *None* when
+        the %D MA computation fails.
+    """
+    lowest_low = low.rolling(fastk).min()
+    highest_high = high.rolling(fastk).max()
+    fastk_ = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
+    fastk_first_valid = fastk_.first_valid_index()
+    if fastk_first_valid is None:
+        fastd_ = fastk_.copy()
+    else:
+        fastd_ = ma(mamode, fastk_.loc[fastk_first_valid:,], length=fastd)
+        if fastd_ is None:
+            return None
+    return fastk_, fastd_
+
+
 def stochf(
     high: Series,
     low: Series,
@@ -47,17 +75,10 @@ def stochf(
 
         fastk_, fastd_ = TASTOCHF(high, low, close, fastk, fastd)
     else:
-        lowest_low = low.rolling(fastk).min()
-        highest_high = high.rolling(fastk).max()
-
-        fastk_ = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
-        fastk_first_valid = fastk_.first_valid_index()
-        if fastk_first_valid is None:
-            fastd_ = fastk_.copy()
-        else:
-            fastd_ = ma(mamode, fastk_.loc[fastk_first_valid:,], length=fastd)
-            if fastd_ is None:
-                return None
+        result = _stochf_native(high, low, close, fastk, fastd, mamode)
+        if result is None:
+            return None
+        fastk_, fastd_ = result
 
     # Offset
     fastk_, fastd_ = apply_offset([fastk_, fastd_], offset)

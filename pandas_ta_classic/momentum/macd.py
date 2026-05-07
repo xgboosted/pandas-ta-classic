@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Moving Average Convergence Divergence (MACD)
 from typing import Any, Optional
 import numpy as np
@@ -14,6 +13,38 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _pos_int(val, default):
+    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
+    return int(val) if val and val > 0 else default
+
+
+def _ema_aligned(arr, m, period, seed_end):
+    """EMA with SMA seed at *seed_end*, matching TA-Lib behaviour.
+
+    The seed SMA is computed over the *period* bars ending at *seed_end*; the
+    EMA is then propagated forward from that point.
+
+    Args:
+        arr (np.ndarray): 1-D float array of price values.
+        m (int): Total length of *arr*.
+        period (int): EMA smoothing period.
+        seed_end (int): Index at which the SMA seed is placed.
+
+    Returns:
+        np.ndarray: EMA array of length *m*; positions before *seed_end* are
+            ``NaN``.
+    """
+    result = np.full(m, np.nan)
+    k = 2.0 / (period + 1)
+    start = seed_end - period + 1
+    if start < 0 or seed_end >= m:
+        return result
+    result[seed_end] = arr[start : seed_end + 1].mean()
+    for i in range(seed_end + 1, m):
+        result[i] = k * arr[i] + (1 - k) * result[i - 1]
+    return result
+
+
 def macd(
     close: Series,
     fast: Optional[int] = None,
@@ -25,9 +56,9 @@ def macd(
 ) -> Optional[DataFrame]:
     """Indicator: Moving Average, Convergence/Divergence (MACD)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 12
-    slow = int(slow) if slow and slow > 0 else 26
-    signal = int(signal) if signal and signal > 0 else 9
+    fast = _pos_int(fast, 12)
+    slow = _pos_int(slow, 26)
+    signal = _pos_int(signal, 9)
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))
@@ -45,19 +76,6 @@ def macd(
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)
     else:
-
-        def _ema_aligned(arr, m, period, seed_end):
-            """EMA with SMA seed at a specific index, matching TA-Lib."""
-            result = np.full(m, np.nan)
-            k = 2.0 / (period + 1)
-            start = seed_end - period + 1
-            if start < 0 or seed_end >= m:
-                return result
-            result[seed_end] = arr[start : seed_end + 1].mean()
-            for i in range(seed_end + 1, m):
-                result[i] = k * arr[i] + (1 - k) * result[i - 1]
-            return result
-
         c_arr = close.to_numpy(dtype=float)
         m = c_arr.shape[0]
         # TA-Lib seeds the fast EMA at its own lookback (fast-1) and the slow

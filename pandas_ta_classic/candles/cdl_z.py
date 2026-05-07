@@ -54,7 +54,7 @@ def cdl_z(
     )
 
     if full:
-        df.fillna(method="backfill", axis=0, inplace=True)
+        df.bfill(axis=0, inplace=True)
 
     # Offset
     df = apply_offset(df, offset)

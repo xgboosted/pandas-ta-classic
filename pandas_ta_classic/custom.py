@@ -83,6 +83,61 @@ def get_module_functions(module):
     return module_functions
 
 
+def _load_and_bind_module(module_path, dirname, category_dir, verbose):
+    """Load one indicator module from *module_path* and bind it to
+    ``pandas_ta_classic``.
+
+    The function (re)loads the Python file at *module_path*, looks up the
+    mandatory ``<name>`` and ``<name>_method`` callables, registers the
+    indicator in the appropriate category, and binds it via :func:`bind`.
+    Errors are logged but do not raise exceptions so that a single broken
+    module does not abort the entire import pass.
+
+    Args:
+        module_path (str): Absolute path to the ``.py`` file to load.
+        dirname (str): Category sub-directory name (e.g. ``"trend"``).
+        category_dir (str): Absolute path to the category directory; added to
+            :data:`sys.path` when not already present.
+        verbose (bool): Whether to emit info-level log messages on success.
+    """
+    module_name = splitext(basename(module_path))[0]
+
+    if category_dir not in sys.path:
+        sys.path.append(category_dir)
+
+    module_functions = load_indicator_module(module_name)
+
+    fcn_callable = module_functions.get(module_name)
+    fcn_method_callable = module_functions.get(f"{module_name}_method")
+
+    if fcn_callable is None:
+        logger.error(
+            "Unable to find a function named '%s' in the module '%s.py'.",
+            module_name,
+            module_name,
+        )
+        return
+    if fcn_method_callable is None:
+        missing_method = f"{module_name}_method"
+        logger.error(
+            "Unable to find a method function named '%s' in the module '%s.py'.",
+            missing_method,
+            module_name,
+        )
+        return
+
+    if module_name not in pandas_ta_classic.Category[dirname]:
+        pandas_ta_classic.Category[dirname].append(module_name)
+
+    bind(module_name, fcn_callable, fcn_method_callable)
+    if verbose:
+        logger.info(
+            "Successfully imported the custom indicator '%s' into category '%s'.",
+            module_path,
+            dirname,
+        )
+
+
 def import_dir(path, verbose=True):
     # ensure that the passed directory exists / is readable
     if not exists(path):
@@ -105,48 +160,9 @@ def import_dir(path, verbose=True):
                 )
             continue
 
-        # for each module found in that category (directory)...
+        # for each module found in that category (directory), load and bind
         for module in glob(abspath(join(path, dirname, "*.py"))):
-            module_name = splitext(basename(module))[0]
-
-            # ensure that the supplied path is included in our python path
-            if d not in sys.path:
-                sys.path.append(d)
-
-            # (re)load the indicator module
-            module_functions = load_indicator_module(module_name)
-
-            # figure out which of the modules functions to bind to pandas_ta_classic
-            fcn_callable = module_functions.get(module_name, None)
-            fcn_method_callable = module_functions.get(f"{module_name}_method", None)
-
-            if fcn_callable is None:
-                logger.error(
-                    "Unable to find a function named '%s' in the module '%s.py'.",
-                    module_name,
-                    module_name,
-                )
-                continue
-            if fcn_method_callable is None:
-                missing_method = f"{module_name}_method"
-                logger.error(
-                    "Unable to find a method function named '%s' in the module '%s.py'.",
-                    missing_method,
-                    module_name,
-                )
-                continue
-
-            # add it to the correct category if it's not there yet
-            if module_name not in pandas_ta_classic.Category[dirname]:
-                pandas_ta_classic.Category[dirname].append(module_name)
-
-            bind(module_name, fcn_callable, fcn_method_callable)
-            if verbose:
-                logger.info(
-                    "Successfully imported the custom indicator '%s' into category '%s'.",
-                    module,
-                    dirname,
-                )
+            _load_and_bind_module(module, dirname, d, verbose)
 
 
 import_dir.__doc__ = """

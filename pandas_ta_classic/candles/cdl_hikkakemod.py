@@ -13,6 +13,37 @@ from pandas_ta_classic.candles._cdl_math import (
 import numpy as np
 
 
+def _hikkakemod_is_setup(H, L, C, near_total, i):
+    """Check if bars at index i form a modified Hikkake setup with near condition."""
+    avg = AVG_FACTOR[CandleSetting.Near]
+    return (
+        H[i - 2] < H[i - 3]
+        and L[i - 2] > L[i - 3]
+        and H[i - 1] < H[i - 2]
+        and L[i - 1] > L[i - 2]
+        and (
+            (
+                H[i] < H[i - 1]
+                and L[i] < L[i - 1]
+                and C[i - 2] <= L[i - 2] + avg * near_total
+            )
+            or (
+                H[i] > H[i - 1]
+                and L[i] > L[i - 1]
+                and C[i - 2] >= H[i - 2] - avg * near_total
+            )
+        )
+    )
+
+
+def _hikkakemod_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
+    """Check if bar i confirms a previously detected modified Hikkake pattern."""
+    return i <= pattern_idx + 3 and (
+        (pattern_result > 0 and C[i] > H[pattern_idx - 1])
+        or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
+    )
+
+
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: max(1, TA_CANDLEAVGPERIOD(Near)) + 5
     near_period = candle_avg_period(CandleSetting.Near)
@@ -43,40 +74,12 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
     # Warm-up: scan the 3 bars before start_idx
     for i in range(start_idx - 3, start_idx):
-        if (
-            # 2nd: lower high and higher low than 1st
-            H[i - 2] < H[i - 3]
-            and L[i - 2] > L[i - 3]
-            # 3rd: lower high and higher low than 2nd
-            and H[i - 1] < H[i - 2]
-            and L[i - 1] > L[i - 2]
-            and (
-                (
-                    # (bull) 4th: lower high and lower low
-                    H[i] < H[i - 1]
-                    and L[i] < L[i - 1]
-                    # (bull) 2nd: close near the low
-                    and C[i - 2]
-                    <= L[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total
-                )
-                or (
-                    # (bear) 4th: higher high and higher low
-                    H[i] > H[i - 1]
-                    and L[i] > L[i - 1]
-                    # (bear) 2nd: close near the top
-                    and C[i - 2]
-                    >= H[i - 2] - AVG_FACTOR[CandleSetting.Near] * near_total
-                )
-            )
-        ):
+        if _hikkakemod_is_setup(H, L, C, near_total, i):
             pattern_result = 100 * (1 if H[i] < H[i - 1] else -1)
             pattern_idx = i
         else:
             # Search for confirmation
-            if i <= pattern_idx + 3 and (
-                (pattern_result > 0 and C[i] > H[pattern_idx - 1])
-                or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
-            ):
+            if _hikkakemod_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
                 pattern_idx = 0
 
         near_total += arr_nr[i - 2] - arr_nr[near_trail - 2]
@@ -84,39 +87,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
     # Main loop
     for i in range(start_idx, len(out)):
-        if (
-            # 2nd: lower high and higher low than 1st
-            H[i - 2] < H[i - 3]
-            and L[i - 2] > L[i - 3]
-            # 3rd: lower high and higher low than 2nd
-            and H[i - 1] < H[i - 2]
-            and L[i - 1] > L[i - 2]
-            and (
-                (
-                    # (bull) 4th: lower high and lower low
-                    H[i] < H[i - 1]
-                    and L[i] < L[i - 1]
-                    # (bull) 2nd: close near the low
-                    and C[i - 2]
-                    <= L[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total
-                )
-                or (
-                    # (bear) 4th: higher high and higher low
-                    H[i] > H[i - 1]
-                    and L[i] > L[i - 1]
-                    # (bear) 2nd: close near the top
-                    and C[i - 2]
-                    >= H[i - 2] - AVG_FACTOR[CandleSetting.Near] * near_total
-                )
-            )
-        ):
+        if _hikkakemod_is_setup(H, L, C, near_total, i):
             pattern_result = 100 * (1 if H[i] < H[i - 1] else -1)
             pattern_idx = i
             out[i] = pattern_result
-        elif i <= pattern_idx + 3 and (
-            (pattern_result > 0 and C[i] > H[pattern_idx - 1])
-            or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
-        ):
+        elif _hikkakemod_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
             out[i] = pattern_result + 100 * (1 if pattern_result > 0 else -1)
             pattern_idx = 0
 

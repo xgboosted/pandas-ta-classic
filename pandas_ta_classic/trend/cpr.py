@@ -12,6 +12,67 @@ from pandas_ta_classic.utils._cpr import (
 )
 
 
+def _any_none(*args):
+    return any(x is None for x in args)
+
+
+def _cpr_add_level(pivot_result, data, level):
+    """Add one named pivot level series to *data* if present in *pivot_result*."""
+    key = level.lower()
+    if key in pivot_result:
+        s = pivot_result[key]
+        s.name = f"CPR_{level}"
+        s.category = "trend"
+        data[s.name] = s
+
+
+def _cpr_offset_and_fill(series_dict, offset, **kwargs):
+    """Apply offset and fill to every Series in *series_dict* in-place."""
+    for key in list(series_dict):
+        series_dict[key] = apply_offset(series_dict[key], offset)
+    keys = list(series_dict)
+    filled = apply_fill([series_dict[k] for k in keys], **kwargs)
+    for i, key in enumerate(keys):
+        series_dict[key] = filled[i]
+
+
+def _cpr_build_dataframe(
+    pivot_result, levels, width_analysis, price_position, virgin_cpr
+):
+    """Build and return the CPR result DataFrame from *pivot_result*."""
+    tc, pivot, bc = pivot_result["tc"], pivot_result["pivot"], pivot_result["bc"]
+    tc.name, pivot.name, bc.name = "CPR_TC", "CPR_PIVOT", "CPR_BC"
+    tc.category = pivot.category = bc.category = "trend"
+    data = {tc.name: tc, pivot.name: pivot, bc.name: bc}
+    if levels in ["standard", "extended", "all"]:
+        for level in ["R1", "R2", "S1", "S2"]:
+            _cpr_add_level(pivot_result, data, level)
+    if levels in ["extended", "all"]:
+        for level in ["R3", "R4", "S3", "S4"]:
+            _cpr_add_level(pivot_result, data, level)
+    if width_analysis:
+        for key, name in [
+            ("width", "CPR_WIDTH"),
+            ("width_pct", "CPR_WIDTH_PCT"),
+            ("width_class", "CPR_WIDTH_CLASS"),
+        ]:
+            pivot_result[key].name = name
+            pivot_result[key].category = "trend"
+            data[name] = pivot_result[key]
+    if price_position:
+        pivot_result["position"].name = "CPR_POSITION"
+        pivot_result["position"].category = "trend"
+        data["CPR_POSITION"] = pivot_result["position"]
+    if virgin_cpr:
+        pivot_result["virgin"].name = "CPR_VIRGIN"
+        pivot_result["virgin"].category = "trend"
+        data["CPR_VIRGIN"] = pivot_result["virgin"]
+    cprdf = DataFrame(data)
+    cprdf.name = "CPR"
+    cprdf.category = "trend"
+    return cprdf
+
+
 def cpr(
     open: Series,
     high: Series,
@@ -49,7 +110,7 @@ def cpr(
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if open is None or high is None or low is None or close is None:
+    if _any_none(open, high, low, close):
         return None
 
     # Prepare DataFrame for OHLCV processing
@@ -82,127 +143,32 @@ def cpr(
             prev_high, prev_low, prev_close, prev_open, levels
         )
 
-    tc = pivot_result["tc"]
-    pivot = pivot_result["pivot"]
-    bc = pivot_result["bc"]
+    tc, pivot, bc = pivot_result["tc"], pivot_result["pivot"], pivot_result["bc"]
 
-    # Optional analysis
-    width = width_pct = width_class = None
+    # Optional analysis (stored directly in pivot_result for unified offset/fill)
     if width_analysis:
-        width, width_pct, width_class = calculate_cpr_width(
+        (
+            pivot_result["width"],
+            pivot_result["width_pct"],
+            pivot_result["width_class"],
+        ) = calculate_cpr_width(
             tc,
             bc,
             pivot,
             narrow_threshold=kwargs.pop("width_narrow", 0.5),
             wide_threshold=kwargs.pop("width_wide", 1.5),
         )
-
-    position = None
     if price_position:
-        position = calculate_price_position(close, tc, bc)
-
-    virgin = None
+        pivot_result["position"] = calculate_price_position(close, tc, bc)
     if virgin_cpr:
-        virgin_lookforward = kwargs.pop("virgin_lookforward", 5)
-        virgin = detect_virgin_cpr(high, low, tc, bc, lookforward=virgin_lookforward)
-
-    # Offset
-    tc, pivot, bc = apply_offset([tc, pivot, bc], offset)
-    for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-        if key in pivot_result:
-            pivot_result[key] = apply_offset(pivot_result[key], offset)
-    if width_analysis:
-        width, width_pct, width_class = apply_offset(
-            [width, width_pct, width_class], offset
+        pivot_result["virgin"] = detect_virgin_cpr(
+            high, low, tc, bc, lookforward=kwargs.pop("virgin_lookforward", 5)
         )
-    if price_position:
-        position = apply_offset(position, offset)
-    if virgin_cpr:
-        virgin = apply_offset(virgin, offset)
 
-    # Handle fills
-    _fill_all = [tc, pivot, bc]
-    for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-        if key in pivot_result:
-            _fill_all.append(pivot_result[key])
-    if width_analysis:
-        _fill_all.extend([width, width_pct])
-    if price_position and position is not None:
-        _fill_all.append(position)
-    if virgin_cpr and virgin is not None:
-        _fill_all.append(virgin)
-    _filled = apply_fill(_fill_all, **kwargs)
-    # Unpack back (apply_fill modifies in-place, but reassign for clarity)
-    tc, pivot, bc = _filled[0], _filled[1], _filled[2]
-    _idx = 3
-    for key in ["r1", "r2", "r3", "r4", "s1", "s2", "s3", "s4"]:
-        if key in pivot_result:
-            pivot_result[key] = _filled[_idx]
-            _idx += 1
-    if width_analysis:
-        width, width_pct = _filled[_idx], _filled[_idx + 1]
-        _idx += 2
-    if price_position and position is not None:
-        position = _filled[_idx]
-        _idx += 1
-    if virgin_cpr and virgin is not None:
-        virgin = _filled[_idx]
-
-    # Name and Categorize it
-    tc.name = f"CPR_TC"
-    pivot.name = f"CPR_PIVOT"
-    bc.name = f"CPR_BC"
-    tc.category = pivot.category = bc.category = "trend"
-
-    # Prepare DataFrame to return
-    data = {
-        tc.name: tc,
-        pivot.name: pivot,
-        bc.name: bc,
-    }
-
-    # Add S/R levels based on 'levels' parameter
-    if levels in ["standard", "extended", "all"]:
-        for level in ["R1", "R2", "S1", "S2"]:
-            if level.lower() in pivot_result:
-                series = pivot_result[level.lower()]
-                series.name = f"CPR_{level}"
-                series.category = "trend"
-                data[series.name] = series
-
-    if levels in ["extended", "all"]:
-        for level in ["R3", "R4", "S3", "S4"]:
-            if level.lower() in pivot_result:
-                series = pivot_result[level.lower()]
-                series.name = f"CPR_{level}"
-                series.category = "trend"
-                data[series.name] = series
-
-    # Add analysis columns
-    if width_analysis:
-        width.name = "CPR_WIDTH"
-        width_pct.name = "CPR_WIDTH_PCT"
-        width_class.name = "CPR_WIDTH_CLASS"
-        width.category = width_pct.category = width_class.category = "trend"
-        data[width.name] = width
-        data[width_pct.name] = width_pct
-        data[width_class.name] = width_class
-
-    if price_position and position is not None:
-        position.name = "CPR_POSITION"
-        position.category = "trend"
-        data[position.name] = position
-
-    if virgin_cpr and virgin is not None:
-        virgin.name = "CPR_VIRGIN"
-        virgin.category = "trend"
-        data[virgin.name] = virgin
-
-    cprdf = DataFrame(data)
-    cprdf.name = f"CPR"
-    cprdf.category = "trend"
-
-    return cprdf
+    _cpr_offset_and_fill(pivot_result, offset, **kwargs)
+    return _cpr_build_dataframe(
+        pivot_result, levels, width_analysis, price_position, virgin_cpr
+    )
 
 
 def _calculate_classic_pivots(

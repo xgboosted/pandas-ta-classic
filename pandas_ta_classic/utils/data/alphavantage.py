@@ -38,9 +38,6 @@ def av(ticker: str, **kwargs):
 
         _all, div = ["all"], "=" * 53  # Max div width is 80
 
-        if kind in _all or verbose:
-            pass
-
         if kind in _all + ["history", "h"]:
             if verbose:
                 logger.info("Chart History: Pandas TA v%s & alphaVantage-api", version)

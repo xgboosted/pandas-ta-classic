@@ -165,6 +165,61 @@ def cross(
     return cross
 
 
+def _add_scalar_threshold_signals(
+    df, indicator, value, cross_values, use_above, offset
+):
+    """Add scalar-value threshold signals to *df* in-place.
+
+    When *cross_values* is ``True`` two cross columns are added (above=True
+    and above=False).  Otherwise a single above/below column is appended.
+
+    Args:
+        df (DataFrame): Target frame; mutated in-place.
+        indicator (Series): The indicator series.
+        value (float): Scalar threshold value.
+        cross_values (bool): Emit cross columns rather than a simple level flag.
+        use_above (bool): ``True`` → above-value; ``False`` → below-value when
+            *cross_values* is ``False``.
+        offset (int): Series offset forwarded to the signal helpers.
+    """
+    if cross_values:
+        s_start = cross_value(indicator, value, above=True, offset=offset)
+        s_end = cross_value(indicator, value, above=False, offset=offset)
+        df[s_start.name] = s_start
+        df[s_end.name] = s_end
+    elif use_above:
+        s = above_value(indicator, value, offset=offset)
+        df[s.name] = s
+    else:
+        s = below_value(indicator, value, offset=offset)
+        df[s.name] = s
+
+
+def _add_series_signals(df, indicator, xserie, cross_series, is_above, offset):
+    """Add series-comparison signals to *df* in-place.
+
+    No-op when *xserie* is ``None`` or fails :func:`verify_series`.
+
+    Args:
+        df (DataFrame): Target frame; mutated in-place.
+        indicator (Series): The indicator series.
+        xserie (Series | None): Comparison series.
+        cross_series (bool): Emit cross columns rather than above/below flags.
+        is_above (bool): Direction of the comparison.
+        offset (int): Series offset forwarded to the signal helpers.
+    """
+    if xserie is not None:
+        xserie_v = verify_series(xserie)
+        if xserie_v is not None:
+            if cross_series:
+                s = cross(indicator, xserie_v, above=is_above, offset=offset)
+            elif is_above:
+                s = above(indicator, xserie_v, offset=offset)
+            else:
+                s = below(indicator, xserie_v, offset=offset)
+            df[s.name] = s
+
+
 def signals(
     indicator: Series,
     xa: Optional[float],
@@ -177,47 +232,21 @@ def signals(
     offset: Optional[int],
 ) -> DataFrame:
     df = DataFrame()
+
     if xa is not None and isinstance(xa, (int, float)):
-        if cross_values:
-            crossed_above_start = cross_value(indicator, xa, above=True, offset=offset)
-            crossed_above_end = cross_value(indicator, xa, above=False, offset=offset)
-            df[crossed_above_start.name] = crossed_above_start
-            df[crossed_above_end.name] = crossed_above_end
-        else:
-            crossed_above = above_value(indicator, xa, offset=offset)
-            df[crossed_above.name] = crossed_above
+        _add_scalar_threshold_signals(df, indicator, xa, cross_values, True, offset)
 
     if xb is not None and isinstance(xb, (int, float)):
-        if cross_values:
-            crossed_below_start = cross_value(indicator, xb, above=True, offset=offset)
-            crossed_below_end = cross_value(indicator, xb, above=False, offset=offset)
-            df[crossed_below_start.name] = crossed_below_start
-            df[crossed_below_end.name] = crossed_below_end
-        else:
-            crossed_below = below_value(indicator, xb, offset=offset)
-            df[crossed_below.name] = crossed_below
+        _add_scalar_threshold_signals(df, indicator, xb, cross_values, False, offset)
 
-    # xseries is the default value for both xserie_a and xserie_b
+    # xserie is the default value for both xserie_a and xserie_b
     if xserie_a is None:
         xserie_a = xserie
     if xserie_b is None:
         xserie_b = xserie
 
-    if xserie_a is not None and verify_series(xserie_a):
-        if cross_series:
-            cross_serie_above = cross(indicator, xserie_a, above=True, offset=offset)
-        else:
-            cross_serie_above = above(indicator, xserie_a, offset=offset)
-
-        df[cross_serie_above.name] = cross_serie_above
-
-    if xserie_b is not None and verify_series(xserie_b):
-        if cross_series:
-            cross_serie_below = cross(indicator, xserie_b, above=False, offset=offset)
-        else:
-            cross_serie_below = below(indicator, xserie_b, offset=offset)
-
-        df[cross_serie_below.name] = cross_serie_below
+    _add_series_signals(df, indicator, xserie_a, cross_series, True, offset)
+    _add_series_signals(df, indicator, xserie_b, cross_series, False, offset)
 
     return df
 

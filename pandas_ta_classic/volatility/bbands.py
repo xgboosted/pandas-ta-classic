@@ -15,6 +15,33 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _bbands_native(close, length, std, ddof, mamode, kwargs):
+    """Compute Bollinger Bands without TA-Lib.
+
+    Args:
+        close (Series): Close price series.
+        length (int): Look-back period.
+        std (float): Standard deviation multiplier.
+        ddof (int): Delta degrees-of-freedom for stdev.
+        mamode (str): MA type for the middle band.
+        kwargs (dict): Extra kwargs forwarded to the MA call.
+
+    Returns:
+        tuple[Series, Series, Series] | None: ``(lower, mid, upper)`` or
+        *None* when any intermediate result is unavailable.
+    """
+    standard_deviation = stdev(close=close, length=length, ddof=ddof)
+    if standard_deviation is None:
+        return None
+    deviations = std * standard_deviation
+    mid = ma(mamode, close, length=length, **kwargs)
+    if mid is None:
+        return None
+    lower = mid - deviations
+    upper = mid + deviations
+    return lower, mid, upper
+
+
 def bbands(
     close: Series,
     length: Optional[int] = None,
@@ -44,17 +71,10 @@ def bbands(
 
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))
     else:
-        standard_deviation = stdev(close=close, length=length, ddof=ddof)
-        if standard_deviation is None:
+        result = _bbands_native(close, length, std, ddof, mamode, kwargs)
+        if result is None:
             return None
-        deviations = std * standard_deviation
-        # deviations = std * standard_deviation.loc[standard_deviation.first_valid_index():,]
-
-        mid = ma(mamode, close, length=length, **kwargs)
-        if mid is None:
-            return None
-        lower = mid - deviations
-        upper = mid + deviations
+        lower, mid, upper = result
 
     ulr = non_zero_range(upper, lower)
     bandwidth = 100 * ulr / mid

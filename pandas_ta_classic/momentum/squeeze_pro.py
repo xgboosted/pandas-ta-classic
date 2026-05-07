@@ -6,6 +6,12 @@ from pandas import DataFrame, Series
 
 npNaN = np.nan
 from pandas_ta_classic.momentum import mom
+from pandas_ta_classic.momentum.squeeze import (
+    _pos_float,
+    _pos_int,
+    _squeeze_detailed,
+    _squeeze_simplify_columns,
+)
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.trend import decreasing, increasing
@@ -33,20 +39,14 @@ def squeeze_pro(
 ) -> Optional[DataFrame]:
     """Indicator: Squeeze Momentum (SQZ) PRO"""
     # Validate arguments
-    bb_length = int(bb_length) if bb_length and bb_length > 0 else 20
-    bb_std = float(bb_std) if bb_std and bb_std > 0 else 2.0
-    kc_length = int(kc_length) if kc_length and kc_length > 0 else 20
-    kc_scalar_wide = (
-        float(kc_scalar_wide) if kc_scalar_wide and kc_scalar_wide > 0 else 2
-    )
-    kc_scalar_normal = (
-        float(kc_scalar_normal) if kc_scalar_normal and kc_scalar_normal > 0 else 1.5
-    )
-    kc_scalar_narrow = (
-        float(kc_scalar_narrow) if kc_scalar_narrow and kc_scalar_narrow > 0 else 1
-    )
-    mom_length = int(mom_length) if mom_length and mom_length > 0 else 12
-    mom_smooth = int(mom_smooth) if mom_smooth and mom_smooth > 0 else 6
+    bb_length = _pos_int(bb_length, 20)
+    bb_std = _pos_float(bb_std, 2.0)
+    kc_length = _pos_int(kc_length, 20)
+    kc_scalar_wide = _pos_float(kc_scalar_wide, 2)
+    kc_scalar_normal = _pos_float(kc_scalar_normal, 1.5)
+    kc_scalar_narrow = _pos_float(kc_scalar_narrow, 1)
+    mom_length = _pos_int(mom_length, 12)
+    mom_smooth = _pos_int(mom_smooth, 6)
 
     _length = max(bb_length, kc_length, mom_length, mom_smooth)
     high = verify_series(high, _length)
@@ -54,11 +54,7 @@ def squeeze_pro(
     close = verify_series(close, _length)
     offset = get_offset(offset)
 
-    valid_kc_scaler = (
-        kc_scalar_wide > kc_scalar_normal and kc_scalar_normal > kc_scalar_narrow
-    )
-
-    if not valid_kc_scaler:
+    if not (kc_scalar_wide > kc_scalar_normal > kc_scalar_narrow):
         return None
     if high is None or low is None or close is None:
         return None
@@ -67,10 +63,6 @@ def squeeze_pro(
     asint = kwargs.pop("asint", True)
     detailed = kwargs.pop("detailed", False)
     mamode = mamode if isinstance(mamode, str) else "sma"
-
-    def simplify_columns(df: DataFrame, n: int = 3) -> list:
-        df.columns = df.columns.str.lower()
-        return [c.split("_")[0][n - 1 : n] for c in df.columns]
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
@@ -105,10 +97,10 @@ def squeeze_pro(
         return None
 
     # Simplify KC and BBAND column names for dynamic access
-    bbd.columns = simplify_columns(bbd)
-    kch_wide.columns = simplify_columns(kch_wide)
-    kch_normal.columns = simplify_columns(kch_normal)
-    kch_narrow.columns = simplify_columns(kch_narrow)
+    bbd.columns = _squeeze_simplify_columns(bbd)
+    kch_wide.columns = _squeeze_simplify_columns(kch_wide)
+    kch_normal.columns = _squeeze_simplify_columns(kch_normal)
+    kch_narrow.columns = _squeeze_simplify_columns(kch_narrow)
 
     momo = mom(close, length=mom_length)
     if mamode.lower() == "ema":
@@ -185,38 +177,7 @@ def squeeze_pro(
 
     # Detailed Squeeze Series
     if detailed:
-        pos_squeeze = squeeze[squeeze >= 0]
-        neg_squeeze = squeeze[squeeze < 0]
-
-        pos_inc, pos_dec = unsigned_differences(pos_squeeze, asint=True)
-        neg_inc, neg_dec = unsigned_differences(neg_squeeze, asint=True)
-
-        pos_inc *= squeeze
-        pos_dec *= squeeze
-        neg_dec *= squeeze
-        neg_inc *= squeeze
-
-        pos_inc.replace(0, npNaN, inplace=True)
-        pos_dec.replace(0, npNaN, inplace=True)
-        neg_dec.replace(0, npNaN, inplace=True)
-        neg_inc.replace(0, npNaN, inplace=True)
-
-        sqz_inc = squeeze * increasing(squeeze)
-        sqz_dec = squeeze * decreasing(squeeze)
-        sqz_inc.replace(0, npNaN, inplace=True)
-        sqz_dec.replace(0, npNaN, inplace=True)
-
-        # Handle fills
-        sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc = apply_fill(
-            [sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc], **kwargs
-        )
-
-        df[f"SQZPRO_INC"] = sqz_inc
-        df[f"SQZPRO_DEC"] = sqz_dec
-        df[f"SQZPRO_PINC"] = pos_inc
-        df[f"SQZPRO_PDEC"] = pos_dec
-        df[f"SQZPRO_NDEC"] = neg_dec
-        df[f"SQZPRO_NINC"] = neg_inc
+        _squeeze_detailed(df, squeeze, kwargs, prefix="SQZPRO_")
 
     return df
 

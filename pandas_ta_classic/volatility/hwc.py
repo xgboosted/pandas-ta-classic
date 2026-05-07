@@ -38,6 +38,38 @@ def _hwc_loop(c_arr, m, na, nb, nc, nd, scalar):
     return result_arr, upper_arr, lower_arr
 
 
+def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval):
+    """Assemble and name the HWC result DataFrame.
+
+    Args:
+        hwc_s (Series): Centre channel series.
+        upper_s (Series): Upper band series.
+        lower_s (Series): Lower band series.
+        width_s (Series | None): Channel width (only when *channel_eval* is True).
+        pctwidth_s (Series | None): Percent width (only when *channel_eval* is True).
+        channel_eval (bool): Whether to include width / pctwidth columns.
+
+    Returns:
+        DataFrame: Named HWC result frame.
+    """
+    hwc_s.name = "HWM"
+    upper_s.name = "HWU"
+    lower_s.name = "HWL"
+    hwc_s.category = upper_s.category = lower_s.category = "volatility"
+
+    data = {hwc_s.name: hwc_s, upper_s.name: upper_s, lower_s.name: lower_s}
+    if channel_eval:
+        width_s.name = "HWW"
+        pctwidth_s.name = "HWPCT"
+        data[width_s.name] = width_s
+        data[pctwidth_s.name] = pctwidth_s
+
+    df = DataFrame(data)
+    df.name = "HWC"
+    df.category = hwc_s.category
+    return df
+
+
 def hwc(
     close: Series,
     na: Optional[float] = None,
@@ -66,9 +98,10 @@ def hwc(
     result_arr, upper_arr, lower_arr = _hwc_loop(c_arr, m, na, nb, nc, nd, scalar)
 
     # Aggregate
-    hwc = Series(result_arr, index=close.index)
+    hwc_s = Series(result_arr, index=close.index)
     hwc_upper = Series(upper_arr, index=close.index)
     hwc_lower = Series(lower_arr, index=close.index)
+    hwc_width = hwc_pctwidth = None
     if channel_eval:
         hwc_width = Series(upper_arr - lower_arr, index=close.index)
         hwc_pctwidth = Series(
@@ -76,44 +109,18 @@ def hwc(
         )
 
     # Offset
-    hwc, hwc_upper, hwc_lower = apply_offset([hwc, hwc_upper, hwc_lower], offset)
+    hwc_s, hwc_upper, hwc_lower = apply_offset([hwc_s, hwc_upper, hwc_lower], offset)
     if channel_eval:
         hwc_width, hwc_pctwidth = apply_offset([hwc_width, hwc_pctwidth], offset)
 
     # Handle fills
-    hwc, hwc_upper, hwc_lower = apply_fill([hwc, hwc_upper, hwc_lower], **kwargs)
+    hwc_s, hwc_upper, hwc_lower = apply_fill([hwc_s, hwc_upper, hwc_lower], **kwargs)
     if channel_eval:
         hwc_width, hwc_pctwidth = apply_fill([hwc_width, hwc_pctwidth], **kwargs)
 
-    # Name and Categorize it
-    # suffix = f'{str(na).replace(".", "")}-{str(nb).replace(".", "")}-{str(nc).replace(".", "")}'
-    hwc.name = "HWM"
-    hwc_upper.name = "HWU"
-    hwc_lower.name = "HWL"
-    hwc.category = hwc_upper.category = hwc_lower.category = "volatility"
-    if channel_eval:
-        hwc_width.name = "HWW"
-        hwc_pctwidth.name = "HWPCT"
-
-    # Prepare DataFrame to return
-    if channel_eval:
-        data = {
-            hwc.name: hwc,
-            hwc_upper.name: hwc_upper,
-            hwc_lower.name: hwc_lower,
-            hwc_width.name: hwc_width,
-            hwc_pctwidth.name: hwc_pctwidth,
-        }
-        df = DataFrame(data)
-        df.name = "HWC"
-        df.category = hwc.category
-    else:
-        data = {hwc.name: hwc, hwc_upper.name: hwc_upper, hwc_lower.name: hwc_lower}
-        df = DataFrame(data)
-        df.name = "HWC"
-        df.category = hwc.category
-
-    return df
+    return _hwc_build_df(
+        hwc_s, hwc_upper, hwc_lower, hwc_width, hwc_pctwidth, channel_eval
+    )
 
 
 hwc.__doc__ = """HWC (Holt-Winter Channel)

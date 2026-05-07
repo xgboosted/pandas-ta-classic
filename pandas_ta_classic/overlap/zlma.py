@@ -16,6 +16,23 @@ from .vidya import vidya
 from .wma import wma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
+# Dispatch table: mamode string → MA function.
+# "ema" is the catch-all default so it is looked up via dict.get(name, ema).
+_ZLMA_DISPATCH = {
+    "dema": dema,
+    "ema": ema,
+    "hma": hma,
+    "linreg": linreg,
+    "rma": rma,
+    "sma": sma,
+    "swma": swma,
+    "t3": t3,
+    "tema": tema,
+    "trima": trima,
+    "vidya": vidya,
+    "wma": wma,
+}
+
 
 def zlma(
     close: Series,
@@ -37,30 +54,8 @@ def zlma(
     # Calculate Result
     lag = int(0.5 * (length - 1))
     close_ = 2 * close - close.shift(lag)
-    if mamode == "dema":
-        zlma = dema(close_, length=length, **kwargs)
-    elif mamode == "hma":
-        zlma = hma(close_, length=length, **kwargs)
-    elif mamode == "linreg":
-        zlma = linreg(close_, length=length, **kwargs)
-    elif mamode == "rma":
-        zlma = rma(close_, length=length, **kwargs)
-    elif mamode == "sma":
-        zlma = sma(close_, length=length, **kwargs)
-    elif mamode == "swma":
-        zlma = swma(close_, length=length, **kwargs)
-    elif mamode == "t3":
-        zlma = t3(close_, length=length, **kwargs)
-    elif mamode == "tema":
-        zlma = tema(close_, length=length, **kwargs)
-    elif mamode == "trima":
-        zlma = trima(close_, length=length, **kwargs)
-    elif mamode == "vidya":
-        zlma = vidya(close_, length=length, **kwargs)
-    elif mamode == "wma":
-        zlma = wma(close_, length=length, **kwargs)
-    else:
-        zlma = ema(close_, length=length, **kwargs)  # "ema"
+    ma_fn = _ZLMA_DISPATCH.get(mamode, ema)
+    zlma = ma_fn(close_, length=length, **kwargs)
 
     if zlma is None:
         return None

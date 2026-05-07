@@ -6,6 +6,27 @@ import pandas as pd
 from pandas import DataFrame, Series
 
 
+def _assign_prev_ohlcv(result: DataFrame, df: DataFrame, prev: DataFrame) -> None:
+    """Reindex *prev* onto *result* index (ffill) and assign prev_* columns in-place."""
+    for col in ("open", "high", "low", "close"):
+        result[f"prev_{col}"] = prev[col].reindex(result.index, method="ffill")
+    if "volume" in df.columns:
+        result["prev_volume"] = prev["volume"].reindex(result.index, method="ffill")
+
+
+def _resample_ohlcv(df: DataFrame, rule: str) -> DataFrame:
+    """Resample OHLCV *df* to *rule* frequency."""
+    agg = {
+        "open": "first",
+        "high": "max",
+        "low": "min",
+        "close": "last",
+    }
+    if "volume" in df.columns:
+        agg["volume"] = "sum"
+    return df.resample(rule).agg(agg)
+
+
 def get_previous_period_ohlcv(
     df: DataFrame, timeframe: str = "daily", interval: Optional[str] = None
 ) -> DataFrame:
@@ -25,32 +46,10 @@ def get_previous_period_ohlcv(
     result = df.copy()
 
     if timeframe == "intraday":
-        # Resample to daily
-        daily = df.resample("D").agg(
-            {
-                "open": "first",
-                "high": "max",
-                "low": "min",
-                "close": "last",
-                "volume": "sum" if "volume" in df.columns else "last",
-            }
-        )
-
-        # Shift by 1 day
-        prev_daily = daily.shift(1)
-
-        # Forward fill to all intraday bars
-        result["prev_open"] = prev_daily["open"].reindex(result.index, method="ffill")
-        result["prev_high"] = prev_daily["high"].reindex(result.index, method="ffill")
-        result["prev_low"] = prev_daily["low"].reindex(result.index, method="ffill")
-        result["prev_close"] = prev_daily["close"].reindex(result.index, method="ffill")
-        if "volume" in df.columns:
-            result["prev_volume"] = prev_daily["volume"].reindex(
-                result.index, method="ffill"
-            )
+        prev_daily = _resample_ohlcv(df, "D").shift(1)
+        _assign_prev_ohlcv(result, df, prev_daily)
 
     elif timeframe == "daily":
-        # Simple shift by 1 period
         result["prev_open"] = df["open"].shift(1)
         result["prev_high"] = df["high"].shift(1)
         result["prev_low"] = df["low"].shift(1)
@@ -59,52 +58,12 @@ def get_previous_period_ohlcv(
             result["prev_volume"] = df["volume"].shift(1)
 
     elif timeframe == "weekly":
-        # Resample to weekly, shift by 1 week
-        weekly = df.resample("W").agg(
-            {
-                "open": "first",
-                "high": "max",
-                "low": "min",
-                "close": "last",
-                "volume": "sum" if "volume" in df.columns else "last",
-            }
-        )
-        prev_weekly = weekly.shift(1)
-
-        result["prev_open"] = prev_weekly["open"].reindex(result.index, method="ffill")
-        result["prev_high"] = prev_weekly["high"].reindex(result.index, method="ffill")
-        result["prev_low"] = prev_weekly["low"].reindex(result.index, method="ffill")
-        result["prev_close"] = prev_weekly["close"].reindex(
-            result.index, method="ffill"
-        )
-        if "volume" in df.columns:
-            result["prev_volume"] = prev_weekly["volume"].reindex(
-                result.index, method="ffill"
-            )
+        prev_weekly = _resample_ohlcv(df, "W").shift(1)
+        _assign_prev_ohlcv(result, df, prev_weekly)
 
     elif timeframe == "monthly":
-        # Resample to monthly, shift by 1 month
-        monthly = df.resample("M").agg(
-            {
-                "open": "first",
-                "high": "max",
-                "low": "min",
-                "close": "last",
-                "volume": "sum" if "volume" in df.columns else "last",
-            }
-        )
-        prev_monthly = monthly.shift(1)
-
-        result["prev_open"] = prev_monthly["open"].reindex(result.index, method="ffill")
-        result["prev_high"] = prev_monthly["high"].reindex(result.index, method="ffill")
-        result["prev_low"] = prev_monthly["low"].reindex(result.index, method="ffill")
-        result["prev_close"] = prev_monthly["close"].reindex(
-            result.index, method="ffill"
-        )
-        if "volume" in df.columns:
-            result["prev_volume"] = prev_monthly["volume"].reindex(
-                result.index, method="ffill"
-            )
+        prev_monthly = _resample_ohlcv(df, "M").shift(1)
+        _assign_prev_ohlcv(result, df, prev_monthly)
 
     return result
 

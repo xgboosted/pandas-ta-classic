@@ -8,6 +8,40 @@ from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
+def _pmax_trend_arrays(close_arr, pmax_up_arr, pmax_down_arr):
+    """Compute PMAX trend direction and band arrays.
+
+    Iterates over ``close_arr`` updating the adaptive upper / lower ATR bands
+    and determining the per-bar trend direction (1 = uptrend, −1 = downtrend).
+
+    Args:
+        close_arr (np.ndarray): 1-D float close-price array.
+        pmax_up_arr (np.ndarray): Initial upper ATR band values (modified in
+            place).
+        pmax_down_arr (np.ndarray): Initial lower ATR band values (modified in
+            place).
+
+    Returns:
+        list[float]: PMAX values for each bar (``NaN`` for the first element).
+    """
+    n = len(close_arr)
+    trend_arr = [1] * n
+    pmax_result = [npNaN] + [0.0] * (n - 1)
+    for i in range(1, n):
+        if close_arr[i - 1] > pmax_up_arr[i - 1]:
+            pmax_up_arr[i] = max(pmax_up_arr[i], pmax_up_arr[i - 1])
+        if close_arr[i - 1] < pmax_down_arr[i - 1]:
+            pmax_down_arr[i] = min(pmax_down_arr[i], pmax_down_arr[i - 1])
+        if close_arr[i] > pmax_down_arr[i - 1]:
+            trend_arr[i] = 1
+        elif close_arr[i] < pmax_up_arr[i - 1]:
+            trend_arr[i] = -1
+        else:
+            trend_arr[i] = trend_arr[i - 1]
+        pmax_result[i] = pmax_up_arr[i] if trend_arr[i] == 1 else pmax_down_arr[i]
+    return pmax_result
+
+
 def pmax(
     high: Series,
     low: Series,
@@ -46,50 +80,25 @@ def pmax(
     pmax_up = ma_value - (multiplier * atr_value)
     pmax_down = ma_value + (multiplier * atr_value)
 
-    # Convert to numpy arrays for faster iteration
-    close_arr = close.to_numpy()
-    pmax_up_arr = pmax_up.to_numpy(copy=True)
-    pmax_down_arr = pmax_down.to_numpy(copy=True)
-
-    # Initialize arrays
-    n = len(close)
-    trend_arr = [1] * n  # Start with uptrend
-    pmax_arr = [npNaN] + [0.0] * (n - 1)
-
-    # Iterate using numpy arrays (much faster than pandas .iloc)
-    for i in range(1, n):
-        # Update upper band: if price was above upper band, maintain higher of current or previous
-        if close_arr[i - 1] > pmax_up_arr[i - 1]:
-            pmax_up_arr[i] = max(pmax_up_arr[i], pmax_up_arr[i - 1])
-
-        # Update lower band: if price was below lower band, maintain lower of current or previous
-        if close_arr[i - 1] < pmax_down_arr[i - 1]:
-            pmax_down_arr[i] = min(pmax_down_arr[i], pmax_down_arr[i - 1])
-
-        # Determine trend: price crosses lower band (uptrend) or upper band (downtrend)
-        if close_arr[i] > pmax_down_arr[i - 1]:
-            trend_arr[i] = 1
-        elif close_arr[i] < pmax_up_arr[i - 1]:
-            trend_arr[i] = -1
-        else:
-            trend_arr[i] = trend_arr[i - 1]  # Maintain previous trend
-
-        # Set PMAX value based on trend
-        pmax_arr[i] = pmax_up_arr[i] if trend_arr[i] == 1 else pmax_down_arr[i]
+    pmax_arr = _pmax_trend_arrays(
+        close.to_numpy(),
+        pmax_up.to_numpy(copy=True),
+        pmax_down.to_numpy(copy=True),
+    )
 
     # Convert back to Series
-    pmax = Series(pmax_arr, index=close.index)
+    pmax_s = Series(pmax_arr, index=close.index)
 
     # Offset
-    pmax = apply_offset(pmax, offset)
+    pmax_s = apply_offset(pmax_s, offset)
 
-    pmax = apply_fill(pmax, **kwargs)
+    pmax_s = apply_fill(pmax_s, **kwargs)
 
     # Name and Categorize it
-    pmax.name = f"PMAX_{mamode[0].upper()}_{length}_{multiplier}"
-    pmax.category = "trend"
+    pmax_s.name = f"PMAX_{mamode[0].upper()}_{length}_{multiplier}"
+    pmax_s.category = "trend"
 
-    return pmax
+    return pmax_s
 
 
 pmax.__doc__ = """PMAX (Price Max)

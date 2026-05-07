@@ -13,6 +13,34 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_tal):
+    """Compute PPO, histogram and signal line.
+
+    Returns:
+        tuple[Series, Series, Series] | None: ``(ppo_s, histogram, signalma)``
+        or *None* if any intermediate result is unavailable.
+    """
+    if Imports["talib"] and mode_tal:
+        from talib import PPO
+
+        ppo_s = PPO(close, fast, slow, tal_ma(mamode))
+    else:
+        fastma = ma(mamode, close, length=fast)
+        if fastma is None:
+            return None
+        slowma = ma(mamode, close, length=slow)
+        if slowma is None:
+            return None
+        ppo_s = scalar * (fastma - slowma)
+        ppo_s /= slowma
+
+    signalma = ma("ema", ppo_s, length=signal)
+    if signalma is None:
+        return None
+    histogram = ppo_s - signalma
+    return ppo_s, histogram, signalma
+
+
 def ppo(
     close: Series,
     fast: Optional[int] = None,
@@ -41,42 +69,28 @@ def ppo(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
-        from talib import PPO
-
-        ppo = PPO(close, fast, slow, tal_ma(mamode))
-    else:
-        fastma = ma(mamode, close, length=fast)
-        if fastma is None:
-            return None
-        slowma = ma(mamode, close, length=slow)
-        if slowma is None:
-            return None
-        ppo = scalar * (fastma - slowma)
-        ppo /= slowma
-
-    signalma = ma("ema", ppo, length=signal)
-    if signalma is None:
+    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_tal)
+    if result is None:
         return None
-    histogram = ppo - signalma
+    ppo_s, histogram, signalma = result
 
     # Offset
-    ppo, histogram, signalma = apply_offset([ppo, histogram, signalma], offset)
+    ppo_s, histogram, signalma = apply_offset([ppo_s, histogram, signalma], offset)
 
-    ppo, histogram, signalma = apply_fill([ppo, histogram, signalma], **kwargs)
+    ppo_s, histogram, signalma = apply_fill([ppo_s, histogram, signalma], **kwargs)
 
     # Name and Categorize it
     _props = f"_{fast}_{slow}_{signal}"
-    ppo.name = f"PPO{_props}"
+    ppo_s.name = f"PPO{_props}"
     histogram.name = f"PPOh{_props}"
     signalma.name = f"PPOs{_props}"
-    ppo.category = histogram.category = signalma.category = "momentum"
+    ppo_s.category = histogram.category = signalma.category = "momentum"
 
     # Prepare DataFrame to return
-    data = {ppo.name: ppo, histogram.name: histogram, signalma.name: signalma}
+    data = {ppo_s.name: ppo_s, histogram.name: histogram, signalma.name: signalma}
     df = DataFrame(data)
     df.name = f"PPO{_props}"
-    df.category = ppo.category
+    df.category = ppo_s.category
 
     return df
 

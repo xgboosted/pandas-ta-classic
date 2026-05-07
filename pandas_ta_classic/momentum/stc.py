@@ -12,6 +12,47 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
+    """Return the MACD-like oscillator used by the Schaff TC calculation.
+
+    Handles the three input modes:
+
+    * External ``ma1`` / ``ma2`` series — returns their difference.
+    * External ``osc`` oscillator series — returned as-is.
+    * Traditional mode — internal EMA-based MACD line.
+
+    Args:
+        close (Series): Close price series.
+        fast (int): Fast EMA period (traditional mode only).
+        slow (int): Slow EMA period (traditional mode only).
+        _length (int): Minimum required length for series validation.
+        ma1 (Series | bool): First external MA (or False).
+        ma2 (Series | bool): Second external MA (or False).
+        osc (Series | bool): External oscillator (or False).
+
+    Returns:
+        Series | None: xmacd line, or *None* when a required series fails
+        validation.
+    """
+    if isinstance(ma1, Series) and isinstance(ma2, Series) and not osc:
+        ma1 = verify_series(ma1, _length)
+        ma2 = verify_series(ma2, _length)
+        if ma1 is None or ma2 is None:
+            return None
+        return ma1 - ma2
+
+    if isinstance(osc, Series):
+        osc = verify_series(osc, _length)
+        if osc is None:
+            return None
+        return osc
+
+    # Traditional / full mode
+    fastma = ema(close, length=fast)
+    slowma = ema(close, length=slow)
+    return fastma - slowma
+
+
 def stc(
     close: Series,
     tclength: Optional[int] = None,
@@ -43,36 +84,10 @@ def stc(
     ma2 = kwargs.pop("ma2", False)
     osc = kwargs.pop("osc", False)
 
-    # 3 different modes of calculation..
-    if isinstance(ma1, Series) and isinstance(ma2, Series) and not osc:
-        ma1 = verify_series(ma1, _length)
-        ma2 = verify_series(ma2, _length)
-
-        if ma1 is None or ma2 is None:
-            return None
-        # Calculate Result based on external feeded series
-        xmacd = ma1 - ma2
-        # invoke shared calculation
-        pff, pf = schaff_tc(close, xmacd, tclength, factor)
-
-    elif isinstance(osc, Series):
-        osc = verify_series(osc, _length)
-        if osc is None:
-            return None
-        # Calculate Result based on feeded oscillator
-        # (should be ranging around 0 x-axis)
-        xmacd = osc
-        # invoke shared calculation
-        pff, pf = schaff_tc(close, xmacd, tclength, factor)
-
-    else:
-        # Calculate Result .. (traditionel/full)
-        # MACD line
-        fastma = ema(close, length=fast)
-        slowma = ema(close, length=slow)
-        xmacd = fastma - slowma
-        # invoke shared calculation
-        pff, pf = schaff_tc(close, xmacd, tclength, factor)
+    xmacd = _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc)
+    if xmacd is None:
+        return None
+    pff, pf = schaff_tc(close, xmacd, tclength, factor)
 
     # Resulting Series
     stc = Series(pff, index=close.index)

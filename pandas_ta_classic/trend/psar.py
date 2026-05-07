@@ -16,6 +16,18 @@ from pandas_ta_classic.utils import (
 from pandas_ta_classic.utils._njit import njit
 
 
+def _pos_float(val, default):
+    return float(val) if val and val > 0 else default
+
+
+def _psar_falling(high: Series, low: Series, drift: int = 1) -> bool:
+    """Returns True when the last -DM is positive (falling market)."""
+    up = high - high.shift(drift)
+    dn = low.shift(drift) - low
+    _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
+    return _dmn > 0
+
+
 @njit(cache=True)
 def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
     long_arr = np.full(m, np.nan)
@@ -72,11 +84,11 @@ def psar(
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
-    af = float(af) if af and af > 0 else 0.02
-    af0 = float(af0) if af0 and af0 > 0 else af
-    max_af = float(max_af) if max_af and max_af > 0 else 0.2
+    af = _pos_float(af, 0.02)
+    af0 = _pos_float(af0, af)
+    max_af = _pos_float(max_af, 0.2)
     offset = get_offset(offset)
-    mode_tal = bool(kwargs.pop("talib", None)) if "talib" in kwargs else False
+    mode_tal = bool(kwargs.pop("talib", None))
 
     if high is None or low is None:
         return None
@@ -105,16 +117,8 @@ def psar(
         psardf.category = "trend"
         return psardf
 
-    def _falling(high: Series, low: Series, drift: int = 1) -> bool:
-        """Returns the last -DM value"""
-        # Not to be confused with ta.falling()
-        up = high - high.shift(drift)
-        dn = low.shift(drift) - low
-        _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
-        return _dmn > 0
-
     # Falling if the first NaN -DM is positive
-    falling = _falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
+    falling = _psar_falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if falling:
         sar = high.iloc[0]
         ep = low.iloc[1] if len(low) > 1 else low.iloc[0]

@@ -14,6 +14,9 @@ def hl2(
     low = verify_series(low)
     offset = get_offset(offset)
 
+    if high is None or low is None:
+        return None
+
     # Calculate Result
     hl2 = 0.5 * (high + low)
 

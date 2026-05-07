@@ -11,6 +11,68 @@ npNaN = np.nan
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
+def _linreg_output(
+    windows,
+    x_arr,
+    x_sum,
+    x2_sum,
+    divisor,
+    length,
+    slope,
+    intercept,
+    angle,
+    degrees,
+    r,
+    tsf,
+):
+    """Compute the requested linear-regression output over *windows*.
+
+    All mode flags are mutually exclusive; the first truthy flag wins.  When
+    no flag is set the default end-point regression value is returned.
+
+    Args:
+        windows (np.ndarray): Shape ``(n - length + 1, length)`` sliding view.
+        x_arr (np.ndarray): ``[0, 1, …, length-1]`` index array.
+        x_sum (float): Precomputed sum of *x_arr*.
+        x2_sum (float): Precomputed sum of squares of *x_arr*.
+        divisor (float): ``length * x2_sum - x_sum ** 2``.
+        length (int): Regression window length.
+        slope (bool): Return OLS slope.
+        intercept (bool): Return OLS intercept.
+        angle (bool): Return slope angle.
+        degrees (bool): Angle in degrees (``True``) or radians (``False``).
+        r (bool): Return Pearson correlation coefficient.
+        tsf (bool): Return Time Series Forecast (one step ahead).
+
+    Returns:
+        np.ndarray: 1-D array of regression values for each window.
+    """
+    y_sums = windows.sum(axis=1)
+    xy_sums = (windows * x_arr).sum(axis=1)
+    m_slopes = (length * xy_sums - x_sum * y_sums) / divisor
+
+    if slope:
+        return m_slopes
+
+    bs = (y_sums * x2_sum - x_sum * xy_sums) / divisor
+
+    if intercept:
+        return bs
+    if angle:
+        theta = npAtan(m_slopes)
+        if degrees:
+            theta *= 180 / npPi
+        return theta
+    if r:
+        y2_sums = (windows * windows).sum(axis=1)
+        rn = length * xy_sums - x_sum * y_sums
+        rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
+        return rn / rd
+    if tsf:
+        return m_slopes * length + bs
+    return m_slopes * (length - 1) + bs
+
+
 def linreg(
     close: Series,
     length: Optional[int] = None,
@@ -42,30 +104,20 @@ def linreg(
     from numpy.lib.stride_tricks import sliding_window_view
 
     windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
-    y_sums = windows.sum(axis=1)
-    xy_sums = (windows * x_arr).sum(axis=1)
-    m_slopes = (length * xy_sums - x_sum * y_sums) / divisor
-
-    if slope:
-        linreg_ = m_slopes
-    else:
-        bs = (y_sums * x2_sum - x_sum * xy_sums) / divisor
-        if intercept:
-            linreg_ = bs
-        elif angle:
-            theta = npAtan(m_slopes)
-            if degrees:
-                theta *= 180 / npPi
-            linreg_ = theta
-        elif r:
-            y2_sums = (windows * windows).sum(axis=1)
-            rn = length * xy_sums - x_sum * y_sums
-            rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
-            linreg_ = rn / rd
-        elif tsf:
-            linreg_ = m_slopes * length + bs
-        else:
-            linreg_ = m_slopes * (length - 1) + bs
+    linreg_ = _linreg_output(
+        windows,
+        x_arr,
+        x_sum,
+        x2_sum,
+        divisor,
+        length,
+        slope,
+        intercept,
+        angle,
+        degrees,
+        r,
+        tsf,
+    )
 
     linreg = Series(
         np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
