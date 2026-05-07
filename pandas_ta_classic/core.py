@@ -625,7 +625,7 @@ class AnalysisIndicators(BasePandasObject):
         """
         as_list = kwargs.setdefault("as_list", False)
         # Public non-indicator methods
-        helper_methods = ["constants", "indicators", "strategy"]
+        helper_methods = ["constants", "indicators", "strategy", "ticker"]
         # Public df.ta.properties
         ta_properties = [
             "adjusted",
@@ -635,7 +635,6 @@ class AnalysisIndicators(BasePandasObject):
             "exchange",
             "last_run",
             "reverse",
-            "ticker",
             "time_range",
             "to_utc",
             "version",

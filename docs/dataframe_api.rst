@@ -127,37 +127,55 @@ reverse
 prefix & suffix
 ~~~~~~~~~~~~~~~
 
+``prefix`` and ``suffix`` are **per-call kwargs**, not settable properties on the
+accessor.  Pass them directly to any indicator call to customise the output
+column name(s).
+
 .. code-block:: python
 
-    # Prefix all Technical Analysis column names
-    df.ta.prefix = "TA"
+    # Prefix the output column name
+    df.ta.sma(length=10, prefix="MY")       # column: MY_SMA_10
 
-    # Suffix all Technical Analysis column names  
-    df.ta.suffix = "XYZ"
+    # Suffix the output column name
+    df.ta.sma(length=10, suffix="SLOW")     # column: SMA_10_SLOW
 
-    # Use both prefix and suffix
-    df.ta.prefix, df.ta.suffix = "TA", "XYZ"
+    # Both together
+    df.ta.sma(length=10, prefix="MY", suffix="SLOW")  # column: MY_SMA_10_SLOW
 
-    # Reset
-    df.ta.prefix = df.ta.suffix = None
+    # Works with multi-column results too (e.g. MACD)
+    df.ta.macd(prefix="MY", suffix="v1")   # columns: MY_MACD_12_26_9_v1, …
 
 time_range
 ~~~~~~~~~~
 
+``time_range`` controls the **time unit** used when ``df.ta.time_range`` is
+read back as a float (e.g. for annualisation).  Valid values are
+``"years"`` (default), ``"months"``, ``"weeks"``, ``"days"``, ``"hours"``,
+``"minutes"``, and ``"seconds"``.
+
 .. code-block:: python
 
-    # Set the time range for indicators (if datetime indexed)
-    df.ta.time_range = "1y"  # Last year
-    df.ta.time_range = "6m"  # Last 6 months
-    df.ta.time_range = None  # Reset to full range
+    # Return the span of the DataFrame in years (default)
+    df.ta.time_range = "years"
+    print(df.ta.time_range)   # e.g. 2.5
+
+    # Switch to months
+    df.ta.time_range = "months"
+    print(df.ta.time_range)   # e.g. 30.1
+
+    # Reset to the default unit
+    df.ta.time_range = "years"
 
 to_utc
 ~~~~~~
 
+``to_utc`` is a **read-only property** (not a method).  Accessing it
+converts the DataFrame index to UTC in place.
+
 .. code-block:: python
 
-    # Convert DataFrame index to UTC
-    df.ta.to_utc(inplace=True)
+    # Convert DataFrame index to UTC (accesses the property — no parentheses)
+    df.ta.to_utc
 
 Methods
 -------
@@ -165,21 +183,38 @@ Methods
 constants
 ~~~~~~~~~
 
+``constants(append: bool, values: list)`` — adds or removes constant
+horizontal-line columns from the DataFrame.
+
 .. code-block:: python
 
-    # Add constant values as new columns
-    df.ta.constants(pi=3.14159, e=2.71828)
+    import numpy as np
+
+    # Add constants 0 and 100 as new columns
+    df.ta.constants(True, [0, 100])
+
+    # Add a range of chart lines at once
+    chart_lines = np.append(np.arange(-4, 5, 1), np.arange(-100, 110, 10))
+    df.ta.constants(True, chart_lines)
+
+    # Remove specific constants
+    df.ta.constants(False, [0, 100])
 
 indicators
 ~~~~~~~~~~
 
+``indicators(**kwargs)`` — prints or returns the list of available indicators.
+
 .. code-block:: python
 
-    # List all available indicators
+    # Print all available indicators to the log
     df.ta.indicators()
 
-    # List indicators by category
-    df.ta.indicators("momentum")
+    # Return indicators as a Python list
+    ind_list = df.ta.indicators(as_list=True)
+
+    # Return the list excluding specific indicators
+    ind_list = df.ta.indicators(as_list=True, exclude=["vp", "td_seq"])
 
 ticker
 ~~~~~~
