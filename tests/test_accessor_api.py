@@ -256,3 +256,32 @@ class TestAccessorConstants(TestCase):
         values = np.array([10, 20, 30])
         df.ta.constants(True, values)
         self.assertEqual(len(df.columns), original_cols + 3)
+
+
+class TestIsDatetimeOrdered(TestCase):
+    """is_datetime_ordered edge-case robustness (fixes from PR #107 review)."""
+
+    def _make_dt_df(self, dates):
+        idx = pd.DatetimeIndex(dates)
+        return pd.DataFrame({"close": range(len(dates))}, index=idx)
+
+    def test_ordered_datetime_index(self):
+        df = self._make_dt_df(["2020-01-01", "2020-01-02", "2020-01-03"])
+        self.assertTrue(df.ta.datetime_ordered)
+
+    def test_reversed_datetime_index(self):
+        df = self._make_dt_df(["2020-01-03", "2020-01-02", "2020-01-01"])
+        self.assertFalse(df.ta.datetime_ordered)
+
+    def test_empty_dataframe_returns_false(self):
+        df = pd.DataFrame({"close": pd.Series([], dtype=float)})
+        df.index = pd.DatetimeIndex([])
+        self.assertFalse(df.ta.datetime_ordered)
+
+    def test_single_row_returns_false(self):
+        df = self._make_dt_df(["2020-01-01"])
+        self.assertFalse(df.ta.datetime_ordered)
+
+    def test_non_datetime_index_returns_false(self):
+        df = pd.DataFrame({"close": [1, 2, 3]}, index=[0, 1, 2])
+        self.assertFalse(df.ta.datetime_ordered)

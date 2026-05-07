@@ -149,9 +149,13 @@ time_range
 ~~~~~~~~~~
 
 ``time_range`` controls the **time unit** used when ``df.ta.time_range`` is
-read back as a float (e.g. for annualisation).  Valid values are
+read back as a numeric value (e.g. for annualisation).  Valid values are
 ``"years"`` (default), ``"months"``, ``"weeks"``, ``"days"``, ``"hours"``,
 ``"minutes"``, and ``"seconds"``.
+
+.. note::
+   Any unrecognised string silently falls back to ``"years"`` (matches the
+   behaviour of the underlying ``total_time()`` helper).
 
 .. code-block:: python
 
@@ -183,8 +187,8 @@ Methods
 constants
 ~~~~~~~~~
 
-``constants(append: bool, values: list)`` — adds or removes constant
-horizontal-line columns from the DataFrame.
+``constants(append: bool, values: list | np.ndarray)`` — adds or removes
+constant horizontal-line columns from the DataFrame.
 
 .. code-block:: python
 
