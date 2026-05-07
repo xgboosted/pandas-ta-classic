@@ -585,5 +585,140 @@ class TestTaLibOracle(unittest.TestCase):
         )
 
 
+@unittest.skipUnless(TALIB_AVAILABLE, "TA-Lib not installed")
+class TestTaLibCandleOracle(unittest.TestCase):
+    """Validate all 59 run_pattern candle implementations against TA-Lib.
+
+    Each native pattern is a direct Python translation of the corresponding
+    TA-Lib C implementation.  These tests assert exact integer agreement
+    (values ∈ {0, ±100}) over the last 2000 bars of the SPY daily series.
+
+    Patterns excluded from this suite (not TA-Lib parity):
+      * cdl_doji   — custom SMA-threshold impl; TA-Lib uses HL-ratio only
+      * cdl_inside — custom (not a TA-Lib pattern)
+      * cdl_z      — statistical z-score utility, not a pattern
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
+        df.drop(columns=["Unnamed: 0"], errors="ignore", inplace=True)
+        df.columns = df.columns.str.lower()
+        cls.idx = df.index
+        cls.o = df["open"]
+        cls.h = df["high"]
+        cls.l = df["low"]
+        cls.c = df["close"]
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.idx, cls.o, cls.h, cls.l, cls.c
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _compare_candle(self, pt_series, tl_arr, name=""):
+        """Assert exact integer agreement on the last 2000 common bars.
+
+        Both native and TA-Lib candle functions return 0 (no signal) or
+        ±100 (signal) with no NaN values, so we compare the full aligned
+        tails directly.
+        """
+        arr = np.asarray(tl_arr, dtype=float)
+        tl_s = pd.Series(arr, index=self.idx[-len(arr) :])
+        both = pt_series.index.intersection(tl_s.index)
+        self.assertGreater(len(both), 0, f"{name}: no overlapping index")
+        tail = both[-min(2000, len(both)) :]
+        diff = np.abs(pt_series.loc[tail].values - tl_s.loc[tail].values)
+        self.assertEqual(
+            diff.max(),
+            0.0,
+            f"{name}: max diff {diff.max():.1f} — native does not match TA-Lib",
+        )
+
+    # ------------------------------------------------------------------
+    # 59 run_pattern candle patterns
+    # ------------------------------------------------------------------
+
+    def test_candle_oracle(self):
+        """Single parametrised test covering all 59 TA-Lib parity patterns."""
+        # (pandas_ta_classic function name, TA-Lib function name, extra kwargs)
+        patterns = [
+            ("cdl_2crows", "CDL2CROWS", {}),
+            ("cdl_3blackcrows", "CDL3BLACKCROWS", {}),
+            ("cdl_3inside", "CDL3INSIDE", {}),
+            ("cdl_3linestrike", "CDL3LINESTRIKE", {}),
+            ("cdl_3outside", "CDL3OUTSIDE", {}),
+            ("cdl_3starsinsouth", "CDL3STARSINSOUTH", {}),
+            ("cdl_3whitesoldiers", "CDL3WHITESOLDIERS", {}),
+            ("cdl_abandonedbaby", "CDLABANDONEDBABY", {"penetration": 0.3}),
+            ("cdl_advanceblock", "CDLADVANCEBLOCK", {}),
+            ("cdl_belthold", "CDLBELTHOLD", {}),
+            ("cdl_breakaway", "CDLBREAKAWAY", {}),
+            ("cdl_closingmarubozu", "CDLCLOSINGMARUBOZU", {}),
+            ("cdl_concealbabyswall", "CDLCONCEALBABYSWALL", {}),
+            ("cdl_counterattack", "CDLCOUNTERATTACK", {}),
+            ("cdl_darkcloudcover", "CDLDARKCLOUDCOVER", {"penetration": 0.5}),
+            ("cdl_dojistar", "CDLDOJISTAR", {}),
+            ("cdl_dragonflydoji", "CDLDRAGONFLYDOJI", {}),
+            ("cdl_engulfing", "CDLENGULFING", {}),
+            ("cdl_eveningdojistar", "CDLEVENINGDOJISTAR", {"penetration": 0.3}),
+            ("cdl_eveningstar", "CDLEVENINGSTAR", {"penetration": 0.3}),
+            ("cdl_gapsidesidewhite", "CDLGAPSIDESIDEWHITE", {}),
+            ("cdl_gravestonedoji", "CDLGRAVESTONEDOJI", {}),
+            ("cdl_hammer", "CDLHAMMER", {}),
+            ("cdl_hangingman", "CDLHANGINGMAN", {}),
+            ("cdl_harami", "CDLHARAMI", {}),
+            ("cdl_haramicross", "CDLHARAMICROSS", {}),
+            ("cdl_highwave", "CDLHIGHWAVE", {}),
+            ("cdl_hikkake", "CDLHIKKAKE", {}),
+            ("cdl_hikkakemod", "CDLHIKKAKEMOD", {}),
+            ("cdl_homingpigeon", "CDLHOMINGPIGEON", {}),
+            ("cdl_identical3crows", "CDLIDENTICAL3CROWS", {}),
+            ("cdl_inneck", "CDLINNECK", {}),
+            ("cdl_invertedhammer", "CDLINVERTEDHAMMER", {}),
+            ("cdl_kicking", "CDLKICKING", {}),
+            ("cdl_kickingbylength", "CDLKICKINGBYLENGTH", {}),
+            ("cdl_ladderbottom", "CDLLADDERBOTTOM", {}),
+            ("cdl_longleggeddoji", "CDLLONGLEGGEDDOJI", {}),
+            ("cdl_longline", "CDLLONGLINE", {}),
+            ("cdl_marubozu", "CDLMARUBOZU", {}),
+            ("cdl_matchinglow", "CDLMATCHINGLOW", {}),
+            ("cdl_mathold", "CDLMATHOLD", {"penetration": 0.5}),
+            ("cdl_morningdojistar", "CDLMORNINGDOJISTAR", {"penetration": 0.3}),
+            ("cdl_morningstar", "CDLMORNINGSTAR", {"penetration": 0.3}),
+            ("cdl_onneck", "CDLONNECK", {}),
+            ("cdl_piercing", "CDLPIERCING", {}),
+            ("cdl_rickshawman", "CDLRICKSHAWMAN", {}),
+            ("cdl_risefall3methods", "CDLRISEFALL3METHODS", {}),
+            ("cdl_separatinglines", "CDLSEPARATINGLINES", {}),
+            ("cdl_shootingstar", "CDLSHOOTINGSTAR", {}),
+            ("cdl_shortline", "CDLSHORTLINE", {}),
+            ("cdl_spinningtop", "CDLSPINNINGTOP", {}),
+            ("cdl_stalledpattern", "CDLSTALLEDPATTERN", {}),
+            ("cdl_sticksandwich", "CDLSTICKSANDWICH", {}),
+            ("cdl_takuri", "CDLTAKURI", {}),
+            ("cdl_tasukigap", "CDLTASUKIGAP", {}),
+            ("cdl_thrusting", "CDLTHRUSTING", {}),
+            ("cdl_tristar", "CDLTRISTAR", {}),
+            ("cdl_unique3river", "CDLUNIQUE3RIVER", {}),
+            ("cdl_upsidegap2crows", "CDLUPSIDEGAP2CROWS", {}),
+            ("cdl_xsidegap3methods", "CDLXSIDEGAP3METHODS", {}),
+        ]
+        for pt_name, tl_name, kwargs in patterns:
+            with self.subTest(pattern=pt_name):
+                # ta.<pt_name> is the submodule; the callable lives inside it
+                # e.g. ta.cdl_2crows  →  module pandas_ta_classic.candles.cdl_2crows
+                #      ta.cdl_2crows.cdl_2crows  →  the function
+                pt_mod = getattr(ta, pt_name)
+                pt_fn = getattr(pt_mod, pt_name)
+                tl_fn = getattr(_tl, tl_name)
+                pt = pt_fn(self.o, self.h, self.l, self.c, **kwargs)
+                self.assertIsNotNone(pt, f"{pt_name} returned None")
+                tl_arr = tl_fn(self.o, self.h, self.l, self.c, **kwargs)
+                self._compare_candle(pt, tl_arr, name=pt_name)
+
+
 if __name__ == "__main__":
     unittest.main()
