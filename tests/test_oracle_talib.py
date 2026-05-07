@@ -36,9 +36,8 @@ _DATA_PATH = (
 )
 
 
-@unittest.skipUnless(TALIB_AVAILABLE, "TA-Lib not installed")
-class TestTaLibOracle(unittest.TestCase):
-    """Compare pandas-ta-classic native output against TA-Lib C library."""
+class _SpyDataMixin:
+    """Shared SPY OHLCV data loader for oracle test cases."""
 
     @classmethod
     def setUpClass(cls):
@@ -55,6 +54,11 @@ class TestTaLibOracle(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         del cls.idx, cls.open, cls.high, cls.low, cls.close, cls.vol
+
+
+@unittest.skipUnless(TALIB_AVAILABLE, "TA-Lib not installed")
+class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
+    """Compare pandas-ta-classic native output against TA-Lib C library."""
 
     # ------------------------------------------------------------------
     # Helpers
@@ -586,7 +590,7 @@ class TestTaLibOracle(unittest.TestCase):
 
 
 @unittest.skipUnless(TALIB_AVAILABLE, "TA-Lib not installed")
-class TestTaLibCandleOracle(unittest.TestCase):
+class TestTaLibCandleOracle(_SpyDataMixin, unittest.TestCase):
     """Validate all 59 run_pattern candle implementations against TA-Lib.
 
     Each native pattern is a direct Python translation of the corresponding
@@ -598,21 +602,6 @@ class TestTaLibCandleOracle(unittest.TestCase):
       * cdl_inside — custom (not a TA-Lib pattern)
       * cdl_z      — statistical z-score utility, not a pattern
     """
-
-    @classmethod
-    def setUpClass(cls):
-        df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-        df.drop(columns=["Unnamed: 0"], errors="ignore", inplace=True)
-        df.columns = df.columns.str.lower()
-        cls.idx = df.index
-        cls.o = df["open"]
-        cls.h = df["high"]
-        cls.l = df["low"]
-        cls.c = df["close"]
-
-    @classmethod
-    def tearDownClass(cls):
-        del cls.idx, cls.o, cls.h, cls.l, cls.c
 
     # ------------------------------------------------------------------
     # Helpers
@@ -714,9 +703,9 @@ class TestTaLibCandleOracle(unittest.TestCase):
                 pt_mod = getattr(ta, pt_name)
                 pt_fn = getattr(pt_mod, pt_name)
                 tl_fn = getattr(_tl, tl_name)
-                pt = pt_fn(self.o, self.h, self.l, self.c, **kwargs)
+                pt = pt_fn(self.open, self.high, self.low, self.close, **kwargs)
                 self.assertIsNotNone(pt, f"{pt_name} returned None")
-                tl_arr = tl_fn(self.o, self.h, self.l, self.c, **kwargs)
+                tl_arr = tl_fn(self.open, self.high, self.low, self.close, **kwargs)
                 self._compare_candle(pt, tl_arr, name=pt_name)
 
 
