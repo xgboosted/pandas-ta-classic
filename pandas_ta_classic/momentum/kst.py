@@ -12,6 +12,11 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _pos_int(val, default):
+    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
+    return int(val) if val and val > 0 else default
+
+
 def kst(
     close: Series,
     roc1: Optional[int] = None,
@@ -29,17 +34,17 @@ def kst(
 ) -> Optional[DataFrame]:
     """Indicator: 'Know Sure Thing' (KST)"""
     # Validate arguments
-    roc1 = int(roc1) if roc1 and roc1 > 0 else 10
-    roc2 = int(roc2) if roc2 and roc2 > 0 else 15
-    roc3 = int(roc3) if roc3 and roc3 > 0 else 20
-    roc4 = int(roc4) if roc4 and roc4 > 0 else 30
+    roc1 = _pos_int(roc1, 10)
+    roc2 = _pos_int(roc2, 15)
+    roc3 = _pos_int(roc3, 20)
+    roc4 = _pos_int(roc4, 30)
 
-    sma1 = int(sma1) if sma1 and sma1 > 0 else 10
-    sma2 = int(sma2) if sma2 and sma2 > 0 else 10
-    sma3 = int(sma3) if sma3 and sma3 > 0 else 10
-    sma4 = int(sma4) if sma4 and sma4 > 0 else 15
+    sma1 = _pos_int(sma1, 10)
+    sma2 = _pos_int(sma2, 10)
+    sma3 = _pos_int(sma3, 10)
+    sma4 = _pos_int(sma4, 15)
 
-    signal = int(signal) if signal and signal > 0 else 9
+    signal = _pos_int(signal, 9)
     _length = max(roc1, roc2, roc3, roc4, sma1, sma2, sma3, sma4, signal)
     close = verify_series(close, _length)
     drift = get_drift(drift)

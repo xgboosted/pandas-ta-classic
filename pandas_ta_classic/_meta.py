@@ -57,70 +57,78 @@ Imports = {
 }
 
 
-def _build_category_dict():
-    """
-    Dynamically build the Category dictionary by scanning the package directory structure.
+# Top-level candle indicator names exposed as public API.  All other cdl_*
+# pattern files are sub-patterns accessed via cdl_pattern() only.
+_CANDLE_TOP_LEVEL = {"cdl_doji", "cdl_inside", "cdl_pattern", "cdl_z", "ha"}
 
-    This function automatically discovers all indicator modules by:
-    1. Finding all subdirectories in pandas_ta_classic (except special ones like __pycache__)
-    2. For each subdirectory, listing all .py files (except __init__.py)
-    3. Building a dictionary mapping category names to lists of indicator names
+# Subdirectories that contain indicator modules (excludes utils, math, etc.)
+_VALID_CATEGORIES = {
+    "candles",
+    "cycles",
+    "momentum",
+    "overlap",
+    "performance",
+    "statistics",
+    "trend",
+    "volatility",
+    "volume",
+}
+
+
+def _collect_category_indicators(category_path, category_name):
+    """Return a sorted list of public indicator names found in *category_path*.
+
+    Files whose names start with ``_`` are treated as internal helpers and are
+    excluded.  For the ``candles`` category only the handful of top-level
+    indicators defined in :data:`_CANDLE_TOP_LEVEL` are included; the
+    individual ``cdl_*`` pattern modules are accessed through
+    ``cdl_pattern()`` and must not appear as standalone indicators.
+
+    Args:
+        category_path (Path): Directory to scan.
+        category_name (str): Name of the category (e.g. ``"candles"``).
 
     Returns:
-        dict: Category dictionary mapping category names to lists of indicator function names
+        list[str]: Sorted indicator stem names.
+    """
+    indicators = []
+    for file_path in category_path.glob("*.py"):
+        if file_path.name.startswith("_"):
+            continue
+        stem = file_path.stem
+        if category_name == "candles" and stem not in _CANDLE_TOP_LEVEL:
+            continue
+        indicators.append(stem)
+    return sorted(indicators)
+
+
+def _build_category_dict():
+    """Dynamically build the Category dictionary by scanning the package
+    directory structure.
+
+    Discovers all indicator modules by iterating over valid category
+    sub-directories and delegating per-directory collection to
+    :func:`_collect_category_indicators`.
+
+    Returns:
+        dict: Mapping of category names to sorted lists of indicator names.
     """
     categories = {}
-
-    # Get the directory containing this file (pandas_ta_classic/)
     package_dir = Path(__file__).parent
 
-    # Define categories that should be included (subdirectories with indicators)
-    # This excludes utility directories that don't contain indicators
-    valid_categories = {
-        "candles",
-        "cycles",
-        "momentum",
-        "overlap",
-        "performance",
-        "statistics",
-        "trend",
-        "volatility",
-        "volume",
-    }
-
-    # Scan each subdirectory
     for category_path in package_dir.iterdir():
-        # Skip if not a directory or not a valid category
         if not category_path.is_dir():
             continue
-
         category_name = category_path.name
-
-        # Skip special directories and non-indicator directories
-        if category_name.startswith("_") or category_name.startswith("."):
+        if (
+            category_name.startswith(("_", "."))
+            or category_name == "__pycache__"
+            or category_name not in _VALID_CATEGORIES
+        ):
             continue
-        if category_name == "__pycache__":
-            continue
-        if category_name not in valid_categories:
-            continue
-
-        # Find all .py files in this category (excluding __init__.py and
-        # internal helpers).  For candles, individual cdl_* pattern files
-        # (e.g. cdl_engulfing) are sub-patterns accessed via cdl_pattern()
-        # and should not appear as top-level indicators.
-        _candle_top = {"cdl_doji", "cdl_inside", "cdl_pattern", "cdl_z", "ha"}
-        indicators = []
-        for file_path in category_path.glob("*.py"):
-            if file_path.name.startswith("_"):
-                continue
-            stem = file_path.stem
-            if category_name == "candles" and stem not in _candle_top:
-                continue
-            indicators.append(stem)
-
-        # Sort indicators alphabetically for consistency
+        indicators = _collect_category_indicators(category_path, category_name)
         if indicators:
-            categories[category_name] = sorted(indicators)
+            categories[category_name] = indicators
 
     return categories
 

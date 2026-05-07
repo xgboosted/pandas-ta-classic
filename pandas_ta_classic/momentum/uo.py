@@ -12,6 +12,51 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _pos_int(val, default):
+    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
+    return int(val) if val and val > 0 else default
+
+
+def _pos_float(val, default):
+    """Return ``float(val)`` when *val* is a positive float, else *default*."""
+    return float(val) if val and val > 0 else default
+
+
+def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):
+    """Compute the Ultimate Oscillator without TA-Lib.
+
+    Args:
+        high (Series): High price series.
+        low (Series): Low price series.
+        close (Series): Close price series.
+        fast (int): Fast period.
+        medium (int): Medium period.
+        slow (int): Slow period.
+        fast_w (float): Fast period weight.
+        medium_w (float): Medium period weight.
+        slow_w (float): Slow period weight.
+        drift (int): Periods to shift ``close`` for the previous-close column.
+
+    Returns:
+        Series: UO values scaled to 0–100.
+    """
+    tdf = DataFrame({"high": high, "low": low, f"close_{drift}": close.shift(drift)})
+    max_h_or_pc = tdf.loc[:, ["high", f"close_{drift}"]].max(axis=1)
+    min_l_or_pc = tdf.loc[:, ["low", f"close_{drift}"]].min(axis=1)
+    del tdf
+
+    bp = close - min_l_or_pc
+    tr = max_h_or_pc - min_l_or_pc
+
+    fast_avg = bp.rolling(fast).sum() / tr.rolling(fast).sum()
+    medium_avg = bp.rolling(medium).sum() / tr.rolling(medium).sum()
+    slow_avg = bp.rolling(slow).sum() / tr.rolling(slow).sum()
+
+    total_weight = fast_w + medium_w + slow_w
+    weights = (fast_w * fast_avg) + (medium_w * medium_avg) + (slow_w * slow_avg)
+    return 100 * weights / total_weight
+
+
 def uo(
     high: Series,
     low: Series,
@@ -29,12 +74,12 @@ def uo(
 ) -> Optional[Series]:
     """Indicator: Ultimate Oscillator (UO)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 7
-    fast_w = float(fast_w) if fast_w and fast_w > 0 else 4.0
-    medium = int(medium) if medium and medium > 0 else 14
-    medium_w = float(medium_w) if medium_w and medium_w > 0 else 2.0
-    slow = int(slow) if slow and slow > 0 else 28
-    slow_w = float(slow_w) if slow_w and slow_w > 0 else 1.0
+    fast = _pos_int(fast, 7)
+    fast_w = _pos_float(fast_w, 4.0)
+    medium = _pos_int(medium, 14)
+    medium_w = _pos_float(medium_w, 2.0)
+    slow = _pos_int(slow, 28)
+    slow_w = _pos_float(slow_w, 1.0)
     _length = max(fast, medium, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -52,23 +97,9 @@ def uo(
 
         uo = ULTOSC(high, low, close, fast, medium, slow)
     else:
-        tdf = DataFrame(
-            {"high": high, "low": low, f"close_{drift}": close.shift(drift)}
+        uo = _uo_native(
+            high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift
         )
-        max_h_or_pc = tdf.loc[:, ["high", f"close_{drift}"]].max(axis=1)
-        min_l_or_pc = tdf.loc[:, ["low", f"close_{drift}"]].min(axis=1)
-        del tdf
-
-        bp = close - min_l_or_pc
-        tr = max_h_or_pc - min_l_or_pc
-
-        fast_avg = bp.rolling(fast).sum() / tr.rolling(fast).sum()
-        medium_avg = bp.rolling(medium).sum() / tr.rolling(medium).sum()
-        slow_avg = bp.rolling(slow).sum() / tr.rolling(slow).sum()
-
-        total_weight = fast_w + medium_w + slow_w
-        weights = (fast_w * fast_avg) + (medium_w * medium_avg) + (slow_w * slow_avg)
-        uo = 100 * weights / total_weight
 
     # Offset
     uo = apply_offset(uo, offset)

@@ -13,6 +13,25 @@ npNaN = np.nan
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
+def _jma_phase_ratio(phase):
+    """Map *phase* to the JMA PR smoothing coefficient.
+
+    Returns 0.5 when *phase* < -100, 2.5 when *phase* > 100, otherwise
+    ``1.5 + phase * 0.01``.
+
+    Args:
+        phase (float): JMA phase parameter (clamped internally).
+
+    Returns:
+        float: PR coefficient used in the JMA calculation.
+    """
+    if phase < -100:
+        return 0.5
+    if phase > 100:
+        return 2.5
+    return 1.5 + phase * 0.01
+
+
 def jma(
     close: Series,
     length: Optional[Union[int, float]] = None,
@@ -40,7 +59,7 @@ def jma(
     # Static variables
     sum_length = 10
     length = 0.5 * (_length - 1)
-    pr = 0.5 if phase < -100 else 2.5 if phase > 100 else 1.5 + phase * 0.01
+    pr = _jma_phase_ratio(phase)
     length1 = max((npLog(npSqrt(length)) / npLog(2.0)) + 2.0, 0)
     pow1 = max(length1 - 2.0, 0.5)
     length2 = length1 * npSqrt(length)

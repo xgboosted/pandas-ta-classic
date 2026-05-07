@@ -18,6 +18,17 @@ from pandas_ta_classic.utils._njit import njit
 npNaN = np.nan
 
 
+def _pos_float(val, default):
+    return float(val) if val and val > 0 else default
+
+
+def _sarext_falling(high: Series, low: Series, drift: int = 1) -> bool:
+    up = high - high.shift(drift)
+    dn = low.shift(drift) - low
+    _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
+    return _dmn > 0
+
+
 @njit(cache=True)
 def _sarext_loop(
     h_arr,
@@ -84,6 +95,59 @@ def _sarext_loop(
     return long_arr, short_arr, af_arr
 
 
+def _sarext_native_result(
+    high,
+    low,
+    startvalue,
+    af0_long,
+    af_long,
+    max_af_long,
+    af0_short,
+    af_short,
+    max_af_short,
+    offsetonreverse,
+):
+    """Run the native SAREXT computation and return a signed Series."""
+    from pandas import Series as _Series
+
+    falling = _sarext_falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
+    if startvalue != 0.0:
+        sar = startvalue
+    elif falling:
+        sar = high.iloc[0]
+    else:
+        sar = low.iloc[0]
+    ep = (
+        low.iloc[1]
+        if falling and len(low) > 1
+        else (high.iloc[1] if len(high) > 1 else high.iloc[0])
+    )
+    m = high.shape[0]
+    h_arr = high.to_numpy(dtype=float)
+    l_arr = low.to_numpy(dtype=float)
+    long_arr, short_arr, af_arr = _sarext_loop(
+        h_arr,
+        l_arr,
+        m,
+        falling,
+        sar,
+        ep,
+        af0_long,
+        af_long,
+        max_af_long,
+        af0_short,
+        af_short,
+        max_af_short,
+        offsetonreverse,
+    )
+    result = np.where(
+        ~np.isnan(long_arr),
+        long_arr,
+        np.where(~np.isnan(short_arr), -short_arr, np.nan),
+    )
+    return _Series(result, index=high.index)
+
+
 def sarext(
     high: Series,
     low: Series,
@@ -105,34 +169,12 @@ def sarext(
     low = verify_series(low)
     startvalue = float(startvalue) if startvalue is not None else 0.0
     offsetonreverse = float(offsetonreverse) if offsetonreverse is not None else 0.0
-    af0_long = (
-        float(accelerationinitlong)
-        if accelerationinitlong and accelerationinitlong > 0
-        else 0.02
-    )
-    af_long = (
-        float(accelerationlong) if accelerationlong and accelerationlong > 0 else 0.02
-    )
-    max_af_long = (
-        float(accelerationmaxlong)
-        if accelerationmaxlong and accelerationmaxlong > 0
-        else 0.2
-    )
-    af0_short = (
-        float(accelerationinitshort)
-        if accelerationinitshort and accelerationinitshort > 0
-        else 0.02
-    )
-    af_short = (
-        float(accelerationshort)
-        if accelerationshort and accelerationshort > 0
-        else 0.02
-    )
-    max_af_short = (
-        float(accelerationmaxshort)
-        if accelerationmaxshort and accelerationmaxshort > 0
-        else 0.2
-    )
+    af0_long = _pos_float(accelerationinitlong, 0.02)
+    af_long = _pos_float(accelerationlong, 0.02)
+    max_af_long = _pos_float(accelerationmaxlong, 0.2)
+    af0_short = _pos_float(accelerationinitshort, 0.02)
+    af_short = _pos_float(accelerationshort, 0.02)
+    max_af_short = _pos_float(accelerationmaxshort, 0.2)
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
@@ -156,39 +198,10 @@ def sarext(
             accelerationmaxshort=max_af_short,
         )
     else:
-        # Native implementation
-        def _falling(high: Series, low: Series, drift: int = 1) -> bool:
-            up = high - high.shift(drift)
-            dn = low.shift(drift) - low
-            _dmn = (((dn > up) & (dn > 0)) * dn).apply(zero).iloc[-1]
-            return _dmn > 0
-
-        falling = _falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
-
-        if startvalue != 0.0:
-            sar = startvalue
-        elif falling:
-            sar = high.iloc[0]
-        else:
-            sar = low.iloc[0]
-
-        ep = (
-            low.iloc[1]
-            if falling and len(low) > 1
-            else (high.iloc[1] if len(high) > 1 else high.iloc[0])
-        )
-
-        m = high.shape[0]
-        h_arr = high.to_numpy(dtype=float)
-        l_arr = low.to_numpy(dtype=float)
-
-        long_arr, short_arr, af_arr = _sarext_loop(
-            h_arr,
-            l_arr,
-            m,
-            falling,
-            sar,
-            ep,
+        sarext_ = _sarext_native_result(
+            high,
+            low,
+            startvalue,
             af0_long,
             af_long,
             max_af_long,
@@ -197,16 +210,6 @@ def sarext(
             max_af_short,
             offsetonreverse,
         )
-
-        # SAREXT returns signed values: positive = long SAR, negative = short SAR
-        from pandas import Series as _Series
-
-        result = np.where(
-            ~np.isnan(long_arr),
-            long_arr,
-            np.where(~np.isnan(short_arr), -short_arr, np.nan),
-        )
-        sarext_ = _Series(result, index=high.index)
 
     # Offset
     sarext_ = apply_offset(sarext_, offset)

@@ -22,6 +22,35 @@ _MATYPE_TO_KIND = {
     8: "t3",
 }
 
+_UNSUPPORTED_NATIVE_MATYPES = {6: "kama", 7: "mama"}
+
+
+def _pos_int(val, default):
+    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
+    return int(val) if val and val > 0 else default
+
+
+def _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype):
+    """Emit a :class:`UserWarning` for each TA-Lib MA type unsupported natively.
+
+    Only ``kama`` (6) and ``mama`` (7) cannot be reproduced natively; EMA is
+    used as a fallback for those types.
+
+    Args:
+        fastmatype (int): Fast MA type index.
+        slowmatype (int): Slow MA type index.
+        signalmatype (int): Signal MA type index.
+    """
+    for _mt, _name in _UNSUPPORTED_NATIVE_MATYPES.items():
+        if _mt in (fastmatype, slowmatype, signalmatype):
+            warnings.warn(
+                f"MACDEXT native fallback does not support matype={_mt} ({_name}); "
+                f"EMA will be used instead. Pass talib=True (with TA-Lib installed) "
+                f"to get the correct {_name.upper()} behaviour.",
+                UserWarning,
+                stacklevel=3,
+            )
+
 
 def macdext(
     close: Series,
@@ -42,9 +71,9 @@ def macdext(
     0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3.
     """
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 12
-    slow = int(slow) if slow and slow > 0 else 26
-    signal = int(signal) if signal and signal > 0 else 9
+    fast = _pos_int(fast, 12)
+    slow = _pos_int(slow, 26)
+    signal = _pos_int(signal, 9)
     fastmatype = int(fastmatype) if fastmatype is not None and fastmatype >= 0 else 1
     slowmatype = int(slowmatype) if slowmatype is not None and slowmatype >= 0 else 1
     signalmatype = (
@@ -75,18 +104,7 @@ def macdext(
     else:
         from pandas_ta_classic.overlap.ma import ma
 
-        # matypes 6 (KAMA) and 7 (MAMA) are not implemented natively;
-        # they silently fall back to EMA inside ma(). Warn the caller.
-        _unsupported = {6: "kama", 7: "mama"}
-        for _mt, _name in _unsupported.items():
-            if _mt in (fastmatype, slowmatype, signalmatype):
-                warnings.warn(
-                    f"MACDEXT native fallback does not support matype={_mt} ({_name}); "
-                    f"EMA will be used instead. Pass talib=True (with TA-Lib installed) "
-                    f"to get the correct {_name.upper()} behaviour.",
-                    UserWarning,
-                    stacklevel=2,
-                )
+        _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype)
 
         fast_kind = _MATYPE_TO_KIND.get(fastmatype, "ema")
         slow_kind = _MATYPE_TO_KIND.get(slowmatype, "ema")

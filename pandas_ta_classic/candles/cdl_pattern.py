@@ -105,6 +105,38 @@ def _discover_native_patterns() -> dict:
 _NATIVE_PATTERNS = _discover_native_patterns()
 
 
+def _run_one_cdl_pattern(
+    n, open_, high, low, close, pta_patterns, scalar, offset, result, tala, **kwargs
+):
+    """Attempt to compute and store one candle pattern by name."""
+    if n not in ALL_PATTERNS:
+        logger.warning("There is no candle pattern named %s available!", n)
+        return
+    col_name = f"CDL_{n.upper()}"
+    if n in pta_patterns:
+        pattern_result = pta_patterns[n](
+            open_, high, low, close, offset=offset, scalar=scalar, **kwargs
+        )
+        result[pattern_result.name] = pattern_result
+    elif n in _NATIVE_PATTERNS:
+        pattern_result = _NATIVE_PATTERNS[n](
+            open_, high, low, close, scalar=scalar, offset=offset, **kwargs
+        )
+        if pattern_result is not None:
+            result[col_name] = pattern_result
+    elif tala is not None:
+        pattern_func = tala.Function(f"CDL{n.upper()}")
+        pattern_result = Series(
+            pattern_func(open_, high, low, close, **kwargs) / 100 * scalar
+        )
+        pattern_result.index = close.index
+        pattern_result = apply_offset(pattern_result, offset)
+        pattern_result = apply_fill(pattern_result, **kwargs)
+        result[col_name] = pattern_result
+    else:
+        logger.warning("Please install TA-Lib to use %s. (pip install TA-Lib)", n)
+
+
 def cdl_pattern(
     open_: Series,
     high: Series,
@@ -139,47 +171,25 @@ def cdl_pattern(
     if type(name) is str:
         name = [name]
 
+    tala = None
     if Imports["talib"]:
         import talib.abstract as tala
 
     result = {}
     for n in name:
-        if n not in ALL_PATTERNS:
-            logger.warning("There is no candle pattern named %s available!", n)
-            continue
-
-        col_name = f"CDL_{n.upper()}"
-
-        if n in pta_patterns:
-            pattern_result = pta_patterns[n](
-                open_, high, low, close, offset=offset, scalar=scalar, **kwargs
-            )
-            result[pattern_result.name] = pattern_result
-        elif n in _NATIVE_PATTERNS:
-            # Use native implementation (no TA-Lib required)
-            pattern_result = _NATIVE_PATTERNS[n](
-                open_, high, low, close, scalar=scalar, offset=offset, **kwargs
-            )
-            if pattern_result is not None:
-                result[col_name] = pattern_result
-        elif Imports["talib"]:
-            # Fall back to TA-Lib
-            pattern_func = tala.Function(f"CDL{n.upper()}")
-            pattern_result = Series(
-                pattern_func(open_, high, low, close, **kwargs) / 100 * scalar
-            )
-            pattern_result.index = close.index
-
-            # Offset
-            pattern_result = apply_offset(pattern_result, offset)
-
-            # Handle fills
-            pattern_result = apply_fill(pattern_result, **kwargs)
-
-            result[col_name] = pattern_result
-        else:
-            logger.warning("Please install TA-Lib to use %s. (pip install TA-Lib)", n)
-            continue
+        _run_one_cdl_pattern(
+            n,
+            open_,
+            high,
+            low,
+            close,
+            pta_patterns,
+            scalar,
+            offset,
+            result,
+            tala,
+            **kwargs,
+        )
 
     if not result:
         return None

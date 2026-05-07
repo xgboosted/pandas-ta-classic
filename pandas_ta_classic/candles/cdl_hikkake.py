@@ -10,6 +10,26 @@ from pandas_ta_classic.candles._cdl_math import (
 import numpy as np
 
 
+def _hikkake_is_setup(H, L, i):
+    """Check if bars at index i form a Hikkake setup (inside bar + breakout direction)."""
+    return (
+        H[i - 1] < H[i - 2]
+        and L[i - 1] > L[i - 2]
+        and (
+            (H[i] < H[i - 1] and L[i] < L[i - 1])
+            or (H[i] > H[i - 1] and L[i] > L[i - 1])
+        )
+    )
+
+
+def _hikkake_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
+    """Check if bar i confirms a previously detected Hikkake pattern."""
+    return i <= pattern_idx + 3 and (
+        (pattern_result > 0 and C[i] > H[pattern_idx - 1])
+        or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
+    )
+
+
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback = 5  (no candle settings used)
     lookback = 5
@@ -27,45 +47,21 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Warm-up: scan the 3 bars before start_idx to initialize state
     # (i runs from start_idx-3 to start_idx-1)
     for i in range(start_idx - 3, start_idx):
-        if (
-            H[i - 1] < H[i - 2]
-            and L[i - 1] > L[i - 2]
-            and (
-                (H[i] < H[i - 1] and L[i] < L[i - 1])
-                or (H[i] > H[i - 1] and L[i] > L[i - 1])
-            )
-        ):
+        if _hikkake_is_setup(H, L, i):
             pattern_result = 100 * (1 if H[i] < H[i - 1] else -1)
             pattern_idx = i
         else:
             # Search for confirmation
-            if i <= pattern_idx + 3 and (
-                (pattern_result > 0 and C[i] > H[pattern_idx - 1])
-                or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
-            ):
+            if _hikkake_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
                 pattern_idx = 0
 
     # Main loop
     for i in range(start_idx, len(out)):
-        if (
-            # 1st + 2nd: inside bar (lower high, higher low)
-            H[i - 1] < H[i - 2]
-            and L[i - 1] > L[i - 2]
-            and (
-                # (bull) 3rd: lower high and lower low
-                (H[i] < H[i - 1] and L[i] < L[i - 1])
-                or
-                # (bear) 3rd: higher high and higher low
-                (H[i] > H[i - 1] and L[i] > L[i - 1])
-            )
-        ):
+        if _hikkake_is_setup(H, L, i):
             pattern_result = 100 * (1 if H[i] < H[i - 1] else -1)
             pattern_idx = i
             out[i] = pattern_result
-        elif i <= pattern_idx + 3 and (
-            (pattern_result > 0 and C[i] > H[pattern_idx - 1])
-            or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
-        ):
+        elif _hikkake_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
             out[i] = pattern_result + 100 * (1 if pattern_result > 0 else -1)
             pattern_idx = 0
 

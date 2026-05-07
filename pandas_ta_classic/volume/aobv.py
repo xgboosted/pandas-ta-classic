@@ -32,8 +32,7 @@ def aobv(
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    if "length" in kwargs:
-        kwargs.pop("length")
+    kwargs.pop("length", None)
     run_length = kwargs.pop("run_length", 2)
 
     if close is None or volume is None:

@@ -10,6 +10,30 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
+def _mavp_sma_values(close_arr, per_arr):
+    """Compute a variable-period SMA for each bar.
+
+    For each bar ``i`` the window is ``close_arr[i - p + 1 : i + 1]`` where
+    ``p = per_arr[i]``.  Bars where fewer than ``p`` preceding values exist
+    are left as ``NaN``.
+
+    Args:
+        close_arr (np.ndarray): 1-D float64 price array.
+        per_arr (np.ndarray): Integer array of per-bar window sizes,
+            already clipped to ``[minperiod, maxperiod]``.
+
+    Returns:
+        np.ndarray: Rolling variable-SMA values.
+    """
+    n = len(close_arr)
+    result = np.full(n, np.nan)
+    for i in range(n):
+        p = per_arr[i]
+        if i + 1 >= p:
+            result[i] = close_arr[i - p + 1 : i + 1].mean()
+    return result
+
+
 def mavp(
     close: Series,
     periods: Optional[Series] = None,
@@ -34,16 +58,18 @@ def mavp(
     if close is None:
         return None
 
-    if periods is None:
-        # Default: linearly vary from minperiod to maxperiod
-        n = len(close)
-        periods = Series(
-            np.linspace(minperiod, maxperiod, n), index=close.index, dtype=float
+    # Resolve variable-period series
+    periods = (
+        Series(
+            np.linspace(minperiod, maxperiod, len(close)),
+            index=close.index,
+            dtype=float,
         )
-    else:
-        periods = verify_series(periods)
-        if periods is None:
-            return None
+        if periods is None
+        else verify_series(periods)
+    )
+    if periods is None:
+        return None
 
     # Calculate Result
     if Imports["talib"] and mode_tal:
@@ -70,13 +96,7 @@ def mavp(
         per_arr = np.clip(
             periods.to_numpy(dtype=float).round().astype(int), minperiod, maxperiod
         )
-        n = len(close_arr)
-        result = np.full(n, np.nan)
-        for i in range(n):
-            p = per_arr[i]
-            if i + 1 >= p:
-                result[i] = close_arr[i - p + 1 : i + 1].mean()
-        mavp_ = Series(result, index=close.index)
+        mavp_ = Series(_mavp_sma_values(close_arr, per_arr), index=close.index)
 
     # Offset
     mavp_ = apply_offset(mavp_, offset)

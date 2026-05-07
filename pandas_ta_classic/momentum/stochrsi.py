@@ -14,6 +14,35 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _stochrsi_result_df(k_series, d_series, length, rsi_length, k, d):
+    """Attach names/categories and return a result :class:`~pandas.DataFrame`.
+
+    Extracted to avoid repeating the identical naming block in both the
+    TA-Lib and the pure-Python code paths.
+
+    Args:
+        k_series (Series): Stochastic %K series.
+        d_series (Series): Stochastic %D series.
+        length (int): STOCHRSI look-back period.
+        rsi_length (int): RSI look-back period.
+        k (int): %K smoothing period.
+        d (int): %D smoothing period.
+
+    Returns:
+        DataFrame: Two columns ``STOCHRSIk_…`` and ``STOCHRSId_…``.
+    """
+    _name = "STOCHRSI"
+    _props = f"_{length}_{rsi_length}_{k}_{d}"
+    k_series.name = f"{_name}k{_props}"
+    d_series.name = f"{_name}d{_props}"
+    k_series.category = d_series.category = "momentum"
+    data = {k_series.name: k_series, d_series.name: d_series}
+    df = DataFrame(data)
+    df.name = f"{_name}{_props}"
+    df.category = k_series.category
+    return df
+
+
 def stochrsi(
     close: Series,
     length: Optional[int] = None,
@@ -33,7 +62,7 @@ def stochrsi(
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_tal = bool(kwargs.pop("talib", None)) if "talib" in kwargs else False
+    mode_tal = bool(kwargs.pop("talib", None))
 
     if close is None:
         return None
@@ -47,16 +76,7 @@ def stochrsi(
         stochrsi_k = Series(fastk, index=close.index)
         stochrsi_d = Series(fastd, index=close.index)
         stochrsi_k, stochrsi_d = apply_offset([stochrsi_k, stochrsi_d], offset)
-        _name = "STOCHRSI"
-        _props = f"_{length}_{rsi_length}_{k}_{d}"
-        stochrsi_k.name = f"{_name}k{_props}"
-        stochrsi_d.name = f"{_name}d{_props}"
-        stochrsi_k.category = stochrsi_d.category = "momentum"
-        data = {stochrsi_k.name: stochrsi_k, stochrsi_d.name: stochrsi_d}
-        df = DataFrame(data)
-        df.name = f"{_name}{_props}"
-        df.category = stochrsi_k.category
-        return df
+        return _stochrsi_result_df(stochrsi_k, stochrsi_d, length, rsi_length, k, d)
 
     # Calculate Result
     rsi_ = rsi(close, length=rsi_length)
@@ -80,20 +100,7 @@ def stochrsi(
 
     stochrsi_k, stochrsi_d = apply_fill([stochrsi_k, stochrsi_d], **kwargs)
 
-    # Name and Categorize it
-    _name = "STOCHRSI"
-    _props = f"_{length}_{rsi_length}_{k}_{d}"
-    stochrsi_k.name = f"{_name}k{_props}"
-    stochrsi_d.name = f"{_name}d{_props}"
-    stochrsi_k.category = stochrsi_d.category = "momentum"
-
-    # Prepare DataFrame to return
-    data = {stochrsi_k.name: stochrsi_k, stochrsi_d.name: stochrsi_d}
-    df = DataFrame(data)
-    df.name = f"{_name}{_props}"
-    df.category = stochrsi_k.category
-
-    return df
+    return _stochrsi_result_df(stochrsi_k, stochrsi_d, length, rsi_length, k, d)
 
 
 stochrsi.__doc__ = """Stochastic (STOCHRSI)

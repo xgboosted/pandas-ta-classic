@@ -10,6 +10,28 @@ from pandas_ta_classic.candles._cdl_math import (
 import numpy as np
 
 
+def _is_bullish_engulf(ca, i):
+    return (
+        ca.color[i] == 1
+        and ca.color[i - 1] == -1
+        and (
+            (ca.close[i] >= ca.open[i - 1] and ca.open[i] < ca.close[i - 1])
+            or (ca.close[i] > ca.open[i - 1] and ca.open[i] <= ca.close[i - 1])
+        )
+    )
+
+
+def _is_bearish_engulf(ca, i):
+    return (
+        ca.color[i] == -1
+        and ca.color[i - 1] == 1
+        and (
+            (ca.open[i] >= ca.close[i - 1] and ca.close[i] < ca.open[i - 1])
+            or (ca.open[i] > ca.close[i - 1] and ca.close[i] <= ca.open[i - 1])
+        )
+    )
+
+
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: 2 (no candle settings needed)
     start_idx = 2
@@ -17,21 +39,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         return
 
     for i in range(start_idx, len(out)):
-        if (
-            ca.color[i] == 1
-            and ca.color[i - 1] == -1  # white engulfs black
-            and (
-                (ca.close[i] >= ca.open[i - 1] and ca.open[i] < ca.close[i - 1])
-                or (ca.close[i] > ca.open[i - 1] and ca.open[i] <= ca.close[i - 1])
-            )
-        ) or (
-            ca.color[i] == -1
-            and ca.color[i - 1] == 1  # black engulfs white
-            and (
-                (ca.open[i] >= ca.close[i - 1] and ca.close[i] < ca.open[i - 1])
-                or (ca.open[i] > ca.close[i - 1] and ca.close[i] <= ca.open[i - 1])
-            )
-        ):
+        if _is_bullish_engulf(ca, i) or _is_bearish_engulf(ca, i):
             if ca.open[i] != ca.close[i - 1] and ca.close[i] != ca.open[i - 1]:
                 out[i] = ca.color[i] * 100
             else:

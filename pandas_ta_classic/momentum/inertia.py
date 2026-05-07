@@ -13,6 +13,59 @@ from pandas_ta_classic.utils import (
 )
 
 
+def _pos_int(val, default):
+    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
+    return int(val) if val and val > 0 else default
+
+
+def _pos_float(val, default):
+    """Return ``float(val)`` when *val* is a positive float, else *default*."""
+    return float(val) if val and val > 0 else default
+
+
+def _inertia_rvi_mode(close, high, low, rvi_length, scalar, refined, thirds, mamode):
+    """Compute RVI and return a ``(mode_suffix, rvi_series)`` tuple.
+
+    Selects the correct :func:`rvi` call based on *refined* / *thirds* flags
+    and returns a short string suffix (``"r"``, ``"t"``, or ``""``) together
+    with the resulting series.
+
+    Args:
+        close (Series): Close price series.
+        high (Series | None): High price series (required for refined/thirds).
+        low (Series | None): Low price series (required for refined/thirds).
+        rvi_length (int): Look-back period for RVI.
+        scalar (float): Scalar multiplier for RVI.
+        refined (bool): Use refined RVI variant.
+        thirds (bool): Use thirds RVI variant.
+        mamode (str): Moving-average mode passed to :func:`rvi`.
+
+    Returns:
+        tuple[str, Series | None]: ``(mode_suffix, rvi_series)``.
+    """
+    if refined:
+        return "r", rvi(
+            close,
+            high=high,
+            low=low,
+            length=rvi_length,
+            scalar=scalar,
+            refined=refined,
+            mamode=mamode,
+        )
+    if thirds:
+        return "t", rvi(
+            close,
+            high=high,
+            low=low,
+            length=rvi_length,
+            scalar=scalar,
+            thirds=thirds,
+            mamode=mamode,
+        )
+    return "", rvi(close, length=rvi_length, scalar=scalar, mamode=mamode)
+
+
 def inertia(
     close: Optional[Series] = None,
     high: Optional[Series] = None,
@@ -29,9 +82,9 @@ def inertia(
 ) -> Optional[Series]:
     """Indicator: Inertia (INERTIA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 20
-    rvi_length = int(rvi_length) if rvi_length and rvi_length > 0 else 14
-    scalar = float(scalar) if scalar and scalar > 0 else 100
+    length = _pos_int(length, 20)
+    rvi_length = _pos_int(rvi_length, 14)
+    scalar = _pos_float(scalar, 100)
     refined = False if refined is None else True
     thirds = False if thirds is None else True
     mamode = mamode if isinstance(mamode, str) else "ema"
@@ -50,28 +103,9 @@ def inertia(
             return None
 
     # Calculate Result
-    if refined:
-        _mode, rvi_ = "r", rvi(
-            close,
-            high=high,
-            low=low,
-            length=rvi_length,
-            scalar=scalar,
-            refined=refined,
-            mamode=mamode,
-        )
-    elif thirds:
-        _mode, rvi_ = "t", rvi(
-            close,
-            high=high,
-            low=low,
-            length=rvi_length,
-            scalar=scalar,
-            thirds=thirds,
-            mamode=mamode,
-        )
-    else:
-        _mode, rvi_ = "", rvi(close, length=rvi_length, scalar=scalar, mamode=mamode)
+    _mode, rvi_ = _inertia_rvi_mode(
+        close, high, low, rvi_length, scalar, refined, thirds, mamode
+    )
 
     if rvi_ is None:
         return None

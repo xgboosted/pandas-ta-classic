@@ -8,6 +8,58 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_off
 from pandas_ta_classic.utils import unsigned_differences, verify_series
 
 
+def _pos_int(val, default):
+    return int(val) if val and val > 0 else default
+
+
+def _pos_float(val, default):
+    return float(val) if val and val > 0 else default
+
+
+def _rvi_compute(
+    source: Series, length: int, scalar: float, mode: str, drift: int
+) -> Optional[Series]:
+    """Core RVI computation for a single source series."""
+    std = stdev(source, length)
+    pos, neg = unsigned_differences(source, amount=drift)
+    pos_std = pos * std
+    neg_std = neg * std
+    pos_avg = ma(mode, pos_std, length=length)
+    if pos_avg is None:
+        return None
+    neg_avg = ma(mode, neg_std, length=length)
+    if neg_avg is None:
+        return None
+    result = scalar * pos_avg
+    result /= pos_avg + neg_avg
+    return result
+
+
+def _rvi_mode(refined, thirds, high, low, close, length, scalar, mamode, drift):
+    """Compute RVI for the requested mode; returns (series, mode_str) or None."""
+    if refined:
+        high_rvi = _rvi_compute(high, length, scalar, mamode, drift)
+        if high_rvi is None:
+            return None
+        low_rvi = _rvi_compute(low, length, scalar, mamode, drift)
+        if low_rvi is None:
+            return None
+        return 0.5 * (high_rvi + low_rvi), "r"
+    if thirds:
+        high_rvi = _rvi_compute(high, length, scalar, mamode, drift)
+        if high_rvi is None:
+            return None
+        low_rvi = _rvi_compute(low, length, scalar, mamode, drift)
+        if low_rvi is None:
+            return None
+        close_rvi = _rvi_compute(close, length, scalar, mamode, drift)
+        if close_rvi is None:
+            return None
+        return (high_rvi + low_rvi + close_rvi) / 3.0, "t"
+    result = _rvi_compute(close, length, scalar, mamode, drift)
+    return (result, "") if result is not None else None
+
+
 def rvi(
     close: Series,
     high: Optional[Series] = None,
@@ -23,10 +75,10 @@ def rvi(
 ) -> Optional[Series]:
     """Indicator: Relative Volatility Index (RVI)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
-    scalar = float(scalar) if scalar and scalar > 0 else 100
-    refined = False if refined is None else refined
-    thirds = False if thirds is None else thirds
+    length = _pos_int(length, 14)
+    scalar = _pos_float(scalar, 100)
+    refined = bool(refined)
+    thirds = bool(thirds)
     mamode = mamode if isinstance(mamode, str) else "ema"
     close = verify_series(close, length)
     drift = get_drift(drift)
@@ -40,53 +92,10 @@ def rvi(
         low = verify_series(low)
 
     # Calculate Result
-    def _rvi(
-        source: Series, length: int, scalar: float, mode: str, drift: int
-    ) -> Series:
-        """RVI"""
-        std = stdev(source, length)
-        pos, neg = unsigned_differences(source, amount=drift)
-
-        pos_std = pos * std
-        neg_std = neg * std
-
-        pos_avg = ma(mode, pos_std, length=length)
-        if pos_avg is None:
-            return None
-        neg_avg = ma(mode, neg_std, length=length)
-        if neg_avg is None:
-            return None
-
-        result = scalar * pos_avg
-        result /= pos_avg + neg_avg
-        return result
-
-    _mode = ""
-    if refined:
-        high_rvi = _rvi(high, length, scalar, mamode, drift)
-        if high_rvi is None:
-            return None
-        low_rvi = _rvi(low, length, scalar, mamode, drift)
-        if low_rvi is None:
-            return None
-        rvi = 0.5 * (high_rvi + low_rvi)
-        _mode = "r"
-    elif thirds:
-        high_rvi = _rvi(high, length, scalar, mamode, drift)
-        if high_rvi is None:
-            return None
-        low_rvi = _rvi(low, length, scalar, mamode, drift)
-        if low_rvi is None:
-            return None
-        close_rvi = _rvi(close, length, scalar, mamode, drift)
-        if close_rvi is None:
-            return None
-        rvi = (high_rvi + low_rvi + close_rvi) / 3.0
-        _mode = "t"
-    else:
-        rvi = _rvi(close, length, scalar, mamode, drift)
-        if rvi is None:
-            return None
+    result = _rvi_mode(refined, thirds, high, low, close, length, scalar, mamode, drift)
+    if result is None:
+        return None
+    rvi, _mode = result
 
     # Offset
     rvi = apply_offset(rvi, offset)

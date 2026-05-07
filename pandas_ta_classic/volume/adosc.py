@@ -29,8 +29,7 @@ def adosc(
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    if "length" in kwargs:
-        kwargs.pop("length")
+    kwargs.pop("length", None)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None or close is None or volume is None:
