@@ -21,8 +21,9 @@ def _resample_ohlcv(df: DataFrame, rule: str) -> DataFrame:
         "high": "max",
         "low": "min",
         "close": "last",
-        "volume": "sum" if "volume" in df.columns else "last",
     }
+    if "volume" in df.columns:
+        agg["volume"] = "sum"
     return df.resample(rule).agg(agg)
 
 

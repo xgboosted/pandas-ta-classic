@@ -208,14 +208,16 @@ def _add_series_signals(df, indicator, xserie, cross_series, is_above, offset):
         is_above (bool): Direction of the comparison.
         offset (int): Series offset forwarded to the signal helpers.
     """
-    if xserie is not None and verify_series(xserie):
-        if cross_series:
-            s = cross(indicator, xserie, above=is_above, offset=offset)
-        elif is_above:
-            s = above(indicator, xserie, offset=offset)
-        else:
-            s = below(indicator, xserie, offset=offset)
-        df[s.name] = s
+    if xserie is not None:
+        xserie_v = verify_series(xserie)
+        if xserie_v is not None:
+            if cross_series:
+                s = cross(indicator, xserie_v, above=is_above, offset=offset)
+            elif is_above:
+                s = above(indicator, xserie_v, offset=offset)
+            else:
+                s = below(indicator, xserie_v, offset=offset)
+            df[s.name] = s
 
 
 def signals(

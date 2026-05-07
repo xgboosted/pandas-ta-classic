@@ -85,8 +85,8 @@ def inertia(
     length = _pos_int(length, 20)
     rvi_length = _pos_int(rvi_length, 14)
     scalar = _pos_float(scalar, 100)
-    refined = False if refined is None else True
-    thirds = False if thirds is None else True
+    refined = bool(refined)
+    thirds = bool(thirds)
     mamode = mamode if isinstance(mamode, str) else "ema"
     _length = max(length, rvi_length)
     close = verify_series(close, _length)

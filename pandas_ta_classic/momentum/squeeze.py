@@ -58,7 +58,7 @@ def _squeeze_momentum(
     return sma(momo, length=mom_smooth)
 
 
-def _squeeze_detailed(df, squeeze_s, kwargs):
+def _squeeze_detailed(df, squeeze_s, kwargs, prefix="SQZ_"):
     """Append detailed signed-momentum columns to *df* in place.
 
     Breaks the squeeze series into positive / negative sub-series, computes
@@ -68,6 +68,7 @@ def _squeeze_detailed(df, squeeze_s, kwargs):
         df (DataFrame): The base squeeze result frame (modified in place).
         squeeze_s (Series): The squeeze momentum series.
         kwargs (dict): Forwarded to :func:`apply_fill`.
+        prefix (str): Column name prefix. Default ``"SQZ_"``.
     """
     pos_squeeze = squeeze_s[squeeze_s >= 0]
     neg_squeeze = squeeze_s[squeeze_s < 0]
@@ -94,12 +95,12 @@ def _squeeze_detailed(df, squeeze_s, kwargs):
         [sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc], **kwargs
     )
 
-    df["SQZ_INC"] = sqz_inc
-    df["SQZ_DEC"] = sqz_dec
-    df["SQZ_PINC"] = pos_inc
-    df["SQZ_PDEC"] = pos_dec
-    df["SQZ_NDEC"] = neg_dec
-    df["SQZ_NINC"] = neg_inc
+    df[f"{prefix}INC"] = sqz_inc
+    df[f"{prefix}DEC"] = sqz_dec
+    df[f"{prefix}PINC"] = pos_inc
+    df[f"{prefix}PDEC"] = pos_dec
+    df[f"{prefix}NDEC"] = neg_dec
+    df[f"{prefix}NINC"] = neg_inc
 
 
 def squeeze(

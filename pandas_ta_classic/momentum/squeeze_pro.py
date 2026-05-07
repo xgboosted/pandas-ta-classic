@@ -177,7 +177,7 @@ def squeeze_pro(
 
     # Detailed Squeeze Series
     if detailed:
-        _squeeze_detailed(df, squeeze, kwargs)
+        _squeeze_detailed(df, squeeze, kwargs, prefix="SQZPRO_")
 
     return df
 
