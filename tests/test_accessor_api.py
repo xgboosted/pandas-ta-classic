@@ -188,7 +188,7 @@ class TestAccessorTimeRange(TestCase):
 
     def test_invalid_unit_falls_back_to_years(self):
         """An invalid unit string falls back to 'years' internally."""
-        self.df.ta.time_range = "1y"   # invalid unit (not a supported string)
+        self.df.ta.time_range = "1y"  # invalid unit (not a supported string)
         # After invalid assignment, the getter should still return a positive float
         val = self.df.ta.time_range
         self.assertIsInstance(val, float)

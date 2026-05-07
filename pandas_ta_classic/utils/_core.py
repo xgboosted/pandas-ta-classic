@@ -87,12 +87,12 @@ def get_offset(x: Optional[int]) -> int:
 def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
     """Returns True if the index is a datetime and ordered."""
     index_is_datetime = is_datetime64_any_dtype(df.index)
+    ordered = False
     try:
         ordered = df.index[0] < df.index[-1]
     except RuntimeWarning:
         pass
-    finally:
-        return True if index_is_datetime and ordered else False
+    return index_is_datetime and ordered
 
 
 def is_percent(x: Optional[Union[int, float]]) -> bool:
