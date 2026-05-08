@@ -530,14 +530,26 @@ class TestEdecayFormula(TestCase):
         # Two consecutive decaying bars: ratio must equal factor
         i = 6  # first bar after spike where decay path > close
         j = 7
-        if result.iloc[i] > 10.0 and result.iloc[j] > 10.0:
-            ratio = result.iloc[j] / result.iloc[i]
-            self.assertAlmostEqual(
-                ratio,
-                factor,
-                places=6,
-                msg=f"edecay ratio {ratio:.6f} must equal exp(-1/{length})={factor:.6f}",
-            )
+        # Assert preconditions explicitly so a broken edecay can't silently pass
+        self.assertGreater(
+            result.iloc[i],
+            10.0,
+            f"Precondition failed: result[{i}]={result.iloc[i]:.4f} must be > 10.0 "
+            "(decay path not yet floored at close)",
+        )
+        self.assertGreater(
+            result.iloc[j],
+            10.0,
+            f"Precondition failed: result[{j}]={result.iloc[j]:.4f} must be > 10.0 "
+            "(decay path not yet floored at close)",
+        )
+        ratio = result.iloc[j] / result.iloc[i]
+        self.assertAlmostEqual(
+            ratio,
+            factor,
+            places=6,
+            msg=f"edecay ratio {ratio:.6f} must equal exp(-1/{length})={factor:.6f}",
+        )
 
     def test_edecay_never_below_close(self):
         """edecay result must always be >= close (floored at close)."""
