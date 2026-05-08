@@ -31,6 +31,9 @@ def ad(
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 
+    if high is None or low is None or close is None or volume is None:
+        return None
+
     # Calculate Result
     if Imports["talib"] and mode_tal:
         from talib import AD
@@ -39,6 +42,8 @@ def ad(
     else:
         if open_ is not None:
             open_ = verify_series(open_)
+            if open_ is None:
+                return None
             ad = non_zero_range(close, open_)  # AD with Open
         else:
             ad = 2 * close - (high + low)  # AD with High, Low, Close

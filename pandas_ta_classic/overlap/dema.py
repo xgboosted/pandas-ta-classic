@@ -30,8 +30,8 @@ def dema(
 
         dema = DEMA(close, length)
     else:
-        ema1 = ema(close=close, length=length)
-        ema2 = ema(close=ema1, length=length)
+        ema1 = ema(close=close, length=length, talib=False)
+        ema2 = ema(close=ema1, length=length, talib=False)
         if ema1 is None or ema2 is None:
             return None
         dema = 2 * ema1 - ema2

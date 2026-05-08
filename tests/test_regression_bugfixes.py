@@ -18,6 +18,11 @@ Covered fixes:
  10. psl               — open_ branch returns None when verify_series returns None
  11. apply_fill        — fillna kwarg is honoured by hl2, hlc3, avgprice, emv, edecay
  12. is_datetime_ordered — returns bool (no return-in-finally SyntaxWarning)
+ 13. ad                — invalid optional open_ returns None instead of crashing
+ 14. ad                — missing required-arg None guard added
+ 15. cmf               — invalid optional open_ returns None instead of crashing
+ 16. psar              — invalid optional close returns None instead of crashing
+ 17. dema/tema/t3/trima/cci/natr — talib=False propagated to sub-indicator calls
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -715,3 +720,202 @@ class TestIsDatetimeOrdered(TestCase):
         result = fn(s)
         self.assertIsInstance(result, bool)
         self.assertFalse(result)
+
+
+# ---------------------------------------------------------------------------
+# Fix 13: ad — invalid optional open_ returns None (not crash)
+# Fix 14: ad — required-arg None guard added
+# ---------------------------------------------------------------------------
+
+
+class TestAdNoneGuard(TestCase):
+    """ad() returns None gracefully on invalid inputs instead of crashing."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+        cls.close = cls.df["close"]
+        cls.volume = cls.df["volume"]
+
+    def test_required_arg_none_returns_none(self):
+        """Passing None for required high → None, not AttributeError."""
+        result = ta.ad(high=None, low=self.low, close=self.close, volume=self.volume)
+        self.assertIsNone(result)
+
+    def test_invalid_open_list_returns_none(self):
+        """Passing a plain list as open_ triggers verify_series → None guard."""
+        bad_open = list(self.close.values)
+        result = ta.ad(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            volume=self.volume,
+            open_=bad_open,
+            talib=False,  # force else-branch where open_ is validated
+        )
+        self.assertIsNone(result)
+
+    def test_valid_call_no_open_returns_series(self):
+        """Normal call without open_ returns a Series named 'AD'."""
+        result = ta.ad(
+            high=self.high, low=self.low, close=self.close, volume=self.volume
+        )
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "AD")
+
+    def test_valid_call_with_open_returns_series(self):
+        """Normal call with valid open_ returns a Series named 'ADo'."""
+        result = ta.ad(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            volume=self.volume,
+            open_=self.df["open"],
+        )
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "ADo")
+
+
+# ---------------------------------------------------------------------------
+# Fix 15: cmf — invalid optional open_ returns None (not crash)
+# ---------------------------------------------------------------------------
+
+
+class TestCmfNoneGuard(TestCase):
+    """cmf() returns None gracefully on invalid optional open_."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+        cls.close = cls.df["close"]
+        cls.volume = cls.df["volume"]
+
+    def test_invalid_open_list_returns_none(self):
+        """Passing a plain list as open_ triggers verify_series → None guard."""
+        bad_open = list(self.close.values)
+        result = ta.cmf(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            volume=self.volume,
+            open_=bad_open,
+        )
+        self.assertIsNone(result)
+
+    def test_valid_call_no_open_returns_series(self):
+        """Normal call without open_ returns a Series."""
+        result = ta.cmf(
+            high=self.high, low=self.low, close=self.close, volume=self.volume
+        )
+        self.assertIsInstance(result, pd.Series)
+
+
+# ---------------------------------------------------------------------------
+# Fix 16: psar — invalid optional close returns None (not crash)
+# ---------------------------------------------------------------------------
+
+
+class TestPsarCloseNoneGuard(TestCase):
+    """psar() optional close None guard: invalid close → None, not AttributeError."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+
+    def test_invalid_close_list_returns_none(self):
+        """Passing a plain list as close triggers verify_series → None guard."""
+        bad_close = list(self.high.values)
+        result = ta.psar(high=self.high, low=self.low, close=bad_close)
+        self.assertIsNone(result)
+
+    def test_valid_call_without_close_returns_dataframe(self):
+        """Normal call without close returns a DataFrame."""
+        result = ta.psar(high=self.high, low=self.low)
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# Fix 17: talib=False propagated to sub-indicator calls
+# dema, tema, t3, trima, cci, natr
+# ---------------------------------------------------------------------------
+
+
+class TestTalibFalsePropagation(TestCase):
+    """talib=False is now forwarded to all sub-indicator calls.
+
+    Each indicator is tested with talib=False to confirm:
+    1. It returns a valid Series/DataFrame (no crash).
+    2. The result is numerically consistent with direct pure-Python sub-calls.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.close = cls.df["close"]
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+
+    def test_dema_talib_false_returns_series(self):
+        """dema(talib=False) returns a Series."""
+        result = ta.dema(self.close, talib=False)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_dema_talib_false_matches_manual_calculation(self):
+        """dema(talib=False) == 2*ema(talib=False) - ema(ema(talib=False))."""
+        from pandas_ta_classic.overlap.ema import ema
+
+        length = 10
+        ema1 = ema(close=self.close, length=length, talib=False)
+        ema2 = ema(close=ema1, length=length, talib=False)
+        expected = 2 * ema1 - ema2
+        result = ta.dema(self.close, length=length, talib=False)
+        # drop leading NaNs then compare
+        mask = expected.notna() & result.notna()
+        np.testing.assert_allclose(
+            result[mask].values, expected[mask].values, rtol=1e-10
+        )
+
+    def test_tema_talib_false_returns_series(self):
+        """tema(talib=False) returns a Series."""
+        result = ta.tema(self.close, talib=False)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_t3_talib_false_returns_series(self):
+        """t3(talib=False) returns a Series."""
+        result = ta.t3(self.close, talib=False)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_trima_talib_false_returns_series(self):
+        """trima(talib=False) returns a Series."""
+        result = ta.trima(self.close, talib=False)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_trima_talib_false_matches_manual_calculation(self):
+        """trima(talib=False) == sma(sma(close, half), half) with talib=False."""
+        from pandas_ta_classic.overlap.sma import sma
+
+        length = 10
+        half_length = round(0.5 * (length + 1))
+        sma1 = sma(self.close, length=half_length, talib=False)
+        expected = sma(sma1, length=half_length, talib=False)
+        result = ta.trima(self.close, length=length, talib=False)
+        mask = expected.notna() & result.notna()
+        np.testing.assert_allclose(
+            result[mask].values, expected[mask].values, rtol=1e-10
+        )
+
+    def test_cci_talib_false_returns_series(self):
+        """cci(talib=False) returns a Series."""
+        result = ta.cci(self.high, self.low, self.close, talib=False)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_natr_talib_false_returns_series(self):
+        """natr(talib=False) returns a Series."""
+        result = ta.natr(self.high, self.low, self.close, talib=False)
+        self.assertIsInstance(result, pd.Series)

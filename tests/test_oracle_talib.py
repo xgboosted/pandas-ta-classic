@@ -422,8 +422,12 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         )
 
     def test_natr(self):
+        # TA-Lib NATR uses Wilder's smoothing (RMA) for ATR internally.
+        # Our pure-Python path must be invoked with mamode="rma" to match.
         self._compare(
-            ta.natr(self.high, self.low, self.close, length=14, talib=False),
+            ta.natr(
+                self.high, self.low, self.close, length=14, mamode="rma", talib=False
+            ),
             _tl.NATR(self.high, self.low, self.close, timeperiod=14),
             name="NATR",
         )

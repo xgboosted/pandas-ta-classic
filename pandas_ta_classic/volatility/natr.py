@@ -53,6 +53,7 @@ def natr(
             close=close,
             length=length,
             mamode=mamode,
+            talib=False,
             drift=drift,
         )
         if _atr is None:

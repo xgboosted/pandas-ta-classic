@@ -42,6 +42,8 @@ def cmf(
     # Calculate Result
     if open_ is not None:
         open_ = verify_series(open_)
+        if open_ is None:
+            return None
         ad = non_zero_range(close, open_)  # AD with Open
     else:
         ad = 2 * close - (high + low)  # AD with High, Low, Close

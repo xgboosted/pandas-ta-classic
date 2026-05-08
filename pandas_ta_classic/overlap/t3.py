@@ -37,12 +37,12 @@ def t3(
         c3 = -6 * a**2 - 3 * a - 3 * a**3
         c4 = a**3 + 3 * a**2 + 3 * a + 1
 
-        e1 = ema(close=close, length=length, **kwargs)
-        e2 = ema(close=e1, length=length, **kwargs)
-        e3 = ema(close=e2, length=length, **kwargs)
-        e4 = ema(close=e3, length=length, **kwargs)
-        e5 = ema(close=e4, length=length, **kwargs)
-        e6 = ema(close=e5, length=length, **kwargs)
+        e1 = ema(close=close, length=length, talib=False, **kwargs)
+        e2 = ema(close=e1, length=length, talib=False, **kwargs)
+        e3 = ema(close=e2, length=length, talib=False, **kwargs)
+        e4 = ema(close=e3, length=length, talib=False, **kwargs)
+        e5 = ema(close=e4, length=length, talib=False, **kwargs)
+        e6 = ema(close=e5, length=length, talib=False, **kwargs)
         if (
             e1 is None
             or e2 is None
