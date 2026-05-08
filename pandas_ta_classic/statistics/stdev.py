@@ -33,7 +33,7 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        _variance = variance(close=close, length=length, ddof=ddof)
+        _variance = variance(close=close, length=length, ddof=ddof, talib=False)
         if _variance is None:
             return None
         stdev = _variance.apply(npsqrt)

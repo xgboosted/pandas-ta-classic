@@ -128,6 +128,8 @@ def psar(
 
     if close is not None:
         close = verify_series(close)
+        if close is None:
+            return None
         sar = close.iloc[0]
 
     # Calculate Result

@@ -14,13 +14,13 @@
   "dema_10": {
     "DEMA_10": {
       "last_value": 348.69759792,
-      "non_nan_count": 5223
+      "non_nan_count": 5232
     }
   },
   "tema_10": {
     "TEMA_10": {
       "last_value": 349.70796434,
-      "non_nan_count": 5214
+      "non_nan_count": 5232
     }
   },
   "wma_10": {
@@ -44,7 +44,7 @@
   "t3_10": {
     "T3_10_0.7": {
       "last_value": 342.39105819,
-      "non_nan_count": 5187
+      "non_nan_count": 5232
     }
   },
   "wcp": {
@@ -235,7 +235,7 @@
   },
   "natr_14": {
     "NATR_14": {
-      "last_value": 0.96642317,
+      "last_value": 0.86445844,
       "non_nan_count": 5227
     }
   },

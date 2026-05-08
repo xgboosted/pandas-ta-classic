@@ -32,10 +32,10 @@ def trima(
         trima = TRIMA(close, length)
     else:
         half_length = round(0.5 * (length + 1))
-        sma1 = sma(close, length=half_length)
+        sma1 = sma(close, length=half_length, talib=False)
         if sma1 is None:
             return None
-        trima = sma(sma1, length=half_length)
+        trima = sma(sma1, length=half_length, talib=False)
         if trima is None:
             return None
 
