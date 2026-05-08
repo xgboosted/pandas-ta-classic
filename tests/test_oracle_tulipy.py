@@ -396,8 +396,12 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_natr(self):
+        # tulipy NATR uses Wilder's smoothing (RMA) for ATR internally.
+        # Our pure-Python path must be invoked with mamode="rma" to match.
         self._compare(
-            ta.natr(self.high, self.low, self.close, length=14, talib=False),
+            ta.natr(
+                self.high, self.low, self.close, length=14, mamode="rma", talib=False
+            ),
             _tp.natr(self.h, self.l, self.c, period=14),
             name="NATR",
         )
