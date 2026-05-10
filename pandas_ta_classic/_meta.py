@@ -36,8 +36,12 @@ except ImportError:
 version = __version__
 
 # Import availability checks
-# These correspond to the optional dependencies defined in pyproject.toml
+# These primarily correspond to optional dependencies defined in
+# pyproject.toml. Some entries keep backward-compatible aliases when package
+# name differs from importable module name.
 Imports = {
+    "alpha-vantage": find_spec("alphaVantageAPI") is not None
+    or find_spec("alpha_vantage") is not None,
     "alphaVantage-api": find_spec("alphaVantageAPI") is not None
     or find_spec("alpha_vantage") is not None,
     "backtrader": find_spec("backtrader") is not None,

@@ -88,23 +88,26 @@ def av(ticker: str, **kwargs):
                     output_format="pandas",
                 )
 
-                interval_upper = str(interval).upper()
+                interval_text = str(interval).strip()
+                interval_upper = interval_text.upper()
+                interval_lower = interval_text.lower()
+
                 if interval_upper in {"D", "1D", "DAILY"}:
                     df, _ = ts.get_daily(symbol=ticker, outputsize=period)
                 elif interval_upper in {"W", "1W", "WEEKLY"}:
                     df, _ = ts.get_weekly(symbol=ticker)
-                elif interval_upper in {"M", "1M", "MONTHLY"}:
+                elif interval_upper in {"M", "MONTHLY"}:
                     df, _ = ts.get_monthly(symbol=ticker)
                 else:
                     intraday_map = {
-                        "1M": "1min",
+                        "1m": "1min",
                         "5M": "5min",
                         "15M": "15min",
                         "30M": "30min",
                         "60M": "60min",
                     }
                     av_interval = intraday_map.get(
-                        interval_upper, str(interval).lower()
+                        interval_text, intraday_map.get(interval_upper, interval_lower)
                     )
                     if av_interval not in {"1min", "5min", "15min", "30min", "60min"}:
                         av_interval = "60min"
