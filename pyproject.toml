@@ -118,7 +118,7 @@ integration = [
     "vectorbt",
     "backtrader", 
     "yfinance",
-    "alphaVantage-api"
+    "alpha-vantage"
 ]
 
 # Complete environment with all features
