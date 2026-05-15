@@ -143,6 +143,7 @@ def psar(
         h_arr, l_arr, m, falling, sar, ep, af0, max_af
     )
     import numpy as _np
+
     # Combine to a single SAR series then reclassify using close when available.
     # This matches TA-Lib's convention (SAR < close → long, SAR >= close → short)
     # and avoids off-by-one splits at reversal bars when using the falling flag alone.

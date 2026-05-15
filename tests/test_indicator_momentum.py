@@ -106,7 +106,12 @@ class TestMomentum(TestCase):
     def test_bop(self):
         result = pandas_ta.bop(self.open, self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, tal.BOP(self.open, self.high, self.low, self.close), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.BOP(self.open, self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -133,7 +138,12 @@ class TestMomentum(TestCase):
     def test_cci(self):
         result = pandas_ta.cci(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, tal.CCI(self.high, self.low, self.close), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.CCI(self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -216,10 +226,12 @@ class TestMomentum(TestCase):
     def test_dm(self):
         result = pandas_ta.dm(self.high, self.low, talib=False)
         if HAS_TALIB:
-            expecteddf = DataFrame({
-                "DMP_14": tal.PLUS_DM(self.high, self.low),
-                "DMN_14": tal.MINUS_DM(self.high, self.low),
-            })
+            expecteddf = DataFrame(
+                {
+                    "DMP_14": tal.PLUS_DM(self.high, self.low),
+                    "DMN_14": tal.MINUS_DM(self.high, self.low),
+                }
+            )
             assert_talib(self, result, expecteddf, correlation_threshold=0.99)
         assert_indicator_standard(
             self,
@@ -319,11 +331,13 @@ class TestMomentum(TestCase):
         result = pandas_ta.macd(self.close, talib=False)
         if HAS_TALIB:
             macd_line, signal, hist = tal.MACD(self.close)
-            expecteddf = DataFrame({
-                "MACD_12_26_9": macd_line,
-                "MACDh_12_26_9": hist,
-                "MACDs_12_26_9": signal,
-            })
+            expecteddf = DataFrame(
+                {
+                    "MACD_12_26_9": macd_line,
+                    "MACDh_12_26_9": hist,
+                    "MACDs_12_26_9": signal,
+                }
+            )
             assert_talib(self, result, expecteddf, correlation_threshold=0.99)
         assert_indicator_standard(
             self,
@@ -417,7 +431,12 @@ class TestMomentum(TestCase):
     def test_ppo(self):
         result = pandas_ta.ppo(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result["PPO_12_26_9"], tal.PPO(self.close), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result["PPO_12_26_9"],
+                tal.PPO(self.close),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -520,7 +539,9 @@ class TestMomentum(TestCase):
     def test_rocr100(self):
         result = pandas_ta.rocr100(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, tal.ROCR100(self.close), correlation_threshold=0.99)
+            assert_talib(
+                self, result, tal.ROCR100(self.close), correlation_threshold=0.99
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -725,7 +746,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.stoch(self.high, self.low, self.close)
         if HAS_TALIB:
             stochk, stochd = tal.STOCH(self.high, self.low, self.close, 14, 3, 0, 3, 0)
-            expecteddf = DataFrame({"STOCHk_14_3_0_3_0": stochk, "STOCHd_14_3_0_3": stochd})
+            expecteddf = DataFrame(
+                {"STOCHk_14_3_0_3_0": stochk, "STOCHd_14_3_0_3": stochd}
+            )
             assert_talib(self, result, expecteddf, correlation_threshold=0.99)
         assert_indicator_standard(
             self,
@@ -762,7 +785,9 @@ class TestMomentum(TestCase):
         result = pandas_ta.stochrsi(self.close)
         if HAS_TALIB:
             stochrsi_k, stochrsi_d = tal.STOCHRSI(self.close, 14, 14, 3, 0)
-            assert_talib(self, result.iloc[:, 0], stochrsi_d, correlation_threshold=0.99)
+            assert_talib(
+                self, result.iloc[:, 0], stochrsi_d, correlation_threshold=0.99
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -818,7 +843,12 @@ class TestMomentum(TestCase):
     def test_uo(self):
         result = pandas_ta.uo(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, tal.ULTOSC(self.high, self.low, self.close), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.ULTOSC(self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -832,7 +862,12 @@ class TestMomentum(TestCase):
     def test_willr(self):
         result = pandas_ta.willr(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, tal.WILLR(self.high, self.low, self.close), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.WILLR(self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(

@@ -33,10 +33,20 @@ def tema(
         ema1 = ema(close=close, length=length, talib=False, **kwargs)
         if ema1 is None:
             return None
-        ema2 = ema(close=ema1.loc[ema1.first_valid_index():], length=length, talib=False, **kwargs)
+        ema2 = ema(
+            close=ema1.loc[ema1.first_valid_index() :],
+            length=length,
+            talib=False,
+            **kwargs,
+        )
         if ema2 is None:
             return None
-        ema3 = ema(close=ema2.loc[ema2.first_valid_index():], length=length, talib=False, **kwargs)
+        ema3 = ema(
+            close=ema2.loc[ema2.first_valid_index() :],
+            length=length,
+            talib=False,
+            **kwargs,
+        )
         if ema3 is None:
             return None
         tema = 3 * (ema1 - ema2) + ema3

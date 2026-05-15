@@ -101,7 +101,9 @@ def adx(
             # Compute DX for all bars from `length` onward
             dx_raw = np.full(n, np.nan)
             denom = dmpos14 + dmneg14
-            dx_raw[length] = scalar * abs(dmpos14 - dmneg14) / denom if denom != 0 else 0.0
+            dx_raw[length] = (
+                scalar * abs(dmpos14 - dmneg14) / denom if denom != 0 else 0.0
+            )
 
             _tr14, _dmpos14, _dmneg14 = tr14, dmpos14, dmneg14
             for idx in range(length + 1, n):
@@ -129,7 +131,7 @@ def adx(
             # ADX first valid at index `length + lensig - 1` in the original array
             adx_start = length + lensig - 1
             adx_raw = np.full(n, np.nan)
-            adx_raw[adx_start: adx_start + len(adx_values)] = adx_values
+            adx_raw[adx_start : adx_start + len(adx_values)] = adx_values
             adx_arr = Series(adx_raw, index=close.index, dtype=float)
 
             # DMP and DMN via the existing ma-based path (for the output columns)

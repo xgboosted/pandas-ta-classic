@@ -47,7 +47,12 @@ class TestVolume(TestCase):
             self.high, self.low, self.close, self.volume_, talib=False
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.AD(self.high, self.low, self.close, self.volume_), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.AD(self.high, self.low, self.close, self.volume_),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -74,7 +79,12 @@ class TestVolume(TestCase):
             self.high, self.low, self.close, self.volume_, talib=False
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.ADOSC(self.high, self.low, self.close, self.volume_), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.ADOSC(self.high, self.low, self.close, self.volume_),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -174,7 +184,12 @@ class TestVolume(TestCase):
             self.high, self.low, self.close, self.volume_, talib=False
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.MFI(self.high, self.low, self.close, self.volume_), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.MFI(self.high, self.low, self.close, self.volume_),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -197,7 +212,12 @@ class TestVolume(TestCase):
     def test_obv(self):
         result = pandas_ta.obv(self.close, self.volume_, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, tal.OBV(self.close, self.volume_), correlation_threshold=0.99)
+            assert_talib(
+                self,
+                result,
+                tal.OBV(self.close, self.volume_),
+                correlation_threshold=0.99,
+            )
         assert_indicator_standard(
             self,
             IndicatorSpec(

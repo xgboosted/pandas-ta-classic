@@ -875,7 +875,9 @@ class TestTalibFalsePropagation(TestCase):
 
         length = 10
         ema1 = ema(close=self.close, length=length, talib=False)
-        ema2 = ema(close=ema1.loc[ema1.first_valid_index():], length=length, talib=False)
+        ema2 = ema(
+            close=ema1.loc[ema1.first_valid_index() :], length=length, talib=False
+        )
         expected = 2 * ema1 - ema2
         result = ta.dema(self.close, length=length, talib=False)
         # drop leading NaNs then compare
@@ -904,8 +906,8 @@ class TestTalibFalsePropagation(TestCase):
         from pandas_ta_classic.overlap.sma import sma
 
         length = 10
-        len1 = (length + 1) // 2   # ceil(length/2)
-        len2 = length // 2 + 1     # floor(length/2) + 1
+        len1 = (length + 1) // 2  # ceil(length/2)
+        len2 = length // 2 + 1  # floor(length/2) + 1
         sma1 = sma(self.close, length=len1, talib=False)
         expected = sma(sma1, length=len2, talib=False)
         result = ta.trima(self.close, length=length, talib=False)

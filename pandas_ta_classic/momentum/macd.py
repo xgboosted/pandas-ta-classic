@@ -83,7 +83,7 @@ def macd(
         #   slow seed = SMA(close[0 : slow])           (all `slow` bars)
         # Both then propagate forward together from bar `slow`.
         slow_start = slow - 1
-        fast_seed = c_arr[slow_start - fast + 1: slow_start + 1].mean()
+        fast_seed = c_arr[slow_start - fast + 1 : slow_start + 1].mean()
         slow_seed = c_arr[: slow_start + 1].mean()
         k_fast = 2.0 / (fast + 1)
         k_slow = 2.0 / (slow + 1)

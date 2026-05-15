@@ -290,7 +290,8 @@ class TestImportDirPlugin(TestCase):
         overlap_dir = os.path.join(self._tmppath, "overlap")
         os.makedirs(overlap_dir, exist_ok=True)
         module_path = os.path.join(overlap_dir, f"{self._IND_NAME}.py")
-        src = textwrap.dedent(f"""\
+        src = textwrap.dedent(
+            f"""\
             from pandas import Series
 
             def {self._IND_NAME}(close, length=None, offset=None, **kwargs):
@@ -302,7 +303,8 @@ class TestImportDirPlugin(TestCase):
                 close = self._get_column(kwargs.pop("close", "close"))
                 result = {self._IND_NAME}(close, length=length, offset=offset, **kwargs)
                 return self._post_process(result, **kwargs)
-            """)
+            """
+        )
         with open(module_path, "w") as fh:
             fh.write(src)
         return module_path

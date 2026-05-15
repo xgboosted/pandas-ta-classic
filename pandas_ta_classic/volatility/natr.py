@@ -67,7 +67,7 @@ def natr(
             )
         atr_arr = np.full(m, np.nan)
         if m > length:
-            atr_val = tr_arr[1: length + 1].mean()
+            atr_val = tr_arr[1 : length + 1].mean()
             atr_arr[length] = atr_val
             for i in range(length + 1, m):
                 atr_val = atr_val + (tr_arr[i] - atr_val) / length
