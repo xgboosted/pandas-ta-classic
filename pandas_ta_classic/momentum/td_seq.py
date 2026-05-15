@@ -15,6 +15,8 @@ def td_seq(
     """Indicator: Tom Demark Sequential (TD_SEQ)"""
     # Validate arguments
     close = verify_series(close)
+    if close is None:
+        return None
     offset = get_offset(offset)
     asint = asint if isinstance(asint, bool) else False
     show_all = kwargs.setdefault("show_all", True)

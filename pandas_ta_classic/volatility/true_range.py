@@ -30,6 +30,8 @@ def true_range(
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
+    if high is None or low is None or close is None:
+        return None
     drift = get_drift(drift)
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
