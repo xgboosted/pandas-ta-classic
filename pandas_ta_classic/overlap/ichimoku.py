@@ -51,7 +51,9 @@ def ichimoku(
         [tenkan_sen, kijun_sen, span_a, span_b, chikou_span], offset
     )
 
-    span_a, span_b, chikou_span = apply_fill([span_a, span_b, chikou_span], **kwargs)
+    tenkan_sen, kijun_sen, span_a, span_b, chikou_span = apply_fill(
+        [tenkan_sen, kijun_sen, span_a, span_b, chikou_span], **kwargs
+    )
 
     # Name and Categorize it
     span_a.name = f"ISA_{tenkan}"
