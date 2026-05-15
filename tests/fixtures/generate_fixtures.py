@@ -493,7 +493,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "stoch",
             _df(STOCHk_14_3_3=_stoch_k, STOCHd_14_3_3=_stoch_d),
-            ta.stoch(h, l, c),
+            ta.stoch(h, l, c, talib=False),
         ),
         (
             "cci_14",
@@ -761,7 +761,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "adxr",
             _df(**{"ADXR_14": _adxr_arr, "DMP_14": _dmp_arr, "DMN_14": _dmn_arr}),
-            ta.adxr(h, l, c, 14),
+            ta.adxr(h, l, c, 14, talib=False),
         ),
         (
             "psar",

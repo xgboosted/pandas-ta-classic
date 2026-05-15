@@ -91,7 +91,7 @@ def _compute_all(df: pd.DataFrame) -> dict[str, object]:
         # ---- Momentum (TA-Lib backed) ----
         "rsi_14": ta.rsi(c, length=14, talib=False),
         "macd_12_26_9": ta.macd(c, fast=12, slow=26, signal=9, talib=False),
-        "stoch": ta.stoch(h, l, c),
+        "stoch": ta.stoch(h, l, c, talib=False),
         "cci_14": ta.cci(h, l, c, length=14, talib=False),
         "roc_10": ta.roc(c, length=10, talib=False),
         "willr_14": ta.willr(h, l, c, length=14, talib=False),
@@ -159,7 +159,7 @@ def _compute_all(df: pd.DataFrame) -> dict[str, object]:
         "psar": ta.psar(h, l, c),
         "decreasing": ta.decreasing(c),
         "increasing": ta.increasing(c),
-        "adxr": ta.adxr(h, l, c, length=14),
+        "adxr": ta.adxr(h, l, c, length=14, talib=False),
         "amat": ta.amat(c, fast=8, slow=21),
         "chop": ta.chop(h, l, c),
         "cksp": ta.cksp(h, l, c),

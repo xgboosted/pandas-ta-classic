@@ -62,7 +62,7 @@ def _compute_all(df: pd.DataFrame) -> dict[str, object]:
         "ohlc4": ta.ohlc4(o, h, l, c),
         "rsi_14": ta.rsi(c, length=14, talib=False),
         "macd_12_26_9": ta.macd(c, fast=12, slow=26, signal=9, talib=False),
-        "stoch": ta.stoch(h, l, c),
+        "stoch": ta.stoch(h, l, c, talib=False),
         "cci_14": ta.cci(h, l, c, length=14, talib=False),
         "roc_10": ta.roc(c, length=10, talib=False),
         "willr_14": ta.willr(h, l, c, length=14, talib=False),

@@ -14,13 +14,13 @@
   "dema_10": {
     "DEMA_10": {
       "last_value": 348.69759792,
-      "non_nan_count": 5232
+      "non_nan_count": 5223
     }
   },
   "tema_10": {
     "TEMA_10": {
       "last_value": 349.70796434,
-      "non_nan_count": 5232
+      "non_nan_count": 5214
     }
   },
   "wma_10": {
@@ -44,7 +44,7 @@
   "t3_10": {
     "T3_10_0.7": {
       "last_value": 342.39105819,
-      "non_nan_count": 5232
+      "non_nan_count": 5187
     }
   },
   "wcp": {
@@ -92,7 +92,7 @@
   "macd_12_26_9": {
     "MACD_12_26_9": {
       "last_value": 6.44272055,
-      "non_nan_count": 5216
+      "non_nan_count": 5208
     },
     "MACDh_12_26_9": {
       "last_value": 0.70026855,
@@ -235,7 +235,7 @@
   },
   "natr_14": {
     "NATR_14": {
-      "last_value": 0.86445844,
+      "last_value": 0.96642317,
       "non_nan_count": 5227
     }
   },
@@ -302,15 +302,15 @@
   "adx_14": {
     "ADX_14": {
       "last_value": 40.06595307,
-      "non_nan_count": 5227
+      "non_nan_count": 5214
     },
     "DMP_14": {
       "last_value": 39.40418792,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     },
     "DMN_14": {
       "last_value": 8.31166673,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     }
   },
   "aroon_14": {
@@ -382,7 +382,7 @@
   "mfi_14": {
     "MFI_14": {
       "last_value": 67.71539291,
-      "non_nan_count": 5228
+      "non_nan_count": 5227
     }
   },
   "ad": {
@@ -561,8 +561,8 @@
   },
   "trima_10": {
     "TRIMA_10": {
-      "last_value": 341.30027778,
-      "non_nan_count": 5231
+      "last_value": 341.94766667,
+      "non_nan_count": 5232
     }
   },
   "swma": {
@@ -688,25 +688,25 @@
   "adxr": {
     "ADXR_14": {
       "last_value": 30.87566884,
-      "non_nan_count": 5214
+      "non_nan_count": 5201
     },
     "DMP_14": {
       "last_value": 39.40418792,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     },
     "DMN_14": {
       "last_value": 8.31166673,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     }
   },
   "psar": {
     "PSARl_0.02_0.2": {
-      "last_value": 338.28691638,
-      "non_nan_count": 3064
+      "last_value": 338.28691638400005,
+      "non_nan_count": 3047
     },
     "PSARs_0.02_0.2": {
       "last_value": 339.61,
-      "non_nan_count": 2176
+      "non_nan_count": 2193
     }
   },
   "zscore_20": {
@@ -1313,11 +1313,11 @@
   },
   "dm_14": {
     "DMP_14": {
-      "last_value": 1.33504791,
+      "last_value": 18.69067075,
       "non_nan_count": 5228
     },
     "DMN_14": {
-      "last_value": 0.28160645,
+      "last_value": 3.94249024,
       "non_nan_count": 5228
     }
   },
