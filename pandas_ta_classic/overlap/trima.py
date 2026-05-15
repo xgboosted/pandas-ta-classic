@@ -31,11 +31,12 @@ def trima(
 
         trima = TRIMA(close, length)
     else:
-        half_length = round(0.5 * (length + 1))
-        sma1 = sma(close, length=half_length, talib=False)
+        len1 = (length + 1) // 2  # ceil(length/2)
+        len2 = length // 2 + 1   # floor(length/2) + 1  — matches TA-Lib asymmetric windows
+        sma1 = sma(close, length=len1, talib=False)
         if sma1 is None:
             return None
-        trima = sma(sma1, length=half_length, talib=False)
+        trima = sma(sma1, length=len2, talib=False)
         if trima is None:
             return None
 
