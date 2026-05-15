@@ -2,6 +2,7 @@
 # OHLC4 (OHLC4)
 from typing import Any, Optional
 from pandas import Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -10,6 +11,7 @@ def ohlc4(
     high: Series,
     low: Series,
     close: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -20,12 +22,18 @@ def ohlc4(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if open_ is None or high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    ohlc4 = 0.25 * (open_ + high + low + close)
+    if Imports["talib"] and mode_tal:
+        from talib import AVGPRICE
+
+        ohlc4 = Series(AVGPRICE(open_, high, low, close), index=close.index)
+    else:
+        ohlc4 = 0.25 * (open_ + high + low + close)
 
     # Offset
     ohlc4 = apply_offset(ohlc4, offset)

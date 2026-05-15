@@ -8,6 +8,7 @@ from numpy import pi as npPi
 from pandas import Series
 
 npNaN = np.nan
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -76,6 +77,7 @@ def _linreg_output(
 def linreg(
     close: Series,
     length: Optional[int] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -90,38 +92,65 @@ def linreg(
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
 
-    # Calculate Result — fully vectorised OLS over all windows at once.
-    # x = [0, 1, ..., L-1] matches TA-Lib convention; precompute scalar sums.
-    x_arr = np.arange(length, dtype=float)
-    x_sum = 0.5 * length * (length - 1)
-    x2_sum = length * (length - 1) * (2 * length - 1) / 6
-    divisor = length * x2_sum - x_sum * x_sum
+    # talib path: not available for r (no equivalent) or angle-in-radians
+    _use_talib = Imports["talib"] and mode_tal and not r and not (angle and not degrees)
+    if _use_talib:
+        _close_arr = npArray(close, dtype=float)
+        if angle:
+            from talib import LINEARREG_ANGLE
 
-    from numpy.lib.stride_tricks import sliding_window_view
+            _talib_out = LINEARREG_ANGLE(_close_arr, timeperiod=length)
+        elif intercept:
+            from talib import LINEARREG_INTERCEPT
 
-    windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
-    linreg_ = _linreg_output(
-        windows,
-        x_arr,
-        x_sum,
-        x2_sum,
-        divisor,
-        length,
-        slope,
-        intercept,
-        angle,
-        degrees,
-        r,
-        tsf,
-    )
+            _talib_out = LINEARREG_INTERCEPT(_close_arr, timeperiod=length)
+        elif slope:
+            from talib import LINEARREG_SLOPE
 
-    linreg = Series(
-        np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
-    )
+            _talib_out = LINEARREG_SLOPE(_close_arr, timeperiod=length)
+        elif tsf:
+            from talib import TSF
+
+            _talib_out = TSF(_close_arr, timeperiod=length)
+        else:
+            from talib import LINEARREG
+
+            _talib_out = LINEARREG(_close_arr, timeperiod=length)
+        linreg = Series(np.array(_talib_out, dtype=float), index=close.index)
+    else:
+        # Calculate Result — fully vectorised OLS over all windows at once.
+        # x = [0, 1, ..., L-1] matches TA-Lib convention; precompute scalar sums.
+        x_arr = np.arange(length, dtype=float)
+        x_sum = 0.5 * length * (length - 1)
+        x2_sum = length * (length - 1) * (2 * length - 1) / 6
+        divisor = length * x2_sum - x_sum * x_sum
+
+        from numpy.lib.stride_tricks import sliding_window_view
+
+        windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
+        linreg_ = _linreg_output(
+            windows,
+            x_arr,
+            x_sum,
+            x2_sum,
+            divisor,
+            length,
+            slope,
+            intercept,
+            angle,
+            degrees,
+            r,
+            tsf,
+        )
+
+        linreg = Series(
+            np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
+        )
 
     # Offset
     linreg = apply_offset(linreg, offset)

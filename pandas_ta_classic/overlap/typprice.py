@@ -2,6 +2,7 @@
 # Typical Price (TYPPRICE)
 from typing import Any, Optional
 from pandas import Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -9,6 +10,7 @@ def typprice(
     high: Series,
     low: Series,
     close: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -21,11 +23,17 @@ def typprice(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None or close is None:
         return None
 
-    result = (high + low + close) / 3.0
+    if Imports["talib"] and mode_tal:
+        from talib import TYPPRICE
+
+        result = Series(TYPPRICE(high, low, close), index=close.index)
+    else:
+        result = (high + low + close) / 3.0
 
     # Offset
     result = apply_offset(result, offset)
@@ -46,6 +54,8 @@ Args:
     high (pd.Series): Series of 'high' prices
     low (pd.Series): Series of 'low' prices
     close (pd.Series): Series of 'close' prices
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): Periods to offset. Default: 0
 
 Kwargs:

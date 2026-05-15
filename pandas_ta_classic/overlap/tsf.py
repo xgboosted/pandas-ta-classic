@@ -9,6 +9,7 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 def tsf(
     close: Series,
     length: Optional[int] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -21,8 +22,8 @@ def tsf(
     if close is None:
         return None
 
-    # Calculate Result
-    result = linreg(close, length=length, tsf=True)
+    # Calculate Result — linreg handles talib/native TSF path
+    result = linreg(close, length=length, talib=talib, tsf=True)
 
     # Offset
     result = apply_offset(result, offset)
@@ -53,6 +54,8 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): The period. Default: 14
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

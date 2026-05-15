@@ -2,23 +2,34 @@
 # HL2 (HL2)
 from typing import Any, Optional
 from pandas import Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def hl2(
-    high: Series, low: Series, offset: Optional[int] = None, **kwargs: Any
+    high: Series,
+    low: Series,
+    talib: Optional[bool] = None,
+    offset: Optional[int] = None,
+    **kwargs: Any,
 ) -> Optional[Series]:
     """Indicator: HL2"""
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
     offset = get_offset(offset)
+    mode_tal = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None:
         return None
 
     # Calculate Result
-    hl2 = 0.5 * (high + low)
+    if Imports["talib"] and mode_tal:
+        from talib import MEDPRICE
+
+        hl2 = Series(MEDPRICE(high, low), index=high.index)
+    else:
+        hl2 = 0.5 * (high + low)
 
     # Offset
     hl2 = apply_offset(hl2, offset)
