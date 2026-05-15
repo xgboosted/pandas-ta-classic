@@ -225,8 +225,16 @@ class TestOverlapExtension(TestCase):
         self.assertEqual(
             list(self.data.columns[-10:]),
             [
-                "RAINBOW_1", "RAINBOW_2", "RAINBOW_3", "RAINBOW_4", "RAINBOW_5",
-                "RAINBOW_6", "RAINBOW_7", "RAINBOW_8", "RAINBOW_9", "RAINBOW_10",
+                "RAINBOW_1",
+                "RAINBOW_2",
+                "RAINBOW_3",
+                "RAINBOW_4",
+                "RAINBOW_5",
+                "RAINBOW_6",
+                "RAINBOW_7",
+                "RAINBOW_8",
+                "RAINBOW_9",
+                "RAINBOW_10",
             ],
         )
 

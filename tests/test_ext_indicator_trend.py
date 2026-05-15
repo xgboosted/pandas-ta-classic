@@ -139,7 +139,9 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "PMAX_E_10_3.0")
 
     def test_tsignals_ext(self):
-        trend = (self.data.ta.sma(length=10) - self.data.ta.sma(length=20) > 0).astype(int)
+        trend = (self.data.ta.sma(length=10) - self.data.ta.sma(length=20) > 0).astype(
+            int
+        )
         result = self.data.ta.tsignals(trend)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(
@@ -157,9 +159,7 @@ class TestTrendExtension(TestCase):
     def test_adxr_ext(self):
         self.data.ta.adxr(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["DMP_14", "DMN_14", "ADXR_14"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["DMP_14", "DMN_14", "ADXR_14"])
 
     def test_dx_ext(self):
         self.data.ta.dx(append=True)

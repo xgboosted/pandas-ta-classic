@@ -1,17 +1,8 @@
-from tests.config import (
-    assert_fill,
-    assert_none_guard,
-    assert_offset,
-    error_analysis,
-    get_sample_data,
-    CORRELATION,
-    CORRELATION_THRESHOLD,
-    VERBOSE,
-)
+from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
-import pandas.testing as pdt
 from pandas import DataFrame, Series
 
 try:
@@ -77,228 +68,209 @@ class TestMomentum(TestCase):
         self.assertEqual(result.index[0], original.index[-1])
 
     def test_ao(self):
-        result = pandas_ta.ao(self.high, self.low)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "AO_5_34")
-        assert_offset(self, pandas_ta.ao, [self.high, self.low])
-        assert_fill(self, pandas_ta.ao, [self.high, self.low])
-        assert_none_guard(self, pandas_ta.ao, [self.high, self.low])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ao,
+                args=[self.high, self.low],
+                expected_name="AO_5_34",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_apo(self):
         result = pandas_ta.apo(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "APO_12_26")
-
-        try:
-            expected = tal.APO(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.apo(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "APO_12_26")
-        assert_offset(self, pandas_ta.apo, [self.close])
-        assert_fill(self, pandas_ta.apo, [self.close])
-        assert_none_guard(self, pandas_ta.apo, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.APO(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.apo,
+                args=[self.close],
+                expected_name="APO_12_26",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_bias(self):
-        result = pandas_ta.bias(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "BIAS_SMA_26")
-        assert_offset(self, pandas_ta.bias, [self.close])
-        assert_fill(self, pandas_ta.bias, [self.close])
-        assert_none_guard(self, pandas_ta.bias, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.bias,
+                args=[self.close],
+                expected_name="BIAS_SMA_26",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_bop(self):
         result = pandas_ta.bop(self.open, self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "BOP")
-
-        try:
-            expected = tal.BOP(self.open, self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.bop(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "BOP")
-        assert_offset(self, pandas_ta.bop, [self.open, self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.bop, [self.open, self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.bop, [self.open, self.high, self.low, self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.BOP(self.open, self.high, self.low, self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.bop,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="BOP",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_brar(self):
-        result = pandas_ta.brar(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "BRAR_26")
-        assert_offset(self, pandas_ta.brar, [self.open, self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.brar, [self.open, self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.brar, [self.open, self.high, self.low, self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.brar,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="BRAR_26",
+                expected_type=DataFrame,
+                expected_columns=["AR_26", "BR_26"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cci(self):
         result = pandas_ta.cci(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CCI_14_0.015")
-
-        try:
-            expected = tal.CCI(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.cci(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CCI_14_0.015")
-        assert_offset(self, pandas_ta.cci, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.cci, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.cci, [self.high, self.low, self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.CCI(self.high, self.low, self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cci,
+                args=[self.high, self.low, self.close],
+                expected_name="CCI_14_0.015",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cfo(self):
-        result = pandas_ta.cfo(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CFO_9")
-        assert_offset(self, pandas_ta.cfo, [self.close])
-        assert_fill(self, pandas_ta.cfo, [self.close])
-        assert_none_guard(self, pandas_ta.cfo, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cfo,
+                args=[self.close],
+                expected_name="CFO_9",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cg(self):
-        result = pandas_ta.cg(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CG_10")
-        assert_offset(self, pandas_ta.cg, [self.close])
-        assert_fill(self, pandas_ta.cg, [self.close])
-        assert_none_guard(self, pandas_ta.cg, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cg,
+                args=[self.close],
+                expected_name="CG_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cmo(self):
         result = pandas_ta.cmo(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CMO_14")
-
-        try:
-            expected = tal.CMO(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.cmo(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CMO_14")
-        assert_offset(self, pandas_ta.cmo, [self.close])
-        assert_fill(self, pandas_ta.cmo, [self.close])
-        assert_none_guard(self, pandas_ta.cmo, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.CMO(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cmo,
+                args=[self.close],
+                expected_name="CMO_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_coppock(self):
-        result = pandas_ta.coppock(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "COPC_11_14_10")
-        assert_offset(self, pandas_ta.coppock, [self.close])
-        assert_fill(self, pandas_ta.coppock, [self.close])
-        assert_none_guard(self, pandas_ta.coppock, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.coppock,
+                args=[self.close],
+                expected_name="COPC_11_14_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cti(self):
-        result = pandas_ta.cti(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CTI_12")
-        assert_offset(self, pandas_ta.cti, [self.close])
-        assert_fill(self, pandas_ta.cti, [self.close])
-        assert_none_guard(self, pandas_ta.cti, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cti,
+                args=[self.close],
+                expected_name="CTI_12",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_er(self):
-        result = pandas_ta.er(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ER_10")
-        assert_offset(self, pandas_ta.er, [self.close])
-        assert_fill(self, pandas_ta.er, [self.close])
-        assert_none_guard(self, pandas_ta.er, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.er,
+                args=[self.close],
+                expected_name="ER_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_dm(self):
         result = pandas_ta.dm(self.high, self.low, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "DM_14")
-
-        try:
-            expected_pos = tal.PLUS_DM(self.high, self.low)
-            expected_neg = tal.MINUS_DM(self.high, self.low)
-            expecteddf = DataFrame({"DMP_14": expected_pos, "DMN_14": expected_neg})
-            pdt.assert_frame_equal(result, expecteddf)
-        except AssertionError:
-            try:
-                dmp = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                )
-                self.assertGreater(dmp, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-            try:
-                dmn = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(dmn, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.dm(self.high, self.low)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "DM_14")
-        assert_offset(self, pandas_ta.dm, [self.high, self.low])
-        assert_fill(self, pandas_ta.dm, [self.high, self.low])
-        assert_none_guard(self, pandas_ta.dm, [self.high, self.low])
+        if HAS_TALIB:
+            expecteddf = DataFrame({
+                "DMP_14": tal.PLUS_DM(self.high, self.low),
+                "DMN_14": tal.MINUS_DM(self.high, self.low),
+            })
+            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.dm,
+                args=[self.high, self.low],
+                expected_name="DM_14",
+                expected_type=DataFrame,
+                expected_columns=["DMP_14", "DMN_14"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_eri(self):
-        result = pandas_ta.eri(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ERI_13")
-        assert_offset(self, pandas_ta.eri, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.eri, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.eri, [self.high, self.low, self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.eri,
+                args=[self.high, self.low, self.close],
+                expected_name="ERI_13",
+                expected_type=DataFrame,
+                expected_columns=["BULLP_13", "BEARP_13"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_fisher(self):
-        result = pandas_ta.fisher(self.high, self.low)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "FISHERT_9_1")
-        assert_offset(self, pandas_ta.fisher, [self.high, self.low])
-        assert_fill(self, pandas_ta.fisher, [self.high, self.low])
-        assert_none_guard(self, pandas_ta.fisher, [self.high, self.low])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.fisher,
+                args=[self.high, self.low],
+                expected_name="FISHERT_9_1",
+                expected_type=DataFrame,
+                expected_columns=["FISHERT_9_1", "FISHERTs_9_1"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_fosc(self):
-        result = pandas_ta.fosc(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "FOSC_14")
-        self.assertIsNone(pandas_ta.fosc(None))
-        assert_offset(self, pandas_ta.fosc, [self.close])
-        assert_fill(self, pandas_ta.fosc, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.fosc,
+                args=[self.close],
+                expected_name="FOSC_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_inertia(self):
-        result = pandas_ta.inertia(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "INERTIA_20_14")
-
         result = pandas_ta.inertia(self.close, self.high, self.low, refined=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "INERTIAr_20_14")
@@ -306,90 +278,86 @@ class TestMomentum(TestCase):
         result = pandas_ta.inertia(self.close, self.high, self.low, thirds=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "INERTIAt_20_14")
-        assert_offset(self, pandas_ta.inertia, [self.close])
-        assert_fill(self, pandas_ta.inertia, [self.close])
-        assert_none_guard(self, pandas_ta.inertia, [self.close])
+
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.inertia,
+                args=[self.close],
+                expected_name="INERTIA_20_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_kdj(self):
-        result = pandas_ta.kdj(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "KDJ_9_3")
-        assert_offset(self, pandas_ta.kdj, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.kdj, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.kdj, [self.high, self.low, self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.kdj,
+                args=[self.high, self.low, self.close],
+                expected_name="KDJ_9_3",
+                expected_type=DataFrame,
+                expected_columns=["K_9_3", "D_9_3", "J_9_3"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_kst(self):
-        result = pandas_ta.kst(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "KST_10_15_20_30_10_10_10_15_9")
-        assert_offset(self, pandas_ta.kst, [self.close])
-        assert_fill(self, pandas_ta.kst, [self.close])
-        assert_none_guard(self, pandas_ta.kst, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.kst,
+                args=[self.close],
+                expected_name="KST_10_15_20_30_10_10_10_15_9",
+                expected_type=DataFrame,
+                expected_columns=["KST_10_15_20_30_10_10_10_15", "KSTs_9"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_macd(self):
         result = pandas_ta.macd(self.close, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "MACD_12_26_9")
-
-        try:
-            expected = tal.MACD(self.close)
-            expecteddf = DataFrame(
-                {
-                    "MACD_12_26_9": expected[0],
-                    "MACDh_12_26_9": expected[2],
-                    "MACDs_12_26_9": expected[1],
-                }
-            )
-            pdt.assert_frame_equal(result, expecteddf)
-        except AssertionError:
-            try:
-                macd_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                )
-                self.assertGreater(macd_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 0], CORRELATION, ex)
-
-            try:
-                history_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(history_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
-
-            try:
-                signal_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 2], expecteddf.iloc[:, 2], col=CORRELATION
-                )
-                self.assertGreater(signal_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 2], CORRELATION, ex, newline=False)
-
-        result = pandas_ta.macd(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "MACD_12_26_9")
-        assert_offset(self, pandas_ta.macd, [self.close])
-        assert_fill(self, pandas_ta.macd, [self.close])
-        assert_none_guard(self, pandas_ta.macd, [self.close])
+        if HAS_TALIB:
+            macd_line, signal, hist = tal.MACD(self.close)
+            expecteddf = DataFrame({
+                "MACD_12_26_9": macd_line,
+                "MACDh_12_26_9": hist,
+                "MACDs_12_26_9": signal,
+            })
+            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.macd,
+                args=[self.close],
+                expected_name="MACD_12_26_9",
+                expected_type=DataFrame,
+                expected_columns=["MACD_12_26_9", "MACDh_12_26_9", "MACDs_12_26_9"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_macdas(self):
-        result = pandas_ta.macd(self.close, asmode=True)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "MACDAS_12_26_9")
-        assert_offset(self, pandas_ta.macd, [self.close], asmode=True)
-        assert_fill(self, pandas_ta.macd, [self.close], asmode=True)
-        assert_none_guard(self, pandas_ta.macd, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.macd,
+                args=[self.close],
+                expected_name="MACDAS_12_26_9",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "MACDAS_12_26_9",
+                    "MACDASh_12_26_9",
+                    "MACDASs_12_26_9",
+                ],
+                none_arg_idx=0,
+                kwargs={"asmode": True},
+            ),
+        )
 
     def test_macdext(self):
         # EMA-based should closely match regular MACD
         result = pandas_ta.macdext(self.close, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "MACDEXT_12_26_9")
-        self.assertListEqual(
-            list(result.columns),
-            ["MACDEXT_12_26_9", "MACDEXTs_12_26_9", "MACDEXTh_12_26_9"],
-        )
         # SMA-based should give different values
         result_sma = pandas_ta.macdext(
             self.close, fastmatype=0, slowmatype=0, signalmatype=0, talib=False
@@ -398,276 +366,276 @@ class TestMomentum(TestCase):
         self.assertFalse(
             result["MACDEXT_12_26_9"].equals(result_sma["MACDEXT_12_26_9"])
         )
-        # With talib
-        result_tal = pandas_ta.macdext(self.close)
-        self.assertIsInstance(result_tal, DataFrame)
-        self.assertEqual(result_tal.name, "MACDEXT_12_26_9")
+        if HAS_TALIB:
+            result_tal = pandas_ta.macdext(self.close)
+            self.assertIsInstance(result_tal, DataFrame)
+            self.assertEqual(result_tal.name, "MACDEXT_12_26_9")
         pandas_ta.macdext(self.close, fillna=0)
         pandas_ta.macdext(self.close, fill_method="ffill")
-        assert_offset(self, pandas_ta.macdext, [self.close])
-        assert_fill(self, pandas_ta.macdext, [self.close])
-        assert_none_guard(self, pandas_ta.macdext, [self.close])
+
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.macdext,
+                args=[self.close],
+                expected_name="MACDEXT_12_26_9",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "MACDEXT_12_26_9",
+                    "MACDEXTs_12_26_9",
+                    "MACDEXTh_12_26_9",
+                ],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_mom(self):
         result = pandas_ta.mom(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MOM_10")
-
-        try:
-            expected = tal.MOM(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.mom(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MOM_10")
-        assert_offset(self, pandas_ta.mom, [self.close])
-        assert_fill(self, pandas_ta.mom, [self.close])
-        assert_none_guard(self, pandas_ta.mom, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.MOM(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.mom,
+                args=[self.close],
+                expected_name="MOM_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_pgo(self):
-        result = pandas_ta.pgo(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PGO_14")
-        assert_offset(self, pandas_ta.pgo, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.pgo, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.pgo, [self.high, self.low, self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pgo,
+                args=[self.high, self.low, self.close],
+                expected_name="PGO_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_ppo(self):
         result = pandas_ta.ppo(self.close, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "PPO_12_26_9")
-
-        try:
-            expected = tal.PPO(self.close)
-            pdt.assert_series_equal(result["PPO_12_26_9"], expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result["PPO_12_26_9"], expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result["PPO_12_26_9"], CORRELATION, ex)
-
-        result = pandas_ta.ppo(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "PPO_12_26_9")
-        assert_offset(self, pandas_ta.ppo, [self.close])
-        assert_fill(self, pandas_ta.ppo, [self.close])
-        assert_none_guard(self, pandas_ta.ppo, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result["PPO_12_26_9"], tal.PPO(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ppo,
+                args=[self.close],
+                expected_name="PPO_12_26_9",
+                expected_type=DataFrame,
+                expected_columns=["PPO_12_26_9", "PPOh_12_26_9", "PPOs_12_26_9"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_psl(self):
-        result = pandas_ta.psl(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PSL_12")
-        assert_offset(self, pandas_ta.psl, [self.close])
-        assert_fill(self, pandas_ta.psl, [self.close])
-        assert_none_guard(self, pandas_ta.psl, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.psl,
+                args=[self.close],
+                expected_name="PSL_12",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_pvo(self):
-        result = pandas_ta.pvo(self.volume)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "PVO_12_26_9")
-        assert_offset(self, pandas_ta.pvo, [self.volume])
-        assert_fill(self, pandas_ta.pvo, [self.volume])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pvo,
+                args=[self.volume],
+                expected_name="PVO_12_26_9",
+                expected_type=DataFrame,
+                expected_columns=["PVO_12_26_9", "PVOh_12_26_9", "PVOs_12_26_9"],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_qqe(self):
-        result = pandas_ta.qqe(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "QQE_14_5_4.236")
-        assert_offset(self, pandas_ta.qqe, [self.close])
-        assert_fill(self, pandas_ta.qqe, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.qqe,
+                args=[self.close],
+                expected_name="QQE_14_5_4.236",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "QQE_14_5_4.236",
+                    "QQE_14_5_4.236_RSIMA",
+                    "QQEl_14_5_4.236",
+                    "QQEs_14_5_4.236",
+                    "QQEb_l_14_5_4.236",
+                    "QQEb_s_14_5_4.236",
+                    "QQEd_14_5_4.236",
+                ],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_roc(self):
         result = pandas_ta.roc(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROC_10")
-
-        try:
-            expected = tal.ROC(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.roc(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROC_10")
-        assert_offset(self, pandas_ta.roc, [self.close])
-        assert_fill(self, pandas_ta.roc, [self.close])
-        assert_none_guard(self, pandas_ta.roc, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.ROC(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.roc,
+                args=[self.close],
+                expected_name="ROC_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_rocp(self):
         result = pandas_ta.rocp(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROCP_10")
-
-        try:
-            expected = tal.ROCP(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.rocp(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROCP_10")
-        assert_offset(self, pandas_ta.rocp, [self.close])
-        assert_fill(self, pandas_ta.rocp, [self.close])
-        assert_none_guard(self, pandas_ta.rocp, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.ROCP(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.rocp,
+                args=[self.close],
+                expected_name="ROCP_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_rocr(self):
         result = pandas_ta.rocr(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROCR_10")
-
-        try:
-            expected = tal.ROCR(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.rocr(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROCR_10")
-        assert_offset(self, pandas_ta.rocr, [self.close])
-        assert_fill(self, pandas_ta.rocr, [self.close])
-        assert_none_guard(self, pandas_ta.rocr, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.ROCR(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.rocr,
+                args=[self.close],
+                expected_name="ROCR_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_rocr100(self):
         result = pandas_ta.rocr100(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROCR100_10")
-
-        try:
-            expected = tal.ROCR100(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.rocr100(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ROCR100_10")
-        assert_offset(self, pandas_ta.rocr100, [self.close])
-        assert_fill(self, pandas_ta.rocr100, [self.close])
-        assert_none_guard(self, pandas_ta.rocr100, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.ROCR100(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.rocr100,
+                args=[self.close],
+                expected_name="ROCR100_10",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_rsi(self):
         result = pandas_ta.rsi(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "RSI_14")
-
-        try:
-            expected = tal.RSI(self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.rsi(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "RSI_14")
-        assert_offset(self, pandas_ta.rsi, [self.close])
-        assert_fill(self, pandas_ta.rsi, [self.close])
-        assert_none_guard(self, pandas_ta.rsi, [self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.RSI(self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.rsi,
+                args=[self.close],
+                expected_name="RSI_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_rsx(self):
-        result = pandas_ta.rsx(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "RSX_14")
-        assert_offset(self, pandas_ta.rsx, [self.close])
-        assert_fill(self, pandas_ta.rsx, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.rsx,
+                args=[self.close],
+                expected_name="RSX_14",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_rvgi(self):
-        result = pandas_ta.rvgi(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "RVGI_14_4")
-        assert_offset(self, pandas_ta.rvgi, [self.open, self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.rvgi, [self.open, self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.rvgi, [self.open, self.high, self.low, self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.rvgi,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="RVGI_14_4",
+                expected_type=DataFrame,
+                expected_columns=["RVGIh_14_4", "RVGI_14_4", "RVGIs_14_4"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_slope(self):
-        result = pandas_ta.slope(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SLOPE_1")
-        assert_offset(self, pandas_ta.slope, [self.close])
-        assert_fill(self, pandas_ta.slope, [self.close])
-        assert_none_guard(self, pandas_ta.slope, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.slope,
+                args=[self.close],
+                expected_name="SLOPE_1",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_slope_as_angle(self):
-        result = pandas_ta.slope(self.close, as_angle=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ANGLEr_1")
-        assert_offset(self, pandas_ta.slope, [self.close], as_angle=True)
-        assert_fill(self, pandas_ta.slope, [self.close], as_angle=True)
-        assert_none_guard(self, pandas_ta.slope, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.slope,
+                args=[self.close],
+                expected_name="ANGLEr_1",
+                none_arg_idx=0,
+                kwargs={"as_angle": True},
+            ),
+        )
 
     def test_slope_as_angle_to_degrees(self):
-        result = pandas_ta.slope(self.close, as_angle=True, to_degrees=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ANGLEd_1")
-        assert_offset(self, pandas_ta.slope, [self.close], as_angle=True, to_degrees=True)
-        assert_fill(self, pandas_ta.slope, [self.close], as_angle=True, to_degrees=True)
-        assert_none_guard(self, pandas_ta.slope, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.slope,
+                args=[self.close],
+                expected_name="ANGLEd_1",
+                none_arg_idx=0,
+                kwargs={"as_angle": True, "to_degrees": True},
+            ),
+        )
 
     def test_smi(self):
-        result = pandas_ta.smi(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SMI_5_20_5")
-        self.assertEqual(len(result.columns), 3)
-        assert_offset(self, pandas_ta.smi, [self.close])
-        assert_fill(self, pandas_ta.smi, [self.close])
-        assert_none_guard(self, pandas_ta.smi, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.smi,
+                args=[self.close],
+                expected_name="SMI_5_20_5",
+                expected_type=DataFrame,
+                expected_columns=["SMI_5_20_5", "SMIs_5_20_5", "SMIo_5_20_5"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_smi_scalar(self):
-        result = pandas_ta.smi(self.close, scalar=10)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SMI_5_20_5_10.0")
-        self.assertEqual(len(result.columns), 3)
-        assert_offset(self, pandas_ta.smi, [self.close], scalar=10)
-        assert_fill(self, pandas_ta.smi, [self.close], scalar=10)
-        assert_none_guard(self, pandas_ta.smi, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.smi,
+                args=[self.close],
+                expected_name="SMI_5_20_5_10.0",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "SMI_5_20_5_10.0",
+                    "SMIs_5_20_5_10.0",
+                    "SMIo_5_20_5_10.0",
+                ],
+                none_arg_idx=0,
+                kwargs={"scalar": 10},
+            ),
+        )
 
     def test_squeeze(self):
-        result = pandas_ta.squeeze(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
-
         result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5")
@@ -681,15 +649,25 @@ class TestMomentum(TestCase):
         )
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5_LB")
-        assert_offset(self, pandas_ta.squeeze, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.squeeze, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.squeeze, [self.high, self.low, self.close])
+
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.squeeze,
+                args=[self.high, self.low, self.close],
+                expected_name="SQZ_20_2.0_20_1.5",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "SQZ_20_2.0_20_1.5",
+                    "SQZ_ON",
+                    "SQZ_OFF",
+                    "SQZ_NO",
+                ],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_squeeze_pro(self):
-        result = pandas_ta.squeeze_pro(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZPRO_20_2.0_20_2_1.5_1")
-
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_2_1.5_1")
@@ -705,208 +683,214 @@ class TestMomentum(TestCase):
         )
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3.0_2.0_1.0")
-        assert_offset(self, pandas_ta.squeeze_pro, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.squeeze_pro, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.squeeze_pro, [self.high, self.low, self.close])
+
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.squeeze_pro,
+                args=[self.high, self.low, self.close],
+                expected_name="SQZPRO_20_2.0_20_2_1.5_1",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "SQZPRO_20_2.0_20_2_1.5_1",
+                    "SQZPRO_ON_WIDE",
+                    "SQZPRO_ON_NORMAL",
+                    "SQZPRO_ON_NARROW",
+                    "SQZPRO_OFF",
+                    "SQZPRO_NO",
+                ],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_stc(self):
-        result = pandas_ta.stc(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "STC_10_12_26_0.5")
-        assert_offset(self, pandas_ta.stc, [self.close])
-        assert_fill(self, pandas_ta.stc, [self.close])
-        assert_none_guard(self, pandas_ta.stc, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.stc,
+                args=[self.close],
+                expected_name="STC_10_12_26_0.5",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "STC_10_12_26_0.5",
+                    "STCmacd_10_12_26_0.5",
+                    "STCstoch_10_12_26_0.5",
+                ],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_stoch(self):
         # TV Correlation
         result = pandas_ta.stoch(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "STOCH_14_3_3")
-
-        try:
-            expected = tal.STOCH(self.high, self.low, self.close, 14, 3, 0, 3, 0)
-            expecteddf = DataFrame(
-                {"STOCHk_14_3_0_3_0": expected[0], "STOCHd_14_3_0_3": expected[1]}
-            )
-            pdt.assert_frame_equal(result, expecteddf)
-        except AssertionError:
-            try:
-                stochk_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                )
-                self.assertGreater(stochk_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 0], CORRELATION, ex)
-
-            try:
-                stochd_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(stochd_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
-        assert_offset(self, pandas_ta.stoch, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.stoch, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.stoch, [self.high, self.low, self.close])
+        if HAS_TALIB:
+            stochk, stochd = tal.STOCH(self.high, self.low, self.close, 14, 3, 0, 3, 0)
+            expecteddf = DataFrame({"STOCHk_14_3_0_3_0": stochk, "STOCHd_14_3_0_3": stochd})
+            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.stoch,
+                args=[self.high, self.low, self.close],
+                expected_name="STOCH_14_3_3",
+                expected_type=DataFrame,
+                expected_columns=["STOCHk_14_3_3", "STOCHd_14_3_3"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_stochf(self):
         result = pandas_ta.stochf(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "STOCHF_5_3")
-
-        try:
-            expected = tal.STOCHF(self.high, self.low, self.close, 5, 3, 0)
-            expecteddf = DataFrame(
-                {"STOCHFk_5_3": expected[0], "STOCHFd_5_3": expected[1]}
-            )
-            pdt.assert_frame_equal(result, expecteddf)
-        except AssertionError:
-            try:
-                stochfk_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                )
-                self.assertGreater(stochfk_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 0], CORRELATION, ex)
-
-            try:
-                stochfd_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(stochfd_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
-
-        result = pandas_ta.stochf(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "STOCHF_5_3")
-        assert_offset(self, pandas_ta.stochf, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.stochf, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.stochf, [self.high, self.low, self.close])
+        if HAS_TALIB:
+            stochfk, stochfd = tal.STOCHF(self.high, self.low, self.close, 5, 3, 0)
+            expecteddf = DataFrame({"STOCHFk_5_3": stochfk, "STOCHFd_5_3": stochfd})
+            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.stochf,
+                args=[self.high, self.low, self.close],
+                expected_name="STOCHF_5_3",
+                expected_type=DataFrame,
+                expected_columns=["STOCHFk_5_3", "STOCHFd_5_3"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_stochrsi(self):
         # TV Correlation
         result = pandas_ta.stochrsi(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "STOCHRSI_14_14_3_3")
-
-        try:
-            expected = tal.STOCHRSI(self.close, 14, 14, 3, 0)
-            expecteddf = DataFrame(
-                {"STOCHRSIk_14_14_0_3": expected[0], "STOCHRSId_14_14_3_0": expected[1]}
-            )
-            pdt.assert_frame_equal(result, expecteddf)
-        except AssertionError:
-            try:
-                stochrsid_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(stochrsid_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 0], CORRELATION, ex, newline=False)
-        assert_offset(self, pandas_ta.stochrsi, [self.close])
-        assert_fill(self, pandas_ta.stochrsi, [self.close])
-        assert_none_guard(self, pandas_ta.stochrsi, [self.close])
+        if HAS_TALIB:
+            stochrsi_k, stochrsi_d = tal.STOCHRSI(self.close, 14, 14, 3, 0)
+            assert_talib(self, result.iloc[:, 0], stochrsi_d, correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.stochrsi,
+                args=[self.close],
+                expected_name="STOCHRSI_14_14_3_3",
+                expected_type=DataFrame,
+                expected_columns=["STOCHRSIk_14_14_3_3", "STOCHRSId_14_14_3_3"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_td_seq(self):
         """TS Sequential: Working but SLOW implementation"""
-        result = pandas_ta.td_seq(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TD_SEQ")
-        assert_offset(self, pandas_ta.td_seq, [self.close])
-        assert_fill(self, pandas_ta.td_seq, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.td_seq,
+                args=[self.close],
+                expected_name="TD_SEQ",
+                expected_type=DataFrame,
+                expected_columns=["TD_SEQ_UPa", "TD_SEQ_DNa"],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_trix(self):
-        result = pandas_ta.trix(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TRIX_30_9")
-        assert_offset(self, pandas_ta.trix, [self.close])
-        assert_fill(self, pandas_ta.trix, [self.close])
-        assert_none_guard(self, pandas_ta.trix, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.trix,
+                args=[self.close],
+                expected_name="TRIX_30_9",
+                expected_type=DataFrame,
+                expected_columns=["TRIX_30_9", "TRIXs_30_9"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_tsi(self):
-        result = pandas_ta.tsi(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TSI_13_25_13")
-        assert_offset(self, pandas_ta.tsi, [self.close])
-        assert_fill(self, pandas_ta.tsi, [self.close])
-        assert_none_guard(self, pandas_ta.tsi, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.tsi,
+                args=[self.close],
+                expected_name="TSI_13_25_13",
+                expected_type=DataFrame,
+                expected_columns=["TSI_13_25_13", "TSIs_13_25_13"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_uo(self):
         result = pandas_ta.uo(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "UO_7_14_28")
-
-        try:
-            expected = tal.ULTOSC(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.uo(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "UO_7_14_28")
-        assert_offset(self, pandas_ta.uo, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.uo, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.uo, [self.high, self.low, self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.ULTOSC(self.high, self.low, self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.uo,
+                args=[self.high, self.low, self.close],
+                expected_name="UO_7_14_28",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_willr(self):
         result = pandas_ta.willr(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "WILLR_14")
-
-        try:
-            expected = tal.WILLR(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-        assert_offset(self, pandas_ta.willr, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.willr, [self.high, self.low, self.close])
-        assert_none_guard(self, pandas_ta.willr, [self.high, self.low, self.close])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.WILLR(self.high, self.low, self.close), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.willr,
+                args=[self.high, self.low, self.close],
+                expected_name="WILLR_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_lrsi(self):
-        result = pandas_ta.lrsi(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "LRSI_14")
-        assert_offset(self, pandas_ta.lrsi, [self.close])
-        assert_fill(self, pandas_ta.lrsi, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.lrsi,
+                args=[self.close],
+                expected_name="LRSI_14",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_po(self):
-        result = pandas_ta.po(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PO_14")
-        assert_offset(self, pandas_ta.po, [self.close])
-        assert_fill(self, pandas_ta.po, [self.close])
-        assert_none_guard(self, pandas_ta.po, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.po,
+                args=[self.close],
+                expected_name="PO_14",
+                none_arg_idx=0,
+            ),
+        )
 
     def test_trixh(self):
-        result = pandas_ta.trixh(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TRIXH_18_9")
-        assert_offset(self, pandas_ta.trixh, [self.close])
-        assert_fill(self, pandas_ta.trixh, [self.close])
-        assert_none_guard(self, pandas_ta.trixh, [self.close])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.trixh,
+                args=[self.close],
+                expected_name="TRIXH_18_9",
+                expected_type=DataFrame,
+                expected_columns=["TRIX_18_9", "TRIXs_18_9", "TRIXh_18_9"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_vwmacd(self):
-        result = pandas_ta.vwmacd(self.close, self.volume)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "VWMACD_12_26_9")
-
-        result = pandas_ta.willr(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "WILLR_14")
-        assert_offset(self, pandas_ta.vwmacd, [self.close, self.volume])
-        assert_fill(self, pandas_ta.vwmacd, [self.close, self.volume])
-        assert_none_guard(self, pandas_ta.vwmacd, [self.close, self.volume])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.vwmacd,
+                args=[self.close, self.volume],
+                expected_name="VWMACD_12_26_9",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "VWMACD_12_26_9",
+                    "VWMACDh_12_26_9",
+                    "VWMACDs_12_26_9",
+                ],
+                none_arg_idx=0,
+            ),
+        )

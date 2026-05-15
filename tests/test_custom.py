@@ -80,9 +80,7 @@ class TestCustom(TestCase):
     def test_create_dir_no_categories(self):
         path = os.path.join(self.tmpdir, "no_categories")
         create_dir(path, create_categories=False, verbose=False)
-        subdirs = [
-            d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))
-        ]
+        subdirs = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         self.assertEqual(subdirs, [])
 
     # ------------------------------------------------------------------
@@ -180,10 +178,7 @@ class TestCustom(TestCase):
         func_name = "_test_cust_nomethod_"
         module_path = os.path.join(cat_dir, f"{func_name}.py")
         with open(module_path, "w") as f:
-            f.write(
-                f"def {func_name}(close, **kwargs):\n"
-                f"    return close\n"
-            )
+            f.write(f"def {func_name}(close, **kwargs):\n" f"    return close\n")
 
         try:
             import_dir(base, verbose=False)

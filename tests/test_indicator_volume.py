@@ -1,17 +1,8 @@
-from tests.config import (
-    assert_fill,
-    assert_none_guard,
-    assert_offset,
-    error_analysis,
-    get_sample_data,
-    CORRELATION,
-    CORRELATION_THRESHOLD,
-    VERBOSE,
-)
+from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
-import pandas.testing as pdt
 from pandas import DataFrame, Series
 
 try:
@@ -55,202 +46,199 @@ class TestVolume(TestCase):
         result = pandas_ta.ad(
             self.high, self.low, self.close, self.volume_, talib=False
         )
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "AD")
-
-        try:
-            expected = tal.AD(self.high, self.low, self.close, self.volume_)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.ad(self.high, self.low, self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "AD")
-        assert_offset(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_])
-        assert_fill(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.AD(self.high, self.low, self.close, self.volume_), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ad,
+                args=[self.high, self.low, self.close, self.volume_],
+                expected_name="AD",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_ad_open(self):
-        result = pandas_ta.ad(self.high, self.low, self.close, self.volume_, self.open)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ADo")
-        assert_offset(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_, self.open])
-        assert_fill(self, pandas_ta.ad, [self.high, self.low, self.close, self.volume_, self.open])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ad,
+                args=[self.high, self.low, self.close, self.volume_, self.open],
+                expected_name="ADo",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_adosc(self):
         result = pandas_ta.adosc(
             self.high, self.low, self.close, self.volume_, talib=False
         )
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ADOSC_3_10")
-
-        try:
-            expected = tal.ADOSC(self.high, self.low, self.close, self.volume_)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.adosc(self.high, self.low, self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ADOSC_3_10")
-        assert_offset(self, pandas_ta.adosc, [self.high, self.low, self.close, self.volume_])
-        assert_fill(self, pandas_ta.adosc, [self.high, self.low, self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.adosc, [self.high, self.low, self.close, self.volume_])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.ADOSC(self.high, self.low, self.close, self.volume_), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.adosc,
+                args=[self.high, self.low, self.close, self.volume_],
+                expected_name="ADOSC_3_10",
+            ),
+        )
 
     def test_aobv(self):
-        result = pandas_ta.aobv(self.close, self.volume_)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "AOBVe_4_12_2_2_2")
-
-        result = pandas_ta.aobv(self.close, self.volume_, fillna=0)
-        self.assertIsInstance(result, DataFrame)
-
-        result = pandas_ta.aobv(self.close, self.volume_, fill_method="ffill")
-        self.assertIsInstance(result, DataFrame)
-
-        result = pandas_ta.aobv(self.close, self.volume_, fill_method="bfill")
-        self.assertIsInstance(result, DataFrame)
-        assert_offset(self, pandas_ta.aobv, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.aobv, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.aobv,
+                args=[self.close, self.volume_],
+                expected_name="AOBVe_4_12_2_2_2",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "OBV",
+                    "OBV_min_2",
+                    "OBV_max_2",
+                    "OBVe_4",
+                    "OBVe_12",
+                    "AOBV_LR_2",
+                    "AOBV_SR_2",
+                ],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_cmf(self):
-        result = pandas_ta.cmf(self.high, self.low, self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CMF_20")
-        assert_offset(self, pandas_ta.cmf, [self.high, self.low, self.close, self.volume_])
-        assert_fill(self, pandas_ta.cmf, [self.high, self.low, self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.cmf, [self.high, self.low, self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cmf,
+                args=[self.high, self.low, self.close, self.volume_],
+                expected_name="CMF_20",
+            ),
+        )
 
     def test_efi(self):
-        result = pandas_ta.efi(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "EFI_13")
-        assert_offset(self, pandas_ta.efi, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.efi, [self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.efi, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.efi,
+                args=[self.close, self.volume_],
+                expected_name="EFI_13",
+            ),
+        )
 
     def test_emv(self):
-        result = pandas_ta.emv(self.high, self.low, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "EMV")
-        self.assertIsNone(pandas_ta.emv(None, self.low, self.volume_))
-        assert_offset(self, pandas_ta.emv, [self.high, self.low, self.volume_])
-        assert_fill(self, pandas_ta.emv, [self.high, self.low, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.emv,
+                args=[self.high, self.low, self.volume_],
+                expected_name="EMV",
+            ),
+        )
 
     def test_eom(self):
-        result = pandas_ta.eom(self.high, self.low, self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "EOM_14_100000000")
-        assert_offset(self, pandas_ta.eom, [self.high, self.low, self.close, self.volume_])
-        assert_fill(self, pandas_ta.eom, [self.high, self.low, self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.eom, [self.high, self.low, self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.eom,
+                args=[self.high, self.low, self.close, self.volume_],
+                expected_name="EOM_14_100000000",
+            ),
+        )
 
     def test_kvo(self):
-        result = pandas_ta.kvo(self.high, self.low, self.close, self.volume_)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "KVO_34_55_13")
-        assert_offset(self, pandas_ta.kvo, [self.high, self.low, self.close, self.volume_])
-        assert_fill(self, pandas_ta.kvo, [self.high, self.low, self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.kvo, [self.high, self.low, self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.kvo,
+                args=[self.high, self.low, self.close, self.volume_],
+                expected_name="KVO_34_55_13",
+                expected_type=DataFrame,
+                expected_columns=["KVO_34_55_13", "KVOs_34_55_13"],
+            ),
+        )
 
     def test_marketfi(self):
-        result = pandas_ta.marketfi(self.high, self.low, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MARKETFI")
-        self.assertIsNone(pandas_ta.marketfi(None, self.low, self.volume_))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.marketfi,
+                args=[self.high, self.low, self.volume_],
+                expected_name="MARKETFI",
+            ),
+        )
         self.assertIsNone(pandas_ta.marketfi(self.high, None, self.volume_))
         self.assertIsNone(pandas_ta.marketfi(self.high, self.low, None))
-        assert_offset(self, pandas_ta.marketfi, [self.high, self.low, self.volume_])
-        assert_fill(self, pandas_ta.marketfi, [self.high, self.low, self.volume_])
 
     def test_mfi(self):
         result = pandas_ta.mfi(
             self.high, self.low, self.close, self.volume_, talib=False
         )
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MFI_14")
-
-        try:
-            expected = tal.MFI(self.high, self.low, self.close, self.volume_)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MFI_14")
-        assert_offset(self, pandas_ta.mfi, [self.high, self.low, self.close, self.volume_])
-        assert_fill(self, pandas_ta.mfi, [self.high, self.low, self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.mfi, [self.high, self.low, self.close, self.volume_])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.MFI(self.high, self.low, self.close, self.volume_), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.mfi,
+                args=[self.high, self.low, self.close, self.volume_],
+                expected_name="MFI_14",
+            ),
+        )
 
     def test_nvi(self):
-        result = pandas_ta.nvi(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "NVI_1")
-        assert_offset(self, pandas_ta.nvi, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.nvi, [self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.nvi, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.nvi,
+                args=[self.close, self.volume_],
+                expected_name="NVI_1",
+            ),
+        )
 
     def test_obv(self):
         result = pandas_ta.obv(self.close, self.volume_, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "OBV")
-
-        try:
-            expected = tal.OBV(self.close, self.volume_)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.obv(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "OBV")
-        assert_offset(self, pandas_ta.obv, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.obv, [self.close, self.volume_])
+        if HAS_TALIB:
+            assert_talib(self, result, tal.OBV(self.close, self.volume_), correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.obv,
+                args=[self.close, self.volume_],
+                expected_name="OBV",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_pvi(self):
-        result = pandas_ta.pvi(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PVI_1")
-        assert_offset(self, pandas_ta.pvi, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.pvi, [self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.pvi, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pvi,
+                args=[self.close, self.volume_],
+                expected_name="PVI_1",
+            ),
+        )
 
     def test_pvol(self):
-        result = pandas_ta.pvol(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PVOL")
-        assert_offset(self, pandas_ta.pvol, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.pvol, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pvol,
+                args=[self.close, self.volume_],
+                expected_name="PVOL",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_pvr(self):
-        result = pandas_ta.pvr(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PVR")
+        result = assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pvr,
+                args=[self.close, self.volume_],
+                expected_name="PVR",
+                none_arg_idx=None,
+            ),
+        )
         # sample indicator values from SPY
         self.assertEqual(result.iloc[0], 1)
         self.assertEqual(result.iloc[1], 3)
@@ -258,41 +246,64 @@ class TestVolume(TestCase):
         self.assertEqual(result.iloc[6], 4)
 
     def test_pvt(self):
-        result = pandas_ta.pvt(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PVT")
-        assert_offset(self, pandas_ta.pvt, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.pvt, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pvt,
+                args=[self.close, self.volume_],
+                expected_name="PVT",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_vp(self):
-        result = pandas_ta.vp(self.close, self.volume_)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "VP_10")
-        assert_offset(self, pandas_ta.vp, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.vp, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.vp,
+                args=[self.close, self.volume_],
+                expected_name="VP_10",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "low_close",
+                    "mean_close",
+                    "high_close",
+                    "pos_volume",
+                    "neg_volume",
+                    "total_volume",
+                ],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_vfi(self):
-        result = pandas_ta.vfi(self.close, self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "VFI_130")
-        assert_offset(self, pandas_ta.vfi, [self.close, self.volume_])
-        assert_fill(self, pandas_ta.vfi, [self.close, self.volume_])
-        assert_none_guard(self, pandas_ta.vfi, [self.close, self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.vfi,
+                args=[self.close, self.volume_],
+                expected_name="VFI_130",
+            ),
+        )
 
     def test_vosc(self):
-        result = pandas_ta.vosc(self.volume_)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "VOSC_14_28")
-        self.assertIsNone(pandas_ta.vosc(None))
-        assert_offset(self, pandas_ta.vosc, [self.volume_])
-        assert_fill(self, pandas_ta.vosc, [self.volume_])
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.vosc,
+                args=[self.volume_],
+                expected_name="VOSC_14_28",
+            ),
+        )
 
     def test_wad(self):
-        result = pandas_ta.wad(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "WAD")
-        self.assertIsNone(pandas_ta.wad(None, self.low, self.close))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.wad,
+                args=[self.high, self.low, self.close],
+                expected_name="WAD",
+            ),
+        )
         self.assertIsNone(pandas_ta.wad(self.high, None, self.close))
         self.assertIsNone(pandas_ta.wad(self.high, self.low, None))
-        assert_offset(self, pandas_ta.wad, [self.high, self.low, self.close])
-        assert_fill(self, pandas_ta.wad, [self.high, self.low, self.close])
