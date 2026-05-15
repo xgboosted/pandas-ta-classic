@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Normalized Average True Range (NATR)
 from typing import Any, Optional
+import numpy as np
 from pandas import Series
 from .atr import atr
 from pandas_ta_classic import Imports
@@ -28,7 +29,10 @@ def natr(
     """Indicator: Normalized Average True Range (NATR)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    # BREAKING CHANGE: default changed from "ema" to "rma" to match TA-Lib's
+    # Wilder's smoothing. Callers relying on the old EMA default will see
+    # different output unless they pass mamode="ema" explicitly.
+    mamode = mamode if isinstance(mamode, str) else "rma"
     scalar = float(scalar) if scalar else 100
     high = verify_series(high, length)
     low = verify_series(low, length)
@@ -46,19 +50,29 @@ def natr(
 
         natr = NATR(high, low, close, length)
     else:
-        natr = scalar / close
-        _atr = atr(
-            high=high,
-            low=low,
-            close=close,
-            length=length,
-            mamode=mamode,
-            talib=False,
-            drift=drift,
-        )
-        if _atr is None:
-            return None
-        natr *= _atr
+        # Direct Wilder loop to match TA-Lib's exact floating-point operations.
+        # Seeding both ATR and NATR from the same SMA value at bar `length`
+        # avoids the rounding introduced by multiplying a pandas Series ATR
+        # by `scalar/close` after the fact.
+        h_arr = high.to_numpy(dtype=float)
+        l_arr = low.to_numpy(dtype=float)
+        c_arr = close.to_numpy(dtype=float)
+        m = len(c_arr)
+        tr_arr = np.full(m, np.nan)
+        for i in range(1, m):
+            tr_arr[i] = max(
+                h_arr[i] - l_arr[i],
+                abs(h_arr[i] - c_arr[i - 1]),
+                abs(l_arr[i] - c_arr[i - 1]),
+            )
+        atr_arr = np.full(m, np.nan)
+        if m > length:
+            atr_val = tr_arr[1: length + 1].mean()
+            atr_arr[length] = atr_val
+            for i in range(length + 1, m):
+                atr_val = atr_val + (tr_arr[i] - atr_val) / length
+                atr_arr[i] = atr_val
+        natr = Series(scalar * atr_arr / c_arr, index=close.index)
 
     # Offset
     natr = apply_offset(natr, offset)
@@ -91,7 +105,7 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): The short period. Default: 20
     scalar (float): How much to magnify. Default: 100
-    mamode (str): See ```help(ta.ma)```. Default: 'ema'
+    mamode (str): See ```help(ta.ma)```. Default: 'rma'
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: True
     offset (int): How many periods to offset the result. Default: 0

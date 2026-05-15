@@ -78,16 +78,26 @@ def macd(
     else:
         c_arr = close.to_numpy(dtype=float)
         m = c_arr.shape[0]
-        # TA-Lib seeds the fast EMA at its own lookback (fast-1) and the slow
-        # EMA at slow-1; by slow-1 the fast EMA has already been running for
-        # (slow - fast) additional bars, not reseeded with a fresh SMA.
-        fast_start = fast - 1
+        # TA-Lib seeds BOTH EMAs at bar `slow-1` using SMA over each window:
+        #   fast seed = SMA(close[slow-fast : slow])  (last `fast` bars)
+        #   slow seed = SMA(close[0 : slow])           (all `slow` bars)
+        # Both then propagate forward together from bar `slow`.
         slow_start = slow - 1
-        fast_ema = _ema_aligned(c_arr, m, fast, fast_start)
-        slow_ema = _ema_aligned(c_arr, m, slow, slow_start)
-        macd_arr = fast_ema - slow_ema
+        fast_seed = c_arr[slow_start - fast + 1: slow_start + 1].mean()
+        slow_seed = c_arr[: slow_start + 1].mean()
+        k_fast = 2.0 / (fast + 1)
+        k_slow = 2.0 / (slow + 1)
+        macd_arr = np.full(m, np.nan)
+        macd_arr[slow_start] = fast_seed - slow_seed
+        fv, sv = fast_seed, slow_seed
+        for i in range(slow_start + 1, m):
+            fv = k_fast * c_arr[i] + (1 - k_fast) * fv
+            sv = k_slow * c_arr[i] + (1 - k_slow) * sv
+            macd_arr[i] = fv - sv
         sig_start = slow_start + signal - 1
         sig_ema = _ema_aligned(macd_arr, m, signal, sig_start)
+        # TA-Lib suppresses MACD output until the signal line is computable.
+        macd_arr[:sig_start] = np.nan
 
         macd = Series(macd_arr, index=close.index)
         signalma = Series(sig_ema, index=close.index)

@@ -2,6 +2,7 @@
 # Stochastic Fast (STOCHF)
 from typing import Any, Optional
 
+import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
@@ -10,13 +11,16 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 
 
 def _stochf_native(high, low, close, fastk, fastd, mamode):
     """Compute Stochastic Fast natively (no TA-Lib).
+
+    Implements TA-Lib STOCHF exactly: scalar loop for k (avoids vectorized
+    FP rounding differences), SMA for d when mamode="sma", and masks the
+    first fastk-1+fastd-1 bars of k to NaN to match TA-Lib's output lookback.
 
     Args:
         high (Series): High price series.
@@ -30,16 +34,42 @@ def _stochf_native(high, low, close, fastk, fastd, mamode):
         tuple[Series, Series] | None: ``(fastk_, fastd_)`` or *None* when
         the %D MA computation fails.
     """
-    lowest_low = low.rolling(fastk).min()
-    highest_high = high.rolling(fastk).max()
-    fastk_ = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
-    fastk_first_valid = fastk_.first_valid_index()
-    if fastk_first_valid is None:
-        fastd_ = fastk_.copy()
+    h_arr = high.to_numpy(dtype=float)
+    l_arr = low.to_numpy(dtype=float)
+    c_arr = close.to_numpy(dtype=float)
+    m = len(c_arr)
+
+    # Scalar loop matches TA-Lib's C doubles arithmetic exactly.
+    k_arr = np.full(m, np.nan)
+    for i in range(fastk - 1, m):
+        lo = l_arr[i - fastk + 1 : i + 1].min()
+        hi = h_arr[i - fastk + 1 : i + 1].max()
+        diff = hi - lo
+        k_arr[i] = 0.0 if diff == 0.0 else 100.0 * (c_arr[i] - lo) / diff
+
+    # Compute d using raw k values (before masking k output).
+    d_arr = np.full(m, np.nan)
+    total_lookback = fastk - 1 + fastd - 1
+    if mamode.lower() == "sma":
+        for i in range(total_lookback, m):
+            d_arr[i] = k_arr[i - fastd + 1 : i + 1].mean()
     else:
-        fastd_ = ma(mamode, fastk_.loc[fastk_first_valid:,], length=fastd)
-        if fastd_ is None:
+        # Fall back to pandas ma for non-SMA modes.
+        k_tmp = Series(k_arr, index=close.index)
+        first_valid = k_tmp.first_valid_index()
+        if first_valid is None:
+            return k_tmp, k_tmp.copy()
+        d_tmp = ma(mamode, k_tmp.loc[first_valid:], length=fastd)
+        if d_tmp is None:
             return None
+        d_arr = d_tmp.reindex(close.index).to_numpy(dtype=float)
+
+    # TA-Lib masks the first fastk-1+fastd-1 bars of k (used internally
+    # for d but not shown in output).
+    k_arr[:total_lookback] = np.nan
+
+    fastk_ = Series(k_arr, index=close.index)
+    fastd_ = Series(d_arr, index=close.index)
     return fastk_, fastd_
 
 
