@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Money Flow Index (MFI)
 from typing import Any, Optional
-import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
+from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -44,43 +44,22 @@ def mfi(
 
         mfi = MFI(high, low, close, volume, length)
     else:
-        h_arr = high.to_numpy(dtype=float)
-        l_arr = low.to_numpy(dtype=float)
-        c_arr = close.to_numpy(dtype=float)
-        v_arr = volume.to_numpy(dtype=float)
-        tp = (h_arr + l_arr + c_arr) / 3.0
-        rmf = tp * v_arr
-        m = len(tp)
+        typical_price = hlc3(high=high, low=low, close=close)
+        raw_money_flow = typical_price * volume
 
-        # Direct sliding-window loop matching TA-Lib's exact FP operations.
-        # Initial window: bars 1..length (bar 0 skipped — no previous bar for diff).
-        psum = 0.0
-        nsum = 0.0
-        for i in range(1, length + 1):
-            if tp[i] > tp[i - 1]:
-                psum += rmf[i]
-            elif tp[i] < tp[i - 1]:
-                nsum += rmf[i]
+        tdf = DataFrame({"diff": 0, "rmf": raw_money_flow, "+mf": 0.0, "-mf": 0.0})
 
-        mfi_arr = np.full(m, np.nan)
-        total = psum + nsum
-        mfi_arr[length] = 100.0 * psum / total if total >= 1.0 else 0.0
+        tdf.loc[(typical_price.diff(drift) > 0), "diff"] = 1
+        tdf.loc[tdf["diff"] == 1, "+mf"] = raw_money_flow
 
-        trailing = 1
-        for i in range(length + 1, m):
-            if tp[i] > tp[i - 1]:
-                psum += rmf[i]
-            elif tp[i] < tp[i - 1]:
-                nsum += rmf[i]
-            if tp[trailing] > tp[trailing - 1]:
-                psum -= rmf[trailing]
-            elif tp[trailing] < tp[trailing - 1]:
-                nsum -= rmf[trailing]
-            trailing += 1
-            total = psum + nsum
-            mfi_arr[i] = 100.0 * psum / total if total >= 1.0 else 0.0
+        tdf.loc[(typical_price.diff(drift) < 0), "diff"] = -1
+        tdf.loc[tdf["diff"] == -1, "-mf"] = raw_money_flow
 
-        mfi = Series(mfi_arr, index=close.index)
+        psum = tdf["+mf"].rolling(length).sum()
+        nsum = tdf["-mf"].rolling(length).sum()
+        tdf["mr"] = psum / nsum
+        mfi = 100 * psum / (psum + nsum)
+        tdf["mfi"] = mfi
 
     # Offset
     mfi = apply_offset(mfi, offset)

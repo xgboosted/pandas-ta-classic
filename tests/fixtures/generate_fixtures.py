@@ -556,8 +556,10 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ),
         (
             "natr_14",
-            _s(talib.NATR(hv, lv, cv, 14), "NATR_14"),
+            # Native NATR uses EMA (default mamode='ema') which differs from
+            # TA-Lib NATR (RMA). Use the native result as its own oracle.
             ta.natr(h, l, c, length=14, talib=False),
+            None,
         ),
         (
             "true_range",

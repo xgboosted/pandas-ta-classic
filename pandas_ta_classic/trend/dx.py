@@ -2,7 +2,6 @@
 # Directional Index (DX)
 from typing import Any, Optional
 
-import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
@@ -49,56 +48,6 @@ def dx(
         from talib import DX as TADX
 
         dx_ = TADX(high, low, close, length)
-    elif mamode == "rma":
-        # TA-Lib-compatible Wilder's smoothing for DX.
-        # TA-Lib seeds with bars 1..length-1, then applies the first Wilder
-        # update at bar `length`. This matches TA-Lib's internal lookback and
-        # produces an exact numerical match when compared to tal.DX().
-        h_arr = high.values.astype(float)
-        l_arr = low.values.astype(float)
-        c_arr = close.values.astype(float)
-        n = len(h_arr)
-
-        dm_pos = np.zeros(n)
-        dm_neg = np.zeros(n)
-        tr_raw = np.zeros(n)
-        for idx in range(1, n):
-            up = h_arr[idx] - h_arr[idx - 1]
-            dn = l_arr[idx - 1] - l_arr[idx]
-            dm_pos[idx] = up if (up > dn and up > 0) else 0.0
-            dm_neg[idx] = dn if (dn > up and dn > 0) else 0.0
-            tr_raw[idx] = max(
-                h_arr[idx] - l_arr[idx],
-                abs(h_arr[idx] - c_arr[idx - 1]),
-                abs(l_arr[idx] - c_arr[idx - 1]),
-            )
-
-        if n <= length:
-            return None
-
-        # Seed: sum of bars 1..length-1, then first Wilder update at bar `length`
-        tr14 = tr_raw[1:length].sum()
-        dmpos14 = dm_pos[1:length].sum()
-        dmneg14 = dm_neg[1:length].sum()
-        tr14 = tr14 - tr14 / length + tr_raw[length]
-        dmpos14 = dmpos14 - dmpos14 / length + dm_pos[length]
-        dmneg14 = dmneg14 - dmneg14 / length + dm_neg[length]
-
-        dx_raw = np.full(n, np.nan)
-        denom = dmpos14 + dmneg14
-        dx_raw[length] = scalar * abs(dmpos14 - dmneg14) / denom if denom != 0 else 0.0
-
-        _tr14, _dmpos14, _dmneg14 = tr14, dmpos14, dmneg14
-        for idx in range(length + 1, n):
-            _tr14 = _tr14 - _tr14 / length + tr_raw[idx]
-            _dmpos14 = _dmpos14 - _dmpos14 / length + dm_pos[idx]
-            _dmneg14 = _dmneg14 - _dmneg14 / length + dm_neg[idx]
-            denom = _dmpos14 + _dmneg14
-            dx_raw[idx] = (
-                scalar * abs(_dmpos14 - _dmneg14) / denom if denom != 0 else 0.0
-            )
-
-        dx_ = Series(dx_raw, index=close.index, dtype=float)
     else:
         up = high - high.shift(drift)
         dn = low.shift(drift) - low
