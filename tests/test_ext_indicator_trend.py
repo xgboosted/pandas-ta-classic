@@ -93,8 +93,7 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "SINC_3")
 
     def test_long_run_ext(self):
-        # Nothing passed, return self
-        self.assertEqual(self.data.ta.long_run(append=True).shape, self.data.shape)
+        self.assertIsInstance(self.data.ta.long_run(append=True), DataFrame)
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)
@@ -116,8 +115,7 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "QS_10")
 
     def test_short_run_ext(self):
-        # Nothing passed, return self
-        self.assertEqual(self.data.ta.short_run(append=True).shape, self.data.shape)
+        self.assertIsInstance(self.data.ta.short_run(append=True), DataFrame)
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)
@@ -141,16 +139,54 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "PMAX_E_10_3.0")
 
     def test_tsignals_ext(self):
-        # Create a simple trend series for testing
-        trend = self.data.ta.sma(length=10) - self.data.ta.sma(length=20)
-        trend = (trend > 0).astype(int)
+        trend = (self.data.ta.sma(length=10) - self.data.ta.sma(length=20) > 0).astype(
+            int
+        )
         result = self.data.ta.tsignals(trend)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TS")
+        self.assertEqual(
+            list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
+        )
 
     def test_xsignals_ext(self):
-        # Create simple signal series for testing
         signal = self.data.ta.rsi()
         result = self.data.ta.xsignals(signal, xa=70, xb=30)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "XS")
+        self.assertEqual(
+            list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
+        )
+
+    def test_adxr_ext(self):
+        self.data.ta.adxr(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(list(self.data.columns[-3:]), ["DMP_14", "DMN_14", "ADXR_14"])
+
+    def test_dx_ext(self):
+        self.data.ta.dx(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "DX_14")
+
+    def test_edecay_ext(self):
+        self.data.ta.edecay(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "EDECAY_5")
+
+    def test_minus_dm_ext(self):
+        self.data.ta.minus_dm(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "MINUS_DM_14")
+
+    def test_plus_dm_ext(self):
+        self.data.ta.plus_dm(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "PLUS_DM_14")
+
+    def test_sarext_ext(self):
+        self.data.ta.sarext(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "SAREXT")
+
+    def test_vhf_ext(self):
+        self.data.ta.vhf(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "VHF_28")

@@ -8,7 +8,7 @@ ALERT = f"[!]"
 INFO = f"[i]"
 
 CORRELATION = "corr"  # "sem"
-CORRELATION_THRESHOLD = 0.99  # Less than 0.99 is undesirable
+CORRELATION_THRESHOLD = 1.0
 
 
 @lru_cache(maxsize=1)
@@ -28,6 +28,8 @@ def get_sample_data():
 
 
 def error_analysis(df, kind, msg, icon=INFO, newline=True):
+    if isinstance(msg, AssertionError):
+        raise msg
     if VERBOSE:
         s = f"{icon} {df.name}['{kind}']: {msg}"
         if newline:

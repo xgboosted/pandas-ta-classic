@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 # Price Volume Rank (PVR)
-from typing import Optional
-from pandas_ta_classic.utils import verify_series
+from typing import Any, Optional
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 import numpy as np
 from pandas import Series
 
 npNaN = np.nan
 
 
-def pvr(close: Series, volume: Series) -> Optional[Series]:
+def pvr(
+    close: Series, volume: Series, offset: Optional[int] = None, **kwargs: Any
+) -> Optional[Series]:
     """Indicator: Price Volume Rank"""
     # Validate arguments
     close = verify_series(close)
     volume = verify_series(volume)
+
+    if close is None or volume is None:
+        return None
+
+    offset = get_offset(offset)
 
     # Calculate Result
     close_diff = close.diff().fillna(0)
@@ -23,8 +30,13 @@ def pvr(close: Series, volume: Series) -> Optional[Series]:
     pvr_.loc[(close_diff < 0) & (volume_diff >= 0)] = 3
     pvr_.loc[(close_diff < 0) & (volume_diff < 0)] = 4
 
+    # Offset
+    pvr_ = apply_offset(pvr_, offset)
+
+    pvr_ = apply_fill(pvr_, **kwargs)
+
     # Name and Categorize it
-    pvr_.name = f"PVR"
+    pvr_.name = "PVR"
     pvr_.category = "volume"
 
     return pvr_
@@ -50,6 +62,11 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method ('ffill' or 'bfill')
 
 Returns:
     pd.Series: New feature generated.

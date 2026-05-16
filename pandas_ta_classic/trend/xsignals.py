@@ -25,6 +25,8 @@ def xsignals(
     """Indicator: Cross Signals"""
     # Validate Arguments
     signal = verify_series(signal)
+    if signal is None:
+        return None
     offset = get_offset(offset)
 
     # Calculate Result

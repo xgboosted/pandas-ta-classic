@@ -1,14 +1,8 @@
-from tests.config import (
-    error_analysis,
-    get_sample_data,
-    CORRELATION,
-    CORRELATION_THRESHOLD,
-    VERBOSE,
-)
+from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
-import pandas.testing as pdt
 from pandas import DataFrame, Series
 
 try:
@@ -50,245 +44,477 @@ class TestTrend(TestCase):
 
     def test_adx(self):
         result = pandas_ta.adx(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ADX_14")
-
-        try:
-            expected = tal.ADX(self.high, self.low, self.close)
-            pdt.assert_series_equal(result.iloc[:, 0], expected)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.adx(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ADX_14")
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result.iloc[:, 0],
+                tal.ADX(self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.adx,
+                args=[self.high, self.low, self.close],
+                expected_name="ADX_14",
+                expected_type=DataFrame,
+                expected_columns=["ADX_14", "DMP_14", "DMN_14"],
+            ),
+        )
 
     def test_adxr(self):
-        result = pandas_ta.adxr(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ADXR_14")
-        self.assertListEqual(list(result.columns), ["ADXR_14", "DMP_14", "DMN_14"])
-        pandas_ta.adxr(self.high, self.low, self.close, fillna=0)
-        pandas_ta.adxr(self.high, self.low, self.close, fill_method="ffill")
-        pandas_ta.adxr(self.high, self.low, self.close, fill_method="bfill")
-        self.assertIsNone(pandas_ta.adxr(None, self.low, self.close))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.adxr,
+                args=[self.high, self.low, self.close],
+                expected_name="ADXR_14",
+                expected_type=DataFrame,
+                expected_columns=["ADXR_14", "DMP_14", "DMN_14"],
+            ),
+        )
 
     def test_amat(self):
-        result = pandas_ta.amat(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "AMATe_8_21_2")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.amat,
+                args=[self.close],
+                expected_name="AMATe_8_21_2",
+                expected_type=DataFrame,
+                expected_columns=["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_aroon(self):
         result = pandas_ta.aroon(self.high, self.low, talib=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "AROON_14")
-
-        try:
-            expected = tal.AROON(self.high, self.low)
-            expecteddf = DataFrame({"AROOND_14": expected[0], "AROONU_14": expected[1]})
-            pdt.assert_frame_equal(result, expecteddf)
-        except AssertionError:
-            try:
-                aroond_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 0], expecteddf.iloc[:, 0], col=CORRELATION
-                )
-                self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 0], CORRELATION, ex)
-
-            try:
-                aroonu_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 1], expecteddf.iloc[:, 1], col=CORRELATION
-                )
-                self.assertGreater(aroonu_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 1], CORRELATION, ex, newline=False)
-
-        result = pandas_ta.aroon(self.high, self.low)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "AROON_14")
+        if HAS_TALIB:
+            aroond, aroonu = tal.AROON(self.high, self.low)
+            expecteddf = DataFrame({"AROOND_14": aroond, "AROONU_14": aroonu})
+            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.aroon,
+                args=[self.high, self.low],
+                expected_name="AROON_14",
+                expected_type=DataFrame,
+                expected_columns=["AROOND_14", "AROONU_14", "AROONOSC_14"],
+            ),
+        )
 
     def test_aroon_osc(self):
         result = pandas_ta.aroon(self.high, self.low)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "AROON_14")
-
-        try:
-            expected = tal.AROONOSC(self.high, self.low)
-            pdt.assert_series_equal(result.iloc[:, 2], expected)
-        except AssertionError:
-            try:
-                aroond_corr = pandas_ta.utils.df_error_analysis(
-                    result.iloc[:, 2], expected, col=CORRELATION
-                )
-                self.assertGreater(aroond_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result.iloc[:, 0], CORRELATION, ex)
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result.iloc[:, 2],
+                tal.AROONOSC(self.high, self.low),
+                correlation_threshold=0.99,
+            )
 
     def test_chop(self):
-        result = pandas_ta.chop(self.high, self.low, self.close, ln=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CHOP_14_1_100")
-
         result = pandas_ta.chop(self.high, self.low, self.close, ln=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CHOPln_14_1_100")
 
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.chop,
+                args=[self.high, self.low, self.close],
+                expected_name="CHOP_14_1_100",
+                kwargs={"ln": False},
+            ),
+        )
+
     def test_cksp(self):
-        result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "CKSP_10_3_20")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cksp,
+                args=[self.high, self.low, self.close],
+                expected_name="CKSP_10_3_20",
+                expected_type=DataFrame,
+                expected_columns=["CKSPl_10_3_20", "CKSPs_10_3_20"],
+                kwargs={"tvmode": False},
+            ),
+        )
 
     def test_cksp_tv(self):
-        result = pandas_ta.cksp(self.high, self.low, self.close, tvmode=True)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "CKSP_10_1_9")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cksp,
+                args=[self.high, self.low, self.close],
+                expected_name="CKSP_10_1_9",
+                expected_type=DataFrame,
+                expected_columns=["CKSPl_10_1_9", "CKSPs_10_1_9"],
+                kwargs={"tvmode": True},
+            ),
+        )
 
     def test_cpr_basic(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, levels="basic"
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"levels": "basic"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "CPR")
-        self.assertIn("CPR_TC", result.columns)
-        self.assertIn("CPR_PIVOT", result.columns)
-        self.assertIn("CPR_BC", result.columns)
 
     def test_cpr_classic_standard(self):
-        result = pandas_ta.cpr(
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            method="classic",
-            levels="standard",
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"method": "classic", "levels": "standard"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_R1", result.columns)
-        self.assertIn("CPR_R2", result.columns)
-        self.assertIn("CPR_S1", result.columns)
-        self.assertIn("CPR_S2", result.columns)
 
     def test_cpr_classic_extended(self):
-        result = pandas_ta.cpr(
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            method="classic",
-            levels="extended",
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_R3",
+                    "CPR_R4",
+                    "CPR_S3",
+                    "CPR_S4",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"method": "classic", "levels": "extended"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_R3", result.columns)
-        self.assertIn("CPR_R4", result.columns)
-        self.assertIn("CPR_S3", result.columns)
-        self.assertIn("CPR_S4", result.columns)
 
     def test_cpr_camarilla(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, method="camarilla", levels="all"
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_R3",
+                    "CPR_R4",
+                    "CPR_S3",
+                    "CPR_S4",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"method": "camarilla", "levels": "all"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_R4", result.columns)
-        self.assertIn("CPR_S4", result.columns)
 
     def test_cpr_fibonacci(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, method="fibonacci", levels="all"
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_R3",
+                    "CPR_S3",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"method": "fibonacci", "levels": "all"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_R3", result.columns)
-        self.assertIn("CPR_S3", result.columns)
 
     def test_cpr_woodie(self):
-        result = pandas_ta.cpr(
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            method="woodie",
-            levels="standard",
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"method": "woodie", "levels": "standard"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_R2", result.columns)
-        self.assertIn("CPR_S2", result.columns)
 
     def test_cpr_width_analysis(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, width_analysis=True
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"width_analysis": True},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_WIDTH", result.columns)
-        self.assertIn("CPR_WIDTH_PCT", result.columns)
-        self.assertIn("CPR_WIDTH_CLASS", result.columns)
 
     def test_cpr_price_position(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, price_position=True
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"price_position": True},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_POSITION", result.columns)
 
     def test_cpr_virgin_detection(self):
-        result = pandas_ta.cpr(
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            virgin_cpr=True,
-            virgin_lookforward=5,
+        result = assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                    "CPR_VIRGIN",
+                ],
+                kwargs={"virgin_cpr": True, "virgin_lookforward": 5},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_VIRGIN", result.columns)
         virgin_values = result["CPR_VIRGIN"].dropna()
         if len(virgin_values) > 0:
             self.assertTrue(virgin_values.dtype == bool)
 
     def test_cpr_virgin_disabled(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, virgin_cpr=False
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"virgin_cpr": False},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertNotIn("CPR_VIRGIN", result.columns)
 
     def test_cpr_virgin_custom_lookforward(self):
-        result = pandas_ta.cpr(
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            virgin_cpr=True,
-            virgin_lookforward=10,
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                    "CPR_VIRGIN",
+                ],
+                kwargs={"virgin_cpr": True, "virgin_lookforward": 10},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_VIRGIN", result.columns)
 
     def test_cpr_invalid_method(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, method="invalid_method"
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"method": "invalid_method"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_TC", result.columns)
 
     def test_cpr_invalid_timeframe(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, timeframe="invalid_timeframe"
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"timeframe": "invalid_timeframe"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_TC", result.columns)
 
     def test_cpr_invalid_levels(self):
-        result = pandas_ta.cpr(
-            self.open, self.high, self.low, self.close, levels="invalid_levels"
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cpr,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CPR",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "CPR_TC",
+                    "CPR_PIVOT",
+                    "CPR_BC",
+                    "CPR_R1",
+                    "CPR_R2",
+                    "CPR_S1",
+                    "CPR_S2",
+                    "CPR_WIDTH",
+                    "CPR_WIDTH_PCT",
+                    "CPR_WIDTH_CLASS",
+                    "CPR_POSITION",
+                ],
+                kwargs={"levels": "invalid_levels"},
+            ),
         )
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_R1", result.columns)
 
     def test_cpr_empty_series(self):
         from pandas import Series
@@ -315,138 +541,270 @@ class TestTrend(TestCase):
         self.assertIn("CPR_TC", result.columns)
 
     def test_decay(self):
-        result = pandas_ta.decay(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "LDECAY_5")
-
         result = pandas_ta.decay(self.close, mode="exp")
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "EXPDECAY_5")
 
-    def test_decreasing(self):
-        result = pandas_ta.decreasing(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "DEC_1")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.decay,
+                args=[self.close],
+                expected_name="LDECAY_5",
+            ),
+        )
 
+    def test_edecay(self):
+        result = pandas_ta.edecay(self.close, length=10)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "EDECAY_10")
+
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.edecay,
+                args=[self.close],
+                expected_name="EDECAY_5",
+            ),
+        )
+
+    def test_decreasing(self):
         result = pandas_ta.decreasing(self.close, length=3, strict=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SDEC_3")
 
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.decreasing,
+                args=[self.close],
+                expected_name="DEC_1",
+            ),
+        )
+
     def test_dpo(self):
-        result = pandas_ta.dpo(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "DPO_20")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.dpo,
+                args=[self.close],
+                expected_name="DPO_20",
+                none_arg_idx=None,
+            ),
+        )
 
     def test_increasing(self):
-        result = pandas_ta.increasing(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "INC_1")
-
         result = pandas_ta.increasing(self.close, length=3, strict=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SINC_3")
 
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.increasing,
+                args=[self.close],
+                expected_name="INC_1",
+            ),
+        )
+
     def test_long_run(self):
-        result = pandas_ta.long_run(self.close, self.open)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "LR_2")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.long_run,
+                args=[self.close, self.open],
+                expected_name="LR_2",
+            ),
+        )
 
     def test_dx(self):
         result = pandas_ta.dx(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "DX_14")
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result,
+                tal.DX(self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.dx,
+                args=[self.high, self.low, self.close],
+                expected_name="DX_14",
+            ),
+        )
 
-        try:
-            expected = tal.DX(self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+    def test_minus_dm(self):
+        result = pandas_ta.minus_dm(self.high, self.low, talib=False)
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result,
+                tal.MINUS_DM(self.high, self.low),
+                correlation_threshold=0.99,
+            )
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.minus_dm,
+                args=[self.high, self.low],
+                expected_name="MINUS_DM_14",
+            ),
+        )
 
-        result = pandas_ta.dx(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "DX_14")
+    def test_plus_dm(self):
+        result = pandas_ta.plus_dm(self.high, self.low, talib=False)
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result,
+                tal.PLUS_DM(self.high, self.low),
+                correlation_threshold=0.99,
+            )
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.plus_dm,
+                args=[self.high, self.low],
+                expected_name="PLUS_DM_14",
+            ),
+        )
 
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "PSAR_0.02_0.2")
-
-        # Combine Long and Short SAR"s into one SAR value
-        psar = result[result.columns[:2]].fillna(0)
-        psar = psar[psar.columns[0]] + psar[psar.columns[1]]
-        psar.name = result.name
-
-        try:
-            expected = tal.SAR(self.high, self.low)
-            pdt.assert_series_equal(psar, expected)
-        except AssertionError:
-            try:
-                psar_corr = pandas_ta.utils.df_error_analysis(
-                    psar, expected, col=CORRELATION
-                )
-                self.assertGreater(psar_corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(psar, CORRELATION, ex)
+        if HAS_TALIB:
+            psar_combined = result[result.columns[:2]].fillna(0)
+            psar_combined = (
+                psar_combined[psar_combined.columns[0]]
+                + psar_combined[psar_combined.columns[1]]
+            )
+            psar_combined.name = result.name
+            assert_talib(
+                self,
+                psar_combined,
+                tal.SAR(self.high, self.low),
+                correlation_threshold=0.99,
+            )
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.psar,
+                args=[self.high, self.low],
+                expected_name="PSAR_0.02_0.2",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "PSARl_0.02_0.2",
+                    "PSARs_0.02_0.2",
+                    "PSARaf_0.02_0.2",
+                    "PSARr_0.02_0.2",
+                ],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_qstick(self):
-        result = pandas_ta.qstick(self.open, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "QS_10")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.qstick,
+                args=[self.open, self.close],
+                expected_name="QS_10",
+            ),
+        )
 
     def test_sarext(self):
-        result = pandas_ta.sarext(self.high, self.low, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SAREXT")
-        self.assertIsNone(pandas_ta.sarext(None, self.low))
-
-        result = pandas_ta.sarext(self.high, self.low)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SAREXT")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.sarext,
+                args=[self.high, self.low],
+                expected_name="SAREXT",
+            ),
+        )
 
     def test_short_run(self):
-        result = pandas_ta.short_run(self.close, self.open)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SR_2")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.short_run,
+                args=[self.close, self.open],
+                expected_name="SR_2",
+            ),
+        )
 
     def test_ttm_trend(self):
-        result = pandas_ta.ttm_trend(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TTMTREND_6")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ttm_trend,
+                args=[self.high, self.low, self.close],
+                expected_name="TTMTREND_6",
+                expected_type=DataFrame,
+                expected_columns=["TTM_TRND_6"],
+            ),
+        )
 
     def test_vhf(self):
-        result = pandas_ta.vhf(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "VHF_28")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.vhf,
+                args=[self.close],
+                expected_name="VHF_28",
+            ),
+        )
 
     def test_vortex(self):
-        result = pandas_ta.vortex(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "VTX_14")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.vortex,
+                args=[self.high, self.low, self.close],
+                expected_name="VTX_14",
+                expected_type=DataFrame,
+                expected_columns=["VTXP_14", "VTXM_14"],
+            ),
+        )
 
     def test_pmax(self):
-        result = pandas_ta.pmax(self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "PMAX_E_10_3.0")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.pmax,
+                args=[self.high, self.low, self.close],
+                expected_name="PMAX_E_10_3.0",
+            ),
+        )
 
     def test_tsignals(self):
-        # Create a simple trend series for testing
         trend = pandas_ta.sma(self.close, length=10) - pandas_ta.sma(
             self.close, length=20
         )
         trend = (trend > 0).astype(int)
-        result = pandas_ta.tsignals(trend)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TS")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.tsignals,
+                args=[trend],
+                expected_name="TS",
+                expected_type=DataFrame,
+                expected_columns=["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"],
+                none_arg_idx=None,
+            ),
+        )
 
     def test_xsignals(self):
-        # Create simple signal series for testing
         signal = pandas_ta.rsi(self.close)
-        result = pandas_ta.xsignals(signal, xa=70, xb=30)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "XS")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.xsignals,
+                args=[signal],
+                expected_name="XS",
+                expected_type=DataFrame,
+                expected_columns=["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"],
+                none_arg_idx=None,
+                kwargs={"xa": 70, "xb": 30},
+            ),
+        )

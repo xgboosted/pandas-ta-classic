@@ -21,13 +21,13 @@ def t3(
     a = float(a) if a and a > 0 and a < 1 else 0.7
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import T3
 
         t3 = T3(close, length, a)
@@ -38,19 +38,32 @@ def t3(
         c4 = a**3 + 3 * a**2 + 3 * a + 1
 
         e1 = ema(close=close, length=length, talib=False, **kwargs)
-        e2 = ema(close=e1, length=length, talib=False, **kwargs)
-        e3 = ema(close=e2, length=length, talib=False, **kwargs)
-        e4 = ema(close=e3, length=length, talib=False, **kwargs)
-        e5 = ema(close=e4, length=length, talib=False, **kwargs)
-        e6 = ema(close=e5, length=length, talib=False, **kwargs)
-        if (
-            e1 is None
-            or e2 is None
-            or e3 is None
-            or e4 is None
-            or e5 is None
-            or e6 is None
-        ):
+        if e1 is None:
+            return None
+        e2 = ema(
+            close=e1.loc[e1.first_valid_index() :], length=length, talib=False, **kwargs
+        )
+        if e2 is None:
+            return None
+        e3 = ema(
+            close=e2.loc[e2.first_valid_index() :], length=length, talib=False, **kwargs
+        )
+        if e3 is None:
+            return None
+        e4 = ema(
+            close=e3.loc[e3.first_valid_index() :], length=length, talib=False, **kwargs
+        )
+        if e4 is None:
+            return None
+        e5 = ema(
+            close=e4.loc[e4.first_valid_index() :], length=length, talib=False, **kwargs
+        )
+        if e5 is None:
+            return None
+        e6 = ema(
+            close=e5.loc[e5.first_valid_index() :], length=length, talib=False, **kwargs
+        )
+        if e6 is None:
             return None
         t3 = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
 

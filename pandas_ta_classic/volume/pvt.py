@@ -23,6 +23,8 @@ def pvt(
     # Validate arguments
     close = verify_series(close)
     volume = verify_series(volume)
+    if close is None or volume is None:
+        return None
     drift = get_drift(drift)
     offset = get_offset(offset)
 

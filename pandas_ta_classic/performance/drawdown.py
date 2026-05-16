@@ -13,6 +13,8 @@ def drawdown(
     """Indicator: Drawdown (DD)"""
     # Validate Arguments
     close = verify_series(close)
+    if close is None:
+        return None
     offset = get_offset(offset)
 
     # Calculate Result

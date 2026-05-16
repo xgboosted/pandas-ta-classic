@@ -2,12 +2,14 @@
 # Median Price (MEDPRICE)
 from typing import Any, Optional
 from pandas import Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def medprice(
     high: Series,
     low: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -21,11 +23,17 @@ def medprice(
     high = verify_series(high)
     low = verify_series(low)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
 
-    result = 0.5 * (high + low)
+    if Imports["talib"] and mode_talib:
+        from talib import MEDPRICE
+
+        result = Series(MEDPRICE(high, low), index=high.index)
+    else:
+        result = 0.5 * (high + low)
 
     # Offset
     result = apply_offset(result, offset)
@@ -45,6 +53,8 @@ Equivalent to ta.hl2.  TA-Lib name: MEDPRICE.
 Args:
     high (pd.Series): Series of 'high' prices
     low (pd.Series): Series of 'low' prices
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): Periods to offset. Default: 0
 
 Kwargs:

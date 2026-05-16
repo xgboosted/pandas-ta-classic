@@ -13,14 +13,14 @@ from pandas_ta_classic.utils import (
 )
 
 
-def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_tal):
+def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
     """Compute PPO, histogram and signal line.
 
     Returns:
         tuple[Series, Series, Series] | None: ``(ppo_s, histogram, signalma)``
         or *None* if any intermediate result is unavailable.
     """
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import PPO
 
         ppo_s = PPO(close, fast, slow, tal_ma(mamode))
@@ -63,13 +63,13 @@ def ppo(
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_tal)
+    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib)
     if result is None:
         return None
     ppo_s, histogram, signalma = result

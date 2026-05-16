@@ -38,6 +38,8 @@ def hwma(
     nb = float(nb) if nb and nb > 0 and nb < 1 else 0.1
     nc = float(nc) if nc and nc > 0 and nc < 1 else 0.1
     close = verify_series(close)
+    if close is None:
+        return None
     offset = get_offset(offset)
 
     # Calculate Result

@@ -22,7 +22,7 @@ def macdfix(
     signal = int(signal) if signal and signal > 0 else 9
     close = verify_series(close, 26 + signal)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
@@ -31,7 +31,7 @@ def macdfix(
     kwargs.pop("fast", None)
     kwargs.pop("slow", None)
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)
@@ -80,7 +80,7 @@ TA-Lib name: MACDFIX.
 Args:
     close (pd.Series): Series of 'close' prices.
     signal (int): Signal period. Default: 9.
-    talib (bool): Use TA-Lib if available. Default: True.
+    talib (bool): Use TA-Lib if available. Default: False.
     offset (int): Number of periods to offset the result. Default: 0.
 
 Kwargs:
@@ -102,7 +102,7 @@ TA-Lib name: MACDFIX.
 Args:
     close (pd.Series): Series of 'close' prices
     signal (int): Signal period. Default: 9
-    talib (bool): Use TA-Lib C library if installed. Default: True
+    talib (bool): Use TA-Lib C library if installed. Default: False
     offset (int): Periods to offset. Default: 0
 
 Kwargs:

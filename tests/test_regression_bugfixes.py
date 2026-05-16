@@ -866,12 +866,18 @@ class TestTalibFalsePropagation(TestCase):
         self.assertIsInstance(result, pd.Series)
 
     def test_dema_talib_false_matches_manual_calculation(self):
-        """dema(talib=False) == 2*ema(talib=False) - ema(ema(talib=False))."""
+        """dema(talib=False) == 2*ema(talib=False) - ema(ema(talib=False)).
+
+        EMA2 must be seeded from the first valid bar of EMA1 (leading NaN
+        stripped) to match TA-Lib's lookback of 2*(length-1).
+        """
         from pandas_ta_classic.overlap.ema import ema
 
         length = 10
         ema1 = ema(close=self.close, length=length, talib=False)
-        ema2 = ema(close=ema1, length=length, talib=False)
+        ema2 = ema(
+            close=ema1.loc[ema1.first_valid_index() :], length=length, talib=False
+        )
         expected = 2 * ema1 - ema2
         result = ta.dema(self.close, length=length, talib=False)
         # drop leading NaNs then compare
@@ -896,13 +902,14 @@ class TestTalibFalsePropagation(TestCase):
         self.assertIsInstance(result, pd.Series)
 
     def test_trima_talib_false_matches_manual_calculation(self):
-        """trima(talib=False) == sma(sma(close, half), half) with talib=False."""
+        """trima(talib=False) == sma(sma(close, len1), len2) matching TA-Lib windows."""
         from pandas_ta_classic.overlap.sma import sma
 
         length = 10
-        half_length = round(0.5 * (length + 1))
-        sma1 = sma(self.close, length=half_length, talib=False)
-        expected = sma(sma1, length=half_length, talib=False)
+        len1 = length // 2 + 1  # ceil((length+1)/2) — matches TA-Lib
+        len2 = length // 2 + 1  # floor(length/2) + 1
+        sma1 = sma(self.close, length=len1, talib=False)
+        expected = sma(sma1, length=len2, talib=False)
         result = ta.trima(self.close, length=length, talib=False)
         mask = expected.notna() & result.notna()
         np.testing.assert_allclose(

@@ -19,21 +19,35 @@ def tema(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import TEMA
 
         tema = TEMA(close, length)
     else:
         ema1 = ema(close=close, length=length, talib=False, **kwargs)
-        ema2 = ema(close=ema1, length=length, talib=False, **kwargs)
-        ema3 = ema(close=ema2, length=length, talib=False, **kwargs)
-        if ema1 is None or ema2 is None or ema3 is None:
+        if ema1 is None:
+            return None
+        ema2 = ema(
+            close=ema1.loc[ema1.first_valid_index() :],
+            length=length,
+            talib=False,
+            **kwargs,
+        )
+        if ema2 is None:
+            return None
+        ema3 = ema(
+            close=ema2.loc[ema2.first_valid_index() :],
+            length=length,
+            talib=False,
+            **kwargs,
+        )
+        if ema3 is None:
             return None
         tema = 3 * (ema1 - ema2) + ema3
 

@@ -14,13 +14,13 @@
   "dema_10": {
     "DEMA_10": {
       "last_value": 348.69759792,
-      "non_nan_count": 5232
+      "non_nan_count": 5223
     }
   },
   "tema_10": {
     "TEMA_10": {
       "last_value": 349.70796434,
-      "non_nan_count": 5232
+      "non_nan_count": 5214
     }
   },
   "wma_10": {
@@ -44,7 +44,7 @@
   "t3_10": {
     "T3_10_0.7": {
       "last_value": 342.39105819,
-      "non_nan_count": 5232
+      "non_nan_count": 5187
     }
   },
   "wcp": {
@@ -302,15 +302,15 @@
   "adx_14": {
     "ADX_14": {
       "last_value": 40.06595307,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     },
     "DMP_14": {
       "last_value": 39.40418792,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     },
     "DMN_14": {
       "last_value": 8.31166673,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     }
   },
   "aroon_14": {
@@ -610,11 +610,11 @@
   "stochrsi": {
     "STOCHRSIk_14_14_3_3": {
       "last_value": 100.0,
-      "non_nan_count": 5212
+      "non_nan_count": 5213
     },
     "STOCHRSId_14_14_3_3": {
       "last_value": 100.0,
-      "non_nan_count": 5210
+      "non_nan_count": 5211
     }
   },
   "ppo": {
@@ -662,7 +662,7 @@
   "pgo_14": {
     "PGO_14": {
       "last_value": 2.65362211,
-      "non_nan_count": 5214
+      "non_nan_count": 5215
     }
   },
   "eri": {
@@ -688,25 +688,25 @@
   "adxr": {
     "ADXR_14": {
       "last_value": 30.87566884,
-      "non_nan_count": 5214
+      "non_nan_count": 5215
     },
     "DMP_14": {
       "last_value": 39.40418792,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     },
     "DMN_14": {
       "last_value": 8.31166673,
-      "non_nan_count": 5227
+      "non_nan_count": 5228
     }
   },
   "psar": {
     "PSARl_0.02_0.2": {
       "last_value": 338.28691638,
-      "non_nan_count": 3064
+      "non_nan_count": 3047
     },
     "PSARs_0.02_0.2": {
       "last_value": 339.61,
-      "non_nan_count": 2176
+      "non_nan_count": 2193
     }
   },
   "zscore_20": {
@@ -1164,7 +1164,7 @@
     },
     "HILOs_13_21": {
       "last_value": 314.41004762,
-      "non_nan_count": 2636
+      "non_nan_count": 2637
     }
   },
   "hwma": {
@@ -1237,7 +1237,7 @@
       "non_nan_count": 5235
     },
     "RAINBOW_7": {
-      "last_value": 343.50414063,
+      "last_value": 343.50414062,
       "non_nan_count": 5234
     },
     "RAINBOW_8": {
@@ -1262,7 +1262,7 @@
   "supertrend": {
     "SUPERT_7_3.0": {
       "last_value": 340.40094842,
-      "non_nan_count": 5235
+      "non_nan_count": 5236
     },
     "SUPERTd_7_3.0": {
       "last_value": 1.0,
@@ -1270,7 +1270,7 @@
     },
     "SUPERTl_7_3.0": {
       "last_value": 340.40094842,
-      "non_nan_count": 2974
+      "non_nan_count": 2975
     },
     "SUPERTs_7_3.0": {
       "last_value": 321.86438238,
@@ -1313,11 +1313,11 @@
   },
   "dm_14": {
     "DMP_14": {
-      "last_value": 1.33504791,
+      "last_value": 18.69067075,
       "non_nan_count": 5228
     },
     "DMN_14": {
-      "last_value": 0.28160645,
+      "last_value": 3.94249024,
       "non_nan_count": 5228
     }
   },
@@ -1376,27 +1376,27 @@
   "qqe": {
     "QQE_14_5_4.236": {
       "last_value": 72.15838921,
-      "non_nan_count": 5170
+      "non_nan_count": 5171
     },
     "QQE_14_5_4.236_RSIMA": {
       "last_value": 76.38435782,
-      "non_nan_count": 5223
+      "non_nan_count": 5224
     },
     "QQEl_14_5_4.236": {
       "last_value": 72.15838921,
-      "non_nan_count": 2874
+      "non_nan_count": 2873
     },
     "QQEs_14_5_4.236": {
       "last_value": 55.49501182,
-      "non_nan_count": 2296
+      "non_nan_count": 2298
     },
     "QQEb_l_14_5_4.236": {
       "last_value": 72.15838921,
-      "non_nan_count": 5171
+      "non_nan_count": 5172
     },
     "QQEb_s_14_5_4.236": {
       "last_value": 77.344922,
-      "non_nan_count": 5171
+      "non_nan_count": 5172
     },
     "QQEd_14_5_4.236": {
       "last_value": 1.0,
@@ -1540,25 +1540,25 @@
     },
     "ABER_SG_5_15": {
       "last_value": 349.43688262,
-      "non_nan_count": 5226
+      "non_nan_count": 5227
     },
     "ABER_XG_5_15": {
       "last_value": 342.53383738,
-      "non_nan_count": 5226
+      "non_nan_count": 5227
     },
     "ABER_ATR_5_15": {
       "last_value": 3.45152262,
-      "non_nan_count": 5226
+      "non_nan_count": 5227
     }
   },
   "ce": {
     "CE_L_22_3.0": {
       "last_value": 339.01041871,
-      "non_nan_count": 5219
+      "non_nan_count": 5220
     },
     "CE_S_22_3.0": {
       "last_value": 331.34958129,
-      "non_nan_count": 5219
+      "non_nan_count": 5220
     }
   },
   "hwc": {
@@ -1612,11 +1612,11 @@
   "cksp": {
     "CKSPl_10_3_20": {
       "last_value": 341.26857647,
-      "non_nan_count": 5212
+      "non_nan_count": 5213
     },
     "CKSPs_10_3_20": {
       "last_value": 330.81462706,
-      "non_nan_count": 5212
+      "non_nan_count": 5213
     }
   },
   "cpr": {
@@ -1672,7 +1672,7 @@
   "pmax": {
     "PMAX_E_10_3.0": {
       "last_value": 334.05612104,
-      "non_nan_count": 5231
+      "non_nan_count": 5232
     }
   },
   "short_run": {
@@ -1701,7 +1701,7 @@
       "non_nan_count": 5240
     },
     "OBVe_4": {
-      "last_value": 9864553456.8781,
+      "last_value": 9864553456.878101,
       "non_nan_count": 5238
     },
     "OBVe_12": {

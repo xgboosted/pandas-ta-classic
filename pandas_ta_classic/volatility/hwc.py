@@ -90,6 +90,8 @@ def hwc(
     scalar = float(scalar) if scalar and scalar > 0 else 1
     channel_eval = bool(channel_eval) if channel_eval and channel_eval else False
     close = verify_series(close)
+    if close is None:
+        return None
     offset = get_offset(offset)
 
     # Calculate Result

@@ -67,7 +67,10 @@ def generate() -> None:
     indicators = _indicators(df)
 
     snapshots: dict[str, dict] = {}
-    for key, result in indicators:
+    for key, ref, actual in indicators:
+        # For regression indicators, ref IS the native result (actual is None).
+        # For reference indicators, actual is the native result.
+        result = actual if actual is not None else ref
         col_snaps = _snapshots_for(result)
         if col_snaps:
             snapshots[key] = col_snaps

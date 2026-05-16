@@ -1,14 +1,13 @@
-from tests.config import (
-    error_analysis,
-    get_sample_data,
-    CORRELATION,
+from tests.assertions import (
+    assert_indicator_standard,
+    assert_talib,
+    IndicatorSpec,
     CORRELATION_THRESHOLD,
-    VERBOSE,
 )
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
-from unittest import skip, TestCase
-import pandas.testing as pdt
+from unittest import TestCase
 from pandas import DataFrame, Series
 
 try:
@@ -29,138 +28,196 @@ class TestStatistics(TestCase):
         cls.high = cls.data["high"]
         cls.low = cls.data["low"]
         cls.close = cls.data["close"]
-        if "volume" in cls.data.columns:
-            cls.volume = cls.data["volume"]
+        cls.volume = cls.data["volume"]
 
     @classmethod
     def tearDownClass(cls):
-        del cls.open
-        del cls.high
-        del cls.low
-        del cls.close
-        if hasattr(cls, "volume"):
-            del cls.volume
-        del cls.data
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+        del cls.open, cls.high, cls.low, cls.close, cls.volume, cls.data
 
     def test_beta(self):
-        result = pandas_ta.beta(self.close, benchmark=self.high)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "BETA_30")
-        pandas_ta.beta(self.close, benchmark=self.high, fillna=0)
-        pandas_ta.beta(self.close, benchmark=self.high, fill_method="ffill")
-        pandas_ta.beta(self.close, benchmark=self.high, fill_method="bfill")
-        self.assertIsNone(pandas_ta.beta(None))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.beta,
+                args=[self.close],
+                expected_name="BETA_30",
+                kwargs={"benchmark": self.high},
+                length_override=20,
+            ),
+        )
 
     def test_correl(self):
-        result = pandas_ta.correl(self.close, benchmark=self.high)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CORREL_30")
-        pandas_ta.correl(self.close, benchmark=self.high, fillna=0)
-        pandas_ta.correl(self.close, benchmark=self.high, fill_method="ffill")
-        pandas_ta.correl(self.close, benchmark=self.high, fill_method="bfill")
-        self.assertIsNone(pandas_ta.correl(None))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.correl,
+                args=[self.close],
+                expected_name="CORREL_30",
+                kwargs={"benchmark": self.high},
+                length_override=20,
+            ),
+        )
 
     def test_entropy(self):
-        result = pandas_ta.entropy(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ENTP_10")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.entropy,
+                args=[self.close],
+                expected_name="ENTP_10",
+                length_override=20,
+            ),
+        )
 
     def test_kurtosis(self):
-        result = pandas_ta.kurtosis(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "KURT_30")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.kurtosis,
+                args=[self.close],
+                expected_name="KURT_30",
+                length_override=20,
+            ),
+        )
 
     def test_mad(self):
-        result = pandas_ta.mad(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MAD_30")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.mad,
+                args=[self.close],
+                expected_name="MAD_30",
+                length_override=20,
+            ),
+        )
+
+    def test_md(self):
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.md,
+                args=[self.close],
+                expected_name="MD_30",
+                length_override=20,
+            ),
+        )
 
     def test_median(self):
-        result = pandas_ta.median(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "MEDIAN_30")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.median,
+                args=[self.close],
+                expected_name="MEDIAN_30",
+                length_override=20,
+            ),
+        )
 
     def test_quantile(self):
-        result = pandas_ta.quantile(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "QTL_30_0.5")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.quantile,
+                args=[self.close],
+                expected_name="QTL_30_0.5",
+                length_override=20,
+            ),
+        )
 
     def test_skew(self):
-        result = pandas_ta.skew(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SKEW_30")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.skew,
+                args=[self.close],
+                expected_name="SKEW_30",
+                length_override=20,
+            ),
+        )
 
     def test_stderr(self):
-        result = pandas_ta.stderr(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "STDERR_14")
-        self.assertIsNone(pandas_ta.stderr(None))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.stderr,
+                args=[self.close],
+                expected_name="STDERR_14",
+                length_override=20,
+            ),
+        )
 
     def test_stdev(self):
-        result = pandas_ta.stdev(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "STDEV_30")
+        result = assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.stdev,
+                args=[self.close],
+                expected_name="STDEV_30",
+                kwargs={"talib": False},
+                length_override=20,
+            ),
+        )
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result,
+                tal.STDDEV(self.close, 30),
+                correlation_threshold=CORRELATION_THRESHOLD,
+            )
 
-        try:
-            expected = tal.STDDEV(self.close, 30)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.stdev(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "STDEV_30")
-
-    def test_tos_sdtevall(self):
-        result = pandas_ta.tos_stdevall(self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TOS_STDEVALL")
-        self.assertEqual(len(result.columns), 7)
-
-        result = pandas_ta.tos_stdevall(self.close, length=30)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TOS_STDEVALL_30")
-        self.assertEqual(len(result.columns), 7)
-
-        result = pandas_ta.tos_stdevall(self.close, length=30, stds=[1, 2])
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "TOS_STDEVALL_30")
-        self.assertEqual(len(result.columns), 5)
+    def test_tos_stdevall(self):
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.tos_stdevall,
+                args=[self.close],
+                expected_name="TOS_STDEVALL",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "TOS_STDEVALL_LR",
+                    "TOS_STDEVALL_L_1",
+                    "TOS_STDEVALL_U_1",
+                    "TOS_STDEVALL_L_2",
+                    "TOS_STDEVALL_U_2",
+                    "TOS_STDEVALL_L_3",
+                    "TOS_STDEVALL_U_3",
+                ],
+                length_override=30,
+            ),
+        )
+        # stds unsorted → auto-reversed and still computes
+        self.assertIsNotNone(pandas_ta.tos_stdevall(self.close, stds=[3, 2, 1]))
+        # stds contains non-positive value → return None
+        self.assertIsNone(pandas_ta.tos_stdevall(self.close, stds=[0, 1, 2]))
+        # length larger than data → verify_series returns None → return None
+        self.assertIsNone(pandas_ta.tos_stdevall(self.close.iloc[:5], length=30))
 
     def test_variance(self):
-        result = pandas_ta.variance(self.close, talib=False)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "VAR_30")
-
-        try:
-            expected = tal.VAR(self.close, 30)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
-
-        result = pandas_ta.variance(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "VAR_30")
+        result = assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.variance,
+                args=[self.close],
+                expected_name="VAR_30",
+                kwargs={"talib": False},
+                length_override=20,
+            ),
+        )
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result,
+                tal.VAR(self.close, 30),
+                correlation_threshold=CORRELATION_THRESHOLD,
+            )
 
     def test_zscore(self):
-        result = pandas_ta.zscore(self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "ZS_30")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.zscore,
+                args=[self.close],
+                expected_name="ZS_30",
+                length_override=20,
+            ),
+        )

@@ -83,13 +83,13 @@ def macdext(
         fast, slow = slow, fast
     close = verify_series(close, slow + signal)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import MACDEXT as _MACDEXT
 
         macd_line, signal_line, histogram = _MACDEXT(
@@ -172,7 +172,7 @@ Args:
     fastmatype (int): MA type for fast line. Default: 1 (EMA).
     slowmatype (int): MA type for slow line. Default: 1 (EMA).
     signalmatype (int): MA type for signal line. Default: 1 (EMA).
-    talib (bool): Use TA-Lib if available. Default: True.
+    talib (bool): Use TA-Lib if available. Default: False.
     offset (int): Number of periods to offset. Default: 0.
 
 Kwargs:

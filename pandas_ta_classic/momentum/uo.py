@@ -86,13 +86,13 @@ def uo(
     close = verify_series(close, _length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import ULTOSC
 
         uo = ULTOSC(high, low, close, fast, medium, slow)

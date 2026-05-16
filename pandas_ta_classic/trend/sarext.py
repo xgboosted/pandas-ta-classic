@@ -176,13 +176,13 @@ def sarext(
     af_short = _pos_float(accelerationshort, 0.02)
     max_af_short = _pos_float(accelerationmaxshort, 0.2)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import SAREXT as TASAREXT
 
         sarext_ = TASAREXT(
@@ -243,7 +243,7 @@ Args:
     accelerationinitshort (float): Initial AF for short positions. Default: 0.02
     accelerationshort (float): AF increment for short positions. Default: 0.02
     accelerationmaxshort (float): Maximum AF for short positions. Default: 0.2
-    talib (bool): Use TA-Lib if installed. Default: True
+    talib (bool): Use TA-Lib if installed. Default: False
     offset (int): Result offset. Default: 0
 
 Kwargs:

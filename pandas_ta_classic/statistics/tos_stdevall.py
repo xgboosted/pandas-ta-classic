@@ -19,6 +19,8 @@ def tos_stdevall(
 ) -> Optional[DataFrame]:
     """Indicator: TD Ameritrade's Think or Swim Standard Deviation All"""
     # Validate Arguments
+    if close is None:
+        return None
     stds = stds if isinstance(stds, list) and len(stds) > 0 else [1, 2, 3]
     if min(stds) <= 0:
         return None

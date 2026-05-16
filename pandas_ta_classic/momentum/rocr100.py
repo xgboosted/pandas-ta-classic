@@ -20,13 +20,13 @@ def rocr100(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import ROCR100 as TAROCR100
 
         rocr100_ = TAROCR100(close, length)
@@ -58,7 +58,7 @@ Sources:
 Args:
     close (pd.Series): Close price series.
     length (int): The period. Default: 10
-    talib (bool): Use TA-Lib if installed. Default: True
+    talib (bool): Use TA-Lib if installed. Default: False
     offset (int): Result offset. Default: 0
 
 Kwargs:

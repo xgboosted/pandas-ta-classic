@@ -41,20 +41,22 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
         l_ = l_arr[row]
         if falling:
             _sar = sar + af * (ep - sar)
-            reverse = h_ > _sar
             if l_ < ep:
                 ep = l_
                 af = min(af + af0, max_af)
             # Guard row==1: row-2 would be -1 (last element) without the clamp.
+            # Guard must be applied before reversal check to match TA-Lib behaviour:
+            # the guarded SAR (not the raw projected value) determines the reversal.
             _sar = max(h_arr[row - 1], h_arr[max(0, row - 2)], _sar)
+            reverse = h_ > _sar
         else:
             _sar = sar + af * (ep - sar)
-            reverse = l_ < _sar
             if h_ > ep:
                 ep = h_
                 af = min(af + af0, max_af)
             # Guard row==1: row-2 would be -1 (last element) without the clamp.
             _sar = min(l_arr[row - 1], l_arr[max(0, row - 2)], _sar)
+            reverse = l_ < _sar
         if reverse:
             _sar = ep
             af = af0
@@ -77,6 +79,7 @@ def psar(
     af0: Optional[float] = None,
     af: Optional[float] = None,
     max_af: Optional[float] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -88,20 +91,21 @@ def psar(
     af0 = _pos_float(af0, af)
     max_af = _pos_float(max_af, 0.2)
     offset = get_offset(offset)
-    mode_tal = bool(kwargs.pop("talib", None))
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import SAR as _SAR
 
         sar = _SAR(high, low, acceleration=af0, maximum=max_af)
         sar_s = Series(sar, index=high.index)
         sar_s = apply_offset(sar_s, offset)
         _params = f"_{af0}_{max_af}"
-        # Split into long (below price) and short (above price) using close or mid
-        ref = high  # fallback: use high as reference
+        # Split into long (below price) and short (above price) using close when
+        # available (matches native path convention), falling back to high.
+        ref = close if close is not None else high
         long = sar_s.where(sar_s < ref, other=np.nan)
         short = sar_s.where(sar_s >= ref, other=np.nan)
         _af_s = Series(np.nan, index=high.index)
@@ -139,6 +143,16 @@ def psar(
     long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
         h_arr, l_arr, m, falling, sar, ep, af0, max_af
     )
+    import numpy as _np
+
+    # Combine to a single SAR series then reclassify using close when available.
+    # This matches TA-Lib's convention (SAR < close → long, SAR >= close → short)
+    # and avoids off-by-one splits at reversal bars when using the falling flag alone.
+    _combined = _np.where(~_np.isnan(long_arr), long_arr, short_arr)
+    if close is not None:
+        close_arr = close.to_numpy(dtype=float)
+        long_arr = _np.where(_combined < close_arr, _combined, _np.nan)
+        short_arr = _np.where(_combined >= close_arr, _combined, _np.nan)
     long = Series(long_arr, index=high.index)
     short = Series(short_arr, index=high.index)
     _af = Series(af_arr, index=high.index)
@@ -193,6 +207,8 @@ Args:
     af0 (float): Initial Acceleration Factor. Default: 0.02
     af (float): Acceleration Factor. Default: 0.02
     max_af (float): Maximum Acceleration Factor. Default: 0.2
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version (SAR only, long/short/af/reversal columns not available). Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

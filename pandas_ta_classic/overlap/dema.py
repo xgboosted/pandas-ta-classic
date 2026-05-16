@@ -19,20 +19,26 @@ def dema(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import DEMA
 
         dema = DEMA(close, length)
     else:
         ema1 = ema(close=close, length=length, talib=False)
-        ema2 = ema(close=ema1, length=length, talib=False)
-        if ema1 is None or ema2 is None:
+        if ema1 is None:
+            return None
+        # Strip leading NaN so EMA2 seeds at bar `2*(length-1)` of the original
+        # index — matching TA-Lib's lookback of 2*length-2.
+        ema2 = ema(
+            close=ema1.loc[ema1.first_valid_index() :], length=length, talib=False
+        )
+        if ema2 is None:
             return None
         dema = 2 * ema1 - ema2
 

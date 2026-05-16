@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Directional Movement (DM)
 from typing import Any, Optional
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
@@ -32,12 +33,12 @@ def dm(
     low = verify_series(low)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import MINUS_DM, PLUS_DM
 
         pos = PLUS_DM(high, low, length)
@@ -52,13 +53,34 @@ def dm(
         pos_ = pos_.apply(zero)
         neg_ = neg_.apply(zero)
 
-        # Not the same values as TA Lib's -+DM (Good First Issue)
-        pos = ma(mamode, pos_, length=length)
-        if pos is None:
-            return None
-        neg = ma(mamode, neg_, length=length)
-        if neg is None:
-            return None
+        if mamode == "rma":
+            # TA-Lib PLUS_DM/MINUS_DM: Wilder cumsum seeding.
+            # Seed = sum(raw[1..length-1]), stored at index length-1.
+            # Wilder updates applied from bar `length` onward.
+            pos_raw = pos_.to_numpy(dtype=float)
+            neg_raw = neg_.to_numpy(dtype=float)
+            n = len(pos_raw)
+            pos_arr = np.full(n, np.nan)
+            neg_arr = np.full(n, np.nan)
+            if n >= length:
+                pos14 = float(pos_raw[1:length].sum())
+                neg14 = float(neg_raw[1:length].sum())
+                pos_arr[length - 1] = pos14
+                neg_arr[length - 1] = neg14
+                for idx in range(length, n):
+                    pos14 = pos14 - pos14 / length + pos_raw[idx]
+                    neg14 = neg14 - neg14 / length + neg_raw[idx]
+                    pos_arr[idx] = pos14
+                    neg_arr[idx] = neg14
+            pos = Series(pos_arr, index=pos_.index)
+            neg = Series(neg_arr, index=neg_.index)
+        else:
+            pos = ma(mamode, pos_, length=length)
+            if pos is None:
+                return None
+            neg = ma(mamode, neg_, length=length)
+            if neg is None:
+                return None
 
     # Offset
     pos, neg = apply_offset([pos, neg], offset)

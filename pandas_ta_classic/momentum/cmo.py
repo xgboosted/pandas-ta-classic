@@ -29,13 +29,13 @@ def cmo(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import CMO
 
         cmo = CMO(close, length)
@@ -44,7 +44,7 @@ def cmo(
         positive = mom.copy().clip(lower=0)
         negative = mom.copy().clip(upper=0).abs()
 
-        if mode_tal:
+        if mode_talib:
             pos_ = rma(positive, length)
             neg_ = rma(negative, length)
             if pos_ is None or neg_ is None:
@@ -93,7 +93,7 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
-    talib (bool): If True, uses TA-Libs implementation. Otherwise uses EMA version. Default: True
+    talib (bool): If True, uses TA-Libs implementation. Otherwise uses EMA version. Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

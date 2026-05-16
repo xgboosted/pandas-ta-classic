@@ -32,12 +32,12 @@ def plus_dm(
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import PLUS_DM as _PLUS_DM
 
         result = _PLUS_DM(high, low, timeperiod=length)
@@ -72,7 +72,7 @@ Args:
     high (pd.Series): Series of 'high' prices
     low (pd.Series): Series of 'low' prices
     length (int): Lookback period. Default: 14
-    talib (bool): Use TA-Lib C library if installed. Default: True
+    talib (bool): Use TA-Lib C library if installed. Default: False
     drift (int): Difference period. Default: 1
     offset (int): Periods to offset. Default: 0
 

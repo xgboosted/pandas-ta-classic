@@ -2,6 +2,7 @@
 # Average Directional Movement Index (ADX)
 from typing import Any, Optional
 from pandas import DataFrame, Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import (
@@ -22,6 +23,7 @@ def adx(
     lensig: Optional[int] = None,
     scalar: Optional[float] = None,
     mamode: Optional[str] = None,
+    talib: Optional[bool] = None,
     drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
@@ -37,53 +39,61 @@ def adx(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    atr_ = atr(high=high, low=low, close=close, length=length)
-    if atr_ is None:
-        return None
+    if Imports["talib"] and mode_talib:
+        from talib import ADX, MINUS_DI, PLUS_DI
 
-    up = high - high.shift(drift)  # high.diff(drift)
-    dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
+        adx_arr = Series(ADX(high, low, close, length), index=close.index)
+        dmp = Series(PLUS_DI(high, low, close, length), index=close.index)
+        dmn = Series(MINUS_DI(high, low, close, length), index=close.index)
+    else:
+        atr_ = atr(high=high, low=low, close=close, length=length)
+        if atr_ is None:
+            return None
 
-    pos = ((up > dn) & (up > 0)) * up
-    neg = ((dn > up) & (dn > 0)) * dn
+        up = high - high.shift(drift)  # high.diff(drift)
+        dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
 
-    pos = pos.apply(zero)
-    neg = neg.apply(zero)
+        pos = ((up > dn) & (up > 0)) * up
+        neg = ((dn > up) & (dn > 0)) * dn
 
-    k = scalar / atr_
-    _dmp_ma = ma(mamode, pos, length=length)
-    if _dmp_ma is None:
-        return None
-    _dmn_ma = ma(mamode, neg, length=length)
-    if _dmn_ma is None:
-        return None
-    dmp = k * _dmp_ma
-    dmn = k * _dmn_ma
+        pos = pos.apply(zero)
+        neg = neg.apply(zero)
 
-    dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
-    adx = ma(mamode, dx, length=lensig)
-    if adx is None:
-        return None
+        k = scalar / atr_
+        _dmp_ma = ma(mamode, pos, length=length)
+        if _dmp_ma is None:
+            return None
+        _dmn_ma = ma(mamode, neg, length=length)
+        if _dmn_ma is None:
+            return None
+        dmp = k * _dmp_ma
+        dmn = k * _dmn_ma
+
+        dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
+        adx_arr = ma(mamode, dx, length=lensig)
+        if adx_arr is None:
+            return None
 
     # Offset
-    dmp, dmn, adx = apply_offset([dmp, dmn, adx], offset)
+    dmp, dmn, adx_arr = apply_offset([dmp, dmn, adx_arr], offset)
 
-    adx, dmp, dmn = apply_fill([adx, dmp, dmn], **kwargs)
+    adx_arr, dmp, dmn = apply_fill([adx_arr, dmp, dmn], **kwargs)
 
     # Name and Categorize it
-    adx.name = f"ADX_{lensig}"
+    adx_arr.name = f"ADX_{lensig}"
     dmp.name = f"DMP_{length}"
     dmn.name = f"DMN_{length}"
 
-    adx.category = dmp.category = dmn.category = "trend"
+    adx_arr.category = dmp.category = dmn.category = "trend"
 
     # Prepare DataFrame to return
-    data = {adx.name: adx, dmp.name: dmp, dmn.name: dmn}
+    data = {adx_arr.name: adx_arr, dmp.name: dmp, dmn.name: dmn}
     adxdf = DataFrame(data)
     adxdf.name = f"ADX_{lensig}"
     adxdf.category = "trend"
@@ -158,6 +168,8 @@ Args:
     lensig (int): Signal Length. Like TradingView's default ADX. Default: length
     scalar (float): How much to magnify. Default: 100
     mamode (str): See ```help(ta.ma)```. Default: 'rma'
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 

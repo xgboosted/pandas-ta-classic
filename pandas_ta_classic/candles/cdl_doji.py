@@ -48,7 +48,8 @@ def cdl_doji(
     hl_range_avg = sma(hl_range, length)
     if hl_range_avg is None:
         return None
-    doji = body < 0.01 * factor * hl_range_avg
+    hl_range_avg = hl_range_avg.shift(1)
+    doji = body <= 0.01 * factor * hl_range_avg
 
     if naive:
         # sma(...).shift(1) produces NaN at indices 0..length (length+1 NaN),

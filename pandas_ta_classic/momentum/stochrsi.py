@@ -50,6 +50,7 @@ def stochrsi(
     k: Optional[int] = None,
     d: Optional[int] = None,
     mamode: Optional[str] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -62,12 +63,12 @@ def stochrsi(
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_tal = bool(kwargs.pop("talib", None))
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import STOCHRSI as _STOCHRSI
 
         fastk, fastd = _STOCHRSI(
@@ -138,6 +139,8 @@ Args:
     k (int): The Fast %K period. Default: 3
     d (int): The Slow %K period. Default: 3
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version (rsi_length ignored). Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

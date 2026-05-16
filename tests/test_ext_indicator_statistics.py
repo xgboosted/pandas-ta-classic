@@ -75,3 +75,23 @@ class TestStatisticsExtension(TestCase):
         self.data.ta.variance(append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "VAR_30")
+
+    def test_beta_ext(self):
+        self.data.ta.beta(benchmark=self.data["open"], append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "BETA_30")
+
+    def test_correl_ext(self):
+        self.data.ta.correl(benchmark=self.data["open"], append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "CORREL_30")
+
+    def test_md_ext(self):
+        self.data.ta.md(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "MD_30")
+
+    def test_stderr_ext(self):
+        self.data.ta.stderr(append=True)
+        self.assertIsInstance(self.data, DataFrame)
+        self.assertEqual(self.data.columns[-1], "STDERR_14")

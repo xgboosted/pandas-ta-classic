@@ -2,6 +2,7 @@
 # Average Price (AVGPRICE)
 from typing import Any, Optional
 from pandas import Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -10,6 +11,7 @@ def avgprice(
     high: Series,
     low: Series,
     close: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -23,11 +25,17 @@ def avgprice(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if open_ is None or high is None or low is None or close is None:
         return None
 
-    result = 0.25 * (open_ + high + low + close)
+    if Imports["talib"] and mode_talib:
+        from talib import AVGPRICE
+
+        result = Series(AVGPRICE(open_, high, low, close), index=close.index)
+    else:
+        result = 0.25 * (open_ + high + low + close)
 
     result = apply_offset(result, offset)
     result = apply_fill(result, **kwargs)
@@ -48,6 +56,8 @@ Args:
     high (pd.Series): Series of 'high' prices
     low (pd.Series): Series of 'low' prices
     close (pd.Series): Series of 'close' prices
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: True
     offset (int): Periods to offset. Default: 0
 
 Kwargs:

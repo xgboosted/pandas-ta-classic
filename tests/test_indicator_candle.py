@@ -1,14 +1,8 @@
-from tests.config import (
-    error_analysis,
-    get_sample_data,
-    CORRELATION,
-    CORRELATION_THRESHOLD,
-    VERBOSE,
-)
+from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
+from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase, skip
-import pandas.testing as pdt
 from pandas import DataFrame, Series
 
 try:
@@ -49,9 +43,17 @@ class TestCandle(TestCase):
         pass
 
     def test_ha(self):
-        result = pandas_ta.ha(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "Heikin-Ashi")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ha,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="Heikin-Ashi",
+                expected_type=DataFrame,
+                expected_columns=["HA_open", "HA_high", "HA_low", "HA_close"],
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cdl_pattern(self):
         result = pandas_ta.cdl_pattern(
@@ -71,26 +73,38 @@ class TestCandle(TestCase):
         self.assertIsInstance(result, DataFrame)
 
     def test_cdl_doji(self):
-        result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CDL_DOJI_10_0.1")
-
-        try:
-            expected = tal.CDLDOJI(self.open, self.high, self.low, self.close)
-            pdt.assert_series_equal(result, expected, check_names=False)
-        except AssertionError:
-            try:
-                corr = pandas_ta.utils.df_error_analysis(
-                    result, expected, col=CORRELATION
-                )
-                self.assertGreater(corr, CORRELATION_THRESHOLD)
-            except Exception as ex:
-                error_analysis(result, CORRELATION, ex)
+        result = pandas_ta.cdl_doji(
+            self.open, self.high, self.low, self.close, talib=False
+        )
+        if HAS_TALIB:
+            assert_talib(
+                self,
+                result,
+                tal.CDLDOJI(self.open, self.high, self.low, self.close),
+                correlation_threshold=0.99,
+            )
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cdl_doji,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CDL_DOJI_10_0.1",
+                expected_type=Series,
+                none_arg_idx=0,
+            ),
+        )
 
     def test_cdl_inside(self):
-        result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CDL_INSIDE")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cdl_inside,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CDL_INSIDE",
+                expected_type=Series,
+                none_arg_idx=0,
+            ),
+        )
 
         result = pandas_ta.cdl_inside(
             self.open, self.high, self.low, self.close, asbool=True
@@ -99,6 +113,19 @@ class TestCandle(TestCase):
         self.assertEqual(result.name, "CDL_INSIDE")
 
     def test_cdl_z(self):
-        result = pandas_ta.cdl_z(self.open, self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "CDL_Z_30_1")
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cdl_z,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CDL_Z_30_1",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "open_Z_30_1",
+                    "high_Z_30_1",
+                    "low_Z_30_1",
+                    "close_Z_30_1",
+                ],
+                none_arg_idx=0,
+            ),
+        )

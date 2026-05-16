@@ -90,6 +90,8 @@ def rvi(
     if refined or thirds:
         high = verify_series(high)
         low = verify_series(low)
+        if high is None or low is None:
+            return None
 
     # Calculate Result
     result = _rvi_mode(refined, thirds, high, low, close, length, scalar, mamode, drift)

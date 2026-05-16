@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 npNaN = np.nan
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -20,6 +21,7 @@ def kama(
     length: Optional[int] = None,
     fast: Optional[int] = None,
     slow: Optional[int] = None,
+    talib: Optional[bool] = None,
     drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
@@ -32,30 +34,37 @@ def kama(
     close = verify_series(close, max(fast, slow, length))
     drift = get_drift(drift)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    def weight(length: int) -> float:
-        return 2 / (length + 1)
+    if Imports["talib"] and mode_talib:
+        from talib import KAMA as _KAMA
 
-    fr = weight(fast)
-    sr = weight(slow)
+        kama = Series(_KAMA(close, timeperiod=length), index=close.index)
+    else:
 
-    abs_diff = non_zero_range(close, close.shift(length)).abs()
-    peer_diff = non_zero_range(close, close.shift(drift)).abs()
-    peer_diff_sum = peer_diff.rolling(length).sum()
-    er = abs_diff / peer_diff_sum
-    x = er * (fr - sr) + sr
-    sc = x * x
+        def weight(length: int) -> float:
+            return 2 / (length + 1)
 
-    m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [close.iloc[length - 1]]
-    for i in range(length, m):
-        result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
+        fr = weight(fast)
+        sr = weight(slow)
 
-    kama = Series(result, index=close.index)
+        abs_diff = non_zero_range(close, close.shift(length)).abs()
+        peer_diff = non_zero_range(close, close.shift(drift)).abs()
+        peer_diff_sum = peer_diff.rolling(length).sum()
+        er = abs_diff / peer_diff_sum
+        x = er * (fr - sr) + sr
+        sc = x * x
+
+        m = close.size
+        result = [npNaN for _ in range(0, length - 1)] + [close.iloc[length - 1]]
+        for i in range(length, m):
+            result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
+
+        kama = Series(result, index=close.index)
 
     # Offset
     kama = apply_offset(kama, offset)
