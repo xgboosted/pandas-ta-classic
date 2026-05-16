@@ -12,7 +12,7 @@ Welcome to **Pandas TA Classic**! This guide will help you get started quickly w
 
 ## Installation
 
-See the [Installation](installation.rst) page for full installation instructions, optional dependencies (TA-Lib, yfinance, numba), and development setup.
+See the [Installation](installation.rst) page for full installation instructions, optional dependencies (TA-Lib, tulipy, yfinance, numba), and development setup.
 
 ## Your First Indicators
 

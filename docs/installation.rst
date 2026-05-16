@@ -80,6 +80,7 @@ Using ``uv``:
     # Or install specific dependency groups:
     uv pip install -e ".[dev]"      # Development tools
     uv pip install -e ".[optional]" # Optional features like TA-Lib
+    uv pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
 
 Using ``pip``:
 
@@ -95,6 +96,7 @@ Using ``pip``:
     # Or install specific dependency groups:
     pip install -e ".[dev]"      # Development tools
     pip install -e ".[optional]" # Optional features like TA-Lib
+    pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
 
 .. note::
    **Development Installation Requirements**:

@@ -31,11 +31,13 @@ def _numpy_rolling_variance(values, length, ddof, min_periods):
     result_arr = np.full(n, np.nan, dtype=np.float64)
     if n >= length:
         windows = sliding_window_view(values, length)
-        result_arr[length - 1 :] = windows.var(axis=1, ddof=ddof)
+        with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
+            result_arr[length - 1 :] = windows.var(axis=1, ddof=ddof)
     if min_periods < length:
         for pos in range(min_periods - 1, min(length - 1, n)):
             w = values[: pos + 1]
-            result_arr[pos] = w.var(ddof=ddof) if len(w) > ddof else np.nan
+            with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
+                result_arr[pos] = w.var(ddof=ddof) if len(w) > ddof else np.nan
     return result_arr
 
 

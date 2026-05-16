@@ -106,9 +106,10 @@ def hwc(
     hwc_width = hwc_pctwidth = None
     if channel_eval:
         hwc_width = Series(upper_arr - lower_arr, index=close.index)
-        hwc_pctwidth = Series(
-            (c_arr - lower_arr) / (upper_arr - lower_arr), index=close.index
-        )
+        denom = upper_arr - lower_arr
+        pct_arr = np.full(m, np.nan, dtype=float)
+        np.divide(c_arr - lower_arr, denom, out=pct_arr, where=denom != 0.0)
+        hwc_pctwidth = Series(pct_arr, index=close.index)
 
     # Offset
     hwc_s, hwc_upper, hwc_lower = apply_offset([hwc_s, hwc_upper, hwc_lower], offset)

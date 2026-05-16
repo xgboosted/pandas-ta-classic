@@ -16,7 +16,7 @@ title: Pandas TA Classic - Technical Analysis Library
 * **252 total unique indicators and patterns**
 * Dynamic category discovery - automatically detects available indicators
 * **Optional TA-Lib Acceleration**: 34 core indicators auto-use TA-Lib when installed; pass `talib=False` to force native
-* **Optional tulipy Oracle**: both TA-Lib and tulipy are optional oracle libraries — skip gracefully when not installed
+* **Optional Oracle Libraries**: TA-Lib (acceleration backend + oracle) and tulipy (oracle only) are optional and skip gracefully when not installed
 * Supports both standalone and DataFrame extension usage
 * Multiprocessing support via Strategy method
 * Custom strategies and indicator chaining
@@ -69,7 +69,7 @@ For detailed documentation, examples, and the complete list of indicators, pleas
 
 ## Categories of Indicators
 
-- **Candles** (67): Pattern recognition indicators (67 native CDL patterns — no TA-Lib required)
+- **Candles** (67): Candle-focused indicators, including 62 native CDL patterns (no TA-Lib required)
 - **Momentum** (41): RSI, MACD, Stochastic, etc.
 - **Overlap** (34): Moving averages, Bollinger Bands, etc.
 - **Trend** (18): ADX, Aroon, Parabolic SAR, etc.
