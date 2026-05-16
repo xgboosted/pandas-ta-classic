@@ -91,12 +91,12 @@ def psar(
     af0 = _pos_float(af0, af)
     max_af = _pos_float(max_af, 0.2)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import SAR as _SAR
 
         sar = _SAR(high, low, acceleration=af0, maximum=max_af)

@@ -34,13 +34,13 @@ def kama(
     close = verify_series(close, max(fast, slow, length))
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import KAMA as _KAMA
 
         kama = Series(_KAMA(close, timeperiod=length), index=close.index)

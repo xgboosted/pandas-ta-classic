@@ -21,13 +21,13 @@ def t3(
     a = float(a) if a and a > 0 and a < 1 else 0.7
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import T3
 
         t3 = T3(close, length, a)

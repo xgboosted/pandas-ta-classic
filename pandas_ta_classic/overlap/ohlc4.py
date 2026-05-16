@@ -22,13 +22,13 @@ def ohlc4(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if open_ is None or high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import AVGPRICE
 
         ohlc4 = Series(AVGPRICE(open_, high, low, close), index=close.index)

@@ -63,12 +63,12 @@ def stochrsi(
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_tal = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import STOCHRSI as _STOCHRSI
 
         fastk, fastd = _STOCHRSI(

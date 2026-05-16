@@ -30,13 +30,13 @@ def adosc(
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
     kwargs.pop("length", None)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None or close is None or volume is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import ADOSC
 
         adosc = ADOSC(high, low, close, volume, fast, slow)

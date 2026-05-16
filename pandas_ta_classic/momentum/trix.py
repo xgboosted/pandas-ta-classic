@@ -30,15 +30,15 @@ def trix(
     close = verify_series(close, max(length, signal))
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
 
     # Calculate Result — propagate talib to EMA so all three stages use same backend
-    ema1 = ema(close=close, length=length, talib=mode_tal, **kwargs)
-    ema2 = ema(close=ema1, length=length, talib=mode_tal, **kwargs)
-    ema3 = ema(close=ema2, length=length, talib=mode_tal, **kwargs)
+    ema1 = ema(close=close, length=length, talib=mode_talib, **kwargs)
+    ema2 = ema(close=ema1, length=length, talib=mode_talib, **kwargs)
+    ema3 = ema(close=ema2, length=length, talib=mode_talib, **kwargs)
     if ema1 is None or ema2 is None or ema3 is None:
         return None
     trix = scalar * ema3.pct_change(drift)

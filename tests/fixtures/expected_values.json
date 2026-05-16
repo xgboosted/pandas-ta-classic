@@ -306,11 +306,11 @@
     },
     "DMP_14": {
       "last_value": 39.40418792,
-      "non_nan_count": 5228
+      "non_nan_count": 5227
     },
     "DMN_14": {
       "last_value": 8.31166673,
-      "non_nan_count": 5228
+      "non_nan_count": 5227
     }
   },
   "aroon_14": {
@@ -692,11 +692,11 @@
     },
     "DMP_14": {
       "last_value": 39.40418792,
-      "non_nan_count": 5228
+      "non_nan_count": 5227
     },
     "DMN_14": {
       "last_value": 8.31166673,
-      "non_nan_count": 5228
+      "non_nan_count": 5227
     }
   },
   "psar": {

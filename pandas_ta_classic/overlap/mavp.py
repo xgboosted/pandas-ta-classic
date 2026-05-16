@@ -53,7 +53,7 @@ def mavp(
     mamode = int(mamode) if mamode is not None else 0
     close = verify_series(close, maxperiod)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
@@ -72,7 +72,7 @@ def mavp(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import MAVP as TAMAVP
 
         mavp_ = TAMAVP(

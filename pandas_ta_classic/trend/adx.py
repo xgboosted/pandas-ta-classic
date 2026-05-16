@@ -40,13 +40,13 @@ def adx(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import ADX, MINUS_DI, PLUS_DI
 
         adx_arr = Series(ADX(high, low, close, length), index=close.index)

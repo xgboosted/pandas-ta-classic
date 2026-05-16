@@ -33,12 +33,12 @@ def dm(
     low = verify_series(low)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import MINUS_DM, PLUS_DM
 
         pos = PLUS_DM(high, low, length)

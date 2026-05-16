@@ -20,13 +20,13 @@ def rocp(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import ROCP as TAROCP
 
         rocp_ = TAROCP(close, length)

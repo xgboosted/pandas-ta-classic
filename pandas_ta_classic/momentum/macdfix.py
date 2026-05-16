@@ -22,7 +22,7 @@ def macdfix(
     signal = int(signal) if signal and signal > 0 else 9
     close = verify_series(close, 26 + signal)
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
@@ -31,7 +31,7 @@ def macdfix(
     kwargs.pop("fast", None)
     kwargs.pop("slow", None)
 
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)

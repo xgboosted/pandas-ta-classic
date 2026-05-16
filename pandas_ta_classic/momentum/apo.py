@@ -31,13 +31,13 @@ def apo(
     close = verify_series(close, max(fast, slow))
     mamode = mamode if isinstance(mamode, str) else "sma"
     offset = get_offset(offset)
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import APO
 
         apo = APO(close, fast, slow, tal_ma(mamode))

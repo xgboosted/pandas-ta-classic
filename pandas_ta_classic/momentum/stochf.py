@@ -94,13 +94,13 @@ def stochf(
     close = verify_series(close, _length)
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_tal = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else True
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_tal:
+    if Imports["talib"] and mode_talib:
         from talib import STOCHF as TASTOCHF
 
         fastk_, fastd_ = TASTOCHF(high, low, close, fastk, fastd)
