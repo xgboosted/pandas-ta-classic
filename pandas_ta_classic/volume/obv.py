@@ -23,6 +23,8 @@ def obv(
     # Validate arguments
     close = verify_series(close)
     volume = verify_series(volume)
+    if close is None or volume is None:
+        return None
     offset = get_offset(offset)
     mode_tal = bool(talib) if isinstance(talib, bool) else True
 

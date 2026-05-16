@@ -21,6 +21,8 @@ def pvol(
     # Validate arguments
     close = verify_series(close)
     volume = verify_series(volume)
+    if close is None or volume is None:
+        return None
     offset = get_offset(offset)
     signed = kwargs.pop("signed", False)
 
