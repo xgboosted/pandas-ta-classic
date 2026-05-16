@@ -98,12 +98,19 @@ def adx(
             if n <= length:
                 return None
 
-            # Compute DX for all bars from `length` onward
+            # Compute DX, DMP, DMN for all bars from `length` onward.
+            # Using the same Wilder running sums for DMP/DMN ensures identical
+            # seeding as the ADX column (avoids the different-init issue that
+            # arises when ma("rma", ...) is called separately).
             dx_raw = np.full(n, np.nan)
+            dmp_raw = np.full(n, np.nan)
+            dmn_raw = np.full(n, np.nan)
             denom = dmpos14 + dmneg14
             dx_raw[length] = (
                 scalar * abs(dmpos14 - dmneg14) / denom if denom != 0 else 0.0
             )
+            dmp_raw[length] = scalar * dmpos14 / tr14 if tr14 != 0 else 0.0
+            dmn_raw[length] = scalar * dmneg14 / tr14 if tr14 != 0 else 0.0
 
             _tr14, _dmpos14, _dmneg14 = tr14, dmpos14, dmneg14
             for idx in range(length + 1, n):
@@ -114,6 +121,8 @@ def adx(
                 dx_raw[idx] = (
                     scalar * abs(_dmpos14 - _dmneg14) / denom if denom != 0 else 0.0
                 )
+                dmp_raw[idx] = scalar * _dmpos14 / _tr14 if _tr14 != 0 else 0.0
+                dmn_raw[idx] = scalar * _dmneg14 / _tr14 if _tr14 != 0 else 0.0
 
             # Two-tier ADX: seed = SMA of first `lensig` DX values, then Wilder's RMA
             dx_valid = dx_raw[length:]  # first valid DX is at index `length`
@@ -134,25 +143,8 @@ def adx(
             adx_raw[adx_start : adx_start + len(adx_values)] = adx_values
             adx_arr = Series(adx_raw, index=close.index, dtype=float)
 
-            # DMP and DMN via the existing ma-based path (for the output columns)
-            atr_ = atr(high=high, low=low, close=close, length=length, talib=False)
-            if atr_ is None:
-                return None
-            up = high - high.shift(drift)
-            dn = low.shift(drift) - low
-            pos = ((up > dn) & (up > 0)) * up
-            neg = ((dn > up) & (dn > 0)) * dn
-            pos = pos.apply(zero)
-            neg = neg.apply(zero)
-            k = scalar / atr_
-            _dmp_ma = ma(mamode, pos, length=length)
-            if _dmp_ma is None:
-                return None
-            _dmn_ma = ma(mamode, neg, length=length)
-            if _dmn_ma is None:
-                return None
-            dmp = k * _dmp_ma
-            dmn = k * _dmn_ma
+            dmp = Series(dmp_raw, index=close.index, dtype=float)
+            dmn = Series(dmn_raw, index=close.index, dtype=float)
         else:
             atr_ = atr(high=high, low=low, close=close, length=length, talib=False)
             if atr_ is None:

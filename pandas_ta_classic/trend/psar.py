@@ -103,8 +103,9 @@ def psar(
         sar_s = Series(sar, index=high.index)
         sar_s = apply_offset(sar_s, offset)
         _params = f"_{af0}_{max_af}"
-        # Split into long (below price) and short (above price) using close or mid
-        ref = high  # fallback: use high as reference
+        # Split into long (below price) and short (above price) using close when
+        # available (matches native path convention), falling back to high.
+        ref = close if close is not None else high
         long = sar_s.where(sar_s < ref, other=np.nan)
         short = sar_s.where(sar_s >= ref, other=np.nan)
         _af_s = Series(np.nan, index=high.index)
