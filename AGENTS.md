@@ -7,6 +7,8 @@ This file documents the use of AI coding agents and assistants for the pandas-ta
 - **Project:** pandas-ta-classic — Technical Analysis Indicators for pandas DataFrames
 - **Main Language:** Python
 - **Coding Style:** Follow PEP8 and repo-specific conventions
+- **GitHub interactions:** Use the GitHub MCP server exclusively; do not use GitLens or GitKraken tools for GitHub operations
+- **Commits:** Never automatically stage or commit changes; every change must be manually reviewed before being committed
 - **Testing:** All code must pass existing tests in `tests/` and include new tests for new features or bugfixes
 - **Documentation:** Update or add docstrings and docs in `docs/` as needed
 
@@ -52,6 +54,8 @@ _Example:_
 - Usage: Used for code generation and review.
 - Notes: Ensure code is compatible with pandas-ta-classic style and all tests pass.
 
-### Copilot Caveman Skill
+### Caveman Skill
+- Install the Caveman skill for the Agent to enable more concise code generation.
+- Turn on by including "Caveman mode" in the PR description or instructions to the agent.
 - Usage: Use for compressed, simple communication when requested.
-- Notes: Default is normal Copilot unless otherwise specified.
+- Notes: Default is normal mode unless otherwise specified.
