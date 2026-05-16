@@ -902,11 +902,11 @@ class TestTalibFalsePropagation(TestCase):
         self.assertIsInstance(result, pd.Series)
 
     def test_trima_talib_false_matches_manual_calculation(self):
-        """trima(talib=False) == sma(sma(close, len1), len2) with TA-Lib asymmetric windows."""
+        """trima(talib=False) == sma(sma(close, len1), len2) matching TA-Lib windows."""
         from pandas_ta_classic.overlap.sma import sma
 
         length = 10
-        len1 = (length + 1) // 2  # ceil(length/2)
+        len1 = length // 2 + 1  # ceil((length+1)/2) — matches TA-Lib
         len2 = length // 2 + 1  # floor(length/2) + 1
         sma1 = sma(self.close, length=len1, talib=False)
         expected = sma(sma1, length=len2, talib=False)

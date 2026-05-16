@@ -36,7 +36,7 @@ def stoch(
     close = verify_series(close, _length)
     offset = get_offset(offset)
     mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None or close is None:
         return None

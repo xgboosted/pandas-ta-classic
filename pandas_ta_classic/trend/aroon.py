@@ -23,7 +23,7 @@ def aroon(
     high = verify_series(high, length)
     low = verify_series(low, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None

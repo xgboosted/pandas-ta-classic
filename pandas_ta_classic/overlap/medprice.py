@@ -23,7 +23,7 @@ def medprice(
     high = verify_series(high)
     low = verify_series(low)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None

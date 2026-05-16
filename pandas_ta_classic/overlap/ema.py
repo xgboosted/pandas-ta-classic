@@ -23,7 +23,7 @@ def ema(
     sma = kwargs.pop("sma", True)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
@@ -36,9 +36,18 @@ def ema(
     else:
         if sma:
             close = close.copy()
-            sma_nth = close[0:length].mean()
-            close[: length - 1] = npNaN
-            close.iloc[length - 1] = sma_nth
+            # Find the first valid (non-NaN) position so the SMA seed is
+            # computed from exactly `length` consecutive valid values — matching
+            # TA-Lib's EMA lookback behaviour for chained/lagged inputs.
+            first_valid = close.first_valid_index()
+            if first_valid is None:
+                fv_pos = None  # fall through to ewm; result will be all-NaN
+            else:
+                fv_pos = close.index.get_loc(first_valid)
+            if fv_pos is not None:
+                sma_nth = close.iloc[fv_pos : fv_pos + length].mean()
+                close.iloc[: fv_pos + length - 1] = npNaN
+                close.iloc[fv_pos + length - 1] = sma_nth
         ema = close.ewm(span=length, adjust=adjust).mean()
 
     # Offset

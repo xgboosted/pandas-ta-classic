@@ -60,7 +60,7 @@ def bbands(
     ddof = int(ddof) if ddof >= 0 and ddof < length else 1
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None

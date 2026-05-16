@@ -53,7 +53,7 @@ def mavp(
     mamode = int(mamode) if mamode is not None else 0
     close = verify_series(close, maxperiod)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
@@ -126,7 +126,7 @@ Args:
     minperiod (int): Minimum allowed period. Default: 2
     maxperiod (int): Maximum allowed period. Default: 30
     mamode (int): MA type (TA-Lib convention: 0=SMA). Default: 0
-    talib (bool): Use TA-Lib if installed. Default: True
+    talib (bool): Use TA-Lib if installed. Default: False
     offset (int): Result offset. Default: 0
 
 Kwargs:

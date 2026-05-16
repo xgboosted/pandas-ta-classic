@@ -30,7 +30,7 @@ def adosc(
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
     kwargs.pop("length", None)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None or close is None or volume is None:
         return None

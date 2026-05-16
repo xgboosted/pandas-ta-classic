@@ -25,7 +25,7 @@ def avgprice(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if open_ is None or high is None or low is None or close is None:
         return None

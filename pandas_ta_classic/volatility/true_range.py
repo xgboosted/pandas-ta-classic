@@ -34,7 +34,7 @@ def true_range(
         return None
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     # Calculate Result
     if Imports["talib"] and mode_talib:

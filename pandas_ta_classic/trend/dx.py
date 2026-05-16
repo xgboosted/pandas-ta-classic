@@ -39,7 +39,7 @@ def dx(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None or close is None:
         return None
@@ -147,7 +147,7 @@ Args:
     length (int): The period. Default: 14
     scalar (float): Scalar multiplier. Default: 100
     mamode (str): Smoothing mode. Default: 'rma'
-    talib (bool): Use TA-Lib if installed. Default: True
+    talib (bool): Use TA-Lib if installed. Default: False
     drift (int): Drift period. Default: 1
     offset (int): Result offset. Default: 0
 

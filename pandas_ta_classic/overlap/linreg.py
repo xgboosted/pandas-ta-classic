@@ -92,13 +92,15 @@ def linreg(
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # talib path: not available for r (no equivalent) or angle-in-radians
-    _use_talib = Imports["talib"] and mode_talib and not r and not (angle and not degrees)
+    _use_talib = (
+        Imports["talib"] and mode_talib and not r and not (angle and not degrees)
+    )
     if _use_talib:
         _close_arr = npArray(close, dtype=float)
         if angle:

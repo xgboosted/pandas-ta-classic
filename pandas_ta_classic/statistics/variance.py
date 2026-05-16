@@ -58,7 +58,7 @@ def variance(
     )
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None

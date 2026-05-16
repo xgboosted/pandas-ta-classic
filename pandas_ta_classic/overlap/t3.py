@@ -21,7 +21,7 @@ def t3(
     a = float(a) if a and a > 0 and a < 1 else 0.7
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None

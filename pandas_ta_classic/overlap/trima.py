@@ -20,7 +20,7 @@ def trima(
     length = int(length) if length and length > 0 else 10
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
@@ -31,7 +31,7 @@ def trima(
 
         trima = TRIMA(close, length)
     else:
-        len1 = (length + 1) // 2  # ceil(length/2)
+        len1 = length // 2 + 1  # ceil((length+1)/2) — matches TA-Lib window
         len2 = (
             length // 2 + 1
         )  # floor(length/2) + 1  — matches TA-Lib asymmetric windows

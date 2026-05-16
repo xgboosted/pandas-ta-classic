@@ -26,7 +26,7 @@ def midprice(
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else True
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if high is None or low is None:
         return None
