@@ -458,11 +458,12 @@ class AnalysisIndicators(BasePandasObject):
         """Deactivate fluent chaining mode.
 
         Returns:
-            AnalysisIndicators: self (the accessor)
+            pd.DataFrame: The working DataFrame (so ``.ta`` is available for
+            non-chained calls).
         """
         self._df.attrs.pop("_ta_chain", None)
         self._df.attrs.pop("_ta_chain_append", None)
-        return self
+        return self._df
 
     # Private DataFrame Methods
     def _add_prefix_suffix(self, result=None, **kwargs) -> None:

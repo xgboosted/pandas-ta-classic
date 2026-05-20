@@ -46,11 +46,12 @@ class TestFluentChaining(TestCase):
         # chain() returns the accessor, not a DataFrame
         self.assertTrue(hasattr(result, 'sma'))
 
-    def test_unchain_returns_accessor(self):
-        """unchain() returns the accessor."""
+    def test_unchain_returns_dataframe(self):
+        """unchain() returns the DataFrame (so .ta is available for normal calls)."""
         self.df.ta.chain()
-        acc = self.df.ta.unchain()
-        self.assertTrue(hasattr(acc, 'sma'))
+        result = self.df.ta.unchain()
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertIs(result, self.df)
 
     def test_chain_sets_flag(self):
         """chain() stores the flag in df.attrs."""
