@@ -16,6 +16,9 @@ jobs:
 
       - name: Push mirror
         run: |
+          git config http.postBuffer 524288000
           git remote add codeberg https://USER:${{ secrets.CODEBERG_TOKEN }}@codeberg.org/xgboosted/pandas-ta-classic.git
-          git push --all --force codeberg
+          for i in 1 2 3; do
+            git push --all --force codeberg && break || sleep 10
+          done
           git push --tags --force codeberg
