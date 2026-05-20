@@ -433,6 +433,38 @@ class AnalysisIndicators(BasePandasObject):
         """Returns the version."""
         return version
 
+    # Fluent API chaining (Issue #36)
+    def chain(self, append: bool = True):
+        """Activate fluent chaining mode.
+
+        When chain mode is active, every indicator call auto-appends its result
+        to the DataFrame and returns the DataFrame itself (which has ``.ta``),
+        so you can chain multiple indicators without repeating ``df.ta``::
+
+            df.ta.chain().sma(10).ta.rsi(14).ta.macd()
+
+        Args:
+            append (bool): When True (default), each indicator is appended to
+                the DataFrame.
+
+        Returns:
+            AnalysisIndicators: self (the accessor) with chain mode active.
+        """
+        self._df.attrs["_ta_chain"] = True
+        self._df.attrs["_ta_chain_append"] = append
+        return self
+
+    def unchain(self):
+        """Deactivate fluent chaining mode.
+
+        Returns:
+            pd.DataFrame: The working DataFrame (so ``.ta`` is available for
+            non-chained calls).
+        """
+        self._df.attrs.pop("_ta_chain", None)
+        self._df.attrs.pop("_ta_chain_append", None)
+        return self._df
+
     # Private DataFrame Methods
     def _add_prefix_suffix(self, result=None, **kwargs) -> None:
         """Add prefix and/or suffix to the result columns"""
@@ -523,12 +555,15 @@ class AnalysisIndicators(BasePandasObject):
         """Applies any additional modifications to the DataFrame
         * Applies prefixes and/or suffixes
         * Appends the result to main DataFrame
+        * In chain mode, auto-appends and returns the DataFrame for fluent chaining.
         """
         verbose = kwargs.pop("verbose", False)
+        chain_mode = self._df.attrs.get("_ta_chain", False)
+
         if not isinstance(result, (pd.Series, pd.DataFrame)):
             if verbose:
                 logger.error("The result was not a Series or DataFrame.")
-            return self._df
+            return self._df if chain_mode else self._df
         else:
             # Append only specific columns to the dataframe (via
             # 'col_numbers':(0,1,3) for example)
@@ -541,7 +576,14 @@ class AnalysisIndicators(BasePandasObject):
             )
             # Add prefix/suffix and append to the dataframe
             self._add_prefix_suffix(result=result, **kwargs)
+            # In chain mode, auto-append results to the DataFrame
+            if chain_mode:
+                kwargs["append"] = self._df.attrs.get("_ta_chain_append", True)
             self._append(result=result, **kwargs)
+
+        # In chain mode, return the DataFrame (which has .ta) for fluent chaining
+        if chain_mode:
+            return self._df
         return result
 
     def _strategy_mode(self, *args) -> tuple:
@@ -622,7 +664,14 @@ class AnalysisIndicators(BasePandasObject):
         """
         as_list = kwargs.setdefault("as_list", False)
         # Public non-indicator methods
-        helper_methods = ["constants", "indicators", "strategy", "ticker"]
+        helper_methods = [
+            "chain",
+            "constants",
+            "indicators",
+            "strategy",
+            "ticker",
+            "unchain",
+        ]
         # Public df.ta.properties
         ta_properties = [
             "adjusted",

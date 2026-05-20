@@ -18,6 +18,7 @@ title: Pandas TA Classic - Technical Analysis Library
 * **Optional TA-Lib Acceleration**: 34 core indicators auto-use TA-Lib when installed; pass `talib=False` to force native
 * **Optional Oracle Libraries**: TA-Lib (acceleration backend + oracle) and tulipy (oracle only) are optional and skip gracefully when not installed
 * Supports both standalone and DataFrame extension usage
+* **Fluent API chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd()``
 * Multiprocessing support via Strategy method
 * Custom strategies and indicator chaining
 * Performance metrics (BETA)
@@ -58,6 +59,9 @@ df = pd.read_csv("path/to/symbol.csv")
 df.ta.sma(length=20, append=True)  # Simple Moving Average
 df.ta.rsi(length=14, append=True)  # RSI
 df.ta.macd(append=True)            # MACD
+
+# Fluent API chaining
+df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)
 
 # Or use strategies for bulk processing
 df.ta.strategy("CommonStrategy")

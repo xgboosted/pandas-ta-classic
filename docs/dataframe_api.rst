@@ -230,3 +230,45 @@ ticker
     
     # With period and interval
     df = df.ta.ticker("AAPL", period="1y", interval="1d")
+
+chain
+~~~~~
+
+``chain(append: bool = True)`` — activates fluent chaining mode, where every
+indicator call auto-appends to the DataFrame and returns the DataFrame (so
+``.ta`` is available for the next call).  Added in v0.6.
+
+.. code-block:: python
+
+    # Chain four indicators in a single expression
+    df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)
+
+    # With per-indicator kwargs
+    df.ta.chain().sma(20, prefix="FAST").ta.sma(50, prefix="SLOW")
+
+    # Rename output columns inline
+    df.ta.chain().bbands(
+        20, col_names=("LOWER", "MID", "UPPER", "BW", "PCT")
+    )
+
+.. note::
+   Chain state is stored on ``df.attrs`` and persists across ``.ta`` accessor
+   re-entries.  Use :meth:`unchain` to exit chain mode.
+
+unchain
+~~~~~~~
+
+``unchain()`` — deactivates fluent chaining mode and returns the DataFrame
+for normal, non-chained usage.
+
+.. code-block:: python
+
+    # Start chaining, then exit mid-expression
+    df.ta.chain().sma(20).ta.unchain().ta.rsi(14)
+    #                               ^
+    #                               rsi() returns a Series (not appended)
+
+    # Manual exit
+    df.ta.chain()
+    # ... do some chained calls ...
+    df.ta.unchain()  # chain mode deactivated
