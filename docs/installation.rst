@@ -21,6 +21,7 @@ For enhanced functionality, consider installing:
 - **TA-Lib**: Optional — all 62 CDL patterns work natively without it (see :ref:`Installing TA-Lib` below)
 - **yfinance**: For downloading stock data with ``df.ta.ticker()``
 - **vectorbt**: For backtesting integration
+- **pytest + Hypothesis**: For running the test suite and property-based tests (``pip install pandas-ta-classic[test]``)
 
 Installation Methods
 --------------------
@@ -79,6 +80,7 @@ Using ``uv``:
     
     # Or install specific dependency groups:
     uv pip install -e ".[dev]"      # Development tools
+    uv pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
     uv pip install -e ".[optional]" # Optional features like TA-Lib
     uv pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
 
@@ -95,6 +97,7 @@ Using ``pip``:
     
     # Or install specific dependency groups:
     pip install -e ".[dev]"      # Development tools
+    pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
     pip install -e ".[optional]" # Optional features like TA-Lib
     pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
 

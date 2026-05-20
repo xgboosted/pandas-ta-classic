@@ -49,7 +49,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 - **Optional Performance Boost**: Install `numba` for 6–230× speedups on hot-loop indicators (QQE, RSX, HWMA, SSF, PSAR, Supertrend, MCGD)
 - **Automatic Versioning**: Version management via git tags using setuptools-scm
 - **Modern Package Management**: Full support for both `uv` and `pip`
-- **Production Ready**: Stable status with comprehensive test coverage
+- **Production Ready**: Stable status with comprehensive test coverage including property-based testing (Hypothesis)
 - **Active Development**: Regular updates with community contributions
 
 ## Quick Start
