@@ -203,7 +203,7 @@ def yf(ticker: str, **kwargs):
             if "marketCap" in ticker_info and ticker_info["marketCap"] is not None:
                 print(
                     "Market Cap.".ljust(39),
-                    f"{ticker_info['marketCap']:,} ({ticker_info['marketCap']/1000000:,.2f} MM)".rjust(
+                    f"{ticker_info['marketCap']:,} ({ticker_info['marketCap'] / 1000000:,.2f} MM)".rjust(
                         40
                     ),
                 )
@@ -380,7 +380,7 @@ def yf(ticker: str, **kwargs):
             )
             print(
                 "HL2 | HLC3 | OHLC4 | C - OHLC4".ljust(39),
-                f"{0.5 * (_h + _l):.4f}, {(_h + _l + _c) / 3.:.4f}, {0.25 * (_o + _h + _l + _c):.4f}, {_c - 0.25 * (_o + _h + _l + _c):.4f}".rjust(
+                f"{0.5 * (_h + _l):.4f}, {(_h + _l + _c) / 3.0:.4f}, {0.25 * (_o + _h + _l + _c):.4f}, {_c - 0.25 * (_o + _h + _l + _c):.4f}".rjust(
                     40
                 ),
             )
@@ -428,7 +428,7 @@ def yf(ticker: str, **kwargs):
             ):
                 print(
                     "52Wk % Change vs S&P500".ljust(39),
-                    f"{100 *ticker_info['SandP52WeekChange']:.4f}%".rjust(40),
+                    f"{100 * ticker_info['SandP52WeekChange']:.4f}%".rjust(40),
                 )
             if (
                 "fiftyTwoWeekHigh" in ticker_info

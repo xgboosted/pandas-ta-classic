@@ -529,7 +529,7 @@ class AnalysisIndicators(BasePandasObject):
                 return df.iloc[:, match[0]]
             cols = ", ".join(list(df.columns))
             logger.warning(
-                f"[X] Column '{series}' not found." f" Available columns: {cols}"
+                f"[X] Column '{series}' not found. Available columns: {cols}"
             )
             return None
 
