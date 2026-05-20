@@ -97,6 +97,36 @@ df.ta.strategy(my_strategy)
 print(df.columns) # See all new indicator columns
 ```
 
+### Method 4: Fluent Chaining (Expressive)
+
+Chain multiple indicators in a single readable expression (v0.6+):
+
+```python
+import pandas as pd
+import pandas_ta_classic as ta
+
+df = pd.read_csv('your_data.csv')
+
+# Chain multiple indicators in one line
+df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)
+
+# With prefixes for clarity
+df.ta.chain().sma(20, prefix="FAST").ta.sma(50, prefix="SLOW")
+
+# Rename output columns inline
+df.ta.chain().bbands(20, col_names=("LOWER", "MID", "UPPER", "BW", "PCT"))
+
+# Exit chain mode mid-expression
+df.ta.chain().sma(20).ta.unchain().ta.rsi(14)  # RSI returned as Series
+```
+
+**How it works:**
+
+- ``chain()`` activates chain mode — every indicator auto-appends to the DataFrame.
+- Each indicator returns the DataFrame (which has ``.ta``), so you can keep chaining.
+- ``unchain()`` exits chain mode, returning the DataFrame for normal use.
+- All kwargs like ``prefix``, ``suffix``, and ``col_names`` work as usual.
+
 ## Working with Real Data
 
 ### Using yfinance (Recommended)

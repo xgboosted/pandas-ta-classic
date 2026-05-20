@@ -131,6 +131,9 @@ df.ta.rsi(append=True) # Relative Strength Index
 df.ta.macd(append=True) # MACD
 df.ta.bbands(append=True) # Bollinger Bands
 
+# Fluent API chaining (v0.6+)
+df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)
+
 # Or run a strategy with multiple indicators
 df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 ```
@@ -143,6 +146,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
+- **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
 - **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: 34 core indicators auto-use TA-Lib's C implementation when installed; pass `talib=False` to force native. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
 - **tulipy Integration (oracle only)** - parity test oracle; `test_oracle_tulipy.py` verifies native output against tulipy; never used as computation backend
