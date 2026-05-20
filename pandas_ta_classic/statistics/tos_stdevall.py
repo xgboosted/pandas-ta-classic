@@ -28,7 +28,7 @@ def tos_stdevall(
         stds = stds[::-1]
     offset = get_offset(offset)
 
-    _props = f"TOS_STDEVALL"
+    _props = "TOS_STDEVALL"
     if length is None:
         length = close.size
     else:

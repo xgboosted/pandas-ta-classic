@@ -188,9 +188,9 @@ def squeeze(
 
     data = {
         squeeze.name: squeeze,
-        f"SQZ_ON": squeeze_on,
-        f"SQZ_OFF": squeeze_off,
-        f"SQZ_NO": no_squeeze,
+        "SQZ_ON": squeeze_on,
+        "SQZ_OFF": squeeze_off,
+        "SQZ_NO": no_squeeze,
     }
     df = DataFrame(data)
     df.name = squeeze.name

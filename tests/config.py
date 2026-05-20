@@ -4,8 +4,8 @@ from pandas import read_csv
 
 VERBOSE = False
 
-ALERT = f"[!]"
-INFO = f"[i]"
+ALERT = "[!]"
+INFO = "[i]"
 
 CORRELATION = "corr"  # "sem"
 CORRELATION_THRESHOLD = 1.0

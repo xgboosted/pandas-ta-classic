@@ -61,8 +61,8 @@ def td_seq(
     up_seq, down_seq = apply_fill([up_seq, down_seq], **kwargs)
 
     # Name & Category
-    up_seq.name = f"TD_SEQ_UPa" if show_all else f"TD_SEQ_UP"
-    down_seq.name = f"TD_SEQ_DNa" if show_all else f"TD_SEQ_DN"
+    up_seq.name = "TD_SEQ_UPa" if show_all else "TD_SEQ_UP"
+    down_seq.name = "TD_SEQ_DNa" if show_all else "TD_SEQ_DN"
     up_seq.category = down_seq.category = "momentum"
 
     # Prepare Dataframe to return

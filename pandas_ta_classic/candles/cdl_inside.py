@@ -38,7 +38,7 @@ def cdl_inside(
     inside = apply_fill(inside, **kwargs)
 
     # Name and Categorize it
-    inside.name = f"CDL_INSIDE"
+    inside.name = "CDL_INSIDE"
     inside.category = "candles"
 
     return inside

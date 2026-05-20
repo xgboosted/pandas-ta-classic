@@ -38,7 +38,7 @@ def pvt(
     pvt = apply_fill(pvt, **kwargs)
 
     # Name and Categorize it
-    pvt.name = f"PVT"
+    pvt.name = "PVT"
     pvt.category = "volume"
 
     return pvt

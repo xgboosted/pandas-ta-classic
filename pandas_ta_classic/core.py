@@ -186,7 +186,7 @@ class BasePandasObject(PandasObject):
 
             self._df = df
         else:
-            raise AttributeError(f"[X] No columns!")
+            raise AttributeError("[X] No columns!")
 
     def __call__(self, kind, *args, **kwargs):
         raise NotImplementedError()
@@ -930,16 +930,14 @@ class AnalysisIndicators(BasePandasObject):
         else:
             # Without multiprocessing:
             if verbose:
-                _col_msg = f"[i] No mulitproccessing (cores = 0)."
+                _col_msg = "[i] No mulitproccessing (cores = 0)."
                 if has_col_names:
-                    _col_msg = (
-                        f"[i] No mulitproccessing support for 'col_names' option."
-                    )
+                    _col_msg = "[i] No mulitproccessing support for 'col_names' option."
                 logger.info(_col_msg)
 
             if mode["custom"]:
                 if Imports["tqdm"] and verbose:
-                    pbar = tqdm(ta, f"[i] Progress")
+                    pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
                         params = (
                             ind["params"]
@@ -957,7 +955,7 @@ class AnalysisIndicators(BasePandasObject):
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
             else:
                 if Imports["tqdm"] and verbose:
-                    pbar = tqdm(ta, f"[i] Progress")
+                    pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
                         getattr(self, ind)(*tuple(), **kwargs)
                 else:

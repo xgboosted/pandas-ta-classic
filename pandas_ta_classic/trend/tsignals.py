@@ -49,10 +49,10 @@ def tsignals(
         exits = exits.astype(bool)
 
     data = {
-        f"TS_Trends": trends,
-        f"TS_Trades": trades,
-        f"TS_Entries": entries,
-        f"TS_Exits": exits,
+        "TS_Trends": trends,
+        "TS_Trades": trades,
+        "TS_Entries": entries,
+        "TS_Exits": exits,
     }
     df = DataFrame(data, index=trends.index)
 
@@ -62,7 +62,7 @@ def tsignals(
     df = apply_fill(df, **kwargs)
 
     # Name & Category
-    df.name = f"TS"
+    df.name = "TS"
     df.category = "trend"
 
     return df

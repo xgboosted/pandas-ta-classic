@@ -51,7 +51,7 @@ def bop(
     bop = apply_fill(bop, **kwargs)
 
     # Name and Categorize it
-    bop.name = f"BOP"
+    bop.name = "BOP"
     bop.category = "momentum"
 
     return bop

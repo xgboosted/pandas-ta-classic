@@ -37,7 +37,7 @@ def pvol(
     pvol = apply_fill(pvol, **kwargs)
 
     # Name and Categorize it
-    pvol.name = f"PVOL"
+    pvol.name = "PVOL"
     pvol.category = "volume"
 
     return pvol

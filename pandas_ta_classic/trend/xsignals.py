@@ -59,7 +59,7 @@ def xsignals(
     df = apply_fill(df, **kwargs)
 
     # Name & Category
-    df.name = f"XS"
+    df.name = "XS"
     df.category = "trend"
 
     return df
