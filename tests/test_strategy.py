@@ -6,7 +6,7 @@ from time import perf_counter
 from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
-from unittest import skip, skipUnless, TestCase
+from unittest import TestCase
 from pandas import DataFrame
 
 # Strategy Testing Parameters
@@ -128,7 +128,6 @@ class TestStrategyMethods(TestCase):
         self.category = "Cycles"
         self.data.ta.strategy(self.category, verbose=verbose, timed=strategy_timed)
 
-    # @skip
     def test_custom_a(self):
         self.category = "Custom A"
 
@@ -138,7 +137,7 @@ class TestStrategyMethods(TestCase):
             {"kind": "macd"},  # 3
             {"kind": "sma", "length": 50},  # 1
             {"kind": "sma", "length": 200},  # 1
-            {"kind": "bbands", "length": 20},  # 3
+            {"kind": "bbands", "length": 20},  # 5 (BBL,BBM,BBU,BBB,BBP)
             {"kind": "log_return", "cumulative": True},  # 1
             {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},  # 1
         ]
@@ -149,7 +148,7 @@ class TestStrategyMethods(TestCase):
             "Common indicators with specific lengths and a chained indicator",  # description
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
-        self.assertEqual(len(self.data.columns), 15)
+        self.assertEqual(len(self.data.columns), 19)  # 5 OHLCV + 14 indicator cols
 
     # @skip
     def test_custom_args_tuple(self):
@@ -195,7 +194,7 @@ class TestStrategyMethods(TestCase):
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
 
     # @skip
-    def test_custom_a(self):
+    def test_custom_e(self):
         self.category = "Custom E"
 
         amat_logret_ta = [

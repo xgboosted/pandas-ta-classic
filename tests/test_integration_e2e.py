@@ -201,7 +201,6 @@ class TestPluginBindRegistration(TestCase):
 
     def _make_custom_pair(self):
         """Returns (function, method) for a trivial 'double close' indicator."""
-        name = self._BIND_NAME
 
         def _fn(close, length=None, offset=None, **kwargs):
             result = close * 2.0

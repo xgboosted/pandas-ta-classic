@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 from numpy import log as npLog
@@ -10,7 +10,7 @@ npNaN = np.nan
 
 from ._core import verify_series
 from ._time import total_time
-from ._math import linear_regression, log_geometric_mean
+from ._math import linear_regression
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance import drawdown, log_return, percent_return
 
@@ -174,9 +174,7 @@ def optimal_leverage(
     if close is None:
         return npNaN
 
-    use_cagr = kwargs.pop("use_cagr", False)
     returns = percent_return(close=close) if not log else log_return(close=close)
-    # sharpe = sharpe_ratio(close, benchmark_rate=benchmark_rate, log=log, use_cagr=use_cagr, period=period)
 
     period_mu = period * returns.mean()
     period_std = npSqrt(period) * returns.std()

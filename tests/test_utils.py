@@ -1,8 +1,7 @@
 from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
-from unittest import skip, TestCase
-from unittest.mock import patch
+from unittest import TestCase
 
 import numpy as np
 import numpy.testing as npt

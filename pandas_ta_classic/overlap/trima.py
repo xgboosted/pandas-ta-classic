@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Triangular Moving Average (TRIMA)
-from math import ceil, floor
 from typing import Any, Optional
 from pandas import Series
 from .sma import sma

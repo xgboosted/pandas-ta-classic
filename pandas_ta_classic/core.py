@@ -3,7 +3,6 @@ import logging
 from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
-from pathlib import Path
 from time import perf_counter
 from typing import Any, List, Optional, Tuple
 from warnings import simplefilter

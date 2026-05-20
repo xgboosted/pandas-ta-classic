@@ -14,10 +14,9 @@ from pandas_ta_classic.momentum.squeeze import (
 )
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.trend import decreasing, increasing
 from pandas_ta_classic.volatility import bbands, kc
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset
-from pandas_ta_classic.utils import unsigned_differences, verify_series
+from pandas_ta_classic.utils import verify_series
 
 
 def squeeze_pro(

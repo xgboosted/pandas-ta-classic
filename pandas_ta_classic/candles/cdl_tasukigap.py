@@ -5,12 +5,10 @@ from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
     AVG_FACTOR,
-    CandleArrays,
     CandleSetting,
     candle_avg_period,
     run_pattern,
 )
-import numpy as np
 
 
 def _detect(ca, out, **kwargs):

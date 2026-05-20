@@ -92,7 +92,6 @@ class TestFluentChaining(TestCase):
 
     def test_chain_with_bbands(self):
         """Chain a multi-column indicator (BBANDS)."""
-        col_count = len(self.df.columns)
         result = self.df.ta.chain().bbands(20)
         self.assertIsInstance(result, pd.DataFrame)
         for col in ("BBL_20_2.0", "BBM_20_2.0", "BBU_20_2.0"):

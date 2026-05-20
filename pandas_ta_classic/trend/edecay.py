@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Exponential Decay (EDECAY)
 from typing import Any, Optional
-from numpy import exp as npExp, maximum
+from numpy import exp as npExp
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 

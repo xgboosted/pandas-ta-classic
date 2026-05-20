@@ -23,7 +23,6 @@ All tests use the SPY_D.csv sample dataset (5241 rows, 1999-2020).
 import math
 from unittest import TestCase
 
-import numpy as np
 import pandas as pd
 
 import pandas_ta_classic as ta

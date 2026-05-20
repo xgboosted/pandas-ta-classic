@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from pandas import DataFrame
-from pandas_ta_classic import Imports, RATE, version
+from pandas_ta_classic import Imports, version
 from .._core import _camelCase2Title
 from .._time import ytd
 
@@ -108,7 +108,7 @@ def yf(ticker: str, **kwargs):
 
         try:
             ticker_info = yfd.info
-        except KeyError as ke:
+        except KeyError:
             logger.error(f"Ticker '{ticker}' not found.")
             return None
 
@@ -637,7 +637,7 @@ def yf(ticker: str, **kwargs):
         if kind in _all + ["option_chain", "oc"]:
             try:
                 yfd_options = yfd.options
-            except IndexError as ie:
+            except IndexError:
                 yfd_options = None
 
             if yfd_options is not None:
