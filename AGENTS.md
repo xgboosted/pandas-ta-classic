@@ -55,7 +55,7 @@ _Example:_
 - Notes: Ensure code is compatible with pandas-ta-classic style and all tests pass.
 
 ### Caveman Skill
-- Install the Caveman skill for the Agent to enable more concise code generation.
-- Turn on by including "Caveman mode" in the PR description or instructions to the agent.
-- Usage: Use for compressed, simple communication when requested.
-- Notes: Default is normal mode unless otherwise specified.
+- **Usage:** Compressed communication mode when token efficiency is requested
+  (`/caveman` or "caveman mode").
+- **Notes:** Code blocks and security warnings are always written in normal
+  style regardless of caveman level. Off with "stop caveman" or "normal mode".
