@@ -6,7 +6,10 @@
 # Package manager detection (prefer uv if available, fallback to pip)
 PIP := $(shell if command -v uv >/dev/null 2>&1; then echo "uv pip"; else echo "pip"; fi)
 
-.PHONY: all help clean caches install install-dev install-all init test test-ext test-metrics test-strats test-ta test-utils docs docs-serve lint format
+# Python: use the local venv if it exists, otherwise fall back to system python
+PYTHON := $(shell if [ -f .venv/bin/python ]; then echo ".venv/bin/python"; else echo "python3"; fi)
+
+.PHONY: all help clean caches install install-dev install-all init test test-ext test-metrics test-strats test-ta test-utils test-all fixtures docs docs-serve lint format
 
 # Default target
 all: test
@@ -23,11 +26,15 @@ help:
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test             Run all tests"
+	@echo "  make test-all         Regenerate fixtures, then run all tests"
 	@echo "  make test-ta          Run indicator tests"
 	@echo "  make test-ext         Run extended indicator tests"
 	@echo "  make test-utils       Run utility tests"
 	@echo "  make test-metrics     Run metrics tests"
 	@echo "  make test-strats      Run strategy tests"
+	@echo ""
+	@echo "Fixtures:"
+	@echo "  make fixtures         Regenerate expected_values.json + regression_snapshots.json"
 	@echo ""
 	@echo "Documentation:"
 	@echo "  make docs             Build Sphinx documentation"
@@ -58,19 +65,32 @@ init: install-dev
 test: test-utils test-metrics test-ta test-ext test-strats
 
 test-ext:
-	python -m unittest discover -s tests -p "test_ext_indicator_*.py" -v
+	$(PYTHON) -m unittest discover -s tests -p "test_ext_indicator_*.py" -v
 
 test-metrics:
-	python -m unittest tests.test_utils_metrics -v
+	$(PYTHON) -m unittest tests.test_utils_metrics -v
 
 test-strats:
-	python -m unittest tests.test_strategy -v
+	$(PYTHON) -m unittest tests.test_strategy -v
 
 test-ta:
-	python -m unittest discover -s tests -p "test_indicator_*.py" -v
+	$(PYTHON) -m unittest discover -s tests -p "test_indicator_*.py" -v
 
 test-utils:
-	python -m unittest tests.test_utils -v
+	$(PYTHON) -m unittest tests.test_utils -v
+
+# Regenerate JSON fixture files from TA-Lib oracle + native code
+fixtures:
+	@echo "Regenerating expected_values.json..."
+	$(PYTHON) -m tests.fixtures.generate_fixtures
+	@echo "Regenerating regression_snapshots.json..."
+	$(PYTHON) -m tests.fixtures.generate_regression_snapshots
+	@echo "Fixtures regenerated."
+
+# Regenerate fixtures then run the full test suite
+test-all: fixtures
+	@echo "Running full test suite..."
+	$(PYTHON) -m unittest discover tests/ -v
 
 # Documentation targets
 docs:
@@ -81,7 +101,7 @@ docs:
 docs-serve: docs
 	@echo "Starting local documentation server..."
 	@echo "Open http://localhost:8000 in your browser"
-	cd docs/_build/html && python -m http.server 8000
+	cd docs/_build/html && $(PYTHON) -m http.server 8000
 
 # Maintenance targets
 clean:

@@ -40,7 +40,14 @@ REGRESSION (55 indicators)
 
 import json
 import math
+import sys
 from pathlib import Path
+
+# Allow running directly (python path/to/script.py) in addition to
+# the documented module invocation (python -m tests.fixtures.…).
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import numpy as np
 import pandas as pd

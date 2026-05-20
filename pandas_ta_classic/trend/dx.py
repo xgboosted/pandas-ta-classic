@@ -60,14 +60,8 @@ def dx(
         pos = pos.apply(zero)
         neg = neg.apply(zero)
 
-        if mamode == "rma":
-            from pandas_ta_classic.utils._wilder import wilder_smooth
-
-            dmp = wilder_smooth(pos, length)
-            dmn = wilder_smooth(neg, length)
-        else:
-            dmp = ma(mamode, pos, length=length)
-            dmn = ma(mamode, neg, length=length)
+        dmp = ma(mamode, pos, length=length)
+        dmn = ma(mamode, neg, length=length)
 
         if dmp is None or dmn is None:
             return None
