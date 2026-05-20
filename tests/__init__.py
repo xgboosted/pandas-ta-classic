@@ -10,6 +10,8 @@ fixture files (which should be committed to the repo) will be used
 as-is.
 """
 
+import contextlib
+import io
 import sys
 from pathlib import Path
 
@@ -26,5 +28,8 @@ else:
     from tests.fixtures.generate_fixtures import generate as _gen_fixtures
     from tests.fixtures.generate_regression_snapshots import generate as _gen_snapshots
 
-    _gen_fixtures()
-    _gen_snapshots()
+    _null = io.StringIO()
+    with contextlib.redirect_stdout(_null), contextlib.redirect_stderr(_null):
+        _gen_fixtures()
+        _gen_snapshots()
+    print("[fixtures] regenerated expected_values.json + regression_snapshots.json")
