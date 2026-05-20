@@ -2,7 +2,7 @@
 # T3 (T3)
 from typing import Any, Optional
 from pandas import Series
-from .ema import ema
+from .ema import ema, _ema_chain
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -37,34 +37,10 @@ def t3(
         c3 = -6 * a**2 - 3 * a - 3 * a**3
         c4 = a**3 + 3 * a**2 + 3 * a + 1
 
-        e1 = ema(close=close, length=length, talib=False, **kwargs)
-        if e1 is None:
+        emas = _ema_chain(close, length, 6, **kwargs)
+        if emas is None or len(emas) < 6:
             return None
-        e2 = ema(
-            close=e1.loc[e1.first_valid_index() :], length=length, talib=False, **kwargs
-        )
-        if e2 is None:
-            return None
-        e3 = ema(
-            close=e2.loc[e2.first_valid_index() :], length=length, talib=False, **kwargs
-        )
-        if e3 is None:
-            return None
-        e4 = ema(
-            close=e3.loc[e3.first_valid_index() :], length=length, talib=False, **kwargs
-        )
-        if e4 is None:
-            return None
-        e5 = ema(
-            close=e4.loc[e4.first_valid_index() :], length=length, talib=False, **kwargs
-        )
-        if e5 is None:
-            return None
-        e6 = ema(
-            close=e5.loc[e5.first_valid_index() :], length=length, talib=False, **kwargs
-        )
-        if e6 is None:
-            return None
+        _, _, e3, e4, e5, e6 = emas
         t3 = c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
 
     # Offset

@@ -11,6 +11,15 @@ npNaN = np.nan
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
+# TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
+_TALIB_DISPATCH = {
+    (True, False, False, False): ("talib", "LINEARREG_ANGLE"),
+    (False, True, False, False): ("talib", "LINEARREG_INTERCEPT"),
+    (False, False, True, False): ("talib", "LINEARREG_SLOPE"),
+    (False, False, False, True): ("talib", "TSF"),
+    (False, False, False, False): ("talib", "LINEARREG"),
+}
+
 
 def _linreg_output(
     windows,
@@ -97,34 +106,24 @@ def linreg(
     if close is None:
         return None
 
-    # talib path: not available for r (no equivalent) or angle-in-radians
+    # TA-Lib dispatch (not available for `r` or angle-in-radians).
     _use_talib = (
         Imports["talib"] and mode_talib and not r and not (angle and not degrees)
     )
     if _use_talib:
         _close_arr = npArray(close, dtype=float)
-        if angle:
-            from talib import LINEARREG_ANGLE
+        _talib_fn = _TALIB_DISPATCH.get((angle, intercept, slope, tsf))
+        if _talib_fn is not None:
+            from importlib import import_module
 
-            _talib_out = LINEARREG_ANGLE(_close_arr, timeperiod=length)
-        elif intercept:
-            from talib import LINEARREG_INTERCEPT
-
-            _talib_out = LINEARREG_INTERCEPT(_close_arr, timeperiod=length)
-        elif slope:
-            from talib import LINEARREG_SLOPE
-
-            _talib_out = LINEARREG_SLOPE(_close_arr, timeperiod=length)
-        elif tsf:
-            from talib import TSF
-
-            _talib_out = TSF(_close_arr, timeperiod=length)
+            mod_name, fn_name = _talib_fn
+            mod = import_module(mod_name)
+            _talib_out = getattr(mod, fn_name)(_close_arr, timeperiod=length)
+            linreg = Series(np.array(_talib_out, dtype=float), index=close.index)
         else:
-            from talib import LINEARREG
+            _use_talib = False  # fall through to native
 
-            _talib_out = LINEARREG(_close_arr, timeperiod=length)
-        linreg = Series(np.array(_talib_out, dtype=float), index=close.index)
-    else:
+    if not _use_talib:
         # Calculate Result — fully vectorised OLS over all windows at once.
         # x = [0, 1, ..., L-1] matches TA-Lib convention; precompute scalar sums.
         x_arr = np.arange(length, dtype=float)

@@ -66,12 +66,19 @@ def adx(
         neg = neg.apply(zero)
 
         k = scalar / atr_
-        _dmp_ma = ma(mamode, pos, length=length)
-        if _dmp_ma is None:
-            return None
-        _dmn_ma = ma(mamode, neg, length=length)
-        if _dmn_ma is None:
-            return None
+        if mamode == "rma":
+            # Use Wilder cumsum smoothing to match TA-Lib's ADX.
+            from pandas_ta_classic.utils._wilder import wilder_smooth
+
+            _dmp_ma = wilder_smooth(pos, length)
+            _dmn_ma = wilder_smooth(neg, length)
+        else:
+            _dmp_ma = ma(mamode, pos, length=length)
+            if _dmp_ma is None:
+                return None
+            _dmn_ma = ma(mamode, neg, length=length)
+            if _dmn_ma is None:
+                return None
         dmp = k * _dmp_ma
         dmn = k * _dmn_ma
 

@@ -2,7 +2,7 @@
 # Triple Exponential Moving Average (TEMA)
 from typing import Any, Optional
 from pandas import Series
-from .ema import ema
+from .ema import ema, _ema_chain
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -30,25 +30,10 @@ def tema(
 
         tema = TEMA(close, length)
     else:
-        ema1 = ema(close=close, length=length, talib=False, **kwargs)
-        if ema1 is None:
+        emas = _ema_chain(close, length, 3, **kwargs)
+        if emas is None or len(emas) < 3:
             return None
-        ema2 = ema(
-            close=ema1.loc[ema1.first_valid_index() :],
-            length=length,
-            talib=False,
-            **kwargs,
-        )
-        if ema2 is None:
-            return None
-        ema3 = ema(
-            close=ema2.loc[ema2.first_valid_index() :],
-            length=length,
-            talib=False,
-            **kwargs,
-        )
-        if ema3 is None:
-            return None
+        ema1, ema2, ema3 = emas[0], emas[1], emas[2]
         tema = 3 * (ema1 - ema2) + ema3
 
     # Offset

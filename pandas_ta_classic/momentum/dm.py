@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Directional Movement (DM)
 from typing import Any, Optional
-import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
@@ -54,26 +53,12 @@ def dm(
         neg_ = neg_.apply(zero)
 
         if mamode == "rma":
-            # TA-Lib PLUS_DM/MINUS_DM: Wilder cumsum seeding.
-            # Seed = sum(raw[1..length-1]), stored at index length-1.
-            # Wilder updates applied from bar `length` onward.
-            pos_raw = pos_.to_numpy(dtype=float)
-            neg_raw = neg_.to_numpy(dtype=float)
-            n = len(pos_raw)
-            pos_arr = np.full(n, np.nan)
-            neg_arr = np.full(n, np.nan)
-            if n >= length:
-                pos14 = float(pos_raw[1:length].sum())
-                neg14 = float(neg_raw[1:length].sum())
-                pos_arr[length - 1] = pos14
-                neg_arr[length - 1] = neg14
-                for idx in range(length, n):
-                    pos14 = pos14 - pos14 / length + pos_raw[idx]
-                    neg14 = neg14 - neg14 / length + neg_raw[idx]
-                    pos_arr[idx] = pos14
-                    neg_arr[idx] = neg14
-            pos = Series(pos_arr, index=pos_.index)
-            neg = Series(neg_arr, index=neg_.index)
+            # TA-Lib PLUS_DM/MINUS_DM: Wilder cumsum seeding —
+            # delegated to the shared wilder_smooth utility.
+            from pandas_ta_classic.utils._wilder import wilder_smooth
+
+            pos = wilder_smooth(pos_, length)
+            neg = wilder_smooth(neg_, length)
         else:
             pos = ma(mamode, pos_, length=length)
             if pos is None:
@@ -121,11 +106,11 @@ Calculation:
         pos_ = pos_.apply(zero)
         neg_ = neg_.apply(zero)
 
-        # For RMA (default), multiply by length to get the Wilder-smoothed sum
-        # matching TA-Lib. Other MA modes are returned as-is.
+        # For RMA (default), Wilder cumsum smoothing is used to match TA-Lib.
+        # Other MA modes are applied via the standard MA pipeline.
         if mamode == "rma":
-            pos = ma(mamode, pos_, length=length) * length
-            neg = ma(mamode, neg_, length=length) * length
+            pos = wilder_smooth(pos_, length)
+            neg = wilder_smooth(neg_, length)
         else:
             pos = ma(mamode, pos_, length=length)
             neg = ma(mamode, neg_, length=length)
@@ -135,7 +120,7 @@ Args:
     low (pd.Series): Series of 'low's
     mamode (str): See ```help(ta.ma)```.  Default: 'rma'
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
