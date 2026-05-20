@@ -6,12 +6,11 @@ from unittest import TestCase
 from pandas import DataFrame, Series
 
 try:
-    import talib as tal
+    import talib
 
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
-    tal = None
 
 
 class TestVolatility(TestCase):
@@ -100,7 +99,7 @@ class TestVolatility(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.ATR(self.high, self.low, self.close),
+                talib.ATR(self.high, self.low, self.close),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -116,7 +115,7 @@ class TestVolatility(TestCase):
     def test_bbands(self):
         result = pandas_ta.bbands(self.close, talib=False)
         if HAS_TALIB:
-            bbu, bbm, bbl = tal.BBANDS(self.close)
+            bbu, bbm, bbl = talib.BBANDS(self.close)
             expecteddf = DataFrame(
                 {"BBL_5_2.0": bbl, "BBM_5_2.0": bbm, "BBU_5_2.0": bbu}
             )
@@ -219,7 +218,7 @@ class TestVolatility(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.NATR(self.high, self.low, self.close),
+                talib.NATR(self.high, self.low, self.close),
                 # Native NATR uses EMA (default mamode='ema') while TA-Lib
                 # NATR uses RMA; correlation is high but not ≥0.99.
                 correlation_threshold=0.98,
@@ -287,7 +286,7 @@ class TestVolatility(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.TRANGE(self.high, self.low, self.close),
+                talib.TRANGE(self.high, self.low, self.close),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(

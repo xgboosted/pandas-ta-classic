@@ -6,12 +6,11 @@ from unittest import TestCase
 from pandas import DataFrame, Series
 
 try:
-    import talib as tal
+    import talib
 
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
-    tal = None
 
 
 class TestTrend(TestCase):
@@ -48,7 +47,7 @@ class TestTrend(TestCase):
             assert_talib(
                 self,
                 result.iloc[:, 0],
-                tal.ADX(self.high, self.low, self.close),
+                talib.ADX(self.high, self.low, self.close),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -90,7 +89,7 @@ class TestTrend(TestCase):
     def test_aroon(self):
         result = pandas_ta.aroon(self.high, self.low, talib=False)
         if HAS_TALIB:
-            aroond, aroonu = tal.AROON(self.high, self.low)
+            aroond, aroonu = talib.AROON(self.high, self.low)
             expecteddf = DataFrame({"AROOND_14": aroond, "AROONU_14": aroonu})
             assert_talib(self, result, expecteddf, correlation_threshold=0.99)
         assert_indicator_standard(
@@ -110,7 +109,7 @@ class TestTrend(TestCase):
             assert_talib(
                 self,
                 result.iloc[:, 2],
-                tal.AROONOSC(self.high, self.low),
+                talib.AROONOSC(self.high, self.low),
                 correlation_threshold=0.99,
             )
 
@@ -623,7 +622,7 @@ class TestTrend(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.DX(self.high, self.low, self.close),
+                talib.DX(self.high, self.low, self.close),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -641,7 +640,7 @@ class TestTrend(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.MINUS_DM(self.high, self.low),
+                talib.MINUS_DM(self.high, self.low),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -659,7 +658,7 @@ class TestTrend(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.PLUS_DM(self.high, self.low),
+                talib.PLUS_DM(self.high, self.low),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -683,7 +682,7 @@ class TestTrend(TestCase):
             assert_talib(
                 self,
                 psar_combined,
-                tal.SAR(self.high, self.low),
+                talib.SAR(self.high, self.low),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
