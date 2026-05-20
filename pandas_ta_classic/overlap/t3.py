@@ -2,7 +2,7 @@
 # T3 (T3)
 from typing import Any, Optional
 from pandas import Series
-from .ema import ema, _ema_chain
+from .ema import _ema_chain
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
