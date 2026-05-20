@@ -74,7 +74,7 @@ def _cpr_build_dataframe(
 
 
 def cpr(
-    open: Series,
+    open: Series,  # noqa: A002
     high: Series,
     low: Series,
     close: Series,

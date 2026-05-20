@@ -118,7 +118,7 @@ def log_max_drawdown(close: Series) -> float:
 
 
 def max_drawdown(
-    close: Series, method: Optional[str] = None, all: bool = False
+    close: Series, method: Optional[str] = None, all: bool = False  # noqa: A002
 ) -> Union[float, Dict[str, float]]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
@@ -144,7 +144,7 @@ def max_drawdown(
     if all:
         return max_dd_
 
-    if isinstance(method, str) and method in max_dd_.keys():
+    if isinstance(method, str) and method in max_dd_:
         return max_dd_[method]
     return max_dd_["dollar"]
 

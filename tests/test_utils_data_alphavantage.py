@@ -106,13 +106,15 @@ class TestAlphaVantageIntegration(TestCase):
         return calls, monthly_patch, intraday_patch
 
     def test_av_supports_alpha_vantage_package(self):
-        with self._install_alpha_vantage_mock():
-            with patch.dict(av_module.Imports, {"alpha-vantage": True}, clear=False):
-                result = av_module.av(
-                    "spy",
-                    interval="D",
-                    av_kwargs={"api_key": "test-key", "output_size": "full"},
-                )
+        with (
+            self._install_alpha_vantage_mock(),
+            patch.dict(av_module.Imports, {"alpha-vantage": True}, clear=False),
+        ):
+            result = av_module.av(
+                "spy",
+                interval="D",
+                av_kwargs={"api_key": "test-key", "output_size": "full"},
+            )
 
         self.assertIsInstance(result, DataFrame)
         self.assertFalse(result.empty)
@@ -123,15 +125,17 @@ class TestAlphaVantageIntegration(TestCase):
         self.assertTrue(result.index.is_monotonic_increasing)
 
     def test_av_1m_uses_intraday_not_monthly(self):
-        with self._install_alpha_vantage_mock():
-            with patch.dict(av_module.Imports, {"alpha-vantage": True}, clear=False):
-                calls, monthly_patch, intraday_patch = self._spy_monthly_and_intraday()
-                with monthly_patch, intraday_patch:
-                    result = av_module.av(
-                        "spy",
-                        interval="1m",
-                        av_kwargs={"api_key": "test-key", "output_size": "compact"},
-                    )
+        with (
+            self._install_alpha_vantage_mock(),
+            patch.dict(av_module.Imports, {"alpha-vantage": True}, clear=False),
+        ):
+            calls, monthly_patch, intraday_patch = self._spy_monthly_and_intraday()
+            with monthly_patch, intraday_patch:
+                result = av_module.av(
+                    "spy",
+                    interval="1m",
+                    av_kwargs={"api_key": "test-key", "output_size": "compact"},
+                )
 
         self.assertIsInstance(result, DataFrame)
         self.assertFalse(result.empty)
@@ -141,15 +145,17 @@ class TestAlphaVantageIntegration(TestCase):
         self.assertEqual(calls["intraday"], 1)
 
     def test_av_monthly_alias_uses_monthly_endpoint(self):
-        with self._install_alpha_vantage_mock():
-            with patch.dict(av_module.Imports, {"alpha-vantage": True}, clear=False):
-                calls, monthly_patch, intraday_patch = self._spy_monthly_and_intraday()
-                with monthly_patch, intraday_patch:
-                    result = av_module.av(
-                        "spy",
-                        interval="monthly",
-                        av_kwargs={"api_key": "test-key", "output_size": "full"},
-                    )
+        with (
+            self._install_alpha_vantage_mock(),
+            patch.dict(av_module.Imports, {"alpha-vantage": True}, clear=False),
+        ):
+            calls, monthly_patch, intraday_patch = self._spy_monthly_and_intraday()
+            with monthly_patch, intraday_patch:
+                result = av_module.av(
+                    "spy",
+                    interval="monthly",
+                    av_kwargs={"api_key": "test-key", "output_size": "full"},
+                )
 
         self.assertIsInstance(result, DataFrame)
         self.assertFalse(result.empty)

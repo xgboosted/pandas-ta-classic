@@ -78,10 +78,7 @@ class _NativeBase(TestCase):
     def _assert_valid(self, result, label: str, *, col: int = 0) -> None:
         """Assert result is not None and has at least one finite value."""
         self.assertIsNotNone(result, f"{label}: returned None")
-        if isinstance(result, pd.DataFrame):
-            series = result.iloc[:, col]
-        else:
-            series = result
+        series = result.iloc[:, col] if isinstance(result, pd.DataFrame) else result
         valid = series.dropna()
         self.assertFalse(valid.empty, f"{label}: all-NaN result")
         last = float(valid.iloc[-1])
@@ -94,10 +91,7 @@ class _NativeBase(TestCase):
     ) -> None:
         """Assert every valid value in *result* lies within [lo, hi]."""
         self._assert_valid(result, label, col=col)
-        if isinstance(result, pd.DataFrame):
-            series = result.iloc[:, col]
-        else:
-            series = result
+        series = result.iloc[:, col] if isinstance(result, pd.DataFrame) else result
         valid = series.dropna()
         out_of_range = valid[(valid < lo) | (valid > hi)]
         self.assertTrue(
@@ -108,10 +102,7 @@ class _NativeBase(TestCase):
 
     def _assert_col_name(self, result, expected_name: str, label: str) -> None:
         """Assert the Series name or first column name equals expected_name."""
-        if isinstance(result, pd.DataFrame):
-            actual = result.columns[0]
-        else:
-            actual = result.name
+        actual = result.columns[0] if isinstance(result, pd.DataFrame) else result.name
         self.assertEqual(actual, expected_name, f"{label}: column name mismatch")
 
     def _assert_has_columns(self, result, expected_cols: list[str], label: str) -> None:

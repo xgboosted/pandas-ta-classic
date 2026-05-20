@@ -382,7 +382,7 @@ class AnalysisIndicators(BasePandasObject):
     @exchange.setter
     def exchange(self, value: str) -> None:
         """property: df.ta.exchange = "LSE" """
-        if value is not None and isinstance(value, str) and value in EXCHANGE_TZ.keys():
+        if value is not None and isinstance(value, str) and value in EXCHANGE_TZ:
             self._exchange = value
 
     @property
@@ -640,7 +640,7 @@ class AnalysisIndicators(BasePandasObject):
             Returns nothing to the user.  Either adds or removes constant ranges
             from the working DataFrame.
         """
-        if isinstance(values, npNdarray) or isinstance(values, list):
+        if isinstance(values, (npNdarray, list)):
             if append:
                 for x in values:
                     self._df[f"{x}"] = x
@@ -817,7 +817,7 @@ class AnalysisIndicators(BasePandasObject):
 
         timed = kwargs.pop("timed", False)
         results: Any = []
-        use_multiprocessing = True if self.cores > 0 else False
+        use_multiprocessing = self.cores > 0
         has_col_names = False
 
         if timed:
@@ -825,16 +825,14 @@ class AnalysisIndicators(BasePandasObject):
 
         if use_multiprocessing and mode["custom"]:
             # Determine if the Custom Model has 'col_names' parameter
-            has_col_names = (
-                True
-                if len(
+            has_col_names = bool(
+                len(
                     [
                         True
                         for x in ta
                         if "col_names" in x and isinstance(x["col_names"], tuple)
                     ]
                 )
-                else False
             )
 
             if has_col_names:

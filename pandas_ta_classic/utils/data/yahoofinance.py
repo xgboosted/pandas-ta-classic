@@ -157,7 +157,7 @@ def yf(ticker: str, **kwargs):
                         f"{ticker_info['state']} {ticker_info['zip']}, {ticker_info['country']}"
                     )
                 print(
-                    f"Phone (Fax): {ticker_info['phone']} ({ticker_info['fax'] if 'fax' in ticker_info else 'N/A'})"
+                    f"Phone (Fax): {ticker_info['phone']} ({ticker_info.get('fax', 'N/A')})"
                 )
 
             if "website" in ticker_info and len(ticker_info["website"]):

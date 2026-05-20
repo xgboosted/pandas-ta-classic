@@ -32,10 +32,7 @@ def _rsx_loop(c_arr, length, m):
             f18 = 3.0 / (length + 2.0)
             f20 = 1.0 - f18
         else:
-            if f88 <= f90:
-                f90 = f88 + 1
-            else:
-                f90 = f90 + 1
+            f90 = f88 + 1 if f88 <= f90 else f90 + 1
             f10 = f8
             f8 = 100.0 * c_arr[i]
             v8 = f8 - f10

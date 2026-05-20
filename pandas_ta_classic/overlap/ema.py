@@ -40,10 +40,7 @@ def ema(
             # computed from exactly `length` consecutive valid values — matching
             # TA-Lib's EMA lookback behaviour for chained/lagged inputs.
             first_valid = close.first_valid_index()
-            if first_valid is None:
-                fv_pos = None  # fall through to ewm; result will be all-NaN
-            else:
-                fv_pos = close.index.get_loc(first_valid)
+            fv_pos = None if first_valid is None else close.index.get_loc(first_valid)
             if fv_pos is not None:
                 sma_nth = close.iloc[fv_pos : fv_pos + length].mean()
                 close.iloc[: fv_pos + length - 1] = npNaN
