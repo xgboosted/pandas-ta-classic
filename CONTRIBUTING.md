@@ -99,6 +99,15 @@ pytest
 # Run specific test file with pytest
 pytest tests/test_indicator_momentum.py
 
+# Run property-based tests (Hypothesis)
+pytest tests/test_property_based.py -v
+
+# Show Hypothesis input distribution statistics
+pytest tests/test_property_based.py -v --hypothesis-show-statistics
+
+# Use CI-optimized profile (more examples, longer deadline)
+pytest tests/test_property_based.py -v --hypothesis-profile=ci
+
 # Run with coverage
 pytest --cov=pandas_ta_classic --cov-report=html
 ```
@@ -106,10 +115,13 @@ pytest --cov=pandas_ta_classic --cov-report=html
 #### Writing Tests
 - Use descriptive test names
 - Test both normal and edge cases
-- Include property-based tests for complex functions
+- Include property-based tests for complex functions (see `tests/test_property_based.py` for examples)
 - Add performance tests for critical functions
 
 #### Test Structure
+
+Traditional unit test pattern:
+
 ```python
 def test_indicator_name():
  """Test indicator_name with normal inputs."""
@@ -123,6 +135,24 @@ def test_indicator_name():
  assert result is not None
  assert len(result) == len(data)
 ```
+
+Property-based test pattern (Hypothesis):
+
+```python
+from hypothesis import assume, given, settings
+
+@given(price_series(min_size=30, max_size=200), _small_positive_int)
+@settings(max_examples=100)
+def test_my_indicator_invariant(s, length):
+    """Output invariants must hold across all valid inputs."""
+    assume(len(s) >= length + 2)
+    result = ta.my_indicator(s, length=length)
+    assert isinstance(result, pd.Series)
+    assert len(result) == len(s)
+    assert str(length) in result.name
+```
+
+See ``tests/test_property_based.py`` and ``docs/testing.rst`` for the full strategy catalog.
 
 ### 3. Documentation
 

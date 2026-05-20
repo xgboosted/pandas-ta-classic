@@ -67,6 +67,7 @@ Table of Contents
    :maxdepth: 2
    :caption: Additional Resources:
 
+   testing
    GitHub Repository <https://github.com/xgboosted/pandas-ta-classic>
    Examples <https://github.com/xgboosted/pandas-ta-classic/tree/main/examples>
    Changelog <https://github.com/xgboosted/pandas-ta-classic/blob/main/CHANGELOG.md>
