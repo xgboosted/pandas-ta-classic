@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Arnaud Legoux Moving Average (ALMA)
 from typing import Any, Optional
 import numpy as np

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Jurik Moving Average (JMA)
 from typing import Any, Optional, Union
 import numpy as np

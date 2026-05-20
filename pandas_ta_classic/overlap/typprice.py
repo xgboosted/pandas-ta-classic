@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Typical Price (TYPPRICE)
 from typing import Any, Optional
 from pandas import Series

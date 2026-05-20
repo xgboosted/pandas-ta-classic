@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # MACD Extended (MACDEXT)
 import warnings
 from typing import Any, Optional

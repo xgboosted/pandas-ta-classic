@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Candle Pattern (CDL_PATTERN)
 import importlib
 import logging

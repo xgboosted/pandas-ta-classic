@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Pretty Good Oscillator (PGO)
 from typing import Any, Optional
 from pandas import Series

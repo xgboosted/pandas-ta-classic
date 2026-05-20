@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # MESA Adaptive Moving Average (MAMA)
 from typing import Any, Optional, Tuple
 import numpy as np
@@ -11,7 +10,7 @@ def _mama_loop(
     m: int,
     fastlimit: float,
     slowlimit: float,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """MAMA / FAMA with inline Hilbert Transform (TA-Lib exact)."""
     mama_out = np.full(m, np.nan)
     fama_out = np.full(m, np.nan)

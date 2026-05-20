@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # from numpy import sqrt as npsqrt
 from typing import Any, Optional
 from pandas import DataFrame, Series

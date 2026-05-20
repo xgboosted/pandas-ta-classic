@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Negative Volume Index (NVI)
 from typing import Any, Optional
 from pandas import Series

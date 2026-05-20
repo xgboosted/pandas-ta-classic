@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from copy import copy
 from dataclasses import dataclass, field
@@ -54,9 +53,9 @@ from pandas_ta_classic.math import (
 
 # TA-Lib-compatible aliases for rolling operators (avoid shadowing Python builtins
 # in this module; users access them as ta.rolling_max / ta.max etc.)
-rolling_max = rolling_max  # noqa: F811
-rolling_min = rolling_min  # noqa: F811
-rolling_sum = rolling_sum  # noqa: F811
+rolling_max = rolling_max
+rolling_min = rolling_min
+rolling_sum = rolling_sum
 from pandas_ta_classic.momentum import *
 from pandas_ta_classic.overlap import *
 from pandas_ta_classic.performance import *
@@ -93,7 +92,7 @@ class Strategy:
     """
 
     name: str  # = None # Required.
-    ta: List = field(default_factory=list)  # Required.
+    ta: list = field(default_factory=list)  # Required.
     # Helpful. More descriptive version or notes or w/e.
     description: str = "TA Description"
     # Optional. Gets Exchange Time and Local Time execution time
@@ -307,7 +306,7 @@ class AnalysisIndicators(BasePandasObject):
         self._last_run = get_time(self._exchange, to_string=True)
 
     @staticmethod
-    def _validate(obj: Tuple[pd.DataFrame, pd.Series]):
+    def _validate(obj: tuple[pd.DataFrame, pd.Series]):
         if not isinstance(obj, pd.DataFrame) and not isinstance(obj, pd.Series):
             raise AttributeError("[X] Must be either a Pandas Series or DataFrame.")
 
@@ -340,8 +339,7 @@ class AnalysisIndicators(BasePandasObject):
                     logger.info(f"{kind}: {result.timed}")
 
                 return result
-            else:
-                self.help()
+            self.help()
 
         except BaseException:
             pass
@@ -392,7 +390,7 @@ class AnalysisIndicators(BasePandasObject):
 
     # Public Get DataFrame Properties
     @property
-    def categories(self) -> List[str]:
+    def categories(self) -> list[str]:
         """Returns the categories."""
         return list(Category.keys())
 
@@ -469,19 +467,18 @@ class AnalysisIndicators(BasePandasObject):
         """Add prefix and/or suffix to the result columns"""
         if result is None:
             return
+        prefix = suffix = ""
+        delimiter = kwargs.setdefault("delimiter", "_")
+
+        if "prefix" in kwargs:
+            prefix = f"{kwargs['prefix']}{delimiter}"
+        if "suffix" in kwargs:
+            suffix = f"{delimiter}{kwargs['suffix']}"
+
+        if isinstance(result, pd.Series):
+            result.name = prefix + result.name + suffix
         else:
-            prefix = suffix = ""
-            delimiter = kwargs.setdefault("delimiter", "_")
-
-            if "prefix" in kwargs:
-                prefix = f"{kwargs['prefix']}{delimiter}"
-            if "suffix" in kwargs:
-                suffix = f"{delimiter}{kwargs['suffix']}"
-
-            if isinstance(result, pd.Series):
-                result.name = prefix + result.name + suffix
-            else:
-                result.columns = [prefix + column + suffix for column in result.columns]
+            result.columns = [prefix + column + suffix for column in result.columns]
 
     def _append(self, result=None, **kwargs) -> None:
         """Appends a Pandas Series or DataFrame columns to self._df."""
@@ -517,25 +514,24 @@ class AnalysisIndicators(BasePandasObject):
         if isinstance(series, pd.Series):
             return series
         # Apply default if no series nor a default.
-        elif series is None:
+        if series is None:
             return df[self.adjusted] if self.adjusted is not None else None
         # Ok.  So it's a str.
-        elif isinstance(series, str):
+        if isinstance(series, str):
             # Return the df column since it's in there.
             if series in df.columns:
                 return df[series]
-            else:
-                # Attempt to match the 'series' because it was likely
-                # misspelled.
-                matches = df.columns.str.match(series, case=False)
-                match = [i for i, x in enumerate(matches) if x]
-                if len(match):
-                    return df.iloc[:, match[0]]
-                cols = ", ".join(list(df.columns))
-                logger.warning(
-                    f"[X] Column '{series}' not found." f" Available columns: {cols}"
-                )
-                return None
+            # Attempt to match the 'series' because it was likely
+            # misspelled.
+            matches = df.columns.str.match(series, case=False)
+            match = [i for i, x in enumerate(matches) if x]
+            if len(match):
+                return df.iloc[:, match[0]]
+            cols = ", ".join(list(df.columns))
+            logger.warning(
+                f"[X] Column '{series}' not found." f" Available columns: {cols}"
+            )
+            return None
 
     def _indicators_by_category(self, name: str) -> Optional[list]:
         """Returns indicators by Categorical name."""
@@ -547,10 +543,9 @@ class AnalysisIndicators(BasePandasObject):
 
         if method != "ichimoku":
             return getattr(self, method)(*args, **kwargs)
-        else:
-            return getattr(self, method)(*args, **kwargs)[0]
+        return getattr(self, method)(*args, **kwargs)[0]
 
-    def _post_process(self, result, **kwargs) -> Tuple[pd.Series, pd.DataFrame]:
+    def _post_process(self, result, **kwargs) -> tuple[pd.Series, pd.DataFrame]:
         """Applies any additional modifications to the DataFrame
         * Applies prefixes and/or suffixes
         * Appends the result to main DataFrame
@@ -563,22 +558,21 @@ class AnalysisIndicators(BasePandasObject):
             if verbose:
                 logger.error("The result was not a Series or DataFrame.")
             return self._df if chain_mode else self._df
-        else:
-            # Append only specific columns to the dataframe (via
-            # 'col_numbers':(0,1,3) for example)
-            result = (
-                result.iloc[:, [int(n) for n in kwargs["col_numbers"]]]
-                if isinstance(result, pd.DataFrame)
-                and "col_numbers" in kwargs
-                and kwargs["col_numbers"] is not None
-                else result
-            )
-            # Add prefix/suffix and append to the dataframe
-            self._add_prefix_suffix(result=result, **kwargs)
-            # In chain mode, auto-append results to the DataFrame
-            if chain_mode:
-                kwargs["append"] = self._df.attrs.get("_ta_chain_append", True)
-            self._append(result=result, **kwargs)
+        # Append only specific columns to the dataframe (via
+        # 'col_numbers':(0,1,3) for example)
+        result = (
+            result.iloc[:, [int(n) for n in kwargs["col_numbers"]]]
+            if isinstance(result, pd.DataFrame)
+            and "col_numbers" in kwargs
+            and kwargs["col_numbers"] is not None
+            else result
+        )
+        # Add prefix/suffix and append to the dataframe
+        self._add_prefix_suffix(result=result, **kwargs)
+        # In chain mode, auto-append results to the DataFrame
+        if chain_mode:
+            kwargs["append"] = self._df.attrs.get("_ta_chain_append", True)
+        self._append(result=result, **kwargs)
 
         # In chain mode, return the DataFrame (which has .ta) for fluent chaining
         if chain_mode:
@@ -645,9 +639,8 @@ class AnalysisIndicators(BasePandasObject):
                 for x in values:
                     self._df[f"{x}"] = x
                 return self._df[self._df.columns[-len(values) :]]
-            else:
-                for x in values:
-                    del self._df[f"{x}"]
+            for x in values:
+                del self._df[f"{x}"]
 
     def indicators(self, **kwargs):
         """List of Indicators
@@ -686,13 +679,11 @@ class AnalysisIndicators(BasePandasObject):
         ]
 
         # Public non-indicator methods
-        ta_indicators = list(
-            (
-                x
-                for x in dir(pd.DataFrame().ta)
-                if not x.startswith("_") and not x.endswith("_")
-            )
-        )
+        ta_indicators = [
+            x
+            for x in dir(pd.DataFrame().ta)
+            if not x.startswith("_") and not x.endswith("_")
+        ]
 
         # Add Pandas TA methods and properties to be removed
         removed = helper_methods + ta_properties
@@ -886,7 +877,7 @@ class AnalysisIndicators(BasePandasObject):
                     # Custom multiprocessing pool. Must be ordered for Chained Strategies
                     results = pool.imap(slim._mp_worker, custom_ta, _chunksize)
                 else:
-                    default_ta: list = [(ind, tuple(), kwargs) for ind in ta]
+                    default_ta: list = [(ind, (), kwargs) for ind in ta]
                     # All and Categorical multiprocessing pool.
                     if all_ordered:
                         if Imports["tqdm"] and verbose:
@@ -940,7 +931,7 @@ class AnalysisIndicators(BasePandasObject):
                         params = (
                             ind["params"]
                             if "params" in ind and isinstance(ind["params"], tuple)
-                            else tuple()
+                            else ()
                         )
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
                 else:
@@ -948,17 +939,17 @@ class AnalysisIndicators(BasePandasObject):
                         params = (
                             ind["params"]
                             if "params" in ind and isinstance(ind["params"], tuple)
-                            else tuple()
+                            else ()
                         )
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
             else:
                 if Imports["tqdm"] and verbose:
                     pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
-                        getattr(self, ind)(*tuple(), **kwargs)
+                        getattr(self, ind)(*(), **kwargs)
                 else:
                     for ind in ta:
-                        getattr(self, ind)(*tuple(), **kwargs)
+                        getattr(self, ind)(*(), **kwargs)
                 self._last_run = get_time(self.exchange, to_string=True)
 
         if verbose:
@@ -1024,14 +1015,13 @@ class AnalysisIndicators(BasePandasObject):
 
         if df is None:
             return
-        elif df.empty:
+        if df.empty:
             logger.error(f"DataFrame is empty: {df.shape}")
             return
-        else:
-            if kwargs.pop("lc_cols", False):
-                df.index.name = df.index.name.lower()
-                df.columns = df.columns.str.lower()
-            self._df = df
+        if kwargs.pop("lc_cols", False):
+            df.index.name = df.index.name.lower()
+            df.columns = df.columns.str.lower()
+        self._df = df
 
         if strategy is not None:
             self.strategy(strategy, **kwargs)
@@ -2681,11 +2671,8 @@ class AnalysisIndicators(BasePandasObject):
     def long_run(self, fast=None, slow=None, length=None, offset=None, **kwargs):
         if fast is None and slow is None:
             return self._df
-        else:
-            result = long_run(
-                fast=fast, slow=slow, length=length, offset=offset, **kwargs
-            )
-            return self._post_process(result, **kwargs)
+        result = long_run(fast=fast, slow=slow, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
 
     def psar(self, af0=None, af=None, max_af=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
@@ -2786,11 +2773,8 @@ class AnalysisIndicators(BasePandasObject):
     def short_run(self, fast=None, slow=None, length=None, offset=None, **kwargs):
         if fast is None and slow is None:
             return self._df
-        else:
-            result = short_run(
-                fast=fast, slow=slow, length=length, offset=offset, **kwargs
-            )
-            return self._post_process(result, **kwargs)
+        result = short_run(fast=fast, slow=slow, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
 
     def tsignals(
         self,
@@ -2803,16 +2787,15 @@ class AnalysisIndicators(BasePandasObject):
     ):
         if trend is None:
             return self._df
-        else:
-            result = tsignals(
-                trend,
-                asbool=asbool,
-                trend_offset=trend_offset,
-                trend_reset=trend_reset,
-                offset=offset,
-                **kwargs,
-            )
-            return self._post_process(result, **kwargs)
+        result = tsignals(
+            trend,
+            asbool=asbool,
+            trend_offset=trend_offset,
+            trend_reset=trend_reset,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
 
     def ttm_trend(self, length=None, offset=None, **kwargs):
         high = self._get_column(kwargs.pop("high", "high"))
@@ -2868,20 +2851,19 @@ class AnalysisIndicators(BasePandasObject):
     ):
         if signal is None:
             return self._df
-        else:
-            result = xsignals(
-                signal=signal,
-                xa=xa,
-                xb=xb,
-                above=above,
-                long=long,
-                asbool=asbool,
-                trend_offset=trend_offset,
-                trend_reset=trend_reset,
-                offset=offset,
-                **kwargs,
-            )
-            return self._post_process(result, **kwargs)
+        result = xsignals(
+            signal=signal,
+            xa=xa,
+            xb=xb,
+            above=above,
+            long=long,
+            asbool=asbool,
+            trend_offset=trend_offset,
+            trend_reset=trend_reset,
+            offset=offset,
+            **kwargs,
+        )
+        return self._post_process(result, **kwargs)
 
     # Utility
     def above(self, asint=True, offset=None, **kwargs):

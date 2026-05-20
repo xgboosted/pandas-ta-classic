@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Trend Signals (TSIGNALS)
 from typing import Any, Optional
 from pandas import DataFrame, Series

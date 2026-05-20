@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .adx import adx
 from .adxr import adxr
 from .dx import dx

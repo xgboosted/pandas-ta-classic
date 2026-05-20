@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Squeeze Pro (SQUEEZE_PRO)
 from typing import Any, Optional
 import numpy as np

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Linear Regression Slope (LINEARREG_SLOPE)
 from typing import Any, Optional
 from pandas import Series
@@ -24,8 +23,7 @@ def linregslope(
     if close is None:
         return None
 
-    result = linreg(close, length=length, offset=offset, slope=True)
-    return result
+    return linreg(close, length=length, offset=offset, slope=True)
 
 
 linregslope.__doc__ = """Linear Regression Slope (LINEARREG_SLOPE)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # KDJ (KDJ)
 from typing import Any, Optional
 from pandas import DataFrame, Series

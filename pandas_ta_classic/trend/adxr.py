@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Average Directional Movement Index Rating (ADXR)
 from typing import Any, Optional
 from pandas import DataFrame, Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Short Run (SHORT_RUN)
 from typing import Any, Optional
 from pandas import Series

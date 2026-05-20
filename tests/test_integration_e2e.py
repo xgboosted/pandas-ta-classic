@@ -25,7 +25,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic import custom
 from pandas_ta_classic.core import AnalysisIndicators
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic  # noqa: F401 — registers df.ta accessor
+from tests.context import pandas_ta_classic
 
 # ---------------------------------------------------------------------------
 # 1. Indicator chaining via append=True

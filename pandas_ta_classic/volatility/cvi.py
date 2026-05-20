@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Chaikins Volatility (CVI)
 from typing import Any, Optional
 

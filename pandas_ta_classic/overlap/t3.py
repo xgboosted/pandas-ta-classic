@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # T3 (T3)
 from typing import Any, Optional
 from pandas import Series

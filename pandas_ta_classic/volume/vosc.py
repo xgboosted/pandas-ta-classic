@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Volume Oscillator (VOSC)
 from typing import Any, Optional
 

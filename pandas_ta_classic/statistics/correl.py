@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Pearson Correlation Coefficient (CORREL)
 from typing import Any, Optional
 from pandas import Series

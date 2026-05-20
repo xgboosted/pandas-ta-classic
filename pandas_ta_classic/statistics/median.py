@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Median (MEDIAN)
 from typing import Any, Optional
 

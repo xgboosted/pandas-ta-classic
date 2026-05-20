@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Quantile (QUANTILE)
 from typing import Any, Optional
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Elder Ray Index (ERI)
 from typing import Any, Optional
 from pandas import DataFrame, Series

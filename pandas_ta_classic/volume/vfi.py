@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Volume Flow Indicator (VFI)
 from typing import Any, Optional
 from pandas import Series

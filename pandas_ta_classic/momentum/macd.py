@@ -121,7 +121,7 @@ def macd(
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:
-        signalsdf = concat(
+        return concat(
             [
                 df,
                 signals(
@@ -150,9 +150,7 @@ def macd(
             axis=1,
         )
 
-        return signalsdf
-    else:
-        return df
+    return df
 
 
 macd.__doc__ = """Moving Average Convergence Divergence (MACD)

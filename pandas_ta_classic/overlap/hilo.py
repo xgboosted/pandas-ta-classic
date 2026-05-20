@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Gann High-Low Activator (HILO)
 from typing import Any, Optional
 import numpy as np

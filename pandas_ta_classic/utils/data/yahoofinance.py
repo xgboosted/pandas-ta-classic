@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from pandas import DataFrame
 from pandas_ta_classic import Imports, version
@@ -120,7 +119,7 @@ def yf(ticker: str, **kwargs):
         dividends, splits = yfd.splits, yfd.dividends
 
         _all, div = ["all"], "=" * 53  # Max div width is 80
-        if kind in _all + ["info"] or verbose:
+        if kind in [*_all, "info"] or verbose:
             description = kwargs.pop("desc", False)
             snd_length = kwargs.pop("snd", 5)
 
@@ -208,11 +207,8 @@ def yf(ticker: str, **kwargs):
                         40
                     ),
                 )
-            if (
-                "navPrice" in ticker_info
-                and ticker_info["navPrice"] is not None
-                or "yield" in ticker_info
-                and ticker_info["yield"] is not None
+            if ("navPrice" in ticker_info and ticker_info["navPrice"] is not None) or (
+                "yield" in ticker_info and ticker_info["yield"] is not None
             ):
                 print(
                     "NAV | Yield".ljust(39),
@@ -267,7 +263,8 @@ def yf(ticker: str, **kwargs):
             if (
                 "heldPercentInstitutions" in ticker_info
                 and ticker_info["heldPercentInstitutions"] is not None
-                or "heldPercentInsiders" in ticker_info
+            ) or (
+                "heldPercentInsiders" in ticker_info
                 and ticker_info["heldPercentInsiders"] is not None
             ):
                 print(
@@ -279,12 +276,12 @@ def yf(ticker: str, **kwargs):
 
             print()
             if (
-                "bookValue" in ticker_info
-                and ticker_info["bookValue"] is not None
-                or "priceToBook" in ticker_info
-                and ticker_info["priceToBook"] is not None
-                or "pegRatio" in ticker_info
-                and ticker_info["pegRatio"] is not None
+                ("bookValue" in ticker_info and ticker_info["bookValue"] is not None)
+                or (
+                    "priceToBook" in ticker_info
+                    and ticker_info["priceToBook"] is not None
+                )
+                or ("pegRatio" in ticker_info and ticker_info["pegRatio"] is not None)
             ):
                 print(
                     "Book Value | Price to Book | Peg Ratio".ljust(39),
@@ -295,10 +292,9 @@ def yf(ticker: str, **kwargs):
             if "forwardPE" in ticker_info and ticker_info["forwardPE"] is not None:
                 print("Forward PE".ljust(39), f"{ticker_info['forwardPE']}".rjust(40))
             if (
-                "forwardEps" in ticker_info
-                and ticker_info["forwardEps"] is not None
-                or "trailingEps" in ticker_info
-                and ticker_info["trailingEps"] is not None
+                "forwardEps" in ticker_info and ticker_info["forwardEps"] is not None
+            ) or (
+                "trailingEps" in ticker_info and ticker_info["trailingEps"] is not None
             ):
                 print(
                     "Forward EPS | Trailing EPS".ljust(39),
@@ -317,7 +313,8 @@ def yf(ticker: str, **kwargs):
             if (
                 "enterpriseToRevenue" in ticker_info
                 and ticker_info["enterpriseToRevenue"] is not None
-                or "enterpriseToEbitda" in ticker_info
+            ) or (
+                "enterpriseToEbitda" in ticker_info
                 and ticker_info["enterpriseToEbitda"] is not None
             ):
                 print(
@@ -540,7 +537,7 @@ def yf(ticker: str, **kwargs):
                     f"\nStock Splits (Last {snd_length} of {total_splits}):\n{splitsdf}"
                 )
 
-        if kind in _all + ["institutional_holders", "ih"]:
+        if kind in [*_all, "institutional_holders", "ih"]:
             ihdf = yfd.institutional_holders
             if ihdf is not None and "Date Reported" in ihdf.columns:
                 ihdf.set_index("Date Reported", inplace=True)
@@ -550,7 +547,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Instl. Holders       " + div + f"\n{ihdf}")
 
-        if kind in _all + ["major_holders", "mh"]:
+        if kind in [*_all, "major_holders", "mh"]:
             mhdf = yfd.major_holders
             if mhdf is not None and "Major Holders" in mhdf.columns:
                 mhdf.columns = ["Percentage", "Major Holders"]
@@ -561,7 +558,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Major Holders       " + div + f"\n{mhdf}")
 
-        if kind in _all + ["mutualfund_holders", "mfh"]:
+        if kind in [*_all, "mutualfund_holders", "mfh"]:
             mfhdf = yfd.get_mutualfund_holders()
             if mfhdf is not None and "Holder" in mfhdf.columns:
                 mfhdf.set_index("Date Reported", inplace=True)
@@ -571,7 +568,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Mutual Fund Holders  " + div + f"\n{mfhdf}")
 
-        if kind in _all + ["recommendations", "rec"]:
+        if kind in [*_all, "recommendations", "rec"]:
             recdf = yfd.recommendations
             if recdf is not None:
                 recdf = ytd(recdf)
@@ -581,7 +578,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Recommendation(YTD)  " + div + f"\n{recdf}")
 
-        if kind in _all + ["calendar", "cal"]:
+        if kind in [*_all, "calendar", "cal"]:
             caldf = yfd.calendar
             if caldf is not None and "Earnings Date" in caldf.columns:
                 caldf.set_index("Earnings Date", inplace=True)
@@ -589,7 +586,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Earnings Calendar    " + div + f"\n{caldf}")
 
-        if kind in _all + ["earnings", "earn"]:
+        if kind in [*_all, "earnings", "earn"]:
             earndf = yfd.earnings
             if not earndf.empty:
                 earndf["Revenue"] = earndf.apply(lambda x: f"{x['Revenue']:,}", axis=1)
@@ -600,7 +597,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Earnings             " + div + f"\n{earndf}")
 
-        if kind in _all + ["sustainability", "sus", "esg"]:
+        if kind in [*_all, "sustainability", "sus", "esg"]:
             susdf = yfd.sustainability
             if susdf is not None:
                 susdf.replace({None: False}, inplace=True)
@@ -612,7 +609,7 @@ def yf(ticker: str, **kwargs):
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Sustainability/ESG   " + div + f"\n{susdf}")
 
-        if kind in _all + ["financials", "fin"]:
+        if kind in [*_all, "financials", "fin"]:
             icdf = yfd.financials
             bsdf = yfd.balance_sheet
             cfdf = yfd.cashflow
@@ -634,7 +631,7 @@ def yf(ticker: str, **kwargs):
                 if not cfdf.empty:
                     print(f"Cash Flow:\n{cfdf}\n")
 
-        if kind in _all + ["option_chain", "oc"]:
+        if kind in [*_all, "option_chain", "oc"]:
             try:
                 yfd_options = yfd.options
             except IndexError:
@@ -730,5 +727,4 @@ def yf(ticker: str, **kwargs):
             print("=" * 80 + "\n")
         return df
 
-    else:
-        return DataFrame()
+    return DataFrame()

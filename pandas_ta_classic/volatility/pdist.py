@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Price Distance (PDIST)
 from typing import Any, Optional
 from pandas import Series

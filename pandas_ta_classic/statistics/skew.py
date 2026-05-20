@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Skew (SKEW)
 from typing import Any, Optional
 

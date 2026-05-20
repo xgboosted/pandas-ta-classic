@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Rate of Change (ROC)
 from typing import Any, Optional
 from pandas import Series

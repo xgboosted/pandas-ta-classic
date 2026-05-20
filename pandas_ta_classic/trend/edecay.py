@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Exponential Decay (EDECAY)
 from typing import Any, Optional
 from numpy import exp as npExp

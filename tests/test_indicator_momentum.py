@@ -786,7 +786,7 @@ class TestMomentum(TestCase):
         # TV Correlation
         result = pandas_ta.stochrsi(self.close)
         if HAS_TALIB:
-            stochrsi_k, stochrsi_d = tal.STOCHRSI(self.close, 14, 14, 3, 0)
+            _stochrsi_k, stochrsi_d = tal.STOCHRSI(self.close, 14, 14, 3, 0)
             assert_talib(
                 self, result.iloc[:, 0], stochrsi_d, correlation_threshold=0.99
             )

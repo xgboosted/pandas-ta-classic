@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Ulcer Index (UI)
 from typing import Any, Optional
 from numpy import sqrt as npsqrt

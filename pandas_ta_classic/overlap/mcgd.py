@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # McGinley Dynamic (MCGD)
 from typing import Any, Optional
 import numpy as np

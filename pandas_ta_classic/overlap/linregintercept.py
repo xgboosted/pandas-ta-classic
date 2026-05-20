@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Linear Regression Intercept (LINEARREG_INTERCEPT)
 from typing import Any, Optional
 from pandas import Series
@@ -24,8 +23,7 @@ def linregintercept(
     if close is None:
         return None
 
-    result = linreg(close, length=length, offset=offset, intercept=True)
-    return result
+    return linreg(close, length=length, offset=offset, intercept=True)
 
 
 linregintercept.__doc__ = """Linear Regression Intercept (LINEARREG_INTERCEPT)

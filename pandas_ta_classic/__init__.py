@@ -20,7 +20,7 @@ from pandas_ta_classic.core import *
 # Re-expose the volatility subpackage under its own name.
 # The utils.metrics.volatility() function (same name) would otherwise shadow it
 # after the wildcard import above.
-from . import volatility  # noqa: F811
+from . import volatility
 
 __version__ = version
 __description__ = (

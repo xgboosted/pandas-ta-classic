@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Rate of Change Ratio (ROCR)
 from typing import Any, Optional
 

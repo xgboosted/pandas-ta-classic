@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Moving Average with Variable Period (MAVP)
 import warnings
 from typing import Any, Optional

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Balance of Power (BOP)
 from typing import Any, Optional
 from pandas import Series

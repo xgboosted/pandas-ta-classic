@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .beta import beta
 from .correl import correl
 from .entropy import entropy

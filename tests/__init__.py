@@ -20,7 +20,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 try:
-    import talib  # noqa: F401
+    import talib
 except ImportError:
     # TA-Lib not installed — cannot regenerate; use committed fixtures.
     pass

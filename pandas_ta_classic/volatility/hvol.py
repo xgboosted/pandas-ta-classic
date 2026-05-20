@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Historical Volatility (HVOL)
 from typing import Any, Optional
 

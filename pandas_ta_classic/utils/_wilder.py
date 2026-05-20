@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Wilder's cumulative smoothing — TA-Lib-exact implementation.
 
 Unlike EMA-seeded RMA (``overlap/rma.py``), this uses the Wilder convention:

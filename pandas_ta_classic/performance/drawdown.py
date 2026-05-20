@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Drawdown (DRAWDOWN)
 from typing import Any, Optional
 from numpy import log as nplog

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # HLC3 (HLC3)
 from typing import Any, Optional
 from pandas import Series

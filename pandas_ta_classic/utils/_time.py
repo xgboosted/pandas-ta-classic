@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from datetime import datetime
 from time import localtime, perf_counter

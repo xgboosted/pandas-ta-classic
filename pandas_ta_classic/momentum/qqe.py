@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Quantitative Qualitative Estimation (QQE)
 from typing import Any, Optional
 import numpy as np

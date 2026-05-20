@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Super Smoother Filter (SSF)
 from typing import Any, Optional
 from numpy import cos as npCos

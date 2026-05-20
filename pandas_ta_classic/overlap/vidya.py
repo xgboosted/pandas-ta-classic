@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Variable Index Dynamic Average (VIDYA)
 from typing import Any, Optional
 import numpy as np

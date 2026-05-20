@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Symmetric Weighted Moving Average (SWMA)
 from typing import Any, Optional
 from pandas import Series

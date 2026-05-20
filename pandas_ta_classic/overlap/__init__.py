@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .alma import alma
 from .avgprice import avgprice
 from .dema import dema

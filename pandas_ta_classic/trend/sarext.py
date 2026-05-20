@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Parabolic SAR Extended (SAREXT)
 from typing import Any, Optional
 
@@ -125,7 +124,7 @@ def _sarext_native_result(
     m = high.shape[0]
     h_arr = high.to_numpy(dtype=float)
     l_arr = low.to_numpy(dtype=float)
-    long_arr, short_arr, af_arr = _sarext_loop(
+    long_arr, short_arr, _af_arr = _sarext_loop(
         h_arr,
         l_arr,
         m,

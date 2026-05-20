@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Parabolic SAR (PSAR)
 from typing import Any, Optional
 import numpy as np

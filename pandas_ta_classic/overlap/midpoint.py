@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Midpoint (MIDPOINT)
 from typing import Any, Optional
 from pandas import Series

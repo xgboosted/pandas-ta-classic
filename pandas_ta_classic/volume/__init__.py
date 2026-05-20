@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .ad import ad
 from .adosc import adosc
 from .aobv import aobv

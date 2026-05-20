@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Percentage Volume Oscillator (PVO)
 from typing import Any, Optional
 from pandas import DataFrame, Series

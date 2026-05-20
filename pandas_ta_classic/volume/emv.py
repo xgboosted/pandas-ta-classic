@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Ease of Movement (EMV)
 from typing import Any, Optional
 from pandas import Series

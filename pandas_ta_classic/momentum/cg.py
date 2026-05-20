@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Center of Gravity (CG)
 from typing import Any, Optional
 import numpy as np

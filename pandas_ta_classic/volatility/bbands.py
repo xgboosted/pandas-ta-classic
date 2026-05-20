@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Bollinger Bands (BBANDS)
 from typing import Any, Optional
 from pandas import DataFrame, Series

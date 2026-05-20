@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Cross Signals (XSIGNALS)
 from typing import Any, Optional
 import numpy as np

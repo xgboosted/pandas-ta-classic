@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Entropy (ENTROPY)
 from typing import Any, Optional
 

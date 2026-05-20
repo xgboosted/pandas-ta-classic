@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Stochastic Oscillator (STOCH)
 from typing import Any, Optional
 from pandas import DataFrame, Series

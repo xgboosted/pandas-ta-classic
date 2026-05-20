@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from typing import Any, List, Optional, Tuple, Union
 
@@ -19,20 +18,19 @@ def _camelCase2Title(x: str) -> str:
     return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
 
 
-def category_files(category: str) -> List[str]:
+def category_files(category: str) -> list[str]:
     """Helper function to return all filenames in the category directory."""
-    files = [
+    return [
         x.stem
         for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py"))
         if x.stem != "__init__"
     ]
-    return files
 
 
 def apply_offset(
-    series: Union[Series, DataFrame, List[Union[Series, DataFrame]]],
+    series: Union[Series, DataFrame, list[Union[Series, DataFrame]]],
     offset: int = 0,
-) -> Union[Series, DataFrame, List[Union[Series, DataFrame]]]:
+) -> Union[Series, DataFrame, list[Union[Series, DataFrame]]]:
     """Shift one or more Series/DataFrames by *offset* periods.
 
     Args:
@@ -48,9 +46,9 @@ def apply_offset(
 
 
 def apply_fill(
-    series: Union[Series, DataFrame, List[Union[Series, DataFrame]]],
+    series: Union[Series, DataFrame, list[Union[Series, DataFrame]]],
     **kwargs: Any,
-) -> Union[Series, DataFrame, List[Union[Series, DataFrame]]]:
+) -> Union[Series, DataFrame, list[Union[Series, DataFrame]]]:
     """Apply fillna and fill_method from kwargs to one or more Series/DataFrames.
 
     Args:
@@ -141,28 +139,28 @@ def tal_ma(name: str) -> Any:
         name = name.lower()
         if name == "sma":
             return MA_Type.SMA  # 0
-        elif name == "ema":
+        if name == "ema":
             return MA_Type.EMA  # 1
-        elif name == "wma":
+        if name == "wma":
             return MA_Type.WMA  # 2
-        elif name == "dema":
+        if name == "dema":
             return MA_Type.DEMA  # 3
-        elif name == "tema":
+        if name == "tema":
             return MA_Type.TEMA  # 4
-        elif name == "trima":
+        if name == "trima":
             return MA_Type.TRIMA  # 5
-        elif name == "kama":
+        if name == "kama":
             return MA_Type.KAMA  # 6
-        elif name == "mama":
+        if name == "mama":
             return MA_Type.MAMA  # 7
-        elif name == "t3":
+        if name == "t3":
             return MA_Type.T3  # 8
     return 0  # Default: SMA -> 0
 
 
 def unsigned_differences(
     series: Series, amount: Optional[int] = None, **kwargs: Any
-) -> Tuple[Series, Series]:
+) -> tuple[Series, Series]:
     """Unsigned Differences
     Returns two Series, an unsigned positive and unsigned negative series based
     on the differences of the original series. The positive series are only the

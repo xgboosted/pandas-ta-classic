@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Triple Exponential Moving Average (TEMA)
 from typing import Any, Optional
 from pandas import Series

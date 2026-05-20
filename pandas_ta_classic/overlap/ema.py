@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Exponential Moving Average (EMA)
 from typing import Any, Optional
 import numpy as np

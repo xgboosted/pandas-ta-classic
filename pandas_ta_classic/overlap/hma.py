@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hull Moving Average (HMA)
 from typing import Any, Optional
 from numpy import sqrt as npSqrt

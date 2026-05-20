@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Price Max (PMAX)
 from typing import Any, Optional
 from numpy import nan as npNaN

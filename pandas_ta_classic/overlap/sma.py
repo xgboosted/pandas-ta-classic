@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Simple Moving Average (SMA)
 from typing import Any, Optional
 from pandas import Series

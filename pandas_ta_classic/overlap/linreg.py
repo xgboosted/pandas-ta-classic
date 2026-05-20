@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Linear Regression (LINREG)
 from typing import Any, Optional
 import numpy as np

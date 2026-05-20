@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
@@ -118,8 +117,8 @@ def log_max_drawdown(close: Series) -> float:
 
 
 def max_drawdown(
-    close: Series, method: Optional[str] = None, all: bool = False  # noqa: A002
-) -> Union[float, Dict[str, float]]:
+    close: Series, method: Optional[str] = None, all: bool = False
+) -> Union[float, dict[str, float]]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
     Args:
@@ -183,8 +182,7 @@ def optimal_leverage(
     # sharpe = mean_excess_return / period_std
     opt_leverage = (period_std**-2) * mean_excess_return
 
-    amount = int(capital * opt_leverage)
-    return amount
+    return int(capital * opt_leverage)
 
 
 def pure_profit_score(close: Series) -> Union[float, int]:
@@ -234,10 +232,9 @@ def sharpe_ratio(
 
     if use_cagr:
         return cagr(close) / volatility(close, log=log)
-    else:
-        period_mu = period * returns.mean()
-        period_std = npSqrt(period) * returns.std()
-        return (period_mu - benchmark_rate) / period_std
+    period_mu = period * returns.mean()
+    period_std = npSqrt(period) * returns.std()
+    return (period_mu - benchmark_rate) / period_std
 
 
 def sortino_ratio(

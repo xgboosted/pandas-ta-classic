@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Historical Volatility – annualised (tulipy: VOLATILITY)
 from typing import Any, Optional
 

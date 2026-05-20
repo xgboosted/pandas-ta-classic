@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Sine Weighted Moving Average (SINWMA)
 from typing import Any, Optional
 import numpy as np

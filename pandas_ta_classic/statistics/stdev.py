@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Standard Deviation (STDEV)
 from typing import Any, Optional
 from numpy import sqrt as npsqrt

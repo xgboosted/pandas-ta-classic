@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Triangular Moving Average (TRIMA)
 from typing import Any, Optional
 from pandas import Series

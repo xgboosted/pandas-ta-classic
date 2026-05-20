@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Madrid Moving Average Ribbon (MMAR)
 from typing import Any, Optional
 from pandas import DataFrame, Series

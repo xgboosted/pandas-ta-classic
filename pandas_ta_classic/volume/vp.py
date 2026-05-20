@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Volume Profile (VP)
 from typing import Any, Optional
 from numpy import arange as npArange

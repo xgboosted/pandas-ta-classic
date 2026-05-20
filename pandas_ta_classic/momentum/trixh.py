@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # TRIX Histogram (TRIXH)
 from typing import Any, Optional
 from pandas import DataFrame, Series

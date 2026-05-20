@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Mesa Sine Wave (MSW)
 from typing import Any, Optional
 

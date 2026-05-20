@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Central Pivot Range (CPR)
 from typing import Any, Optional
 
@@ -74,7 +73,7 @@ def _cpr_build_dataframe(
 
 
 def cpr(
-    open: Series,  # noqa: A002
+    open: Series,
     high: Series,
     low: Series,
     close: Series,

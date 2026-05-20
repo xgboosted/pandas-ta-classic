@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Directional Index (DX)
 from typing import Any, Optional
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Log Return (LOG_RETURN)
 from typing import Any, Optional
 from numpy import log as nplog

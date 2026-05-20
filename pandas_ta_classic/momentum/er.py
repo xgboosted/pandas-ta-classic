@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Efficiency Ratio (ER)
 from typing import Any, Optional, Union
 from pandas import DataFrame, concat, Series
@@ -47,7 +46,7 @@ def er(
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:
-        signalsdf = concat(
+        return concat(
             [
                 DataFrame({er.name: er}),
                 signals(
@@ -65,9 +64,7 @@ def er(
             axis=1,
         )
 
-        return signalsdf
-    else:
-        return er
+    return er
 
 
 er.__doc__ = """Efficiency Ratio (ER)

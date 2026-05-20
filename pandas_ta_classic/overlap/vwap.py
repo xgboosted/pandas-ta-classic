@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Volume Weighted Average Price (VWAP)
 import logging
 from typing import Any, Optional

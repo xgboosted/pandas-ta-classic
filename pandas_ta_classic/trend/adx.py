@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Average Directional Movement Index (ADX)
 from typing import Any, Optional
 from pandas import DataFrame, Series

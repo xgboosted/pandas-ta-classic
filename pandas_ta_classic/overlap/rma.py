@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Wilder's Moving Average (RMA)
 from typing import Any, Optional
 import numpy as np

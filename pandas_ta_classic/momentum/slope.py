@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Slope (SLOPE)
 from typing import Any, Optional
 from numpy import arctan as npAtan

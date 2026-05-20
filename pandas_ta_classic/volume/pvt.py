@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Price Volume Trend (PVT)
 from typing import Any, Optional
 from pandas import Series

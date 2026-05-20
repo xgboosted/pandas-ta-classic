@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Archer Moving Averages Trends (AMAT)
 from typing import Any, Optional
 from pandas import DataFrame, Series

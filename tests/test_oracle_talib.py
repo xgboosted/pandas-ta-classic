@@ -214,7 +214,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
     def test_ppo(self):
         # talib=True calls TA-Lib PPO directly with mamode='ema' (matype=1)
         pt_df = ta.ppo(self.close, fast=12, slow=26, mamode="ema", talib=True)
-        pt = pt_df[[c for c in pt_df.columns if c.startswith("PPO_")][0]]
+        pt = pt_df[next(c for c in pt_df.columns if c.startswith("PPO_"))]
         self._compare(
             pt,
             _tl.PPO(self.close, fastperiod=12, slowperiod=26, matype=1),
@@ -348,7 +348,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_adx(self):
         pt_df = ta.adx(self.high, self.low, self.close, length=14, talib=False)
-        adx_col = [c for c in pt_df.columns if c.startswith("ADX_")][0]
+        adx_col = next(c for c in pt_df.columns if c.startswith("ADX_"))
         self._compare(
             pt_df[adx_col],
             _tl.ADX(self.high, self.low, self.close, timeperiod=14),
@@ -358,7 +358,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
     def test_adxr(self):
         # ta.adxr returns a DataFrame; extract just the ADXR_ column
         pt_df = ta.adxr(self.high, self.low, self.close, talib=False)
-        pt = pt_df[[c for c in pt_df.columns if c.startswith("ADXR_")][0]]
+        pt = pt_df[next(c for c in pt_df.columns if c.startswith("ADXR_"))]
         self._compare(
             pt,
             _tl.ADXR(self.high, self.low, self.close, timeperiod=14),
@@ -375,7 +375,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
     def test_dm_plus(self):
         # ta.dm with talib=True calls PLUS_DM; compare against TA-Lib PLUS_DM
         pt_df = ta.dm(self.high, self.low, length=14, talib=True)
-        dmp_col = [c for c in pt_df.columns if c.startswith("DMP_")][0]
+        dmp_col = next(c for c in pt_df.columns if c.startswith("DMP_"))
         self._compare(
             pt_df[dmp_col],
             _tl.PLUS_DM(self.high, self.low, timeperiod=14),
@@ -385,7 +385,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
     def test_dm_minus(self):
         # ta.dm with talib=True calls MINUS_DM; compare against TA-Lib MINUS_DM
         pt_df = ta.dm(self.high, self.low, length=14, talib=True)
-        dmn_col = [c for c in pt_df.columns if c.startswith("DMN_")][0]
+        dmn_col = next(c for c in pt_df.columns if c.startswith("DMN_"))
         self._compare(
             pt_df[dmn_col],
             _tl.MINUS_DM(self.high, self.low, timeperiod=14),

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Strength Xtra (RSX)
 from typing import Any, Optional, Union
 import numpy as np
@@ -103,7 +102,7 @@ def rsx(
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:
-        signalsdf = concat(
+        return concat(
             [
                 DataFrame({rsx.name: rsx}),
                 signals(
@@ -121,9 +120,7 @@ def rsx(
             axis=1,
         )
 
-        return signalsdf
-    else:
-        return rsx
+    return rsx
 
 
 rsx.__doc__ = """Relative Strength Xtra (rsx)

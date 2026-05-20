@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Stochastic Fast (STOCHF)
 from typing import Any, Optional
 

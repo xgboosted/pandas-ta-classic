@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Z Score (ZSCORE)
 from typing import Any, Optional
 

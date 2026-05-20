@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Hilbert Transform - Instantaneous Trendline (HT_TRENDLINE)
 from typing import Any, Optional
 from pandas import Series

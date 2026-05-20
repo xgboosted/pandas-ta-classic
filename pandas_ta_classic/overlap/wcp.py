@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Weighted Close Price (WCP)
 from typing import Any, Optional
 from pandas import Series
