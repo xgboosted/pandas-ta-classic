@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Any, Optional
 
 from pandas import Series
@@ -28,7 +27,6 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     arr_nr = ca._ranges[CandleSetting.Near]
     arr_sl = ca._ranges[CandleSetting.ShadowLong]
     arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
-    body_hi = ca.body_high
     body_lo = ca.body_low
 
     body_short_trail = start_idx - body_short_period

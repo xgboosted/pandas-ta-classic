@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Elder Thermometer (THERMO)
 from typing import Any, Optional
 from pandas import DataFrame, Series

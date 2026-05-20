@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Positive Volume Index (PVI)
 from typing import Any, Optional
 from pandas import Series

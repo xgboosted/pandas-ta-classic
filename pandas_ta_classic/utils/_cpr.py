@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # CPR Utility Functions
 from typing import Optional, Tuple
 
@@ -74,7 +73,7 @@ def calculate_cpr_width(
     pivot: Series,
     narrow_threshold: float = 0.5,
     wide_threshold: float = 1.5,
-) -> Tuple[Series, Series, Series]:
+) -> tuple[Series, Series, Series]:
     """Calculate CPR width metrics
 
     Args:
@@ -169,7 +168,7 @@ def calculate_option_strikes(
 
 def detect_cpr_breakout(
     close: Series, high: Series, low: Series, tc: Series, bc: Series, lookback: int = 1
-) -> Tuple[Series, Series]:
+) -> tuple[Series, Series]:
     """Detect CPR breakouts for option entry signals
 
     Args:
@@ -205,7 +204,7 @@ def detect_cpr_rejection(
     tc: Series,
     bc: Series,
     threshold: float = 0.2,
-) -> Tuple[Series, Series]:
+) -> tuple[Series, Series]:
     """Detect CPR rejections for reversal option trades
 
     Args:

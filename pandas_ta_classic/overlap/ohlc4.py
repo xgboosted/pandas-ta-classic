@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # OHLC4 (OHLC4)
 from typing import Any, Optional
 from pandas import Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Elder Force Index (EFI)
 from typing import Any, Optional
 from pandas import Series

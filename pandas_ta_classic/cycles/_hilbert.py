@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Shared Hilbert Transform helper.
 
 This internal module contains the core Hilbert Transform loop and returns
@@ -15,7 +14,7 @@ import numpy as np
 from pandas import Series
 
 
-def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -> Tuple[
+def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -> tuple[
     np.ndarray,
     np.ndarray,
     np.ndarray,

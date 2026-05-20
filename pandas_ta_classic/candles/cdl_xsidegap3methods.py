@@ -1,15 +1,10 @@
-# -*- coding: utf-8 -*-
 from typing import Any, Optional
 
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    CandleArrays,
-    CandleSetting,
-    candle_avg_period,
     run_pattern,
 )
-import numpy as np
 
 
 def _detect(ca, out, **kwargs):

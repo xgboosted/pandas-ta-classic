@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Numba njit decorator with graceful fallback.
 
 When numba is installed (``pip install numba``), re-exports the real

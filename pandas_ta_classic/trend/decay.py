@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Linear Decay (DECAY)
 from typing import Any, Optional
 from numpy import exp as npExp

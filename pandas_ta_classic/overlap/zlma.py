@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Zero Lag Moving Average (ZLMA)
 from typing import Any, Optional
 from pandas import Series

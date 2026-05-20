@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Plus Directional Movement (PLUS_DM)
 from typing import Any, Optional
 from pandas import Series

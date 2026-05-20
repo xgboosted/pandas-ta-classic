@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Chande Forecast Oscillator (CFO)
 from typing import Any, Optional
 from pandas import Series

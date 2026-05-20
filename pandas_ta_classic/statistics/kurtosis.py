@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Kurtosis (KURTOSIS)
 from typing import Any, Optional
 

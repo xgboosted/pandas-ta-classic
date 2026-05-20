@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Percentage Price Oscillator (PPO)
 from typing import Any, Optional
 from pandas import DataFrame, Series

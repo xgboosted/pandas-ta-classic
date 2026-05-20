@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Money Flow Index (MFI)
 from typing import Any, Optional
 from pandas import DataFrame, Series

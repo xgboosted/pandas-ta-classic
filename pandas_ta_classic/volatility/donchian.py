@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Donchian Channels (DONCHIAN)
 from typing import Any, Optional
 from pandas import DataFrame, Series

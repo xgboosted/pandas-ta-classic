@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Chaikin Money Flow (CMF)
 from typing import Any, Optional
 from pandas import Series

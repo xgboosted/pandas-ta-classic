@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Slope (SLOPE)
 from typing import Any, Optional
 from numpy import arctan as npAtan
@@ -19,8 +18,8 @@ def slope(
     """Indicator: Slope"""
     # Validate arguments
     length = int(length) if length and length > 0 else 1
-    as_angle = True if isinstance(as_angle, bool) else False
-    to_degrees = True if isinstance(to_degrees, bool) else False
+    as_angle = bool(isinstance(as_angle, bool))
+    to_degrees = bool(isinstance(to_degrees, bool))
     close = verify_series(close, length)
     offset = get_offset(offset)
 

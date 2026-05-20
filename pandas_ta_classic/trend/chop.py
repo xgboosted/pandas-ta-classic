@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Choppiness Index (CHOP)
 from typing import Any, Optional
 from numpy import log10 as npLog10

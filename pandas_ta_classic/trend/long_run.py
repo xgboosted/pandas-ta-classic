@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Long Run (LONG_RUN)
 from typing import Any, Optional
 from pandas import Series

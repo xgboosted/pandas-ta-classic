@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # MACD with Fixed Periods (MACDFIX)
 from typing import Any, Optional
 from pandas import DataFrame, Series

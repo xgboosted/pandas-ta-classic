@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Time Series Forecast (TSF)
 from typing import Any, Optional
 from pandas import Series

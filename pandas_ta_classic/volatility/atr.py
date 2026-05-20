@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Average True Range (ATR)
 from typing import Any, Optional
 from pandas import Series

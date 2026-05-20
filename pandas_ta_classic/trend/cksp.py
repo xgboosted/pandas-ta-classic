@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Chande Kroll Stop (CKSP)
 from typing import Any, Optional
 from pandas import DataFrame, Series

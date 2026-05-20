@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## **[Unreleased]**
 
+### Changed
+* **Wilder smoothing shared utility** (PR #112 remediation): Extracted `wilder_smooth()` into `utils/_wilder.py` for TA-Lib-exact cumulative smoothing. Used by `dm.py` for PLUS_DM/MINUS_DM parity.
+* **Chained EMA helper** (PR #112 remediation): Added `_ema_chain()` to `overlap/ema.py` for consistent NaN-stripping in DEMA, TEMA, T3. Reduces repetitive boilerplate by ~60 lines.
+* **Fixture auto-regeneration**: `tests/__init__.py` now regenerates `expected_values.json` and `regression_snapshots.json` on import when TA-Lib is available. `make fixtures` and `make test-all` targets added to `Makefile`.
+* **`tal` → `talib` rename**: All test files now import `talib` directly instead of aliasing as `tal`, matching the source code convention.
+* **Dead code removal**: Removed ~370 instances of unused imports (F401), 8 unused local variables (F841), 1 duplicate method (`test_custom_a`), 65 useless f-string prefixes (F541), and 279 unnecessary UTF-8 encoding declarations (UP009).
+* **Code modernization**: Applied pyupgrade (UP) and flake8-return (RET) fixes — `Optional[X]`→`X|None`, `List`→`list`, removed redundant `else` after `return`.
+* **Linreg TA-Lib dispatch**: Replaced 6-branch `if`/`elif` chain with `_TALIB_DISPATCH` lookup dictionary.
+* **PSAR cleanup**: Removed `import numpy as _np` from function body; uses module-level `np` instead.
+* **test_strategy**: Fixed duplicate `test_custom_a` method (was shadowed, never ran). Fixed stale column count assertion.
+
 ### Added
 * **TA-Lib / tulipy parity indicator set** (PR #104): Added wrappers and native implementations for `msw`, `fosc`, `macdext`, `macdfix`, `rocp`, `rocr`, `rocr100`, `stochf`, `avgprice`, `medprice`, `typprice`, `linregangle`, `linregintercept`, `linregslope`, `mavp`, `md`, `stderr`, `dx`, `edecay`, `plus_dm`, `minus_dm`, `sarext`, `avolume`, `cvi`, `hvol`, `emv`, `marketfi`, `vosc`, and `wad`.
 * **Math operator namespace**: Added `pandas_ta_classic/math/__init__.py` exposing arithmetic operators (`add`, `sub`, `mult`, `div`), rolling operators (`rolling_max`, `rolling_min`, `rolling_sum`), and math transforms for TA-Lib/tulipy compatibility.

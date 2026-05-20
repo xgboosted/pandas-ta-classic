@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Keltner Channels (KC)
 from typing import Any, Optional
 from pandas import DataFrame, Series
@@ -38,10 +37,7 @@ def kc(
 
     # Calculate Result
     use_tr = kwargs.pop("tr", True)
-    if use_tr:
-        range_ = true_range(high, low, close)
-    else:
-        range_ = high_low_range(high, low)
+    range_ = true_range(high, low, close) if use_tr else high_low_range(high, low)
 
     basis = ma(mamode, close, length=length)
     if basis is None:

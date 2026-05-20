@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Williams Accumulation/Distribution (WAD)
 from typing import Any, Optional
 

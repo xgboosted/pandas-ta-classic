@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # True Strength Index (TSI)
 from typing import Any, Optional
 from pandas import DataFrame, Series

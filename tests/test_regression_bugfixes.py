@@ -36,7 +36,7 @@ import pandas as pd
 
 import pandas_ta_classic as ta
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic  # noqa: F401
+from tests.context import pandas_ta_classic
 
 # ---------------------------------------------------------------------------
 # Fix 1: stdev / variance ddof default = 0 (population)
@@ -500,10 +500,7 @@ class TestEdecayFormula(TestCase):
 
     def test_edecay_decays_after_spike(self):
         """After a spike, edecay must decay exponentially, not stay flat."""
-        import math
-
         length = 5
-        factor = math.exp(-1.0 / length)
         # Flat series then a spike: value should decay after the spike
         close = pd.Series([100.0] * 10 + [200.0] + [100.0] * 10)
         result = ta.edecay(close, length=length)

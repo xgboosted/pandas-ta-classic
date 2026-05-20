@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import logging
 from datetime import datetime
 from time import localtime, perf_counter
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from pandas import DataFrame, Timestamp, to_datetime
 
@@ -77,7 +76,9 @@ def get_time(exchange: str = "NYSE", full: bool = True, to_string: bool = False)
     if full:
         lt = localtime()
         local_ = f"Local: {lt.tm_hour}:{lt.tm_min:02d}:{lt.tm_sec:02d} {lt.tm_zone}"
-        doy = f"Day {today.dayofyear}/365 ({100 * round(today.dayofyear/365, 2):.2f}%)"
+        doy = (
+            f"Day {today.dayofyear}/365 ({100 * round(today.dayofyear / 365, 2):.2f}%)"
+        )
         exchange_ = f"{exchange}: {exchange_time}"
 
         s = f"{date}, {exchange_}, {local_}, {doy}"
@@ -105,7 +106,7 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
         "seconds": time_diff.total_seconds(),
     }
 
-    if isinstance(tf, str) and tf in TimeFrame.keys():
+    if isinstance(tf, str) and tf in TimeFrame:
         return TimeFrame[tf]
     return TimeFrame["years"]
 

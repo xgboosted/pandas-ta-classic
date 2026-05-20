@@ -49,11 +49,8 @@ _O = _C + _RNG.standard_normal(_N) * 0.5
 
 def _nan_prefix(result) -> int:
     """Return the number of leading NaN rows in *result* (Series or DataFrame)."""
-    if isinstance(result, pd.DataFrame):
-        # All columns must agree; use the first one
-        series = result.iloc[:, 0]
-    else:
-        series = result
+    # All columns must agree; use the first one
+    series = result.iloc[:, 0] if isinstance(result, pd.DataFrame) else result
     # Count consecutive leading NaNs
     non_nan_idx = series.first_valid_index()
     if non_nan_idx is None:

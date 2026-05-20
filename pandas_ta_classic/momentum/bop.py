@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Balance of Power (BOP)
 from typing import Any, Optional
 from pandas import Series
@@ -51,7 +50,7 @@ def bop(
     bop = apply_fill(bop, **kwargs)
 
     # Name and Categorize it
-    bop.name = f"BOP"
+    bop.name = "BOP"
     bop.category = "momentum"
 
     return bop

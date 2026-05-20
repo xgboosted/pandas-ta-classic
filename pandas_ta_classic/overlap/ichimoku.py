@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Ichimoku Kinko Hyo (ICHIMOKU)
 from typing import Any, Optional, Tuple
 from pandas import date_range, DataFrame, RangeIndex, Timedelta, Series
@@ -16,7 +15,7 @@ def ichimoku(
     include_chikou: bool = True,
     offset: Optional[int] = None,
     **kwargs: Any,
-) -> Tuple[Optional[DataFrame], Optional[DataFrame]]:
+) -> tuple[Optional[DataFrame], Optional[DataFrame]]:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
     tenkan = int(tenkan) if tenkan and tenkan > 0 else 9
     kijun = int(kijun) if kijun and kijun > 0 else 26

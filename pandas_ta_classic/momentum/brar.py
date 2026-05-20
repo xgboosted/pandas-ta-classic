@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # BRAR (Bull and Bear Ratio)
 from typing import Any, Optional
 from pandas import DataFrame, Series

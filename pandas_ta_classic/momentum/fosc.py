@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Forecast Oscillator (FOSC)
 from typing import Any, Optional
 

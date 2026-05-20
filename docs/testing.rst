@@ -216,11 +216,34 @@ Running All Tests
 
 .. code-block:: bash
 
-   # Full test suite (primary — matches CI)
+   # Full test suite (primary — matches CI, auto-regenerates fixture JSONs)
    python -m unittest discover tests/ -v
+
+   # Regenerate fixtures then run all tests (recommended after indicator changes)
+   make test-all
+
+   # Regenerate fixture JSONs only (requires TA-Lib installed)
+   make fixtures
 
    # pytest equivalent
    python -m pytest tests/ -v
 
    # With coverage
    python -m pytest --cov=pandas_ta_classic --cov-report=html tests/
+
+
+Fixture Files
+-------------
+
+``tests/fixtures/expected_values.json`` and
+``tests/fixtures/regression_snapshots.json`` are **generated** files.
+They are rebuilt automatically when ``tests/`` is imported (before any
+test runs) if TA-Lib is available.  Manual regeneration:
+
+.. code-block:: bash
+
+   python -m tests.fixtures.generate_fixtures
+   python -m tests.fixtures.generate_regression_snapshots
+
+Both scripts can also be invoked directly (``python tests/fixtures/generate_*.py``)
+and require the project root to be on ``sys.path``.

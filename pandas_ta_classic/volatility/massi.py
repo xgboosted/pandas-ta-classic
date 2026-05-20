@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Mass Index (MASSI)
 from typing import Any, Optional
 from pandas import Series

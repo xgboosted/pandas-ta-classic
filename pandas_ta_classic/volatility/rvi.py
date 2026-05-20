@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Volatility Index (RVI)
 from typing import Any, Optional
 from pandas import Series

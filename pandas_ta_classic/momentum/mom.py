@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Momentum (MOM)
 from typing import Any, Optional
 from pandas import Series

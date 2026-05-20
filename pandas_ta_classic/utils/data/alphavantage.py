@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import logging
 from pandas import DataFrame
-from pandas_ta_classic import Imports, RATE, version
+from pandas_ta_classic import Imports, version
 
 # from .._core import _camelCase2Title
 # from .._time import ytd_df
@@ -49,7 +48,7 @@ def av(ticker: str, **kwargs):
 
         _all = ["all"]
 
-        if kind in _all + ["history", "h"]:
+        if kind in [*_all, "history", "h"]:
             try:
                 from alpha_vantage.timeseries import TimeSeries
 

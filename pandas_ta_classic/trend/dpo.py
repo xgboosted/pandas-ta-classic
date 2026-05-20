@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Detrend Price Oscillator (DPO)
 from typing import Any, Optional
 from pandas import Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Archer On Balance Volume (AOBV)
 from typing import Any, Optional
 from pandas import DataFrame, Series

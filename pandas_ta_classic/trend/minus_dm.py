@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Minus Directional Movement (MINUS_DM)
 from typing import Any, Optional
 from pandas import Series

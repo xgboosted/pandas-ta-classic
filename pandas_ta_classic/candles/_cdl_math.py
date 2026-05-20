@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Core candle pattern framework — translates TA-Lib's C candle macros to Python.
 
 Underscore prefix ensures ``_build_category_dict()`` in ``_meta.py`` ignores this
@@ -83,19 +82,19 @@ class CandleArrays:
     macro equivalents (``candle_range``, ``candle_average``, etc.)."""
 
     __slots__ = (
-        "open",
-        "high",
-        "low",
-        "close",
-        "real_body",
-        "upper_shadow",
-        "lower_shadow",
-        "hl_range",
-        "shadow_range",
+        "_ranges",
         "body_high",
         "body_low",
+        "close",
         "color",
-        "_ranges",
+        "high",
+        "hl_range",
+        "low",
+        "lower_shadow",
+        "open",
+        "real_body",
+        "shadow_range",
+        "upper_shadow",
     )
 
     def __init__(

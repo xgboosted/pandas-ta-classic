@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Meta information for pandas-ta-classic
 Contains Category definitions, version information, and import checks.

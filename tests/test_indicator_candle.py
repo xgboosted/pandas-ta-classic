@@ -2,16 +2,15 @@ from tests.assertions import assert_indicator_standard, assert_talib, IndicatorS
 from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
-from unittest import TestCase, skip
+from unittest import TestCase
 from pandas import DataFrame, Series
 
 try:
-    import talib as tal
+    import talib
 
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
-    tal = None
 
 
 class TestCandle(TestCase):
@@ -80,7 +79,7 @@ class TestCandle(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.CDLDOJI(self.open, self.high, self.low, self.close),
+                talib.CDLDOJI(self.open, self.high, self.low, self.close),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(

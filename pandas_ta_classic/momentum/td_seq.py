@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # import numpy as np
 from typing import Any, Optional
 from numpy import where as npWhere
@@ -26,9 +25,8 @@ def td_seq(
 
         if index is None:
             return series.count()
-        else:
-            s = series[series.index > index]
-            return s.count()
+        s = series[series.index > index]
+        return s.count()
 
     def calc_td(series: Series, direction: str, show_all: bool):
         td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
@@ -61,8 +59,8 @@ def td_seq(
     up_seq, down_seq = apply_fill([up_seq, down_seq], **kwargs)
 
     # Name & Category
-    up_seq.name = f"TD_SEQ_UPa" if show_all else f"TD_SEQ_UP"
-    down_seq.name = f"TD_SEQ_DNa" if show_all else f"TD_SEQ_DN"
+    up_seq.name = "TD_SEQ_UPa" if show_all else "TD_SEQ_UP"
+    down_seq.name = "TD_SEQ_DNa" if show_all else "TD_SEQ_DN"
     up_seq.category = down_seq.category = "momentum"
 
     # Prepare Dataframe to return

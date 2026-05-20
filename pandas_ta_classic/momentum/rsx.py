@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Strength Xtra (RSX)
 from typing import Any, Optional, Union
 import numpy as np
@@ -32,10 +31,7 @@ def _rsx_loop(c_arr, length, m):
             f18 = 3.0 / (length + 2.0)
             f20 = 1.0 - f18
         else:
-            if f88 <= f90:
-                f90 = f88 + 1
-            else:
-                f90 = f90 + 1
+            f90 = f88 + 1 if f88 <= f90 else f90 + 1
             f10 = f8
             f8 = 100.0 * c_arr[i]
             v8 = f8 - f10
@@ -106,7 +102,7 @@ def rsx(
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:
-        signalsdf = concat(
+        return concat(
             [
                 DataFrame({rsx.name: rsx}),
                 signals(
@@ -124,9 +120,7 @@ def rsx(
             axis=1,
         )
 
-        return signalsdf
-    else:
-        return rsx
+    return rsx
 
 
 rsx.__doc__ = """Relative Strength Xtra (rsx)

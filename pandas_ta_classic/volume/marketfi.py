@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Market Facilitation Index (MARKETFI)
 from typing import Any, Optional
 

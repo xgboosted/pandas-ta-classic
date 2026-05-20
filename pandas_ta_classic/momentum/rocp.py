@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Rate of Change Percentage (ROCP)
 from typing import Any, Optional
 

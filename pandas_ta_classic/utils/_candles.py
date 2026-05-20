@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from pandas import Series
 
 from ._core import non_zero_range

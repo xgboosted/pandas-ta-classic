@@ -10,10 +10,10 @@ CORRELATION_THRESHOLD = 1.0
 @dataclass
 class IndicatorSpec:
     func: Callable
-    args: List[Any]
+    args: list[Any]
     expected_name: str
-    expected_type: Type = Series
-    expected_columns: Optional[List[str]] = None
+    expected_type: type = Series
+    expected_columns: Optional[list[str]] = None
     none_arg_idx: Optional[int] = 0
     skip_offset: bool = False
     tuple_index: Optional[int] = None

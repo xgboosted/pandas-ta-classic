@@ -16,7 +16,7 @@ from unittest import TestCase
 import pandas as pd
 
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic  # noqa: F401 — registers df.ta accessor
+from tests.context import pandas_ta_classic
 
 
 class TestFluentChaining(TestCase):
@@ -44,7 +44,7 @@ class TestFluentChaining(TestCase):
         """chain() returns the AnalysisIndicators accessor."""
         result = self.df.ta.chain()
         # chain() returns the accessor, not a DataFrame
-        self.assertTrue(hasattr(result, 'sma'))
+        self.assertTrue(hasattr(result, "sma"))
 
     def test_unchain_returns_dataframe(self):
         """unchain() returns the DataFrame (so .ta is available for normal calls)."""
@@ -92,7 +92,6 @@ class TestFluentChaining(TestCase):
 
     def test_chain_with_bbands(self):
         """Chain a multi-column indicator (BBANDS)."""
-        col_count = len(self.df.columns)
         result = self.df.ta.chain().bbands(20)
         self.assertIsInstance(result, pd.DataFrame)
         for col in ("BBL_20_2.0", "BBM_20_2.0", "BBU_20_2.0"):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Vertical Horizontal Filter (VHF)
 from typing import Any, Optional
 from numpy import fabs as npFabs

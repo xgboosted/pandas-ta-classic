@@ -87,11 +87,17 @@ We welcome contributions from the community! This document provides guidelines a
 
 #### Running Tests
 ```bash
-# Run all tests (primary — matches CI)
+# Run all tests (primary — matches CI, auto-regenerates fixture JSONs)
 python -m unittest discover tests/ -v
+
+# Regenerate fixtures then run all tests (via Makefile)
+make test-all
 
 # Run a specific test module
 python -m unittest tests.test_indicator_momentum -v
+
+# Regenerate only the fixture JSONs (when TA-Lib is installed)
+make fixtures
 
 # Alternatively, with pytest (also supported)
 pytest

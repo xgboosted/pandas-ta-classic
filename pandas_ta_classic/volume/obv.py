@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # On Balance Volume (OBV)
 from typing import Any, Optional
 from pandas import Series
@@ -43,7 +42,7 @@ def obv(
     obv = apply_fill(obv, **kwargs)
 
     # Name and Categorize it
-    obv.name = f"OBV"
+    obv.name = "OBV"
     obv.category = "volume"
 
     return obv

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .dsp import dsp
 from .ebsw import ebsw
 from .ht_dcperiod import ht_dcperiod

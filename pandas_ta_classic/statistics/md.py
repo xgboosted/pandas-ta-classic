@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Mean Deviation (MD)
 from typing import Any, Optional
 from pandas import Series

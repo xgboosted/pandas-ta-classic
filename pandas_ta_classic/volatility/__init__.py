@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .aberration import aberration
 from .accbands import accbands
 from .avolume import avolume

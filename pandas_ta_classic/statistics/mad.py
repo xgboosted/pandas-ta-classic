@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Mean Absolute Deviation (MAD)
 from typing import Any, Optional
 

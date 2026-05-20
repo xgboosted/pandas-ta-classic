@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Weighted Moving Average (WMA)
 from typing import Any, Callable, Optional
 from pandas import Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Central Pivot Range (CPR)
 from typing import Any, Optional
 

@@ -8,15 +8,14 @@ from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
-from pandas import DataFrame, Series
+from pandas import DataFrame
 
 try:
-    import talib as tal
+    import talib
 
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
-    tal = None
 
 
 class TestStatistics(TestCase):
@@ -161,7 +160,7 @@ class TestStatistics(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.STDDEV(self.close, 30),
+                talib.STDDEV(self.close, 30),
                 correlation_threshold=CORRELATION_THRESHOLD,
             )
 
@@ -207,7 +206,7 @@ class TestStatistics(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.VAR(self.close, 30),
+                talib.VAR(self.close, 30),
                 correlation_threshold=CORRELATION_THRESHOLD,
             )
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Increasing (INCREASING)
 from typing import Any, Optional
 from pandas import Series

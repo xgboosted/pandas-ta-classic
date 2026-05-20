@@ -2,21 +2,19 @@ from tests.assertions import (
     assert_indicator_standard,
     assert_talib,
     IndicatorSpec,
-    CORRELATION_THRESHOLD,
 )
 from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
-from pandas import DataFrame, Series
+from pandas import DataFrame
 
 try:
-    import talib as tal
+    import talib
 
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
-    tal = None
 
 
 class TestMath(TestCase):
@@ -48,7 +46,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.ADD(self.close, self.open))
+            assert_talib(self, result, talib.ADD(self.close, self.open))
 
     def test_sub(self):
         result = assert_indicator_standard(
@@ -60,7 +58,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.SUB(self.close, self.open))
+            assert_talib(self, result, talib.SUB(self.close, self.open))
 
     def test_div(self):
         result = assert_indicator_standard(
@@ -72,7 +70,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.DIV(self.close, self.open))
+            assert_talib(self, result, talib.DIV(self.close, self.open))
 
     def test_mult(self):
         result = assert_indicator_standard(
@@ -84,7 +82,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.MULT(self.close, self.open))
+            assert_talib(self, result, talib.MULT(self.close, self.open))
 
     # -----------------------------------------------------------------------
     # Rolling operators
@@ -101,7 +99,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.MAX(self.close, 30))
+            assert_talib(self, result, talib.MAX(self.close, 30))
 
     def test_rolling_min(self):
         result = assert_indicator_standard(
@@ -114,7 +112,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.MIN(self.close, 30))
+            assert_talib(self, result, talib.MIN(self.close, 30))
 
     def test_rolling_sum(self):
         result = assert_indicator_standard(
@@ -127,7 +125,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.SUM(self.close, 30))
+            assert_talib(self, result, talib.SUM(self.close, 30))
 
     def test_maxindex(self):
         assert_indicator_standard(
@@ -213,7 +211,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.ATAN(self.close))
+            assert_talib(self, result, talib.ATAN(self.close))
 
     def test_ceil(self):
         result = assert_indicator_standard(
@@ -225,7 +223,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.CEIL(self.close))
+            assert_talib(self, result, talib.CEIL(self.close))
 
     def test_cos(self):
         result = assert_indicator_standard(
@@ -237,7 +235,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.COS(self.close))
+            assert_talib(self, result, talib.COS(self.close))
 
     def test_cosh(self):
         assert_indicator_standard(
@@ -259,7 +257,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.EXP(self.close))
+            assert_talib(self, result, talib.EXP(self.close))
 
     def test_floor(self):
         result = assert_indicator_standard(
@@ -271,7 +269,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.FLOOR(self.close))
+            assert_talib(self, result, talib.FLOOR(self.close))
 
     def test_ln(self):
         result = assert_indicator_standard(
@@ -283,7 +281,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.LN(self.close))
+            assert_talib(self, result, talib.LN(self.close))
 
     def test_log10(self):
         result = assert_indicator_standard(
@@ -295,7 +293,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.LOG10(self.close))
+            assert_talib(self, result, talib.LOG10(self.close))
 
     def test_sin(self):
         result = assert_indicator_standard(
@@ -307,7 +305,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.SIN(self.close))
+            assert_talib(self, result, talib.SIN(self.close))
 
     def test_sinh(self):
         assert_indicator_standard(
@@ -329,7 +327,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.SQRT(self.close))
+            assert_talib(self, result, talib.SQRT(self.close))
 
     def test_tan(self):
         result = assert_indicator_standard(
@@ -341,7 +339,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.TAN(self.close))
+            assert_talib(self, result, talib.TAN(self.close))
 
     def test_tanh(self):
         result = assert_indicator_standard(
@@ -353,7 +351,7 @@ class TestMath(TestCase):
             ),
         )
         if HAS_TALIB:
-            assert_talib(self, result, tal.TANH(self.close))
+            assert_talib(self, result, talib.TANH(self.close))
 
     # -----------------------------------------------------------------------
     # tulipy extras

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Normalized Average True Range (NATR)
 from typing import Any, Optional
 from pandas import Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Math Operators and Transforms for pandas-ta-classic.
 
 Covers TA-Lib's Math Operator (ADD, SUB, DIV, MULT, MAX, MIN, SUM,
@@ -132,7 +131,7 @@ def rolling_max(
 
 
 # Public alias matching TA-Lib name
-max = rolling_max  # noqa: A001
+max = rolling_max
 
 
 def rolling_min(
@@ -155,7 +154,7 @@ def rolling_min(
     return result
 
 
-min = rolling_min  # noqa: A001
+min = rolling_min
 
 
 def rolling_sum(
@@ -178,7 +177,7 @@ def rolling_sum(
     return result
 
 
-sum = rolling_sum  # noqa: A001
+sum = rolling_sum
 
 
 def maxindex(

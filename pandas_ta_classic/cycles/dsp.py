@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Detrended Synthetic Price (DSP)
 from typing import Any, Optional
 from pandas import Series

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # HL2 (HL2)
 from typing import Any, Optional
 from pandas import Series

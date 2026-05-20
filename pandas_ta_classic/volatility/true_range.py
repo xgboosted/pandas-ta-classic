@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # True Range (TRUE_RANGE)
 from typing import Any, Optional
 import numpy as np

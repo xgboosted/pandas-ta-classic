@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Exponential Moving Average (EMA)
 from typing import Any, Optional
 import numpy as np
@@ -40,10 +39,7 @@ def ema(
             # computed from exactly `length` consecutive valid values — matching
             # TA-Lib's EMA lookback behaviour for chained/lagged inputs.
             first_valid = close.first_valid_index()
-            if first_valid is None:
-                fv_pos = None  # fall through to ewm; result will be all-NaN
-            else:
-                fv_pos = close.index.get_loc(first_valid)
+            fv_pos = None if first_valid is None else close.index.get_loc(first_valid)
             if fv_pos is not None:
                 sma_nth = close.iloc[fv_pos : fv_pos + length].mean()
                 close.iloc[: fv_pos + length - 1] = npNaN
@@ -98,3 +94,42 @@ Kwargs:
 Returns:
     pd.Series: New feature generated.
 """
+
+
+def _ema_chain(close: Series, length: int, depth: int, **kwargs):
+    """Repeatedly apply EMA, stripping leading NaN between stages.
+
+    This matches TA-Lib's lookback of ``depth * (length - 1)`` for
+    indicators like DEMA (depth=2), TEMA (depth=3), and T3 (depth=6).
+
+    Parameters
+    ----------
+    close : pd.Series
+        Input price series.
+    length : int
+        EMA period.
+    depth : int
+        Number of EMA passes (2 for DEMA, 3 for TEMA, 6 for T3).
+    **kwargs
+        Forwarded to each ``ema()`` call.
+
+    Returns
+    -------
+    list of pd.Series or None
+        The ``depth`` EMA results in order (e1, e2, …).  Each result
+        retains the full index of the original *close*.  Returns *None*
+        if any intermediate EMA call fails.
+    """
+    results = []
+    feed = close
+    for _ in range(depth):
+        e = ema(close=feed, length=length, talib=False, **kwargs)
+        if e is None:
+            return None
+        results.append(e)
+        # Strip leading NaN so the next EMA seeds at the right bar.
+        fvi = e.first_valid_index()
+        if fvi is None:
+            return results  # all-NaN — caller can check
+        feed = e.loc[fvi:]
+    return results

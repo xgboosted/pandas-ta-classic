@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 # Directional Index (DX)
 from typing import Any, Optional
 
-from pandas import DataFrame, Series
+from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma

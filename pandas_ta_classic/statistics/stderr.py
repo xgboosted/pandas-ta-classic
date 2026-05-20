@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Standard Error (STDERR)
 from typing import Any, Optional
 

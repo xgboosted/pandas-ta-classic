@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Holt-Winter Moving Average (HWMA)
 from typing import Any, Optional
 import numpy as np

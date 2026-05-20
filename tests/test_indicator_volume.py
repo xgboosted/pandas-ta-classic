@@ -2,16 +2,15 @@ from tests.assertions import assert_indicator_standard, assert_talib, IndicatorS
 from tests.config import get_sample_data
 from tests.context import pandas_ta_classic as pandas_ta
 
-from unittest import TestCase, skip
-from pandas import DataFrame, Series
+from unittest import TestCase
+from pandas import DataFrame
 
 try:
-    import talib as tal
+    import talib
 
     HAS_TALIB = True
 except ImportError:
     HAS_TALIB = False
-    tal = None
 
 
 class TestVolume(TestCase):
@@ -50,7 +49,7 @@ class TestVolume(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.AD(self.high, self.low, self.close, self.volume_),
+                talib.AD(self.high, self.low, self.close, self.volume_),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -82,7 +81,7 @@ class TestVolume(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.ADOSC(self.high, self.low, self.close, self.volume_),
+                talib.ADOSC(self.high, self.low, self.close, self.volume_),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -187,7 +186,7 @@ class TestVolume(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.MFI(self.high, self.low, self.close, self.volume_),
+                talib.MFI(self.high, self.low, self.close, self.volume_),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
@@ -215,7 +214,7 @@ class TestVolume(TestCase):
             assert_talib(
                 self,
                 result,
-                tal.OBV(self.close, self.volume_),
+                talib.OBV(self.close, self.volume_),
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(

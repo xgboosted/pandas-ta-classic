@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Cross Signals (XSIGNALS)
 from typing import Any, Optional
 import numpy as np
@@ -59,7 +58,7 @@ def xsignals(
     df = apply_fill(df, **kwargs)
 
     # Name & Category
-    df.name = f"XS"
+    df.name = "XS"
     df.category = "trend"
 
     return df

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from functools import reduce
 from math import floor as mfloor
@@ -33,7 +32,7 @@ from ._core import verify_series
 
 def np_rolling_moments(
     values: npNdArray, length: int, *orders: int, min_periods: Optional[int] = None
-) -> Tuple[npNdArray, ...]:
+) -> tuple[npNdArray, ...]:
     """Rolling raw central-moment sums using pure numpy.
 
     Returns one float64 array per *order*, each of ``len(values)`` elements.
@@ -60,7 +59,7 @@ def np_rolling_moments(
     n = len(arr)
 
     # Pre-allocate output arrays filled with NaN.
-    results: List[npNdArray] = [np.full(n, np.nan, dtype=np.float64) for _ in orders]
+    results: list[npNdArray] = [np.full(n, np.nan, dtype=np.float64) for _ in orders]
 
     # Vectorised computation over all full-length windows.
     if n >= length:
@@ -143,10 +142,8 @@ def fibonacci(n: int = 2, **kwargs: Any) -> npNdArray:
         fib_sum: float = npSum(result)
         if fib_sum > 0:
             return result / fib_sum
-        else:
-            return result
-    else:
         return result
+    return result
 
 
 def geometric_mean(series: Series) -> float:
@@ -177,8 +174,7 @@ def linear_regression(x: Series, y: Series) -> dict:
 
     if Imports["sklearn"]:
         return _linear_regression_sklearn(x, y)
-    else:
-        return _linear_regression_np(x, y)
+    return _linear_regression_np(x, y)
 
 
 def log_geometric_mean(series: Series) -> float:
@@ -186,11 +182,10 @@ def log_geometric_mean(series: Series) -> float:
     n = series.size
     if n < 2:
         return 0
-    else:
-        series = series.fillna(0) + 1
-        if npAll(series > 0):
-            return npExp(npLog(series).sum() / n) - 1
-        return 0
+    series = series.fillna(0) + 1
+    if npAll(series > 0):
+        return npExp(npLog(series).sum() / n) - 1
+    return 0
 
 
 def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[npNdArray]:
@@ -223,7 +218,7 @@ def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[npNdArr
 
 def symmetric_triangle(
     n: Optional[int] = None, **kwargs: Any
-) -> Optional[Union[List[int], npNdArray]]:
+) -> Optional[Union[list[int], npNdArray]]:
     """Symmetric Triangle with n >= 2
 
     Returns a numpy array of the nth row of Symmetric Triangle.
@@ -333,11 +328,10 @@ def _linear_regression_sklearn(x: Series, y: Series) -> dict:
     r = lr.score(X, y=y)
     a, b = lr.intercept_, lr.coef_[0]
 
-    result = {
+    return {
         "a": a,
         "b": b,
         "r": r,
         "t": r / npSqrt((1 - r * r) / (x.size - 2)),
         "line": a + b * x,
     }
-    return result

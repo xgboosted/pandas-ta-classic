@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Williams %R (WILLR)
 from typing import Any, Optional
 from pandas import Series

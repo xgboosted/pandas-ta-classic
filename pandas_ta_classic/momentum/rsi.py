@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Relative Strength Index (RSI)
 from typing import Any, Optional, Union
 from pandas import DataFrame, Series, concat
@@ -63,7 +62,7 @@ def rsi(
 
     signal_indicators = kwargs.pop("signal_indicators", False)
     if signal_indicators:
-        signalsdf = concat(
+        return concat(
             [
                 DataFrame({rsi.name: rsi}),
                 signals(
@@ -81,9 +80,7 @@ def rsi(
             axis=1,
         )
 
-        return signalsdf
-    else:
-        return rsi
+    return rsi
 
 
 rsi.__doc__ = """Relative Strength Index (RSI)

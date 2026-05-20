@@ -25,7 +25,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic import custom
 from pandas_ta_classic.core import AnalysisIndicators
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic  # noqa: F401 — registers df.ta accessor
+from tests.context import pandas_ta_classic
 
 # ---------------------------------------------------------------------------
 # 1. Indicator chaining via append=True
@@ -201,7 +201,6 @@ class TestPluginBindRegistration(TestCase):
 
     def _make_custom_pair(self):
         """Returns (function, method) for a trivial 'double close' indicator."""
-        name = self._BIND_NAME
 
         def _fn(close, length=None, offset=None, **kwargs):
             result = close * 2.0

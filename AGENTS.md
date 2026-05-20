@@ -5,7 +5,7 @@ This file documents the use of AI coding agents and assistants for the pandas-ta
 
 ## Repository Context
 - **Project:** pandas-ta-classic — Technical Analysis Indicators for pandas DataFrames
-- **Main Language:** Python
+- **Main Language:** Python 3; Execute in the local venv instead of system Python
 - **Coding Style:** Follow PEP8 and repo-specific conventions
 - **GitHub interactions:** Use the GitHub MCP server exclusively; do not use GitLens or GitKraken tools for GitHub operations
 - **Commits:** Never automatically stage or commit changes; every change must be manually reviewed before being committed

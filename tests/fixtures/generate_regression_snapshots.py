@@ -19,13 +19,20 @@ All are well past the warmup period for every tracked indicator.
 
 import json
 import math
+import sys
 from pathlib import Path
+
+# Allow running directly (python path/to/script.py) in addition to
+# the documented module invocation (python -m tests.fixtures.…).
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import pandas as pd
 
 # Re-use the same indicator compute function from generate_fixtures to stay
 # in sync with the full set of 43 tracked indicators.
-from tests.fixtures.generate_fixtures import _load, _indicators  # noqa: E402
+from tests.fixtures.generate_fixtures import _load, _indicators
 
 # ---------------------------------------------------------------------------
 # Snapshot configuration

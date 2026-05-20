@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 from numpy import log as npLog
@@ -10,7 +9,7 @@ npNaN = np.nan
 
 from ._core import verify_series
 from ._time import total_time
-from ._math import linear_regression, log_geometric_mean
+from ._math import linear_regression
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance import drawdown, log_return, percent_return
 
@@ -119,7 +118,7 @@ def log_max_drawdown(close: Series) -> float:
 
 def max_drawdown(
     close: Series, method: Optional[str] = None, all: bool = False
-) -> Union[float, Dict[str, float]]:
+) -> Union[float, dict[str, float]]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
     Args:
@@ -144,7 +143,7 @@ def max_drawdown(
     if all:
         return max_dd_
 
-    if isinstance(method, str) and method in max_dd_.keys():
+    if isinstance(method, str) and method in max_dd_:
         return max_dd_[method]
     return max_dd_["dollar"]
 
@@ -174,9 +173,7 @@ def optimal_leverage(
     if close is None:
         return npNaN
 
-    use_cagr = kwargs.pop("use_cagr", False)
     returns = percent_return(close=close) if not log else log_return(close=close)
-    # sharpe = sharpe_ratio(close, benchmark_rate=benchmark_rate, log=log, use_cagr=use_cagr, period=period)
 
     period_mu = period * returns.mean()
     period_std = npSqrt(period) * returns.std()
@@ -185,8 +182,7 @@ def optimal_leverage(
     # sharpe = mean_excess_return / period_std
     opt_leverage = (period_std**-2) * mean_excess_return
 
-    amount = int(capital * opt_leverage)
-    return amount
+    return int(capital * opt_leverage)
 
 
 def pure_profit_score(close: Series) -> Union[float, int]:
@@ -236,10 +232,9 @@ def sharpe_ratio(
 
     if use_cagr:
         return cagr(close) / volatility(close, log=log)
-    else:
-        period_mu = period * returns.mean()
-        period_std = npSqrt(period) * returns.std()
-        return (period_mu - benchmark_rate) / period_std
+    period_mu = period * returns.mean()
+    period_std = npSqrt(period) * returns.std()
+    return (period_mu - benchmark_rate) / period_std
 
 
 def sortino_ratio(

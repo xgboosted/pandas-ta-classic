@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Even Better Sine Wave (EBSW)
 from typing import Any, Optional
 import numpy as np

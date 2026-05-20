@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # TTM Trend (TTM_TREND)
 from typing import Any, Optional
 from pandas import DataFrame, Series

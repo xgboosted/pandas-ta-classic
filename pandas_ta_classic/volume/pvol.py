@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Price Volume (PVOL)
 from typing import Any, Optional
 from pandas import Series
@@ -37,7 +36,7 @@ def pvol(
     pvol = apply_fill(pvol, **kwargs)
 
     # Name and Categorize it
-    pvol.name = f"PVOL"
+    pvol.name = "PVOL"
     pvol.category = "volume"
 
     return pvol

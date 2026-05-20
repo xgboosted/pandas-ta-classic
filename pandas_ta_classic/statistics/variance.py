@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Variance (VARIANCE)
 from typing import Any, Optional
 

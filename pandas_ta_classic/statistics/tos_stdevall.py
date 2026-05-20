@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # TOS Standard Deviation All (TOS_STDEVALL)
 from typing import Any, List, Optional
 from numpy import array as npArray
@@ -12,7 +11,7 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 def tos_stdevall(
     close: Series,
     length: Optional[int] = None,
-    stds: Optional[List[int]] = None,
+    stds: Optional[list[int]] = None,
     ddof: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
@@ -28,7 +27,7 @@ def tos_stdevall(
         stds = stds[::-1]
     offset = get_offset(offset)
 
-    _props = f"TOS_STDEVALL"
+    _props = "TOS_STDEVALL"
     if length is None:
         length = close.size
     else:

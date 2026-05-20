@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SuperTrend (SUPERTREND)
 from typing import Any, Optional
 import numpy as np
@@ -93,9 +92,7 @@ def supertrend(
     df = apply_offset(df, offset)
 
     # Handle fills
-    df = apply_fill(df, **kwargs)
-
-    return df
+    return apply_fill(df, **kwargs)
 
 
 supertrend.__doc__ = """Supertrend (supertrend)

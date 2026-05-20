@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Accumulation/Distribution (AD)
 from typing import Any, Optional
 from pandas import Series

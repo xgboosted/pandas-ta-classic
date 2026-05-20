@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Linear Regression Angle (LINEARREG_ANGLE)
 from typing import Any, Optional
 from pandas import Series
@@ -24,8 +23,7 @@ def linregangle(
     if close is None:
         return None
 
-    result = linreg(close, length=length, offset=offset, angle=True, degrees=True)
-    return result
+    return linreg(close, length=length, offset=offset, angle=True, degrees=True)
 
 
 linregangle.__doc__ = """Linear Regression Angle (LINEARREG_ANGLE)

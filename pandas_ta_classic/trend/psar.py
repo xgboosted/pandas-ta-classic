@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Parabolic SAR (PSAR)
 from typing import Any, Optional
 import numpy as np
@@ -143,16 +142,15 @@ def psar(
     long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
         h_arr, l_arr, m, falling, sar, ep, af0, max_af
     )
-    import numpy as _np
 
     # Combine to a single SAR series then reclassify using close when available.
     # This matches TA-Lib's convention (SAR < close → long, SAR >= close → short)
     # and avoids off-by-one splits at reversal bars when using the falling flag alone.
-    _combined = _np.where(~_np.isnan(long_arr), long_arr, short_arr)
+    _combined = np.where(~np.isnan(long_arr), long_arr, short_arr)
     if close is not None:
         close_arr = close.to_numpy(dtype=float)
-        long_arr = _np.where(_combined < close_arr, _combined, _np.nan)
-        short_arr = _np.where(_combined >= close_arr, _combined, _np.nan)
+        long_arr = np.where(_combined < close_arr, _combined, np.nan)
+        short_arr = np.where(_combined >= close_arr, _combined, np.nan)
     long = Series(long_arr, index=high.index)
     short = Series(short_arr, index=high.index)
     _af = Series(af_arr, index=high.index)

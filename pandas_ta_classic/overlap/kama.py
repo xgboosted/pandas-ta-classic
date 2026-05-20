@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Kaufman Adaptive Moving Average (KAMA)
 from typing import Any, Optional
 import numpy as np

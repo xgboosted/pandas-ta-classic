@@ -40,7 +40,14 @@ REGRESSION (55 indicators)
 
 import json
 import math
+import sys
 from pathlib import Path
+
+# Allow running directly (python path/to/script.py) in addition to
+# the documented module invocation (python -m tests.fixtures.…).
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import numpy as np
 import pandas as pd
@@ -526,11 +533,9 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "pvo",
             _df(
-                **{
-                    "PVO_12_26_9": _pvo_line_ref,
-                    "PVOh_12_26_9": _pvo_hist_ref,
-                    "PVOs_12_26_9": _pvo_sig_ref,
-                }
+                PVO_12_26_9=_pvo_line_ref,
+                PVOh_12_26_9=_pvo_hist_ref,
+                PVOs_12_26_9=_pvo_sig_ref,
             ),
             ta.pvo(v),
         ),
@@ -568,24 +573,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ),
         (
             "donchian_20",
-            _df(
-                **{
-                    "DCL_20_20": _don_lower,
-                    "DCM_20_20": _don_mid,
-                    "DCU_20_20": _don_upper,
-                }
-            ),
+            _df(DCL_20_20=_don_lower, DCM_20_20=_don_mid, DCU_20_20=_don_upper),
             ta.donchian(h, l, lower_length=20, upper_length=20),
         ),
         (
             "kc_20",
-            _df(
-                **{
-                    "KCLe_20_2": _kc_lower,
-                    "KCBe_20_2": _kc_basis,
-                    "KCUe_20_2": _kc_upper,
-                }
-            ),
+            _df(KCLe_20_2=_kc_lower, KCBe_20_2=_kc_basis, KCUe_20_2=_kc_upper),
             ta.kc(h, l, c, length=20),
         ),
         ("massi", _s(_massi_ref, "MASSI_9_25"), ta.massi(h, l)),
@@ -593,11 +586,9 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "accbands",
             _df(
-                **{
-                    "ACCBL_20": _accbands_lower_ref,
-                    "ACCBM_20": _accbands_mid_ref,
-                    "ACCBU_20": _accbands_upper_ref,
-                }
+                ACCBL_20=_accbands_lower_ref,
+                ACCBM_20=_accbands_mid_ref,
+                ACCBU_20=_accbands_upper_ref,
             ),
             ta.accbands(h, l, c),
         ),
@@ -620,7 +611,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("vhf", _s(_vhf_ref, "VHF_28"), ta.vhf(c)),
         (
             "vortex",
-            _df(**{"VTXP_14": _vtx_p, "VTXM_14": _vtx_m}),
+            _df(VTXP_14=_vtx_p, VTXM_14=_vtx_m),
             ta.vortex(h, l, c),
         ),
         # ---- Volume ----
@@ -641,7 +632,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("eom", _s(_eom_ref, "EOM_14_100000000"), ta.eom(h, l, c, v)),
         (
             "kvo",
-            _df(**{"KVO_34_55_13": _kvo_line, "KVOs_34_55_13": _kvo_sig}),
+            _df(KVO_34_55_13=_kvo_line, KVOs_34_55_13=_kvo_sig),
             ta.kvo(h, l, c, v),
         ),
         ("nvi", _s(_nvi_ref, "NVI_1"), ta.nvi(c, v)),
@@ -691,13 +682,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ),
         (
             "drawdown",
-            _df(
-                **{
-                    "DD": _dd_abs_ref,
-                    "DD_PCT": _dd_pct_ref,
-                    "DD_LOG": _dd_log_ref,
-                }
-            ),
+            _df(DD=_dd_abs_ref, DD_PCT=_dd_pct_ref, DD_LOG=_dd_log_ref),
             ta.drawdown(c),
         ),
         # ---- Overlap (additional) ----
@@ -725,44 +710,33 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         # ---- Momentum (additional) ----
         (
             "stochrsi",
-            _df(
-                **{
-                    "STOCHRSIk_14_14_3_3": _stochrsi_k,
-                    "STOCHRSId_14_14_3_3": _stochrsi_d,
-                }
-            ),
+            _df(STOCHRSIk_14_14_3_3=_stochrsi_k, STOCHRSId_14_14_3_3=_stochrsi_d),
             ta.stochrsi(c),
         ),
         (
             "ppo",
-            _df(
-                **{
-                    "PPO_12_26_9": _ppo_line,
-                    "PPOs_12_26_9": _ppo_sig,
-                    "PPOh_12_26_9": _ppo_hist,
-                }
-            ),
+            _df(PPO_12_26_9=_ppo_line, PPOs_12_26_9=_ppo_sig, PPOh_12_26_9=_ppo_hist),
             ta.ppo(c),
         ),
-        ("trix", _df(**{"TRIX_30_9": _trix_line, "TRIXs_30_9": _trix_sig}), ta.trix(c)),
+        ("trix", _df(TRIX_30_9=_trix_line, TRIXs_30_9=_trix_sig), ta.trix(c)),
         ("cmo_14", _s(_cmo14_ref, "CMO_14"), ta.cmo(c, length=14, talib=False)),
         ("coppock", _s(_coppock_ref, "COPC_11_14_10"), ta.coppock(c)),
         ("cg", _s(_cg10_ref, "CG_10"), ta.cg(c)),
         ("pgo_14", _s(_pgo14_ref, "PGO_14"), ta.pgo(h, l, c, length=14)),
         (
             "eri",
-            _df(**{"BULLP_13": _eri_bull_ref, "BEARP_13": _eri_bear_ref}),
+            _df(BULLP_13=_eri_bull_ref, BEARP_13=_eri_bear_ref),
             ta.eri(h, l, c),
         ),
         (
             "tsi",
-            _df(**{"TSI_13_25_13": _tsi_line_ref, "TSIs_13_25_13": _tsi_sig_ref}),
+            _df(TSI_13_25_13=_tsi_line_ref, TSIs_13_25_13=_tsi_sig_ref),
             ta.tsi(c),
         ),
         # ---- Trend (additional) ----
         (
             "adxr",
-            _df(**{"ADXR_14": _adxr_arr, "DMP_14": _dmp_arr, "DMN_14": _dmn_arr}),
+            _df(ADXR_14=_adxr_arr, DMP_14=_dmp_arr, DMN_14=_dmn_arr),
             ta.adxr(h, l, c, 14, talib=False),
         ),
         (
@@ -791,12 +765,10 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "ha",
             _df(
-                **{
-                    "HA_open": _ha_open_arr,
-                    "HA_high": _ha_high_arr,
-                    "HA_low": _ha_low_arr,
-                    "HA_close": _ha_close_arr,
-                }
+                HA_open=_ha_open_arr,
+                HA_high=_ha_high_arr,
+                HA_low=_ha_low_arr,
+                HA_close=_ha_close_arr,
             ),
             ta.ha(o, h, l, c),
         ),

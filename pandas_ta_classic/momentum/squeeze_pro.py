@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Squeeze Pro (SQUEEZE_PRO)
 from typing import Any, Optional
 import numpy as np
@@ -14,10 +13,9 @@ from pandas_ta_classic.momentum.squeeze import (
 )
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.trend import decreasing, increasing
 from pandas_ta_classic.volatility import bbands, kc
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset
-from pandas_ta_classic.utils import unsigned_differences, verify_series
+from pandas_ta_classic.utils import verify_series
 
 
 def squeeze_pro(
@@ -169,11 +167,11 @@ def squeeze_pro(
 
     data = {
         squeeze.name: squeeze,
-        f"SQZPRO_ON_WIDE": squeeze_on_wide,
-        f"SQZPRO_ON_NORMAL": squeeze_on_normal,
-        f"SQZPRO_ON_NARROW": squeeze_on_narrow,
-        f"SQZPRO_OFF": squeeze_off_wide,
-        f"SQZPRO_NO": no_squeeze,
+        "SQZPRO_ON_WIDE": squeeze_on_wide,
+        "SQZPRO_ON_NORMAL": squeeze_on_normal,
+        "SQZPRO_ON_NARROW": squeeze_on_narrow,
+        "SQZPRO_OFF": squeeze_off_wide,
+        "SQZPRO_NO": no_squeeze,
     }
     df = DataFrame(data)
     df.name = squeeze.name
