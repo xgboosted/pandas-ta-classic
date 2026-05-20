@@ -54,9 +54,16 @@ class TestAccessorHelperClassification(TestCase):
     # ------------------------------------------------------------------
 
     def test_helper_methods_excluded(self):
-        """constants, indicators, strategy, ticker must not be in the list."""
+        """chain, constants, indicators, strategy, ticker, unchain must not be in the list."""
         ind = self._indicator_list()
-        for name in ("constants", "indicators", "strategy", "ticker"):
+        for name in (
+            "chain",
+            "constants",
+            "indicators",
+            "strategy",
+            "ticker",
+            "unchain",
+        ):
             self.assertNotIn(
                 name,
                 ind,
