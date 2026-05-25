@@ -2121,8 +2121,7 @@ class AnalysisIndicators(BasePandasObject):
         self._add_prefix_suffix(result, **kwargs)
         self._add_prefix_suffix(span, **kwargs)
         self._append(result, **kwargs)
-        # return self._post_process(result, **kwargs), span
-        return result, span
+        return self._post_process(result, **kwargs)
 
     def linreg(self, length=None, offset=None, adjust=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
