@@ -1,6 +1,7 @@
 # CPR Utility Functions
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from pandas import DataFrame, Series
 
@@ -109,11 +110,11 @@ def calculate_price_position(close: Series, tc: Series, bc: Series) -> Series:
         bc: Bottom Central series
 
     Returns:
-        Series with values: 'above_tc', 'inside_cpr', 'below_bc'
+        Series with integer values: 1 (above TC), 0 (inside CPR), -1 (below BC)
     """
-    position = Series("inside_cpr", index=close.index)
-    position[close > tc] = "above_tc"
-    position[close < bc] = "below_bc"
+    position = Series(0, index=close.index, dtype=np.int8)
+    position[close > tc] = 1
+    position[close < bc] = -1
     return position
 
 
