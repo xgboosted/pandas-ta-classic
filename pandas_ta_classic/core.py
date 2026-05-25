@@ -540,10 +540,7 @@ class AnalysisIndicators(BasePandasObject):
     def _mp_worker(self, arguments: tuple):
         """Multiprocessing Worker to handle different Methods."""
         method, args, kwargs = arguments
-
-        if method != "ichimoku":
-            return getattr(self, method)(*args, **kwargs)
-        return getattr(self, method)(*args, **kwargs)[0]
+        return getattr(self, method)(*args, **kwargs)
 
     def _post_process(self, result, **kwargs) -> tuple[pd.Series, pd.DataFrame]:
         """Applies any additional modifications to the DataFrame
