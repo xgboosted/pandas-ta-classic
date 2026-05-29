@@ -1,6 +1,7 @@
 # CPR Utility Functions
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from pandas import DataFrame, Series
 
@@ -87,15 +88,14 @@ def calculate_cpr_width(
         Tuple of (width, width_pct, width_class):
             width: Absolute width (TC - BC)
             width_pct: Percentage width relative to Pivot
-            width_class: Classification ('narrow', 'medium', 'wide')
+            width_class: Integer classification: -1 (narrow), 0 (medium), 1 (wide)
     """
     width = tc - bc
     width_pct = (width / pivot) * 100
 
-    # Classify width
-    width_class = Series("medium", index=width.index)
-    width_class[width_pct < narrow_threshold] = "narrow"
-    width_class[width_pct > wide_threshold] = "wide"
+    width_class = Series(0, index=width.index, dtype=np.int8)
+    width_class[width_pct < narrow_threshold] = -1
+    width_class[width_pct > wide_threshold] = 1
 
     return width, width_pct, width_class
 
@@ -109,11 +109,11 @@ def calculate_price_position(close: Series, tc: Series, bc: Series) -> Series:
         bc: Bottom Central series
 
     Returns:
-        Series with values: 'above_tc', 'inside_cpr', 'below_bc'
+        Series with integer values: 1 (above TC), 0 (inside CPR), -1 (below BC)
     """
-    position = Series("inside_cpr", index=close.index)
-    position[close > tc] = "above_tc"
-    position[close < bc] = "below_bc"
+    position = Series(0, index=close.index, dtype=np.int8)
+    position[close > tc] = 1
+    position[close < bc] = -1
     return position
 
 
