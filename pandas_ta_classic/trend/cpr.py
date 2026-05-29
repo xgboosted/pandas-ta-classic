@@ -433,5 +433,8 @@ Returns:
     pd.DataFrame: CPR levels and analysis columns.
         Core columns: CPR_TC, CPR_PIVOT, CPR_BC
         S/R columns (depends on 'levels'): CPR_R1, CPR_R2, CPR_S1, CPR_S2, etc.
-        Analysis columns: CPR_WIDTH, CPR_WIDTH_PCT, CPR_WIDTH_CLASS, CPR_POSITION, CPR_VIRGIN
+        Analysis columns: CPR_WIDTH (float), CPR_WIDTH_PCT (float),
+            CPR_WIDTH_CLASS (int8: -1=narrow, 0=medium, 1=wide),
+            CPR_POSITION (int8: -1=below BC, 0=inside CPR, 1=above TC),
+            CPR_VIRGIN (bool)
 """

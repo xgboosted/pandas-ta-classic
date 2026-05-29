@@ -88,15 +88,14 @@ def calculate_cpr_width(
         Tuple of (width, width_pct, width_class):
             width: Absolute width (TC - BC)
             width_pct: Percentage width relative to Pivot
-            width_class: Classification ('narrow', 'medium', 'wide')
+            width_class: Integer classification: -1 (narrow), 0 (medium), 1 (wide)
     """
     width = tc - bc
     width_pct = (width / pivot) * 100
 
-    # Classify width
-    width_class = Series("medium", index=width.index)
-    width_class[width_pct < narrow_threshold] = "narrow"
-    width_class[width_pct > wide_threshold] = "wide"
+    width_class = Series(0, index=width.index, dtype=np.int8)
+    width_class[width_pct < narrow_threshold] = -1
+    width_class[width_pct > wide_threshold] = 1
 
     return width, width_pct, width_class
 

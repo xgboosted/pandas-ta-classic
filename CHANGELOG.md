@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 * **Dead code removal**: Removed ~370 instances of unused imports (F401), 8 unused local variables (F841), 1 duplicate method (`test_custom_a`), 65 useless f-string prefixes (F541), and 279 unnecessary UTF-8 encoding declarations (UP009).
 * **Code modernization**: Applied pyupgrade (UP) and flake8-return (RET) fixes — `Optional[X]`→`X|None`, `List`→`list`, removed redundant `else` after `return`.
 * **Linreg TA-Lib dispatch**: Replaced 6-branch `if`/`elif` chain with `_TALIB_DISPATCH` lookup dictionary.
+* **CPR numeric encoding** (PR #117): `calculate_price_position()` and `calculate_cpr_width()` now return `np.int8` instead of string labels. `CPR_POSITION`: `1` (above TC), `0` (inside CPR), `-1` (below BC). `CPR_WIDTH_CLASS`: `1` (wide), `0` (medium), `-1` (narrow). All indicator columns are now numeric.
 * **PSAR cleanup**: Removed `import numpy as _np` from function body; uses module-level `np` instead.
 * **test_strategy**: Fixed duplicate `test_custom_a` method (was shadowed, never ran). Fixed stale column count assertion.
 

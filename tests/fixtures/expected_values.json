@@ -1655,6 +1655,14 @@
     "CPR_WIDTH_PCT": {
       "last_value": 0.02201463,
       "non_nan_count": 5240
+    },
+    "CPR_WIDTH_CLASS": {
+      "last_value": -1.0,
+      "non_nan_count": 5241
+    },
+    "CPR_POSITION": {
+      "last_value": 1.0,
+      "non_nan_count": 5241
     }
   },
   "decay": {
