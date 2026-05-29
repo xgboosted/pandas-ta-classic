@@ -252,9 +252,9 @@ class AnalysisIndicators(BasePandasObject):
 
     Returns:
         Most Indicators will return a Pandas Series. Others like MACD, BBANDS,
-        KC, et al will return a Pandas DataFrame. Ichimoku on the other hand
-        will return two DataFrames, the Ichimoku DataFrame for the known period
-        and a Span DataFrame for the future of the Span values.
+        KC, et al will return a Pandas DataFrame. Ichimoku returns a single
+        DataFrame for the known period; the forward-looking Span DataFrame is
+        only available through the underlying ``pandas_ta.ichimoku()`` function.
 
     Let's get started!
 
@@ -2116,7 +2116,6 @@ class AnalysisIndicators(BasePandasObject):
             **kwargs,
         )
         self._add_prefix_suffix(result, **kwargs)
-        self._add_prefix_suffix(span, **kwargs)
         self._append(result, **kwargs)
         return self._post_process(result, **kwargs)
 
