@@ -136,6 +136,9 @@ Documentation = "https://xgboosted.github.io/pandas-ta-classic/"
 markers = [
     "regression: snapshot regression tests — run with -m regression",
 ]
+filterwarnings = [
+    "error::UserWarning:pandas_ta_classic",
+]
 
 [tool.black]
 skip-string-normalization = true

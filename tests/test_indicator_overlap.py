@@ -320,6 +320,13 @@ class TestOverlap(TestCase):
             ),
         )
 
+    def test_mavp_unsupported_mamode_warns(self):
+        import pytest
+
+        with pytest.warns(UserWarning, match="Results will use SMA"):
+            result = pandas_ta.mavp(self.close, mamode=1, talib=False)
+        self.assertIsInstance(result, Series)
+
     def test_mcgd(self):
         assert_indicator_standard(
             self,
