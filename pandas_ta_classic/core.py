@@ -2098,9 +2098,17 @@ class AnalysisIndicators(BasePandasObject):
         kijun=None,
         senkou=None,
         include_chikou=True,
+        append_span: bool = False,
         offset=None,
         **kwargs,
     ):
+        """Ichimoku Kinkō Hyō.
+
+        The span DataFrame (projected Senkou A/B values for the next kijun
+        periods) is only accessible by calling ta.ichimoku() directly or by
+        passing append_span=True to this accessor. When append_span=True and
+        append=True, span columns are appended alongside the main result.
+        """
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
@@ -2117,6 +2125,8 @@ class AnalysisIndicators(BasePandasObject):
         )
         self._add_prefix_suffix(result, **kwargs)
         self._append(result, **kwargs)
+        if append_span and span is not None:
+            self._append(span, **kwargs)
         return self._post_process(result, **kwargs)
 
     def linreg(self, length=None, offset=None, adjust=None, **kwargs):
