@@ -94,12 +94,19 @@ Source: Kevin Johnson
 Calculation:
     Default Inputs:
         asbool=False, trend_reset=0, trade_offset=0, drift=1
+        (xa, xb: no defaults — required)
 
     trades = trends.diff().shift(trade_offset).fillna(0).astype(int)
     entries = (trades > 0).astype(int)
     exits = (trades < 0).abs().astype(int)
 
 Args:
+    signal (pd.Series): Oscillator or signal Series to evaluate.
+    xa (float): Entry threshold. Choose based on indicator range.
+        RSI/Stoch/KDJ (0–100): typical 20–30 (oversold) or 70–80 (overbought).
+        Unbounded indicators (MACD, CCI): must match their actual value range.
+        WARNING: xa=80 with MACD (range ~-5 to +5) will never trigger.
+    xb (float): Exit threshold, opposite side of xa (e.g. if xa=20 use xb=80).
     above (bool): When the signal crosses above 'xa' first and then 'xb'. When
         False, then when the signal crosses below 'xa' first and then 'xb'.
         Default: True
