@@ -4,6 +4,8 @@ from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
+# benchmark is Optional (not required) to stay compatible with df.ta.strategy("all"),
+# which calls every indicator without arguments; returns None when absent.
 def beta(
     close: Series,
     benchmark: Optional[Series] = None,
