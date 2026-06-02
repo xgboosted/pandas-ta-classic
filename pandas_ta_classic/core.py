@@ -2123,9 +2123,8 @@ class AnalysisIndicators(BasePandasObject):
             offset=offset,
             **kwargs,
         )
-        self._add_prefix_suffix(result, **kwargs)
-        self._append(result, **kwargs)
         if append_span and span is not None:
+            self._add_prefix_suffix(span, **kwargs)
             self._append(span, **kwargs)
         return self._post_process(result, **kwargs)
 
