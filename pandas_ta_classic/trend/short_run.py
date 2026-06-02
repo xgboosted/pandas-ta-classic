@@ -60,14 +60,21 @@ Calculation:
     SHORT_RUN = PT OR BD
 
 Args:
-    fast (pd.Series): Fast moving average series
-    slow (pd.Series): Slow moving average series
+    fast (pd.Series): Fast moving average Series (e.g. EMA(5)). Pre-computed,
+        not a period length.
+    slow (pd.Series): Slow moving average Series (e.g. EMA(20)). Pre-computed,
+        not a period length.
     length (int): Lookback period. Default: 2
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
+
+Example:
+    fast_ma = df.ta.ema(length=5)
+    slow_ma = df.ta.ema(length=20)
+    sr = ta.short_run(fast_ma, slow_ma)
 
 Returns:
     pd.Series: New feature generated (boolean).
