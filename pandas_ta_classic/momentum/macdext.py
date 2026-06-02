@@ -16,8 +16,8 @@ _MATYPE_TO_KIND = {
     3: "dema",
     4: "tema",
     5: "trima",
-    6: "kama",
-    7: "mama",
+    6: "ema",  # KAMA not supported natively; EMA used as fallback
+    7: "ema",  # MAMA not supported natively; EMA used as fallback
     8: "t3",
 }
 
@@ -158,7 +158,8 @@ Like MACD but each of the three moving averages (fast, slow, signal) can use
 a different MA type, following the TA-Lib convention.
 
 MA type integers:
-    0=SMA, 1=EMA (default), 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3
+    0=SMA, 1=EMA (default), 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA*, 7=MAMA*, 8=T3
+    (* native fallback uses EMA; UserWarning emitted)
 
 Sources:
     TA-Lib: https://ta-lib.org/functions/
@@ -171,6 +172,9 @@ Args:
     fastmatype (int): MA type for fast line. Default: 1 (EMA).
     slowmatype (int): MA type for slow line. Default: 1 (EMA).
     signalmatype (int): MA type for signal line. Default: 1 (EMA).
+        Native fallback supports: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA,
+        5=TRIMA, 8=T3. Types 6=KAMA and 7=MAMA use EMA as a fallback and
+        emit a UserWarning. Use talib=True for correct KAMA/MAMA behaviour.
     talib (bool): Use TA-Lib if available. Default: False.
     offset (int): Number of periods to offset. Default: 0.
 

@@ -124,7 +124,9 @@ Args:
     periods (pd.Series): Variable period series (optional). Default: linearly spaced [minperiod, maxperiod]
     minperiod (int): Minimum allowed period. Default: 2
     maxperiod (int): Maximum allowed period. Default: 30
-    mamode (int): MA type (TA-Lib convention: 0=SMA). Default: 0
+    mamode (int): MA type (TA-Lib convention). Default: 0 (SMA).
+        Only mamode=0 (SMA) is supported natively. All other values
+        require TA-Lib and emit a UserWarning if talib=False.
     talib (bool): Use TA-Lib if installed. Default: False
     offset (int): Result offset. Default: 0
 

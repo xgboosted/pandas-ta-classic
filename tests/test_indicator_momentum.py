@@ -408,6 +408,17 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_macdext_unsupported_matype_warns(self):
+        import pytest
+
+        with pytest.warns(UserWarning, match="EMA will be used instead"):
+            result = pandas_ta.macdext(self.close, signalmatype=6, talib=False)
+        self.assertIsInstance(result, DataFrame)
+
+        with pytest.warns(UserWarning, match="EMA will be used instead"):
+            result = pandas_ta.macdext(self.close, fastmatype=7, talib=False)
+        self.assertIsInstance(result, DataFrame)
+
     def test_mom(self):
         result = pandas_ta.mom(self.close, talib=False)
         if HAS_TALIB:
