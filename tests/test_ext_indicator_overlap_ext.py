@@ -76,6 +76,19 @@ class TestOverlapExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "KAMA_10_2_30")
 
+    def test_ichimoku_append_span_ext(self):
+        from tests.config import get_sample_data
+
+        data = get_sample_data()
+        data.ta.ichimoku(append=True, append_span=True)
+        self.assertIsInstance(data, DataFrame)
+        # Span columns (ISA_9, ISB_26) should be present after append_span=True
+        self.assertIn("ISA_9", data.columns)
+        self.assertIn("ISB_26", data.columns)
+        # Main ichimoku columns should also be present
+        self.assertIn("ITS_9", data.columns)
+        self.assertIn("IKS_26", data.columns)
+
     def test_ichimoku_ext(self):
         self.data.ta.ichimoku(append=True)
         self.assertIsInstance(self.data, DataFrame)
