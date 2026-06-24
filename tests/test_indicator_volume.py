@@ -1,6 +1,6 @@
 from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import DataFrame
@@ -42,9 +42,7 @@ class TestVolume(TestCase):
         pass
 
     def test_ad(self):
-        result = pandas_ta.ad(
-            self.high, self.low, self.close, self.volume_, talib=False
-        )
+        result = pandas_ta.ad(self.high, self.low, self.close, self.volume_, talib=False)
         if HAS_TALIB:
             assert_talib(
                 self,
@@ -74,9 +72,7 @@ class TestVolume(TestCase):
         )
 
     def test_adosc(self):
-        result = pandas_ta.adosc(
-            self.high, self.low, self.close, self.volume_, talib=False
-        )
+        result = pandas_ta.adosc(self.high, self.low, self.close, self.volume_, talib=False)
         if HAS_TALIB:
             assert_talib(
                 self,
@@ -179,9 +175,7 @@ class TestVolume(TestCase):
         self.assertIsNone(pandas_ta.marketfi(self.high, self.low, None))
 
     def test_mfi(self):
-        result = pandas_ta.mfi(
-            self.high, self.low, self.close, self.volume_, talib=False
-        )
+        result = pandas_ta.mfi(self.high, self.low, self.close, self.volume_, talib=False)
         if HAS_TALIB:
             assert_talib(
                 self,

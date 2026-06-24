@@ -30,11 +30,9 @@ def _detect(ca, out, **kwargs):
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 2] == 1
-            and ca.real_body[i - 2]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
+            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and ca.color[i - 1] == -1
-            and ca.real_body[i - 1]
-            <= AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
+            and ca.real_body[i - 1] <= AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
             and body_lo[i - 1] > body_hi[i - 2]
             and ca.color[i] == -1
             and ca.open[i] > ca.open[i - 1]

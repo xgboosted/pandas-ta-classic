@@ -1,5 +1,5 @@
 # TOS Standard Deviation All (TOS_STDEVALL)
-from typing import Any, List, Optional
+from typing import Any, Optional
 from numpy import array as npArray
 from numpy import arange as npArange
 from numpy import polyfit as npPolyfit

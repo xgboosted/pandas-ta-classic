@@ -4,7 +4,7 @@ from multiprocessing import cpu_count
 from time import perf_counter
 
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import DataFrame
@@ -90,9 +90,7 @@ class TestStrategyMethods(TestCase):
         self.category = "All Ordered"  # Rename for Speed Table
 
     def test_all_strategy(self):
-        self.data.ta.strategy(
-            pandas_ta.AllStrategy, verbose=verbose, timed=strategy_timed
-        )
+        self.data.ta.strategy(pandas_ta.AllStrategy, verbose=verbose, timed=strategy_timed)
 
     def test_all_name_strategy(self):
         self.category = "All"
@@ -101,15 +99,9 @@ class TestStrategyMethods(TestCase):
     # @skipUnless(verbose, "verbose mode only")
     def test_all_multiparams_strategy(self):
         self.category = "All"
-        self.data.ta.strategy(
-            self.category, length=10, verbose=verbose, timed=strategy_timed
-        )
-        self.data.ta.strategy(
-            self.category, length=50, verbose=verbose, timed=strategy_timed
-        )
-        self.data.ta.strategy(
-            self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed
-        )
+        self.data.ta.strategy(self.category, length=10, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(self.category, length=50, verbose=verbose, timed=strategy_timed)
+        self.data.ta.strategy(self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed)
         self.category = "All Multiruns with diff Args"  # Rename for Speed Table
 
     # @skip
@@ -120,9 +112,7 @@ class TestStrategyMethods(TestCase):
     # @skip
     def test_common(self):
         self.category = "Common"
-        self.data.ta.strategy(
-            pandas_ta.CommonStrategy, verbose=verbose, timed=strategy_timed
-        )
+        self.data.ta.strategy(pandas_ta.CommonStrategy, verbose=verbose, timed=strategy_timed)
 
     def test_cycles_category(self):
         self.category = "Cycles"
@@ -179,9 +169,7 @@ class TestStrategyMethods(TestCase):
     def test_custom_col_names_tuple(self):
         self.category = "Custom C"
 
-        custom_args_ta = [
-            {"kind": "bbands", "col_names": ("LB", "MB", "UB", "BW", "BP")}
-        ]
+        custom_args_ta = [{"kind": "bbands", "col_names": ("LB", "MB", "UB", "BW", "BP")}]
 
         custom = pandas_ta.Strategy(
             "Custom Col Numbers Tuple",
@@ -218,9 +206,7 @@ class TestStrategyMethods(TestCase):
             amat_logret_ta,  # ta
             "AMAT Log Returns",  # description
         )
-        self.data.ta.strategy(
-            custom, verbose=verbose, timed=strategy_timed, ordered=True
-        )
+        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed, ordered=True)
         self.data.ta.tsignals(trend=self.data["AMATe_LR_20_50_2"], append=True)
         self.assertEqual(len(self.data.columns), 13)
 

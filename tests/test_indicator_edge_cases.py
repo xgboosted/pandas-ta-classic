@@ -57,9 +57,7 @@ class TestAllNanInput(TestCase):
     """Indicators on all-NaN input must return an all-NaN result, not raise."""
 
     def _assert_all_nan_result(self, result, label: str):
-        self.assertIsNotNone(
-            result, f"{label}: returned None instead of all-NaN result"
-        )
+        self.assertIsNotNone(result, f"{label}: returned None instead of all-NaN result")
         if isinstance(result, pd.DataFrame):
             for col in result.columns:
                 self.assertTrue(
@@ -87,9 +85,7 @@ class TestAllNanInput(TestCase):
         self._assert_all_nan_result(ta.obv(nan, nan, talib=False), "obv")
 
     def test_stdev_all_nan(self):
-        self._assert_all_nan_result(
-            ta.stdev(_all_nan_series(), 10, talib=False), "stdev"
-        )
+        self._assert_all_nan_result(ta.stdev(_all_nan_series(), 10, talib=False), "stdev")
 
     def test_roc_all_nan(self):
         self._assert_all_nan_result(ta.roc(_all_nan_series(), 10, talib=False), "roc")
@@ -125,9 +121,7 @@ class TestConstantInput(TestCase):
         self.assertIsNotNone(result)
         valid = result.dropna()
         self.assertFalse(valid.empty, "stdev on constant returned all-NaN")
-        self.assertTrue(
-            (valid.abs() < 1e-10).all(), "stdev of constant series must be 0"
-        )
+        self.assertTrue((valid.abs() < 1e-10).all(), "stdev of constant series must be 0")
 
     def test_rsi_constant_is_all_nan(self):
         """RSI on a constant series is undefined (0/0) — result must be all-NaN."""
@@ -212,9 +206,7 @@ class TestInfInInput(TestCase):
 
     def test_obv_inf_volume(self):
         """Inf in volume column must not crash OBV."""
-        self._assert_no_crash(
-            ta.obv(_C, self._inject_inf(_V), talib=False), "obv(inf_volume)"
-        )
+        self._assert_no_crash(ta.obv(_C, self._inject_inf(_V), talib=False), "obv(inf_volume)")
 
 
 # ---------------------------------------------------------------------------
@@ -229,30 +221,22 @@ class TestMismatchedLengths(TestCase):
         """atr with h shorter than the minimum requirement must return None."""
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(_H.iloc[:5], _L, _C, length=14, talib=False)
-        self.assertIsNone(
-            result, "atr should return None when h is shorter than required"
-        )
+        self.assertIsNone(result, "atr should return None when h is shorter than required")
 
     def test_atr_l_too_short_returns_none(self):
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(_H, _L.iloc[:5], _C, length=14, talib=False)
-        self.assertIsNone(
-            result, "atr should return None when l is shorter than required"
-        )
+        self.assertIsNone(result, "atr should return None when l is shorter than required")
 
     def test_atr_c_too_short_returns_none(self):
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(_H, _L, _C.iloc[:5], length=14, talib=False)
-        self.assertIsNone(
-            result, "atr should return None when c is shorter than required"
-        )
+        self.assertIsNone(result, "atr should return None when c is shorter than required")
 
     def test_adx_h_too_short_returns_none(self):
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.adx(_H.iloc[:5], _L, _C, length=14, talib=False)
-        self.assertIsNone(
-            result, "adx should return None when h is shorter than required"
-        )
+        self.assertIsNone(result, "adx should return None when h is shorter than required")
 
     def test_obv_short_volume_limits_output(self):
         """

@@ -3,7 +3,7 @@ from unittest import TestCase
 from pandas import DataFrame
 
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 
 class TestUtilityMetrics(TestCase):

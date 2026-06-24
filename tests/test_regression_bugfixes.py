@@ -36,7 +36,6 @@ import pandas as pd
 
 import pandas_ta_classic as ta
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic
 
 # ---------------------------------------------------------------------------
 # Fix 1: stdev / variance ddof default = 0 (population)
@@ -81,8 +80,7 @@ class TestStdevDdofDefault(TestCase):
         diff = np.abs(result[mask].values - sample_std[mask].values)
         self.assertTrue(
             diff.max() > 1e-8,
-            "stdev() default must NOT equal sample std (ddof=1); "
-            "ddof=0 (population) is the correct post-fix default",
+            "stdev() default must NOT equal sample std (ddof=1); " "ddof=0 (population) is the correct post-fix default",
         )
 
     def test_explicit_ddof1_matches_sample_stdev(self):
@@ -136,16 +134,13 @@ class TestLinregDegreesDefault(TestCase):
         self.assertGreater(
             max_abs,
             math.pi / 2,
-            f"linreg(angle=True) max|value|={max_abs:.4f} must exceed "
-            "pi/2 ({:.4f}), confirming values are in degrees".format(math.pi / 2),
+            f"linreg(angle=True) max|value|={max_abs:.4f} must exceed " "pi/2 ({:.4f}), confirming values are in degrees".format(math.pi / 2),
         )
 
     def test_explicit_degrees_false_returns_radians(self):
         """linreg(angle=True, degrees=False) must return radian values in (-pi/2, pi/2)."""
         length = 14
-        result = ta.linreg(
-            self.close, length=length, angle=True, degrees=False, talib=False
-        )
+        result = ta.linreg(self.close, length=length, angle=True, degrees=False, talib=False)
         self.assertIsNotNone(result)
         vals = result.dropna()
         self.assertGreater(len(vals), 0)
@@ -158,12 +153,8 @@ class TestLinregDegreesDefault(TestCase):
     def test_degrees_and_radians_produce_different_values(self):
         """degrees=True and degrees=False must produce numerically different results."""
         length = 14
-        deg = ta.linreg(
-            self.close, length=length, angle=True, degrees=True, talib=False
-        )
-        rad = ta.linreg(
-            self.close, length=length, angle=True, degrees=False, talib=False
-        )
+        deg = ta.linreg(self.close, length=length, angle=True, degrees=True, talib=False)
+        rad = ta.linreg(self.close, length=length, angle=True, degrees=False, talib=False)
         mask = deg.notna() & rad.notna()
         diff = (deg[mask] - rad[mask]).abs()
         self.assertTrue(
@@ -350,9 +341,7 @@ class TestRvgiHistogram(TestCase):
         del cls.df
 
     def _result(self):
-        return ta.rvgi(
-            self.df["open"], self.df["high"], self.df["low"], self.df["close"]
-        )
+        return ta.rvgi(self.df["open"], self.df["high"], self.df["low"], self.df["close"])
 
     def test_rvgi_returns_dataframe(self):
         self.assertIsInstance(self._result(), pd.DataFrame)
@@ -381,11 +370,7 @@ class TestRvgiHistogram(TestCase):
         rvgi_col = next(c for c in result.columns if c.startswith("RVGI_"))
         sig_col = next(c for c in result.columns if c.startswith("RVGIs"))
         hist_col = next(c for c in result.columns if c.startswith("RVGIh"))
-        mask = (
-            result[rvgi_col].notna()
-            & result[sig_col].notna()
-            & result[hist_col].notna()
-        )
+        mask = result[rvgi_col].notna() & result[sig_col].notna() & result[hist_col].notna()
         np.testing.assert_allclose(
             result.loc[mask, hist_col].values,
             (result.loc[mask, rvgi_col] - result.loc[mask, sig_col]).values,
@@ -535,14 +520,12 @@ class TestEdecayFormula(TestCase):
         self.assertGreater(
             result.iloc[i],
             10.0,
-            f"Precondition failed: result[{i}]={result.iloc[i]:.4f} must be > 10.0 "
-            "(decay path not yet floored at close)",
+            f"Precondition failed: result[{i}]={result.iloc[i]:.4f} must be > 10.0 " "(decay path not yet floored at close)",
         )
         self.assertGreater(
             result.iloc[j],
             10.0,
-            f"Precondition failed: result[{j}]={result.iloc[j]:.4f} must be > 10.0 "
-            "(decay path not yet floored at close)",
+            f"Precondition failed: result[{j}]={result.iloc[j]:.4f} must be > 10.0 " "(decay path not yet floored at close)",
         )
         ratio = result.iloc[j] / result.iloc[i]
         self.assertAlmostEqual(
@@ -755,9 +738,7 @@ class TestAdNoneGuard(TestCase):
 
     def test_valid_call_no_open_returns_series(self):
         """Normal call without open_ returns a Series named 'AD'."""
-        result = ta.ad(
-            high=self.high, low=self.low, close=self.close, volume=self.volume
-        )
+        result = ta.ad(high=self.high, low=self.low, close=self.close, volume=self.volume)
         self.assertIsInstance(result, pd.Series)
         self.assertEqual(result.name, "AD")
 
@@ -804,9 +785,7 @@ class TestCmfNoneGuard(TestCase):
 
     def test_valid_call_no_open_returns_series(self):
         """Normal call without open_ returns a Series."""
-        result = ta.cmf(
-            high=self.high, low=self.low, close=self.close, volume=self.volume
-        )
+        result = ta.cmf(high=self.high, low=self.low, close=self.close, volume=self.volume)
         self.assertIsInstance(result, pd.Series)
 
 
@@ -872,16 +851,12 @@ class TestTalibFalsePropagation(TestCase):
 
         length = 10
         ema1 = ema(close=self.close, length=length, talib=False)
-        ema2 = ema(
-            close=ema1.loc[ema1.first_valid_index() :], length=length, talib=False
-        )
+        ema2 = ema(close=ema1.loc[ema1.first_valid_index() :], length=length, talib=False)
         expected = 2 * ema1 - ema2
         result = ta.dema(self.close, length=length, talib=False)
         # drop leading NaNs then compare
         mask = expected.notna() & result.notna()
-        np.testing.assert_allclose(
-            result[mask].values, expected[mask].values, rtol=1e-10
-        )
+        np.testing.assert_allclose(result[mask].values, expected[mask].values, rtol=1e-10)
 
     def test_tema_talib_false_returns_series(self):
         """tema(talib=False) returns a Series."""
@@ -909,9 +884,7 @@ class TestTalibFalsePropagation(TestCase):
         expected = sma(sma1, length=len2, talib=False)
         result = ta.trima(self.close, length=length, talib=False)
         mask = expected.notna() & result.notna()
-        np.testing.assert_allclose(
-            result[mask].values, expected[mask].values, rtol=1e-10
-        )
+        np.testing.assert_allclose(result[mask].values, expected[mask].values, rtol=1e-10)
 
     def test_cci_talib_false_returns_series(self):
         """cci(talib=False) returns a Series."""

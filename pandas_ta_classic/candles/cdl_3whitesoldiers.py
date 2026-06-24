@@ -56,18 +56,15 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 1st white
             ca.color[i - 2] == 1
             # 1st: very short upper shadow
-            and ca.upper_shadow[i - 2]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
+            and ca.upper_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
             # 2nd white
             and ca.color[i - 1] == 1
             # 2nd: very short upper shadow
-            and ca.upper_shadow[i - 1]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
+            and ca.upper_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
             # 3rd white
             and ca.color[i] == 1
             # 3rd: very short upper shadow
-            and ca.upper_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
+            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
             # Consecutive higher closes
             and C[i] > C[i - 1]
             and C[i - 1] > C[i - 2]
@@ -78,11 +75,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and O[i] > O[i - 1]
             and O[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
             # 2nd not far shorter than 1st
-            and ca.real_body[i - 1]
-            > ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
+            and ca.real_body[i - 1] > ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
             # 3rd not far shorter than 2nd
-            and ca.real_body[i]
-            > ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1
+            and ca.real_body[i] > ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1
             # 3rd: not short real body
             and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
         ):

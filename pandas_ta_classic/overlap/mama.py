@@ -1,5 +1,5 @@
 # MESA Adaptive Moving Average (MAMA)
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series

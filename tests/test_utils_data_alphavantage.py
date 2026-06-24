@@ -119,9 +119,7 @@ class TestAlphaVantageIntegration(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertFalse(result.empty)
         self.assertEqual(result.name, "SPY")
-        self.assertListEqual(
-            list(result.columns), ["Open", "High", "Low", "Close", "Volume"]
-        )
+        self.assertListEqual(list(result.columns), ["Open", "High", "Low", "Close", "Volume"])
         self.assertTrue(result.index.is_monotonic_increasing)
 
     def test_av_1m_uses_intraday_not_monthly(self):

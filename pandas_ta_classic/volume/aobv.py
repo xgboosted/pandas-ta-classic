@@ -51,14 +51,10 @@ def aobv(
     obv_short = short_run(maf, mas, length=run_length)
 
     # Offset
-    obv_, maf, mas, obv_long, obv_short = apply_offset(
-        [obv_, maf, mas, obv_long, obv_short], offset
-    )
+    obv_, maf, mas, obv_long, obv_short = apply_offset([obv_, maf, mas, obv_long, obv_short], offset)
 
     # Handle fills
-    obv_, maf, mas, obv_long, obv_short = apply_fill(
-        [obv_, maf, mas, obv_long, obv_short], **kwargs
-    )
+    obv_, maf, mas, obv_long, obv_short = apply_fill([obv_, maf, mas, obv_long, obv_short], **kwargs)
 
     # Prepare DataFrame to return
     _mode = mamode.lower()[0] if len(mamode) else ""
@@ -74,9 +70,7 @@ def aobv(
     aobvdf = DataFrame(data)
 
     # Name and Categorize it
-    aobvdf.name = (
-        f"AOBV{_mode}_{fast}_{slow}_{min_lookback}_{max_lookback}_{run_length}"
-    )
+    aobvdf.name = f"AOBV{_mode}_{fast}_{slow}_{min_lookback}_{max_lookback}_{run_length}"
     aobvdf.category = "volume"
 
     return aobvdf

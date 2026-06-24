@@ -18,11 +18,7 @@ def quantile(
     """Indicator: Quantile"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     q = float(q) if q and q > 0 and q < 1 else 0.5
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)

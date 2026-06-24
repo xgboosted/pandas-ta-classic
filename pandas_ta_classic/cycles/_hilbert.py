@@ -8,8 +8,6 @@ The leading underscore keeps ``_meta.py`` from registering this file as an
 indicator.
 """
 
-from typing import Tuple
-
 import numpy as np
 from pandas import Series
 
@@ -84,12 +82,7 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
     for i in range(m):
         # WMA(4) smoothing — only stored from bar ht_start onwards
         if i >= ht_start and i >= 3:
-            smooth_price[i] = (
-                4.0 * close_arr[i]
-                + 3.0 * close_arr[i - 1]
-                + 2.0 * close_arr[i - 2]
-                + close_arr[i - 3]
-            ) / 10.0
+            smooth_price[i] = (4.0 * close_arr[i] + 3.0 * close_arr[i - 1] + 2.0 * close_arr[i - 2] + close_arr[i - 3]) / 10.0
 
         if i < ht_start:
             period[i] = 0.0
@@ -99,35 +92,15 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         adj = 0.075 * period[i - 1] + 0.54
 
         # Detrend (4-tap FIR)
-        detrend[i] = (
-            0.0962 * smooth_price[i]
-            + 0.5769 * smooth_price[i - 2]
-            - 0.5769 * smooth_price[i - 4]
-            - 0.0962 * smooth_price[i - 6]
-        ) * adj
+        detrend[i] = (0.0962 * smooth_price[i] + 0.5769 * smooth_price[i - 2] - 0.5769 * smooth_price[i - 4] - 0.0962 * smooth_price[i - 6]) * adj
 
         # InPhase and Quadrature
-        q1[i] = (
-            0.0962 * detrend[i]
-            + 0.5769 * detrend[i - 2]
-            - 0.5769 * detrend[i - 4]
-            - 0.0962 * detrend[i - 6]
-        ) * adj
+        q1[i] = (0.0962 * detrend[i] + 0.5769 * detrend[i - 2] - 0.5769 * detrend[i - 4] - 0.0962 * detrend[i - 6]) * adj
         i1[i] = detrend[i - 3]
 
         # Advance the phase of I1 and Q1 by 90 degrees
-        ji[i] = (
-            0.0962 * i1[i]
-            + 0.5769 * i1[i - 2]
-            - 0.5769 * i1[i - 4]
-            - 0.0962 * i1[i - 6]
-        ) * adj
-        jq[i] = (
-            0.0962 * q1[i]
-            + 0.5769 * q1[i - 2]
-            - 0.5769 * q1[i - 4]
-            - 0.0962 * q1[i - 6]
-        ) * adj
+        ji[i] = (0.0962 * i1[i] + 0.5769 * i1[i - 2] - 0.5769 * i1[i - 4] - 0.0962 * i1[i - 6]) * adj
+        jq[i] = (0.0962 * q1[i] + 0.5769 * q1[i - 2] - 0.5769 * q1[i - 4] - 0.0962 * q1[i - 6]) * adj
 
         # Phasor addition for 3-bar averaging
         i2[i] = i1[i] - jq[i]
@@ -217,9 +190,7 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         trend = 1
 
         # Step 1: Sine/LeadSine crossover resets trend counter
-        if (sine_val > lead_sine_val and prev_sine <= prev_lead_sine) or (
-            sine_val < lead_sine_val and prev_sine >= prev_lead_sine
-        ):
+        if (sine_val > lead_sine_val and prev_sine <= prev_lead_sine) or (sine_val < lead_sine_val and prev_sine >= prev_lead_sine):
             days_in_trend = 0
             trend = 0
 
@@ -231,18 +202,11 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
 
         # Step 3: Phase change in expected cycle range -> cycle mode
         phase_diff = dc_phase_val - prev_dc_phase
-        if (
-            sp != 0.0
-            and phase_diff > 0.67 * 360.0 / sp
-            and phase_diff < 1.5 * 360.0 / sp
-        ):
+        if sp != 0.0 and phase_diff > 0.67 * 360.0 / sp and phase_diff < 1.5 * 360.0 / sp:
             trend = 0
 
         # Step 4: Price far from trendline -> trend mode override
-        if (
-            trendline_arr[i] != 0.0
-            and abs((smooth_price[i] - trendline_arr[i]) / trendline_arr[i]) >= 0.015
-        ):
+        if trendline_arr[i] != 0.0 and abs((smooth_price[i] - trendline_arr[i]) / trendline_arr[i]) >= 0.015:
             trend = 1
 
         trend_mode_arr[i] = float(trend)

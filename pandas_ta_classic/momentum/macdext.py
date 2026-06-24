@@ -75,9 +75,7 @@ def macdext(
     signal = _pos_int(signal, 9)
     fastmatype = int(fastmatype) if fastmatype is not None and fastmatype >= 0 else 1
     slowmatype = int(slowmatype) if slowmatype is not None and slowmatype >= 0 else 1
-    signalmatype = (
-        int(signalmatype) if signalmatype is not None and signalmatype >= 0 else 1
-    )
+    signalmatype = int(signalmatype) if signalmatype is not None and signalmatype >= 0 else 1
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, slow + signal)
@@ -120,23 +118,17 @@ def macdext(
     histogram_series = Series(np.array(histogram, dtype=float), index=close.index)
 
     # Offset
-    macd_series, signal_series, histogram_series = apply_offset(
-        [macd_series, signal_series, histogram_series], offset
-    )
+    macd_series, signal_series, histogram_series = apply_offset([macd_series, signal_series, histogram_series], offset)
 
     # Handle fills
-    macd_series, signal_series, histogram_series = apply_fill(
-        [macd_series, signal_series, histogram_series], **kwargs
-    )
+    macd_series, signal_series, histogram_series = apply_fill([macd_series, signal_series, histogram_series], **kwargs)
 
     # Name and Categorize
     _params = f"_{fast}_{slow}_{signal}"
     macd_series.name = f"MACDEXT{_params}"
     signal_series.name = f"MACDEXTs{_params}"
     histogram_series.name = f"MACDEXTh{_params}"
-    macd_series.category = signal_series.category = histogram_series.category = (
-        "momentum"
-    )
+    macd_series.category = signal_series.category = histogram_series.category = "momentum"
 
     df = DataFrame(
         {

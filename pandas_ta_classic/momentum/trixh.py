@@ -43,14 +43,10 @@ def trixh(
     histogram = trix_line - trix_signal
 
     # Offset
-    trix_line, trix_signal, histogram = apply_offset(
-        [trix_line, trix_signal, histogram], offset
-    )
+    trix_line, trix_signal, histogram = apply_offset([trix_line, trix_signal, histogram], offset)
 
     # Handle fills
-    trix_line, trix_signal, histogram = apply_fill(
-        [trix_line, trix_signal, histogram], **kwargs
-    )
+    trix_line, trix_signal, histogram = apply_fill([trix_line, trix_signal, histogram], **kwargs)
 
     # Name and Categorize it
     trix_line.name = f"TRIX_{length}_{signal}"

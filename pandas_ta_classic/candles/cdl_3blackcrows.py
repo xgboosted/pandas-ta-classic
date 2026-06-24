@@ -39,18 +39,15 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 1st black
             and ca.color[i - 2] == -1
             # very short lower shadow
-            and ca.lower_shadow[i - 2]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
+            and ca.lower_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
             # 2nd black
             and ca.color[i - 1] == -1
             # very short lower shadow
-            and ca.lower_shadow[i - 1]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
+            and ca.lower_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
             # 3rd black
             and ca.color[i] == -1
             # very short lower shadow
-            and ca.lower_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
+            and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
             # 2nd black opens within 1st black's real body
             and O[i - 1] < O[i - 2]
             and O[i - 1] > C[i - 2]

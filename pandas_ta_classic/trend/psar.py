@@ -139,9 +139,7 @@ def psar(
     m = high.shape[0]
     h_arr = high.to_numpy(dtype=float)
     l_arr = low.to_numpy(dtype=float)
-    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(
-        h_arr, l_arr, m, falling, sar, ep, af0, max_af
-    )
+    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af)
 
     # Combine to a single SAR series then reclassify using close when available.
     # This matches TA-Lib's convention (SAR < close → long, SAR >= close → short)

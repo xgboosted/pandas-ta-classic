@@ -40,34 +40,19 @@ def _detect(ca, out, **kwargs):
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == -ca.color[i]
-            and ca.real_body[i - 1]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total[1]
-            and ca.upper_shadow[i - 1]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[1]
-            and ca.lower_shadow[i - 1]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[1]
-            and ca.real_body[i]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total[0]
-            and ca.upper_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[0]
-            and ca.lower_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[0]
-            and (
-                (ca.color[i - 1] == -1 and lo[i] > hi[i - 1])
-                or (ca.color[i - 1] == 1 and hi[i] < lo[i - 1])
-            )
+            and ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total[1]
+            and ca.upper_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[1]
+            and ca.lower_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[1]
+            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total[0]
+            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[0]
+            and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total[0]
+            and ((ca.color[i - 1] == -1 and lo[i] > hi[i - 1]) or (ca.color[i - 1] == 1 and hi[i] < lo[i - 1]))
         ):
-            out[i] = (
-                ca.color[i if ca.real_body[i] > ca.real_body[i - 1] else i - 1] * 100
-            )
+            out[i] = ca.color[i if ca.real_body[i] > ca.real_body[i - 1] else i - 1] * 100
 
         for tot_idx in range(2):
-            body_long_total[tot_idx] += (
-                arr_bl[i - tot_idx] - arr_bl[body_long_trail - tot_idx]
-            )
-            shadow_vs_total[tot_idx] += (
-                arr_svs[i - tot_idx] - arr_svs[shadow_vs_trail - tot_idx]
-            )
+            body_long_total[tot_idx] += arr_bl[i - tot_idx] - arr_bl[body_long_trail - tot_idx]
+            shadow_vs_total[tot_idx] += arr_svs[i - tot_idx] - arr_svs[shadow_vs_trail - tot_idx]
         body_long_trail += 1
         shadow_vs_trail += 1
 

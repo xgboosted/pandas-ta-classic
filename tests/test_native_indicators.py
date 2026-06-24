@@ -31,12 +31,7 @@ import pandas_ta_classic as ta
 # Shared data
 # ---------------------------------------------------------------------------
 
-_DATA_PATH = (
-    __import__("pathlib").Path(__file__).parent.parent
-    / "examples"
-    / "data"
-    / "SPY_D.csv"
-)
+_DATA_PATH = __import__("pathlib").Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
 
 
 def _load() -> pd.DataFrame:
@@ -82,13 +77,9 @@ class _NativeBase(TestCase):
         valid = series.dropna()
         self.assertFalse(valid.empty, f"{label}: all-NaN result")
         last = float(valid.iloc[-1])
-        self.assertTrue(
-            math.isfinite(last), f"{label}: last value is not finite ({last})"
-        )
+        self.assertTrue(math.isfinite(last), f"{label}: last value is not finite ({last})")
 
-    def _assert_bounded(
-        self, result, lo: float, hi: float, label: str, *, col: int = 0
-    ) -> None:
+    def _assert_bounded(self, result, lo: float, hi: float, label: str, *, col: int = 0) -> None:
         """Assert every valid value in *result* lies within [lo, hi]."""
         self._assert_valid(result, label, col=col)
         series = result.iloc[:, col] if isinstance(result, pd.DataFrame) else result
@@ -96,8 +87,7 @@ class _NativeBase(TestCase):
         out_of_range = valid[(valid < lo) | (valid > hi)]
         self.assertTrue(
             out_of_range.empty,
-            f"{label}: {len(out_of_range)} values outside [{lo}, {hi}]; "
-            f"min={valid.min():.4f} max={valid.max():.4f}",
+            f"{label}: {len(out_of_range)} values outside [{lo}, {hi}]; " f"min={valid.min():.4f} max={valid.max():.4f}",
         )
 
     def _assert_col_name(self, result, expected_name: str, label: str) -> None:
@@ -501,9 +491,7 @@ class TestNativeTrend(_NativeBase):
         r = ta.long_run(fast, slow)
         self.assertIsNotNone(r)
         valid = r.dropna()
-        self.assertTrue(
-            set(valid.unique()).issubset({0.0, 1.0}), "long_run must be binary"
-        )
+        self.assertTrue(set(valid.unique()).issubset({0.0, 1.0}), "long_run must be binary")
 
     def test_pmax(self):
         # Known bug: pmax raises "truth value of a Series is ambiguous"
@@ -640,9 +628,7 @@ class TestNativeStatistics(_NativeBase):
         r = ta.mad(self.c)
         self._assert_valid(r, "mad")
         valid = r.dropna()
-        self.assertTrue(
-            (valid >= 0).all(), "mad (mean absolute deviation) must be >= 0"
-        )
+        self.assertTrue((valid >= 0).all(), "mad (mean absolute deviation) must be >= 0")
 
     def test_massi(self):
         r = ta.massi(self.h, self.l)
@@ -740,9 +726,7 @@ class TestNativeCandles(_NativeBase):
         self.assertIsNotNone(r)
         self._assert_has_columns(r, ["HA_open", "HA_high", "HA_low", "HA_close"], "ha")
         # HA_high >= HA_low
-        self.assertTrue(
-            (r["HA_high"] >= r["HA_low"]).all(), "ha: HA_high < HA_low found"
-        )
+        self.assertTrue((r["HA_high"] >= r["HA_low"]).all(), "ha: HA_high < HA_low found")
 
     def test_cdl_doji(self):
         r = ta.cdl_doji(self.o, self.h, self.l, self.c)

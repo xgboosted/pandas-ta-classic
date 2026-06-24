@@ -27,16 +27,12 @@ class TestTrendExtension(TestCase):
     def test_amat_ext(self):
         self.data.ta.amat(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"])
 
     def test_aroon_ext(self):
         self.data.ta.aroon(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["AROOND_14", "AROONU_14", "AROONOSC_14"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["AROOND_14", "AROONU_14", "AROONOSC_14"])
 
     def test_chop_ext(self):
         self.data.ta.chop(append=True, ln=False)
@@ -50,9 +46,7 @@ class TestTrendExtension(TestCase):
     def test_cksp_ext(self):
         self.data.ta.cksp(tvmode=False, append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["CKSPl_10_3_20", "CKSPs_10_3_20"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_3_20", "CKSPs_10_3_20"])
 
     def test_cksp_tv_ext(self):
         self.data.ta.cksp(tvmode=True, append=True)
@@ -138,22 +132,16 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "PMAX_E_10_3.0")
 
     def test_tsignals_ext(self):
-        trend = (self.data.ta.sma(length=10) - self.data.ta.sma(length=20) > 0).astype(
-            int
-        )
+        trend = (self.data.ta.sma(length=10) - self.data.ta.sma(length=20) > 0).astype(int)
         result = self.data.ta.tsignals(trend)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(
-            list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
-        )
+        self.assertEqual(list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
 
     def test_xsignals_ext(self):
         signal = self.data.ta.rsi()
         result = self.data.ta.xsignals(signal, xa=70, xb=30)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(
-            list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"]
-        )
+        self.assertEqual(list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
 
     def test_adxr_ext(self):
         self.data.ta.adxr(append=True)

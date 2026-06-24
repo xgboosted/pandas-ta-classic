@@ -48,8 +48,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 1st: long real body
             ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             # 2nd: doji
-            and ca.real_body[i - 1]
-            <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
+            and ca.real_body[i - 1] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
             # 3rd: longer than short
             and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
             and (
@@ -58,8 +57,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     ca.color[i - 2] == 1
                     and ca.color[i] == -1
                     # 3rd closes well within 1st rb
-                    and ca.close[i]
-                    < ca.close[i - 2] - ca.real_body[i - 2] * penetration
+                    and ca.close[i] < ca.close[i - 2] - ca.real_body[i - 2] * penetration
                     # upside candle gap between 1st and 2nd
                     and lo[i - 1] > hi[i - 2]
                     # downside candle gap between 2nd and 3rd
@@ -70,8 +68,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     ca.color[i - 2] == -1
                     and ca.color[i] == 1
                     # 3rd closes well within 1st rb
-                    and ca.close[i]
-                    > ca.close[i - 2] + ca.real_body[i - 2] * penetration
+                    and ca.close[i] > ca.close[i - 2] + ca.real_body[i - 2] * penetration
                     # downside candle gap between 1st and 2nd
                     and hi[i - 1] < lo[i - 2]
                     # upside candle gap between 2nd and 3rd

@@ -13,10 +13,7 @@ def _is_bullish_engulf(ca, i):
     return (
         ca.color[i] == 1
         and ca.color[i - 1] == -1
-        and (
-            (ca.close[i] >= ca.open[i - 1] and ca.open[i] < ca.close[i - 1])
-            or (ca.close[i] > ca.open[i - 1] and ca.open[i] <= ca.close[i - 1])
-        )
+        and ((ca.close[i] >= ca.open[i - 1] and ca.open[i] < ca.close[i - 1]) or (ca.close[i] > ca.open[i - 1] and ca.open[i] <= ca.close[i - 1]))
     )
 
 
@@ -24,10 +21,7 @@ def _is_bearish_engulf(ca, i):
     return (
         ca.color[i] == -1
         and ca.color[i - 1] == 1
-        and (
-            (ca.open[i] >= ca.close[i - 1] and ca.close[i] < ca.open[i - 1])
-            or (ca.open[i] > ca.close[i - 1] and ca.close[i] <= ca.open[i - 1])
-        )
+        and ((ca.open[i] >= ca.close[i - 1] and ca.close[i] < ca.open[i - 1]) or (ca.open[i] > ca.close[i - 1] and ca.close[i] <= ca.open[i - 1]))
     )
 
 

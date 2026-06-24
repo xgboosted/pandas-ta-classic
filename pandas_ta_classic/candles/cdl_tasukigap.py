@@ -32,8 +32,7 @@ def _detect(ca, out, **kwargs):
             and ca.open[i] > ca.open[i - 1]
             and ca.close[i] < ca.open[i - 1]
             and ca.close[i] > body_hi[i - 2]
-            and abs(ca.real_body[i - 1] - ca.real_body[i])
-            < AVG_FACTOR[CandleSetting.Near] * near_total
+            and abs(ca.real_body[i - 1] - ca.real_body[i]) < AVG_FACTOR[CandleSetting.Near] * near_total
         ) or (
             body_hi[i - 1] < body_lo[i - 2]
             and ca.color[i - 1] == -1
@@ -42,8 +41,7 @@ def _detect(ca, out, **kwargs):
             and ca.open[i] > ca.close[i - 1]
             and ca.close[i] > ca.open[i - 1]
             and ca.close[i] < body_lo[i - 2]
-            and abs(ca.real_body[i - 1] - ca.real_body[i])
-            < AVG_FACTOR[CandleSetting.Near] * near_total
+            and abs(ca.real_body[i - 1] - ca.real_body[i]) < AVG_FACTOR[CandleSetting.Near] * near_total
         ):
             out[i] = ca.color[i - 1] * 100
 

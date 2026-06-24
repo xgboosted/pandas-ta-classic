@@ -7,9 +7,7 @@ from pandas import Series
 npNaN = np.nan
 
 
-def pvr(
-    close: Series, volume: Series, offset: Optional[int] = None, **kwargs: Any
-) -> Optional[Series]:
+def pvr(close: Series, volume: Series, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]:
     """Indicator: Price Volume Rank"""
     # Validate arguments
     close = verify_series(close)

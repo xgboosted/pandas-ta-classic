@@ -1,5 +1,5 @@
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 
@@ -177,12 +177,8 @@ class TestUtilities(TestCase):
         npt.assert_array_equal(self.utils.fibonacci(zero=True), np.array([0, 1, 1]))
         npt.assert_array_equal(self.utils.fibonacci(zero=False), np.array([1, 1]))
 
-        npt.assert_array_equal(
-            self.utils.fibonacci(n=0, zero=True, weighted=False), np.array([0])
-        )
-        npt.assert_array_equal(
-            self.utils.fibonacci(n=0, zero=False, weighted=False), np.array([1])
-        )
+        npt.assert_array_equal(self.utils.fibonacci(n=0, zero=True, weighted=False), np.array([0]))
+        npt.assert_array_equal(self.utils.fibonacci(n=0, zero=False, weighted=False), np.array([1]))
 
         npt.assert_array_equal(
             self.utils.fibonacci(n=5, zero=True, weighted=False),
@@ -195,12 +191,8 @@ class TestUtilities(TestCase):
 
     def test_fibonacci_weighted(self):
         self.assertIs(type(self.utils.fibonacci(zero=True, weighted=True)), np.ndarray)
-        npt.assert_array_equal(
-            self.utils.fibonacci(n=0, zero=True, weighted=True), np.array([0])
-        )
-        npt.assert_array_equal(
-            self.utils.fibonacci(n=0, zero=False, weighted=True), np.array([1])
-        )
+        npt.assert_array_equal(self.utils.fibonacci(n=0, zero=True, weighted=True), np.array([0]))
+        npt.assert_array_equal(self.utils.fibonacci(n=0, zero=False, weighted=True), np.array([1]))
 
         npt.assert_allclose(
             self.utils.fibonacci(n=5, zero=True, weighted=True),
@@ -279,48 +271,32 @@ class TestUtilities(TestCase):
         array_1 = np.array([1])
         npt.assert_array_equal(self.utils.pascals_triangle(), array_1)
         npt.assert_array_equal(self.utils.pascals_triangle(weighted=True), array_1)
-        npt.assert_array_equal(
-            self.utils.pascals_triangle(weighted=True, inverse=True), np.array([0])
-        )
+        npt.assert_array_equal(self.utils.pascals_triangle(weighted=True, inverse=True), np.array([0]))
 
         array_5 = self.utils.pascals_triangle(n=5)  # or np.array([1, 5, 10, 10, 5, 1])
         array_5w = array_5 / np.sum(array_5)
         array_5iw = 1 - array_5w
         npt.assert_array_equal(self.utils.pascals_triangle(n=-5), array_5)
-        npt.assert_array_equal(
-            self.utils.pascals_triangle(n=-5, weighted=True), array_5w
-        )
-        npt.assert_array_equal(
-            self.utils.pascals_triangle(n=-5, weighted=True, inverse=True), array_5iw
-        )
+        npt.assert_array_equal(self.utils.pascals_triangle(n=-5, weighted=True), array_5w)
+        npt.assert_array_equal(self.utils.pascals_triangle(n=-5, weighted=True, inverse=True), array_5iw)
 
         npt.assert_array_equal(self.utils.pascals_triangle(n=5), array_5)
-        npt.assert_array_equal(
-            self.utils.pascals_triangle(n=5, weighted=True), array_5w
-        )
-        npt.assert_array_equal(
-            self.utils.pascals_triangle(n=5, weighted=True, inverse=True), array_5iw
-        )
+        npt.assert_array_equal(self.utils.pascals_triangle(n=5, weighted=True), array_5w)
+        npt.assert_array_equal(self.utils.pascals_triangle(n=5, weighted=True, inverse=True), array_5iw)
 
     def test_symmetric_triangle(self):
         npt.assert_array_equal(self.utils.symmetric_triangle(), np.array([1, 1]))
-        npt.assert_array_equal(
-            self.utils.symmetric_triangle(weighted=True), np.array([0.5, 0.5])
-        )
+        npt.assert_array_equal(self.utils.symmetric_triangle(weighted=True), np.array([0.5, 0.5]))
 
         array_4 = self.utils.symmetric_triangle(n=4)  # or np.array([1, 2, 2, 1])
         array_4w = array_4 / np.sum(array_4)
         npt.assert_array_equal(self.utils.symmetric_triangle(n=4), array_4)
-        npt.assert_array_equal(
-            self.utils.symmetric_triangle(n=4, weighted=True), array_4w
-        )
+        npt.assert_array_equal(self.utils.symmetric_triangle(n=4, weighted=True), array_4w)
 
         array_5 = self.utils.symmetric_triangle(n=5)  # or np.array([1, 2, 3, 2, 1])
         array_5w = array_5 / np.sum(array_5)
         npt.assert_array_equal(self.utils.symmetric_triangle(n=5), array_5)
-        npt.assert_array_equal(
-            self.utils.symmetric_triangle(n=5, weighted=True), array_5w
-        )
+        npt.assert_array_equal(self.utils.symmetric_triangle(n=5, weighted=True), array_5w)
 
     def test_tal_ma(self):
         self.assertEqual(self.utils.tal_ma("sma"), 0)
@@ -489,13 +465,7 @@ class TestApplyFill(TestCase):
         self.assertEqual(result.iloc[1], 1.0)
         self.assertEqual(result.iloc[2], 1.0)
         # Leading NaN stays NaN (nothing to forward-fill from)
-        self.assertTrue(
-            np.isnan(
-                pandas_ta.utils.apply_fill(
-                    Series([np.nan, 2.0]), fill_method="ffill"
-                ).iloc[0]
-            )
-        )
+        self.assertTrue(np.isnan(pandas_ta.utils.apply_fill(Series([np.nan, 2.0]), fill_method="ffill").iloc[0]))
 
     # -- fill_method bfill --
 
@@ -505,13 +475,7 @@ class TestApplyFill(TestCase):
         self.assertEqual(result.iloc[0], 3.0)
         self.assertEqual(result.iloc[1], 3.0)
         # Trailing NaN stays NaN (nothing to back-fill from)
-        self.assertTrue(
-            np.isnan(
-                pandas_ta.utils.apply_fill(
-                    Series([1.0, np.nan]), fill_method="bfill"
-                ).iloc[-1]
-            )
-        )
+        self.assertTrue(np.isnan(pandas_ta.utils.apply_fill(Series([1.0, np.nan]), fill_method="bfill").iloc[-1]))
 
     # -- unknown fill_method is ignored --
 

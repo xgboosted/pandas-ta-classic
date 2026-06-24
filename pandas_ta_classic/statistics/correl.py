@@ -14,11 +14,7 @@ def correl(
     """Indicator: Pearson Correlation Coefficient"""
     # Validate Arguments
     length = int(length) if length and length > 1 else 30
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     close = verify_series(close, max(length, min_periods))
     benchmark = verify_series(benchmark, max(length, min_periods))
     offset = get_offset(offset)
@@ -68,4 +64,5 @@ Kwargs:
 
 Returns:
     pd.Series: New feature generated.
+    None: If benchmark is not provided; enables df.ta.strategy("all") compatibility.
 """

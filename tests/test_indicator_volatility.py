@@ -1,6 +1,6 @@
 from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import DataFrame, Series
@@ -116,9 +116,7 @@ class TestVolatility(TestCase):
         result = pandas_ta.bbands(self.close, talib=False)
         if HAS_TALIB:
             bbu, bbm, bbl = talib.BBANDS(self.close)
-            expecteddf = DataFrame(
-                {"BBL_5_2.0": bbl, "BBM_5_2.0": bbm, "BBU_5_2.0": bbu}
-            )
+            expecteddf = DataFrame({"BBL_5_2.0": bbl, "BBM_5_2.0": bbm, "BBU_5_2.0": bbu})
             assert_talib(
                 self,
                 result[["BBL_5_2.0", "BBM_5_2.0", "BBU_5_2.0"]],
@@ -165,9 +163,7 @@ class TestVolatility(TestCase):
         )
 
     def test_donchian(self):
-        result = pandas_ta.donchian(
-            self.high, self.low, lower_length=20, upper_length=5
-        )
+        result = pandas_ta.donchian(self.high, self.low, lower_length=20, upper_length=5)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "DC_20_5")
 

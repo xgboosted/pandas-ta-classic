@@ -47,9 +47,7 @@ class TestCylesExtension(TestCase):
     def test_ht_phasor_ext(self):
         self.data.ta.ht_phasor(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["HT_PHASOR_INPHASE", "HT_PHASOR_QUAD"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["HT_PHASOR_INPHASE", "HT_PHASOR_QUAD"])
 
     def test_ht_sine_ext(self):
         self.data.ta.ht_sine(append=True)

@@ -42,9 +42,7 @@ class TestOverlapExtension(TestCase):
     def test_hilo_ext(self):
         self.data.ta.hilo(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["HILO_13_21", "HILOl_13_21", "HILOs_13_21"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["HILO_13_21", "HILOl_13_21", "HILOs_13_21"])
 
     def test_hl2_ext(self):
         self.data.ta.hl2(append=True)
@@ -273,9 +271,7 @@ class TestOverlapExtension(TestCase):
     def test_mama_ext(self):
         self.data.ta.mama(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["MAMA_0.5_0.05", "FAMA_0.5_0.05"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["MAMA_0.5_0.05", "FAMA_0.5_0.05"])
 
     def test_mavp_ext(self):
         self.data.ta.mavp(append=True)

@@ -44,9 +44,7 @@ _MA_DISPATCH = {
 }
 
 
-def ma(
-    name: Optional[str] = None, source: Optional[Series] = None, **kwargs: Any
-) -> Optional[Series]:
+def ma(name: Optional[str] = None, source: Optional[Series] = None, **kwargs: Any) -> Optional[Series]:
     """Simple MA Utility for easier MA selection
 
     Available MAs:

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime as dt
 
 from pathlib import Path
-from random import random
 from typing import Tuple
 
 import pandas as pd  # pip install pandas
@@ -14,9 +12,7 @@ try:
     PANDAS_DATAREADER_AVAILABLE = True
 except ImportError:
     PANDAS_DATAREADER_AVAILABLE = False
-    print(
-        "[!] pandas_datareader not available. Install with: pip install pandas-datareader"
-    )
+    print("[!] pandas_datareader not available. Install with: pip install pandas-datareader")
 
 try:
     import yfinance as yf
@@ -38,9 +34,7 @@ try:
     ALPHAVANTAGE_AVAILABLE = True
 except ImportError:
     ALPHAVANTAGE_AVAILABLE = False
-    print(
-        "[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api"
-    )
+    print("[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api")
 
 import pandas_ta_classic as ta  # pip install pandas-ta-classic
 
@@ -129,9 +123,7 @@ class Watchlist(object):
         # Default: AlphaVantage
         if self.ds_name == "av":
             if not ALPHAVANTAGE_AVAILABLE:
-                raise ImportError(
-                    "alphaVantageAPI not available. Please install with: pip install alphaVantage-api"
-                )
+                raise ImportError("alphaVantageAPI not available. Please install with: pip install alphaVantage-api")
             AVkwargs = {
                 "api_key": "YOUR API KEY",
                 "clean": True,
@@ -145,9 +137,7 @@ class Watchlist(object):
 
         if self.ds_name == "yahoo":
             if not YFINANCE_AVAILABLE:
-                raise ImportError(
-                    "yfinance not available. Please install with: pip install yfinance"
-                )
+                raise ImportError("yfinance not available. Please install with: pip install yfinance")
             self.ds = yf
             self.file_path = Path(__file__).resolve().parent / "data"
             self.file_path.mkdir(parents=True, exist_ok=True)
@@ -175,11 +165,7 @@ class Watchlist(object):
     def _load_all(self, **kwargs) -> dict:
         """Updates the Watchlist's data property with a dictionary of DataFrames
         keyed by ticker."""
-        if (
-            self.tickers is not None
-            and isinstance(self.tickers, list)
-            and len(self.tickers)
-        ):
+        if self.tickers is not None and isinstance(self.tickers, list) and len(self.tickers):
             self.data = {ticker: self.load(ticker, **kwargs) for ticker in self.tickers}
             return self.data
 
@@ -188,9 +174,7 @@ class Watchlist(object):
         if constants:
             chart_lines = npAppend(npArange(-5, 6, 1), npArange(-100, 110, 10))
             df.ta.constants(True, chart_lines)  # Adding the constants for the charts
-            df.ta.constants(
-                False, npArray([-60, -40, 40, 60])
-            )  # Removing some constants from the DataFrame
+            df.ta.constants(False, npArray([-60, -40, 40, 60]))  # Removing some constants from the DataFrame
             if self.verbose:
                 print(f"[i] {df.ticker} constants added.")
 
@@ -199,9 +183,7 @@ class Watchlist(object):
             _time = ta.get_time(_exchange, to_string=True)
             _kind = kwargs.pop("plot_kind", None)
             _figsize = kwargs.pop("figsize", (16, 10))
-            _colors = kwargs.pop(
-                "figsize", ["black", "green", "orange", "red", "maroon"]
-            )
+            _colors = kwargs.pop("figsize", ["black", "green", "orange", "red", "maroon"])
             _grid = kwargs.pop("grid", True)
             _alpha = kwargs.pop("alpha", 1)
             _last = kwargs.pop("last", 252)
@@ -224,7 +206,7 @@ class Watchlist(object):
                     alpha=_alpha,
                 )
             else:
-                print(f"[X] Plot kind not implemented")
+                print("[X] Plot kind not implemented")
                 return
 
     def load(
@@ -260,23 +242,15 @@ class Watchlist(object):
                 if not df.ta.datetime_ordered:
                     # Prefer an explicit date/datetime column over a raw integer index
                     date_col = next(
-                        (
-                            c
-                            for c in df.columns
-                            if c.lower() in ("date", "datetime", "timestamp", "time")
-                        ),
+                        (c for c in df.columns if c.lower() in ("date", "datetime", "timestamp", "time")),
                         None,
                     )
                     if date_col is not None:
-                        df = df.set_index(
-                            pd.to_datetime(df[date_col], utc=True).dt.tz_convert(None)
-                        )
+                        df = df.set_index(pd.to_datetime(df[date_col], utc=True).dt.tz_convert(None))
                         df.index.name = date_col
                         df.drop(columns=[date_col], errors="ignore", inplace=True)
                     else:
-                        df = df.set_index(
-                            pd.to_datetime(df.index, utc=True).tz_convert(None)
-                        )
+                        df = df.set_index(pd.to_datetime(df.index, utc=True).tz_convert(None))
                 print(file_loaded)
             else:
                 print(f"[X] {filename_} not found in {Path(self.file_path)}")
@@ -319,7 +293,7 @@ class Watchlist(object):
         # Later check dict has string keys and DataFrame values
         if value is not None and isinstance(value, dict):
             if self.verbose:
-                print(f"[+] New data")
+                print("[+] New data")
             self._data = value
         else:
             self._data = None
@@ -443,13 +417,9 @@ if __name__ == "__main__":
             print(f"Note: Could not add TA indicators: {e}")
 
     else:
-        print(
-            "Sample data not found. Watchlist class is ready for use with external data sources."
-        )
+        print("Sample data not found. Watchlist class is ready for use with external data sources.")
         print("To use the Watchlist class with external APIs:")
-        print(
-            "1. Install optional dependencies: pip install yfinance pandas-datareader alphaVantage-api"
-        )
+        print("1. Install optional dependencies: pip install yfinance pandas-datareader alphaVantage-api")
         print("2. Get API keys for data sources like AlphaVantage")
         print("3. Create a watchlist: watch = Watchlist(['SPY', 'AAPL'])")
 

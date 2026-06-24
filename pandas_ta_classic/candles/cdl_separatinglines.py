@@ -32,22 +32,12 @@ def _detect(ca, out, **kwargs):
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == -ca.color[i]
-            and ca.open[i]
-            <= ca.open[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
-            and ca.open[i]
-            >= ca.open[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
+            and ca.open[i] <= ca.open[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
+            and ca.open[i] >= ca.open[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
             and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and (
-                (
-                    ca.color[i] == 1
-                    and ca.lower_shadow[i]
-                    < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
-                )
-                or (
-                    ca.color[i] == -1
-                    and ca.upper_shadow[i]
-                    < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
-                )
+                (ca.color[i] == 1 and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
+                or (ca.color[i] == -1 and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
             )
         ):
             out[i] = ca.color[i] * 100

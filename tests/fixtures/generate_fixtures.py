@@ -91,9 +91,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         return pd.DataFrame({k: pd.Series(v, index=idx) for k, v in cols.items()})
 
     # Pre-compute multi-output TA-Lib calls so we can reference them below.
-    _macd_line, _macd_sig, _macd_hist = talib.MACD(
-        cv, fastperiod=12, slowperiod=26, signalperiod=9
-    )
+    _macd_line, _macd_sig, _macd_hist = talib.MACD(cv, fastperiod=12, slowperiod=26, signalperiod=9)
     _stoch_k, _stoch_d = talib.STOCH(
         hv,
         lv,
@@ -104,9 +102,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         slowd_period=3,
         slowd_matype=0,
     )
-    _bb_upper, _bb_mid, _bb_lower = talib.BBANDS(
-        cv, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0
-    )
+    _bb_upper, _bb_mid, _bb_lower = talib.BBANDS(cv, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
     _bb_bw = (_bb_upper - _bb_lower) / _bb_mid * 100  # bandwidth
     _bb_pct = (cv - _bb_lower) / (_bb_upper - _bb_lower)  # percent
     _adx_arr = talib.ADX(hv, lv, cv, timeperiod=14)
@@ -132,9 +128,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     _skew_ref = c.rolling(20).skew()
     _median_ref = c.rolling(14).median()
     _quantile_ref = c.rolling(14).quantile(0.5)
-    _mad_ref = c.rolling(10).apply(
-        lambda x: float(np.mean(np.abs(x - x.mean()))), raw=True
-    )
+    _mad_ref = c.rolling(10).apply(lambda x: float(np.mean(np.abs(x - x.mean()))), raw=True)
 
     def _rolling_entropy(s, n):
         def _ent(x):
@@ -236,11 +230,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
 
     # oracle: TA-Lib SUM / MAX / MIN + log10
     # CHOP_14: 100 * log10(SUM(TR,14) / (MAX(H,14) - MIN(L,14))) / log10(14)
-    _chop_ref = (
-        100.0
-        * np.log10(talib.SUM(_tr_arr, 14) / (talib.MAX(hv, 14) - talib.MIN(lv, 14)))
-        / np.log10(14)
-    )
+    _chop_ref = 100.0 * np.log10(talib.SUM(_tr_arr, 14) / (talib.MAX(hv, 14) - talib.MIN(lv, 14))) / np.log10(14)
 
     # oracle: TA-Lib SMA + pure shift (centered lookahead)
     # DPO_14 (centered): close[i] - SMA14[i+8]  (t = int(0.5*14)+1 = 8)
@@ -373,9 +363,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
 
     # ALMA_10: Arnaud Legoux Gaussian weights  m=0.85*9=7.65, s=10/6
     _alma10_m, _alma10_s = 0.85 * 9.0, 10.0 / 6.0
-    _alma10_raw = np.array(
-        [np.exp(-((i - _alma10_m) ** 2) / (2 * _alma10_s**2)) for i in range(10)]
-    )
+    _alma10_raw = np.array([np.exp(-((i - _alma10_m) ** 2) / (2 * _alma10_s**2)) for i in range(10)])
     _alma10_ref = _wma_r(cv, _alma10_raw[::-1] / _alma10_raw.sum())
 
     # RMA_10: SMA-seeded Wilder MA  alpha = 1/10

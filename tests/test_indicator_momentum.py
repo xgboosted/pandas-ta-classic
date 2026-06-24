@@ -1,6 +1,6 @@
 from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import DataFrame, Series
@@ -80,9 +80,7 @@ class TestMomentum(TestCase):
     def test_apo(self):
         result = pandas_ta.apo(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.APO(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.APO(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -182,9 +180,7 @@ class TestMomentum(TestCase):
         # Correlation ~0.885 is expected between the two algorithms.
         result = pandas_ta.cmo(self.close)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.CMO(self.close), correlation_threshold=0.85
-            )
+            assert_talib(self, result, talib.CMO(self.close), correlation_threshold=0.85)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -378,13 +374,9 @@ class TestMomentum(TestCase):
         # EMA-based should closely match regular MACD
         result = pandas_ta.macdext(self.close, talib=False)
         # SMA-based should give different values
-        result_sma = pandas_ta.macdext(
-            self.close, fastmatype=0, slowmatype=0, signalmatype=0, talib=False
-        )
+        result_sma = pandas_ta.macdext(self.close, fastmatype=0, slowmatype=0, signalmatype=0, talib=False)
         self.assertIsInstance(result_sma, DataFrame)
-        self.assertFalse(
-            result["MACDEXT_12_26_9"].equals(result_sma["MACDEXT_12_26_9"])
-        )
+        self.assertFalse(result["MACDEXT_12_26_9"].equals(result_sma["MACDEXT_12_26_9"]))
         if HAS_TALIB:
             result_tal = pandas_ta.macdext(self.close)
             self.assertIsInstance(result_tal, DataFrame)
@@ -422,9 +414,7 @@ class TestMomentum(TestCase):
     def test_mom(self):
         result = pandas_ta.mom(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.MOM(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.MOM(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -515,9 +505,7 @@ class TestMomentum(TestCase):
     def test_roc(self):
         result = pandas_ta.roc(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.ROC(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.ROC(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -531,9 +519,7 @@ class TestMomentum(TestCase):
     def test_rocp(self):
         result = pandas_ta.rocp(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.ROCP(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.ROCP(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -547,9 +533,7 @@ class TestMomentum(TestCase):
     def test_rocr(self):
         result = pandas_ta.rocr(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.ROCR(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.ROCR(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -563,9 +547,7 @@ class TestMomentum(TestCase):
     def test_rocr100(self):
         result = pandas_ta.rocr100(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.ROCR100(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.ROCR100(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -579,9 +561,7 @@ class TestMomentum(TestCase):
     def test_rsi(self):
         result = pandas_ta.rsi(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self, result, talib.RSI(self.close), correlation_threshold=0.99
-            )
+            assert_talib(self, result, talib.RSI(self.close), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -702,9 +682,7 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZ_20_2.0_20_1.5_LB")
 
-        result = pandas_ta.squeeze(
-            self.high, self.low, self.close, tr=False, lazybear=True
-        )
+        result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False, lazybear=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5_LB")
 
@@ -730,15 +708,11 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_2_1.5_1")
 
-        result = pandas_ta.squeeze_pro(
-            self.high, self.low, self.close, 20, 2, 20, 3, 2, 1
-        )
+        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, 20, 2, 20, 3, 2, 1)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPRO_20_2.0_20_3.0_2.0_1.0")
 
-        result = pandas_ta.squeeze_pro(
-            self.high, self.low, self.close, 20, 2, 20, 3, 2, 1, tr=False
-        )
+        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, 20, 2, 20, 3, 2, 1, tr=False)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3.0_2.0_1.0")
 
@@ -782,12 +756,8 @@ class TestMomentum(TestCase):
         # TV Correlation
         result = pandas_ta.stoch(self.high, self.low, self.close)
         if HAS_TALIB:
-            stochk, stochd = talib.STOCH(
-                self.high, self.low, self.close, 14, 3, 0, 3, 0
-            )
-            expecteddf = DataFrame(
-                {"STOCHk_14_3_0_3_0": stochk, "STOCHd_14_3_0_3": stochd}
-            )
+            stochk, stochd = talib.STOCH(self.high, self.low, self.close, 14, 3, 0, 3, 0)
+            expecteddf = DataFrame({"STOCHk_14_3_0_3_0": stochk, "STOCHd_14_3_0_3": stochd})
             assert_talib(self, result, expecteddf, correlation_threshold=0.99)
         assert_indicator_standard(
             self,
@@ -824,9 +794,7 @@ class TestMomentum(TestCase):
         result = pandas_ta.stochrsi(self.close)
         if HAS_TALIB:
             _stochrsi_k, stochrsi_d = talib.STOCHRSI(self.close, 14, 14, 3, 0)
-            assert_talib(
-                self, result.iloc[:, 0], stochrsi_d, correlation_threshold=0.99
-            )
+            assert_talib(self, result.iloc[:, 0], stochrsi_d, correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(

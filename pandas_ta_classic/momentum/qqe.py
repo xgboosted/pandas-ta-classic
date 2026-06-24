@@ -48,14 +48,10 @@ def _qqe_loop(rsi_arr, ub_arr, lb_arr, m):
             short_arr[i] = ub_arr[i]
 
         # Trend & QQE Calculation
-        if (c_rsi > c_short and p_rsi < p_short) or (
-            c_rsi <= c_short and p_rsi >= p_short
-        ):
+        if (c_rsi > c_short and p_rsi < p_short) or (c_rsi <= c_short and p_rsi >= p_short):
             trend_arr[i] = 1.0
             qqe_arr[i] = qqe_long_arr[i] = long_arr[i]
-        elif (c_rsi > c_long and p_rsi < p_long) or (
-            c_rsi <= c_long and p_rsi >= p_long
-        ):
+        elif (c_rsi > c_long and p_rsi < p_long) or (c_rsi <= c_long and p_rsi >= p_long):
             trend_arr[i] = -1.0
             qqe_arr[i] = qqe_short_arr[i] = short_arr[i]
         else:
@@ -123,9 +119,7 @@ def qqe(
     ub_arr = upperband.to_numpy()
     lb_arr = lowerband.to_numpy()
 
-    long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr = _qqe_loop(
-        rsi_arr, ub_arr, lb_arr, m
-    )
+    long_arr, short_arr, trend_arr, qqe_arr, qqe_long_arr, qqe_short_arr = _qqe_loop(rsi_arr, ub_arr, lb_arr, m)
 
     idx = close.index
     long = Series(long_arr, index=idx)
@@ -136,13 +130,9 @@ def qqe(
     qqe_short = Series(qqe_short_arr, index=idx)
 
     # Offset
-    rsi_ma, qqe, long, short, trend = apply_offset(
-        [rsi_ma, qqe, long, short, trend], offset
-    )
+    rsi_ma, qqe, long, short, trend = apply_offset([rsi_ma, qqe, long, short, trend], offset)
 
-    rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_fill(
-        [rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], **kwargs
-    )
+    rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_fill([rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], **kwargs)
 
     # Name and Categorize it
     _props = f"{_mode}_{length}_{smooth}_{factor}"

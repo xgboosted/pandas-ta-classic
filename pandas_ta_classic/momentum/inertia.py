@@ -102,9 +102,7 @@ def inertia(
             return None
 
     # Calculate Result
-    _mode, rvi_ = _inertia_rvi_mode(
-        close, high, low, rvi_length, scalar, refined, thirds, mamode
-    )
+    _mode, rvi_ = _inertia_rvi_mode(close, high, low, rvi_length, scalar, refined, thirds, mamode)
 
     if rvi_ is None:
         return None

@@ -56,12 +56,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         if (
             # 1st long, then 3 small
             ca.real_body[i - 4] > AVG_FACTOR[CandleSetting.BodyLong] * body_total[4]
-            and ca.real_body[i - 3]
-            < AVG_FACTOR[CandleSetting.BodyShort] * body_total[3]
-            and ca.real_body[i - 2]
-            < AVG_FACTOR[CandleSetting.BodyShort] * body_total[2]
-            and ca.real_body[i - 1]
-            < AVG_FACTOR[CandleSetting.BodyShort] * body_total[1]
+            and ca.real_body[i - 3] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[3]
+            and ca.real_body[i - 2] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[2]
+            and ca.real_body[i - 1] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[1]
             # white, black, ?, ?, white
             and ca.color[i - 4] == 1
             and ca.color[i - 3] == -1

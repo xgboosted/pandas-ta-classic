@@ -43,14 +43,10 @@ def vwmacd(
     histogram = vwmacd - signal_line
 
     # Offset
-    vwmacd, signal_line, histogram = apply_offset(
-        [vwmacd, signal_line, histogram], offset
-    )
+    vwmacd, signal_line, histogram = apply_offset([vwmacd, signal_line, histogram], offset)
 
     # Handle fills
-    vwmacd, signal_line, histogram = apply_fill(
-        [vwmacd, signal_line, histogram], **kwargs
-    )
+    vwmacd, signal_line, histogram = apply_fill([vwmacd, signal_line, histogram], **kwargs)
 
     # Name and Categorize it
     _props = f"_{fast}_{slow}_{signal}"

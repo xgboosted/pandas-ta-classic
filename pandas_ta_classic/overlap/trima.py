@@ -30,9 +30,7 @@ def trima(
         trima = TRIMA(close, length)
     else:
         len1 = length // 2 + 1  # ceil((length+1)/2) — matches TA-Lib window
-        len2 = (
-            length // 2 + 1
-        )  # floor(length/2) + 1  — matches TA-Lib asymmetric windows
+        len2 = length // 2 + 1  # floor(length/2) + 1  — matches TA-Lib asymmetric windows
         sma1 = sma(close, length=len1, talib=False)
         if sma1 is None:
             return None

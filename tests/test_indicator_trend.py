@@ -1,6 +1,6 @@
 from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import DataFrame, Series
@@ -520,9 +520,7 @@ class TestTrend(TestCase):
 
         empty_series = Series(dtype=float)
         with self.assertLogs("pandas_ta_classic.utils._core", level="WARNING") as cm:
-            result = pandas_ta.cpr(
-                empty_series, empty_series, empty_series, empty_series
-            )
+            result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
         self.assertGreaterEqual(len(cm.output), 1)
         self.assertTrue(
             any("Series has 0 rows" in message for message in cm.output),
@@ -674,10 +672,7 @@ class TestTrend(TestCase):
         result = pandas_ta.psar(self.high, self.low)
         if HAS_TALIB:
             psar_combined = result[result.columns[:2]].fillna(0)
-            psar_combined = (
-                psar_combined[psar_combined.columns[0]]
-                + psar_combined[psar_combined.columns[1]]
-            )
+            psar_combined = psar_combined[psar_combined.columns[0]] + psar_combined[psar_combined.columns[1]]
             psar_combined.name = result.name
             assert_talib(
                 self,
@@ -777,9 +772,7 @@ class TestTrend(TestCase):
         )
 
     def test_tsignals(self):
-        trend = pandas_ta.sma(self.close, length=10) - pandas_ta.sma(
-            self.close, length=20
-        )
+        trend = pandas_ta.sma(self.close, length=10) - pandas_ta.sma(self.close, length=20)
         trend = (trend > 0).astype(int)
         assert_indicator_standard(
             self,

@@ -3,7 +3,7 @@ from functools import reduce
 from math import floor as mfloor
 from operator import mul
 from sys import float_info as sflt
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 
@@ -30,9 +30,7 @@ from pandas_ta_classic import Imports
 from ._core import verify_series
 
 
-def np_rolling_moments(
-    values: npNdArray, length: int, *orders: int, min_periods: Optional[int] = None
-) -> tuple[npNdArray, ...]:
+def np_rolling_moments(values: npNdArray, length: int, *orders: int, min_periods: Optional[int] = None) -> tuple[npNdArray, ...]:
     """Rolling raw central-moment sums using pure numpy.
 
     Returns one float64 array per *order*, each of ``len(values)`` elements.
@@ -167,9 +165,7 @@ def linear_regression(x: Series, y: Series) -> dict:
     m, n = x.size, y.size
 
     if m != n:
-        logger.error(
-            "Linear Regression X and y have unequal total observations: %d != %d", m, n
-        )
+        logger.error("Linear Regression X and y have unequal total observations: %d != %d", m, n)
         return {}
 
     if Imports["sklearn"]:
@@ -216,9 +212,7 @@ def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[npNdArr
     return triangle
 
 
-def symmetric_triangle(
-    n: Optional[int] = None, **kwargs: Any
-) -> Optional[Union[list[int], npNdArray]]:
+def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union[list[int], npNdArray]]:
     """Symmetric Triangle with n >= 2
 
     Returns a numpy array of the nth row of Symmetric Triangle.

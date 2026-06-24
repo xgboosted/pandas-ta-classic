@@ -22,9 +22,7 @@ def _hwc_loop(c_arr, m, na, nb, nc, nd, scalar):
         V = (1.0 - nb) * (last_v + last_a) + nb * (F - last_f)
         A = (1.0 - nc) * last_a + nc * (V - last_v)
         result_arr[i] = F + V + 0.5 * A
-        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (
-            last_price - last_result
-        )
+        var = (1.0 - nd) * last_var + nd * (last_price - last_result) * (last_price - last_result)
         stddev = last_var**0.5
         upper_arr[i] = result_arr[i] + scalar * stddev
         lower_arr[i] = result_arr[i] - scalar * stddev
@@ -120,9 +118,7 @@ def hwc(
     if channel_eval:
         hwc_width, hwc_pctwidth = apply_fill([hwc_width, hwc_pctwidth], **kwargs)
 
-    return _hwc_build_df(
-        hwc_s, hwc_upper, hwc_lower, hwc_width, hwc_pctwidth, channel_eval
-    )
+    return _hwc_build_df(hwc_s, hwc_upper, hwc_lower, hwc_width, hwc_pctwidth, channel_eval)
 
 
 hwc.__doc__ = """HWC (Holt-Winter Channel)

@@ -28,11 +28,7 @@ def edecay(
     arr = close.to_numpy(float)
     result = arr.copy()
     for i in range(1, len(arr)):
-        result[i] = (
-            arr[i]
-            if arr[i] >= result[i - 1] * factor
-            else max(arr[i], result[i - 1] * factor)
-        )
+        result[i] = arr[i] if arr[i] >= result[i - 1] * factor else max(arr[i], result[i - 1] * factor)
 
     result = Series(result, index=close.index)
 

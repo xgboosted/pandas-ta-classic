@@ -1,5 +1,5 @@
 import logging
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import re as re_
 from pathlib import Path
@@ -20,11 +20,7 @@ def _camelCase2Title(x: str) -> str:
 
 def category_files(category: str) -> list[str]:
     """Helper function to return all filenames in the category directory."""
-    return [
-        x.stem
-        for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py"))
-        if x.stem != "__init__"
-    ]
+    return [x.stem for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py")) if x.stem != "__init__"]
 
 
 def apply_offset(
@@ -158,9 +154,7 @@ def tal_ma(name: str) -> Any:
     return 0  # Default: SMA -> 0
 
 
-def unsigned_differences(
-    series: Series, amount: Optional[int] = None, **kwargs: Any
-) -> tuple[Series, Series]:
+def unsigned_differences(series: Series, amount: Optional[int] = None, **kwargs: Any) -> tuple[Series, Series]:
     """Unsigned Differences
     Returns two Series, an unsigned positive and unsigned negative series based
     on the differences of the original series. The positive series are only the
@@ -189,17 +183,12 @@ def unsigned_differences(
     return positive, negative
 
 
-def verify_series(
-    series: Series, min_length: Optional[Union[int, float]] = None
-) -> Optional[Series]:
+def verify_series(series: Series, min_length: Optional[Union[int, float]] = None) -> Optional[Series]:
     """If a Pandas Series and it meets the min_length of the indicator return it."""
     has_length = min_length is not None and isinstance(min_length, int)
     if series is not None and isinstance(series, Series):
         if has_length and series.size < min_length:
-            logger.warning(
-                f"[X] Series has {series.size} rows but indicator requires"
-                f" at least {min_length}. Returning None."
-            )
+            logger.warning(f"[X] Series has {series.size} rows but indicator requires" f" at least {min_length}. Returning None.")
             return None
         return series
     return None

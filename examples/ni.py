@@ -92,9 +92,7 @@ if __name__ == "__main__":
     # Create sample data
     np.random.seed(42)
     dates = pd.date_range("2023-01-01", periods=50, freq="D")
-    close_prices = pd.Series(
-        100 + np.cumsum(np.random.randn(50) * 0.5), index=dates, name="close"
-    )
+    close_prices = pd.Series(100 + np.cumsum(np.random.randn(50) * 0.5), index=dates, name="close")
 
     # Calculate the NI indicator
     result = ni(close_prices, length=20)
@@ -102,8 +100,8 @@ if __name__ == "__main__":
     print(f"Sample data shape: {close_prices.shape}")
     print(f"NI indicator shape: {result.shape}")
     print(f"NI indicator name: {result.name}")
-    print(f"First 5 values:")
+    print("First 5 values:")
     print(result.head())
-    print(f"Last 5 values:")
+    print("Last 5 values:")
     print(result.tail())
     print("Custom NI indicator test completed successfully!")

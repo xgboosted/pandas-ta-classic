@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Optional, Union, cast
 
 import numpy as np
 from numpy import log as npLog
@@ -54,9 +54,7 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
     return cagr(close) / cast(float, max_drawdown(close, method=method))
 
 
-def downside_deviation(
-    returns: Series, benchmark_rate: float = 0.0, tf: str = "years"
-) -> float:
+def downside_deviation(returns: Series, benchmark_rate: float = 0.0, tf: str = "years") -> float:
     """Downside Deviation for the Sortino ratio.
     Benchmark rate is assumed to be annualized. Adjusted according for the
     number of periods per year seen in the data.
@@ -116,9 +114,7 @@ def log_max_drawdown(close: Series) -> float:
     return log_return - max_drawdown(close, method="log")
 
 
-def max_drawdown(
-    close: Series, method: Optional[str] = None, all: bool = False
-) -> Union[float, dict[str, float]]:
+def max_drawdown(close: Series, method: Optional[str] = None, all: bool = False) -> Union[float, dict[str, float]]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
     Args:
@@ -237,9 +233,7 @@ def sharpe_ratio(
     return (period_mu - benchmark_rate) / period_std
 
 
-def sortino_ratio(
-    close: Series, benchmark_rate: float = 0.0, log: bool = False
-) -> float:
+def sortino_ratio(close: Series, benchmark_rate: float = 0.0, log: bool = False) -> float:
     """Sortino Ratio of a series.
 
     Args:

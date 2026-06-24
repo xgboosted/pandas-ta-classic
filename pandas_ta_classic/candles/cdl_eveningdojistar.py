@@ -48,8 +48,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and ca.color[i - 2] == 1
             # 2nd: doji gapping up
-            and ca.real_body[i - 1]
-            <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
+            and ca.real_body[i - 1] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
             and body_lo[i - 1] > body_hi[i - 2]
             # 3rd: longer than short, black, closing well within 1st rb
             and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total

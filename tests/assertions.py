@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Optional, Type
+from typing import Any, Callable, Optional
 
 from pandas import DataFrame, Series
 
@@ -52,9 +52,7 @@ def assert_talib(test_case, result, expected, correlation_threshold=None):
         if isinstance(result, DataFrame) and isinstance(expected, DataFrame):
             pdt.assert_frame_equal(result, expected, check_dtype=False)
         else:
-            pdt.assert_series_equal(
-                result, expected, check_names=False, check_dtype=False
-            )
+            pdt.assert_series_equal(result, expected, check_names=False, check_dtype=False)
         return
     except AssertionError:
         if correlation_threshold is None:
@@ -66,22 +64,14 @@ def assert_talib(test_case, result, expected, correlation_threshold=None):
     if isinstance(result, DataFrame):
         n_cols = min(
             len(result.columns),
-            (
-                len(expected.columns)
-                if isinstance(expected, DataFrame)
-                else len(result.columns)
-            ),
+            (len(expected.columns) if isinstance(expected, DataFrame) else len(result.columns)),
         )
         cols = list(range(n_cols))
     else:
         cols = [None]
     for i in cols:
         r = result.iloc[:, i] if i is not None else result
-        e = (
-            expected.iloc[:, i]
-            if (i is not None and isinstance(expected, DataFrame))
-            else expected
-        )
+        e = expected.iloc[:, i] if (i is not None and isinstance(expected, DataFrame)) else expected
         try:
             corr = df_error_analysis(r, e)
         except Exception as ex:
@@ -107,9 +97,7 @@ def assert_indicator_standard(test_case, spec: IndicatorSpec):
         assert_offset(test_case, spec.func, spec.args, **spec.kwargs)
     assert_fill(test_case, spec.func, spec.args, **spec.kwargs)
     if spec.none_arg_idx is not None:
-        assert_none_guard(
-            test_case, spec.func, spec.args, spec.none_arg_idx, **spec.kwargs
-        )
+        assert_none_guard(test_case, spec.func, spec.args, spec.none_arg_idx, **spec.kwargs)
     if spec.length_override is not None:
         base_kwargs = {k: v for k, v in spec.kwargs.items() if k != "length"}
         assert_length_in_name(

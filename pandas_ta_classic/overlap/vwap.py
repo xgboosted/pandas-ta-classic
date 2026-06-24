@@ -29,11 +29,7 @@ def vwap(
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
-    anchor = (
-        anchor.upper()
-        if anchor and isinstance(anchor, str) and len(anchor) >= 1
-        else "D"
-    )
+    anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
     offset = get_offset(offset)
 
     if high is None or low is None or close is None or volume is None:
@@ -41,13 +37,9 @@ def vwap(
 
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):
-        logger.warning(
-            "VWAP volume series is not datetime ordered. Results may not be as expected."
-        )
+        logger.warning("VWAP volume series is not datetime ordered. Results may not be as expected.")
     if not is_datetime_ordered(typical_price):
-        logger.warning(
-            "VWAP price series is not datetime ordered. Results may not be as expected."
-        )
+        logger.warning("VWAP price series is not datetime ordered. Results may not be as expected.")
 
     # Calculate Result
     wp = typical_price * volume

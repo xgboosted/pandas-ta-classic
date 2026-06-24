@@ -30,10 +30,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             ca.real_body[i] < AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
-            and ca.upper_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
-            and ca.lower_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
+            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
+            and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
         ):
             out[i] = ca.color[i] * 100
 

@@ -29,14 +29,9 @@ def _detect(ca, out, **kwargs):
             and ca.real_body[i - 1] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_total
             and ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_total
         ):
-            if body_lo[i - 1] > body_hi[i - 2] and body_hi[i] < max(
-                ca.open[i - 1], ca.close[i - 1]
-            ):
+            if body_lo[i - 1] > body_hi[i - 2] and body_hi[i] < max(ca.open[i - 1], ca.close[i - 1]):
                 out[i] = -100
-            if (
-                body_hi[i - 1] < body_lo[i - 2]
-                and min(ca.open[i], ca.close[i]) > body_lo[i - 1]
-            ):
+            if body_hi[i - 1] < body_lo[i - 2] and min(ca.open[i], ca.close[i]) > body_lo[i - 1]:
                 out[i] = 100
 
         body_total += arr_bd[i - 2] - arr_bd[body_trail]

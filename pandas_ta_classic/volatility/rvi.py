@@ -15,9 +15,7 @@ def _pos_float(val, default):
     return float(val) if val and val > 0 else default
 
 
-def _rvi_compute(
-    source: Series, length: int, scalar: float, mode: str, drift: int
-) -> Optional[Series]:
+def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Optional[Series]:
     """Core RVI computation for a single source series."""
     std = stdev(source, length)
     pos, neg = unsigned_differences(source, amount=drift)

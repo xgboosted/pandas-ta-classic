@@ -19,12 +19,7 @@ def _ssf2_loop(c_arr, ssf_arr, m, c1, b1, a1):
 @njit(cache=True)
 def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
     for i in range(3, m):
-        ssf_arr[i] = (
-            c1 * c_arr[i]
-            + c2 * ssf_arr[i - 1]
-            + c3 * ssf_arr[i - 2]
-            + c4 * ssf_arr[i - 3]
-        )
+        ssf_arr[i] = c1 * c_arr[i] + c2 * ssf_arr[i - 1] + c3 * ssf_arr[i - 2] + c4 * ssf_arr[i - 3]
     return ssf_arr
 
 

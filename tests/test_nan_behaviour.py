@@ -77,9 +77,7 @@ class TestWarmupNanPrefix(TestCase):
     # --- length-1 warmup (rolling window, first value at index length-1) ---
 
     def _assert_warmup(self, result, expected_warmup: int, label: str):
-        self.assertIsNotNone(
-            result, f"{label}: indicator returned None on sufficient data"
-        )
+        self.assertIsNotNone(result, f"{label}: indicator returned None on sufficient data")
         actual = _nan_prefix(result)
         self.assertEqual(
             actual,
@@ -125,9 +123,7 @@ class TestWarmupNanPrefix(TestCase):
 
     def test_willr_warmup(self):
         length = 14
-        self._assert_warmup(
-            ta.willr(_H, _L, _C, length, talib=False), length - 1, "willr"
-        )
+        self._assert_warmup(ta.willr(_H, _L, _C, length, talib=False), length - 1, "willr")
 
     # --- length warmup (diff / rate: first valid value at index = length) ---
 

@@ -50,9 +50,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # ShadowLong: applied to i-2
     shadow_long_total = float(arr_sl[shadow_long_trail - 2 : start_idx - 2].sum())
     # ShadowVeryShort[1]: applied to i-1; ShadowVeryShort[0]: applied to i
-    shadow_vshort_total_1 = float(
-        arr_svs[shadow_vshort_trail - 1 : start_idx - 1].sum()
-    )
+    shadow_vshort_total_1 = float(arr_svs[shadow_vshort_trail - 1 : start_idx - 1].sum())
     shadow_vshort_total_0 = float(arr_svs[shadow_vshort_trail:start_idx].sum())
     # BodyShort: applied to i
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
@@ -68,11 +66,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i - 1] == -1
             and ca.color[i] == -1
             # 1st: long body
-            and ca.real_body[i - 2]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
+            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             # 1st: long lower shadow
-            and ca.lower_shadow[i - 2]
-            > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i - 2]
+            and ca.lower_shadow[i - 2] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i - 2]
             # 2nd: smaller candle
             and ca.real_body[i - 1] < ca.real_body[i - 2]
             # 2nd: opens higher than 1st close but within 1st range
@@ -83,16 +79,13 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 2nd: but not lower than 1st low
             and L[i - 1] >= L[i - 2]
             # 2nd: has a lower shadow (not very short)
-            and ca.lower_shadow[i - 1]
-            > AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vshort_total_1
+            and ca.lower_shadow[i - 1] > AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vshort_total_1
             # 3rd: small marubozu (short body)
             and ca.real_body[i] < AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
             # 3rd: very short lower shadow
-            and ca.lower_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vshort_total_0
+            and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vshort_total_0
             # 3rd: very short upper shadow
-            and ca.upper_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vshort_total_0
+            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vshort_total_0
             # 3rd: engulfed by 2nd candle's range
             and L[i] > L[i - 1]
             and H[i] < H[i - 1]
