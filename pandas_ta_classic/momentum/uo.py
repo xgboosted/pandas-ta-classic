@@ -96,9 +96,7 @@ def uo(
 
         uo = ULTOSC(high, low, close, fast, medium, slow)
     else:
-        uo = _uo_native(
-            high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift
-        )
+        uo = _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift)
 
     # Offset
     uo = apply_offset(uo, offset)

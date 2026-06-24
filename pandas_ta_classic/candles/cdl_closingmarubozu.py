@@ -29,16 +29,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     shadow_vs_total = float(arr_svs[shadow_vs_trail:start_idx].sum())
     for i in range(start_idx, len(out)):
         if ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total and (
-            (
-                ca.color[i] == 1
-                and ca.upper_shadow[i]
-                < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
-            )
-            or (
-                ca.color[i] == -1
-                and ca.lower_shadow[i]
-                < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
-            )
+            (ca.color[i] == 1 and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
+            or (ca.color[i] == -1 and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
         ):
             out[i] = ca.color[i] * 100
 

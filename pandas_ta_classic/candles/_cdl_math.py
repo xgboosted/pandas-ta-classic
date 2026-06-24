@@ -133,9 +133,7 @@ class CandleArrays:
         return self._ranges[setting][i]
 
     # -- TA-Lib macro: TA_CANDLEAVERAGE --
-    def candle_average(
-        self, setting: CandleSetting, period_total: float, i: int
-    ) -> float:
+    def candle_average(self, setting: CandleSetting, period_total: float, i: int) -> float:
         """Exact replica of TA-Lib's TA_CANDLEAVERAGE macro.
 
         Formula: ``factor * (sum/period) / (2 if Shadows else 1)``

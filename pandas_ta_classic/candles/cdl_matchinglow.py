@@ -25,10 +25,8 @@ def _detect(ca, out, **kwargs):
         if (
             ca.color[i - 1] == -1
             and ca.color[i] == -1
-            and ca.close[i]
-            <= ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
-            and ca.close[i]
-            >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
+            and ca.close[i] <= ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
+            and ca.close[i] >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
         ):
             out[i] = 100
 

@@ -334,9 +334,7 @@ class TestIndicatorValues(TestCase):
 
     def _check_fixture(self, fixture_key: str) -> None:
         """Assert last value and non-NaN count for every column of fixture_key."""
-        self.assertIn(
-            fixture_key, self.results, f"No result computed for {fixture_key!r}"
-        )
+        self.assertIn(fixture_key, self.results, f"No result computed for {fixture_key!r}")
         result = self.results[fixture_key]
         if result is None:
             self.fail(f"{fixture_key!r} returned None")
@@ -360,8 +358,7 @@ class TestIndicatorValues(TestCase):
                 self.assertEqual(
                     actual_non_nan,
                     expected["non_nan_count"],
-                    f"{fixture_key!r}[{col!r}]: non_nan_count "
-                    f"{actual_non_nan} != {expected['non_nan_count']}",
+                    f"{fixture_key!r}[{col!r}]: non_nan_count " f"{actual_non_nan} != {expected['non_nan_count']}",
                 )
 
                 expected_last = expected["last_value"]
@@ -380,8 +377,7 @@ class TestIndicatorValues(TestCase):
                 )
                 self.assertTrue(
                     _approx_equal(actual_last, expected_last),
-                    f"{fixture_key!r}[{col!r}]: last value {actual_last:.8f} "
-                    f"differs from golden {expected_last:.8f}",
+                    f"{fixture_key!r}[{col!r}]: last value {actual_last:.8f} " f"differs from golden {expected_last:.8f}",
                 )
 
     # ------------------------------------------------------------------

@@ -119,11 +119,7 @@ def _build_category_dict():
         if not category_path.is_dir():
             continue
         category_name = category_path.name
-        if (
-            category_name.startswith(("_", "."))
-            or category_name == "__pycache__"
-            or category_name not in _VALID_CATEGORIES
-        ):
+        if category_name.startswith(("_", ".")) or category_name == "__pycache__" or category_name not in _VALID_CATEGORIES:
             continue
         indicators = _collect_category_indicators(category_path, category_name)
         if indicators:

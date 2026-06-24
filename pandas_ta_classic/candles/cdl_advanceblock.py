@@ -84,46 +84,32 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and O[i] > O[i - 1]
             and O[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
             # 1st: long real body
-            and ca.real_body[i - 2]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
+            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             # 1st: short upper shadow
-            and ca.upper_shadow[i - 2]
-            < AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_2
+            and ca.upper_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_2
             # Signs of weakening (any of 4 sub-conditions)
             and (
                 # Sub-condition 1: 2nd far smaller than 1st AND
                 # 3rd not longer than 2nd
                 (
-                    ca.real_body[i - 1]
-                    < ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
-                    and ca.real_body[i]
-                    < ca.real_body[i - 1]
-                    + AVG_FACTOR[CandleSetting.Near] * near_total_1
+                    ca.real_body[i - 1] < ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
+                    and ca.real_body[i] < ca.real_body[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
                 )
                 # Sub-condition 2: 3rd far smaller than 2nd
-                or (
-                    ca.real_body[i]
-                    < ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1
-                )
+                or (ca.real_body[i] < ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1)
                 # Sub-condition 3: progressively smaller bodies AND
                 # (3rd or 2nd has non-short upper shadow)
                 or (
                     ca.real_body[i] < ca.real_body[i - 1]
                     and ca.real_body[i - 1] < ca.real_body[i - 2]
                     and (
-                        ca.upper_shadow[i]
-                        > AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_0
-                        or ca.upper_shadow[i - 1]
-                        > AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_1
+                        ca.upper_shadow[i] > AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_0
+                        or ca.upper_shadow[i - 1] > AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_1
                     )
                 )
                 # Sub-condition 4: 3rd smaller than 2nd AND
                 # 3rd has long upper shadow
-                or (
-                    ca.real_body[i] < ca.real_body[i - 1]
-                    and ca.upper_shadow[i]
-                    > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i]
-                )
+                or (ca.real_body[i] < ca.real_body[i - 1] and ca.upper_shadow[i] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i])
             )
         ):
             out[i] = -100  # Always bearish

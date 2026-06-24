@@ -45,20 +45,15 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i - 1] == -1
             and ca.color[i] == -1
             # 1st: marubozu (very short shadows)
-            and ca.lower_shadow[i - 3]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[3]
-            and ca.upper_shadow[i - 3]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[3]
+            and ca.lower_shadow[i - 3] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[3]
+            and ca.upper_shadow[i - 3] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[3]
             # 2nd: marubozu (very short shadows)
-            and ca.lower_shadow[i - 2]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[2]
-            and ca.upper_shadow[i - 2]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[2]
+            and ca.lower_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[2]
+            and ca.upper_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[2]
             # 3rd: opens gapping down
             and body_hi[i - 1] < body_lo[i - 2]
             # 3rd: HAS an upper shadow
-            and ca.upper_shadow[i - 1]
-            > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[1]
+            and ca.upper_shadow[i - 1] > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total[1]
             # 3rd upper shadow extends into the prior body
             and H[i - 1] > C[i - 2]
             # 4th: engulfs the 3rd including the shadows

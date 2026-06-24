@@ -40,9 +40,7 @@ def decreasing(
         # Returns value as float64? Have to cast to bool
         decreasing = close < close_.shift(drift)
         for x in range(3, length + 1):
-            decreasing = decreasing & (
-                close.shift(x - (drift + 1)) < close_.shift(x - drift)
-            )
+            decreasing = decreasing & (close.shift(x - (drift + 1)) < close_.shift(x - drift))
 
         decreasing.fillna(0, inplace=True)
         decreasing = decreasing.astype(bool)

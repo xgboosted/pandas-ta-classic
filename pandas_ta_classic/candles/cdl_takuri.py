@@ -34,10 +34,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
-            and ca.upper_shadow[i]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
-            and ca.lower_shadow[i]
-            > AVG_FACTOR[CandleSetting.ShadowVeryLong] * arr_svl[i]
+            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
+            and ca.lower_shadow[i] > AVG_FACTOR[CandleSetting.ShadowVeryLong] * arr_svl[i]
         ):
             out[i] = 100
 

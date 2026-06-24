@@ -52,11 +52,7 @@ def variance(
     # Validate Arguments
     length = int(length) if length and length > 1 else 30
     ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 0
-    min_periods = (
-        int(kwargs["min_periods"])
-        if "min_periods" in kwargs and kwargs["min_periods"] is not None
-        else length
-    )
+    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False
@@ -70,9 +66,7 @@ def variance(
 
         variance = VAR(close, length)
     else:
-        result_arr = _numpy_rolling_variance(
-            close.values.astype(np.float64), length, ddof, min_periods
-        )
+        result_arr = _numpy_rolling_variance(close.values.astype(np.float64), length, ddof, min_periods)
         variance = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset

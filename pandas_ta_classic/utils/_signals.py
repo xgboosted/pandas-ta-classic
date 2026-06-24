@@ -51,9 +51,7 @@ def above(
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Series:
-    return _above_below(
-        series_a, series_b, above=True, asint=asint, offset=offset, **kwargs
-    )
+    return _above_below(series_a, series_b, above=True, asint=asint, offset=offset, **kwargs)
 
 
 def above_value(
@@ -71,9 +69,7 @@ def above_value(
         return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
 
-    return _above_below(
-        series_a, series_b, above=True, asint=asint, offset=offset, **kwargs
-    )
+    return _above_below(series_a, series_b, above=True, asint=asint, offset=offset, **kwargs)
 
 
 def below(
@@ -83,9 +79,7 @@ def below(
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Series:
-    return _above_below(
-        series_a, series_b, above=False, asint=asint, offset=offset, **kwargs
-    )
+    return _above_below(series_a, series_b, above=False, asint=asint, offset=offset, **kwargs)
 
 
 def below_value(
@@ -102,9 +96,7 @@ def below_value(
     if series_a is None:
         return None
     series_b = Series(value, index=series_a.index, name=f"{value}".replace(".", "_"))
-    return _above_below(
-        series_a, series_b, above=False, asint=asint, offset=offset, **kwargs
-    )
+    return _above_below(series_a, series_b, above=False, asint=asint, offset=offset, **kwargs)
 
 
 def cross_value(
@@ -161,9 +153,7 @@ def cross(
     return cross
 
 
-def _add_scalar_threshold_signals(
-    df, indicator, value, cross_values, use_above, offset
-):
+def _add_scalar_threshold_signals(df, indicator, value, cross_values, use_above, offset):
     """Add scalar-value threshold signals to *df* in-place.
 
     When *cross_values* is ``True`` two cross columns are added (above=True

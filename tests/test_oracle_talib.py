@@ -28,12 +28,7 @@ except ImportError:
 
 import pandas_ta_classic as ta
 
-_DATA_PATH = (
-    __import__("pathlib").Path(__file__).parent.parent
-    / "examples"
-    / "data"
-    / "SPY_D.csv"
-)
+_DATA_PATH = __import__("pathlib").Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
 
 
 class _SpyDataMixin:
@@ -74,14 +69,10 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         arr = np.asarray(tl_series)
         tl_s = pd.Series(arr, index=self.idx[-len(arr) :])
         both = pt_series.dropna().index.intersection(tl_s.dropna().index)
-        self.assertGreater(
-            len(both), 50, f"{name}: too few common non-NaN values ({len(both)})"
-        )
+        self.assertGreater(len(both), 50, f"{name}: too few common non-NaN values ({len(both)})")
         tail = both[-min(2000, len(both)) :]
         diff = np.abs(pt_series.loc[tail].values - tl_s.loc[tail].values)
-        self.assertLess(
-            diff.max(), tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}"
-        )
+        self.assertLess(diff.max(), tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}")
 
     # ------------------------------------------------------------------
     # Overlap / Moving averages
@@ -227,25 +218,19 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_macd_line(self):
         pt = ta.macd(self.close)
-        oracle, _, _ = _tl.MACD(
-            self.close, fastperiod=12, slowperiod=26, signalperiod=9
-        )
+        oracle, _, _ = _tl.MACD(self.close, fastperiod=12, slowperiod=26, signalperiod=9)
         self._compare(pt.iloc[:, 0], oracle, name="MACD_line")
 
     def test_macd_hist(self):
         # ta.macd column order: [MACD_line, MACDh_hist, MACDs_signal]
         # TA-Lib MACD returns: (macd, signal, hist)
         pt = ta.macd(self.close)
-        _, _, oracle = _tl.MACD(
-            self.close, fastperiod=12, slowperiod=26, signalperiod=9
-        )
+        _, _, oracle = _tl.MACD(self.close, fastperiod=12, slowperiod=26, signalperiod=9)
         self._compare(pt.iloc[:, 1], oracle, name="MACD_hist")
 
     def test_macd_signal(self):
         pt = ta.macd(self.close)
-        _, oracle, _ = _tl.MACD(
-            self.close, fastperiod=12, slowperiod=26, signalperiod=9
-        )
+        _, oracle, _ = _tl.MACD(self.close, fastperiod=12, slowperiod=26, signalperiod=9)
         self._compare(pt.iloc[:, 2], oracle, name="MACD_signal")
 
     def test_macdext_line(self):
@@ -330,16 +315,12 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_stochrsi_k(self):
         pt = ta.stochrsi(self.close, length=14, talib=True)
-        oracle_k, _ = _tl.STOCHRSI(
-            self.close, timeperiod=14, fastk_period=14, fastd_period=3
-        )
+        oracle_k, _ = _tl.STOCHRSI(self.close, timeperiod=14, fastk_period=14, fastd_period=3)
         self._compare(pt.iloc[:, 0], oracle_k, name="STOCHRSI_k")
 
     def test_stochrsi_d(self):
         pt = ta.stochrsi(self.close, length=14, talib=True)
-        _, oracle_d = _tl.STOCHRSI(
-            self.close, timeperiod=14, fastk_period=14, fastd_period=3
-        )
+        _, oracle_d = _tl.STOCHRSI(self.close, timeperiod=14, fastk_period=14, fastd_period=3)
         self._compare(pt.iloc[:, 1], oracle_d, name="STOCHRSI_d")
 
     # ------------------------------------------------------------------
@@ -425,9 +406,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         # TA-Lib NATR uses Wilder's smoothing (RMA) for ATR internally.
         # Our pure-Python path must be invoked with mamode="rma" to match.
         self._compare(
-            ta.natr(
-                self.high, self.low, self.close, length=14, mamode="rma", talib=False
-            ),
+            ta.natr(self.high, self.low, self.close, length=14, mamode="rma", talib=False),
             _tl.NATR(self.high, self.low, self.close, timeperiod=14),
             name="NATR",
         )
@@ -435,16 +414,12 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
     def test_bbands_upper(self):
         pt = ta.bbands(self.close, length=20)
         oracle_u, _, _ = _tl.BBANDS(self.close, timeperiod=20, nbdevup=2, nbdevdn=2)
-        self._compare(
-            pt.filter(regex=r"^BBU").iloc[:, 0], oracle_u, name="BBANDS_upper"
-        )
+        self._compare(pt.filter(regex=r"^BBU").iloc[:, 0], oracle_u, name="BBANDS_upper")
 
     def test_bbands_lower(self):
         pt = ta.bbands(self.close, length=20)
         _, _, oracle_l = _tl.BBANDS(self.close, timeperiod=20, nbdevup=2, nbdevdn=2)
-        self._compare(
-            pt.filter(regex=r"^BBL").iloc[:, 0], oracle_l, name="BBANDS_lower"
-        )
+        self._compare(pt.filter(regex=r"^BBL").iloc[:, 0], oracle_l, name="BBANDS_lower")
 
     # ------------------------------------------------------------------
     # Statistics
@@ -550,23 +525,17 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         # Native MACDFIX uses SMA-seeded EMA (same as MACD), while TA-Lib
         # MACDFIX uses unstretched EMA — compare against TA-Lib MACD oracle.
         pt = ta.macdfix(self.close, signal=9)
-        oracle, _, _ = _tl.MACD(
-            self.close, fastperiod=12, slowperiod=26, signalperiod=9
-        )
+        oracle, _, _ = _tl.MACD(self.close, fastperiod=12, slowperiod=26, signalperiod=9)
         self._compare(pt.iloc[:, 0], oracle, name="MACDFIX_line")
 
     def test_macdfix_signal(self):
         pt = ta.macdfix(self.close, signal=9)
-        _, oracle, _ = _tl.MACD(
-            self.close, fastperiod=12, slowperiod=26, signalperiod=9
-        )
+        _, oracle, _ = _tl.MACD(self.close, fastperiod=12, slowperiod=26, signalperiod=9)
         self._compare(pt.iloc[:, 2], oracle, name="MACDFIX_signal")
 
     def test_macdfix_hist(self):
         pt = ta.macdfix(self.close, signal=9)
-        _, _, oracle = _tl.MACD(
-            self.close, fastperiod=12, slowperiod=26, signalperiod=9
-        )
+        _, _, oracle = _tl.MACD(self.close, fastperiod=12, slowperiod=26, signalperiod=9)
         self._compare(pt.iloc[:, 1], oracle, name="MACDFIX_hist")
 
     def test_avgprice(self):

@@ -25,9 +25,7 @@ def short_run(
 
     # Calculate Result
     pt = decreasing(fast, length) & increasing(slow, length)  # potential top or top
-    bd = decreasing(fast, length) & decreasing(
-        slow, length
-    )  # fast and slow are decreasing
+    bd = decreasing(fast, length) & decreasing(slow, length)  # fast and slow are decreasing
     short_run = pt | bd
 
     # Offset

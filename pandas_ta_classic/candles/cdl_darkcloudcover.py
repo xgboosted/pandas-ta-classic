@@ -34,8 +34,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == 1  # 1st: white
-            and ca.real_body[i - 1]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total  # long
+            and ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total  # long
             and ca.color[i] == -1  # 2nd: black
             and ca.open[i] > ca.high[i - 1]  # open above prior high
             and ca.close[i] > ca.open[i - 1]  # close within prior body

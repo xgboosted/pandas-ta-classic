@@ -42,9 +42,7 @@ def _squeeze_simplify_columns(df, n=3):
     return [c.split("_")[0][n - 1 : n] for c in df.columns]
 
 
-def _squeeze_momentum(
-    close, high, low, kch_b, mom_length, mom_smooth, kc_length, mamode, lazybear
-):
+def _squeeze_momentum(close, high, low, kch_b, mom_length, mom_smooth, kc_length, mamode, lazybear):
     """Compute the squeeze momentum series (lazybear or standard path)."""
     if lazybear:
         highest_high = high.rolling(kc_length).max()
@@ -90,9 +88,7 @@ def _squeeze_detailed(df, squeeze_s, kwargs, prefix="SQZ_"):
     sqz_inc.replace(0, npNaN, inplace=True)
     sqz_dec.replace(0, npNaN, inplace=True)
 
-    sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc = apply_fill(
-        [sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc], **kwargs
-    )
+    sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc = apply_fill([sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc], **kwargs)
 
     df[f"{prefix}INC"] = sqz_inc
     df[f"{prefix}DEC"] = sqz_dec
@@ -142,9 +138,7 @@ def squeeze(
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
-    kch = kc(
-        high, low, close, length=kc_length, scalar=kc_scalar, mamode=mamode, tr=use_tr
-    )
+    kch = kc(high, low, close, length=kc_length, scalar=kc_scalar, mamode=mamode, tr=use_tr)
     if bbd is None or kch is None:
         return None
 
@@ -152,9 +146,7 @@ def squeeze(
     bbd.columns = _squeeze_simplify_columns(bbd)
     kch.columns = _squeeze_simplify_columns(kch)
 
-    squeeze = _squeeze_momentum(
-        close, high, low, kch.b, mom_length, mom_smooth, kc_length, mamode, lazybear
-    )
+    squeeze = _squeeze_momentum(close, high, low, kch.b, mom_length, mom_smooth, kc_length, mamode, lazybear)
 
     if squeeze is None:
         return None
@@ -171,13 +163,9 @@ def squeeze(
         no_squeeze = no_squeeze.astype(int)
 
     # Offset
-    squeeze, squeeze_on, squeeze_off, no_squeeze = apply_offset(
-        [squeeze, squeeze_on, squeeze_off, no_squeeze], offset
-    )
+    squeeze, squeeze_on, squeeze_off, no_squeeze = apply_offset([squeeze, squeeze_on, squeeze_off, no_squeeze], offset)
 
-    squeeze, squeeze_on, squeeze_off, no_squeeze = apply_fill(
-        [squeeze, squeeze_on, squeeze_off, no_squeeze], **kwargs
-    )
+    squeeze, squeeze_on, squeeze_off, no_squeeze = apply_fill([squeeze, squeeze_on, squeeze_off, no_squeeze], **kwargs)
 
     # Name and Categorize it
     _props = "" if use_tr else "hlr"

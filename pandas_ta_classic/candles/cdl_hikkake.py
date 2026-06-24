@@ -11,22 +11,12 @@ import numpy as np
 
 def _hikkake_is_setup(H, L, i):
     """Check if bars at index i form a Hikkake setup (inside bar + breakout direction)."""
-    return (
-        H[i - 1] < H[i - 2]
-        and L[i - 1] > L[i - 2]
-        and (
-            (H[i] < H[i - 1] and L[i] < L[i - 1])
-            or (H[i] > H[i - 1] and L[i] > L[i - 1])
-        )
-    )
+    return H[i - 1] < H[i - 2] and L[i - 1] > L[i - 2] and ((H[i] < H[i - 1] and L[i] < L[i - 1]) or (H[i] > H[i - 1] and L[i] > L[i - 1]))
 
 
 def _hikkake_is_confirmed(pattern_result, pattern_idx, C, H, L, i):
     """Check if bar i confirms a previously detected Hikkake pattern."""
-    return i <= pattern_idx + 3 and (
-        (pattern_result > 0 and C[i] > H[pattern_idx - 1])
-        or (pattern_result < 0 and C[i] < L[pattern_idx - 1])
-    )
+    return i <= pattern_idx + 3 and ((pattern_result > 0 and C[i] > H[pattern_idx - 1]) or (pattern_result < 0 and C[i] < L[pattern_idx - 1]))
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:

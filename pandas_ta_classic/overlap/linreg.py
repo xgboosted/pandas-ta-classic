@@ -106,9 +106,7 @@ def linreg(
         return None
 
     # TA-Lib dispatch (not available for `r` or angle-in-radians).
-    _use_talib = (
-        Imports["talib"] and mode_talib and not r and not (angle and not degrees)
-    )
+    _use_talib = Imports["talib"] and mode_talib and not r and not (angle and not degrees)
     if _use_talib:
         _close_arr = npArray(close, dtype=float)
         _talib_fn = _TALIB_DISPATCH.get((angle, intercept, slope, tsf))
@@ -148,9 +146,7 @@ def linreg(
             tsf,
         )
 
-        linreg = Series(
-            np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index
-        )
+        linreg = Series(np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index)
 
     # Offset
     linreg = apply_offset(linreg, offset)

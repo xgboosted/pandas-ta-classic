@@ -70,9 +70,7 @@ def stochrsi(
     if Imports["talib"] and mode_talib:
         from talib import STOCHRSI as _STOCHRSI
 
-        fastk, fastd = _STOCHRSI(
-            close, timeperiod=length, fastk_period=length, fastd_period=d
-        )
+        fastk, fastd = _STOCHRSI(close, timeperiod=length, fastk_period=length, fastd_period=d)
         stochrsi_k = Series(fastk, index=close.index)
         stochrsi_d = Series(fastd, index=close.index)
         stochrsi_k, stochrsi_d = apply_offset([stochrsi_k, stochrsi_d], offset)

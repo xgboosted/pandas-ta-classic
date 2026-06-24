@@ -80,13 +80,9 @@ def bbands(
     percent = non_zero_range(close, lower) / ulr
 
     # Offset
-    lower, mid, upper, bandwidth, percent = apply_offset(
-        [lower, mid, upper, bandwidth, percent], offset
-    )
+    lower, mid, upper, bandwidth, percent = apply_offset([lower, mid, upper, bandwidth, percent], offset)
 
-    lower, mid, upper, bandwidth, percent = apply_fill(
-        [lower, mid, upper, bandwidth, percent], **kwargs
-    )
+    lower, mid, upper, bandwidth, percent = apply_fill([lower, mid, upper, bandwidth, percent], **kwargs)
 
     # Name and Categorize it
     lower.name = f"BBL_{length}_{std}"

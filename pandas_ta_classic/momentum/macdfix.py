@@ -41,9 +41,7 @@ def macdfix(
         }
         result = DataFrame(data, index=close.index)
     else:
-        result = macd(
-            close, fast=12, slow=26, signal=signal, talib=False, offset=offset, **kwargs
-        )
+        result = macd(close, fast=12, slow=26, signal=signal, talib=False, offset=offset, **kwargs)
         if result is None:
             return None
 

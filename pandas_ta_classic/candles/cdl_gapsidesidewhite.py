@@ -43,22 +43,13 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
     for i in range(start_idx, len(out)):
         if (
-            (
-                (body_lo[i - 1] > body_hi[i - 2] and body_lo[i] > body_hi[i - 2])
-                or (body_hi[i - 1] < body_lo[i - 2] and body_hi[i] < body_lo[i - 2])
-            )
+            ((body_lo[i - 1] > body_hi[i - 2] and body_lo[i] > body_hi[i - 2]) or (body_hi[i - 1] < body_lo[i - 2] and body_hi[i] < body_lo[i - 2]))
             and ca.color[i - 1] == 1  # 2nd: white
             and ca.color[i] == 1  # 3rd: white
-            and ca.real_body[i]
-            >= ca.real_body[i - 1]
-            - AVG_FACTOR[CandleSetting.Near] * near_total  # same size
-            and ca.real_body[i]
-            <= ca.real_body[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total
-            and ca.open[i]
-            >= ca.open[i - 1]
-            - AVG_FACTOR[CandleSetting.Equal] * equal_total  # same open
-            and ca.open[i]
-            <= ca.open[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
+            and ca.real_body[i] >= ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Near] * near_total  # same size
+            and ca.real_body[i] <= ca.real_body[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total
+            and ca.open[i] >= ca.open[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total  # same open
+            and ca.open[i] <= ca.open[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
         ):
             out[i] = 100 if body_lo[i - 1] > body_hi[i - 2] else -100
 

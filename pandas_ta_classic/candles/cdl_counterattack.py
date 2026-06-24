@@ -44,15 +44,10 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 1] == -ca.color[i]  # opposite candles
-            and ca.real_body[i - 1]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_1  # 1st long
-            and ca.real_body[i]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_0  # 2nd long
-            and ca.close[i]
-            <= ca.close[i - 1]
-            + AVG_FACTOR[CandleSetting.Equal] * equal_total  # equal closes
-            and ca.close[i]
-            >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
+            and ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_1  # 1st long
+            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_0  # 2nd long
+            and ca.close[i] <= ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total  # equal closes
+            and ca.close[i] >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
         ):
             out[i] = ca.color[i] * 100
 

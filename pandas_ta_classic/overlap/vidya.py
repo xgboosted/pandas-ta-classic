@@ -53,9 +53,7 @@ def vidya(
     cmo_arr = abs_cmo.to_numpy()
     c_arr = close.to_numpy()
     for i in range(length, m):
-        vidya_arr[i] = alpha * cmo_arr[i] * c_arr[i] + vidya_arr[i - 1] * (
-            1 - alpha * cmo_arr[i]
-        )
+        vidya_arr[i] = alpha * cmo_arr[i] * c_arr[i] + vidya_arr[i - 1] * (1 - alpha * cmo_arr[i])
     vidya = Series(vidya_arr, index=close.index)
 
     # Offset

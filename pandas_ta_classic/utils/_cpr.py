@@ -27,9 +27,7 @@ def _resample_ohlcv(df: DataFrame, rule: str) -> DataFrame:
     return df.resample(rule).agg(agg)
 
 
-def get_previous_period_ohlcv(
-    df: DataFrame, timeframe: str = "daily", interval: Optional[str] = None
-) -> DataFrame:
+def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval: Optional[str] = None) -> DataFrame:
     """Get previous period OHLCV data using resample + shift
 
     For intraday: Resamples to daily, shifts by 1 day, forward fills
@@ -130,9 +128,7 @@ def round_to_strike(price: Series, round_to: int = 50) -> Series:
     return (price / round_to).round() * round_to
 
 
-def calculate_option_strikes(
-    tc: Series, pivot: Series, bc: Series, strike_round: int = 50
-) -> dict:
+def calculate_option_strikes(tc: Series, pivot: Series, bc: Series, strike_round: int = 50) -> dict:
     """Calculate option strike recommendations based on CPR levels
 
     Args:
@@ -166,9 +162,7 @@ def calculate_option_strikes(
     }
 
 
-def detect_cpr_breakout(
-    close: Series, high: Series, low: Series, tc: Series, bc: Series, lookback: int = 1
-) -> tuple[Series, Series]:
+def detect_cpr_breakout(close: Series, high: Series, low: Series, tc: Series, bc: Series, lookback: int = 1) -> tuple[Series, Series]:
     """Detect CPR breakouts for option entry signals
 
     Args:
@@ -233,9 +227,7 @@ def detect_cpr_rejection(
     return rejection_call, rejection_put
 
 
-def detect_virgin_cpr(
-    high: Series, low: Series, tc: Series, bc: Series, lookforward: int = 5
-) -> Series:
+def detect_virgin_cpr(high: Series, low: Series, tc: Series, bc: Series, lookforward: int = 5) -> Series:
     """Detect Virgin CPR levels (untested CPR ranges)
 
     A Virgin CPR is one where price has not entered the CPR range (between TC and BC)

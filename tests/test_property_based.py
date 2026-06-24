@@ -36,6 +36,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
+    df_error_analysis,
     get_drift,
     get_offset,
     non_zero_range,
@@ -128,9 +129,7 @@ def ohlcv_dataframe(draw, min_size: int = 20, max_size: int = 200):
                 arrays(
                     dtype=np.float64,
                     shape=n,
-                    elements=st.floats(
-                        min_value=-2.0, max_value=2.0, width=64, allow_nan=False
-                    ),
+                    elements=st.floats(min_value=-2.0, max_value=2.0, width=64, allow_nan=False),
                 )
             )
         )
@@ -167,9 +166,7 @@ def ohlcv_dataframe(draw, min_size: int = 20, max_size: int = 200):
         arrays(
             dtype=np.float64,
             shape=n,
-            elements=st.floats(
-                min_value=df["low"].min(), max_value=df["high"].max(), width=64
-            ),
+            elements=st.floats(min_value=df["low"].min(), max_value=df["high"].max(), width=64),
         )
     )
     df["volume"] = np.abs(
@@ -283,11 +280,7 @@ class TestApplyFill(TestCase):
         first_valid = filled.first_valid_index()
         if first_valid is not None and first_valid > 0:
             assert filled.iloc[:first_valid].isna().all()
-        assert (
-            not filled.iloc[first_valid:].isna().any()
-            if first_valid is not None
-            else True
-        )
+        assert not filled.iloc[first_valid:].isna().any() if first_valid is not None else True
 
 
 class TestMiscUtils(TestCase):
@@ -581,9 +574,7 @@ class TestMathematicalInvariants(TestCase):
             valid = mom.dropna().index.intersection(roc.dropna().index)
             if len(valid) > 0:
                 expected_roc = (mom.loc[valid] / s.shift(length).loc[valid]) * 100
-                assert np.allclose(
-                    roc.loc[valid].values, expected_roc.values, rtol=1e-9
-                )
+                assert np.allclose(roc.loc[valid].values, expected_roc.values, rtol=1e-9)
 
 
 # ======================================================================
@@ -733,9 +724,7 @@ class TestCategoryDiscovery(TestCase):
 
         for cat_name, indicators in Category.items():
             for ind in indicators:
-                assert isinstance(
-                    ind, str
-                ), f"Non-string indicator in {cat_name}: {ind!r}"
+                assert isinstance(ind, str), f"Non-string indicator in {cat_name}: {ind!r}"
 
     def test_top_level_indicators_exist(self):
         """Top-level indicators like sma, rsi, bbands must be callable."""
@@ -771,7 +760,9 @@ def test_hypothesis_sma_idempotent(s, length):
 @settings(max_examples=50, deadline=1000)
 def test_hypothesis_correlation_non_negative(s1, s2):
     """ta.corr must return value in [-1, 1]."""
-    from pandas_ta_classic.utils import df_error_analysis
+    # Pearson correlation is undefined for constant series (std=0 → divide-by-zero)
+    assume(s1.std() > 0)
+    assume(s2.std() > 0)
 
     try:
         corr = df_error_analysis(s1, s2)

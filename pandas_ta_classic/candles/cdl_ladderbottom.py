@@ -44,8 +44,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and C[i - 3] > C[i - 2]
             # 4th: black with an upper shadow
             and ca.color[i - 1] == -1
-            and ca.upper_shadow[i - 1]
-            > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
+            and ca.upper_shadow[i - 1] > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
             # 5th: white
             and ca.color[i] == 1
             # That opens above prior candle's body (open, since bearish)

@@ -112,9 +112,7 @@ class TestMomentumExtension(TestCase):
     def test_kst_ext(self):
         self.data.ta.kst(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["KST_10_15_20_30_10_10_10_15", "KSTs_9"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["KST_10_15_20_30_10_10_10_15", "KSTs_9"])
 
     def test_macd_ext(self):
         self.data.ta.macd(append=True)
@@ -207,9 +205,7 @@ class TestMomentumExtension(TestCase):
     def test_smi_ext(self):
         self.data.ta.smi(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["SMI_5_20_5", "SMIs_5_20_5", "SMIo_5_20_5"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["SMI_5_20_5", "SMIs_5_20_5", "SMIo_5_20_5"])
 
         self.data.ta.smi(scalar=10, append=True)
         self.assertIsInstance(self.data, DataFrame)
@@ -264,16 +260,12 @@ class TestMomentumExtension(TestCase):
     def test_stoch_ext(self):
         self.data.ta.stoch(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["STOCHk_14_3_3", "STOCHd_14_3_3"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["STOCHk_14_3_3", "STOCHd_14_3_3"])
 
     def test_stochrsi_ext(self):
         self.data.ta.stochrsi(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["STOCHRSIk_14_14_3_3", "STOCHRSId_14_14_3_3"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["STOCHRSIk_14_14_3_3", "STOCHRSId_14_14_3_3"])
 
     def test_td_seq_ext(self):
         """TS Sequential DataFrame: Working but SLOW implementation"""
@@ -293,9 +285,7 @@ class TestMomentumExtension(TestCase):
     def test_tsi_ext(self):
         self.data.ta.tsi(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-2:]), ["TSI_13_25_13", "TSIs_13_25_13"]
-        )
+        self.assertEqual(list(self.data.columns[-2:]), ["TSI_13_25_13", "TSIs_13_25_13"])
 
     def test_uo_ext(self):
         self.data.ta.uo(append=True)
@@ -320,9 +310,7 @@ class TestMomentumExtension(TestCase):
     def test_trixh_ext(self):
         self.data.ta.trixh(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["TRIX_18_9", "TRIXs_18_9", "TRIXh_18_9"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["TRIX_18_9", "TRIXs_18_9", "TRIXh_18_9"])
 
     def test_vwmacd_ext(self):
         self.data.ta.vwmacd(append=True)

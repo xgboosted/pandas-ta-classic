@@ -71,11 +71,7 @@ def _sarext_loop(
 
         if reverse:
             if offset_on_reverse != 0.0:
-                _sar = (
-                    _sar + offset_on_reverse * _sar
-                    if falling
-                    else _sar - offset_on_reverse * _sar
-                )
+                _sar = _sar + offset_on_reverse * _sar if falling else _sar - offset_on_reverse * _sar
             falling = not falling
             if falling:
                 ep = l_
@@ -116,11 +112,7 @@ def _sarext_native_result(
         sar = high.iloc[0]
     else:
         sar = low.iloc[0]
-    ep = (
-        low.iloc[1]
-        if falling and len(low) > 1
-        else (high.iloc[1] if len(high) > 1 else high.iloc[0])
-    )
+    ep = low.iloc[1] if falling and len(low) > 1 else (high.iloc[1] if len(high) > 1 else high.iloc[0])
     m = high.shape[0]
     h_arr = high.to_numpy(dtype=float)
     l_arr = low.to_numpy(dtype=float)

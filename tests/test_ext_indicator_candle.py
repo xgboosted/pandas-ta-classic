@@ -40,9 +40,7 @@ class TestCandleExtension(TestCase):
     def test_ha_ext(self):
         self.data.ta.ha(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-4:]), ["HA_open", "HA_high", "HA_low", "HA_close"]
-        )
+        self.assertEqual(list(self.data.columns[-4:]), ["HA_open", "HA_high", "HA_low", "HA_close"])
 
     def test_cdl_2crows_ext(self):
         self.data.ta.cdl_pattern("2crows", append=True)

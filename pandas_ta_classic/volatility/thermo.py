@@ -59,13 +59,9 @@ def thermo(
         thermo_short = thermo_short.astype(int)
 
     # Offset
-    thermo, thermo_ma, thermo_long, thermo_short = apply_offset(
-        [thermo, thermo_ma, thermo_long, thermo_short], offset
-    )
+    thermo, thermo_ma, thermo_long, thermo_short = apply_offset([thermo, thermo_ma, thermo_long, thermo_short], offset)
 
-    thermo, thermo_ma, thermo_long, thermo_short = apply_fill(
-        [thermo, thermo_ma, thermo_long, thermo_short], **kwargs
-    )
+    thermo, thermo_ma, thermo_long, thermo_short = apply_fill([thermo, thermo_ma, thermo_long, thermo_short], **kwargs)
 
     # Name and Categorize it
     _props = f"_{length}_{long}_{short}"
@@ -74,9 +70,7 @@ def thermo(
     thermo_long.name = f"THERMOl{_props}"
     thermo_short.name = f"THERMOs{_props}"
 
-    thermo.category = thermo_ma.category = thermo_long.category = (
-        thermo_short.category
-    ) = "volatility"
+    thermo.category = thermo_ma.category = thermo_long.category = thermo_short.category = "volatility"
 
     # Prepare Dataframe to return
     data = {

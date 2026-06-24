@@ -21,11 +21,7 @@ def alma(
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
     sigma = float(sigma) if sigma and sigma > 0 else 6.0
-    distribution_offset = (
-        float(distribution_offset)
-        if distribution_offset and distribution_offset > 0
-        else 0.85
-    )
+    distribution_offset = float(distribution_offset) if distribution_offset and distribution_offset > 0 else 0.85
     close = verify_series(close, length)
     offset = get_offset(offset)
 

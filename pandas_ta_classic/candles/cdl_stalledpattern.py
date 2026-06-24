@@ -66,14 +66,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and C[i] > C[i - 1]
             and C[i - 1] > C[i - 2]
             # 1st: long real body
-            and ca.real_body[i - 2]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_2
+            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_2
             # 2nd: long real body
-            and ca.real_body[i - 1]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_1
+            and ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_1
             # 2nd: very short upper shadow
-            and ca.upper_shadow[i - 1]
-            < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
+            and ca.upper_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
             # 2nd opens within/near 1st real body: opens above 1st open
             and O[i - 1] > O[i - 2]
             # 2nd opens at or below 1st close + Near average
@@ -81,10 +78,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 3rd: small real body
             and ca.real_body[i] < AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
             # 3rd rides on the shoulder of 2nd real body
-            and O[i]
-            >= C[i - 1]
-            - ca.real_body[i]
-            - AVG_FACTOR[CandleSetting.Near] * near_total_1
+            and O[i] >= C[i - 1] - ca.real_body[i] - AVG_FACTOR[CandleSetting.Near] * near_total_1
         ):
             out[i] = -100
 

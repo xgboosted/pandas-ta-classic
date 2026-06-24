@@ -26,13 +26,9 @@ def tsignals(
         return None
 
     asbool = bool(asbool) if isinstance(asbool, bool) else False
-    trend_reset = (
-        int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
-    )
+    trend_reset = int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
     if trade_offset != 0:
-        trade_offset = (
-            int(trade_offset) if trade_offset and isinstance(trade_offset, int) else 0
-        )
+        trade_offset = int(trade_offset) if trade_offset and isinstance(trade_offset, int) else 0
     drift = get_drift(drift)
     offset = get_offset(offset)
 

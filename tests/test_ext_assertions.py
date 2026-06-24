@@ -66,9 +66,7 @@ class _ExtBase(TestCase):
         valid = series.dropna()
         self.assertFalse(valid.empty, f"Column {col_name!r} is all-NaN after append")
         last = float(valid.iloc[-1])
-        self.assertTrue(
-            math.isfinite(last), f"Column {col_name!r} last value is not finite: {last}"
-        )
+        self.assertTrue(math.isfinite(last), f"Column {col_name!r} last value is not finite: {last}")
 
     def _check_last_col(self, df: pd.DataFrame) -> None:
         """Check the last column of *df* (for indicators that add a single column)."""
@@ -154,9 +152,7 @@ class TestExtMomentumDeeper(_ExtBase):
         df.ta.rsi(append=True)
         self._check_appended(df, "RSI_14")
         valid = df["RSI_14"].dropna()
-        self.assertTrue(
-            (valid >= 0).all() and (valid <= 100).all(), "RSI out of [0,100]"
-        )
+        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "RSI out of [0,100]")
 
     def test_stochrsi_ext(self):
         df = self.fresh()
@@ -292,9 +288,7 @@ class TestExtVolatilityDeeper(_ExtBase):
         df.ta.chop(append=True)
         self._check_appended(df, "CHOP_14_1_100")
         valid = df["CHOP_14_1_100"].dropna()
-        self.assertTrue(
-            (valid >= 0).all() and (valid <= 100).all(), "CHOP out of [0,100]"
-        )
+        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "CHOP out of [0,100]")
 
     def test_donchian_ext(self):
         df = self.fresh()
@@ -351,9 +345,7 @@ class TestExtTrendDeeper(_ExtBase):
         df.ta.adx(append=True)
         self._check_appended(df, "ADX_14")
         valid = df["ADX_14"].dropna()
-        self.assertTrue(
-            (valid >= 0).all() and (valid <= 100).all(), "ADX out of [0,100]"
-        )
+        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "ADX out of [0,100]")
 
     def test_aroon_ext(self):
         df = self.fresh()
@@ -431,9 +423,7 @@ class TestExtVolumeDeeper(_ExtBase):
         self._check_appended(df, mfi_cols[0])
         # MFI in [0, 100]
         valid = df[mfi_cols[0]].dropna()
-        self.assertTrue(
-            (valid >= 0).all() and (valid <= 100).all(), "MFI out of [0,100]"
-        )
+        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "MFI out of [0,100]")
 
     def test_obv_ext(self):
         df = self.fresh()

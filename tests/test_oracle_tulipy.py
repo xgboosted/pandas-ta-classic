@@ -32,12 +32,7 @@ except ImportError:
 
 import pandas_ta_classic as ta
 
-_DATA_PATH = (
-    __import__("pathlib").Path(__file__).parent.parent
-    / "examples"
-    / "data"
-    / "SPY_D.csv"
-)
+_DATA_PATH = __import__("pathlib").Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
 
 
 @unittest.skipUnless(TULIPY_AVAILABLE, "tulipy not installed")
@@ -80,23 +75,17 @@ class TestTulipyOracle(unittest.TestCase):
         arr = np.asarray(tp_arr)
         tp_s = pd.Series(arr, index=self.idx[-len(arr) :])
         both = pt_series.dropna().index.intersection(tp_s.index)
-        self.assertGreater(
-            len(both), 50, f"{name}: too few common non-NaN values ({len(both)})"
-        )
+        self.assertGreater(len(both), 50, f"{name}: too few common non-NaN values ({len(both)})")
         tail = both[-min(2000, len(both)) :]
         diff = np.abs(pt_series.loc[tail].values - tp_s.loc[tail].values)
-        self.assertLess(
-            diff.max(), tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}"
-        )
+        self.assertLess(diff.max(), tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}")
 
     # ------------------------------------------------------------------
     # Overlap / Moving averages
     # ------------------------------------------------------------------
 
     def test_sma(self):
-        self._compare(
-            ta.sma(self.close, length=20), _tp.sma(self.c, period=20), name="SMA"
-        )
+        self._compare(ta.sma(self.close, length=20), _tp.sma(self.c, period=20), name="SMA")
 
     def test_ema(self):
         self._compare(
@@ -106,26 +95,18 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_wma(self):
-        self._compare(
-            ta.wma(self.close, length=20), _tp.wma(self.c, period=20), name="WMA"
-        )
+        self._compare(ta.wma(self.close, length=20), _tp.wma(self.c, period=20), name="WMA")
 
     def test_hma(self):
-        self._compare(
-            ta.hma(self.close, length=9), _tp.hma(self.c, period=9), name="HMA"
-        )
+        self._compare(ta.hma(self.close, length=9), _tp.hma(self.c, period=9), name="HMA")
 
     def test_zlma(self):
         # tulipy name: zlema
-        self._compare(
-            ta.zlma(self.close, length=20), _tp.zlema(self.c, period=20), name="ZLMA"
-        )
+        self._compare(ta.zlma(self.close, length=20), _tp.zlema(self.c, period=20), name="ZLMA")
 
     def test_rma(self):
         # tulipy name: wilders (Wilder's Moving Average)
-        self._compare(
-            ta.rma(self.close, length=14), _tp.wilders(self.c, period=14), name="RMA"
-        )
+        self._compare(ta.rma(self.close, length=14), _tp.wilders(self.c, period=14), name="RMA")
 
     def test_dema(self):
         self._compare(
@@ -190,21 +171,15 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_mom(self):
-        self._compare(
-            ta.mom(self.close, length=10), _tp.mom(self.c, period=10), name="MOM"
-        )
+        self._compare(ta.mom(self.close, length=10), _tp.mom(self.c, period=10), name="MOM")
 
     def test_roc(self):
         # tulipy roc returns a decimal fraction; ta.roc returns percentage.
         # Scale the oracle by 100 to match.
-        self._compare(
-            ta.roc(self.close, length=10), _tp.roc(self.c, period=10) * 100, name="ROC"
-        )
+        self._compare(ta.roc(self.close, length=10), _tp.roc(self.c, period=10) * 100, name="ROC")
 
     def test_rocr(self):
-        self._compare(
-            ta.rocr(self.close, length=10), _tp.rocr(self.c, period=10), name="ROCR"
-        )
+        self._compare(ta.rocr(self.close, length=10), _tp.rocr(self.c, period=10), name="ROCR")
 
     def test_willr(self):
         self._compare(
@@ -246,9 +221,7 @@ class TestTulipyOracle(unittest.TestCase):
         self._compare(ta.ao(self.high, self.low), _tp.ao(self.h, self.l), name="AO")
 
     def test_vhf(self):
-        self._compare(
-            ta.vhf(self.close, length=28), _tp.vhf(self.c, period=28), name="VHF"
-        )
+        self._compare(ta.vhf(self.close, length=28), _tp.vhf(self.c, period=28), name="VHF")
 
     def test_wad(self):
         self._compare(
@@ -265,9 +238,7 @@ class TestTulipyOracle(unittest.TestCase):
         n = min(len(pt), len(tp))
         self.assertGreater(n, 50, f"DPO: too few comparable values ({n})")
         diff = np.abs(pt[-n:] - tp[-n:])
-        self.assertLess(
-            diff.max(), 1e-6, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-6"
-        )
+        self.assertLess(diff.max(), 1e-6, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-6")
 
     def test_cmo(self):
         self._compare(
@@ -300,15 +271,11 @@ class TestTulipyOracle(unittest.TestCase):
     def test_stochrsi(self):
         # talib=True uses TA-Lib STOCHRSI which matches tulipy's single-period formula
         pt = ta.stochrsi(self.close, length=14, talib=True)
-        self._compare(
-            pt.iloc[:, 0], _tp.stochrsi(self.c, period=14) * 100, name="STOCHRSI"
-        )
+        self._compare(pt.iloc[:, 0], _tp.stochrsi(self.c, period=14) * 100, name="STOCHRSI")
 
     def test_macd(self):
         pt = ta.macd(self.close)
-        oracle, _, _ = _tp.macd(
-            self.c, short_period=12, long_period=26, signal_period=9
-        )
+        oracle, _, _ = _tp.macd(self.c, short_period=12, long_period=26, signal_period=9)
         tp_s = pd.Series(np.asarray(oracle), index=self.idx[-len(oracle) :])
         both = pt.iloc[:, 0].dropna().index.intersection(tp_s.index)
         self.assertGreater(len(both), 50, f"MACD: too few common values ({len(both)})")
@@ -368,9 +335,7 @@ class TestTulipyOracle(unittest.TestCase):
 
     def test_aroonosc(self):
         pt = ta.aroon(self.high, self.low, length=14, talib=False)
-        self._compare(
-            pt.iloc[:, 2], _tp.aroonosc(self.h, self.l, period=14), name="AROONOSC"
-        )
+        self._compare(pt.iloc[:, 2], _tp.aroonosc(self.h, self.l, period=14), name="AROONOSC")
 
     def test_dx(self):
         # A single outlier bar appears in the 1001-2000 tail window; the final
@@ -399,9 +364,7 @@ class TestTulipyOracle(unittest.TestCase):
         # tulipy NATR uses Wilder's smoothing (RMA) for ATR internally.
         # Our pure-Python path must be invoked with mamode="rma" to match.
         self._compare(
-            ta.natr(
-                self.high, self.low, self.close, length=14, mamode="rma", talib=False
-            ),
+            ta.natr(self.high, self.low, self.close, length=14, mamode="rma", talib=False),
             _tp.natr(self.h, self.l, self.c, period=14),
             name="NATR",
         )
@@ -442,9 +405,7 @@ class TestTulipyOracle(unittest.TestCase):
         tp_arr = _tp.stderr(self.c, period=20)
         tp_s = pd.Series(np.asarray(tp_arr), index=self.idx[-len(tp_arr) :])
         both = pt.dropna().index.intersection(tp_s.index)
-        self.assertGreater(
-            len(both), 50, f"STDERR: too few common non-NaN values ({len(both)})"
-        )
+        self.assertGreater(len(both), 50, f"STDERR: too few common non-NaN values ({len(both)})")
         ratio = np.median(pt.loc[both].values / tp_s.loc[both].values)
         expected = np.sqrt((20 - 1) / (20 - 2))
         self.assertLess(

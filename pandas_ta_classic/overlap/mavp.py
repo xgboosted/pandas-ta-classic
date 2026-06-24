@@ -86,15 +86,12 @@ def mavp(
         # Only SMA (mamode=0) is supported natively; other MA types require TA-Lib
         if mamode != 0:
             warnings.warn(
-                f"MAVP native fallback only supports SMA (mamode=0); "
-                f"mamode={mamode} requires TA-Lib. Results will use SMA.",
+                f"MAVP native fallback only supports SMA (mamode=0); " f"mamode={mamode} requires TA-Lib. Results will use SMA.",
                 UserWarning,
                 stacklevel=2,
             )
         close_arr = close.to_numpy(dtype=float)
-        per_arr = np.clip(
-            periods.to_numpy(dtype=float).round().astype(int), minperiod, maxperiod
-        )
+        per_arr = np.clip(periods.to_numpy(dtype=float).round().astype(int), minperiod, maxperiod)
         mavp_ = Series(_mavp_sma_values(close_arr, per_arr), index=close.index)
 
     # Offset

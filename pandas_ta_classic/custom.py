@@ -250,9 +250,7 @@ def load_indicator_module(name):
     try:
         module = importlib.import_module(name)
     except Exception as ex:
-        logger.error(
-            "An error occurred when attempting to load module %s: %s", name, ex
-        )
+        logger.error("An error occurred when attempting to load module %s: %s", name, ex)
         sys.exit(1)
 
     # reload to refresh previously loaded module

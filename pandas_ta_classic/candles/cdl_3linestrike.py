@@ -38,15 +38,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 4th opposite color
             and ca.color[i] == -ca.color[i - 1]
             # 2nd opens within/near 1st real body
-            and O[i - 2]
-            >= min(O[i - 3], C[i - 3]) - AVG_FACTOR[CandleSetting.Near] * near_total_3
-            and O[i - 2]
-            <= max(O[i - 3], C[i - 3]) + AVG_FACTOR[CandleSetting.Near] * near_total_3
+            and O[i - 2] >= min(O[i - 3], C[i - 3]) - AVG_FACTOR[CandleSetting.Near] * near_total_3
+            and O[i - 2] <= max(O[i - 3], C[i - 3]) + AVG_FACTOR[CandleSetting.Near] * near_total_3
             # 3rd opens within/near 2nd real body
-            and O[i - 1]
-            >= min(O[i - 2], C[i - 2]) - AVG_FACTOR[CandleSetting.Near] * near_total_2
-            and O[i - 1]
-            <= max(O[i - 2], C[i - 2]) + AVG_FACTOR[CandleSetting.Near] * near_total_2
+            and O[i - 1] >= min(O[i - 2], C[i - 2]) - AVG_FACTOR[CandleSetting.Near] * near_total_2
+            and O[i - 1] <= max(O[i - 2], C[i - 2]) + AVG_FACTOR[CandleSetting.Near] * near_total_2
             and (
                 (
                     # If three white

@@ -127,9 +127,7 @@ class TestRegressionSnapshots(TestCase):
         del cls.results
 
     def _check_snapshot(self, fixture_key: str) -> None:
-        self.assertIn(
-            fixture_key, self.results, f"No result computed for {fixture_key!r}"
-        )
+        self.assertIn(fixture_key, self.results, f"No result computed for {fixture_key!r}")
         result = self.results[fixture_key]
         self.assertIsNotNone(result, f"{fixture_key!r} returned None")
 
@@ -140,9 +138,7 @@ class TestRegressionSnapshots(TestCase):
 
         for col, checkpoints in col_snaps.items():
             with self.subTest(col=col):
-                self.assertIn(
-                    col, result.columns, f"Column {col!r} missing from {fixture_key!r}"
-                )
+                self.assertIn(col, result.columns, f"Column {col!r} missing from {fixture_key!r}")
                 series = result[col]
 
                 for idx_str, expected_val in checkpoints.items():
@@ -153,15 +149,13 @@ class TestRegressionSnapshots(TestCase):
                             actual = series.iloc[idx]
                             self.assertTrue(
                                 pd.isna(actual),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: "
-                                f"snapshot was NaN but got {actual}",
+                                f"{fixture_key!r}[{col!r}] at idx={idx}: " f"snapshot was NaN but got {actual}",
                             )
                         else:
                             actual_raw = series.iloc[idx]
                             self.assertFalse(
                                 pd.isna(actual_raw),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: "
-                                f"got NaN but snapshot has value {expected_val}",
+                                f"{fixture_key!r}[{col!r}] at idx={idx}: " f"got NaN but snapshot has value {expected_val}",
                             )
                             actual = float(actual_raw)
                             self.assertFalse(
@@ -170,8 +164,7 @@ class TestRegressionSnapshots(TestCase):
                             )
                             self.assertTrue(
                                 _approx_equal(actual, expected_val),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: "
-                                f"actual={actual:.8f} != snapshot={expected_val:.8f}",
+                                f"{fixture_key!r}[{col!r}] at idx={idx}: " f"actual={actual:.8f} != snapshot={expected_val:.8f}",
                             )
 
     # ------------------------------------------------------------------

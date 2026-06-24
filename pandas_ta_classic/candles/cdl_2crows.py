@@ -29,8 +29,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     for i in range(start_idx, len(out)):
         if (
             ca.color[i - 2] == 1  # 1st: white
-            and ca.real_body[i - 2]
-            > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total  # long
+            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total  # long
             and ca.color[i - 1] == -1  # 2nd: black
             and body_lo[i - 1] > body_hi[i - 2]  # gapping up
             and ca.color[i] == -1  # 3rd: black

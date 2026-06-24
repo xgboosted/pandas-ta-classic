@@ -35,9 +35,7 @@ def _cpr_offset_and_fill(series_dict, offset, **kwargs):
         series_dict[key] = filled[i]
 
 
-def _cpr_build_dataframe(
-    pivot_result, levels, width_analysis, price_position, virgin_cpr
-):
+def _cpr_build_dataframe(pivot_result, levels, width_analysis, price_position, virgin_cpr):
     """Build and return the CPR result DataFrame from *pivot_result*."""
     tc, pivot, bc = pivot_result["tc"], pivot_result["pivot"], pivot_result["bc"]
     tc.name, pivot.name, bc.name = "CPR_TC", "CPR_PIVOT", "CPR_BC"
@@ -126,21 +124,13 @@ def cpr(
 
     # Calculate Result based on method
     if method == "classic":
-        pivot_result = _calculate_classic_pivots(
-            prev_high, prev_low, prev_close, levels
-        )
+        pivot_result = _calculate_classic_pivots(prev_high, prev_low, prev_close, levels)
     elif method == "camarilla":
-        pivot_result = _calculate_camarilla_pivots(
-            prev_high, prev_low, prev_close, levels
-        )
+        pivot_result = _calculate_camarilla_pivots(prev_high, prev_low, prev_close, levels)
     elif method == "fibonacci":
-        pivot_result = _calculate_fibonacci_pivots(
-            prev_high, prev_low, prev_close, levels
-        )
+        pivot_result = _calculate_fibonacci_pivots(prev_high, prev_low, prev_close, levels)
     elif method == "woodie":
-        pivot_result = _calculate_woodie_pivots(
-            prev_high, prev_low, prev_close, prev_open, levels
-        )
+        pivot_result = _calculate_woodie_pivots(prev_high, prev_low, prev_close, prev_open, levels)
 
     tc, pivot, bc = pivot_result["tc"], pivot_result["pivot"], pivot_result["bc"]
 
@@ -160,19 +150,13 @@ def cpr(
     if price_position:
         pivot_result["position"] = calculate_price_position(close, tc, bc)
     if virgin_cpr:
-        pivot_result["virgin"] = detect_virgin_cpr(
-            high, low, tc, bc, lookforward=kwargs.pop("virgin_lookforward", 5)
-        )
+        pivot_result["virgin"] = detect_virgin_cpr(high, low, tc, bc, lookforward=kwargs.pop("virgin_lookforward", 5))
 
     _cpr_offset_and_fill(pivot_result, offset, **kwargs)
-    return _cpr_build_dataframe(
-        pivot_result, levels, width_analysis, price_position, virgin_cpr
-    )
+    return _cpr_build_dataframe(pivot_result, levels, width_analysis, price_position, virgin_cpr)
 
 
-def _calculate_classic_pivots(
-    prev_high: Series, prev_low: Series, prev_close: Series, levels: str = "standard"
-) -> dict:
+def _calculate_classic_pivots(prev_high: Series, prev_low: Series, prev_close: Series, levels: str = "standard") -> dict:
     """Calculate Classic Floor Pivots
 
     Args:
@@ -207,9 +191,7 @@ def _calculate_classic_pivots(
     return result
 
 
-def _calculate_camarilla_pivots(
-    prev_high: Series, prev_low: Series, prev_close: Series, levels: str = "all"
-) -> dict:
+def _calculate_camarilla_pivots(prev_high: Series, prev_low: Series, prev_close: Series, levels: str = "all") -> dict:
     """Calculate Camarilla Pivots
 
     Args:
@@ -252,9 +234,7 @@ def _calculate_camarilla_pivots(
     }
 
 
-def _calculate_fibonacci_pivots(
-    prev_high: Series, prev_low: Series, prev_close: Series, levels: str = "all"
-) -> dict:
+def _calculate_fibonacci_pivots(prev_high: Series, prev_low: Series, prev_close: Series, levels: str = "all") -> dict:
     """Calculate Fibonacci Pivots
 
     Args:

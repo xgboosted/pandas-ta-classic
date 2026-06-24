@@ -75,9 +75,7 @@ def jma(
         volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0
 
         # Relative price volatility factor
-        v_sum[i] = (
-            v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
-        )
+        v_sum[i] = v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
         avg_volty = npAverage(v_sum[max(i - 65, 0) : i + 1])
         d_volty = 0 if avg_volty == 0 else volty[i] / avg_volty
         r_volty = max(1.0, min(npPower(length1, 1 / pow1), d_volty))

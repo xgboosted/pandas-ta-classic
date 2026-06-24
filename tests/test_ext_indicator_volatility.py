@@ -30,9 +30,7 @@ class TestVolatilityExtension(TestCase):
     def test_accbands_ext(self):
         self.data.ta.accbands(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["ACCBL_20", "ACCBM_20", "ACCBU_20"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["ACCBL_20", "ACCBM_20", "ACCBU_20"])
 
     def test_atr_ext(self):
         self.data.ta.atr(append=True)
@@ -55,16 +53,12 @@ class TestVolatilityExtension(TestCase):
     def test_donchian_ext(self):
         self.data.ta.donchian(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["DCL_20_20", "DCM_20_20", "DCU_20_20"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["DCL_20_20", "DCM_20_20", "DCU_20_20"])
 
     def test_kc_ext(self):
         self.data.ta.kc(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-3:]), ["KCLe_20_2", "KCBe_20_2", "KCUe_20_2"]
-        )
+        self.assertEqual(list(self.data.columns[-3:]), ["KCLe_20_2", "KCBe_20_2", "KCUe_20_2"])
 
     def test_massi_ext(self):
         self.data.ta.massi(append=True)

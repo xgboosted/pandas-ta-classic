@@ -39,11 +39,7 @@ def slope(
     slope = apply_fill(slope, **kwargs)
 
     # Name and Categorize it
-    slope.name = (
-        f"SLOPE_{length}"
-        if not as_angle
-        else f"ANGLE{'d' if to_degrees else 'r'}_{length}"
-    )
+    slope.name = f"SLOPE_{length}" if not as_angle else f"ANGLE{'d' if to_degrees else 'r'}_{length}"
     slope.category = "momentum"
 
     return slope

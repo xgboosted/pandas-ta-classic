@@ -188,9 +188,7 @@ class TestAccessorTimeRange(TestCase):
         for unit in ("years", "months", "weeks", "days", "hours", "minutes", "seconds"):
             self.df.ta.time_range = unit
             val = self.df.ta.time_range
-            self.assertIsInstance(
-                val, (int, float), f"time_range='{unit}' must return a numeric value"
-            )
+            self.assertIsInstance(val, (int, float), f"time_range='{unit}' must return a numeric value")
             self.assertGreater(val, 0, f"time_range='{unit}' must be positive")
 
     def test_invalid_unit_falls_back_to_years(self):

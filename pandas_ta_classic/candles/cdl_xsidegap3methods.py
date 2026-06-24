@@ -23,10 +23,7 @@ def _detect(ca, out, **kwargs):
             and ca.open[i] > body_lo[i - 1]
             and ca.close[i] < body_hi[i - 2]
             and ca.close[i] > body_lo[i - 2]
-            and (
-                (ca.color[i - 2] == 1 and body_lo[i - 1] > body_hi[i - 2])
-                or (ca.color[i - 2] == -1 and body_hi[i - 1] < body_lo[i - 2])
-            )
+            and ((ca.color[i - 2] == 1 and body_lo[i - 1] > body_hi[i - 2]) or (ca.color[i - 2] == -1 and body_hi[i - 1] < body_lo[i - 2]))
         ):
             out[i] = ca.color[i - 2] * 100
 

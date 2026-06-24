@@ -33,9 +33,7 @@ def zscore(
         window_mean = windows.mean(axis=1)
         window_std = windows.std(axis=1, ddof=1)
         with np.errstate(divide="ignore", invalid="ignore"):
-            result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (
-                std * window_std
-            )
+            result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (std * window_std)
     zscore = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset

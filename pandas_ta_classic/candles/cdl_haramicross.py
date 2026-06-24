@@ -32,15 +32,9 @@ def _detect(ca, out, **kwargs):
             ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             and ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
         ):
-            if (
-                body_hi[i] < max(ca.close[i - 1], ca.open[i - 1])
-                and body_lo[i] > body_lo[i - 1]
-            ):
+            if body_hi[i] < max(ca.close[i - 1], ca.open[i - 1]) and body_lo[i] > body_lo[i - 1]:
                 out[i] = -ca.color[i - 1] * 100
-            elif (
-                body_hi[i] <= max(ca.close[i - 1], ca.open[i - 1])
-                and body_lo[i] >= body_lo[i - 1]
-            ):
+            elif body_hi[i] <= max(ca.close[i - 1], ca.open[i - 1]) and body_lo[i] >= body_lo[i - 1]:
                 out[i] = -ca.color[i - 1] * 80
 
         body_long_total += arr_bl[i - 1] - arr_bl[body_long_trail]
