@@ -71,4 +71,5 @@ Kwargs:
 
 Returns:
     pd.Series: New feature generated.
+    None: If benchmark is not provided; enables df.ta.strategy("all") compatibility.
 """
