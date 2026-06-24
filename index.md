@@ -5,15 +5,15 @@ title: Pandas TA Classic - Technical Analysis Library
 
 # Pandas TA Classic
 
-**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **192 indicators and utility functions** plus **62 native candlestick patterns** (**252 total unique** — no TA-Lib required). This is the **community maintained version** of the popular pandas-ta library.
+**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **193 indicators and utility functions** plus **62 native candlestick patterns** (**253 total unique** — no TA-Lib required). This is the **community maintained version** of the popular pandas-ta library.
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/docs/images/TA_Chart.png)
 
 ## Features
 
-* **192 indicators and utility functions** across 9 categories
+* **193 indicators and utility functions** across 9 categories
 * **62 native candlestick patterns** — all natively implemented, no TA-Lib required
-* **252 total unique indicators and patterns**
+* **253 total unique indicators and patterns**
 * Dynamic category discovery - automatically detects available indicators
 * **Optional TA-Lib Acceleration**: 34 core indicators auto-use TA-Lib when installed; pass `talib=False` to force native
 * **Optional Oracle Libraries**: TA-Lib (acceleration backend + oracle) and tulipy (oracle only) are optional and skip gracefully when not installed

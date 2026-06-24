@@ -1,7 +1,7 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 192 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (252 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
+**Pandas TA Classic** includes 193 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (253 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
 * **Candles** (5 wrappers + 62 native CDL patterns) - Category count includes wrapper/accessor indicators (``cdl_pattern``, ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``). The 62 pattern names are exposed through ``cdl_pattern()``.
 * **Cycles** (8) - Cycle-based and Hilbert Transform indicators  
