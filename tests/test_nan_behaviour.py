@@ -220,6 +220,13 @@ class TestTooShortInput(TestCase):
             result = ta.adx(h, l, c, length=14, talib=False)
         self.assertIsNone(result, "adx should return None when len < length")
 
+    def test_smc_sweep_too_short(self):
+        c, h, l, _ = self._short(14)
+        o = _O.iloc[:14]
+        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+            result = ta.smc_sweep(o, h, l, c, length=15)
+        self.assertIsNone(result, "smc_sweep should return None when len < length")
+
 
 # ---------------------------------------------------------------------------
 # 3 — Boundary: exactly minimum rows → exactly one valid value

@@ -36,6 +36,7 @@ from .rsi import rsi
 from .rsx import rsx
 from .rvgi import rvgi
 from .slope import slope
+from .smc_sweep import smc_sweep
 from .smi import smi
 from .squeeze import squeeze
 from .squeeze_pro import squeeze_pro

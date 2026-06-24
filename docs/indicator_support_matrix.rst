@@ -201,6 +201,11 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
      - yes
      - no
      - no
+   * - smc_sweep
+     - momentum
+     - yes
+     - no
+     - no
    * - smi
      - momentum
      - yes

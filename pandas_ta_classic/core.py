@@ -1046,14 +1046,6 @@ class AnalysisIndicators(BasePandasObject):
             **kwargs,
         )
         return self._post_process(result, **kwargs)
-        def smc_sweep(self, length=None, wick_mult=None, **kwargs):
-            open_ = self._get_column(kwargs.pop("open", "open"))
-            high = self._get_column(kwargs.pop("high", "high"))
-            low = self._get_column(kwargs.pop("low", "low"))
-            close = self._get_column(kwargs.pop("close", "close"))
-
-            result = smc_sweep(open_=open_, high=high, low=low, close=close, length=length, wick_mult=wick_mult, **kwargs)
-            return self._append(result, **kwargs)
 
     def cdl_inside(self, asbool=False, offset=None, **kwargs):
         open_ = self._get_column(kwargs.pop("open", "open"))
@@ -1560,6 +1552,17 @@ class AnalysisIndicators(BasePandasObject):
     def slope(self, length=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = slope(close=close, length=length, offset=offset, **kwargs)
+        return self._post_process(result, **kwargs)
+
+    def smc_sweep(self, length=None, wick_mult=None, offset=None, **kwargs):
+        open_ = self._get_column(kwargs.pop("open", "open"))
+        high = self._get_column(kwargs.pop("high", "high"))
+        low = self._get_column(kwargs.pop("low", "low"))
+        close = self._get_column(kwargs.pop("close", "close"))
+        result = smc_sweep(
+            open_=open_, high=high, low=low, close=close,
+            length=length, wick_mult=wick_mult, offset=offset, **kwargs,
+        )
         return self._post_process(result, **kwargs)
 
     def smi(

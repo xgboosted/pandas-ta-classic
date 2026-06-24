@@ -651,6 +651,17 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_smc_sweep(self):
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.smc_sweep,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="SMC_SWEEP_15_1.5",
+                none_arg_idx=0,
+            ),
+        )
+
     def test_smi(self):
         assert_indicator_standard(
             self,
