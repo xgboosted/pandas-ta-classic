@@ -1468,14 +1468,18 @@ class AnalysisIndicators(BasePandasObject):
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
         result = smc_sweep(
-            open_=open_, high=high, low=low, close=close,
-            length=length, wick_mult=wick_mult, offset=offset, **kwargs,
+            open_=open_,
+            high=high,
+            low=low,
+            close=close,
+            length=length,
+            wick_mult=wick_mult,
+            offset=offset,
+            **kwargs,
         )
         return self._post_process(result, **kwargs)
 
-    def smi(
-        self, fast=None, slow=None, signal=None, scalar=None, offset=None, **kwargs
-    ):
+    def smi(self, fast=None, slow=None, signal=None, scalar=None, offset=None, **kwargs):
         close = self._get_column(kwargs.pop("close", "close"))
         result = smi(
             close=close,

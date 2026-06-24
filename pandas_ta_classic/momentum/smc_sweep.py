@@ -39,11 +39,13 @@ def smc_sweep(
 
     bull_sweep = np.where(
         (low < swing_low) & (close > swing_low) & (close > open_) & (lower_wick > body * wick_mult),
-        1, 0,
+        1,
+        0,
     )
     bear_sweep = np.where(
         (high > swing_high) & (close < swing_high) & (close < open_) & (upper_wick > body * wick_mult),
-        -1, 0,
+        -1,
+        0,
     )
 
     result = Series(bull_sweep + bear_sweep, index=close.index)
