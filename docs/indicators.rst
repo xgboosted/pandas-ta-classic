@@ -1,11 +1,11 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 192 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (252 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
+**Pandas TA Classic** includes 193 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (253 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
 * **Candles** (5 wrappers + 62 native CDL patterns) - Category count includes wrapper/accessor indicators (``cdl_pattern``, ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``). The 62 pattern names are exposed through ``cdl_pattern()``.
 * **Cycles** (8) - Cycle-based and Hilbert Transform indicators  
-* **Momentum** (52) - Momentum and oscillator indicators
+* **Momentum** (53) - Momentum and oscillator indicators
 * **Overlap** (46) - Moving averages and trend-following indicators
 * **Performance** (3) - Performance and return metrics
 * **Statistics** (14) - Statistical analysis functions
@@ -97,7 +97,7 @@ Cycles (8)
 * *Hilbert Transform — Trend vs Cycle Mode*: **ht_trendmode**
 * *Mesa Sine Wave*: **msw** (returns MSW_SINE + MSW_LEAD; period-based DFT cycle detector)
 
-Momentum (52)
+Momentum (53)
 -------------
 
 Momentum and oscillator indicators for measuring the speed of price changes:
@@ -141,6 +141,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Relative Vigor Index*: **rvgi**
 * *Schaff Trend Cycle*: **stc**
 * *Slope*: **slope**
+* *Smart Money Concept Liquidity Sweep*: **smc_sweep** (returns +1 bullish sweep, -1 bearish sweep, 0 none; length=15, wick_mult=1.5)
 * *SMI Ergodic*: **smi**
 * *Squeeze*: **squeeze** (Default is John Carter's. Enable Lazybear's with ``lazybear=True``)
 * *Squeeze Pro*: **squeeze_pro**

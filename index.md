@@ -5,15 +5,15 @@ title: Pandas TA Classic - Technical Analysis Library
 
 # Pandas TA Classic
 
-**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **192 indicators and utility functions** plus **62 native candlestick patterns** (**252 total unique** — no TA-Lib required). This is the **community maintained version** of the popular pandas-ta library.
+**Pandas Technical Analysis (Pandas TA Classic)** is an easy to use library that leverages the Pandas package with **193 indicators and utility functions** plus **62 native candlestick patterns** (**253 total unique** — no TA-Lib required). This is the **community maintained version** of the popular pandas-ta library.
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/docs/images/TA_Chart.png)
 
 ## Features
 
-* **192 indicators and utility functions** across 9 categories
+* **193 indicators and utility functions** across 9 categories
 * **62 native candlestick patterns** — all natively implemented, no TA-Lib required
-* **252 total unique indicators and patterns**
+* **253 total unique indicators and patterns**
 * Dynamic category discovery - automatically detects available indicators
 * **Optional TA-Lib Acceleration**: 34 core indicators auto-use TA-Lib when installed; pass `talib=False` to force native
 * **Optional Oracle Libraries**: TA-Lib (acceleration backend + oracle) and tulipy (oracle only) are optional and skip gracefully when not installed
@@ -74,15 +74,15 @@ For detailed documentation, examples, and the complete list of indicators, pleas
 ## Categories of Indicators
 
 - **Candles** (67): Candle-focused indicators, including 62 native CDL patterns (no TA-Lib required)
-- **Momentum** (41): RSI, MACD, Stochastic, etc.
-- **Overlap** (34): Moving averages, Bollinger Bands, etc.
-- **Trend** (18): ADX, Aroon, Parabolic SAR, etc.
-- **Volume** (15): OBV, Money Flow, etc.
-- **Volatility** (15): ATR, Bollinger Bands, Chandelier Exit, etc.
-- **Statistics** (10): Z-Score, Standard Deviation, etc.
+- **Momentum** (53): RSI, MACD, Stochastic, etc.
+- **Overlap** (46): Moving averages, Bollinger Bands, etc.
+- **Trend** (26): ADX, Aroon, Parabolic SAR, etc.
+- **Volume** (20): OBV, Money Flow, etc.
+- **Volatility** (18): ATR, Bollinger Bands, Chandelier Exit, etc.
+- **Statistics** (14): Z-Score, Standard Deviation, etc.
 - **Performance** (3): Returns, Drawdown analysis
-- **Cycles** (1): Even Better Sinewave
-- **Utility** (10): Helper functions
+- **Cycles** (8): Hilbert Transform and cycle detection
+- **Math** (28): Element-wise math operators and transforms
 
 ## Support
 

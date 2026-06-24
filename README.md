@@ -20,7 +20,7 @@
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/docs/images/TA_Chart.png)
 
-> **Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **192 indicators and utility functions** and **62 native candlestick patterns** (**252 total unique** — no TA-Lib required). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
+> **Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **193 indicators and utility functions** and **62 native candlestick patterns** (**253 total unique** — no TA-Lib required). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
@@ -42,7 +42,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 ### Key Features
 
-- **252 Unique Indicators & Patterns**: 192 Category indicators + 62 CDL patterns via `cdl_pattern()` = 252 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
+- **253 Unique Indicators & Patterns**: 193 Category indicators + 62 CDL patterns via `cdl_pattern()` = 253 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
 - **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — TA-Lib is never used for CDL patterns
 - **Optional TA-Lib Acceleration**: 34 core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) automatically use TA-Lib when installed; pass `talib=False` to force native
 - **Compatibility Scope Is Explicit**: Not every TA-Lib/tulipy function has a pandas-ta-classic counterpart. Current mapping includes 67 indicators with TA-Lib counterparts, 71 with tulipy counterparts, and 44 covered by both. Full per-indicator matrix: `docs/indicator_support_matrix.rst`
@@ -140,9 +140,9 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 ## Features
 
-- **192 Technical Indicators & Utilities** across 9 categories (Candles, Cycles, Momentum, Overlap, Trend, Volume, etc.)
+- **193 Technical Indicators & Utilities** across 9 categories (Candles, Cycles, Momentum, Overlap, Trend, Volume, etc.)
 - **62 Native Candlestick Patterns** — all patterns natively implemented, no TA-Lib required
-- **252 Unique Indicators & Patterns** - 192 category indicators plus 62 CDL patterns via `cdl_pattern()`
+- **253 Unique Indicators & Patterns** - 193 category indicators plus 62 CDL patterns via `cdl_pattern()`
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
