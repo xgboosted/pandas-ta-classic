@@ -1,6 +1,6 @@
 from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic as pandas_ta
+import pandas_ta_classic as pandas_ta
 
 from unittest import TestCase
 from pandas import DataFrame

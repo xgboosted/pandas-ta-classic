@@ -1,5 +1,5 @@
 # Ichimoku Kinko Hyo (ICHIMOKU)
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 from pandas import date_range, DataFrame, RangeIndex, Timedelta, Series
 from .midprice import midprice
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Optional, Type
+from typing import Any, Callable, Optional
 
 from pandas import DataFrame, Series
 

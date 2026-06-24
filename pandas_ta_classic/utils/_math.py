@@ -3,7 +3,7 @@ from functools import reduce
 from math import floor as mfloor
 from operator import mul
 from sys import float_info as sflt
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 

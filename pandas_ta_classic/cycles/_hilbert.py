@@ -8,8 +8,6 @@ The leading underscore keeps ``_meta.py`` from registering this file as an
 indicator.
 """
 
-from typing import Tuple
-
 import numpy as np
 from pandas import Series
 

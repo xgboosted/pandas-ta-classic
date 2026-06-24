@@ -760,13 +760,16 @@ def test_hypothesis_sma_idempotent(s, length):
 @settings(max_examples=50, deadline=1000)
 def test_hypothesis_correlation_non_negative(s1, s2):
     """ta.corr must return value in [-1, 1]."""
-    # Pearson correlation is undefined for constant series (std=0 → divide-by-zero)
-    assume(s1.std() > 0)
-    assume(s2.std() > 0)
+    # Pearson correlation is undefined for constant series (std=0 → divide-by-zero).
+    # Check the aligned overlap, not full-series std: series have RangeIndex so
+    # the overlap is [:min(len(s1), len(s2))]. A full-series std>0 does not guarantee the
+    # aligned slice is non-constant when the two lengths differ.
+    n = min(len(s1), len(s2))
+    assume(s1.iloc[:n].std() > 0)
+    assume(s2.iloc[:n].std() > 0)
 
     try:
         corr = df_error_analysis(s1, s2)
-        assert -1.0 <= corr <= 1.0, f"Correlation out of bounds: {corr}"
     except Exception:
-        # df_error_analysis may raise on pathological inputs — that's acceptable
-        pass
+        return  # pathological input — acceptable
+    assert -1.0 <= corr <= 1.0, f"Correlation out of bounds: {corr}"

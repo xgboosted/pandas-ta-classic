@@ -33,7 +33,6 @@ from unittest import TestCase
 import pandas as pd
 
 from tests.config import get_sample_data
-from tests.context import pandas_ta_classic
 
 
 class _ExtBase(TestCase):

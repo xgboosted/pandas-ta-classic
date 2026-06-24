@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime as dt
 
 from pathlib import Path
-from random import random
 from typing import Tuple
 
 import pandas as pd  # pip install pandas
@@ -208,7 +206,7 @@ class Watchlist(object):
                     alpha=_alpha,
                 )
             else:
-                print(f"[X] Plot kind not implemented")
+                print("[X] Plot kind not implemented")
                 return
 
     def load(
@@ -295,7 +293,7 @@ class Watchlist(object):
         # Later check dict has string keys and DataFrame values
         if value is not None and isinstance(value, dict):
             if self.verbose:
-                print(f"[+] New data")
+                print("[+] New data")
             self._data = value
         else:
             self._data = None

@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 from warnings import simplefilter
 
 logger = logging.getLogger(__name__)
