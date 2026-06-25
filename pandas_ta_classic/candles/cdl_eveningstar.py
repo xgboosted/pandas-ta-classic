@@ -1,3 +1,4 @@
+# Candle Evening Star (CDL_EVENINGSTAR)
 from typing import Any, Optional
 
 from pandas import Series

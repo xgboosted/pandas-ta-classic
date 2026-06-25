@@ -1,3 +1,4 @@
+# Candle Ladder Bottom (CDL_LADDERBOTTOM)
 from typing import Any, Optional
 
 from pandas import Series

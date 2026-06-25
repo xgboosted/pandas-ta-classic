@@ -1,3 +1,4 @@
+# Candle Piercing Pattern (CDL_PIERCING)
 from typing import Any, Optional
 
 from pandas import Series

@@ -1,3 +1,4 @@
+# Candle Marubozu (CDL_MARUBOZU)
 from typing import Any, Optional
 
 from pandas import Series

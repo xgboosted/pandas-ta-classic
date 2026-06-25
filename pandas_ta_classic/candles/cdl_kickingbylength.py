@@ -1,3 +1,4 @@
+# Candle Kicking - bull/bear determined by the longer marubozu (CDL_KICKINGBYLENGTH)
 from typing import Any, Optional
 
 from pandas import Series

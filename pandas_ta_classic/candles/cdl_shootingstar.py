@@ -1,3 +1,4 @@
+# Candle Shooting Star (CDL_SHOOTINGSTAR)
 from typing import Any, Optional
 
 from pandas import Series

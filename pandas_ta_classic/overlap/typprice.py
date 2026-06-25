@@ -54,7 +54,7 @@ Args:
     low (pd.Series): Series of 'low' prices
     close (pd.Series): Series of 'close' prices
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     offset (int): Periods to offset. Default: 0
 
 Kwargs:

@@ -1,3 +1,4 @@
+# Candle Engulfing Pattern (CDL_ENGULFING)
 from typing import Any, Optional
 
 from pandas import Series

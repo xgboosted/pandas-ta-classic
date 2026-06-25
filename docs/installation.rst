@@ -123,7 +123,7 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
      - Effect when installed
    * - TA-Lib
      - **Acceleration backend + oracle**
-     - 34 core indicators use TA-Lib's C implementation by default; also used by ``test_oracle_talib.py`` for parity checks
+      - 59 core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
    * - tulipy
      - **Oracle only**
      - Never used as computation backend; only ``test_oracle_tulipy.py`` uses it to verify native output
@@ -131,23 +131,23 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
 Installing TA-Lib
 ^^^^^^^^^^^^^^^^^^
 
-TA-Lib has a **dual role**: acceleration backend for 34 core indicators, and parity oracle. The two behavioural areas affected are:
+TA-Lib has a **dual role**: acceleration backend for 59 core indicators (opt-in via ``talib=True``), and parity oracle. The two behavioural areas affected are:
 
 **Candlestick patterns (CDL family)**
    All 62 CDL patterns have native Python implementations that are always used. TA-Lib is **never** invoked for CDL patterns — the TA-Lib fallback code path in ``cdl_pattern()`` is only retained for hypothetical future patterns without a native implementation.
 
-**34 core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
-   When TA-Lib is installed, these indicators use TA-Lib's implementation by default for numerical consistency with TA-Lib-based workflows. Pass ``talib=False`` to any call to force the native implementation instead.
+**59 core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
+   The native implementation is used by default. TA-Lib is opt-in — pass ``talib=True`` to any call to use TA-Lib's implementation instead.
 
    .. code-block:: python
 
-       import pandas_ta_classic as ta
+        import pandas_ta_classic as ta
 
-       # Uses TA-Lib EMA (if TA-Lib installed) — default behaviour
-       ema = df.ta.ema(length=20)
+        # Uses native EMA — default behaviour
+        ema = df.ta.ema(length=20)
 
-       # Force native implementation regardless of TA-Lib
-       ema = df.ta.ema(length=20, talib=False)
+        # Use TA-Lib implementation if installed
+        ema = df.ta.ema(length=20, talib=True)
 
        # CDL patterns — always native, talib= kwarg has no effect here
        df = df.ta.cdl_pattern(name="engulfing")       # native

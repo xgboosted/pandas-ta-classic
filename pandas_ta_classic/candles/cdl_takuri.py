@@ -1,3 +1,4 @@
+# Candle Takuri (Dragonfly Doji with very long lower shadow) (CDL_TAKURI)
 from typing import Any, Optional
 
 from pandas import Series

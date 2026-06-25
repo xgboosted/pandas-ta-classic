@@ -1,3 +1,4 @@
+# Candle Harami Pattern (CDL_HARAMI)
 from typing import Any, Optional
 
 from pandas import Series

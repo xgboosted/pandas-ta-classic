@@ -1,3 +1,4 @@
+# Candle Advance Block (CDL_ADVANCEBLOCK)
 from typing import Any, Optional
 
 from pandas import Series

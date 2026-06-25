@@ -27,7 +27,7 @@ def natr(
     """Indicator: Normalized Average True Range (NATR)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = mamode if isinstance(mamode, str) else "rma"
     scalar = float(scalar) if scalar else 100
     high = verify_series(high, length)
     low = verify_series(low, length)
@@ -90,9 +90,9 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): The short period. Default: 20
     scalar (float): How much to magnify. Default: 100
-    mamode (str): See ```help(ta.ma)```. Default: 'ema'
+    mamode (str): See ```help(ta.ma)```. Default: 'rma'
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

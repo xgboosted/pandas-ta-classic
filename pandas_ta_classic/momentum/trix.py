@@ -61,7 +61,6 @@ def trix(
 
     return df
 
-
 trix.__doc__ = """Trix (TRIX)
 
 TRIX is a momentum oscillator to identify divergences.
@@ -85,6 +84,8 @@ Args:
     signal (int): It's period. Default: 9
     scalar (float): How much to magnify. Default: 100
     drift (int): The difference period. Default: 1
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

@@ -1,3 +1,4 @@
+# Candle Morning Star (CDL_MORNINGSTAR)
 from typing import Any, Optional
 
 from pandas import Series

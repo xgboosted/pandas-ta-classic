@@ -87,7 +87,7 @@ Args:
     scalar (float): How much to magnify. Default: 100
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. If TA Lib is not installed but talib is True, it runs the Python
-        version TA Lib. Default: True
+        version TA Lib. Default: False
     drift (int): The short period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 

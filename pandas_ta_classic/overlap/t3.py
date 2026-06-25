@@ -83,7 +83,7 @@ Args:
     length (int): It's period. Default: 10
     a (float): 0 < a < 1. Default: 0.7
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

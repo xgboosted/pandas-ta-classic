@@ -44,7 +44,6 @@ def ohlc4(
 
     return ohlc4
 
-
 ohlc4.__doc__ = """OHLC4 (Average of Open, High, Low, Close)
 
 OHLC4 calculates the average of the Open, High, Low, and Close prices for 
@@ -67,6 +66,8 @@ Args:
     high (pd.Series): Series of 'high' prices
     low (pd.Series): Series of 'low' prices
     close (pd.Series): Series of 'close' prices
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

@@ -40,7 +40,6 @@ def hl2(
 
     return hl2
 
-
 hl2.__doc__ = """HL2 (Median Price)
 
 HL2 calculates the median price, which is the average of the High and Low 
@@ -62,6 +61,8 @@ Calculation:
 Args:
     high (pd.Series): Series of 'high' prices
     low (pd.Series): Series of 'low' prices
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

@@ -1,3 +1,4 @@
+# Candle Thrusting Pattern (CDL_THRUSTING)
 from typing import Any, Optional
 
 from pandas import Series

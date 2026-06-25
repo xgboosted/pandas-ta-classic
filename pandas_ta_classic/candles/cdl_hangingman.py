@@ -1,3 +1,4 @@
+# Candle Hanging Man (CDL_HANGINGMAN)
 from typing import Any, Optional
 
 from pandas import Series

@@ -1,3 +1,4 @@
+# Candle Three-Line Strike (CDL_3LINESTRIKE)
 from typing import Any, Optional
 
 from pandas import Series

@@ -1,3 +1,4 @@
+# Candle Unique 3 River (CDL_UNIQUE3RIVER)
 from typing import Any, Optional
 
 from pandas import Series

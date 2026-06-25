@@ -1,3 +1,4 @@
+# Candle Concealing Baby Swallow (CDL_CONCEALBABYSWALL)
 from typing import Any, Optional
 
 from pandas import Series

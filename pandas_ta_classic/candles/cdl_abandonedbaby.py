@@ -1,3 +1,4 @@
+# Candle Abandoned Baby (CDL_ABANDONEDBABY)
 from typing import Any, Optional
 
 from pandas import Series

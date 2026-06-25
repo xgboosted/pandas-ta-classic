@@ -73,7 +73,7 @@ Args:
     close (pd.Series): Series of 'close's
     scalar (float): How much to magnify. Default: 1
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

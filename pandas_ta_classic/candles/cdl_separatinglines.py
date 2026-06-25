@@ -1,3 +1,4 @@
+# Candle Separating Lines (CDL_SEPARATINGLINES)
 from typing import Any, Optional
 
 from pandas import Series

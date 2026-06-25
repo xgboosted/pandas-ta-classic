@@ -1,3 +1,4 @@
+# Candle Two Crows (CDL_2CROWS)
 from typing import Any, Optional
 
 from pandas import Series

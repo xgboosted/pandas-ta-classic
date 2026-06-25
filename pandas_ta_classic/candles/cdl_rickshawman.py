@@ -1,3 +1,4 @@
+# Candle Rickshaw Man (CDL_RICKSHAWMAN)
 from typing import Any, Optional
 
 from pandas import Series

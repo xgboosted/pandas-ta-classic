@@ -1,3 +1,4 @@
+# Candle Modified Hikkake Pattern (CDL_HIKKAKEMOD)
 from typing import Any, Optional
 
 from pandas import Series

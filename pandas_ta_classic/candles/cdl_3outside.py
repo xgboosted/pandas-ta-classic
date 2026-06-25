@@ -1,3 +1,4 @@
+# Candle Three Outside Up/Down (CDL_3OUTSIDE)
 from typing import Any, Optional
 
 from pandas import Series

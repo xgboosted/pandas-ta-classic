@@ -1,3 +1,4 @@
+# Candle Mat Hold (CDL_MATHOLD)
 from typing import Any, Optional
 
 from pandas import Series

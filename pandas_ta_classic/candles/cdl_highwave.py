@@ -1,3 +1,4 @@
+# Candle High-Wave Candle (CDL_HIGHWAVE)
 from typing import Any, Optional
 
 from pandas import Series

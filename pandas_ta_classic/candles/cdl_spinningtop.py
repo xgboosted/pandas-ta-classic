@@ -1,3 +1,4 @@
+# Candle Spinning Top (CDL_SPINNINGTOP)
 from typing import Any, Optional
 
 from pandas import Series

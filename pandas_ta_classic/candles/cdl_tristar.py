@@ -1,3 +1,4 @@
+# Candle Tristar Pattern (CDL_TRISTAR)
 from typing import Any, Optional
 
 from pandas import Series

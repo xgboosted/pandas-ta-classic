@@ -1,3 +1,4 @@
+# Candle Rising/Falling Three Methods (CDL_RISEFALL3METHODS)
 from typing import Any, Optional
 
 from pandas import Series

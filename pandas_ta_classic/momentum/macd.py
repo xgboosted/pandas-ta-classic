@@ -179,7 +179,7 @@ Args:
     slow (int): The long period. Default: 26
     signal (int): The signal period. Default: 9
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

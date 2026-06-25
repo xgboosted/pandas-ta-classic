@@ -33,7 +33,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **Comprehensive candle pattern tests** (PR #106): 59 TA-Lib candle patterns covered by CI tests.
 * **Fluent API chaining** (PR #113): DataFrame accessor supports method chaining.
 * **Property-based testing** (PR #114): Hypothesis-based tests added to test suite.
-* **Full Indicator Name Comments**: All 150 indicator files include full indicator names as comments on line 2 (format: `# Full Indicator Name (ABBREVIATION)`).
+* **Full Indicator Name Comments**: All indicator files include full indicator names as comments on line 1 (format: `# Full Indicator Name (ABBREVIATION)`).
 * **UV Package Manager Support**: All documentation includes `uv` install instructions alongside `pip`.
 * **Native Candlestick Patterns**: Added native `cdl_doji` and `cdl_inside` implementations (no TA-Lib required). Accessible via `df.ta.cdl_doji()`, `df.ta.cdl_inside()`, or `df.ta.cdl_pattern()`.
 
@@ -82,7 +82,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`linreg` breaking default change**: `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib. Callers using `linreg(close, angle=True)` without `degrees=False` will now receive degrees instead of radians.
 * **`stdev`/`variance` breaking default change**: `ddof` now defaults to `0` (population, was `1` sample) to match TA-Lib. Callers relying on sample variance must pass `ddof=1` explicitly.
 * **`natr` breaking default change**: `mamode` now defaults to `'rma'` (Wilder smoothing, was `'ema'`) to match TA-Lib. Callers relying on EMA-based NATR must pass `mamode='ema'` explicitly.
-* **TA-Lib preferred by default** for `adx`, `adxr`, `dm`, `linreg`, `stoch`: Default changed to `mode_tal=True`. Callers with TA-Lib installed receive TA-Lib output unless `talib=False` is passed.
+* **Native preferred by default** for all indicators with `talib` parameter: Native implementation used by default across all 59 indicators. Callers wanting TA-Lib output must pass `talib=True` explicitly.
 * **Enhanced RVGI**: Relative Vigor Index now includes histogram column (RVGI − Signal).
 * **Dynamic Category Discovery**: `Category` dict in `_meta.py` now built dynamically from filesystem structure. Auto-discovers previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
 * **Python Version Support**: Rolling 5-version support policy (LATEST-4 through LATEST). Managed dynamically via `LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`.

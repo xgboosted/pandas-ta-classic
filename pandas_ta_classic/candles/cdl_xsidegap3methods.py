@@ -1,3 +1,4 @@
+# Candle Upside/Downside Gap Three Methods (CDL_XSIDEGAP3METHODS)
 from typing import Any, Optional
 
 from pandas import Series

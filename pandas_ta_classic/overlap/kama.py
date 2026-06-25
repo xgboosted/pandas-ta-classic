@@ -76,7 +76,6 @@ def kama(
 
     return kama
 
-
 kama.__doc__ = """Kaufman's Adaptive Moving Average (KAMA)
 
 Developed by Perry Kaufman, Kaufman's Adaptive Moving Average (KAMA) is a moving average
@@ -99,6 +98,8 @@ Args:
     fast (int): Fast MA period. Default: 2
     slow (int): Slow MA period. Default: 30
     drift (int): The difference period. Default: 1
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

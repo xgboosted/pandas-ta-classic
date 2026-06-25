@@ -1,3 +1,4 @@
+# Candle Three Stars In The South (CDL_3STARSINSOUTH)
 from typing import Any, Optional
 
 from pandas import Series

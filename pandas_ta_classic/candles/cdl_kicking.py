@@ -1,3 +1,4 @@
+# Candle Kicking (CDL_KICKING)
 from typing import Any, Optional
 
 from pandas import Series

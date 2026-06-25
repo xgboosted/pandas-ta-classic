@@ -1,3 +1,4 @@
+# Candle Hammer (CDL_HAMMER)
 from typing import Any, Optional
 
 from pandas import Series

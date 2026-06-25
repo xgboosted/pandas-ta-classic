@@ -69,17 +69,17 @@ Other candle indicators:
 * *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern
 
 .. note::
-   **TA-Lib and core indicators**: For 34 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), TA-Lib’s implementation is used **by default** when TA-Lib is installed, for numerical consistency with TA-Lib-based workflows. Every such indicator accepts a ``talib=False`` kwarg to force the native implementation:
+   **TA-Lib and core indicators**: For 59 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
 
    .. code-block:: python
 
-       # Uses TA-Lib EMA if installed (default behaviour)
-       ema = df.ta.ema(length=20)
+        # Uses native EMA (default behaviour)
+        ema = df.ta.ema(length=20)
 
-       # Force native implementation regardless of TA-Lib
-       ema = df.ta.ema(length=20, talib=False)
+        # Use TA-Lib implementation if installed
+        ema = df.ta.ema(length=20, talib=True)
 
-       # Indicators with TA-Lib passthrough:
+        # Indicators with TA-Lib passthrough:
        # ad, adosc, apo, aroon, atr, bbands, bop, cci, cmo, dema, dm,
        # ema, hlc3, macd, mfi, midpoint, midprice, mom, natr, obv, ppo,
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
@@ -256,9 +256,9 @@ Trend identification and direction indicators:
 * *Exponential Decay*: **edecay** (multiplicative exponential decay; equivalent to tulipy ``edecay``)
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
-* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; uses TA-Lib ``MINUS_DM`` by default)
+* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; pass ``talib=True`` for TA-Lib ``MINUS_DM``)
 * *Parabolic Stop and Reverse*: **psar** (pass ``talib=True`` for exact TA-Lib ``SAR`` output)
-* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; uses TA-Lib ``PLUS_DM`` by default)
+* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; pass ``talib=True`` for TA-Lib ``PLUS_DM``)
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick**
 * *Parabolic SAR Extended*: **sarext**

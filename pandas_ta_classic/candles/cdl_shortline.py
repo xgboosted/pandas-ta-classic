@@ -1,3 +1,4 @@
+# Candle Short Line Candle (CDL_SHORTLINE)
 from typing import Any, Optional
 
 from pandas import Series

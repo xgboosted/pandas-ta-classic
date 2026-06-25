@@ -1,3 +1,4 @@
+# Candle Closing Marubozu (CDL_CLOSINGMARUBOZU)
 from typing import Any, Optional
 
 from pandas import Series

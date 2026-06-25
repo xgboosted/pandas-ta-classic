@@ -1,3 +1,4 @@
+# Candle Long Line Candle (CDL_LONGLINE)
 from typing import Any, Optional
 
 from pandas import Series

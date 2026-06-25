@@ -1,3 +1,4 @@
+# Candle Counterattack (CDL_COUNTERATTACK)
 from typing import Any, Optional
 
 from pandas import Series

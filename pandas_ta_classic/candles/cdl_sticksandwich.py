@@ -1,3 +1,4 @@
+# Candle Stick Sandwich (CDL_STICKSANDWICH)
 from typing import Any, Optional
 
 from pandas import Series

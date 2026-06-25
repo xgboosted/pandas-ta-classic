@@ -1,3 +1,4 @@
+# Candle In-Neck Pattern (CDL_INNECK)
 from typing import Any, Optional
 
 from pandas import Series

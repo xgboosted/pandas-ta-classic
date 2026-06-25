@@ -1,3 +1,4 @@
+# Candle Breakaway (CDL_BREAKAWAY)
 from typing import Any, Optional
 
 from pandas import Series

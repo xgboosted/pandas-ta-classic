@@ -1,3 +1,4 @@
+# Candle Three Advancing White Soldiers (CDL_3WHITESOLDIERS)
 from typing import Any, Optional
 
 from pandas import Series

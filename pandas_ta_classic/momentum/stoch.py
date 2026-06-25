@@ -125,7 +125,7 @@ Args:
     smooth_k (int): The Slow %D period. Default: 3
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version (SMA smoothing only). Default: True
+        version (SMA smoothing only). Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

@@ -1,3 +1,4 @@
+# Candle Stalled Pattern (CDL_STALLEDPATTERN)
 from typing import Any, Optional
 
 from pandas import Series

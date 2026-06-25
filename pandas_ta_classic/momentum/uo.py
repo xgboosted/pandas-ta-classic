@@ -138,7 +138,7 @@ Args:
     medium_w (float): The Slow %K period. Default: 2.0
     slow_w (float): The Slow %D period. Default: 1.0
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version. Default: True
+        version. Default: False
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 

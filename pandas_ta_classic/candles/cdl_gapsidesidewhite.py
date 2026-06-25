@@ -1,3 +1,4 @@
+# Candle Up/Down-gap side-by-side white lines (CDL_GAPSIDESIDEWHITE)
 from typing import Any, Optional
 
 from pandas import Series
