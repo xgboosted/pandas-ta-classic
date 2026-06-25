@@ -108,10 +108,13 @@ script.
 
         def next(self):
             if crossover(self.sma_fast, self.sma_slow):
-                self.buy()
+                if not self.position:
+                    self.buy(size=0.1)
             elif crossover(self.sma_slow, self.sma_fast):
-                self.position.close()
+                if self.position:
+                    self.position.close()
 
 
     bt = Backtest(GOOG, SMACrossover, cash=10000, commission=0.002)
-    bt.run()
+    stats = bt.run()
+    print(stats)

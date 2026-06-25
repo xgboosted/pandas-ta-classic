@@ -33,7 +33,7 @@ def ta_bridge(data, indicator_fn):
 - **Multi-output**: If the indicator returns a DataFrame (e.g., MACD, Bollinger Bands), the bridge unpacks it into a tuple of numpy arrays.
 - **Callable dispatch**: You supply the indicator as a lambda or function, avoiding unsafe string-based dispatch.
 
-> **Performance note:** The bridge reconstructs the DataFrame on every call. For strategies with many indicators, consider constructing the DataFrame once in `init()` and reusing it.
+> **Performance note:** `backtesting.py` calls `ta_bridge` once per `self.I()` invocation in `init()`, over the full data array, then caches the result. The bridge does not run per bar. For strategies with many indicators, the cost is one DataFrame construction per indicator registration — not per tick.
 
 ---
 
@@ -62,9 +62,11 @@ class SMACrossover(Strategy):
 
     def next(self):
         if crossover(self.sma_fast, self.sma_slow):
-            self.buy()
+            if not self.position:
+                self.buy()
         elif crossover(self.sma_slow, self.sma_fast):
-            self.position.close()
+            if self.position:
+                self.position.close()
 ```
 
 ### Pattern B: Momentum (Multi-Indicator Unpacking)
@@ -104,7 +106,8 @@ class ATRTrailingStop(Strategy):
 
         current_volatility = self.atr[-1]
         if current_volatility > 2.5:
-            pass
+            if self.position:
+                self.position.close()
 ```
 
 For a fully runnable script, refer to `examples/backtesting_py_strategy.py`.
