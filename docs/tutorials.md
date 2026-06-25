@@ -14,6 +14,8 @@ Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 
 For integrating with **backtesting.py**, see the [backtesting.py integration guide](tutorials/backtesting_py).
 
+For integrating with **backtrader**, see the [backtrader integration guide](tutorials/backtrader).
+
 For integrating with **vectorbt**, see the [vectorbt integration guide](tutorials/vectorbt).
 
 ```{toctree}
@@ -21,6 +23,7 @@ For integrating with **vectorbt**, see the [vectorbt integration guide](tutorial
 :maxdepth: 1
 
 tutorials/backtesting_py
+tutorials/backtrader
 tutorials/vectorbt
 ```
 

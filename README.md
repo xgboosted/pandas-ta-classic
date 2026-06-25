@@ -33,6 +33,8 @@ This is the **classic/community maintained version** of the popular pandas-ta li
  - Moving Average Crossover Strategy
  - Building Custom Indicator Strategies 
  - Backtesting with Performance Metrics
+ - Integrating with backtesting.py
+ - Integrating with backtrader
  - Integrating with VectorBT
  - Multi-Timeframe Analysis
  - Creating Custom Indicators
@@ -150,8 +152,9 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
 - **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: 59 core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
 - **tulipy Integration (oracle only)** - parity test oracle; `test_oracle_tulipy.py` verifies native output against tulipy; never used as computation backend
-- **Vectorbt Integration** - compatible with popular backtesting framework
 - **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
+- **backtrader Integration** — precompute-then-feed pattern with dynamic `PandasData` subclass; runnable example in ``examples/backtrader_strategy.py``
+- **Vectorbt Integration** - compatible with popular backtesting framework
 - **Custom Indicators** - easily create and chain your own indicators
 
 ## Documentation

@@ -15,6 +15,8 @@ We welcome contributions from the community! This document provides guidelines a
 ### Development Setup
 
 1. **Fork and Clone**
+ 1. Go to [github.com/xgboosted/pandas-ta-classic](https://github.com/xgboosted/pandas-ta-classic) and click **Fork**.
+ 2. Clone your fork:
  ```bash
  git clone https://github.com/your-username/pandas-ta-classic.git
  cd pandas-ta-classic
@@ -30,8 +32,8 @@ We welcome contributions from the community! This document provides guidelines a
  
  Using `venv`:
  ```bash
- python -m venv venv
- source venv/bin/activate # On Windows: venv\Scripts\activate
+ python -m venv .venv
+ source .venv/bin/activate # On Windows: .venv\Scripts\activate
  ```
 
 3. **Install Dependencies**
@@ -42,10 +44,13 @@ We welcome contributions from the community! This document provides guidelines a
  uv pip install -e ".[all]"
  
  # Or install specific dependency groups as needed:
- uv pip install -e ".[dev]" # Development dependencies
- uv pip install -e ".[test]" # Testing dependencies only
- uv pip install -e ".[docs]" # Documentation dependencies
- uv pip install -e ".[optional]" # Optional runtime dependencies
+ uv pip install -e ".[dev]"          # Development dependencies
+ uv pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
+ uv pip install -e ".[docs]"         # Documentation dependencies
+ uv pip install -e ".[optional]"     # Optional runtime features (scipy, numba, etc.)
+ uv pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
+ uv pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt, yfinance
+ uv pip install -e ".[performance]"  # Numba acceleration
  ```
  
  Using `pip`:
@@ -54,10 +59,13 @@ We welcome contributions from the community! This document provides guidelines a
  pip install -e ".[all]"
  
  # Or install specific dependency groups as needed:
- pip install -e ".[dev]" # Development dependencies
- pip install -e ".[test]" # Testing dependencies only
- pip install -e ".[docs]" # Documentation dependencies
- pip install -e ".[optional]" # Optional runtime dependencies
+ pip install -e ".[dev]"          # Development dependencies
+ pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
+ pip install -e ".[docs]"         # Documentation dependencies
+ pip install -e ".[optional]"     # Optional runtime features (scipy, numba, etc.)
+ pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
+ pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt, yfinance
+ pip install -e ".[performance]"  # Numba acceleration
  ```
 
 ## How to Contribute
@@ -87,25 +95,19 @@ We welcome contributions from the community! This document provides guidelines a
 
 #### Running Tests
 ```bash
-# Run all tests (primary — matches CI, auto-regenerates fixture JSONs)
-python -m unittest discover tests/ -v
+# Full test suite (primary — matches CI)
+pytest tests/ -v
 
-# Regenerate fixtures then run all tests (via Makefile)
-make test-all
+# Single test module (fastest feedback)
+pytest tests/test_indicator_momentum.py -v
 
-# Run a specific test module
-python -m unittest tests.test_indicator_momentum -v
+# Specific test
+pytest tests/test_indicator_momentum.py::TestRSI::test_rsi -v
 
-# Regenerate only the fixture JSONs (when TA-Lib is installed)
-make fixtures
+# Oracle tests (requires TA-Lib + tulipy: pip install -e ".[oracle]")
+pytest tests/test_oracle_talib.py tests/test_oracle_tulipy.py -v
 
-# Alternatively, with pytest (also supported)
-pytest
-
-# Run specific test file with pytest
-pytest tests/test_indicator_momentum.py
-
-# Run property-based tests (Hypothesis)
+# Property-based tests (Hypothesis)
 pytest tests/test_property_based.py -v
 
 # Show Hypothesis input distribution statistics
@@ -122,7 +124,6 @@ pytest --cov=pandas_ta_classic --cov-report=html
 - Use descriptive test names
 - Test both normal and edge cases
 - Include property-based tests for complex functions (see `tests/test_property_based.py` for examples)
-- Add performance tests for critical functions
 
 #### Test Structure
 
@@ -131,13 +132,8 @@ Traditional unit test pattern:
 ```python
 def test_indicator_name():
  """Test indicator_name with normal inputs."""
- # Arrange
- data = sample_data()
- 
- # Act
+ data = pd.Series(range(100), dtype=float)
  result = indicator_name(data)
- 
- # Assert
  assert result is not None
  assert len(result) == len(data)
 ```
@@ -145,9 +141,10 @@ def test_indicator_name():
 Property-based test pattern (Hypothesis):
 
 ```python
+import hypothesis.strategies as st
 from hypothesis import assume, given, settings
 
-@given(price_series(min_size=30, max_size=200), _small_positive_int)
+@given(price_series(min_size=30, max_size=200), st.integers(min_value=2, max_value=20))
 @settings(max_examples=100)
 def test_my_indicator_invariant(s, length):
     """Output invariants must hold across all valid inputs."""
@@ -164,7 +161,9 @@ See ``tests/test_property_based.py`` and ``docs/testing.rst`` for the full strat
 
 #### Docstring Format
 ```python
-def indicator_name(close: pd.Series, length: int = 20) -> pd.Series:
+from typing import Optional
+
+def indicator_name(close: pd.Series, length: Optional[int] = None) -> pd.Series:
  """
  Brief description of the indicator.
  
@@ -173,7 +172,7 @@ def indicator_name(close: pd.Series, length: int = 20) -> pd.Series:
  
  Args:
  close (pd.Series): Series of closing prices
- length (int, optional): Lookback period. Defaults to 20.
+ length (Optional[int]): Lookback period. Defaults to None (resolved internally, typically 20).
  
  Returns:
  pd.Series: Calculated indicator values
@@ -195,9 +194,13 @@ def indicator_name(close: pd.Series, length: int = 20) -> pd.Series:
 
 #### Python Style Guide
 - Follow PEP 8
-- Use Black for code formatting: `black .`
+- Use Black for formatting: `black pandas_ta_classic/` (line-length=150, skip-string-normalization)
+- Use Ruff for linting: `ruff check pandas_ta_classic --select E9,F63,F7,F82`
 - Use type hints for all functions
-- Maximum line length: 88 characters
+- Maximum line length: 150 characters (Black config)
+- f-strings preferred over `.format()` or `%`-formatting
+
+**Gate condition:** both `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` must return EXIT=0 before opening a PR. CI enforces this in the `code-quality` job.
 
 #### Import Organization
 ```python
@@ -222,10 +225,12 @@ from pandas_ta_classic.utils import verify_series
 ### 5. Git Workflow
 
 #### Branch Naming
-- Features: `feature/indicator-name` or `feature/description`
-- Bug fixes: `fix/issue-number-description`
-- Documentation: `docs/description`
-- Performance: `perf/description`
+- Features: `feat/<topic>`
+- Bug fixes: `fix/<topic>`
+- Documentation: `docs/<topic>`
+- CI/workflow: `ci/<topic>`
+
+One logical change per PR.
 
 #### Commit Messages
 ```
@@ -236,13 +241,13 @@ Longer description if needed.
 Fixes #123
 ```
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `perf`
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
 
 #### Pull Request Process
 
 1. **Create Feature Branch**
  ```bash
- git checkout -b feature/new-indicator
+ git checkout -b feat/new-indicator
  ```
 
 2. **Make Changes**
@@ -252,238 +257,61 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `perf`
 
 3. **Commit Changes**
  ```bash
- git add .
+ # Stage specific files — avoid `git add .` to prevent accidentally including secrets or large files
+ git add pandas_ta_classic/momentum/my_indicator.py tests/test_indicator_momentum.py
  git commit -m "feat(momentum): add new RSI variant"
  ```
 
 4. **Push and Create PR**
  ```bash
- git push origin feature/new-indicator
+ git push origin feat/new-indicator
  ```
 
 5. **PR Requirements**
- - [ ] Tests pass
- - [ ] Code coverage maintained/improved
- - [ ] Documentation updated
- - [ ] Type hints included
- - [ ] No linting errors
+ - [ ] `black --check --diff pandas_ta_classic/` passes (EXIT=0)
+ - [ ] `ruff check pandas_ta_classic --select E9,F63,F7,F82` passes (EXIT=0)
+ - [ ] `pytest tests/ -v` passes
+ - [ ] Documentation updated (docstrings + `docs/` if behavior changed)
+ - [ ] Type hints included on all new function signatures
+ - [ ] CHANGELOG.md `[Unreleased]` section updated
+ - [ ] New indicator: entry added to `docs/indicators.rst`
 
 ## Version Management
 
-The project uses [setuptools-scm](https://github.com/pypa/setuptools-scm) for automatic version management based on git tags.
+Versions are managed automatically via [setuptools-scm](https://github.com/pypa/setuptools-scm) from git tags. **Never manually edit version strings.**
 
-### How It Works
+- Tagged commits produce a clean version (`0.4.0`)
+- Untagged commits produce a dev version (`0.4.1.dev3` = 3 commits after `0.4.0`)
+- Clone with full history — not a shallow clone — so setuptools-scm can find tags:
+  ```bash
+  git clone https://github.com/xgboosted/pandas-ta-classic.git
+  ```
 
-Version numbers are automatically determined from git tags and commit history:
-
-- **Tagged releases**: Version matches the git tag exactly (e.g., `0.4.0`)
-- **Development builds**: Version includes `.dev` suffix with commit count (e.g., `0.3.36.dev1`)
-
-#### Version Scheme
-
-We use the default `guess-next-dev` version scheme:
-```
-0.3.35 # Clean release from tag 0.3.35
-0.3.36.dev1 # 1 commit after tag 0.3.35 (developing towards 0.3.36)
-0.3.36.dev2 # 2 commits after tag 0.3.35
+**Troubleshooting:** If `import pandas_ta_classic` shows version `0.0.0`, fetch missing tags:
+```bash
+git fetch --tags
+pip install -e ".[dev]"  # reinstall to regenerate _version.py
 ```
 
-This scheme provides clean version numbers on tagged releases (no `.post0` suffix) and uses `.devN` for development builds, clearly indicating work-in-progress towards the next release.
+### Creating a Release (maintainers only)
 
-### For Contributors
+1. Rename `[Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`
+2. Ensure CI is green: `pytest tests/ -v`
+3. Create an **annotated** tag and push:
+   ```bash
+   git tag -a X.Y.Z -m "X.Y.Z"
+   git push origin X.Y.Z
+   ```
+4. Draft a GitHub Release from that tag — publishing it triggers automated PyPI upload via CI.
 
-When working on the repository:
+## Roadmap
 
-- **Never manually edit version strings** - versions are automatically determined from git tags
-- Development builds show `.dev` suffix (e.g., `0.3.36.dev1` = developing towards 0.3.36)
-- Clone with full history (not shallow): `git clone https://github.com/xgboosted/pandas-ta-classic.git`
-- Check current version:
- ```python
- import pandas_ta_classic as ta
- print(ta.version) # Should show something like 0.3.36.dev1
- ```
+See [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues) for the full list. Current priority areas:
 
-### For Maintainers
-
-#### Creating a Release
-
-1. **Update CHANGELOG.md**
- - Move items from "Unreleased" to new version section
- - Add release date
- - Follow [Keep a Changelog](https://keepachangelog.com/) format
-
-2. **Ensure all tests pass**
- - Check CI/CD status
- - Run tests locally: `pytest`
-
-3. **Create and push git tag**
- ```bash
- # Ensure you're on main branch
- git checkout main
- git pull
- 
- # Create annotated tag
- git tag -a 0.4.0 -m "Release version 0.4.0"
- 
- # Push tag to GitHub
- git push origin 0.4.0
- ```
-
-4. **Create GitHub Release**
- - Go to repository's Releases page
- - Click "Draft a new release"
- - Select the tag you just created
- - Copy relevant CHANGELOG.md entries
- - Publish the release
- 
-5. **Automated Publishing**
- - CI/CD workflow automatically publishes to PyPI when GitHub Release is published
- - Version is automatically set to tag name (e.g., `0.4.0`)
- - No manual version updates needed in any files
- - Verify on PyPI that package appears with correct version
-
-#### Version Resolution
-
-The package resolves version in the following order:
-
-1. `pandas_ta_classic/_version.py` (generated by setuptools-scm during installation)
-2. Installed package metadata via `importlib.metadata`
-3. Installed package metadata via `pkg_resources` (Python < 3.8)
-4. Fallback to `"0.0.0"` if not installed
-
-#### Configuration
-
-Version management is configured in `pyproject.toml`:
-
-```toml
-[build-system]
-requires = ["setuptools>=61.0", "setuptools-scm>=8.0", "wheel"]
-
-[project]
-dynamic = ["version"]
-
-[tool.setuptools_scm]
-write_to = "pandas_ta_classic/_version.py"
-# Default scheme: clean version on tags, .devN after tags
-local_scheme = "no-local-version"
-fallback_version = "0.0.0"
-```
-
-### CI/CD Considerations
-
-#### GitHub Actions Shallow Clones
-
-GitHub Actions by default performs shallow clones (only the latest commit), which prevents setuptools-scm from accessing git tags and history. All checkout actions in CI/CD workflows must use:
-
-```yaml
-- uses: actions/checkout@v4
- with:
- fetch-depth: 0 # Full history needed for setuptools-scm
-```
-
-Without `fetch-depth: 0`, setuptools-scm will fall back to `0.0.0`.
-
-#### Release Builds with Modified Files
-
-When building releases in CI/CD that modify files (like `pyproject.toml`), the working directory becomes "dirty" and setuptools-scm would generate a development version. To prevent this, use the `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable:
-
-```yaml
-- name: Set version environment variable
- run: |
- RELEASE_TAG="${{ github.event.release.tag_name }}"
- VERSION="${RELEASE_TAG#v}"
- echo "SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION" >> $GITHUB_ENV
-
-- name: Build package
- run: python -m build --wheel
-```
-
-This ensures the exact release tag version is used, even if files are modified during the build process.
-
-#### Fallback Version
-
-If git is not available (e.g., building from a source tarball), the version falls back to `0.0.0`. This is a valid PEP 440 version that won't conflict with the version scheme.
-
-### Troubleshooting
-
-#### Problem: Installation fails with `Invalid version: '0.0.0.dev0.post1'`
-
-**Cause**: 
-- Git repository is shallow (missing tags/history)
-- Fallback version uses `.dev0` suffix which conflicts with version scheme
-
-**Solution**:
-- In CI/CD: Add `fetch-depth: 0` to all checkout actions
-- Locally: Ensure you have full git history and tags (`git fetch --unshallow --tags`)
-- Update fallback version to `0.0.0` (without `.dev0`)
-
-#### Problem: Version shows `0.0.0` instead of expected version
-
-**Cause**: setuptools-scm cannot find git tags or history
-
-**Solution**: 
-- Ensure git tags exist: `git tag -l`
-- Fetch tags if missing: `git fetch --tags`
-- Check setuptools-scm is installed: `pip show setuptools-scm`
-- Verify full git history: `git log --oneline` (should show all commits)
-
-#### Problem: Development version not incrementing
-
-**Cause**: Working from a clean tag without additional commits
-
-**Solution**: This is expected behavior. Make commits after the tag to see `.dev` suffix increment.
-
-### Benefits
-
-- **No manual version updates**: Version is always correct based on git tags
-- **No version conflicts**: Single source of truth (git tags)
-- **Development clarity**: `.dev` suffix clearly indicates pre-release development builds
-- **Clean releases**: Tagged releases get exact version numbers without suffixes
-- **PEP 440 compliant**: All versions follow Python versioning standards
-- **CI/CD friendly**: Works automatically in GitHub Actions with proper configuration
-
-## Project Structure
-
-```
-pandas_ta_classic/
-├── __init__.py
-├── core.py # Core functionality
-├── custom.py # Custom indicators
-├── candles/ # Candlestick patterns
-├── cycles/ # Cycle indicators 
-├── momentum/ # Momentum indicators
-├── overlap/ # Overlap studies
-├── performance/ # Performance metrics
-├── statistics/ # Statistical functions
-├── trend/ # Trend indicators
-├── utils/ # Utility functions
-├── volatility/ # Volatility indicators
-└── volume/ # Volume indicators
-```
-
-## Current Roadmap
-
-See our [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues) for the current roadmap. Priority areas include:
-
-### Phase 1: Foundation
-- Type hints for all modules
-- Standardized error handling
-- Comprehensive test coverage
-
-### Phase 2: Performance 
-- Numba optimization
 - Lazy loading
-- Performance benchmarks
-
-### Phase 3: API Enhancements
-- Fluent API for chaining
 - Plugin system improvements
-- Custom metrics support
 
-### Phase 4: Integrations
-- vectorbt integration
-- backtrader integration
-- Enhanced TA-Lib support
+Contributions in these areas are especially welcome. Check the issues list for anything tagged `good first issue` or `help wanted`.
 
 ## Community Guidelines
 
@@ -509,7 +337,6 @@ See our [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues) f
 Contributors are recognized in:
 - Git commit history
 - Release notes for significant contributions
-- README contributors section (planned)
 
 ## Resources
 

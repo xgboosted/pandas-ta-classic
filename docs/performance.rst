@@ -28,40 +28,6 @@ Backtesting
 **Pandas TA Classic** provides trading signals and indicator output
 suitable for popular backtesting frameworks.
 
-vectorbt
-~~~~~~~~
-
-Use ``ta.tsignals`` to generate entry/exit signals for **vectorbt**'s
-``Portfolio.from_signals`` method.
-
-For a comprehensive example, see the Jupyter Notebook `VectorBT Backtest
-with Pandas TA <https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/VectorBT_Backtest_with_Pandas_TA.ipynb>`_
-in the examples directory.
-
-.. code-block:: python
-
-    import pandas as pd
-    import pandas_ta_classic as ta
-    import vectorbt as vbt
-
-    df = pd.read_csv("your_data.csv")
-
-    df['sma_short'] = df.ta.sma(length=20)
-    df['sma_long'] = df.ta.sma(length=50)
-
-    entries = df['sma_short'] > df['sma_long']
-    exits = df['sma_short'] < df['sma_long']
-
-    signals = ta.tsignals(entries, asbool=True)
-
-    portfolio = vbt.Portfolio.from_signals(
-        df['close'],
-        entries=signals['TS_Entries'],
-        exits=signals['TS_Exits'],
-    )
-
-    portfolio.stats()
-
 backtesting.py
 ~~~~~~~~~~~~~~
 
@@ -118,3 +84,70 @@ script.
     bt = Backtest(GOOG, SMACrossover, cash=10000, commission=0.002)
     stats = bt.run()
     print(stats)
+
+backtrader
+~~~~~~~~~~
+
+For **backtrader**, precompute indicators with pandas-ta-classic before
+passing data to cerebro. Use a dynamic ``PandasData`` subclass to expose
+extra columns as lines. See the :doc:`integration tutorial
+<tutorials/backtrader>` and the runnable
+`examples/backtrader_strategy.py <https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/backtrader_strategy.py>`_
+script.
+
+.. code-block:: python
+
+    import pandas as pd
+    import pandas_ta_classic as ta
+    import backtrader as bt
+
+
+    def make_feed(df: pd.DataFrame, *extra_cols: str) -> type:
+        lines = tuple(extra_cols)
+        params = tuple((col, -1) for col in extra_cols)
+        return type('PandasDataWithTA', (bt.feeds.PandasData,), {'lines': lines, 'params': params})
+
+
+    df['sma_fast'] = ta.sma(df['Close'], length=10)
+    df['sma_slow'] = ta.sma(df['Close'], length=20)
+    df = df.dropna()
+
+    cerebro = bt.Cerebro()
+    cerebro.adddata(make_feed(df, 'sma_fast', 'sma_slow')(dataname=df))
+    cerebro.addstrategy(SMACrossover)
+    cerebro.broker.setcash(10_000.0)
+    results = cerebro.run()
+
+vectorbt
+~~~~~~~~
+
+Use ``ta.tsignals`` to generate entry/exit signals for **vectorbt**'s
+``Portfolio.from_signals`` method.
+
+For a comprehensive example, see the Jupyter Notebook `VectorBT Backtest
+with Pandas TA <https://github.com/xgboosted/pandas-ta-classic/blob/main/examples/VectorBT_Backtest_with_Pandas_TA.ipynb>`_
+in the examples directory.
+
+.. code-block:: python
+
+    import pandas as pd
+    import pandas_ta_classic as ta
+    import vectorbt as vbt
+
+    df = pd.read_csv("your_data.csv")
+
+    df['sma_short'] = df.ta.sma(length=20)
+    df['sma_long'] = df.ta.sma(length=50)
+
+    entries = df['sma_short'] > df['sma_long']
+    exits = df['sma_short'] < df['sma_long']
+
+    signals = ta.tsignals(entries, asbool=True)
+
+    portfolio = vbt.Portfolio.from_signals(
+        df['close'],
+        entries=signals['TS_Entries'],
+        exits=signals['TS_Exits'],
+    )
+
+    portfolio.stats()

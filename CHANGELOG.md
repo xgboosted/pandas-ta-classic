@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 * **backtesting.py integration** (PR #124 by @Adhyansinghgupta): Bridge function (`ta_bridge`), `SMACrossover` example strategy (`examples/backtesting_py_strategy.py`), and integration tutorial (`docs/tutorials/backtesting_py.md`). Added `backtesting` to `integration` optional dependencies.
+* **backtrader integration** (`docs/tutorials/backtrader.md`, `examples/backtrader_strategy.py`): Precompute-then-feed pattern using dynamic `PandasData` subclass (`make_feed()`); covers single-output, multi-output (MACD), and OHLCV-dependent (ATR) indicators. Added `backtrader` to `integration` optional dependencies.
 * **vectorbt integration tutorial** (`docs/tutorials/vectorbt.md`): Documented the `df.ta.tsignals()` → `vbt.Portfolio.from_signals()` integration pattern, including multi-output indicator handling and benchmark comparison.
 
 ## [0.6.52] - 2026-06-25

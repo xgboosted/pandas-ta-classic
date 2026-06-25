@@ -215,14 +215,16 @@ Using ``uv``:
     uv pip install yfinance
     
     # For backtesting
+    uv pip install backtesting
+    uv pip install backtrader
     uv pip install vectorbt
-    
+
     # For enhanced performance (optional — provides 6–230× speedups on hot-loop indicators)
     uv pip install pandas-ta-classic[performance]
-    
+
     # Or install numba directly
     uv pip install numba
-    
+
     # Install all optional dependencies at once
     uv pip install pandas-ta-classic[optional]
 
@@ -232,8 +234,10 @@ Using ``pip``:
 
     # For stock data download
     pip install yfinance
-    
+
     # For backtesting
+    pip install backtesting
+    pip install backtrader
     pip install vectorbt
     
     # For enhanced performance (optional — provides 6–230× speedups on hot-loop indicators)
