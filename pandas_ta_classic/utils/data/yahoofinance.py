@@ -122,20 +122,20 @@ def yf(ticker: str, **kwargs):
             description = kwargs.pop("desc", False)
             snd_length = kwargs.pop("snd", 5)
 
-            print("\n====  Company Information  " + div)
+            logger.info("\n====  Company Information  " + div)
             ci_header = f"({ticker_info['shortName']}) [{ticker_info['symbol']}]"
             if "longName" in ticker_info and len(ticker_info["longName"]):
-                print(f"{ticker_info['longName']}" + ci_header)
+                logger.info(f"{ticker_info['longName']}" + ci_header)
             else:
-                print(ci_header)
+                logger.info(ci_header)
 
             if description:
-                print(f"{ticker_info['longBusinessSummary']}\n")
+                logger.info(f"{ticker_info['longBusinessSummary']}\n")
             if "address1" in ticker_info and len(ticker_info["address1"]):
                 if "address2" in ticker_info and len(ticker_info["address2"]):
-                    print(f"{ticker_info['address1']} {ticker_info['address2']}")
+                    logger.info(f"{ticker_info['address1']} {ticker_info['address2']}")
                 else:
-                    print(f"{ticker_info['address1']}")
+                    logger.info(f"{ticker_info['address1']}")
 
                 if (
                     "city" in ticker_info
@@ -147,42 +147,45 @@ def yf(ticker: str, **kwargs):
                     and "country" in ticker_info
                     and len(ticker_info["country"])
                 ):
-                    print(f"{ticker_info['city']}, {ticker_info['state']} {ticker_info['zip']}, {ticker_info['country']}")
+                    logger.info(f"{ticker_info['city']}, {ticker_info['state']} {ticker_info['zip']}, {ticker_info['country']}")
                 else:
-                    print(f"{ticker_info['state']} {ticker_info['zip']}, {ticker_info['country']}")
-                print(f"Phone (Fax): {ticker_info['phone']} ({ticker_info.get('fax', 'N/A')})")
+                    logger.info(f"{ticker_info['state']} {ticker_info['zip']}, {ticker_info['country']}")
+                logger.info(f"Phone (Fax): {ticker_info['phone']} ({ticker_info.get('fax', 'N/A')})")
 
             if "website" in ticker_info and len(ticker_info["website"]):
                 s = f"Website: {ticker_info['website']}".ljust(40)
                 if "fullTimeEmployees" in ticker_info:
                     s += f"FT Employees: {ticker_info['fullTimeEmployees']:,}".rjust(40)
-                print(s)
+                logger.info(s)
             elif "fullTimeEmployees" in ticker_info:
-                print(f"FT Employees: {ticker_info['fullTimeEmployees']:,}")
+                logger.info(f"FT Employees: {ticker_info['fullTimeEmployees']:,}")
 
             if "companyOfficers" in ticker_info and len(ticker_info["companyOfficers"]):
-                print(f"Company Officers: {', '.join(ticker_info['companyOfficers'])}".ljust(40))
+                logger.info(f"Company Officers: {', '.join(ticker_info['companyOfficers'])}".ljust(40))
             if "sector" in ticker_info and len(ticker_info["sector"]) and "industry" in ticker_info and len(ticker_info["industry"]):
-                print(
+                logger.info(
+                    "%s %s",
                     "Sector | Industry".ljust(29),
                     f"{ticker_info['sector']} | {ticker_info['industry']}".rjust(50),
                 )
 
-            print("\n====  Market Information   " + div)
+            logger.info("\n====  Market Information   " + div)
             _category = f" | {ticker_info['category']}" if "category" in ticker_info and ticker_info["category"] is not None else ""
-            print(
+            logger.info(
+                "%s %s",
                 f"Market | Exchange | Symbol{' | Category' if 'category' in ticker_info and ticker_info['category'] is not None else ''}".ljust(39),
                 f"{ticker_info['market'].split('_')[0].upper()} | {ticker_info['exchange']} | {ticker_info['symbol']}{_category}".rjust(40),
             )
 
-            print()
             if "marketCap" in ticker_info and ticker_info["marketCap"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Market Cap.".ljust(39),
                     f"{ticker_info['marketCap']:,} ({ticker_info['marketCap'] / 1000000:,.2f} MM)".rjust(40),
                 )
             if ("navPrice" in ticker_info and ticker_info["navPrice"] is not None) or ("yield" in ticker_info and ticker_info["yield"] is not None):
-                print(
+                logger.info(
+                    "%s %s",
                     "NAV | Yield".ljust(39),
                     f"{ticker_info['navPrice']} | {100 * ticker_info['yield']:.4f}%".rjust(40),
                 )
@@ -192,12 +195,14 @@ def yf(ticker: str, **kwargs):
                 and "floatShares" in ticker_info
                 and ticker_info["floatShares"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Shares Outstanding | Float".ljust(39),
                     f"{ticker_info['sharesOutstanding']:,} | {ticker_info['floatShares']:,}".rjust(40),
                 )
             if "impliedSharesOutstanding" in ticker_info and ticker_info["impliedSharesOutstanding"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Implied Shares Outstanding".ljust(39),
                     f"{ticker_info['impliedSharesOutstanding']:,}".rjust(40),
                 )
@@ -207,7 +212,8 @@ def yf(ticker: str, **kwargs):
                 and ticker_info["sharesShort"] is not None
                 and ticker_info["shortRatio"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Shares Short | Ratio".ljust(39),
                     f"{ticker_info['sharesShort']:,} | {ticker_info['shortRatio']:,}".rjust(40),
                 )
@@ -217,78 +223,87 @@ def yf(ticker: str, **kwargs):
                 and "sharesShortPriorMonth" in ticker_info
                 and ticker_info["sharesShortPriorMonth"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Short % of Float | Short prior Month".ljust(39),
                     f"{100 * ticker_info['shortPercentOfFloat']:.4f}% | {ticker_info['sharesShortPriorMonth']:,}".rjust(40),
                 )
             if ("heldPercentInstitutions" in ticker_info and ticker_info["heldPercentInstitutions"] is not None) or (
                 "heldPercentInsiders" in ticker_info and ticker_info["heldPercentInsiders"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Insiders % | Institution %".ljust(39),
                     f"{100 * ticker_info['heldPercentInsiders']:.4f}% | {100 * ticker_info['heldPercentInstitutions']:.4f}%".rjust(40),
                 )
 
-            print()
             if (
                 ("bookValue" in ticker_info and ticker_info["bookValue"] is not None)
                 or ("priceToBook" in ticker_info and ticker_info["priceToBook"] is not None)
                 or ("pegRatio" in ticker_info and ticker_info["pegRatio"] is not None)
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Book Value | Price to Book | Peg Ratio".ljust(39),
                     f"{ticker_info['priceToBook']} | {ticker_info['priceToBook']} | {ticker_info['pegRatio']}".rjust(40),
                 )
             if "forwardPE" in ticker_info and ticker_info["forwardPE"] is not None:
-                print("Forward PE".ljust(39), f"{ticker_info['forwardPE']}".rjust(40))
+                logger.info("%s %s", "Forward PE".ljust(39), f"{ticker_info['forwardPE']}".rjust(40))
             if ("forwardEps" in ticker_info and ticker_info["forwardEps"] is not None) or (
                 "trailingEps" in ticker_info and ticker_info["trailingEps"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Forward EPS | Trailing EPS".ljust(39),
                     f"{ticker_info['forwardEps']} | {ticker_info['trailingEps']}".rjust(40),
                 )
             if "enterpriseValue" in ticker_info and ticker_info["enterpriseValue"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Enterprise Value".ljust(39),
                     f"{ticker_info['enterpriseValue']:,}".rjust(40),
                 )
             if ("enterpriseToRevenue" in ticker_info and ticker_info["enterpriseToRevenue"] is not None) or (
                 "enterpriseToEbitda" in ticker_info and ticker_info["enterpriseToEbitda"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Enterprise to Revenue | to EBITDA".ljust(39),
                     f"{ticker_info['enterpriseToRevenue']} | {ticker_info['enterpriseToEbitda']}".rjust(40),
                 )
 
-            print()
             if "netIncomeToCommon" in ticker_info and ticker_info["netIncomeToCommon"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Net Income to Common".ljust(39),
                     f"{ticker_info['netIncomeToCommon']:,}".rjust(40),
                 )
             if "revenueQuarterlyGrowth" in ticker_info and ticker_info["revenueQuarterlyGrowth"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Revenue Quarterly Growth".ljust(39),
                     f"{ticker_info['revenueQuarterlyGrowth']}".rjust(40),
                 )
             if "profitMargins" in ticker_info and ticker_info["profitMargins"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Profit Margins".ljust(39),
                     f"{100 * ticker_info['profitMargins']:.4f}%".rjust(40),
                 )
             if "earningsQuarterlyGrowth" in ticker_info and ticker_info["earningsQuarterlyGrowth"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Quarterly Earnings Growth".ljust(39),
                     f"{ticker_info['earningsQuarterlyGrowth']}".rjust(40),
                 )
             if "annualReportExpenseRatio" in ticker_info and ticker_info["annualReportExpenseRatio"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Annual Expense Ratio".ljust(39),
                     f"{ticker_info['annualReportExpenseRatio']}".rjust(40),
                 )
 
-            print("\n====  Price Information    " + div)
+            logger.info("\n====  Price Information    " + div)
             _o, _h, _l, _c, _v = (
                 ticker_info["open"],
                 ticker_info["dayHigh"],
@@ -296,17 +311,20 @@ def yf(ticker: str, **kwargs):
                 ticker_info["regularMarketPrice"],
                 ticker_info["regularMarketVolume"],
             )
-            print(
+            logger.info(
+                "%s %s",
                 "Open High Low | Close".ljust(39),
                 f"{_o:.4f}  {_o:.4f}  {_l:.4f} | {_c:.4f}".rjust(40),
             )
-            print(
+            logger.info(
+                "%s %s",
                 "HL2 | HLC3 | OHLC4 | C - OHLC4".ljust(39),
                 f"{0.5 * (_h + _l):.4f}, {(_h + _l + _c) / 3.0:.4f}, {0.25 * (_o + _h + _l + _c):.4f}, {_c - 0.25 * (_o + _h + _l + _c):.4f}".rjust(
                     40
                 ),
             )
-            print(
+            logger.info(
+                "%s %s",
                 "Change (%)".ljust(39),
                 f"{_c - ticker_info['previousClose']:.4f} ({100 * ((_c / ticker_info['previousClose']) - 1):.4f}%)".rjust(40),
             )
@@ -320,28 +338,33 @@ def yf(ticker: str, **kwargs):
                 and "askSize" in ticker_info
                 and ticker_info["askSize"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Bid | Ask | Spread".ljust(39),
                     f"{ticker_info['bid']} x {ticker_info['bidSize']} | {ticker_info['ask']} x {ticker_info['askSize']} | {ticker_info['ask'] - ticker_info['bid']:.4f}".rjust(
                         40
                     ),
                 )
-            print("Volume | Market | Avg Vol (10Day)".ljust(40))
-            print(f"{ticker_info['volume']:,} | {_v:,} | {ticker_info['averageVolume']:,} ({ticker_info['averageDailyVolume10Day']:,})".rjust(80))
+            logger.info("Volume | Market | Avg Vol (10Day)".ljust(40))
+            logger.info(
+                f"{ticker_info['volume']:,} | {_v:,} | {ticker_info['averageVolume']:,} ({ticker_info['averageDailyVolume10Day']:,})".rjust(80)
+            )
 
-            print()
             if "52WeekChange" in ticker_info and ticker_info["52WeekChange"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "52Wk % Change".ljust(39),
                     f"{100 * ticker_info['52WeekChange']:.4f}%".rjust(40),
                 )
             if "SandP52WeekChange" in ticker_info and ticker_info["SandP52WeekChange"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "52Wk % Change vs S&P500".ljust(39),
                     f"{100 * ticker_info['SandP52WeekChange']:.4f}%".rjust(40),
                 )
             if "fiftyTwoWeekHigh" in ticker_info and "fiftyTwoWeekLow" in ticker_info and "previousClose" in ticker_info:  # or 'regularMarketPrice'
-                print(
+                logger.info(
+                    "%s %s",
                     "52Wk Range (% from 52Wk Low)".ljust(39),
                     f"{ticker_info['fiftyTwoWeekLow']} - {ticker_info['fiftyTwoWeekHigh']} : {ticker_info['fiftyTwoWeekHigh'] - ticker_info['fiftyTwoWeekLow']:.4f} ({100 * (ticker_info['regularMarketPrice'] / ticker_info['fiftyTwoWeekLow'] - 1):.4f}%)".rjust(
                         40
@@ -351,41 +374,46 @@ def yf(ticker: str, **kwargs):
             avg50 = "fiftyDayAverage" in ticker_info and ticker_info["fiftyDayAverage"] is not None
             avg200 = "twoHundredDayAverage" in ticker_info and ticker_info["twoHundredDayAverage"] is not None
             if avg50 and avg200:
-                print(
+                logger.info(
+                    "%s %s",
                     "SMA 50 | SMA 200".ljust(39),
                     f"{ticker_info['fiftyDayAverage']:.4f} | {ticker_info['twoHundredDayAverage']:.4f}".rjust(40),
                 )
             elif avg50:
-                print(
+                logger.info(
+                    "%s %s",
                     "SMA 50".ljust(39),
                     f"{ticker_info['fiftyDayAverage']:.4f}".rjust(40),
                 )
             elif avg200:
-                print(
+                logger.info(
+                    "%s %s",
                     "SMA 200".ljust(39),
                     f"{ticker_info['twoHundredDayAverage']:.4f}".rjust(40),
                 )
             if "beta" in ticker_info and ticker_info["beta"] is not None and "beta3Year" in ticker_info and ticker_info["beta3Year"] is not None:
-                print(
+                logger.info(
+                    "%s %s",
                     "Beta | 3Yr".ljust(39),
                     f"{ticker_info['beta']} | {ticker_info['beta3Year']}".rjust(40),
                 )
             elif "beta" in ticker_info and ticker_info["beta"] is not None:
-                print("Beta".ljust(39), f"{ticker_info['beta']}".rjust(40))
+                logger.info("%s %s", "Beta".ljust(39), f"{ticker_info['beta']}".rjust(40))
             if (
                 "threeYearAverageReturn" in ticker_info
                 and ticker_info["threeYearAverageReturn"] is not None
                 and "fiveYearAverageReturn" in ticker_info
                 and ticker_info["fiveYearAverageReturn"] is not None
             ):
-                print(
+                logger.info(
+                    "%s %s",
                     "Avg. Return 3Yr | 5Yr".ljust(39),
                     f"{100 * ticker_info['threeYearAverageReturn']:.4f}% | {100 * ticker_info['fiveYearAverageReturn']:.4f}%".rjust(40),
                 )
 
             # Dividends and Splits
             if not dividends.empty or not splits.empty:
-                print("\n====  Dividends / Splits   " + div)
+                logger.info("\n====  Dividends / Splits   " + div)
                 if (
                     "dividendRate" in ticker_info
                     and ticker_info["dividendRate"] is not None
@@ -394,7 +422,8 @@ def yf(ticker: str, **kwargs):
                     and "payoutRatio" in ticker_info
                     and ticker_info["payoutRatio"] is not None
                 ):
-                    print(
+                    logger.info(
+                        "%s %s",
                         "Rate | Yield | Payout Ratio".ljust(39),
                         f"{ticker_info['dividendRate']} | {100 * ticker_info['dividendYield']:.4f}% | {ticker_info['payoutRatio']}".rjust(40),
                     )
@@ -404,7 +433,8 @@ def yf(ticker: str, **kwargs):
                     and "trailingAnnualDividendYield" in ticker_info
                     and ticker_info["trailingAnnualDividendYield"] is not None
                 ):
-                    print(
+                    logger.info(
+                        "%s %s",
                         "Trailing Annual Dividend Rate | Yield".ljust(40),
                         f"{ticker_info['trailingAnnualDividendRate']} | {100 * ticker_info['trailingAnnualDividendYield']:.4f}%\n".rjust(40),
                     )
@@ -412,13 +442,13 @@ def yf(ticker: str, **kwargs):
                 dividends.name = "Value"
                 total_dividends = dividends.size
                 dividendsdf = DataFrame(dividends.tail(snd_length)[::-1]).T
-                print(f"Dividends (Last {snd_length} of {total_dividends}):\n{dividendsdf}")
+                logger.info(f"Dividends (Last {snd_length} of {total_dividends}):\n{dividendsdf}")
 
             if not splits.empty:
                 splits.name = "Ratio"
                 total_splits = splits.size
                 splitsdf = DataFrame(splits.tail(snd_length)[::-1]).T
-                print(f"\nStock Splits (Last {snd_length} of {total_splits}):\n{splitsdf}")
+                logger.info(f"\nStock Splits (Last {snd_length} of {total_splits}):\n{splitsdf}")
 
         if kind in [*_all, "institutional_holders", "ih"]:
             ihdf = yfd.institutional_holders
@@ -427,8 +457,8 @@ def yf(ticker: str, **kwargs):
                 ihdf["Shares"] = ihdf.apply(lambda x: f"{x['Shares']:,}", axis=1)
                 ihdf["Value"] = ihdf.apply(lambda x: f"{x['Value']:,}", axis=1)
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Instl. Holders       " + div + f"\n{ihdf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Instl. Holders       " + div + f"\n{ihdf}")
 
         if kind in [*_all, "major_holders", "mh"]:
             mhdf = yfd.major_holders
@@ -438,8 +468,8 @@ def yf(ticker: str, **kwargs):
                 mhdf["Shares"] = mhdf.apply(lambda x: f"{x['Shares']:,}", axis=1)
                 mhdf["Value"] = mhdf.apply(lambda x: f"{x['Value']:,}", axis=1)
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Major Holders       " + div + f"\n{mhdf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Major Holders       " + div + f"\n{mhdf}")
 
         if kind in [*_all, "mutualfund_holders", "mfh"]:
             mfhdf = yfd.get_mutualfund_holders()
@@ -448,24 +478,24 @@ def yf(ticker: str, **kwargs):
                 mfhdf["Shares"] = mfhdf.apply(lambda x: f"{x['Shares']:,}", axis=1)
                 mfhdf["Value"] = mfhdf.apply(lambda x: f"{x['Value']:,}", axis=1)
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Mutual Fund Holders  " + div + f"\n{mfhdf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Mutual Fund Holders  " + div + f"\n{mfhdf}")
 
         if kind in [*_all, "recommendations", "rec"]:
             recdf = yfd.recommendations
             if recdf is not None:
                 recdf = ytd(recdf)
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Recommendation(YTD)  " + div + f"\n{recdf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Recommendation(YTD)  " + div + f"\n{recdf}")
 
         if kind in [*_all, "calendar", "cal"]:
             caldf = yfd.calendar
             if caldf is not None and "Earnings Date" in caldf.columns:
                 caldf.set_index("Earnings Date", inplace=True)
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Earnings Calendar    " + div + f"\n{caldf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Earnings Calendar    " + div + f"\n{caldf}")
 
         if kind in [*_all, "earnings", "earn"]:
             earndf = yfd.earnings
@@ -473,8 +503,8 @@ def yf(ticker: str, **kwargs):
                 earndf["Revenue"] = earndf.apply(lambda x: f"{x['Revenue']:,}", axis=1)
                 earndf["Earnings"] = earndf.apply(lambda x: f"{x['Earnings']:,}", axis=1)
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Earnings             " + div + f"\n{earndf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Earnings             " + div + f"\n{earndf}")
 
         if kind in [*_all, "sustainability", "sus", "esg"]:
             susdf = yfd.sustainability
@@ -485,8 +515,8 @@ def yf(ticker: str, **kwargs):
                 susdf.rename(index=_camelCase2Title, errors="ignore", inplace=True)
                 susdf.index.name = "Source"
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
-                print("\n====  Sustainability/ESG   " + div + f"\n{susdf}")
+                    logger.info(f"\n{ticker_info['symbol']}")
+                logger.info("\n====  Sustainability/ESG   " + div + f"\n{susdf}")
 
         if kind in [*_all, "financials", "fin"]:
             icdf = yfd.financials
@@ -502,13 +532,13 @@ def yf(ticker: str, **kwargs):
                         "https://github.com/ranaroussi/yfinance/pull/517/files"
                     )
             else:
-                print("\n====  Company Financials   " + div)
+                logger.info("\n====  Company Financials   " + div)
                 if not icdf.empty:
-                    print(f"Income Statement:\n{icdf}\n")
+                    logger.info(f"Income Statement:\n{icdf}\n")
                 if not bsdf.empty:
-                    print(f"Balance Sheet:\n{bsdf}\n")
+                    logger.info(f"Balance Sheet:\n{bsdf}\n")
                 if not cfdf.empty:
-                    print(f"Cash Flow:\n{cfdf}\n")
+                    logger.info(f"Cash Flow:\n{cfdf}\n")
 
         if kind in [*_all, "option_chain", "oc"]:
             yfd_options = None
@@ -526,17 +556,17 @@ def yf(ticker: str, **kwargs):
                 opt_expirations_str = f"{ticker} Option Expirations:\n\t{', '.join(opt_expirations)}\n"
 
                 if kind not in _all:
-                    print(f"\n{ticker_info['symbol']}")
+                    logger.info(f"\n{ticker_info['symbol']}")
                 if isinstance(itm, bool) and itm:
-                    print("\n====  ITM Option Chains    " + div)
+                    logger.info("\n====  ITM Option Chains    " + div)
                 elif isinstance(itm, bool) and not itm:
-                    print("\n====  OTM Option Chains    " + div)
+                    logger.info("\n====  OTM Option Chains    " + div)
                 else:
-                    print("\n====  Option Chains        " + div)
-                print(opt_expirations_str)
+                    logger.info("\n====  Option Chains        " + div)
+                logger.info(opt_expirations_str)
 
                 if opt_date not in opt_expirations:
-                    print(f"[X] No Options for {ticker_info['quoteType']} {ticker_info['symbol']}")
+                    logger.info(f"[X] No Options for {ticker_info['quoteType']} {ticker_info['symbol']}")
                 else:
                     option_columns = [
                         "Contract",
@@ -573,30 +603,30 @@ def yf(ticker: str, **kwargs):
                         itm_puts = f"{puts.name}\n{puts[puts['ITM'] == itm]}"
 
                         if just_calls:
-                            print(itm_calls)
+                            logger.info(itm_calls)
                         elif just_puts:
-                            print(itm_puts)
+                            logger.info(itm_puts)
                         else:
-                            print(f"{itm_calls}\n\n{itm_puts}")
+                            logger.info(f"{itm_calls}\n\n{itm_puts}")
                     else:
                         all_calls, all_puts = (
                             f"{calls.name}\n{calls}",
                             f"{puts.name}\n{puts}",
                         )
                         if just_calls:
-                            print(all_calls)
+                            logger.info(all_calls)
                         elif just_puts:
-                            print(all_puts)
+                            logger.info(all_puts)
                         else:
-                            print(f"{all_calls}\n\n{all_puts}")
+                            logger.info(f"{all_calls}\n\n{all_puts}")
 
         if verbose:
-            print("\n====  Chart History        " + div + f"\n[*] Pandas TA v{version} & yfinance v{yfra.__version__}")
-            print(f"[+] Downloading {ticker}[{interval}:{period}] from Yahoo Finance")
+            logger.info("\n====  Chart History        " + div + f"\n[*] Pandas TA v{version} & yfinance v{yfra.__version__}")
+            logger.info(f"[+] Downloading {ticker}[{interval}:{period}] from Yahoo Finance")
         if show is not None and isinstance(show, int) and show > 0:
-            print(f"\n{df.name}\n{df.tail(show)}\n")
+            logger.info(f"\n{df.name}\n{df.tail(show)}\n")
         if verbose:
-            print("=" * 80 + "\n")
+            logger.info("=" * 80 + "\n")
         return df
 
     return DataFrame()
