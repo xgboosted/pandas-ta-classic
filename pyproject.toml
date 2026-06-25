@@ -115,6 +115,7 @@ performance = [
 
 # Data sources and external integrations
 integration = [
+    "backtesting",
     "vectorbt",
     "backtrader", 
     "yfinance",

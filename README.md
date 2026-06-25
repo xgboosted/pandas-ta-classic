@@ -151,6 +151,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: 34 core indicators auto-use TA-Lib's C implementation when installed; pass `talib=False` to force native. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
 - **tulipy Integration (oracle only)** - parity test oracle; `test_oracle_tulipy.py` verifies native output against tulipy; never used as computation backend
 - **Vectorbt Integration** - compatible with popular backtesting framework
+- **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
 - **Custom Indicators** - easily create and chain your own indicators
 
 ## Documentation
