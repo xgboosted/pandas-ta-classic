@@ -61,6 +61,7 @@ def trix(
 
     return df
 
+
 trix.__doc__ = """Trix (TRIX)
 
 TRIX is a momentum oscillator to identify divergences.

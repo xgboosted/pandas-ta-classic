@@ -44,6 +44,7 @@ def ohlc4(
 
     return ohlc4
 
+
 ohlc4.__doc__ = """OHLC4 (Average of Open, High, Low, Close)
 
 OHLC4 calculates the average of the Open, High, Low, and Close prices for 

@@ -76,6 +76,7 @@ def kama(
 
     return kama
 
+
 kama.__doc__ = """Kaufman's Adaptive Moving Average (KAMA)
 
 Developed by Perry Kaufman, Kaufman's Adaptive Moving Average (KAMA) is a moving average

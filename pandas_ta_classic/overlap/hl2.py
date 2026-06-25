@@ -40,6 +40,7 @@ def hl2(
 
     return hl2
 
+
 hl2.__doc__ = """HL2 (Median Price)
 
 HL2 calculates the median price, which is the average of the High and Low 
