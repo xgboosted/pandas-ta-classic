@@ -11,6 +11,8 @@
 - **Commits:** Never automatically stage or commit changes; every change must be manually reviewed before being committed
 - **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` before opening. Never force-push to `main`.
 - **Documentation:** Update docstrings and `docs/` when behavior, indicators, or public usage change. Docs built with Sphinx + ReadTheDocs theme + MyST Parser, deployed to GitHub Pages.
+- **CHANGELOG:** No `[Unreleased]` section. Every entry goes directly under a versioned header (`## [X.Y.Z] - YYYY-MM-DD`, Keep a Changelog format). Update `CHANGELOG.md` with the new version header at release time. Never leave changes floating without a version.
+- **Releases:** Always create annotated tags: `git tag -a X.Y.Z -m "X.Y.Z"` then `git push origin X.Y.Z`. Annotated tags carry tagger identity and timestamp needed for setuptools-scm and GitHub release attribution. Never use lightweight tags (`git tag X.Y.Z`) — they carry no metadata and produce ambiguous version strings.
 
 ## Granular Context Control
 
@@ -171,7 +173,7 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 3. Add test in appropriate `tests/test_indicator_<category>.py` or `tests/test_ext_indicator_<category>.py`
    (overlap uses `test_ext_indicator_overlap_ext.py`; candles has no ext test file)
 4. Add entry to `docs/indicators.rst`
-5. Update `CHANGELOG.md` under `## [Unreleased]` → `### Added` with a bullet describing the indicator
+5. Add a bullet under `### Added` in the top versioned section of `CHANGELOG.md` (e.g., `## [0.7.0] - 2026-MM-DD`) describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed
 
 ### TA-Lib / Numba Integration
