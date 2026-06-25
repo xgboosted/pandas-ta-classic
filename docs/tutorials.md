@@ -12,6 +12,18 @@ Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 - [Tutorial 6: Creating Custom Indicators](#tutorial-6-creating-custom-indicators)
 - [Tutorial 7: Candlestick Pattern Recognition](#tutorial-7-candlestick-pattern-recognition)
 
+For integrating with **backtesting.py**, see the [backtesting.py integration guide](tutorials/backtesting_py).
+
+For integrating with **vectorbt**, see the [vectorbt integration guide](tutorials/vectorbt).
+
+```{toctree}
+:hidden:
+:maxdepth: 1
+
+tutorials/backtesting_py
+tutorials/vectorbt
+```
+
 ---
 
 ## Tutorial 1: Creating a Moving Average Crossover Strategy
