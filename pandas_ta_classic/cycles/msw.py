@@ -30,16 +30,13 @@ def msw(
     # Tulipy passthrough
     mode_tu = kwargs.get("tulipy", True)
     if Imports["tulipy"] and mode_tu:
-        try:
-            import tulipy as tu
+        import tulipy as tu
 
-            result = tu.msw(np.array(close, dtype=float), period=period)
-            _size = result[0].size
-            _pad = len(close) - _size
-            sine_arr = np.concatenate([[np.nan] * _pad, result[0]])
-            lead_arr = np.concatenate([[np.nan] * _pad, result[1]])
-        except Exception:
-            sine_arr, lead_arr = _msw_native(np.array(close, dtype=float), period)
+        result = tu.msw(np.array(close, dtype=float), period=period)
+        _size = result[0].size
+        _pad = len(close) - _size
+        sine_arr = np.concatenate([[np.nan] * _pad, result[0]])
+        lead_arr = np.concatenate([[np.nan] * _pad, result[1]])
     else:
         sine_arr, lead_arr = _msw_native(np.array(close, dtype=float), period)
 

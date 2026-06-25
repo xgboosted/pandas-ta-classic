@@ -22,7 +22,6 @@ def pvi(
     """Indicator: Positive Volume Index (PVI)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 1
-    # min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     initial = int(initial) if initial and initial > 0 else 1000
     close = verify_series(close, length)
     volume = verify_series(volume, length)

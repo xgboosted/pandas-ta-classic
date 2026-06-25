@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 * **CPR numeric encoding** (PR #117): `calculate_price_position()` and `calculate_cpr_width()` now return `np.int8` instead of string labels. `CPR_POSITION`: `1` (above TC), `0` (inside CPR), `-1` (below BC). `CPR_WIDTH_CLASS`: `1` (wide), `0` (medium), `-1` (narrow). All indicator columns are now numeric.
 * **PSAR cleanup**: Removed `import numpy as _np` from function body; uses module-level `np` instead.
 * **test_strategy**: Fixed duplicate `test_custom_a` method (was shadowed, never ran). Fixed stale column count assertion.
+* **`AnalysisIndicators.__call__` fail-fast**: Removed `except BaseException: pass` swallowing all indicator errors. Indicator exceptions now propagate to callers instead of silently returning `None`. Code that relied on `df.ta.rsi()` never raising must add its own error handling.
 
 ### Added
 * **TA-Lib / tulipy parity indicator set** (PR #104): Added wrappers and native implementations for `msw`, `fosc`, `macdext`, `macdfix`, `rocp`, `rocr`, `rocr100`, `stochf`, `avgprice`, `medprice`, `typprice`, `linregangle`, `linregintercept`, `linregslope`, `mavp`, `md`, `stderr`, `dx`, `edecay`, `plus_dm`, `minus_dm`, `sarext`, `avolume`, `cvi`, `hvol`, `emv`, `marketfi`, `vosc`, and `wad`.

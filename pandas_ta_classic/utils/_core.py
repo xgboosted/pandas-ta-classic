@@ -18,6 +18,16 @@ def _camelCase2Title(x: str) -> str:
     return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
 
 
+def _pos_int(val, default):
+    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
+    return int(val) if val and val > 0 else default
+
+
+def _pos_float(val, default):
+    """Return ``float(val)`` when *val* is a positive float, else *default*."""
+    return float(val) if val and val > 0 else default
+
+
 def category_files(category: str) -> list[str]:
     """Helper function to return all filenames in the category directory."""
     return [x.stem for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py")) if x.stem != "__init__"]

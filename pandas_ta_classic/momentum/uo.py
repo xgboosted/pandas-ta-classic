@@ -9,16 +9,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-
-
-def _pos_int(val, default):
-    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
-    return int(val) if val and val > 0 else default
-
-
-def _pos_float(val, default):
-    """Return ``float(val)`` when *val* is a positive float, else *default*."""
-    return float(val) if val and val > 0 else default
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):

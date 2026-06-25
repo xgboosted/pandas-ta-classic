@@ -95,8 +95,8 @@ def _discover_native_patterns() -> dict:
             func = getattr(mod, mod_name, None)
             if callable(func):
                 native[pattern_name] = func
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to load CDL pattern '%s': %s", mod_name, exc)
     return native
 
 

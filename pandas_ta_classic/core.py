@@ -316,27 +316,33 @@ class AnalysisIndicators(BasePandasObject):
     ):
         if version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
-        try:
-            if isinstance(kind, str):
-                kind = kind.lower()
-                fn = getattr(self, kind)
+        if isinstance(kind, str):
+            kind = kind.lower()
+            fn = getattr(self, kind, None)
+            if fn is None:
+                logger.error("Indicator '%s' not found.", kind)
+                self.help()
+                return None
+            if not callable(fn):
+                logger.error("'%s' is not a callable indicator.", kind)
+                return None
 
-                if timed:
-                    stime = perf_counter()
+            if timed:
+                stime = perf_counter()
 
-                # Run the indicator
-                result = fn(**kwargs)  # = getattr(self, kind)(**kwargs)
-                self._last_run = get_time(self.exchange, to_string=True)  # Save when it completed it's run
+            # Run the indicator
+            result = fn(**kwargs)
+            self._last_run = get_time(self.exchange, to_string=True)  # Save when it completed it's run
 
-                if timed:
+            if timed:
+                if result is not None:
                     result.timed = final_time(stime)
-                    logger.info(f"{kind}: {result.timed}")
+                    logger.info("%s: %s", kind, result.timed)
+                else:
+                    logger.warning("%s: returned None, timed run produced no result", kind)
 
-                return result
-            self.help()
-
-        except BaseException:
-            pass
+            return result
+        self.help()
 
     # Public Get/Set DataFrame Properties
     @property
@@ -714,7 +720,6 @@ class AnalysisIndicators(BasePandasObject):
         """
         # If True, it returns the resultant DataFrame. Default: False
         returns = kwargs.pop("returns", False)
-        # cpus = cpu_count()
         # Ensure indicators are appended to the DataFrame
         kwargs["append"] = True
         all_ordered = kwargs.pop("ordered", True)
@@ -945,7 +950,6 @@ class AnalysisIndicators(BasePandasObject):
 
         # Fetch the Data
         ds = ds.lower() is not None and isinstance(ds, str)
-        # df = av(ticker, **kwargs) if ds and ds == "av" else yf(ticker, **kwargs)
         df = yf(ticker, **kwargs)
 
         if df is None:
@@ -2794,7 +2798,6 @@ class AnalysisIndicators(BasePandasObject):
 
     def cross_value(self, value=None, above=True, asint=True, offset=None, **kwargs):
         a = self._get_column(kwargs.pop("close", "a"))
-        # a = self._get_column(a, f"{a}")
         result = cross_value(series_a=a, value=value, above=above, asint=asint, offset=offset, **kwargs)
         return self._post_process(result, **kwargs)
 

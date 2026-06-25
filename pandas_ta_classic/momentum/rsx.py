@@ -3,7 +3,6 @@ from typing import Any, Optional, Union
 import numpy as np
 from pandas import concat, DataFrame, Series
 
-npNaN = np.nan
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

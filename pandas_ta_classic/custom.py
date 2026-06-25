@@ -45,9 +45,6 @@ def create_dir(path, create_categories=True, verbose=True):
         if verbose:
             logger.info("Created main directory '%s'.", path)
 
-    # list the contents of the directory
-    # dirs = glob(abspath(join(path, '*')))
-
     # optionally add any missing category subdirectories
     if create_categories:
         for sd in [*pandas_ta_classic.Category]:

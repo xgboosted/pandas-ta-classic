@@ -24,7 +24,6 @@ def log_return(
 
     # Calculate Result
     if cumulative:
-        # log_return = nplog(close).diff(length).cumsum()
         log_return = nplog(close / close.iloc[0])
     else:
         log_return = nplog(close / close.shift(length))  # nplog(close).diff(length)

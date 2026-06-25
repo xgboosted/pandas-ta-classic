@@ -96,7 +96,8 @@ def yf(ticker: str, **kwargs):
 
         try:
             df = yfd.history(period=period, interval=interval, **kwargs)
-        except Exception:
+        except Exception as exc:
+            logger.error("yfinance history fetch failed for '%s': %s", ticker, exc)
             return None
 
         if df.empty:
@@ -454,8 +455,6 @@ def yf(ticker: str, **kwargs):
             recdf = yfd.recommendations
             if recdf is not None:
                 recdf = ytd(recdf)
-                # recdf_grade = recdf["To Grade"].value_counts().T
-                # recdf_grade.name = "Grades"
                 if kind not in _all:
                     print(f"\n{ticker_info['symbol']}")
                 print("\n====  Recommendation(YTD)  " + div + f"\n{recdf}")
@@ -512,10 +511,11 @@ def yf(ticker: str, **kwargs):
                     print(f"Cash Flow:\n{cfdf}\n")
 
         if kind in [*_all, "option_chain", "oc"]:
+            yfd_options = None
             try:
                 yfd_options = yfd.options
-            except IndexError:
-                yfd_options = None
+            except IndexError as exc:
+                logger.warning("yfinance options unavailable for '%s': %s", ticker, exc)
 
             if yfd_options is not None:
                 opt_expirations = list(yfd_options)

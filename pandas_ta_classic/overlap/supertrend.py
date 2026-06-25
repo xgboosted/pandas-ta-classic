@@ -3,7 +3,6 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series

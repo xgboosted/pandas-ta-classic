@@ -3,7 +3,6 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -13,10 +12,7 @@ from pandas_ta_classic.utils import (
     zero,
 )
 from pandas_ta_classic.utils._njit import njit
-
-
-def _pos_float(val, default):
-    return float(val) if val and val > 0 else default
+from pandas_ta_classic.utils._core import _pos_float
 
 
 def _psar_falling(high: Series, low: Series, drift: int = 1) -> bool:

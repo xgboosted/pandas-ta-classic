@@ -3,8 +3,6 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
-
 from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (

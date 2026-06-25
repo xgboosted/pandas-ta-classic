@@ -5,14 +5,7 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics import stdev
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset
 from pandas_ta_classic.utils import unsigned_differences, verify_series
-
-
-def _pos_int(val, default):
-    return int(val) if val and val > 0 else default
-
-
-def _pos_float(val, default):
-    return float(val) if val and val > 0 else default
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Optional[Series]:

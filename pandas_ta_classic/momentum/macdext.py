@@ -7,6 +7,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 # TA-Lib MA type integer → string kind for native fallback
 _MATYPE_TO_KIND = {
@@ -22,11 +23,6 @@ _MATYPE_TO_KIND = {
 }
 
 _UNSUPPORTED_NATIVE_MATYPES = {6: "kama", 7: "mama"}
-
-
-def _pos_int(val, default):
-    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
-    return int(val) if val and val > 0 else default
 
 
 def _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype):

@@ -1,9 +1,7 @@
 # Squeeze Pro (SQUEEZE_PRO)
 from typing import Any, Optional
-import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
 from pandas_ta_classic.momentum import mom
 from pandas_ta_classic.momentum.squeeze import (
     _pos_float,

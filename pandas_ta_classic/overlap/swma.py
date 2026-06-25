@@ -21,7 +21,6 @@ def swma(
     """Indicator: Symmetric Weighted Moving Average (SWMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
-    # min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     asc = asc if asc else True
     close = verify_series(close, length)
     offset = get_offset(offset)
@@ -32,7 +31,6 @@ def swma(
     # Calculate Result
     triangle = symmetric_triangle(length, weighted=True)
     swma = close.rolling(length, min_periods=length).apply(weights(triangle), raw=True)
-    # swma = close.rolling(length).apply(weights(triangle), raw=True)
 
     # Offset
     swma = apply_offset(swma, offset)

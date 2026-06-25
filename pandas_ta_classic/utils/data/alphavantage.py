@@ -2,9 +2,6 @@ import logging
 from pandas import DataFrame
 from pandas_ta_classic import Imports, version
 
-# from .._core import _camelCase2Title
-# from .._time import ytd_df
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +31,6 @@ def av(ticker: str, **kwargs):
     kind = kind.lower()
     interval = kwargs.pop("interval", "D")
     show = kwargs.pop("show", None)
-    # last = kwargs.pop("last", RATE["TRADING_DAYS_PER_YEAR"])
 
     ticker = ticker.upper() if ticker is not None and isinstance(ticker, str) else None
 
@@ -96,7 +92,8 @@ def av(ticker: str, **kwargs):
                 if show is not None and isinstance(show, int) and show > 0:
                     logger.info(f"\n{df.name}\n{df.tail(show)}\n")
                 return df
-            except ImportError:
+            except ImportError as exc:
+                logger.warning("alpha_vantage package not installed: %s", exc)
                 return DataFrame()
             except Exception:
                 logger.exception("Alpha Vantage request failed for %s", ticker)

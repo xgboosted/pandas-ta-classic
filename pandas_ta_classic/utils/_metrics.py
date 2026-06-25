@@ -175,7 +175,6 @@ def optimal_leverage(
     period_std = npSqrt(period) * returns.std()
 
     mean_excess_return = period_mu - benchmark_rate
-    # sharpe = mean_excess_return / period_std
     opt_leverage = (period_std**-2) * mean_excess_return
 
     return int(capital * opt_leverage)

@@ -4,7 +4,6 @@ import numpy as np
 from numpy import exp as npExp
 from pandas import Series
 
-npNaN = np.nan
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _sliding_weighted_ma
 

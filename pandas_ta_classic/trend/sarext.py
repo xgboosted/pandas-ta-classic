@@ -13,12 +13,7 @@ from pandas_ta_classic.utils import (
     zero,
 )
 from pandas_ta_classic.utils._njit import njit
-
-npNaN = np.nan
-
-
-def _pos_float(val, default):
-    return float(val) if val and val > 0 else default
+from pandas_ta_classic.utils._core import _pos_float
 
 
 def _sarext_falling(high: Series, low: Series, drift: int = 1) -> bool:

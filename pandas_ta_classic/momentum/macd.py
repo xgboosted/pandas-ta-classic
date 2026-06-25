@@ -11,11 +11,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-
-
-def _pos_int(val, default):
-    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
-    return int(val) if val and val > 0 else default
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def _ema_aligned(arr, m, period, seed_end):
