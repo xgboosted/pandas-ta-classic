@@ -1,82 +1,139 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## **[Unreleased]**
+## [0.6.52] - 2026-06-25
+
+### Added
+* **SMC Liquidity Sweep** (`smc_sweep`) (PR #123 by @Adhyansinghgupta): Bullish and bearish smart-money liquidity sweep indicator for momentum analysis. Available as `df.ta.smc_sweep()`.
+* **ichimoku `append_span`** (PR #120): New `append_span` parameter on the ichimoku accessor for span-appending control.
+
+### Changed
+* **CPR numeric encoding** (PR #117): `calculate_price_position()` and `calculate_cpr_width()` now return `np.int8` instead of string labels. `CPR_POSITION`: `1` (above TC), `0` (inside CPR), `-1` (below BC). `CPR_WIDTH_CLASS`: `1` (wide), `0` (medium), `-1` (narrow). All indicator columns are now numeric.
+* **`AnalysisIndicators.__call__` fail-fast**: Removed `except BaseException: pass` swallowing all indicator errors. Indicator exceptions now propagate to callers instead of silently returning `None`. Code that relied on `df.ta.rsi()` never raising must add its own error handling.
+
+### Fixed
+* **ichimoku accessor returns DataFrame** (PR #116): `df.ta.ichimoku()` now returns a DataFrame instead of a tuple.
+* **macdext silent double-fallback** (PR #121): Eliminated silent double-fallback for KAMA/MAMA matypes in `macdext`.
+
+### Documentation
+* **long_run / short_run / xsignals** (PR #119): Clarified `fast`/`slow` as pre-computed Series; added `xa`/`xb` range guidance.
+* **beta / correl benchmark** (PR #118): Documented that `benchmark` is required for non-`None` output.
+
+### Dependencies
+* **actions/checkout v7** (PR #122): Bumped from v6 to v7.
+
+---
+
+## [0.6.20] - 2026-05-21
+
+### Added
+* **`apply_offset` / `apply_fill` helpers** (PR #105): Extracted into `utils/` and all indicators migrated to use them. Removes ~200 lines of duplicated offset/fill logic.
+* **Comprehensive candle pattern tests** (PR #106): 59 TA-Lib candle patterns covered by CI tests.
+* **Fluent API chaining** (PR #113): DataFrame accessor supports method chaining.
+* **Property-based testing** (PR #114): Hypothesis-based tests added to test suite.
+* **Full Indicator Name Comments**: All 150 indicator files include full indicator names as comments on line 2 (format: `# Full Indicator Name (ABBREVIATION)`).
+* **UV Package Manager Support**: All documentation includes `uv` install instructions alongside `pip`.
+* **Native Candlestick Patterns**: Added native `cdl_doji` and `cdl_inside` implementations (no TA-Lib required). Accessible via `df.ta.cdl_doji()`, `df.ta.cdl_inside()`, or `df.ta.cdl_pattern()`.
 
 ### Changed
 * **Wilder smoothing shared utility** (PR #112 remediation): Extracted `wilder_smooth()` into `utils/_wilder.py` for TA-Lib-exact cumulative smoothing. Used by `dm.py` for PLUS_DM/MINUS_DM parity.
 * **Chained EMA helper** (PR #112 remediation): Added `_ema_chain()` to `overlap/ema.py` for consistent NaN-stripping in DEMA, TEMA, T3. Reduces repetitive boilerplate by ~60 lines.
 * **Fixture auto-regeneration**: `tests/__init__.py` now regenerates `expected_values.json` and `regression_snapshots.json` on import when TA-Lib is available. `make fixtures` and `make test-all` targets added to `Makefile`.
-* **`tal` → `talib` rename**: All test files now import `talib` directly instead of aliasing as `tal`, matching the source code convention.
+* **`tal` → `talib` rename**: All test files now import `talib` directly instead of aliasing as `tal`, matching source code convention.
 * **Dead code removal**: Removed ~370 instances of unused imports (F401), 8 unused local variables (F841), 1 duplicate method (`test_custom_a`), 65 useless f-string prefixes (F541), and 279 unnecessary UTF-8 encoding declarations (UP009).
 * **Code modernization**: Applied pyupgrade (UP) and flake8-return (RET) fixes — `Optional[X]`→`X|None`, `List`→`list`, removed redundant `else` after `return`.
 * **Linreg TA-Lib dispatch**: Replaced 6-branch `if`/`elif` chain with `_TALIB_DISPATCH` lookup dictionary.
-* **CPR numeric encoding** (PR #117): `calculate_price_position()` and `calculate_cpr_width()` now return `np.int8` instead of string labels. `CPR_POSITION`: `1` (above TC), `0` (inside CPR), `-1` (below BC). `CPR_WIDTH_CLASS`: `1` (wide), `0` (medium), `-1` (narrow). All indicator columns are now numeric.
 * **PSAR cleanup**: Removed `import numpy as _np` from function body; uses module-level `np` instead.
 * **test_strategy**: Fixed duplicate `test_custom_a` method (was shadowed, never ran). Fixed stale column count assertion.
-* **`AnalysisIndicators.__call__` fail-fast**: Removed `except BaseException: pass` swallowing all indicator errors. Indicator exceptions now propagate to callers instead of silently returning `None`. Code that relied on `df.ta.rsi()` never raising must add its own error handling.
+
+### Fixed
+* **TA-Lib-exact native implementations** (PR #112): Corrected native paths for many indicators to match TA-Lib output exactly.
+* **stdev variance calculation** (PR #109): `ddof` default updated to `False` for population variance.
+* **Modularity refactor** (PR #108): Issue #46 modularity improvements.
+* **Accessor usability** (PR #107): Issue #48 usability and docs fixes.
+* **Alpha Vantage integration** (PRs #110, #111): Support for both `alpha_vantage` and `alphaVantage` libraries; improved import checks and error handling.
+* **Feature fix PR #112** (PR #115): Follow-up corrections to the TA-Lib-exact implementation from PR #112.
+
+---
+
+## [0.5.44] - 2026-04-30
 
 ### Added
 * **TA-Lib / tulipy parity indicator set** (PR #104): Added wrappers and native implementations for `msw`, `fosc`, `macdext`, `macdfix`, `rocp`, `rocr`, `rocr100`, `stochf`, `avgprice`, `medprice`, `typprice`, `linregangle`, `linregintercept`, `linregslope`, `mavp`, `md`, `stderr`, `dx`, `edecay`, `plus_dm`, `minus_dm`, `sarext`, `avolume`, `cvi`, `hvol`, `emv`, `marketfi`, `vosc`, and `wad`.
-* **Math operator namespace**: Added `pandas_ta_classic/math/__init__.py` exposing arithmetic operators (`add`, `sub`, `mult`, `div`), rolling operators (`rolling_max`, `rolling_min`, `rolling_sum`), and math transforms for TA-Lib/tulipy compatibility.
+* **Math operator namespace**: Added `pandas_ta_classic/math/` exposing arithmetic operators (`add`, `sub`, `mult`, `div`), rolling operators (`rolling_max`, `rolling_min`, `rolling_sum`), and math transforms for TA-Lib/tulipy compatibility.
 * **Oracle parity suites**: Added `tests/test_oracle_talib.py` and `tests/test_oracle_tulipy.py` for cross-library validation on shared SPY fixtures.
-* **60 new native CDL pattern files** (PR #87): Added `candles/cdl_*.py` implementations for 60 patterns (the PR commit message says 59 — off by one due to `cdl_dojistar` being missed by a grep filter). Combined with the pre-existing `cdl_doji` and `cdl_inside`, the total accessible via `cdl_pattern()` is **62** (the `ALL_PATTERNS` list). TA-Lib is **never** used for CDL patterns — native implementations take priority in the dispatch chain regardless of whether TA-Lib is installed. Patterns are accessible via `df.ta.cdl_pattern(name=...)` (e.g. `df.ta.cdl_pattern(name="engulfing")`). Added shared `_cdl_math.py` helper for body/shadow calculations.
-* **5 Hilbert Transform cycle indicators** (PR #83): `ht_dcperiod`, `ht_dcphase`, `ht_phasor`, `ht_sine`, `ht_trendmode` — matching TA-Lib's HT family. All use a shared `_hilbert.py` helper module. Cycles category grows from 2 to 7.
+* **60 native CDL pattern files** (PR #87): Added `candles/cdl_*.py` implementations for 60 patterns. Combined with `cdl_doji` and `cdl_inside`, total accessible via `cdl_pattern()` is **62**. TA-Lib is **never** used for CDL patterns — native implementations take priority regardless of TA-Lib installation. Added shared `_cdl_math.py` helper.
+* **5 Hilbert Transform cycle indicators** (PR #83): `ht_dcperiod`, `ht_dcphase`, `ht_phasor`, `ht_sine`, `ht_trendmode`. Shared `_hilbert.py` helper. Cycles category grows from 2 to 7.
 * **MAMA / FAMA** (PR #84): MESA Adaptive Moving Average with FAMA output. Uses Ehlers' adaptive phase computation.
 * **HT_TRENDLINE** (PR #84): Hilbert Transform Instantaneous Trendline. Added to overlap category.
-* **TSF** (PR #85): Time Series Forecast indicator — linear regression projected one period ahead. Matches TA-Lib TSF.
+* **TSF** (PR #85): Time Series Forecast — linear regression projected one period ahead. Matches TA-Lib TSF.
 * **Beta** (PR #86): Asset volatility relative to a benchmark series. Matches TA-Lib BETA.
 * **CORREL** (PR #86): Pearson Correlation Coefficient between two series. Matches TA-Lib CORREL.
 * **ADXR** (PR #89): Average Directional Movement Index Rating — smoothed average of ADX. Matches TA-Lib ADXR.
 * **CPR** (PR #77): Central Pivot Range with 4 calculation methods (classic, camarilla, fibonacci, woodie).
-* **Chandelier Exit (CE)**: New volatility indicator (`ce`) implementing the classic Chuck Le Beau trailing stop. Computes `CE Long = rolling_max(high, length) - multiplier * ATR` and `CE Short = rolling_min(low, length) + multiplier * ATR`. Supports `mamode` for ATR smoothing, `offset`, and standard `fillna`/`fill_method` kwargs. Default parameters: `length=22`, `multiplier=3.0`. Available as both standalone `ta.ce(high, low, close)` and DataFrame extension `df.ta.ce(append=True)`. Returns a DataFrame with columns `CE_L_{length}_{multiplier}` and `CE_S_{length}_{multiplier}`.
-* **9 New Technical Indicators**: Added high-demand indicators from Issue #29 analysis:
-  - **LRSI** (Laguerre Relative Strength Index) - Momentum indicator with reduced lag using gamma parameter
-  - **PMAX** (Price Max) - Trend indicator combining moving average with ATR
-  - **VFI** (Volume Flow Indicator) - Money flow indicator analyzing volume direction
-  - **MMAR** (Madrid Moving Average Ribbon) - Multiple EMA ribbons for trend visualization
-  - **Rainbow** (Rainbow Charts) - Sequential SMA ribbons creating rainbow effect
-  - **PO** (Projection Oscillator) - Linear regression based momentum oscillator
-  - **DSP** (Detrended Synthetic Price) - Cycles indicator removing trend to reveal cycles
-  - **TRIXH** (TRIX Histogram) - Enhanced TRIX with signal line and histogram
-  - **VWMACD** (Volume Weighted MACD) - MACD variant using volume-weighted moving averages
-* **Full Indicator Name Comments**: All 150 indicator files now include full indicator names as comments on line 2 for improved code readability and documentation (format: `# Full Indicator Name (ABBREVIATION)`).
-* **UV Package Manager Support**: All documentation now includes installation instructions for both `uv` (recommended for faster installs) and traditional `pip`. This includes README.md, CONTRIBUTING.md, docs/installation.rst, docs/index.rst, index.md, and docs/indicators.rst.
-* **Automatic Version Management**: Package version is now automatically determined from git tags using `setuptools-scm`, eliminating manual version updates. Development builds get `.dev` suffix (e.g., `0.3.36.dev1`), while tagged releases use the tag version exactly (e.g., `0.4.0`). See the Version Management section in CONTRIBUTING.md for comprehensive documentation.
-* **Native Candlestick Patterns**: Added native implementations of `cdl_doji` and `cdl_inside` patterns that don't require TA-Lib installation. These can be accessed directly via `df.ta.cdl_doji()` and `df.ta.cdl_inside()`, or through the unified `df.ta.cdl_pattern()` interface. Native patterns join `cdl_z` and `ha` to provide 5 total TA-Lib-free candlestick indicators.
+* **Chandelier Exit** (`ce`): Trailing stop. `CE_L = rolling_max(high, length) - multiplier × ATR`, `CE_S = rolling_min(low, length) + multiplier × ATR`. Default `length=22`, `multiplier=3.0`. Returns DataFrame with `CE_L_{length}_{multiplier}` and `CE_S_{length}_{multiplier}`.
+* **9 New Technical Indicators** (Issue #29): LRSI (Laguerre RSI), PMAX (Price Max), VFI (Volume Flow Indicator), MMAR (Madrid Moving Average Ribbon), Rainbow (Rainbow Charts), PO (Projection Oscillator), DSP (Detrended Synthetic Price), TRIXH (TRIX Histogram), VWMACD (Volume Weighted MACD).
 
 ### Changed
-* **QQE output columns** (PR #97): `qqe()` now returns 6 columns instead of 3. New columns: `QQEb_l` (long band), `QQEb_s` (short band), `QQEd` (±1 trend direction). **Breaking change**: code relying on a fixed column count or positional indexing of the QQE DataFrame must be updated.
-* **Updated indicator counts**: 164 indicators in Category (was 151); total 224 with native CDL patterns (was 213 with TA-Lib patterns).
-* **`linreg` breaking default change**: The `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib's convention. Any caller using `linreg(close, angle=True)` without explicitly passing `degrees=False` will now receive degrees instead of radians.
-* **`stdev`/`variance` breaking default change**: The `ddof` parameter now defaults to `0` (population std/variance, was `1` sample std/variance) to match TA-Lib. Callers relying on the default sample variance must now pass `ddof=1` explicitly.
-* **`natr` breaking default change**: The `mamode` parameter now defaults to `'rma'` (Wilder smoothing, was `'ema'`) to match TA-Lib's NATR formula. Callers relying on the default EMA-based NATR must now pass `mamode='ema'` explicitly.
-* **TA-Lib preferred by default** for `adx`, `adxr`, `dm`, `linreg`, `stoch`: These indicators now default to `mode_tal=True`, meaning TA-Lib is used when installed. Previously they defaulted to `mode_tal=False` (native path). Callers with TA-Lib installed will now receive TA-Lib output unless they pass `talib=False` explicitly.
-* **Enhanced RVGI**: Relative Vigor Index now includes histogram column (RVGI - Signal) in addition to RVGI and Signal columns.
-* **Dynamic Category Discovery**: The `Category` dictionary in `_meta.py` is now built dynamically by scanning the filesystem structure. This eliminates manual maintenance, ensures it stays in sync with available indicators, and automatically discovered several previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
-* **Documentation Updates**: Updated README.md, docs/indicators.rst, and CONTRIBUTING.md to reflect dynamic discovery and correct indicator counts.
-* **Python Version Support**: Updated to Python (the latest stable plus the prior 4 versions) following a rolling 5-version support policy. Version requirements are now dynamically managed via CI/CD workflows (`LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`).
-* **Development Status**: Changed from Beta to Production/Stable in `pyproject.toml` to reflect library maturity.
+* **QQE output columns** (PR #97): `qqe()` now returns 6 columns instead of 3. New columns: `QQEb_l` (long band), `QQEb_s` (short band), `QQEd` (±1 trend direction). **Breaking change**: code relying on a fixed column count or positional indexing must be updated.
+* **Updated indicator counts**: 164 indicators in Category (was 151); total 224 with native CDL patterns (was 213).
+* **`linreg` breaking default change**: `degrees` kwarg now defaults to `True` (was `False`) to match TA-Lib. Callers using `linreg(close, angle=True)` without `degrees=False` will now receive degrees instead of radians.
+* **`stdev`/`variance` breaking default change**: `ddof` now defaults to `0` (population, was `1` sample) to match TA-Lib. Callers relying on sample variance must pass `ddof=1` explicitly.
+* **`natr` breaking default change**: `mamode` now defaults to `'rma'` (Wilder smoothing, was `'ema'`) to match TA-Lib. Callers relying on EMA-based NATR must pass `mamode='ema'` explicitly.
+* **TA-Lib preferred by default** for `adx`, `adxr`, `dm`, `linreg`, `stoch`: Default changed to `mode_tal=True`. Callers with TA-Lib installed receive TA-Lib output unless `talib=False` is passed.
+* **Enhanced RVGI**: Relative Vigor Index now includes histogram column (RVGI − Signal).
+* **Dynamic Category Discovery**: `Category` dict in `_meta.py` now built dynamically from filesystem structure. Auto-discovers previously undocumented indicators (`cdl_doji`, `cdl_inside`, `hwma`, `ma`, `drawdown`, `dm`, `vp`).
+* **Python Version Support**: Rolling 5-version support policy (LATEST-4 through LATEST). Managed dynamically via `LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`.
+* **Development Status**: Changed from Beta to Production/Stable in `pyproject.toml`.
 
 ### Performance
-* **numpy vectorization** (PR #88): 15 indicators (QQE, PSAR, HWC, HT_TRENDLINE, SSF, squeeze, squeeze_pro, RVGI, TD_SEQ, TOS_STDEVALL, ALMA, SINWMA, SWMA, TRIMA, VIDYA) now use `numpy` arrays and `sliding_window_view` instead of pandas `.iloc` loops. Adds shared `_sliding_weighted_ma()` utility.
-* **numba JIT acceleration** (PR #99): 10 indicators (SSF, MCGD, HWMA, RSX, PSAR, Supertrend, QQE, and 3 more) gain optional `@njit(cache=True)` JIT compilation via `numba`. A graceful no-op fallback in `utils/_njit.py` ensures identical results without numba. Enable with `pip install pandas-ta-classic[performance]`. Measured speedups: RSX 230×, HWMA 70×, MCGD 43×, SSF 42×, Supertrend 13×, QQE 10×, PSAR 6×.
+* **numpy vectorization** (PR #88): 15 indicators (QQE, PSAR, HWC, HT_TRENDLINE, SSF, squeeze, squeeze_pro, RVGI, TD_SEQ, TOS_STDEVALL, ALMA, SINWMA, SWMA, TRIMA, VIDYA) now use `sliding_window_view` instead of pandas `.iloc` loops. Adds shared `_sliding_weighted_ma()` utility.
+* **Numba JIT acceleration** (PR #99): 10 indicators (SSF, MCGD, HWMA, RSX, PSAR, Supertrend, QQE, and 3 more) gain optional `@njit(cache=True)` via numba. Graceful no-op fallback in `utils/_njit.py`. Enable with `pip install pandas-ta-classic[performance]`. Speedups: RSX 230×, HWMA 70×, MCGD 43×, SSF 42×, Supertrend 13×, QQE 10×, PSAR 6×.
 
 ### Fixed
-* **Oracle test policy**: Removed skip-based oracle tests and replaced them with explicit assertions for either value equivalence or expected, documented formula/seeding divergence. Test suite now runs with zero skipped tests.
-* **TA-Lib compatibility paths**: Added/updated `talib=True` compatibility behavior for `macdfix`, `psar`, `stochrsi`, `plus_dm`, `minus_dm`, and related oracle validations.
-* **Indicator formula parity**: Corrected `edecay` (multiplicative exponential decay), `emv` scaling (`divisor=10000` compatibility), and associated oracle expectations.
-* **Code of Conduct Contact Information**: Updated enforcement contact from original maintainer's email to GitHub Issues link, making it maintainer-agnostic and easier to manage as the project evolves.
-* **PyPI Release Version**: Fixed CI/CD workflow to use exact release tag version by setting `SETUPTOOLS_SCM_PRETEND_VERSION` environment variable. This prevents development versions (`.dev0`) from being published when `pyproject.toml` is modified during the build process. Releases now correctly use the clean tag version (e.g., `0.3.35` instead of `0.3.36.dev0`).
-* **Version Scheme Optimization**: Changed from `post-release` to default version scheme to avoid `.post0` suffix on tagged releases. Tagged releases now get clean version numbers (e.g., `0.3.35`), while commits after tags get development versions (e.g., `0.3.36.dev1`). This provides clearer distinction between releases and development builds.
-* **PyPI Image Display**: Updated README.md to use absolute GitHub URLs for images instead of relative paths, ensuring logo and example charts display correctly on PyPI package page.
-* **CI/CD Shallow Clone Issue**: Added `fetch-depth: 0` to all GitHub Actions checkout steps to ensure full git history is available for setuptools-scm. This prevents version detection failures in CI/CD pipelines.
-* **Version Fallback Compatibility**: Changed fallback version from `0.0.0.dev0` to `0.0.0` in both `pyproject.toml` and `_meta.py` to prevent invalid version strings that violate PEP 440. The clean `0.0.0` fallback is compatible with all version schemes.
+* **Oracle test policy**: Replaced skip-based oracle tests with explicit assertions for value equivalence or documented divergence. Zero skipped tests.
+* **TA-Lib compatibility paths**: Added/updated `talib=True` behavior for `macdfix`, `psar`, `stochrsi`, `plus_dm`, `minus_dm`.
+* **Indicator formula parity**: Corrected `edecay` (multiplicative exponential decay), `emv` scaling (`divisor=10000`).
 
-<br />
+---
 
-## **General**
+## [0.4.47] - 2026-03-17
+
+### Fixed
+* **Dependency cleanup, pandas 3.0 compat, Windows pool fix** (PR #79).
+* **Initialization and edge-case bugs** across 11 indicators (PR #80).
+* **Numerical bugs** in `linreg`, `tsi`, `brar`, `bbands`, `cti` (PR #94).
+* **TA-Lib reference alignment** for 8 indicators (PR #81).
+* **Rolling stats cross-version determinism**: Replaced pandas rolling stats with numpy (PR #82).
+* **None-guards** to prevent crashes on short/invalid input across 26 files (PR #95).
+* **print() → logging** across library code (PR #93). **Breaking**: code catching print output must switch to log capture.
+* **Strategy dataclass bugs** (PR #96). **Breaking**: some Strategy API surface changed.
+* **Code of Conduct Contact**: Updated enforcement contact from original maintainer email to GitHub Issues.
+* **PyPI Release Version**: Set `SETUPTOOLS_SCM_PRETEND_VERSION` from the release tag to prevent `.dev0` versions being published.
+* **Version Scheme**: Changed from post-release to default scheme. Tagged releases get clean versions (e.g., `0.4.47`); commits after a tag get `.devN` suffix.
+* **PyPI Image Display**: Updated README.md to use absolute GitHub URLs so images render correctly on the PyPI package page.
+* **CI/CD Shallow Clone**: Added `fetch-depth: 0` to all checkout steps to ensure full git history for setuptools-scm.
+* **Version Fallback**: Changed fallback from `0.0.0.dev0` to `0.0.0` (PEP 440 compliant).
+
+### Added
+* **Automatic Version Management**: Version now determined from git tags via `setuptools-scm`. Development builds get `.dev` suffix; tagged releases use the tag exactly. See CONTRIBUTING.md for documentation.
+
+---
+
+## [0.3.78] - 2026-02-27
+
+### Changed
+* **Type hints** (PR #67 by @rmarcink): Type annotations added across all public function signatures.
+
+---
+
+## Pre-0.3.78 — Historical
+
+> Items below describe the state of the library as inherited from the original `pandas-ta` project and pre-2026 development. Preserved for historical reference.
+
+### General
 * A __Strategy__ Class to help name and group your favorite indicators.
 * If a **TA Lib** is already installed, Pandas TA will run TA Lib's version. (**BETA**)
 * Some indicators have had their ```mamode``` _kwarg_ updated with more _moving average_ choices with the **Moving Average Utility** function ```ta.ma()```. For simplicity, all _choices_ are single source _moving averages_. This is primarily an internal utility used by indicators that have a ```mamode``` _kwarg_. This includes indicators: _accbands_, _amat_, _aobv_, _atr_, _bbands_, _bias_, _efi_, _hilo_, _kc_, _natr_, _qqe_, _rvi_, and _thermo_; the default ```mamode``` parameters have not changed. However, ```ta.ma()``` can be used by the user as well if needed. For more information: ```help(ta.ma)```
@@ -87,12 +144,12 @@ All notable changes to this project will be documented in this file.
 
 <br />
 
-## **Breaking / Depreciated Indicators**
+### Breaking / Depreciated Indicators
 * _Trend Return_ (**trend_return**) has been removed and replaced with **tsignals**. When given a trend Series like ```close > sma(close, 50)``` it returns the Trend, Trade Entries and Trade Exits of that trend to make it compatible with [**vectorbt**](https://github.com/polakowo/vectorbt) by setting ```asbool=True``` to get boolean Trade Entries and Exits. See ```help(ta.tsignals)```
 
 <br/>
 
-## **New Indicators**
+### New Indicators
 * _Arnaud Legoux Moving Average_ (**alma**) uses the curve of the Normal (Gauss) distribution to allow regulating the smoothness and high sensitivity of the indicator. See: ```help(ta.alma)```
 * _Draw Down_ (**drawdown**) calculates the percentage decline from the peak equity of a trading account, or fund. See ```help(ta.drawdown)```
 * _Candle Patterns_ (**cdl_pattern**) If TA Lib is installed, then all those Candle Patterns are available. See the list and examples above on how to call the patterns. See ```help(ta.cdl_pattern)```
@@ -113,7 +170,7 @@ of the last bars defined by the length parameter. See ```help(ta.tos_stdevall)``
 
 <br/>
 
-## **Updated Indicators**
+### Updated Indicators
 
 * _Acceleration Bands_ (**accbands**) Argument ```mamode``` renamed to ```mode```. See ```help(ta.accbands)```.
 * _ADX_ (**adx**): Added ```mamode``` with default "**RMA**" and with the same ```mamode``` options as TradingView. New argument ```lensig``` so it behaves like TradingView's builtin ADX indicator. See ```help(ta.adx)```.
