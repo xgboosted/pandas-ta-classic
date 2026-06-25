@@ -7,16 +7,12 @@ Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 - [Tutorial 1: Creating a Moving Average Crossover Strategy](#tutorial-1-creating-a-moving-average-crossover-strategy)
 - [Tutorial 2: Building a Custom Indicator Strategy](#tutorial-2-building-a-custom-indicator-strategy)
 - [Tutorial 3: Backtesting with Performance Metrics](#tutorial-3-backtesting-with-performance-metrics)
-- [Tutorial 4: Integrating with VectorBT](#tutorial-4-integrating-with-vectorbt)
-- [Tutorial 5: Multi-Timeframe Analysis](#tutorial-5-multi-timeframe-analysis)
-- [Tutorial 6: Creating Custom Indicators](#tutorial-6-creating-custom-indicators)
-- [Tutorial 7: Candlestick Pattern Recognition](#tutorial-7-candlestick-pattern-recognition)
-
-For integrating with **backtesting.py**, see the [backtesting.py integration guide](tutorials/backtesting_py).
-
-For integrating with **backtrader**, see the [backtrader integration guide](tutorials/backtrader).
-
-For integrating with **vectorbt**, see the [vectorbt integration guide](tutorials/vectorbt).
+- [Tutorial 4: Integrating with backtesting.py](#tutorial-4-integrating-with-backtestingpy)
+- [Tutorial 5: Integrating with backtrader](#tutorial-5-integrating-with-backtrader)
+- [Tutorial 6: Integrating with VectorBT](#tutorial-6-integrating-with-vectorbt)
+- [Tutorial 7: Multi-Timeframe Analysis](#tutorial-7-multi-timeframe-analysis)
+- [Tutorial 8: Creating Custom Indicators](#tutorial-8-creating-custom-indicators)
+- [Tutorial 9: Candlestick Pattern Recognition](#tutorial-9-candlestick-pattern-recognition)
 
 ```{toctree}
 :hidden:
@@ -349,7 +345,23 @@ print(f"{'='*50}")
 
 ---
 
-## Tutorial 4: Integrating with VectorBT
+## Tutorial 4: Integrating with backtesting.py
+
+Use pandas-ta-classic indicators with the backtesting.py framework via a bridge function.
+
+See the complete **[backtesting.py integration guide](tutorials/backtesting_py)** for a full walkthrough and runnable example (`examples/backtesting_py_strategy.py`).
+
+---
+
+## Tutorial 5: Integrating with backtrader
+
+Use pandas-ta-classic by precomputing indicators before passing data to cerebro.
+
+See the complete **[backtrader integration guide](tutorials/backtrader)** for a full walkthrough and runnable example (`examples/backtrader_strategy.py`).
+
+---
+
+## Tutorial 6: Integrating with VectorBT
 
 Use pandas-ta-classic indicators with the VectorBT backtesting framework.
 
@@ -442,7 +454,7 @@ portfolio.positions.plot(trace_kwargs=dict(name='Position')).show()
 
 ---
 
-## Tutorial 5: Multi-Timeframe Analysis
+## Tutorial 7: Multi-Timeframe Analysis
 
 Analyze different timeframes to confirm trends.
 
@@ -539,7 +551,7 @@ print(f"Bearish signals: {(df_hourly['mtf_signal'] == -1).sum()}")
 
 ---
 
-## Tutorial 6: Creating Custom Indicators
+## Tutorial 8: Creating Custom Indicators
 
 Build your own custom indicators using pandas-ta-classic as a foundation.
 
@@ -658,7 +670,7 @@ print(f"Bearish signals: {(df['signal'] == -1).sum()}")
 
 ---
 
-## Tutorial 7: Candlestick Pattern Recognition
+## Tutorial 9: Candlestick Pattern Recognition
 
 Identify Japanese candlestick patterns for trading signals.
 

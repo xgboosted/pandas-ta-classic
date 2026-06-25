@@ -188,9 +188,10 @@ boundary violations.
 
 .. code-block:: python
 
+   import hypothesis.strategies as st
    from hypothesis import assume, given, settings
 
-   @given(price_series(min_size=30, max_size=200), _small_positive_int)
+   @given(price_series(min_size=30, max_size=200), st.integers(min_value=2, max_value=20))
    @settings(max_examples=100)
    def test_my_indicator_output_invariant(s, length):
        assume(len(s) >= length + 2)

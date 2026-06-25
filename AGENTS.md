@@ -3,7 +3,7 @@
 ## Repository Context
 
 - **Project:** pandas-ta-classic — Community-maintained Python 3 technical analysis library with 250+ indicators across 10 categories (Candles, Cycles, Momentum, Overlap, Performance, Statistics, Trend, Volatility, Volume, Math) plus 60+ native candlestick patterns
-- **Main Language:** Python 3.9+ (rolling 5-version support: 3.10–3.14)
+- **Main Language:** Python 3.10+ (rolling 5-version support: 3.10–3.14)
 - **Coding Style:** PEP 8; type hints on all function signatures; f-strings preferred; pandas extension via `@pd.api.extensions.register_dataframe_accessor("ta")`
 - **Architecture:** Modular — indicators organized by category subpackage (e.g., `pandas_ta_classic/momentum/rsi.py`); dynamic category discovery via `_meta.py`; all indicators exposed through `pandas_ta_classic` namespace
 - **Testing:** pytest (primary, matches CI). Run `pytest tests/ -v` for full suite (oracle deps required; see Validation section), or the smallest relevant test module for the changed area (e.g., `pytest tests/test_indicator_momentum.py -v`). Hypothesis property-based tests also use pytest.
