@@ -6,9 +6,7 @@ from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
-def sqrt(
-    close: Series, offset: Optional[int] = None, **kwargs: Any
-) -> Optional[Series]:
+def sqrt(close: Series, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]:
     """Vector Square Root (TA-Lib: SQRT)."""
     close = verify_series(close)
     if close is None:

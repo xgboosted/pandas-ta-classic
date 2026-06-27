@@ -6,9 +6,7 @@ from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
-def cosh(
-    close: Series, offset: Optional[int] = None, **kwargs: Any
-) -> Optional[Series]:
+def cosh(close: Series, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]:
     """Vector Trigonometric Cosh (TA-Lib: COSH)."""
     close = verify_series(close)
     if close is None:

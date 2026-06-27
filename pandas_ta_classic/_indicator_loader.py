@@ -23,9 +23,7 @@ _SERIES_COLUMN_PARAMS: dict[str, tuple] = {
 }
 
 # Reverse lookup: indicator name → category name (built once at import)
-_INDICATOR_TO_CATEGORY: dict[str, str] = {
-    ind: cat for cat, indicators in Category.items() for ind in indicators
-}
+_INDICATOR_TO_CATEGORY: dict[str, str] = {ind: cat for cat, indicators in Category.items() for ind in indicators}
 
 
 def _find_indicator_func(name: str) -> Optional[Callable]:
@@ -65,17 +63,12 @@ def _make_ta_wrapper(func: Callable) -> Callable:
     # the function) or (b) the caller explicitly passes open=<col> in kwargs.
     _ALWAYS_FETCH = {"close", "high", "low", "volume"}
     col_params_required = [
-        p
-        for p in sig.parameters
-        if p in _COLUMN_PARAM_TO_COL_KEY
-        and (p in _ALWAYS_FETCH or sig.parameters[p].default is inspect.Parameter.empty)
+        p for p in sig.parameters if p in _COLUMN_PARAM_TO_COL_KEY and (p in _ALWAYS_FETCH or sig.parameters[p].default is inspect.Parameter.empty)
     ]
     col_params_optional = [
         p
         for p in sig.parameters
-        if p in _COLUMN_PARAM_TO_COL_KEY
-        and p not in _ALWAYS_FETCH
-        and sig.parameters[p].default is not inspect.Parameter.empty
+        if p in _COLUMN_PARAM_TO_COL_KEY and p not in _ALWAYS_FETCH and sig.parameters[p].default is not inspect.Parameter.empty
     ]
     # Ordered list of non-column positional/keyword parameters (for *args binding)
     non_col_positional = [
