@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 """Generate pandas_ta_classic/core.pyi from indicator function signatures."""
-import importlib
 import inspect
 import sys
+import types
+import typing
+
+# PEP 604 union type added in Python 3.10. Guard for back-compat.
+_UNION_TYPE = getattr(types, "UnionType", None)
 from pathlib import Path
 
 # Ensure the project root is on sys.path
@@ -50,21 +54,59 @@ def _build_method_stub(name: str, func) -> str:
     return f"    def {name}({params_str}) -> {ret}: ..."
 
 
+_BARE_NAME_OVERRIDES = {
+    "Series": "Series",
+    "DataFrame": "DataFrame",
+    "Sequence": "Sequence",
+    "NoneType": "None",
+}
+
+
 def _format_annotation(ann) -> str:
+    """Render an annotation as a canonical, Python-version-independent string.
+
+    Reconstructs the stub form from the typing API (``get_origin`` /
+    ``get_args``) instead of relying on ``str(ann)``, whose output changed
+    between Python 3.13 and 3.14 (``Optional[int]`` -> ``int | None``,
+    ``Series`` -> ``pandas.Series``). The reconstruction normalises:
+
+    * ``Union[X, None]`` and ``X | None`` -> ``Optional[X]``
+    * ``Union[A, B, None]`` -> ``Optional[Union[A, B]]``
+    * Any pandas Series / DataFrame fully-qualified name -> bare class
+    * ``typing.Sequence`` and ``collections.abc.Sequence`` -> ``Sequence``
+    """
     if ann is type(None):
         return "None"
-    if hasattr(ann, "__origin__"):
-        raw = str(ann).replace("typing.", "")
-        raw = raw.replace("pandas.core.series.Series", "Series")
-        raw = raw.replace("pandas.core.frame.DataFrame", "DataFrame")
-        raw = raw.replace("NoneType", "None")
-        raw = raw.replace("collections.abc.Sequence", "Sequence")
-        return raw
-    name = getattr(ann, "__name__", None) or str(ann)
-    # Normalise fully-qualified pandas names
-    name = name.replace("pandas.core.series.Series", "Series")
-    name = name.replace("pandas.core.frame.DataFrame", "DataFrame")
-    return name
+
+    origin = typing.get_origin(ann)
+    args = typing.get_args(ann)
+
+    # Union / PEP 604 X | Y
+    if origin is typing.Union or (_UNION_TYPE is not None and origin is _UNION_TYPE):
+        non_none = [a for a in args if a is not type(None)]
+        has_none = len(non_none) < len(args)
+        if has_none and len(non_none) == 1:
+            return f"Optional[{_format_annotation(non_none[0])}]"
+        if has_none:
+            inner = ", ".join(_format_annotation(a) for a in non_none)
+            return f"Optional[Union[{inner}]]"
+        inner = ", ".join(_format_annotation(a) for a in args)
+        return f"Union[{inner}]"
+
+    # Generic alias (List[X], Tuple[X, Y], dict[K, V], ...)
+    if origin is not None:
+        origin_name = getattr(origin, "__name__", None) or str(origin).rsplit(".", 1)[-1]
+        # typing aliases like typing.List/Tuple expose origin = list/tuple
+        if origin_name in ("list", "tuple", "dict", "set", "frozenset", "type"):
+            origin_str = origin_name
+        else:
+            origin_str = origin_name
+        inner = ", ".join(_format_annotation(a) for a in args) if args else ""
+        return f"{origin_str}[{inner}]" if inner else origin_str
+
+    # Bare class
+    name = getattr(ann, "__name__", None) or str(ann).replace("typing.", "")
+    return _BARE_NAME_OVERRIDES.get(name, name)
 
 
 def main():
