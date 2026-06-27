@@ -52,7 +52,11 @@ if str(_PROJECT_ROOT) not in sys.path:
 import numpy as np
 import pandas as pd
 import talib
-import tulipy as ti
+try:
+    import tulipy as ti
+    _HAS_TULIPY = True
+except ImportError:
+    _HAS_TULIPY = False
 
 import pandas_ta_classic as ta
 
@@ -375,8 +379,11 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
 
     # ---- Momentum -------------------------------------------------------
     # CMO_14: Tulip C library (direct rolling sum — matches pta talib=False)
-    _ti_cmo14 = ti.cmo(cv, 14)
-    _cmo14_ref = np.concatenate([np.full(len(cv) - len(_ti_cmo14), np.nan), _ti_cmo14])
+    if _HAS_TULIPY:
+        _ti_cmo14 = ti.cmo(cv, 14)
+        _cmo14_ref = np.concatenate([np.full(len(cv) - len(_ti_cmo14), np.nan), _ti_cmo14])
+    else:
+        _cmo14_ref = None
 
     # COPPOCK: WMA(ROC(14) + ROC(11), 10)
     _coppock_ref = talib.WMA(talib.ROC(cv, 14) + talib.ROC(cv, 11), 10)
@@ -707,7 +714,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             ta.ppo(c),
         ),
         ("trix", _df(TRIX_30_9=_trix_line, TRIXs_30_9=_trix_sig), ta.trix(c)),
-        ("cmo_14", _s(_cmo14_ref, "CMO_14"), ta.cmo(c, length=14, talib=False)),
+        *([("cmo_14", _s(_cmo14_ref, "CMO_14"), ta.cmo(c, length=14, talib=False))] if _cmo14_ref is not None else []),
         ("coppock", _s(_coppock_ref, "COPC_11_14_10"), ta.coppock(c)),
         ("cg", _s(_cg10_ref, "CG_10"), ta.cg(c)),
         ("pgo_14", _s(_pgo14_ref, "PGO_14"), ta.pgo(h, l, c, length=14)),
@@ -1264,7 +1271,15 @@ def _serialise(value_ref, count_ref=None) -> dict:
 
 def generate() -> None:
     df = _load()
-    fixtures: dict[str, dict] = {}
+    out_path = Path(__file__).parent / "expected_values.json"
+
+    # Merge-mode: load existing fixtures (if any) so optional-dependency keys
+    # (e.g. cmo_14 when tulipy is absent) are preserved across regenerations.
+    if out_path.exists():
+        with open(out_path) as fh:
+            fixtures: dict[str, dict] = json.load(fh)
+    else:
+        fixtures = {}
 
     for key, value_ref, count_ref in _indicators(df):
         if value_ref is None:
@@ -1274,7 +1289,6 @@ def generate() -> None:
         col_summary = list(fixtures[key].keys())
         print(f"  OK    {key!r:30s}  cols={col_summary}")
 
-    out_path = Path(__file__).parent / "expected_values.json"
     with open(out_path, "w") as fh:
         json.dump(fixtures, fh, indent=2)
     print(f"\nWrote {len(fixtures)} fixtures → {out_path}")

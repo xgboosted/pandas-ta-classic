@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generate regression snapshot values for test_regression.py.
 
@@ -73,7 +75,14 @@ def generate() -> None:
     df = _load()
     indicators = _indicators(df)
 
-    snapshots: dict[str, dict] = {}
+    # Merge-mode: load existing snapshots (if any) so optional-dependency keys
+    # (e.g. cmo_14 when tulipy is absent) are preserved across regenerations.
+    if _OUT_PATH.exists():
+        with open(_OUT_PATH) as fh:
+            snapshots: dict[str, dict] = json.load(fh)
+    else:
+        snapshots = {}
+
     for key, ref, actual in indicators:
         # For regression indicators, ref IS the native result (actual is None).
         # For reference indicators, actual is the native result.
