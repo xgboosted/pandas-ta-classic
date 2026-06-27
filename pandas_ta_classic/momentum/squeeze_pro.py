@@ -2,7 +2,7 @@
 from typing import Any, Optional
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.momentum import mom
+from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.momentum.squeeze import (
     _pos_float,
     _pos_int,
@@ -11,7 +11,8 @@ from pandas_ta_classic.momentum.squeeze import (
 )
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.volatility import bbands, kc
+from pandas_ta_classic.volatility.bbands import bbands
+from pandas_ta_classic.volatility.kc import kc
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset
 from pandas_ta_classic.utils import verify_series
 

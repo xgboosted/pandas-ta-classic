@@ -1,7 +1,11 @@
 # Q Stick (QSTICK)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.overlap import dema, ema, hma, rma, sma
+from pandas_ta_classic.overlap.dema import dema
+from pandas_ta_classic.overlap.ema import ema
+from pandas_ta_classic.overlap.hma import hma
+from pandas_ta_classic.overlap.rma import rma
+from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

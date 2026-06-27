@@ -2,7 +2,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.volatility import rvi
+from pandas_ta_classic.volatility.rvi import rvi
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
