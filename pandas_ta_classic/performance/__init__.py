@@ -1,3 +1,3 @@
-from .drawdown import drawdown
-from .log_return import log_return
-from .percent_return import percent_return
+from pandas_ta_classic._lazy_subpackage import install_lazy_subpackage
+
+install_lazy_subpackage(__name__)

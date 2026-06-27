@@ -64,6 +64,7 @@ _CANDLE_TOP_LEVEL = {"cdl_doji", "cdl_inside", "cdl_pattern", "cdl_z", "ha"}
 _VALID_CATEGORIES = {
     "candles",
     "cycles",
+    "math",
     "momentum",
     "overlap",
     "performance",
