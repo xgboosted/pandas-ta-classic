@@ -9,6 +9,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **backtesting.py integration** (PR #124 by @Adhyansinghgupta): Bridge function (`ta_bridge`), `SMACrossover` example strategy (`examples/backtesting_py_strategy.py`), and integration tutorial (`docs/tutorials/backtesting_py.md`). Added `backtesting` to `integration` optional dependencies.
 * **backtrader integration** (`docs/tutorials/backtrader.md`, `examples/backtrader_strategy.py`): Precompute-then-feed pattern using dynamic `PandasData` subclass (`make_feed()`); covers single-output, multi-output (MACD), and OHLCV-dependent (ATR) indicators. Added `backtrader` to `integration` optional dependencies.
 * **vectorbt integration tutorial** (`docs/tutorials/vectorbt.md`): Documented the `df.ta.tsignals()` → `vbt.Portfolio.from_signals()` integration pattern, including multi-output indicator handling and benchmark comparison.
+* **Type stubs for `AnalysisIndicators`** (`pandas_ta_classic/core.pyi`): IDE autocomplete and mypy now see full method signatures for every indicator.
+
+### Changed
+* **Faster cold import (~3–4×)**: `import pandas_ta_classic` takes ~280 ms (was ~930 ms) because indicator functions load on demand. Public API unchanged.
+* **Math operators individually importable**: Each math/trig operator (`add`, `sub`, `mult`, `div`, `rolling_max/min/sum`, `acos`, `cos`, `exp`, `ln`, …) now lives in its own submodule, e.g. `from pandas_ta_classic.math.add import add`.
+
+### Deprecated
+* **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
+
+### Fixed
+* **Cross-package indicator imports**: A submodule import could overwrite a re-exported function of the same name on the parent package (e.g. `from pandas_ta_classic.volatility import atr` occasionally returned the `atr` *module* instead of the function). Resolved.
+* **Test-fixture regen no longer drops `cmo_14` entries** when running tests without tulipy installed. Generators now merge with existing JSON instead of overwriting.
 
 ## [0.6.52] - 2026-06-25
 
