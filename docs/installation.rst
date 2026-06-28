@@ -123,13 +123,15 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
      - Effect when installed
    * - TA-Lib
      - **Acceleration backend + oracle**
-      - 59 core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
+     - 59 core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
    * - tulipy
      - **Oracle only**
      - Never used as computation backend; only ``test_oracle_tulipy.py`` uses it to verify native output
 
+.. _installing ta-lib:
+
 Installing TA-Lib
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 TA-Lib has a **dual role**: acceleration backend for 59 core indicators (opt-in via ``talib=True``), and parity oracle. The two behavioural areas affected are:
 
@@ -170,7 +172,7 @@ Using ``pip``:
 **Note**: If you encounter installation issues with TA-Lib, refer to the `TA-Lib installation guide <https://github.com/mrjbq7/ta-lib#installation>`_.
 
 Installing tulipy
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 tulipy is an **oracle-only** library. It is never used as a computation backend — its sole purpose is ``test_oracle_tulipy.py``, which verifies that native indicator output matches tulipy's reference values.
 

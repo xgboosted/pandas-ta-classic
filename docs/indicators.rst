@@ -1,5 +1,5 @@
 Indicators Reference
-===================
+====================
 
 **Pandas TA Classic** includes 224 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (284 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
@@ -12,7 +12,7 @@ Indicators Reference
 * **Trend** (26) - Trend identification and direction indicators
 * **Volatility** (18) - Volatility and range-based indicators
 * **Volume** (20) - Volume analysis indicators
-* **Math** (28) - Element-wise math operators and transforms
+* **Math** (31) - Element-wise math operators and transforms
 
 .. note::
    The category system now uses **dynamic discovery** - indicators are automatically detected from the package structure, ensuring the list is always up-to-date with available indicators.

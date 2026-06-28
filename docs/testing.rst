@@ -4,7 +4,9 @@ Testing
 **Pandas TA Classic** uses a multi-layered testing strategy to ensure
 indicator correctness, robustness, and reliability.
 
-.. contents:: :local: :depth: 1
+.. contents::
+   :local:
+   :depth: 1
 
 
 Unit Tests

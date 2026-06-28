@@ -25,6 +25,7 @@ tutorials/vectorbt
 
 ---
 
+(tutorial-1-creating-a-moving-average-crossover-strategy)=
 ## Tutorial 1: Creating a Moving Average Crossover Strategy
 
 Learn to create a classic moving average crossover trading strategy.
@@ -111,6 +112,7 @@ plt.show()
 
 ---
 
+(tutorial-2-building-a-custom-indicator-strategy)=
 ## Tutorial 2: Building a Custom Indicator Strategy
 
 Create a comprehensive strategy using multiple indicators.
@@ -219,6 +221,7 @@ print(f"Strong bullish signals: {len(strong_bullish)}")
 
 ---
 
+(tutorial-3-backtesting-with-performance-metrics)=
 ## Tutorial 3: Backtesting with Performance Metrics
 
 Calculate returns and performance metrics for your strategy.
@@ -345,6 +348,7 @@ print(f"{'='*50}")
 
 ---
 
+(tutorial-4-integrating-with-backtestingpy)=
 ## Tutorial 4: Integrating with backtesting.py
 
 Use pandas-ta-classic indicators with the backtesting.py framework via a bridge function.
@@ -353,6 +357,7 @@ See the complete **[backtesting.py integration guide](tutorials/backtesting_py)*
 
 ---
 
+(tutorial-5-integrating-with-backtrader)=
 ## Tutorial 5: Integrating with backtrader
 
 Use pandas-ta-classic by precomputing indicators before passing data to cerebro.
@@ -361,6 +366,7 @@ See the complete **[backtrader integration guide](tutorials/backtrader)** for a 
 
 ---
 
+(tutorial-6-integrating-with-vectorbt)=
 ## Tutorial 6: Integrating with VectorBT
 
 Use pandas-ta-classic indicators with the VectorBT backtesting framework.
@@ -454,6 +460,7 @@ portfolio.positions.plot(trace_kwargs=dict(name='Position')).show()
 
 ---
 
+(tutorial-7-multi-timeframe-analysis)=
 ## Tutorial 7: Multi-Timeframe Analysis
 
 Analyze different timeframes to confirm trends.
@@ -551,6 +558,7 @@ print(f"Bearish signals: {(df_hourly['mtf_signal'] == -1).sum()}")
 
 ---
 
+(tutorial-8-creating-custom-indicators)=
 ## Tutorial 8: Creating Custom Indicators
 
 Build your own custom indicators using pandas-ta-classic as a foundation.
@@ -670,6 +678,7 @@ print(f"Bearish signals: {(df['signal'] == -1).sum()}")
 
 ---
 
+(tutorial-9-candlestick-pattern-recognition)=
 ## Tutorial 9: Candlestick Pattern Recognition
 
 Identify Japanese candlestick patterns for trading signals.

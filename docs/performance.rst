@@ -1,5 +1,5 @@
 Performance Metrics
-==================
+===================
 
 Performance Metrics return a *float* and are *not* part of the *DataFrame* Extension. They are called the Standard way. The DataFrame must have a **DatetimeIndex** for time-based metrics such as ``cagr``.
 

@@ -10,10 +10,12 @@ Welcome to **Pandas TA Classic**! This guide will help you get started quickly w
 - [Common Use Cases](#common-use-cases)
 - [Next Steps](#next-steps)
 
+(installation)=
 ## Installation
 
 See the [Installation](installation.rst) page for full installation instructions, optional dependencies (TA-Lib, tulipy, yfinance, numba), and development setup.
 
+(your-first-indicators)=
 ## Your First Indicators
 
 ### Method 1: Standard Approach (Explicit)
@@ -127,6 +129,7 @@ df.ta.chain().sma(20).ta.unchain().ta.rsi(14)  # RSI returned as Series
 - ``unchain()`` exits chain mode, returning the DataFrame for normal use.
 - All kwargs like ``prefix``, ``suffix``, and ``col_names`` work as usual.
 
+(working-with-real-data)=
 ## Working with Real Data
 
 ### Using yfinance (Recommended)
@@ -182,6 +185,7 @@ df.ta.sma(length=20, append=True)
 df.ta.atr(length=14, append=True) # Average True Range
 ```
 
+(common-use-cases)=
 ## Common Use Cases
 
 ### 1. Trend Following
@@ -424,6 +428,7 @@ pip install TA-Lib
 pip install TA_Lib-0.4.XX-cpXX-cpXX-win_amd64.whl
 ```
 
+(next-steps)=
 ## Next Steps
 
 Now that you've got the basics, explore more:
