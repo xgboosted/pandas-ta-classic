@@ -1,7 +1,7 @@
 Indicators Reference
 ===================
 
-**Pandas TA Classic** includes 193 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (253 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
+**Pandas TA Classic** includes 224 indicators in the Category system plus 62 CDL patterns accessible via ``cdl_pattern()`` (284 unique total — ``cdl_doji`` and ``cdl_inside`` are counted in both) organized into the following categories:
 
 * **Candles** (5 wrappers + 62 native CDL patterns) - Category count includes wrapper/accessor indicators (``cdl_pattern``, ``cdl_doji``, ``cdl_inside``, ``cdl_z``, ``ha``). The 62 pattern names are exposed through ``cdl_pattern()``.
 * **Cycles** (8) - Cycle-based and Hilbert Transform indicators  
@@ -319,11 +319,15 @@ Volume analysis indicators:
 * *Volume Profile*: **vp**
 * *Williams Accumulation/Distribution*: **wad**
 
-Math (28)
+Math (31)
 ---------
 
-Element-wise arithmetic operators, rolling aggregation, and mathematical transforms.
-All functions are available via ``df.ta.<name>()``.
+Element-wise math operators, rolling aggregations, and mathematical transforms.
+
+.. note::
+   Each operator lives in its own submodule (e.g., ``from pandas_ta_classic.math.add import add``).
+   Aliases ``max``, ``min``, ``sum`` resolve to ``rolling_max``, ``rolling_min``, ``rolling_sum``
+   (matching TA-Lib ``MAX``, ``MIN``, ``SUM`` names).
 
 Element-wise binary operators:
 
@@ -355,6 +359,21 @@ Mathematical transforms (wrapping NumPy / SciPy math, TA-Lib ``MATH TRANSFORM`` 
 * *Square Root*: **sqrt**
 * *Tangent*: **tan**
 * *Hyperbolic Tangent*: **tanh**
+
+Index / position operators (TA-Lib ``MATH OPERATORS`` group):
+
+* *Maximum Index*: **maxindex** — index of rolling maximum over a window
+* *Minimum Index*: **minindex** — index of rolling minimum over a window
+* *Min-Max*: **minmax** — rolling minimum and maximum over a window
+* *Min-Max Index*: **minmaxindex** — indices of rolling min/max over a window
+
+Tulipy extras (NumPy wrappers):
+
+* *Absolute Value*: **npabs** — element-wise absolute value (tulipy: ``abs``)
+* *Round*: **npround** — element-wise rounding (tulipy: ``round``)
+* *Truncate*: **trunc** — element-wise truncation toward zero
+* *To Degrees*: **todeg** — convert radians to degrees
+* *To Radians*: **torad** — convert degrees to radians
 
 Utility / signal functions (accessible directly or via ``df.ta``):
 

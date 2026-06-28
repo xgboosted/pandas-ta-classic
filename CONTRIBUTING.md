@@ -73,13 +73,15 @@ We welcome contributions from the community! This document provides guidelines a
 ### 1. Code Contributions
 
 #### New Indicators
-- Add indicators to the appropriate category module (momentum, overlap, trend, etc.)
+- Each indicator lives in its own file under the appropriate category directory (e.g., `pandas_ta_classic/momentum/new_indicator.py`). One public function per file matching the indicator name.
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
 > **Note:** The library uses **dynamic category discovery** via `_build_category_dict()` in `_meta.py`. When you add a new indicator file to any category folder (e.g., `pandas_ta_classic/momentum/new_indicator.py`), it will automatically be detected and included in the `Category` dictionary. Just ensure your file is in the correct category folder!
+
+> **Cross-package imports:** When one indicator imports another from a different category (e.g., ADX importing ATR), use the fully-qualified submodule path: `from pandas_ta_classic.volatility.atr import atr` — not `from pandas_ta_classic.volatility import atr`. The short form can return the module object instead of the function.
 
 #### Bug Fixes
 - Reference the issue number in your commit message
