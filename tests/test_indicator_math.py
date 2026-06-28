@@ -127,6 +127,24 @@ class TestMath(TestCase):
         if HAS_TALIB:
             assert_talib(self, result, talib.SUM(self.close, 30))
 
+    def test_rolling_max_length_invalid_raises(self):
+        with self.assertRaises(ValueError):
+            pandas_ta.rolling_max(self.close, length=0)
+        with self.assertRaises(ValueError):
+            pandas_ta.rolling_max(self.close, length=-5)
+
+    def test_rolling_min_length_invalid_raises(self):
+        with self.assertRaises(ValueError):
+            pandas_ta.rolling_min(self.close, length=0)
+        with self.assertRaises(ValueError):
+            pandas_ta.rolling_min(self.close, length=-5)
+
+    def test_rolling_sum_length_invalid_raises(self):
+        with self.assertRaises(ValueError):
+            pandas_ta.rolling_sum(self.close, length=0)
+        with self.assertRaises(ValueError):
+            pandas_ta.rolling_sum(self.close, length=-5)
+
     def test_maxindex(self):
         assert_indicator_standard(
             self,

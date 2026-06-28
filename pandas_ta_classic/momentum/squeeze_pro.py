@@ -3,12 +3,8 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.mom import mom
-from pandas_ta_classic.momentum.squeeze import (
-    _pos_float,
-    _pos_int,
-    _squeeze_detailed,
-    _squeeze_simplify_columns,
-)
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simplify_columns
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.volatility.bbands import bbands

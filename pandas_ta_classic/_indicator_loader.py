@@ -22,6 +22,8 @@ _SERIES_COLUMN_PARAMS: dict[str, tuple] = {
     "series_b": (("b", "series_b"), "close"),
 }
 
+_ALWAYS_FETCH: frozenset[str] = frozenset({"close", "high", "low", "volume"})
+
 # Reverse lookup: indicator name → category name (built once at import)
 _INDICATOR_TO_CATEGORY: dict[str, str] = {ind: cat for cat, indicators in Category.items() for ind in indicators}
 _INDICATOR_TO_CATEGORY.update({alias: "math" for alias in _MATH_ALIASES})
@@ -54,7 +56,6 @@ def _make_ta_wrapper(func: Callable) -> Callable:
     #   - it is one of the primary OHLCV columns (close, high, low, volume).
     # open_ is optional: only fetched when (a) it has no default (required by
     # the function) or (b) the caller explicitly passes open=<col> in kwargs.
-    _ALWAYS_FETCH = {"close", "high", "low", "volume"}
     col_params_required = [
         p for p in sig.parameters if p in _COLUMN_PARAM_TO_COL_KEY and (p in _ALWAYS_FETCH or sig.parameters[p].default is inspect.Parameter.empty)
     ]
@@ -90,6 +91,8 @@ def _make_ta_wrapper(func: Callable) -> Callable:
         for param_name in col_params_required:
             col_key = _COLUMN_PARAM_TO_COL_KEY[param_name]
             col_val = kwargs.pop(col_key, col_key)
+            if col_val is None:
+                raise ValueError(f"'{col_key}' cannot be None; pass a Series or column name string")
             call_kwargs[param_name] = self._get_column(col_val)
         # Extract optional column values only when explicitly requested by user
         for param_name in col_params_optional:

@@ -13,7 +13,7 @@ from numpy import log10 as npLog10
 from numpy import ndarray as npNdarray
 from pandas.core.base import PandasObject
 
-from pandas_ta_classic._meta import Category, Imports, version
+from pandas_ta_classic._meta import Category, Imports, version, _MATH_ALIASES
 from pandas_ta_classic._indicator_loader import _find_indicator_func, _make_ta_wrapper
 from pandas_ta_classic.utils import *
 
@@ -935,8 +935,11 @@ class AnalysisIndicators(BasePandasObject):
         wrapper = _make_ta_wrapper(func)
         wrapper.__name__ = name
         wrapper.__qualname__ = f"AnalysisIndicators.{name}"
-        # Cache on the class so future calls bypass __getattr__
-        setattr(type(self), name, wrapper)
+        # Cache on the class so future calls bypass __getattr__.
+        # Aliases (max/min/sum) are intentionally excluded: caching them on
+        # the class would permanently shadow Python builtins at the class level.
+        if name not in _MATH_ALIASES:
+            setattr(type(self), name, wrapper)
         return wrapper.__get__(self, type(self))
 
     # ichimoku is the only explicit wrapper left: it returns a (Series, DataFrame)

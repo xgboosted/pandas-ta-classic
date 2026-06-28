@@ -78,6 +78,17 @@ class TestLazySubpackage(unittest.TestCase):
         for name in ("sma", "ema", "wma"):
             self.assertIn(name, names, f"{name!r} must appear in dir(overlap)")
 
+    def test_all_excludes_aliases(self):
+        """__all__ must exclude aliases so wildcard imports don't shadow builtins."""
+        import pandas_ta_classic.math
+
+        self.assertNotIn("max", pandas_ta_classic.math.__all__)
+        self.assertNotIn("min", pandas_ta_classic.math.__all__)
+        self.assertNotIn("sum", pandas_ta_classic.math.__all__)
+        self.assertIn("rolling_max", pandas_ta_classic.math.__all__)
+        self.assertIn("rolling_min", pandas_ta_classic.math.__all__)
+        self.assertIn("rolling_sum", pandas_ta_classic.math.__all__)
+
 
 # ---------------------------------------------------------------------------
 # _indicator_loader tests
@@ -119,6 +130,24 @@ class TestIndicatorLoader(unittest.TestCase):
         result2 = df2.ta.sma(length=10)
         self.assertIsNotNone(result2)
         self.assertEqual(len(result), len(result2))
+
+    def test_aliases_not_cached_on_class(self):
+        """max/min/sum must NOT be cached as class attributes to prevent builtin shadowing."""
+        df = get_sample_data()
+        df.ta.max(length=5)
+        df.ta.min(length=5)
+        df.ta.sum(length=5)
+
+        cls = type(df.ta)
+        self.assertNotIn("max", vars(cls), "max must not be cached on AnalysisIndicators")
+        self.assertNotIn("min", vars(cls), "min must not be cached on AnalysisIndicators")
+        self.assertNotIn("sum", vars(cls), "sum must not be cached on AnalysisIndicators")
+
+    def test_required_column_none_raises(self):
+        """Passing close=None to a required column param must raise ValueError."""
+        df = get_sample_data()
+        with self.assertRaises(ValueError):
+            df.ta.rsi(close=None)
 
 
 # ---------------------------------------------------------------------------

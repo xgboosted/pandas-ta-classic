@@ -75,6 +75,8 @@ def install_lazy_subpackage(
 
         def __getattr__(self, name: str) -> Any:
             pkg = object.__getattribute__(self, "__name__")
+            if name not in _known_names:
+                raise AttributeError(f"module {pkg!r} has no attribute {name!r}")
             if name in special_map:
                 submod_name, attr = special_map[name]
                 mod = importlib.import_module(f"{pkg}.{submod_name}")
@@ -85,7 +87,7 @@ def install_lazy_subpackage(
             try:
                 mod = importlib.import_module(f"{pkg}.{canonical}")
                 func = getattr(mod, canonical, None)
-                if func is not None:
+                if func is not None and callable(func):
                     object.__setattr__(self, name, func)
                     return func
             except ModuleNotFoundError:
@@ -99,7 +101,9 @@ def install_lazy_subpackage(
 
     new_mod = _LazySubpackage(module_name)
     # Expose all lazily-loadable names so `from pkg import *` works without prior access.
-    new_mod.__all__ = sorted(_known_names)
+    # Exclude aliases (e.g. max/min/sum) from __all__: wildcard import would
+    # shadow Python builtins. They remain accessible via explicit attribute access.
+    new_mod.__all__ = sorted(_known_names - aliases_map.keys())
     # Copy module attributes from the original so docstring, path, spec, etc. survive.
     new_mod.__doc__ = getattr(original, "__doc__", None)
     if hasattr(original, "__path__"):

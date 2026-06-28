@@ -12,7 +12,9 @@ def rolling_max(
     **kwargs: Any,
 ) -> Optional[Series]:
     """Rolling Maximum over *length* periods (TA-Lib: MAX)."""
-    length = int(length) if length and length > 0 else 30
+    length = int(length) if length is not None else 30
+    if length <= 0:
+        raise ValueError(f"length must be positive, got {length}")
     close = verify_series(close, length)
     offset = get_offset(offset)
     if close is None:
