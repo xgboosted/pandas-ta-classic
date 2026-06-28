@@ -3,7 +3,7 @@ from typing import Any, Optional
 from numpy import log10 as npLog10
 from numpy import log as npLn
 from pandas import Series
-from pandas_ta_classic.volatility import atr
+from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

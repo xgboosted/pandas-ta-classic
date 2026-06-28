@@ -1,20 +1,3 @@
-from .ad import ad
-from .adosc import adosc
-from .aobv import aobv
-from .cmf import cmf
-from .efi import efi
-from .emv import emv
-from .eom import eom
-from .kvo import kvo
-from .marketfi import marketfi
-from .mfi import mfi
-from .nvi import nvi
-from .obv import obv
-from .pvi import pvi
-from .pvol import pvol
-from .pvr import pvr
-from .pvt import pvt
-from .vfi import vfi
-from .vosc import vosc
-from .vp import vp
-from .wad import wad
+from pandas_ta_classic._lazy_subpackage import install_lazy_subpackage
+
+install_lazy_subpackage(__name__)

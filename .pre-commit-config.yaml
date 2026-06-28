@@ -1,0 +1,25 @@
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
+    hooks:
+      - id: black
+        files: ^pandas_ta_classic/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.13
+    hooks:
+      - id: ruff
+        args: [--select, "E9,F63,F7,F82"]
+        files: ^pandas_ta_classic/
+
+  - repo: local
+    hooks:
+      - id: gen-core-stub
+        name: Regenerate core.pyi
+        entry: bash -c 'python tools/gen_core_stub.py && black --quiet pandas_ta_classic/core.pyi'
+        language: system
+        pass_filenames: false
+        files: ^pandas_ta_classic/.+\.py$

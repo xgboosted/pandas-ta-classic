@@ -1,7 +1,7 @@
 # TRIX Histogram (TRIXH)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.momentum import trix
+from pandas_ta_classic.momentum.trix import trix
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 

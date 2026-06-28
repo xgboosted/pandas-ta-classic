@@ -1,7 +1,7 @@
 # Vortex Indicator (VORTEX)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.volatility import true_range
+from pandas_ta_classic.volatility.true_range import true_range
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

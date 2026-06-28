@@ -1,14 +1,3 @@
-from .beta import beta
-from .correl import correl
-from .entropy import entropy
-from .kurtosis import kurtosis
-from .mad import mad
-from .md import md
-from .median import median
-from .quantile import quantile
-from .skew import skew
-from .stderr import stderr
-from .stdev import stdev
-from .tos_stdevall import tos_stdevall
-from .variance import variance
-from .zscore import zscore
+from pandas_ta_classic._lazy_subpackage import install_lazy_subpackage
+
+install_lazy_subpackage(__name__)

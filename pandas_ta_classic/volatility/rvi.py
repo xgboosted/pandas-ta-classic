@@ -2,7 +2,7 @@
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.statistics import stdev
+from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset
 from pandas_ta_classic.utils import unsigned_differences, verify_series
 from pandas_ta_classic.utils._core import _pos_float, _pos_int

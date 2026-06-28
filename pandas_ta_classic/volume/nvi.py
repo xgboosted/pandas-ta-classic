@@ -1,7 +1,7 @@
 # Negative Volume Index (NVI)
 from typing import Any, Optional
 from pandas import Series
-from pandas_ta_classic.momentum import roc
+from pandas_ta_classic.momentum.roc import roc
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

@@ -11,7 +11,9 @@ from ._core import verify_series
 from ._time import total_time
 from ._math import linear_regression
 from pandas_ta_classic import RATE
-from pandas_ta_classic.performance import drawdown, log_return, percent_return
+from pandas_ta_classic.performance.drawdown import drawdown
+from pandas_ta_classic.performance.log_return import log_return
+from pandas_ta_classic.performance.percent_return import percent_return
 
 
 def cagr(close: Series) -> float:

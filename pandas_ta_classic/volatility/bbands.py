@@ -3,7 +3,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.statistics import stdev
+from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

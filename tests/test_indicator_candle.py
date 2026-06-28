@@ -57,7 +57,7 @@ class TestCandle(TestCase):
     def test_cdl_pattern(self):
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(len(result.columns), len(pandas_ta.CDL_PATTERN_NAMES))
+        self.assertEqual(len(result.columns), len(pandas_ta.ALL_PATTERNS))
 
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="doji")
         self.assertIsInstance(result, DataFrame)

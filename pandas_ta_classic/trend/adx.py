@@ -3,7 +3,7 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.volatility import atr
+from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,

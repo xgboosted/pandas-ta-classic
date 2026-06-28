@@ -4,12 +4,14 @@ import numpy as np
 from pandas import DataFrame, Series
 
 npNaN = np.nan
-from pandas_ta_classic.momentum import mom
+from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.trend import decreasing, increasing
-from pandas_ta_classic.volatility import bbands, kc
+from pandas_ta_classic.trend.decreasing import decreasing
+from pandas_ta_classic.trend.increasing import increasing
+from pandas_ta_classic.volatility.bbands import bbands
+from pandas_ta_classic.volatility.kc import kc
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset
 from pandas_ta_classic.utils import unsigned_differences, verify_series
 from pandas_ta_classic.utils._core import _pos_float, _pos_int

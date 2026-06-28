@@ -1,7 +1,7 @@
 # Candle Z (CDL_Z)
 from typing import Any, Optional
 from pandas import DataFrame, Series
-from pandas_ta_classic.statistics import zscore
+from pandas_ta_classic.statistics.zscore import zscore
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 

@@ -3,7 +3,8 @@ from typing import Any, Optional
 from pandas import DataFrame, Series
 from .obv import obv
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.trend import long_run, short_run
+from pandas_ta_classic.trend.long_run import long_run
+from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 

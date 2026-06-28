@@ -4,7 +4,6 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hl2 import hl2
-from pandas_ta_classic.volatility import atr
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
@@ -57,6 +56,8 @@ def supertrend(
         return None
 
     # Calculate Results
+    from pandas_ta_classic.volatility.atr import atr
+
     m = close.size
 
     hl2_ = hl2(high, low)

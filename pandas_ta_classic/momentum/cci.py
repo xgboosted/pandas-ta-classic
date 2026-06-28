@@ -4,7 +4,7 @@ from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
-from pandas_ta_classic.statistics import mad
+from pandas_ta_classic.statistics.mad import mad
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 

@@ -1,18 +1,3 @@
-from .aberration import aberration
-from .accbands import accbands
-from .avolume import avolume
-from .cvi import cvi
-from .atr import atr
-from .bbands import bbands
-from .ce import ce
-from .donchian import donchian
-from .hvol import hvol
-from .hwc import hwc
-from .kc import kc
-from .massi import massi
-from .natr import natr
-from .pdist import pdist
-from .rvi import rvi
-from .thermo import thermo
-from .true_range import true_range
-from .ui import ui
+from pandas_ta_classic._lazy_subpackage import install_lazy_subpackage
+
+install_lazy_subpackage(__name__)

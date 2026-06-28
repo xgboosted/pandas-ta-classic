@@ -60,6 +60,12 @@ jobs:
         # report broader lint issues without failing this non-critical pass
         ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 
+    - name: Verify core.pyi is in sync with generator
+      run: |
+        python tools/gen_core_stub.py
+        black --quiet pandas_ta_classic/core.pyi
+        git diff --exit-code pandas_ta_classic/core.pyi
+
   # Job 2: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
   # These versions are used for:
