@@ -61,7 +61,7 @@ def __getattr__(name: str) -> Any:
     if cat is not None:
         try:
             func = _find_indicator_func(name)
-        except ImportError:
+        except ModuleNotFoundError:
             raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")
         setattr(sys.modules[__name__], name, func)  # cache in module dict
         return func
