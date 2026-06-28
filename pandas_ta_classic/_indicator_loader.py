@@ -5,7 +5,7 @@ import importlib
 import inspect
 from typing import Any, Callable, Optional
 
-from pandas_ta_classic._meta import Category
+from pandas_ta_classic._meta import Category, _MATH_ALIASES
 
 # Maps function param name → DataFrame column key
 _COLUMN_PARAM_TO_COL_KEY: dict[str, str] = {
@@ -24,6 +24,7 @@ _SERIES_COLUMN_PARAMS: dict[str, tuple] = {
 
 # Reverse lookup: indicator name → category name (built once at import)
 _INDICATOR_TO_CATEGORY: dict[str, str] = {ind: cat for cat, indicators in Category.items() for ind in indicators}
+_INDICATOR_TO_CATEGORY.update({alias: "math" for alias in _MATH_ALIASES})
 
 
 def _find_indicator_func(name: str) -> Optional[Callable]:
@@ -31,20 +32,12 @@ def _find_indicator_func(name: str) -> Optional[Callable]:
     cat = _INDICATOR_TO_CATEGORY.get(name)
     if cat is None:
         return None
-    try:
-        mod = importlib.import_module(f"pandas_ta_classic.{cat}.{name}")
-        func = getattr(mod, name, None)
-        # Importing a submodule causes Python to bind parent.name = <module>,
-        # overwriting any re-exported function of the same name in __init__.py.
-        # Restore the function binding so sibling imports stay correct.
-        import sys
-
-        parent = sys.modules.get(f"pandas_ta_classic.{cat}")
-        if parent is not None and getattr(parent, name, None) is mod:
-            setattr(parent, name, func)
-        return func
-    except ImportError:
-        return None
+    canonical = _MATH_ALIASES.get(name, name)
+    mod = importlib.import_module(f"pandas_ta_classic.{cat}.{canonical}")
+    func = getattr(mod, canonical, None)
+    if func is None:
+        raise AttributeError(f"module 'pandas_ta_classic.{cat}.{canonical}' has no attribute '{canonical}'")
+    return func
 
 
 def _make_ta_wrapper(func: Callable) -> Callable:

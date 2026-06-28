@@ -60,6 +60,8 @@ Imports = {
 # pattern files are sub-patterns accessed via cdl_pattern() only.
 _CANDLE_TOP_LEVEL = {"cdl_doji", "cdl_inside", "cdl_pattern", "cdl_z", "ha"}
 
+_MATH_ALIASES: dict[str, str] = {"max": "rolling_max", "min": "rolling_min", "sum": "rolling_sum"}
+
 # Subdirectories that contain indicator modules (excludes utils, math, etc.)
 _VALID_CATEGORIES = {
     "candles",

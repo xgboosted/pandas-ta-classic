@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Generate pandas_ta_classic/core.pyi from indicator function signatures."""
+
 import inspect
 import sys
 import types
@@ -128,9 +129,7 @@ def main():
                 stub = _build_method_stub(ind_name, func)
                 lines.append(stub)
             except Exception as e:
-                lines.append(
-                    f"    def {ind_name}(self, **kwargs: Any) -> Optional[Union[Series, DataFrame]]: ...  # stub-gen failed: {e}"
-                )
+                lines.append(f"    def {ind_name}(self, **kwargs: Any) -> Optional[Union[Series, DataFrame]]: ...  # stub-gen failed: {e}")
         lines.append("")
 
     out_path = ROOT / "pandas_ta_classic" / "core.pyi"

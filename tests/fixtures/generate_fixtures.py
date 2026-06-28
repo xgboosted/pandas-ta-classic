@@ -52,8 +52,10 @@ if str(_PROJECT_ROOT) not in sys.path:
 import numpy as np
 import pandas as pd
 import talib
+
 try:
     import tulipy as ti
+
     _HAS_TULIPY = True
 except ImportError:
     _HAS_TULIPY = False

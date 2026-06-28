@@ -31,6 +31,15 @@ __description__ = (
 )
 
 
+def __dir__() -> list[str]:
+    from pandas_ta_classic._indicator_loader import _INDICATOR_TO_CATEGORY
+
+    names = set(globals().keys())
+    names.update(_INDICATOR_TO_CATEGORY.keys())
+    names.add("ALL_PATTERNS")
+    return sorted(names)
+
+
 def __getattr__(name: str) -> Any:
     """Lazy-load indicator functions for direct module-level access (e.g. ta.rsi(...)).
 
@@ -50,10 +59,12 @@ def __getattr__(name: str) -> Any:
     # Regular indicators in Category → return the function
     cat = _INDICATOR_TO_CATEGORY.get(name)
     if cat is not None:
-        func = _find_indicator_func(name)
-        if func is not None:
-            setattr(sys.modules[__name__], name, func)  # cache in module dict
-            return func
+        try:
+            func = _find_indicator_func(name)
+        except ImportError:
+            raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")
+        setattr(sys.modules[__name__], name, func)  # cache in module dict
+        return func
 
     # ALL_PATTERNS: canonical public name for the candle pattern name list
     if name == "ALL_PATTERNS":
@@ -73,7 +84,7 @@ def __getattr__(name: str) -> Any:
         )
         from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 
-        setattr(sys.modules[__name__], "ALL_PATTERNS", ALL_PATTERNS)
+        setattr(sys.modules[__name__], name, ALL_PATTERNS)
         return ALL_PATTERNS
 
     # Individual candle-pattern submodules (cdl_*) not tracked in Category
@@ -83,7 +94,9 @@ def __getattr__(name: str) -> Any:
             mod = importlib.import_module(f"pandas_ta_classic.candles.{name}")
             setattr(sys.modules[__name__], name, mod)  # cache in module dict
             return mod
-        except ImportError:
+        except ModuleNotFoundError:
             pass
+        except ImportError:
+            raise
 
     raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")

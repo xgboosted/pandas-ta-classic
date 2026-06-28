@@ -47,30 +47,31 @@ def install_lazy_subpackage(
     aliases_map: Mapping[str, str] = aliases or {}
     special_map: Mapping[str, tuple] = special or {}
 
+    from pandas_ta_classic._meta import Category
+
+    _cat = module_name.rsplit(".", 1)[-1]
+    _known_names: frozenset[str] = frozenset(list(Category.get(_cat, [])) + list(aliases_map.keys()) + list(special_map.keys()))
+
     original = sys.modules[module_name]
 
     class _LazySubpackage(types.ModuleType):
         """Lazy-loading package module: resolves names to attrs in submodules."""
 
-        def __getattribute__(self, name: str) -> Any:
-            if name.startswith("__") and name.endswith("__"):
-                return super().__getattribute__(name)
-            val = super().__getattribute__(name)
-            pkg = super().__getattribute__("__name__")
-            # If Python registered a submodule as attr, unwrap it to the function.
-            if isinstance(val, types.ModuleType) and val.__name__ == f"{pkg}.{name}":
-                if name in special_map:
-                    submod_name, attr = special_map[name]
-                    mod = importlib.import_module(f"{pkg}.{submod_name}")
-                    value = getattr(mod, attr)
-                    object.__setattr__(self, name, value)
-                    return value
+        def __setattr__(self, name: str, value: Any) -> None:
+            # Python's import machinery binds imported submodules as attrs on the
+            # parent package. Intercept those bindings and unwrap to the function.
+            if name not in _known_names:
+                object.__setattr__(self, name, value)
+                return
+            pkg = object.__getattribute__(self, "__name__")
+            if isinstance(value, types.ModuleType) and value.__name__ == f"{pkg}.{name}":
                 canonical = aliases_map.get(name, name)
-                func = getattr(val, canonical, None)
+                func = getattr(value, canonical, None)
                 if func is not None and callable(func):
                     object.__setattr__(self, name, func)
-                    return func
-            return val
+                    return
+                raise ImportError(f"module '{value.__name__}' has no callable attribute '{canonical}'")
+            object.__setattr__(self, name, value)
 
         def __getattr__(self, name: str) -> Any:
             pkg = object.__getattribute__(self, "__name__")
@@ -87,11 +88,18 @@ def install_lazy_subpackage(
                 if func is not None:
                     object.__setattr__(self, name, func)
                     return func
-            except ImportError:
+            except ModuleNotFoundError:
                 pass
+            except ImportError:
+                raise
             raise AttributeError(f"module {pkg!r} has no attribute {name!r}")
 
+        def __dir__(self) -> list[str]:
+            return sorted(_known_names)
+
     new_mod = _LazySubpackage(module_name)
+    # Expose all lazily-loadable names so `from pkg import *` works without prior access.
+    new_mod.__all__ = sorted(_known_names)
     # Copy module attributes from the original so docstring, path, spec, etc. survive.
     new_mod.__doc__ = getattr(original, "__doc__", None)
     if hasattr(original, "__path__"):

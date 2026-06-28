@@ -338,8 +338,7 @@ class TestIndicatorValues(TestCase):
 
         if fixture_key not in _FIXTURES:
             raise unittest.SkipTest(
-                f"Fixture {fixture_key!r} not present in expected_values.json "
-                f"(may require an optional dependency such as tulipy)"
+                f"Fixture {fixture_key!r} not present in expected_values.json " f"(may require an optional dependency such as tulipy)"
             )
         self.assertIn(fixture_key, self.results, f"No result computed for {fixture_key!r}")
         result = self.results[fixture_key]

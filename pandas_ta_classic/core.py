@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 from warnings import simplefilter
 
 logger = logging.getLogger(__name__)
@@ -624,41 +624,8 @@ class AnalysisIndicators(BasePandasObject):
         # in Category but are available on the accessor.
         from pandas_ta_classic._meta import Category as _Category
 
-        _explicit_methods = [
-            "add",
-            "sub",
-            "div",
-            "mult",
-            "rolling_max",
-            "rolling_min",
-            "rolling_sum",
-            "maxindex",
-            "minindex",
-            "minmax",
-            "minmaxindex",
-            "acos",
-            "asin",
-            "atan",
-            "ceil",
-            "cos",
-            "cosh",
-            "exp",
-            "floor",
-            "ln",
-            "log10",
-            "sin",
-            "sinh",
-            "sqrt",
-            "tan",
-            "tanh",
-            "npabs",
-            "npround",
-            "trunc",
-            "todeg",
-            "torad",
-        ]
         _category_indicators = [ind for inds in _Category.values() for ind in inds]
-        ta_indicators = sorted(set(_category_indicators + _explicit_methods))
+        ta_indicators = sorted(set(_category_indicators))
 
         # Add Pandas TA methods and properties to be removed
         removed = helper_methods + ta_properties
@@ -713,7 +680,6 @@ class AnalysisIndicators(BasePandasObject):
         """
         # If True, it returns the resultant DataFrame. Default: False
         returns = kwargs.pop("returns", False)
-        # cpus = cpu_count()
         # Ensure indicators are appended to the DataFrame
         kwargs["append"] = True
         all_ordered = kwargs.pop("ordered", True)
@@ -943,8 +909,6 @@ class AnalysisIndicators(BasePandasObject):
         strategy = kwargs.pop("strategy", None)
 
         # Fetch the Data
-        ds = ds.lower() is not None and isinstance(ds, str)
-        # df = av(ticker, **kwargs) if ds and ds == "av" else yf(ticker, **kwargs)
         df = yf(ticker, **kwargs)
 
         if df is None:
