@@ -381,9 +381,4 @@ Utility / signal functions (accessible directly or via ``df.ta``):
 * *Crossany*: **crossany** (returns Boolean Series that is True on any bar where ``a`` and ``b`` cross in either direction)
 * *Lag*: **lag** (returns a Series offset by ``n`` periods; equivalent to tulipy ``lag``)
 
-Compatibility Matrix
---------------------
-
-The full per-indicator compatibility table (Native / TA-Lib / tulipy) is maintained here:
-
 .. include:: indicator_support_matrix.rst

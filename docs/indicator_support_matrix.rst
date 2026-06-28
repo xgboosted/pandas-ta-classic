@@ -1,6 +1,8 @@
 Indicator Compatibility Matrix
 ==============================
 
+The full per-indicator compatibility table (Native / TA-Lib / tulipy) is maintained here:
+
 Legend: ``yes`` = indicator has corresponding implementation in that library by direct name or maintained alias mapping.
 
 .. list-table:: pandas-ta-classic indicator support vs TA-Lib and tulipy

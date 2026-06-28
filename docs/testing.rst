@@ -68,7 +68,7 @@ Requires ``ta-lib`` and ``tulipy`` installed.
 Native Indicator Tests
 ----------------------
 
-**Why:** Cover ~45 indicators that have no TA-Lib alternative, validating
+**Why:** Cover indicators that have no TA-Lib alternative, validating
 return type, non-NaN row count, value finiteness, and mathematical bounds.
 
 **Files:** ``test_native_indicators.py``.
@@ -164,7 +164,7 @@ boundary violations.
 * **Mathematical invariants** — Bollinger Band ordering, ATR/STDEV
   non-negativity, MOM/ROC relationship.
 * **Core utilities** — ``verify_series``, ``apply_offset``, ``apply_fill``.
-* **None-guard safety** — 7 indicators return ``None`` for ``None`` input.
+* **None-guard safety** — Indicators return ``None`` for ``None`` input.
 * **NaN propagation** — All-NaN input → all-NaN output, no crash.
 * **Idempotence** — Same args twice → identical result.
 * **Category discovery** — Dynamic discovery stays consistent.

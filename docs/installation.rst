@@ -19,6 +19,7 @@ Optional Dependencies
 For enhanced functionality, consider installing:
 
 - **TA-Lib**: Optional — all 62 CDL patterns work natively without it (see :ref:`Installing TA-Lib` below)
+- **tulipy**: Optional — oracle-only; used by ``test_oracle_tulipy.py`` for parity verification, never as a computation backend
 - **yfinance**: For downloading stock data with ``df.ta.ticker()``
 - **vectorbt**: For backtesting integration
 - **pytest + Hypothesis**: For running the test suite and property-based tests (``pip install pandas-ta-classic[test]``)
@@ -123,7 +124,7 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
      - Effect when installed
    * - TA-Lib
      - **Acceleration backend + oracle**
-     - 59 core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
+      - Core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
    * - tulipy
      - **Oracle only**
      - Never used as computation backend; only ``test_oracle_tulipy.py`` uses it to verify native output
@@ -133,12 +134,12 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
 Installing TA-Lib
 ~~~~~~~~~~~~~~~~~
 
-TA-Lib has a **dual role**: acceleration backend for 59 core indicators (opt-in via ``talib=True``), and parity oracle. The two behavioural areas affected are:
+TA-Lib has a **dual role**: acceleration backend for core indicators (opt-in via ``talib=True``), and parity oracle. The two behavioural areas affected are:
 
 **Candlestick patterns (CDL family)**
    All 62 CDL patterns have native Python implementations that are always used. TA-Lib is **never** invoked for CDL patterns — the TA-Lib fallback code path in ``cdl_pattern()`` is only retained for hypothetical future patterns without a native implementation.
 
-**59 core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
+**Core indicators** (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, etc.)
    The native implementation is used by default. TA-Lib is opt-in — pass ``talib=True`` to any call to use TA-Lib's implementation instead.
 
    .. code-block:: python
@@ -151,25 +152,38 @@ TA-Lib has a **dual role**: acceleration backend for 59 core indicators (opt-in 
         # Use TA-Lib implementation if installed
         ema = df.ta.ema(length=20, talib=True)
 
-       # CDL patterns — always native, talib= kwarg has no effect here
-       df = df.ta.cdl_pattern(name="engulfing")       # native
-       result = df.ta.cdl_pattern(name="hammer")      # native
+        # CDL patterns — always native, talib= kwarg has no effect here
+        df = df.ta.cdl_pattern(name="engulfing")       # native
+        result = df.ta.cdl_pattern(name="hammer")      # native
 
-Installing TA-Lib:
+Installation
+^^^^^^^^^^^^
+
+Binary wheels (v0.6.5+) bundle the TA-Lib C library — no separate C library
+setup needed. Versions before 0.6.5 lack binary wheels and require manual C library
+installation. We require ``>=0.6.8`` so ``pip install ta-lib`` works out of
+the box on Linux, macOS, and Windows (x86\_64, arm64):
 
 Using ``uv``:
 
 .. code-block:: bash
 
-    uv pip install TA-Lib
+    uv pip install "ta-lib>=0.6.8"
 
 Using ``pip``:
 
 .. code-block:: bash
 
-    pip install TA-Lib
+    pip install "ta-lib>=0.6.8"
 
-**Note**: If you encounter installation issues with TA-Lib, refer to the `TA-Lib installation guide <https://github.com/mrjbq7/ta-lib#installation>`_.
+If your platform is not covered by binary wheels, or you prefer a source build, install the `TA-Lib C library <https://ta-lib.org/install/>`_ first. For Conda users:
+
+.. code-block:: bash
+
+    conda install -c conda-forge libta-lib
+    conda install -c conda-forge ta-lib
+
+See the `TA-Lib Python README <https://github.com/TA-Lib/ta-lib-python#dependencies>`_ for platform-specific instructions and troubleshooting.
 
 Installing tulipy
 ~~~~~~~~~~~~~~~~~

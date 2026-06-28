@@ -420,13 +420,10 @@ pip install --upgrade pandas-ta-classic
 **Solution:** TA-Lib is optional and only used for supported core indicators (candlestick patterns are native). Install TA-Lib separately:
 
 ```bash
-# On Linux/Mac
-pip install TA-Lib
-
-# On Windows, download wheel from:
-# https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
-pip install TA_Lib-0.4.XX-cpXX-cpXX-win_amd64.whl
+pip install "ta-lib>=0.6.8"
 ```
+
+Binary wheels (v0.6.5+) bundle the C library — no separate TA-Lib C installation needed on any platform. Versions before 0.6.5 lack binary wheels and require manual C library setup.
 
 (next-steps)=
 ## Next Steps
@@ -435,7 +432,7 @@ Now that you've got the basics, explore more:
 
 1. **[Full Documentation](https://xgboosted.github.io/pandas-ta-classic/)** - Complete API reference
 2. **[Tutorials](https://xgboosted.github.io/pandas-ta-classic/tutorials.html)** - Step-by-step guides for common tasks
-3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - 192 indicators plus 62 CDL patterns (252 unique total)
+3. **[Indicator Reference](https://xgboosted.github.io/pandas-ta-classic/indicators.html)** - 224 indicators plus 62 CDL patterns (284 unique total)
 4. **[Strategy Guide](https://xgboosted.github.io/pandas-ta-classic/strategies.html)** - Advanced strategy system
 5. **[Examples](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)** - Jupyter notebooks with real examples
 

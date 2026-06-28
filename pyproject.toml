@@ -53,8 +53,8 @@ optional = [
 
 # External oracle libraries for parity tests
 oracle = [
-    "ta-lib",
-    "tulipy",
+    "ta-lib>=0.6.8",
+    "tulipy>=0.4.0",
 ]
 
 # CI code quality tools

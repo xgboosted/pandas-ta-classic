@@ -44,10 +44,10 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 ### Key Features
 
-- **253 Unique Indicators & Patterns**: 193 Category indicators + 62 CDL patterns via `cdl_pattern()` = 253 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
+- **284 Unique Indicators & Patterns**: 224 Category indicators + 62 CDL patterns via `cdl_pattern()` = 284 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
 - **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — TA-Lib is never used for CDL patterns
-- **Optional TA-Lib Acceleration**: 59 core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) use native implementations by default; pass `talib=True` to use TA-Lib
-- **Compatibility Scope Is Explicit**: Not every TA-Lib/tulipy function has a pandas-ta-classic counterpart. Current mapping includes 67 indicators with TA-Lib counterparts, 71 with tulipy counterparts, and 44 covered by both. Full per-indicator matrix: `docs/indicator_support_matrix.rst`
+- **Optional TA-Lib Acceleration**: Core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) use native implementations by default; pass `talib=True` to use TA-Lib
+- **Compatibility Scope Is Explicit**: Not every TA-Lib/tulipy function has a pandas-ta-classic counterpart. See the full per‑indicator matrix for current coverage: `docs/indicator_support_matrix.rst`
 - **Optional Performance Boost**: Install `numba` for 6–230× speedups on hot-loop indicators (QQE, RSX, HWMA, SSF, PSAR, Supertrend, MCGD)
 - **Automatic Versioning**: Version management via git tags using setuptools-scm
 - **Modern Package Management**: Full support for both `uv` and `pip`
@@ -142,15 +142,15 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 ## Features
 
-- **193 Technical Indicators & Utilities** across 9 categories (Candles, Cycles, Momentum, Overlap, Trend, Volume, etc.)
+- **224 Technical Indicators & Utilities** across 10 categories (Candles, Cycles, Math, Momentum, Overlap, Trend, Volume, etc.)
 - **62 Native Candlestick Patterns** — all patterns natively implemented, no TA-Lib required
-- **253 Unique Indicators & Patterns** - 193 category indicators plus 62 CDL patterns via `cdl_pattern()`
+- **284 Unique Indicators & Patterns** - 224 category indicators plus 62 CDL patterns via `cdl_pattern()`
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
 - **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
-- **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: 59 core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
+- **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
 - **tulipy Integration (oracle only)** - parity test oracle; `test_oracle_tulipy.py` verifies native output against tulipy; never used as computation backend
 - **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
 - **backtrader Integration** — precompute-then-feed pattern with dynamic `PandasData` subclass; runnable example in ``examples/backtrader_strategy.py``
@@ -171,7 +171,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 **Reference Documentation:**
 - [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
 - [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing 
-- [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of 193 indicators plus 62 CDL patterns (253 unique total)
+- [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of 224 indicators plus 62 CDL patterns (284 unique total)
 - [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis
 
@@ -185,7 +185,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 | Library | Role | Effect when installed |
 |---------|------|-----------------------|
-| TA-Lib | **Acceleration backend + oracle** | 59 core indicators — native by default, opt-in via `talib=True`; also used in `test_oracle_talib.py` for parity checks |
+| TA-Lib | **Acceleration backend + oracle** | Core indicators — native by default, opt-in via `talib=True`; also used in `test_oracle_talib.py` for parity checks |
 | tulipy | **Oracle only** | Never used as computation backend; only `test_oracle_tulipy.py` uses it to verify native output |
 
 | Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
@@ -215,7 +215,7 @@ pip install TA-Lib # TA-Lib only (also enables acceleration backend)
 pip install tulipy # tulipy only (oracle test use only)
 ```
 
-> **Note:** Both oracle test suites (`test_oracle_talib.py`, `test_oracle_tulipy.py`) are guarded with `@unittest.skipUnless` and skip automatically when the respective library is not installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for 59 indicators via `talib=True`.
+> **Note:** Both oracle test suites (`test_oracle_talib.py`, `test_oracle_tulipy.py`) are guarded with `@unittest.skipUnless` and skip automatically when the respective library is not installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
 
 **Performance boost:** Install `numba` for 6–230× speedups on computation-heavy indicators:
 - Using `uv`: `uv pip install pandas-ta-classic[performance]`
