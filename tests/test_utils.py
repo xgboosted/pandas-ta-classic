@@ -136,36 +136,6 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result, Series)
         npt.assert_array_equal(result, self.crosseddf["crossed"])
 
-    def test_df_dates(self):
-        result = self.utils.df_dates(self.data)
-        self.assertEqual(None, result)
-
-        result = self.utils.df_dates(self.data, "1999-11-01")
-        self.assertEqual(1, result.shape[0])
-
-        result = self.utils.df_dates(
-            self.data,
-            [
-                "1999-11-01",
-                "2020-08-15",
-                "2020-08-24",
-                "2020-08-25",
-                "2020-08-26",
-                "2020-08-27",
-            ],
-        )
-        self.assertEqual(5, result.shape[0])
-
-    def test_df_month_to_date(self):
-        result = self.utils.df_month_to_date(self.data)
-        self.assertIsInstance(result, DataFrame)
-        self.assertLessEqual(len(result), len(self.data))
-
-    def test_df_quarter_to_date(self):
-        result = self.utils.df_quarter_to_date(self.data)
-        self.assertIsInstance(result, DataFrame)
-        self.assertLessEqual(len(result), len(self.data))
-
     def test_df_year_to_date(self):
         result = self.utils.df_year_to_date(self.data)
         self.assertIsInstance(result, DataFrame)

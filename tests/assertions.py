@@ -15,8 +15,6 @@ class IndicatorSpec:
     expected_type: type = Series
     expected_columns: Optional[list[str]] = None
     none_arg_idx: Optional[int] = 0
-    skip_offset: bool = False
-    tuple_index: Optional[int] = None
     kwargs: dict = field(default_factory=dict)
     length_override: Optional[int] = None
 
@@ -31,11 +29,9 @@ def assert_fill(test_case, func, args, **kwargs):
     test_case.assertIsNotNone(func(*args, fill_method="bfill", **kwargs))
 
 
-def assert_length_in_name(test_case, func, args, length, tuple_index=None, **kwargs):
+def assert_length_in_name(test_case, func, args, length, **kwargs):
     result = func(*args, length=length, **kwargs)
     test_case.assertIsNotNone(result)
-    if tuple_index is not None:
-        result = result[tuple_index]
     test_case.assertIn(str(length), result.name)
 
 
@@ -82,7 +78,7 @@ def assert_talib(test_case, result, expected, correlation_threshold=None):
 
 def assert_indicator_standard(test_case, spec: IndicatorSpec):
     raw = spec.func(*spec.args, **spec.kwargs)
-    result = raw[spec.tuple_index] if spec.tuple_index is not None else raw
+    result = raw
     test_case.assertIsInstance(result, spec.expected_type)
     test_case.assertEqual(result.name, spec.expected_name)
     if spec.expected_type is DataFrame:
@@ -93,8 +89,7 @@ def assert_indicator_standard(test_case, spec: IndicatorSpec):
         test_case.assertListEqual(list(result.columns), spec.expected_columns)
     elif spec.expected_columns is not None:
         test_case.assertListEqual(list(result.columns), spec.expected_columns)
-    if not spec.skip_offset:
-        assert_offset(test_case, spec.func, spec.args, **spec.kwargs)
+    assert_offset(test_case, spec.func, spec.args, **spec.kwargs)
     assert_fill(test_case, spec.func, spec.args, **spec.kwargs)
     if spec.none_arg_idx is not None:
         assert_none_guard(test_case, spec.func, spec.args, spec.none_arg_idx, **spec.kwargs)
@@ -105,7 +100,6 @@ def assert_indicator_standard(test_case, spec: IndicatorSpec):
             spec.func,
             spec.args,
             spec.length_override,
-            tuple_index=spec.tuple_index,
             **base_kwargs,
         )
     return result

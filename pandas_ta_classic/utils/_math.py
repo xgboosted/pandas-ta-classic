@@ -8,14 +8,11 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 from numpy import ones, triu
-from numpy import all as npAll
 from numpy import append as npAppend
 from numpy import array as npArray
 from numpy import corrcoef as npCorrcoef
 from numpy import dot as npDot
 from numpy import fabs as npFabs
-from numpy import exp as npExp
-from numpy import log as npLog
 from numpy import ndarray as npNdArray
 from numpy import seterr
 from numpy import sqrt as npSqrt

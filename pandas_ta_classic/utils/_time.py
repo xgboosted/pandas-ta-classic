@@ -1,41 +1,11 @@
 import logging
-from datetime import datetime
 from time import localtime, perf_counter
-from typing import Optional, Union
 
-from pandas import DataFrame, Timestamp, to_datetime
+from pandas import DataFrame, Timestamp
 
 from pandas_ta_classic._meta import EXCHANGE_TZ, RATE
 
 logger = logging.getLogger(__name__)
-
-
-def df_dates(df: DataFrame, dates: Optional[Union[str, list]] = None) -> Optional[DataFrame]:
-    """Yields the DataFrame with the given dates"""
-    if dates is None:
-        return None
-    if not isinstance(dates, list):
-        dates = [dates]
-    return df[df.index.isin(to_datetime(dates))]
-
-
-def df_month_to_date(df: DataFrame) -> DataFrame:
-    """Yields the Month-to-Date (MTD) DataFrame"""
-    in_mtd = df.index >= Timestamp.now().strftime("%Y-%m-01")
-    if any(in_mtd):
-        return df[in_mtd]
-    return df
-
-
-def df_quarter_to_date(df: DataFrame) -> DataFrame:
-    """Yields the Quarter-to-Date (QTD) DataFrame"""
-    now = Timestamp.now()
-    for m in [1, 4, 7, 10]:
-        if now.month <= m:
-            in_qtr = df.index >= datetime(now.year, m, 1).strftime("%Y-%m-01")
-            if any(in_qtr):
-                return df[in_qtr]
-    return df[df.index >= now.strftime("%Y-%m-01")]
 
 
 def df_year_to_date(df: DataFrame) -> DataFrame:
@@ -117,6 +87,4 @@ def to_utc(df: DataFrame) -> DataFrame:
 
 
 # Aliases
-mtd = df_month_to_date
-qtd = df_quarter_to_date
 ytd = df_year_to_date

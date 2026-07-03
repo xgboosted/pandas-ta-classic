@@ -2,7 +2,6 @@ import logging
 from typing import Any, Optional, Union
 
 import re as re_
-from pathlib import Path
 from sys import float_info as sflt
 
 from numpy import argmax, argmin
@@ -26,11 +25,6 @@ def _pos_int(val, default):
 def _pos_float(val, default):
     """Return ``float(val)`` when *val* is a positive float, else *default*."""
     return float(val) if val and val > 0 else default
-
-
-def category_files(category: str) -> list[str]:
-    """Helper function to return all filenames in the category directory."""
-    return [x.stem for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py")) if x.stem != "__init__"]
 
 
 def apply_offset(
