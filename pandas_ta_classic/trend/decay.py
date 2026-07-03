@@ -1,6 +1,6 @@
 # Linear Decay (DECAY)
 from typing import Any, Optional
-from numpy import exp as npExp
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -27,7 +27,7 @@ def decay(
     _mode = "L"
     if mode == "exp" or kind == "exponential":
         _mode = "EXP"
-        diff = close.shift(1) - npExp(-length)
+        diff = close.shift(1) - np.exp(-length)
     else:  # "linear"
         diff = close.shift(1) - (1 / length)
     diff.iloc[0] = close.iloc[0]

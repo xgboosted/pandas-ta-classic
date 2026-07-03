@@ -84,7 +84,3 @@ def to_utc(df: DataFrame) -> DataFrame:
         except TypeError:
             df.index = df.index.tz_convert("UTC")
     return df
-
-
-# Aliases
-ytd = df_year_to_date

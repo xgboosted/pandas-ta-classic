@@ -1,8 +1,6 @@
 from typing import Any, Optional, Union, cast
 
 import numpy as np
-from numpy import log as npLog
-from numpy import sqrt as npSqrt
 from pandas import Series, Timedelta
 
 
@@ -78,8 +76,8 @@ def downside_deviation(returns: Series, benchmark_rate: float = 0.0, tf: str = "
 
     downside = adjusted_benchmark_rate - returns
     downside_sum_of_squares = (downside[downside > 0] ** 2).sum()
-    downside_deviation = npSqrt(downside_sum_of_squares / (returns.shape[0] - 1))
-    return downside_deviation * npSqrt(days_per_year)
+    downside_deviation = np.sqrt(downside_sum_of_squares / (returns.shape[0] - 1))
+    return downside_deviation * np.sqrt(days_per_year)
 
 
 def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
@@ -111,7 +109,7 @@ def log_max_drawdown(close: Series) -> float:
     close = verify_series(close)
     if close is None:
         return np.nan
-    log_return = npLog(close.iloc[-1]) - npLog(close.iloc[0])
+    log_return = np.log(close.iloc[-1]) - np.log(close.iloc[0])
     return log_return - max_drawdown(close, method="log")
 
 
@@ -173,7 +171,7 @@ def optimal_leverage(
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     period_mu = period * returns.mean()
-    period_std = npSqrt(period) * returns.std()
+    period_std = np.sqrt(period) * returns.std()
 
     mean_excess_return = period_mu - benchmark_rate
     opt_leverage = (period_std**-2) * mean_excess_return
@@ -229,7 +227,7 @@ def sharpe_ratio(
     if use_cagr:
         return cagr(close) / volatility(close, log=log)
     period_mu = period * returns.mean()
-    period_std = npSqrt(period) * returns.std()
+    period_std = np.sqrt(period) * returns.std()
     return (period_mu - benchmark_rate) / period_std
 
 
@@ -288,4 +286,4 @@ def volatility(
     factor = _returns.shape[0] / total_time(_returns, tf)
     if kwargs.pop("nearest_day", False) and tf.lower() == "years":
         factor = int(factor + 1)
-    return float(npSqrt(factor) * _returns.std())
+    return float(np.sqrt(factor) * _returns.std())

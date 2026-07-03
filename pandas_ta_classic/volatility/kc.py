@@ -7,7 +7,7 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    high_low_range,
+    non_zero_range,
     verify_series,
 )
 
@@ -37,7 +37,7 @@ def kc(
 
     # Calculate Result
     use_tr = kwargs.pop("tr", True)
-    range_ = true_range(high, low, close) if use_tr else high_low_range(high, low)
+    range_ = true_range(high, low, close) if use_tr else non_zero_range(high, low)
 
     basis = ma(mamode, close, length=length)
     if basis is None:

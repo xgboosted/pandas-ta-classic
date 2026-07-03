@@ -125,5 +125,3 @@ lint:
 format:
 	@echo "Formatting code with black..."
 	black pandas_ta_classic/
-	@echo "Checking import order with isort..."
-	isort pandas_ta_classic/

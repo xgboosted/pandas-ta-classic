@@ -1,7 +1,6 @@
 # Arnaud Legoux Moving Average (ALMA)
 from typing import Any, Optional
 import numpy as np
-from numpy import exp as npExp
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -30,7 +29,7 @@ def alma(
     # Pre-Calculations
     m = distribution_offset * (length - 1)
     s = length / sigma
-    w = np.array([npExp(-1 * ((i - m) * (i - m)) / (2 * s * s)) for i in range(length)])
+    w = np.array([np.exp(-1 * ((i - m) * (i - m)) / (2 * s * s)) for i in range(length)])
     w_norm = w / w.sum()
 
     # Calculate Result — vectorised via sliding_window_view

@@ -1,7 +1,6 @@
 # Slope (SLOPE)
 from typing import Any, Optional
-from numpy import arctan as npAtan
-from numpy import pi as npPi
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -29,9 +28,9 @@ def slope(
     # Calculate Result
     slope = close.diff(length) / length
     if as_angle:
-        slope = slope.apply(npAtan)
+        slope = slope.apply(np.arctan)
         if to_degrees:
-            slope *= 180 / npPi
+            slope *= 180 / np.pi
 
     # Offset
     slope = apply_offset(slope, offset)

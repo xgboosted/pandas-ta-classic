@@ -7,17 +7,6 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 
 logger = logging.getLogger(__name__)
-from numpy import ones, triu
-from numpy import append as npAppend
-from numpy import array as npArray
-from numpy import corrcoef as npCorrcoef
-from numpy import dot as npDot
-from numpy import fabs as npFabs
-from numpy import ndarray as npNdArray
-from numpy import seterr
-from numpy import sqrt as npSqrt
-
-from numpy import sum as npSum
 
 from pandas import DataFrame, Series
 
@@ -25,7 +14,7 @@ from pandas_ta_classic import Imports
 from ._core import verify_series
 
 
-def np_rolling_moments(values: npNdArray, length: int, *orders: int, min_periods: Optional[int] = None) -> tuple[npNdArray, ...]:
+def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: Optional[int] = None) -> tuple[np.ndarray, ...]:
     """Rolling raw central-moment sums using pure numpy.
 
     Returns one float64 array per *order*, each of ``len(values)`` elements.
@@ -52,7 +41,7 @@ def np_rolling_moments(values: npNdArray, length: int, *orders: int, min_periods
     n = len(arr)
 
     # Pre-allocate output arrays filled with NaN.
-    results: list[npNdArray] = [np.full(n, np.nan, dtype=np.float64) for _ in orders]
+    results: list[np.ndarray] = [np.full(n, np.nan, dtype=np.float64) for _ in orders]
 
     # Vectorised computation over all full-length windows.
     if n >= length:
@@ -75,16 +64,16 @@ def np_rolling_moments(values: npNdArray, length: int, *orders: int, min_periods
 
 def combination(**kwargs: Any) -> int:
     """nCr combinatorics — wraps math.comb."""
-    n = int(npFabs(kwargs.pop("n", 1)))
-    r = int(npFabs(kwargs.pop("r", 0)))
-    if kwargs.pop("repetition", False) or kwargs.pop("multichoose", False):
+    n = int(abs(kwargs.pop("n", 1)))
+    r = int(abs(kwargs.pop("r", 0)))
+    if kwargs.pop("repetition", False):
         n = n + r - 1
     return comb(n, r)
 
 
-def fibonacci(n: int = 2, **kwargs: Any) -> npNdArray:
+def fibonacci(n: int = 2, **kwargs: Any) -> np.ndarray:
     """Fibonacci Sequence as a numpy array"""
-    n = int(npFabs(n)) if n >= 0 else 2
+    n = int(n) if n >= 0 else 2
 
     zero = kwargs.pop("zero", False)
     if zero:
@@ -93,14 +82,14 @@ def fibonacci(n: int = 2, **kwargs: Any) -> npNdArray:
         n -= 1
         a, b = 1, 1
 
-    result = npArray([a])
+    result = np.array([a])
     for _ in range(0, n):
         a, b = b, a + b
-        result = npAppend(result, a)
+        result = np.append(result, a)
 
     weighted = kwargs.pop("weighted", False)
     if weighted:
-        fib_sum: float = npSum(result)
+        fib_sum: float = np.sum(result)
         if fib_sum > 0:
             return result / fib_sum
         return result
@@ -121,7 +110,7 @@ def linear_regression(x: Series, y: Series) -> dict:
     return _linear_regression_np(x, y)
 
 
-def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[npNdArray]:
+def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[np.ndarray]:
     """Pascal's Triangle
 
     Returns a numpy array of the nth row of Pascal's Triangle.
@@ -129,11 +118,11 @@ def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[npNdArr
          => weighted: [0.0625, 0.25, 0.375, 0.25, 0.0625]
          => inverse weighted: [0.9375, 0.75, 0.625, 0.75, 0.9375]
     """
-    n = int(npFabs(n)) if n is not None else 0
+    n = int(abs(n)) if n is not None else 0
 
     # Calculation
-    triangle = npArray([combination(n=n, r=i) for i in range(0, n + 1)])
-    triangle_sum: float = npSum(triangle)
+    triangle = np.array([combination(n=n, r=i) for i in range(0, n + 1)])
+    triangle_sum: float = np.sum(triangle)
     triangle_weights = triangle / triangle_sum
     inverse_weights = 1 - triangle_weights
 
@@ -149,14 +138,14 @@ def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[npNdArr
     return triangle
 
 
-def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union[list[int], npNdArray]]:
+def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union[list[int], np.ndarray]]:
     """Symmetric Triangle with n >= 2
 
     Returns a numpy array of the nth row of Symmetric Triangle.
     n=4  => triangle: [1, 2, 2, 1]
          => weighted: [0.16666667 0.33333333 0.33333333 0.16666667]
     """
-    n = int(npFabs(n)) if n is not None else 2
+    n = int(abs(n)) if n is not None else 2
 
     triangle = None
     if n == 2:
@@ -173,9 +162,9 @@ def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union
             triangle += front[::-1]
 
     if kwargs.pop("weighted", False) and isinstance(triangle, list):
-        triangle_arr: npNdArray = np.array(triangle)
-        triangle_sum: float = float(npSum(triangle_arr))
-        triangle_weights: npNdArray = triangle_arr / triangle_sum
+        triangle_arr: np.ndarray = np.array(triangle)
+        triangle_sum: float = float(np.sum(triangle_arr))
+        triangle_weights: np.ndarray = triangle_arr / triangle_sum
         return triangle_weights
 
     return triangle
@@ -185,7 +174,7 @@ def weights(w: Any) -> Callable[[Any], Any]:
     """Calculates the dot product of weights with values x"""
 
     def _dot(x: Any) -> Any:
-        return npDot(w, x)
+        return np.dot(w, x)
 
     return _dot
 
@@ -213,7 +202,7 @@ def df_error_analysis(dfA: DataFrame, dfB: DataFrame, **kwargs: Any) -> DataFram
             diff.plot(kind="kde")
 
     if kwargs.pop("triangular", False):
-        return corr.where(triu(ones(corr.shape)).astype(bool))
+        return corr.where(np.triu(np.ones(corr.shape)).astype(bool))
 
     return corr
 
@@ -227,7 +216,7 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
 
     if int(x_sum) != 0:
         # 1st row, 2nd col value corr(x, y)
-        r = npCorrcoef(x, y)[0, 1]
+        r = np.corrcoef(x, y)[0, 1]
 
         m = x.size
         r_mix = m * (x * y).sum() - x_sum * y_sum
@@ -235,16 +224,16 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
         a = y.mean() - b * x.mean()
         line = a + b * x
 
-        _np_err = seterr()
-        seterr(divide="ignore", invalid="ignore")
+        _np_err = np.seterr()
+        np.seterr(divide="ignore", invalid="ignore")
         result = {
             "a": a,
             "b": b,
             "r": r,
-            "t": r / npSqrt((1 - r * r) / (m - 2)),
+            "t": r / np.sqrt((1 - r * r) / (m - 2)),
             "line": line,
         }
-        seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
+        np.seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
 
     return result
 
@@ -263,6 +252,6 @@ def _linear_regression_sklearn(x: Series, y: Series) -> dict:
         "a": a,
         "b": b,
         "r": r,
-        "t": r / npSqrt((1 - r * r) / (x.size - 2)),
+        "t": r / np.sqrt((1 - r * r) / (x.size - 2)),
         "line": a + b * x,
     }

@@ -47,7 +47,6 @@ optional = [
     "scipy",
     "scikit-learn",
     "statsmodels",
-    "stochastic",
     "tqdm",
 ]
 
@@ -84,8 +83,7 @@ dev = [
     
     # Type checking and linting
     "mypy>=1.0.0",
-    "isort>=5.0.0",
-    
+
     # Pre-commit hooks
     "pre-commit>=3.0.0",
 ]
@@ -93,8 +91,6 @@ dev = [
 # Testing framework
 test = [
     "pytest>=7.0.0",
-    "pytest-cov>=4.0.0", 
-    "pytest-benchmark>=4.0.0",
     "hypothesis>=6.0.0"
 ]
 
@@ -109,8 +105,7 @@ docs = [
 
 # Performance optimization
 performance = [
-    "numba>=0.58.0",
-    "cython>=3.0.0"
+    "numba>=0.58.0"
 ]
 
 # Data sources and external integrations

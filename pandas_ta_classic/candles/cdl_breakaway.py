@@ -28,7 +28,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Trailing index for BodyLong setting applied to i-4
     body_long_trail = start_idx - body_long_period
 
-    # Seed BodyLong total: sum candle_range(BodyLong, i-4)
+    # Seed BodyLong total: sum of the BodyLong range values at i-4
     # for i from body_long_trail to start_idx-1
     body_long_total = float(arr_bl[body_long_trail - 4 : start_idx - 4].sum())
     O = ca.open

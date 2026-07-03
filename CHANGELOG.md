@@ -14,9 +14,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 * **Faster cold import (~3–4×)**: `import pandas_ta_classic` takes ~280 ms (was ~930 ms) because indicator functions load on demand. Public API unchanged.
 * **Math operators individually importable**: Each math/trig operator (`add`, `sub`, `mult`, `div`, `rolling_max/min/sum`, `acos`, `cos`, `exp`, `ln`, …) now lives in its own submodule, e.g. `from pandas_ta_classic.math.add import add`.
+* **`combination()` delegates to `math.comb`**: Replaces the hand-rolled nCr loop. Signature and results unchanged; the unused `multichoose` kwarg alias was dropped (use `repetition`).
+* **`npNaN` alias removed internally**: All modules now use `np.nan` directly. No public API change.
+* **All `npX` numpy import aliases removed** (26 aliases, e.g. `npSqrt`, `npArange`, `npNdArray`): modules now use `import numpy as np` + `np.x` directly. Internal only; no public API change.
 
 ### Deprecated
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
+
+### Removed
+* **Dead code (audit, zero callers)**: `BasePandasObject` and `_check_na_columns()` in `core.py`; CPR helpers `round_to_strike`, `calculate_option_strikes`, `detect_cpr_breakout`, `detect_cpr_rejection`; math utils `geometric_mean`, `log_geometric_mean`, and the hand-rolled `erf`; time utils `df_dates`, `df_month_to_date`/`mtd`, `df_quarter_to_date`/`qtd`; `category_files()`; six unused `CandleArrays` helper methods; the `pkg_resources` Python < 3.8 fallback in `_meta.py`; `tests/context.py` and other unused test scaffolding.
+* **`crossany()`**: zero callers and zero tests; use `cross(a, b, above=True) | cross(a, b, above=False)` if needed. Docs entry removed.
+* **`high_low_range()` / `real_body()` wrappers** (`utils/_candles.py`): call sites now use `non_zero_range()` directly (`real_body(open_, close)` ≡ `non_zero_range(close, open_)`).
+* **`ytd` alias**: use `df_year_to_date()`. Internal `_camelCase2Title` inlined at its single call site.
+* **Unused dev/optional dependencies**: `stochastic` (never imported), `cython` (no `.pyx` sources), `pytest-cov` and `pytest-benchmark` (no coverage/benchmark runs), `isort` (black owns formatting). Corresponding `Imports` probes and the Makefile isort step removed.
 
 ### Fixed
 * **Cross-package indicator imports**: A submodule import could overwrite a re-exported function of the same name on the parent package (e.g. `from pandas_ta_classic.volatility import atr` occasionally returned the `atr` *module* instead of the function). Resolved.

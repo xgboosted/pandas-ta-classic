@@ -9,7 +9,7 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    high_low_range,
+    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._njit import njit
@@ -55,7 +55,7 @@ def fisher(
     highest_hl2 = hl2_.rolling(length).max()
     lowest_hl2 = hl2_.rolling(length).min()
 
-    hlr = high_low_range(highest_hl2, lowest_hl2)
+    hlr = non_zero_range(highest_hl2, lowest_hl2)
     hlr[hlr < 0.001] = 0.001
 
     hl_range = hlr

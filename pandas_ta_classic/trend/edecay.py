@@ -1,6 +1,6 @@
 # Exponential Decay (EDECAY)
 from typing import Any, Optional
-from numpy import exp as npExp
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -24,7 +24,7 @@ def edecay(
     if close is None:
         return None
 
-    factor = npExp(-1.0 / length)
+    factor = np.exp(-1.0 / length)
     arr = close.to_numpy(float)
     result = arr.copy()
     for i in range(1, len(arr)):

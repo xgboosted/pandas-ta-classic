@@ -28,7 +28,7 @@ Read costs scale with context size. Only read directories relevant to the task �
 | DataFrame accessor / API | `pandas_ta_classic/core.py` + `tests/test_accessor_api.py` + `tests/test_accessor_conformance.py` |
 | Utilities / helpers | `pandas_ta_classic/utils/` + `tests/test_utils.py` |
 | Math operators | `pandas_ta_classic/math/` + `tests/test_indicator_math.py` |
-| Testing infrastructure | `tests/config.py`, `tests/context.py`, `tests/fixtures/`, `tests/assertions.py` |
+| Testing infrastructure | `tests/config.py`, `tests/fixtures/`, `tests/assertions.py` |
 | CI / workflow | `.github/workflows/` only; add `AGENTS.md` if pipeline order changes |
 | Formatting / linting | `pyproject.toml` + the specific file under review |
 | Docs update | `docs/` + the specific doc file; `README.md`; `AGENTS.md` only if structure changes |
@@ -283,7 +283,7 @@ python -m build
 │   └── utils/                        # Shared utilities
 │       └── data/                     # Data integrations (Alpha Vantage, Yahoo Finance)
 ├── tests/                            # Test suite
-│   ├── config.py, context.py
+│   ├── config.py
 │   ├── assertions.py
 │   ├── fixtures/                     # expected_values.json, regression_snapshots.json
 │   └── test_*.py                     # Indicator, accessor, strategy, utils tests

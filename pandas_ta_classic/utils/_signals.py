@@ -257,37 +257,6 @@ def crossover(
     return result
 
 
-def crossany(
-    series_a: Series,
-    series_b: Series,
-    asint: bool = True,
-    offset: Optional[int] = None,
-    **kwargs: Any,
-) -> Optional[Series]:
-    """Cross in either direction (tulipy: CROSSANY).
-
-    Returns 1 on any bar where series_a and series_b cross (either up or
-    down), 0 otherwise.
-    """
-    series_a = verify_series(series_a)
-    series_b = verify_series(series_b)
-    if series_a is None or series_b is None:
-        return None
-    offset = get_offset(offset)
-
-    xa = cross(series_a, series_b, above=True, asint=False)
-    xb = cross(series_a, series_b, above=False, asint=False)
-    result = xa | xb
-    if asint:
-        result = result.astype(int)
-
-    result = apply_offset(result, offset)
-
-    result.name = f"{series_a.name}_X_{series_b.name}"
-    result.category = "utility"
-    return result
-
-
 def lag(
     close: Series,
     period: Optional[int] = None,

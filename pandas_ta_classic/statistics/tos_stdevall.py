@@ -1,9 +1,6 @@
 # TOS Standard Deviation All (TOS_STDEVALL)
 from typing import Any, Optional
-from numpy import array as npArray
-from numpy import arange as npArange
-from numpy import polyfit as npPolyfit
-from numpy import std as npStd
+import numpy as np
 from pandas import DataFrame, DatetimeIndex, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -45,12 +42,12 @@ def tos_stdevall(
     # Calculate Result
     X = src_index = close.index
     if isinstance(close.index, DatetimeIndex):
-        X = npArange(length)
-        close = npArray(close)
+        X = np.arange(length)
+        close = np.array(close)
 
-    m, b = npPolyfit(X, close, 1)
+    m, b = np.polyfit(X, close, 1)
     lr = Series(m * X + b, index=src_index)
-    stdev = npStd(close, ddof=ddof)
+    stdev = np.std(close, ddof=ddof)
 
     # Name and Categorize it
     df = DataFrame({f"{_props}_LR": lr}, index=src_index)

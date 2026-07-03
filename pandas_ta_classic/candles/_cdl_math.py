@@ -78,8 +78,8 @@ del _s, _rt, _ap, _f, _d
 
 
 class CandleArrays:
-    """Holds pre-computed OHLC-derived numpy arrays and provides TA-Lib
-    macro equivalents (``candle_range``, ``candle_average``, etc.)."""
+    """Holds pre-computed OHLC-derived numpy arrays (TA-Lib candle-macro
+    equivalents) shared by the candlestick pattern implementations."""
 
     __slots__ = (
         "_ranges",
@@ -120,7 +120,7 @@ class CandleArrays:
         self.color = np.where(close >= open_, 1, -1)
 
         # Pre-computed range array for each CandleSetting (eliminates
-        # per-call branching in candle_range).
+        # per-call range-type branching).
         _rt_arrays = {
             RangeType.RealBody: self.real_body,
             RangeType.HighLow: self.hl_range,

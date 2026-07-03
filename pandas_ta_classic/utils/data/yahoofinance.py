@@ -1,8 +1,8 @@
 import logging
+import re
 from pandas import DataFrame
 from pandas_ta_classic import Imports, version
-from .._core import _camelCase2Title
-from .._time import ytd
+from .._time import df_year_to_date
 
 logger = logging.getLogger(__name__)
 
@@ -484,7 +484,7 @@ def yf(ticker: str, **kwargs):
         if kind in [*_all, "recommendations", "rec"]:
             recdf = yfd.recommendations
             if recdf is not None:
-                recdf = ytd(recdf)
+                recdf = df_year_to_date(recdf)
                 if kind not in _all:
                     logger.info(f"\n{ticker_info['symbol']}")
                 logger.info("\n====  Recommendation(YTD)  " + div + f"\n{recdf}")
@@ -512,7 +512,7 @@ def yf(ticker: str, **kwargs):
                 susdf.replace({None: False}, inplace=True)
                 susdf.columns = ["Score"]
                 susdf.drop(susdf[susdf["Score"] == False].index, inplace=True)
-                susdf.rename(index=_camelCase2Title, errors="ignore", inplace=True)
+                susdf.rename(index=lambda x: re.sub("([a-z])([A-Z])", r"\g<1> \g<2>", str(x)).title(), errors="ignore", inplace=True)
                 susdf.index.name = "Source"
                 if kind not in _all:
                     logger.info(f"\n{ticker_info['symbol']}")

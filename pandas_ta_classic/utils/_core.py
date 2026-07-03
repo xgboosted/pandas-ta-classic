@@ -1,7 +1,6 @@
 import logging
 from typing import Any, Optional, Union
 
-import re as re_
 from sys import float_info as sflt
 
 from numpy import argmax, argmin
@@ -10,11 +9,6 @@ from pandas.api.types import is_datetime64_any_dtype
 from pandas_ta_classic import Imports
 
 logger = logging.getLogger(__name__)
-
-
-def _camelCase2Title(x: str) -> str:
-    """https://stackoverflow.com/questions/5020906/python-convert-camel-case-to-space-delimited-using-regex-and-taking-acronyms-in"""
-    return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
 
 
 def _pos_int(val, default):

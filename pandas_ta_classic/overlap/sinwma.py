@@ -1,8 +1,6 @@
 # Sine Weighted Moving Average (SINWMA)
 from typing import Any, Optional
 import numpy as np
-from numpy import pi as npPi
-from numpy import sin as npSin
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _sliding_weighted_ma
@@ -24,7 +22,7 @@ def sinwma(
         return None
 
     # Calculate Result
-    sines = np.array([npSin((i + 1) * npPi / (length + 1)) for i in range(length)])
+    sines = np.array([np.sin((i + 1) * np.pi / (length + 1)) for i in range(length)])
     w = sines / sines.sum()
 
     sinwma = _sliding_weighted_ma(close, length, w)

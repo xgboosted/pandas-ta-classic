@@ -9,8 +9,7 @@ from warnings import simplefilter
 logger = logging.getLogger(__name__)
 
 import pandas as pd
-from numpy import log10 as npLog10
-from numpy import ndarray as npNdarray
+import numpy as np
 from pandas.core.base import PandasObject
 
 from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version, _MATH_ALIASES
@@ -520,7 +519,7 @@ class AnalysisIndicators(PandasObject):
             Returns nothing to the user.  Either adds or removes constant ranges
             from the working DataFrame.
         """
-        if isinstance(values, (npNdarray, list)):
+        if isinstance(values, (np.ndarray, list)):
             if append:
                 for x in values:
                     self._df[f"{x}"] = x
@@ -724,7 +723,7 @@ class AnalysisIndicators(PandasObject):
             pool = get_context("spawn").Pool(self.cores)
             try:
                 # Some magic to optimize chunksize for speed based on total ta indicators
-                _chunksize = mp_chunksize - 1 if mp_chunksize > _total_ta else int(npLog10(_total_ta)) + 1
+                _chunksize = mp_chunksize - 1 if mp_chunksize > _total_ta else int(np.log10(_total_ta)) + 1
                 if verbose:
                     logger.info(f"Multiprocessing {_total_ta} indicators with {_chunksize} chunks and {self.cores}/{cpu_count()} cpus.")
 
@@ -840,7 +839,6 @@ class AnalysisIndicators(PandasObject):
                 Default: "SPY"
         Kwargs:
             kind (str): Options see above. Default: "history"
-            ds (str): Data Source to use. Default: "yahoo"
             strategy (str | ta.Strategy): Which strategy to apply after
                 downloading chart history. Default: None
 
@@ -850,7 +848,7 @@ class AnalysisIndicators(PandasObject):
             Exits if the DataFrame is empty or None
             Otherwise it returns a DataFrame
         """
-        ds = kwargs.pop("ds", "yahoo")
+        kwargs.pop("ds", None)
         strategy = kwargs.pop("strategy", None)
 
         # Fetch the Data

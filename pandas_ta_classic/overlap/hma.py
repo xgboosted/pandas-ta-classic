@@ -1,6 +1,6 @@
 # Hull Moving Average (HMA)
 from typing import Any, Optional
-from numpy import sqrt as npSqrt
+import numpy as np
 from pandas import Series
 from .wma import wma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -23,7 +23,7 @@ def hma(
 
     # Calculate Result
     half_length = int(length / 2)
-    sqrt_length = int(npSqrt(length))
+    sqrt_length = int(np.sqrt(length))
 
     wmaf = wma(close=close, length=half_length)
     wmas = wma(close=close, length=length)

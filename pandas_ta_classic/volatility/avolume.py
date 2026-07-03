@@ -1,7 +1,7 @@
 # Historical Volatility – annualised (tulipy: VOLATILITY)
 from typing import Any, Optional
 
-from numpy import log as npLog, sqrt as npSqrt
+import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -29,8 +29,8 @@ def avolume(
     if close is None:
         return None
 
-    log_returns = npLog(close / close.shift(1))
-    result = log_returns.rolling(length).std(ddof=0) * npSqrt(252)
+    log_returns = np.log(close / close.shift(1))
+    result = log_returns.rolling(length).std(ddof=0) * np.sqrt(252)
 
     # Offset
     result = apply_offset(result, offset)
