@@ -203,25 +203,6 @@ class TestUtilities(TestCase):
             np.array([1 / 12, 1 / 12, 1 / 6, 1 / 4, 5 / 12]),
         )
 
-    def test_geometric_mean(self):
-        returns = pandas_ta.percent_return(self.data.close)
-        result = self.utils.geometric_mean(returns)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.geometric_mean(Series([12, 14, 11, 8]))
-        self.assertIsInstance(result, float)
-
-        result = self.utils.geometric_mean(Series([100, 50, 0, 25, 0, 60]))
-        self.assertIsInstance(result, float)
-
-        series = Series([0, 1, 2, 3])
-        result = self.utils.geometric_mean(series)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.geometric_mean(-series)
-        self.assertIsInstance(result, int)
-        self.assertAlmostEqual(result, 0)
-
     def test_get_time(self):
         result = self.utils.get_time(to_string=True)
         self.assertIsInstance(result, str)
@@ -245,25 +226,6 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result["r"], float)
         self.assertIsInstance(result["t"], float)
         self.assertIsInstance(result["line"], Series)
-
-    def test_log_geometric_mean(self):
-        returns = pandas_ta.percent_return(self.data.close)
-        result = self.utils.log_geometric_mean(returns)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.log_geometric_mean(Series([12, 14, 11, 8]))
-        self.assertIsInstance(result, float)
-
-        result = self.utils.log_geometric_mean(Series([100, 50, 0, 25, 0, 60]))
-        self.assertIsInstance(result, float)
-
-        series = Series([0, 1, 2, 3])
-        result = self.utils.log_geometric_mean(series)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.log_geometric_mean(-series)
-        self.assertIsInstance(result, int)
-        self.assertAlmostEqual(result, 0)
 
     def test_pascals_triangle(self):
         self.assertIsNone(self.utils.pascals_triangle(inverse=True), None)

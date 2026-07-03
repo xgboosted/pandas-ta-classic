@@ -7,9 +7,6 @@ VERBOSE = False
 ALERT = "[!]"
 INFO = "[i]"
 
-CORRELATION = "corr"  # "sem"
-CORRELATION_THRESHOLD = 1.0
-
 
 @lru_cache(maxsize=1)
 def _read_sample_csv():

@@ -13,11 +13,9 @@ from numpy import log10 as npLog10
 from numpy import ndarray as npNdarray
 from pandas.core.base import PandasObject
 
-from pandas_ta_classic._meta import Category, Imports, version, _MATH_ALIASES
+from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version, _MATH_ALIASES
 from pandas_ta_classic._indicator_loader import _find_indicator_func, _make_ta_wrapper
 from pandas_ta_classic.utils import *
-
-df = pd.DataFrame()
 
 
 # Strategy DataClass
@@ -92,55 +90,6 @@ CommonStrategy = Strategy(
 )
 
 
-# Base Class for extending a Pandas DataFrame
-class BasePandasObject(PandasObject):
-    """Simple PandasObject Extension
-
-    Ensures the DataFrame is not empty and has columns.
-    It would be a sad Panda otherwise.
-
-    Args:
-        df (pd.DataFrame): Extends Pandas DataFrame
-    """
-
-    def __init__(self, df, **kwargs):
-        if df.empty:
-            return
-        if len(df.columns) > 0:
-            common_names = {
-                "Date": "date",
-                "Time": "time",
-                "Timestamp": "timestamp",
-                "Datetime": "datetime",
-                "Open": "open",
-                "High": "high",
-                "Low": "low",
-                "Close": "close",
-                "Adj Close": "adj_close",
-                "Volume": "volume",
-                "Dividends": "dividends",
-                "Stock Splits": "split",
-            }
-            # Preemptively drop the rows that are all NaNs
-            # Might need to be moved to AnalysisIndicators.__call__() to be
-            #   toggleable via kwargs.
-            # df.dropna(axis=0, inplace=True)
-            # Preemptively rename columns to lowercase
-            df.rename(columns=common_names, errors="ignore", inplace=True)
-
-            # Preemptively lowercase the index
-            index_name = df.index.name
-            if index_name is not None:
-                df.index.rename(index_name.lower(), inplace=True)
-
-            self._df = df
-        else:
-            raise AttributeError("[X] No columns!")
-
-    def __call__(self, kind, *args, **kwargs):
-        raise NotImplementedError()
-
-
 def _append_dataframe(df, result, kwargs):
     """Append a DataFrame *result* to *df*, honouring optional col_names in *kwargs*."""
     if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
@@ -157,7 +106,7 @@ def _append_dataframe(df, result, kwargs):
 
 # Pandas TA - DataFrame Analysis Indicators
 @pd.api.extensions.register_dataframe_accessor("ta")
-class AnalysisIndicators(BasePandasObject):
+class AnalysisIndicators(PandasObject):
     """
     This Pandas Extension is named 'ta' for Technical Analysis. In other words,
     it is a Numerical Time Series Feature Generator where the Time Series data
@@ -243,7 +192,7 @@ class AnalysisIndicators(BasePandasObject):
 
     _adjusted = None
     _cores = cpu_count()
-    _df = DataFrame()
+    _df = pd.DataFrame()
     _exchange = "NYSE"
     _time_range = "years"
     _last_run = get_time(_exchange, to_string=True)
@@ -447,10 +396,6 @@ class AnalysisIndicators(BasePandasObject):
         else:
             ind_name = kwargs["col_names"][0] if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple) else result.name
             df[ind_name] = result
-
-    def _check_na_columns(self, stdout: bool = True):
-        """Returns the columns in which all it's values are na."""
-        return [x for x in self._df.columns if all(self._df[x].isna())]
 
     def _get_column(self, series):
         """Attempts to get the correct series or 'column' and return it."""

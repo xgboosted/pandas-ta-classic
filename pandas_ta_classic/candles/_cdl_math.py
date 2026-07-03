@@ -128,39 +128,6 @@ class CandleArrays:
         }
         self._ranges = {s: _rt_arrays[CANDLE_DEFAULTS[s][0]] for s in CandleSetting}
 
-    # -- TA-Lib macro: TA_CANDLERANGE --
-    def candle_range(self, setting: CandleSetting, i: int) -> float:
-        return self._ranges[setting][i]
-
-    # -- TA-Lib macro: TA_CANDLEAVERAGE --
-    def candle_average(self, setting: CandleSetting, period_total: float, i: int) -> float:
-        """Exact replica of TA-Lib's TA_CANDLEAVERAGE macro.
-
-        Formula: ``factor * (sum/period) / (2 if Shadows else 1)``
-        When ``avgPeriod == 0``, uses ``candle_range(setting, i)`` instead of
-        ``sum/period``.
-        """
-        ap = AVG_PERIOD[setting]
-        if ap != 0:
-            return AVG_FACTOR[setting] * period_total
-        return AVG_FACTOR[setting] * self._ranges[setting][i]
-
-    # -- TA-Lib macro: TA_REALBODYGAPUP --
-    def real_body_gap_up(self, i2: int, i1: int) -> bool:
-        return self.body_low[i2] > self.body_high[i1]
-
-    # -- TA-Lib macro: TA_REALBODYGAPDOWN --
-    def real_body_gap_down(self, i2: int, i1: int) -> bool:
-        return self.body_high[i2] < self.body_low[i1]
-
-    # -- TA-Lib macro: TA_CANDLEGAPUP --
-    def candle_gap_up(self, i2: int, i1: int) -> bool:
-        return self.low[i2] > self.high[i1]
-
-    # -- TA-Lib macro: TA_CANDLEGAPDOWN --
-    def candle_gap_down(self, i2: int, i1: int) -> bool:
-        return self.high[i2] < self.low[i1]
-
 
 # ---------------------------------------------------------------------------
 # Lookback helper

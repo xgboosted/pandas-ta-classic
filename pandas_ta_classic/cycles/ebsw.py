@@ -8,7 +8,7 @@ from numpy import sin as npSin
 from numpy import sqrt as npSqrt
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -39,7 +39,7 @@ def ebsw(
 
     # Calculate Result
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = [np.nan for _ in range(0, length - 1)] + [0]
     for i in range(length, m):
         # HighPass filter cyclic components whose periods are shorter than Duration input
         alpha1 = (1 - npSin(360 / length)) / npCos(360 / length)

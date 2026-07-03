@@ -8,7 +8,7 @@ from numpy import sqrt as npSqrt
 from numpy import zeros_like as npZeroslike
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -102,7 +102,7 @@ def jma(
         jma[i] = jma[i - 1] + det1
 
     # Remove initial lookback data and convert to pandas frame
-    jma[0 : _length - 1] = npNaN
+    jma[0 : _length - 1] = np.nan
     jma = Series(jma, index=close.index)
 
     # Offset

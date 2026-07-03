@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
+
 from .ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -34,9 +34,9 @@ def hilo(
 
     # Calculate Result
     m = close.size
-    hilo = Series(npNaN, index=close.index)
-    long = Series(npNaN, index=close.index)
-    short = Series(npNaN, index=close.index)
+    hilo = Series(np.nan, index=close.index)
+    long = Series(np.nan, index=close.index)
+    short = Series(np.nan, index=close.index)
 
     high_ma = ma(mamode, high, length=high_length)
     if high_ma is None:
@@ -104,7 +104,7 @@ Calculation:
         low_ma = SMA(low, low_length)
 
     # Similar to Supertrend MA selection
-    hilo = Series(npNaN, index=close.index)
+    hilo = Series(np.nan, index=close.index)
     for i in range(1, m):
         if close.iloc[i] > high_ma.iloc[i - 1]:
             hilo.iloc[i] = low_ma.iloc[i]

@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
+
 from .tsignals import tsignals
 from pandas_ta_classic.utils._signals import cross_value
 from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
@@ -38,7 +38,7 @@ def xsignals(
     trades = entries + exits
 
     # Modify trades to fill gaps for trends
-    trades.replace({0: npNaN}, inplace=True)
+    trades.replace({0: np.nan}, inplace=True)
     trades.ffill(inplace=True)
     trades.fillna(0, inplace=True)
 

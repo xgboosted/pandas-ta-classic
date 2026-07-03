@@ -4,8 +4,6 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 import numpy as np
 from pandas import Series
 
-npNaN = np.nan
-
 
 def pvr(close: Series, volume: Series, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]:
     """Indicator: Price Volume Rank"""
@@ -21,7 +19,7 @@ def pvr(close: Series, volume: Series, offset: Optional[int] = None, **kwargs: A
     # Calculate Result
     close_diff = close.diff().fillna(0)
     volume_diff = volume.diff().fillna(0)
-    pvr_ = Series(npNaN, index=close.index)
+    pvr_ = Series(np.nan, index=close.index)
     pvr_.loc[(close_diff >= 0) & (volume_diff >= 0)] = 1
     pvr_.loc[(close_diff >= 0) & (volume_diff < 0)] = 2
     pvr_.loc[(close_diff < 0) & (volume_diff >= 0)] = 3

@@ -6,7 +6,7 @@ from numpy import arctan as npAtan
 from numpy import pi as npPi
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -146,7 +146,7 @@ def linreg(
             tsf,
         )
 
-        linreg = Series(np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index)
+        linreg = Series(np.concatenate([[np.nan] * (length - 1), linreg_]), index=close.index)
 
     # Offset
     linreg = apply_offset(linreg, offset)
