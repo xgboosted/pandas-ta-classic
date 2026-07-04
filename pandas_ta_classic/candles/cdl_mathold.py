@@ -49,7 +49,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         body_total[4] += arr_bl[j - 4]
         j += 1
 
-    O = ca.open
+    O_ = ca.open
     H = ca.high
     C = ca.close
 
@@ -67,16 +67,16 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # upside gap 1st to 2nd
             and body_lo[i - 3] > body_hi[i - 4]
             # 3rd to 4th hold within 1st: part of real body within 1st body
-            and min(O[i - 2], C[i - 2]) < C[i - 4]
-            and min(O[i - 1], C[i - 1]) < C[i - 4]
+            and min(O_[i - 2], C[i - 2]) < C[i - 4]
+            and min(O_[i - 1], C[i - 1]) < C[i - 4]
             # reaction days penetrate first body less than penetration %
-            and min(O[i - 2], C[i - 2]) > C[i - 4] - ca.real_body[i - 4] * penetration
-            and min(O[i - 1], C[i - 1]) > C[i - 4] - ca.real_body[i - 4] * penetration
+            and min(O_[i - 2], C[i - 2]) > C[i - 4] - ca.real_body[i - 4] * penetration
+            and min(O_[i - 1], C[i - 1]) > C[i - 4] - ca.real_body[i - 4] * penetration
             # 2nd to 4th are falling
-            and max(C[i - 2], O[i - 2]) < O[i - 3]
-            and max(C[i - 1], O[i - 1]) < max(C[i - 2], O[i - 2])
+            and max(C[i - 2], O_[i - 2]) < O_[i - 3]
+            and max(C[i - 1], O_[i - 1]) < max(C[i - 2], O_[i - 2])
             # 5th opens above the prior close
-            and O[i] > C[i - 1]
+            and O_[i] > C[i - 1]
             # 5th closes above the highest high of the reaction days
             and C[i] > max(max(H[i - 3], H[i - 2]), H[i - 1])
         ):

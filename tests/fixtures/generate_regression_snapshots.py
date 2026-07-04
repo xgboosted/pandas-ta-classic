@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Generate regression snapshot values for test_regression.py.
 
@@ -19,16 +17,11 @@ Checkpoint indices (positional, 0-based): 50, 200, 500, 1500, 3000
 All are well past the warmup period for every tracked indicator.
 """
 
+from __future__ import annotations
+
 import json
 import math
-import sys
 from pathlib import Path
-
-# Allow running directly (python path/to/script.py) in addition to
-# the documented module invocation (python -m tests.fixtures.…).
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import pandas as pd
 

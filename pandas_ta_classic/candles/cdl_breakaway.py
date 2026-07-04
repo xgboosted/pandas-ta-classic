@@ -31,7 +31,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Seed BodyLong total: sum of the BodyLong range values at i-4
     # for i from body_long_trail to start_idx-1
     body_long_total = float(arr_bl[body_long_trail - 4 : start_idx - 4].sum())
-    O = ca.open
+    O_ = ca.open
     H = ca.high
     L = ca.low
     C = ca.close
@@ -57,7 +57,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and H[i - 1] < H[i - 2]
                     and L[i - 1] < L[i - 2]
                     # 5th closes inside the gap
-                    and C[i] > O[i - 3]
+                    and C[i] > O_[i - 3]
                     and C[i] < C[i - 4]
                 )
                 or (
@@ -72,7 +72,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and H[i - 1] > H[i - 2]
                     and L[i - 1] > L[i - 2]
                     # 5th closes inside the gap
-                    and C[i] < O[i - 3]
+                    and C[i] < O_[i - 3]
                     and C[i] > C[i - 4]
                 )
             )

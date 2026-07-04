@@ -15,6 +15,11 @@ jobs:
           fetch-depth: 0
 
       - name: Push mirror
+        # Codeberg is a read-only mirror of GitHub — nothing should ever be
+        # pushed there directly. --force is intentional: it makes GitHub the
+        # sole source of truth and keeps the mirror in lockstep even across a
+        # history rewrite on GitHub's side. If Codeberg ever needs to hold
+        # commits GitHub doesn't have, this job will silently discard them.
         run: |
           git config http.postBuffer 524288000
           git remote add codeberg https://USER:${{ secrets.CODEBERG_TOKEN }}@codeberg.org/xgboosted/pandas-ta-classic.git

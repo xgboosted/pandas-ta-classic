@@ -29,7 +29,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     svs_total_2 = float(arr_svs[svs_trail - 2 : start_idx - 2].sum())
     svs_total_1 = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
     svs_total_0 = float(arr_svs[svs_trail:start_idx].sum())
-    O = ca.open
+    O_ = ca.open
     H = ca.high
     C = ca.close
 
@@ -50,11 +50,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # very short lower shadow
             and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
             # 2nd black opens within 1st black's real body
-            and O[i - 1] < O[i - 2]
-            and O[i - 1] > C[i - 2]
+            and O_[i - 1] < O_[i - 2]
+            and O_[i - 1] > C[i - 2]
             # 3rd black opens within 2nd black's real body
-            and O[i] < O[i - 1]
-            and O[i] > C[i - 1]
+            and O_[i] < O_[i - 1]
+            and O_[i] > C[i - 1]
             # 1st black closes under prior candle's high
             and H[i - 3] > C[i - 2]
             # Three declining closes

@@ -511,7 +511,7 @@ def yf(ticker: str, **kwargs):
             if susdf is not None:
                 susdf.replace({None: False}, inplace=True)
                 susdf.columns = ["Score"]
-                susdf.drop(susdf[susdf["Score"] == False].index, inplace=True)
+                susdf.drop(susdf[susdf["Score"].eq(False)].index, inplace=True)
                 susdf.rename(index=lambda x: re.sub("([a-z])([A-Z])", r"\g<1> \g<2>", str(x)).title(), errors="ignore", inplace=True)
                 susdf.index.name = "Source"
                 if kind not in _all:

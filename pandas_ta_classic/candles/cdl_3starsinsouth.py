@@ -55,7 +55,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     shadow_vshort_total_0 = float(arr_svs[shadow_vshort_trail:start_idx].sum())
     # BodyShort: applied to i
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
-    O = ca.open
+    O_ = ca.open
     H = ca.high
     L = ca.low
     C = ca.close
@@ -73,8 +73,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 2nd: smaller candle
             and ca.real_body[i - 1] < ca.real_body[i - 2]
             # 2nd: opens higher than 1st close but within 1st range
-            and O[i - 1] > C[i - 2]
-            and O[i - 1] <= H[i - 2]
+            and O_[i - 1] > C[i - 2]
+            and O_[i - 1] <= H[i - 2]
             # 2nd: trades lower than 1st close
             and L[i - 1] < C[i - 2]
             # 2nd: but not lower than 1st low

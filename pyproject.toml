@@ -35,7 +35,7 @@ classifiers = [
     "Programming Language :: Python :: {{LATEST-1}}",
     "Programming Language :: Python :: {{LATEST}}",
 ]
-requires-python = ">=3.9"  # Minimum Python version - dynamically updated by CI/CD during release
+requires-python = ">=3.10"  # Minimum Python version; matches AGENTS.md's rolling 5-version window (LATEST-4..LATEST)
 dependencies = [
     "numpy>=2.0.0",
     "pandas>=2.0.0",
@@ -60,6 +60,9 @@ oracle = [
 lint = [
     "ruff>=0.15.20",
     "black>=26.5.1",
+    # Not a linter: tools/check_lint_versions.py (run by the CI code-quality
+    # job, which installs only this extra) parses .pre-commit-config.yaml.
+    "pyyaml>=6.0",
 ]
 
 # PyPI publishing tools
@@ -187,10 +190,11 @@ fallback_version = "0.0.0"  # Fallback if not in a git repository
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]
-python_version = "3.9"
+# python_version intentionally omitted here to avoid duplicating the floor in
+# `project.requires-python` above. `make typecheck` derives it from that field
+# and passes it via `--python-version` (which always overrides this file).
 warn_return_any = false
 warn_unused_configs = true
-ignore_missing_imports = true
 disallow_untyped_defs = false
 check_untyped_defs = true
 no_implicit_optional = true
@@ -206,6 +210,21 @@ strict_optional = true
 #   (e.g. `from .roc import roc`), which shadows the submodule of the same
 #   name. mypy sees this as a redefinition, but it works correctly at runtime.
 disable_error_code = ["union-attr", "operator", "no-redef", "index", "attr-defined"]
+
+# Third-party dependencies that ship no py.typed marker / stubs (verified via
+# `mypy --python-version 3.9` with ignore_missing_imports unset: these are the
+# only packages that raise import-untyped). Scoped instead of a blanket
+# ignore_missing_imports=true so new dependencies are still checked by default.
+[[tool.mypy.overrides]]
+module = [
+    "pandas.*",
+    "sklearn.*",
+    "alpha_vantage.*",
+    "numba",
+    "tulipy",
+    "yfinance",
+]
+ignore_missing_imports = true
 
 # Per-module overrides for pre-existing code issues that require logic changes
 # (not annotation-only) to fix properly.

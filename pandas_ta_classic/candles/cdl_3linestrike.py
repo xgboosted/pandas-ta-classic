@@ -28,7 +28,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Seed Near totals for i-3 and i-2 (indices 3, 2)
     near_total_3 = float(arr_nr[near_trail - 3 : start_idx - 3].sum())
     near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
-    O = ca.open
+    O_ = ca.open
     C = ca.close
 
     for i in range(start_idx, len(out)):
@@ -39,11 +39,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 4th opposite color
             and ca.color[i] == -ca.color[i - 1]
             # 2nd opens within/near 1st real body
-            and O[i - 2] >= min(O[i - 3], C[i - 3]) - AVG_FACTOR[CandleSetting.Near] * near_total_3
-            and O[i - 2] <= max(O[i - 3], C[i - 3]) + AVG_FACTOR[CandleSetting.Near] * near_total_3
+            and O_[i - 2] >= min(O_[i - 3], C[i - 3]) - AVG_FACTOR[CandleSetting.Near] * near_total_3
+            and O_[i - 2] <= max(O_[i - 3], C[i - 3]) + AVG_FACTOR[CandleSetting.Near] * near_total_3
             # 3rd opens within/near 2nd real body
-            and O[i - 1] >= min(O[i - 2], C[i - 2]) - AVG_FACTOR[CandleSetting.Near] * near_total_2
-            and O[i - 1] <= max(O[i - 2], C[i - 2]) + AVG_FACTOR[CandleSetting.Near] * near_total_2
+            and O_[i - 1] >= min(O_[i - 2], C[i - 2]) - AVG_FACTOR[CandleSetting.Near] * near_total_2
+            and O_[i - 1] <= max(O_[i - 2], C[i - 2]) + AVG_FACTOR[CandleSetting.Near] * near_total_2
             and (
                 (
                     # If three white
@@ -52,9 +52,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and C[i - 1] > C[i - 2]
                     and C[i - 2] > C[i - 3]
                     # 4th opens above prior close
-                    and O[i] > C[i - 1]
+                    and O_[i] > C[i - 1]
                     # 4th closes below 1st open
-                    and C[i] < O[i - 3]
+                    and C[i] < O_[i - 3]
                 )
                 or (
                     # If three black
@@ -63,9 +63,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
                     and C[i - 1] < C[i - 2]
                     and C[i - 2] < C[i - 3]
                     # 4th opens below prior close
-                    and O[i] < C[i - 1]
+                    and O_[i] < C[i - 1]
                     # 4th closes above 1st open
-                    and C[i] > O[i - 3]
+                    and C[i] > O_[i - 3]
                 )
             )
         ):

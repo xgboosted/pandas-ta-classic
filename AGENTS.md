@@ -131,7 +131,7 @@ After each coding session, execute the code/module in local venv and troubleshoo
 - Config in `pyproject.toml` under `[tool.black]` and `[tool.ruff]`
 - If black and ruff format disagree on a region, lock it with `# fmt: off` / `# fmt: on`
 - **Gate condition:** `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` must both return EXIT=0 before the task is considered complete. If black reports a reformat, run `black pandas_ta_classic/` then re-check.
-- **Dual config pattern:** black/ruff versions appear in two places — `pyproject.toml` under `[project.optional-dependencies].lint` (CI installs via `pip install -e ".[lint]"`) AND `.pre-commit-config.yaml` under each hook's `rev`. When bumping a version, update BOTH. Versions must be kept in sync.
+- **Dual config pattern:** black/ruff versions appear in two places — `pyproject.toml` under `[project.optional-dependencies].lint` (CI installs via `pip install -e ".[lint]"`) AND `.pre-commit-config.yaml` under each hook's `rev`. When bumping a version, update BOTH. Enforced: `tools/check_lint_versions.py` (run by the CI `code-quality` job and `make lint`) fails on any mismatch.
 
 ## Imports and Paths
 

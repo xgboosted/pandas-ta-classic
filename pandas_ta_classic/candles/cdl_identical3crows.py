@@ -36,7 +36,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Seed Equal totals for i-2, i-1 (indices 2, 1)
     equal_total_2 = float(arr_eq[equal_trail - 2 : start_idx - 2].sum())
     equal_total_1 = float(arr_eq[equal_trail - 1 : start_idx - 1].sum())
-    O = ca.open
+    O_ = ca.open
     C = ca.close
 
     for i in range(start_idx, len(out)):
@@ -57,11 +57,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and C[i - 2] > C[i - 1]
             and C[i - 1] > C[i]
             # 2nd opens very close to 1st close
-            and O[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Equal] * equal_total_2
-            and O[i - 1] >= C[i - 2] - AVG_FACTOR[CandleSetting.Equal] * equal_total_2
+            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Equal] * equal_total_2
+            and O_[i - 1] >= C[i - 2] - AVG_FACTOR[CandleSetting.Equal] * equal_total_2
             # 3rd opens very close to 2nd close
-            and O[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total_1
-            and O[i] >= C[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total_1
+            and O_[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total_1
+            and O_[i] >= C[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total_1
         ):
             out[i] = -100
 

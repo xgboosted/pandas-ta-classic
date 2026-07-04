@@ -1,19 +1,9 @@
-# -*- coding: utf-8 -*-
-
 from pathlib import Path
 from typing import Tuple
 
 import pandas as pd  # pip install pandas
 
 # Optional imports for data sources - will gracefully handle missing dependencies
-try:
-    from pandas_datareader import data as pdr
-
-    PANDAS_DATAREADER_AVAILABLE = True
-except ImportError:
-    PANDAS_DATAREADER_AVAILABLE = False
-    print("[!] pandas_datareader not available. Install with: pip install pandas-datareader")
-
 try:
     import yfinance as yf
 

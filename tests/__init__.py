@@ -13,18 +13,15 @@ as-is.
 import contextlib
 import io
 import sys
+from importlib.util import find_spec
 from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-try:
-    import talib
-except ImportError:
-    # TA-Lib not installed — cannot regenerate; use committed fixtures.
-    pass
-else:
+# TA-Lib not installed — cannot regenerate; use committed fixtures.
+if find_spec("talib") is not None:
     from tests.fixtures.generate_fixtures import generate as _gen_fixtures
     from tests.fixtures.generate_regression_snapshots import generate as _gen_snapshots
 

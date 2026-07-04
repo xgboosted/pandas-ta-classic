@@ -21,7 +21,7 @@ def td_seq(
     show_all = kwargs.setdefault("show_all", True)
 
     def true_sequence_count(series: Series):
-        index = series.where(series == False).last_valid_index()
+        index = series.where(series.eq(False)).last_valid_index()
 
         if index is None:
             return series.count()

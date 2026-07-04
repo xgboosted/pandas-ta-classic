@@ -27,7 +27,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
     # Seed ShadowVeryShort total: applied to bar i-1
     svs_total = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
-    O = ca.open
+    O_ = ca.open
     H = ca.high
     C = ca.close
 
@@ -38,8 +38,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i - 3] == -1
             and ca.color[i - 2] == -1
             # With consecutively lower opens
-            and O[i - 4] > O[i - 3]
-            and O[i - 3] > O[i - 2]
+            and O_[i - 4] > O_[i - 3]
+            and O_[i - 3] > O_[i - 2]
             # And consecutively lower closes
             and C[i - 4] > C[i - 3]
             and C[i - 3] > C[i - 2]
@@ -49,7 +49,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             # 5th: white
             and ca.color[i] == 1
             # That opens above prior candle's body (open, since bearish)
-            and O[i] > O[i - 1]
+            and O_[i] > O_[i - 1]
             # And closes above prior candle's high
             and C[i] > H[i - 1]
         ):

@@ -3,7 +3,6 @@ import logging
 from typing import Any, Optional
 from pandas import Series
 
-logger = logging.getLogger(__name__)
 from .hlc3 import hlc3
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -12,6 +11,8 @@ from pandas_ta_classic.utils import (
     is_datetime_ordered,
     verify_series,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def vwap(

@@ -5,13 +5,12 @@ from sys import float_info as sflt
 from typing import Any, Callable, Optional, Union
 
 import numpy as np
-
-logger = logging.getLogger(__name__)
-
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from ._core import verify_series
+
+logger = logging.getLogger(__name__)
 
 
 def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: Optional[int] = None) -> tuple[np.ndarray, ...]:

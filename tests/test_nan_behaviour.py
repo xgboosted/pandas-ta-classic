@@ -164,9 +164,9 @@ class TestTooShortInput(TestCase):
     def _short(self, n: int):
         c = _C.iloc[:n]
         h = _H.iloc[:n]
-        l = _L.iloc[:n]
+        low = _L.iloc[:n]
         v = _V.iloc[:n]
-        return c, h, l, v
+        return c, h, low, v
 
     def test_sma_too_short(self):
         c, *_ = self._short(5)
@@ -187,9 +187,9 @@ class TestTooShortInput(TestCase):
         self.assertIsNone(result, "rsi should return None when len < length")
 
     def test_atr_too_short(self):
-        c, h, l, _ = self._short(5)
+        c, h, low, _ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
-            result = ta.atr(h, l, c, length=14, talib=False)
+            result = ta.atr(h, low, c, length=14, talib=False)
         self.assertIsNone(result, "atr should return None when len < length")
 
     def test_roc_too_short(self):
@@ -211,16 +211,16 @@ class TestTooShortInput(TestCase):
         self.assertIsNone(result, "bbands should return None when len < length")
 
     def test_adx_too_short(self):
-        c, h, l, _ = self._short(5)
+        c, h, low, _ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
-            result = ta.adx(h, l, c, length=14, talib=False)
+            result = ta.adx(h, low, c, length=14, talib=False)
         self.assertIsNone(result, "adx should return None when len < length")
 
     def test_smc_sweep_too_short(self):
-        c, h, l, _ = self._short(14)
+        c, h, low, _ = self._short(14)
         o = _O.iloc[:14]
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
-            result = ta.smc_sweep(o, h, l, c, length=15)
+            result = ta.smc_sweep(o, h, low, c, length=15)
         self.assertIsNone(result, "smc_sweep should return None when len < length")
 
 
@@ -235,8 +235,8 @@ class TestBoundaryLength(TestCase):
     def _exact(self, n: int):
         c = _C.iloc[:n]
         h = _H.iloc[:n]
-        l = _L.iloc[:n]
-        return c, h, l
+        low = _L.iloc[:n]
+        return c, h, low
 
     def test_sma_boundary(self):
         length = 20

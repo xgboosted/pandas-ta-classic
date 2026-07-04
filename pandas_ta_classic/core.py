@@ -6,15 +6,15 @@ from time import perf_counter
 from typing import Any, Optional
 from warnings import simplefilter
 
-logger = logging.getLogger(__name__)
-
 import pandas as pd
 import numpy as np
 from pandas.core.base import PandasObject
 
 from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version, _MATH_ALIASES
 from pandas_ta_classic._indicator_loader import _find_indicator_func, _make_ta_wrapper
-from pandas_ta_classic.utils import *
+from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time, yf
+
+logger = logging.getLogger(__name__)
 
 
 # Strategy DataClass

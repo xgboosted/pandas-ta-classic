@@ -46,7 +46,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         body_total[0] += arr_bl[j]
         j += 1
 
-    O = ca.open
+    O_ = ca.open
     H = ca.high
     L = ca.low
     C = ca.close
@@ -65,17 +65,17 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and ca.color[i - 2] == ca.color[i - 1]
             and ca.color[i - 1] == -ca.color[i]
             # 2nd to 4th hold within 1st: part of real body within 1st range
-            and min(O[i - 3], C[i - 3]) < H[i - 4]
-            and max(O[i - 3], C[i - 3]) > L[i - 4]
-            and min(O[i - 2], C[i - 2]) < H[i - 4]
-            and max(O[i - 2], C[i - 2]) > L[i - 4]
-            and min(O[i - 1], C[i - 1]) < H[i - 4]
-            and max(O[i - 1], C[i - 1]) > L[i - 4]
+            and min(O_[i - 3], C[i - 3]) < H[i - 4]
+            and max(O_[i - 3], C[i - 3]) > L[i - 4]
+            and min(O_[i - 2], C[i - 2]) < H[i - 4]
+            and max(O_[i - 2], C[i - 2]) > L[i - 4]
+            and min(O_[i - 1], C[i - 1]) < H[i - 4]
+            and max(O_[i - 1], C[i - 1]) > L[i - 4]
             # 2nd to 4th are falling (rising)
             and C[i - 2] * ca.color[i - 4] < C[i - 3] * ca.color[i - 4]
             and C[i - 1] * ca.color[i - 4] < C[i - 2] * ca.color[i - 4]
             # 5th opens above (below) the prior close
-            and O[i] * ca.color[i - 4] > C[i - 1] * ca.color[i - 4]
+            and O_[i] * ca.color[i - 4] > C[i - 1] * ca.color[i - 4]
             # 5th closes above (below) the 1st close
             and C[i] * ca.color[i - 4] > C[i - 4] * ca.color[i - 4]
         ):

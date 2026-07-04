@@ -17,6 +17,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`combination()` delegates to `math.comb`**: Replaces the hand-rolled nCr loop. Signature and results unchanged; the unused `multichoose` kwarg alias was dropped (use `repetition`).
 * **`npNaN` alias removed internally**: All modules now use `np.nan` directly. No public API change.
 * **All `npX` numpy import aliases removed** (26 aliases, e.g. `npSqrt`, `npArange`, `npNdArray`): modules now use `import numpy as np` + `np.x` directly. Internal only; no public API change.
+* **Explicit package namespace**: `pandas_ta_classic/__init__.py`, `core.py`, and `utils/__init__.py` no longer use star imports — every re-export is explicit with `__all__` defined. All documented names (utility functions, metrics, `Strategy`, lazy-loaded indicators) are unchanged. Incidental namespace leaks (e.g. `ta.np`, `ta.pd`, `ta.DataFrame`, `ta.logger`) are gone; import these from their real homes.
+* **Lint-clean repo**: `ruff check .` passes with zero errors and zero per-file ignores. Ambiguous variables renamed (`O` → `O_` in candle loops, `l` → `low` in tests); `sys.path` bootstrap hacks removed from `tests/fixtures/`, `tools/`, and `docs/conf.py` (the editable install makes them redundant); notebook cells reordered to import-first.
 
 ### Deprecated
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
