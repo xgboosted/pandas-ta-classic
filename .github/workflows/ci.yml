@@ -347,23 +347,17 @@ jobs:
       run: twine upload dist/*
 
     - name: Open PR to persist requires-python floor
-      # The "Update pyproject.toml" step above only patches this job's ephemeral
-      # checkout to build the wheel — it never touches the repository, so the
-      # committed requires-python silently goes stale each time
-      # LATEST_PYTHON_VERSION advances in this file. Once the release has
-      # published successfully, open a PR with just that one-line bump so a
-      # human reviews and merges it — no direct push to main. Classifier
-      # placeholders ({{LATEST-N}}) are intentionally left untouched here;
-      # they are re-resolved fresh at every future release.
+      # The wheel-building steps above never touch the repository, so the
+      # committed requires-python goes stale each time LATEST_PYTHON_VERSION
+      # advances. Open a PR (never push main directly) with that one-line bump;
+      # {{LATEST-N}} classifier placeholders are re-resolved at every release.
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         NEW_FLOOR="${{ fromJson(needs.generate-matrix.outputs.python-versions)[0] }}"
 
-        # This job checked out the release tag (detached HEAD) and the
-        # classifier-patching step above dirtied pyproject.toml in that tree.
-        # -f discards those local edits; -B pins local main exactly to
-        # origin/main so the sed below starts from a clean, current base.
+        # Checkout is the release tag (detached HEAD) with pyproject.toml
+        # dirtied by the classifier-patching step; -f -B resets to clean main.
         git fetch origin main
         git checkout -f -B main origin/main
 
@@ -373,11 +367,9 @@ jobs:
           exit 0
         fi
 
-        # If a previous bump PR for this same floor was closed without merging,
-        # its branch still exists and this guard no-ops on every later release
-        # until that branch is deleted or merged. Deliberate: closing that PR
-        # is a maintainer decision not to take the bump, and this job should
-        # not keep reopening it.
+        # Existing branch = a PR for this floor is open, or was closed without
+        # merging (a maintainer decision not to take the bump). Either way,
+        # skip — never reopen.
         BRANCH="chore/requires-python-$NEW_FLOOR"
         if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
           echo "Branch $BRANCH already exists on origin, skipping (PR likely already open)."
@@ -397,10 +389,8 @@ jobs:
         git checkout -b "$BRANCH"
         git add pyproject.toml
         git commit -m "chore: bump requires-python floor to >=$NEW_FLOOR"
-        # Auth: the push reuses the credentials actions/checkout persisted in
-        # this clone, authorized by this job's `contents: write`; gh uses
-        # GH_TOKEN from env, authorized by `pull-requests: write`. No explicit
-        # token-in-URL setup is needed (unlike mirror.yml's cross-host push).
+        # Push auth: credentials persisted by actions/checkout + this job's
+        # `contents: write`; gh auth: GH_TOKEN + `pull-requests: write`.
         git push origin "$BRANCH"
 
         gh pr create \

@@ -60,9 +60,6 @@ oracle = [
 lint = [
     "ruff>=0.15.20",
     "black>=26.5.1",
-    # Not a linter: tools/check_lint_versions.py (run by the CI code-quality
-    # job, which installs only this extra) parses .pre-commit-config.yaml.
-    "pyyaml>=6.0",
 ]
 
 # PyPI publishing tools

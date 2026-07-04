@@ -123,7 +123,6 @@ lint:
 	ruff check pandas_ta_classic --select E9,F63,F7,F82
 	ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 	@echo "Checking black/ruff versions match .pre-commit-config.yaml..."
-	@$(PYTHON) -c "import yaml" 2>/dev/null || { echo "PyYAML missing — run 'make install-dev' (or pip install -e '.[lint]') first"; exit 1; }
 	$(PYTHON) tools/check_lint_versions.py
 
 format:

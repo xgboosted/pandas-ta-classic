@@ -14,8 +14,6 @@ import sys
 import tomllib
 from pathlib import Path
 
-import yaml
-
 ROOT = Path(__file__).parent.parent
 
 # Repos whose pre-commit `rev:` mirrors a pin in the lint extra. Any other
@@ -32,25 +30,24 @@ def main() -> int:
     lint_pins = pyproject["project"]["optional-dependencies"]["lint"]
     # A pin that doesn't match (or a missing tool) leaves its entry unset,
     # which the mismatch check below reports as `tool: ...=None` and fails.
-    pyproject_versions = {}
-    for pin in lint_pins:
-        match = re.match(r"([a-zA-Z_-]+)>=(.+)", pin)
-        if match:
-            pyproject_versions[match.group(1)] = match.group(2)
+    pyproject_versions = {m[1]: m[2] for pin in lint_pins if (m := re.match(r"([a-zA-Z_-]+)>=(.+)", pin))}
 
-    precommit = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
-    precommit_versions = {}
-    for entry in precommit.get("repos", []):
-        tool = REPO_TO_TOOL.get(entry.get("repo", ""))
-        if tool is not None:
-            # ruff-pre-commit tags are v-prefixed (v0.15.20); black's are bare.
-            precommit_versions[tool] = str(entry.get("rev", "")).lstrip("v")
+    # The config is a repo-controlled flat file, so a regex pairing each
+    # `repo:` with the `rev:` on the next line beats a PyYAML dependency.
+    # Revs may be YAML-quoted, and ruff-pre-commit tags are v-prefixed
+    # (v0.15.20) while black's are bare — normalize both away.
+    precommit = (ROOT / ".pre-commit-config.yaml").read_text()
+    precommit_versions = {
+        REPO_TO_TOOL[repo]: rev.strip("'\"").lstrip("v")
+        for repo, rev in re.findall(r"- repo: (\S+)\s*\n\s*rev: (\S+)", precommit)
+        if repo in REPO_TO_TOOL
+    }
 
     # Missing on either side is a failure too — `!=` alone would let a tool
     # absent from BOTH files pass as None == None.
     mismatches = [
         f"{tool}: pyproject.toml={pyproject_versions.get(tool)} vs .pre-commit-config.yaml={precommit_versions.get(tool)}"
-        for tool in ("black", "ruff")
+        for tool in sorted(REPO_TO_TOOL.values())
         if pyproject_versions.get(tool) != precommit_versions.get(tool) or pyproject_versions.get(tool) is None
     ]
     if mismatches:
