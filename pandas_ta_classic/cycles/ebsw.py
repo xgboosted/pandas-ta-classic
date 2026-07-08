@@ -1,14 +1,9 @@
 # Even Better Sine Wave (EBSW)
 from typing import Any, Optional
 import numpy as np
-from numpy import cos as npCos
-from numpy import exp as npExp
-from numpy import pi as npPi
-from numpy import sin as npSin
-from numpy import sqrt as npSqrt
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -39,15 +34,15 @@ def ebsw(
 
     # Calculate Result
     m = close.size
-    result = [npNaN for _ in range(0, length - 1)] + [0]
+    result = [np.nan for _ in range(0, length - 1)] + [0]
     for i in range(length, m):
         # HighPass filter cyclic components whose periods are shorter than Duration input
-        alpha1 = (1 - npSin(360 / length)) / npCos(360 / length)
+        alpha1 = (1 - np.sin(360 / length)) / np.cos(360 / length)
         HP = 0.5 * (1 + alpha1) * (close.iloc[i] - lastClose) + alpha1 * lastHP
 
         # Smooth with a Super Smoother Filter from equation 3-3
-        a1 = npExp(-npSqrt(2) * npPi / bars)
-        b1 = 2 * a1 * npCos(npSqrt(2) * 180 / bars)
+        a1 = np.exp(-np.sqrt(2) * np.pi / bars)
+        b1 = 2 * a1 * np.cos(np.sqrt(2) * 180 / bars)
         c2 = b1
         c3 = -1 * a1 * a1
         c1 = 1 - c2 - c3
@@ -59,7 +54,7 @@ def ebsw(
         Pwr = (Filt * Filt + FilterHist[1] * FilterHist[1] + FilterHist[0] * FilterHist[0]) / 3
 
         # Normalize the Average Wave to Square Root of the Average Power
-        Wave = Wave / npSqrt(Pwr) if Pwr > 0 else 0.0
+        Wave = Wave / np.sqrt(Pwr) if Pwr > 0 else 0.0
 
         # update storage, result
         FilterHist.append(Filt)  # append new Filt value

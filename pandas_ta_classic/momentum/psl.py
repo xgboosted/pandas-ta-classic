@@ -1,6 +1,6 @@
 # Psychological Line (PSL)
 from typing import Any, Optional
-from numpy import sign as npSign
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -36,9 +36,9 @@ def psl(
         open_ = verify_series(open_)
         if open_ is None:
             return None
-        diff = npSign(close - open_)
+        diff = np.sign(close - open_)
     else:
-        diff = npSign(close.diff(drift))
+        diff = np.sign(close.diff(drift))
 
     diff.fillna(0, inplace=True)
     diff[diff <= 0] = 0  # Zero negative values

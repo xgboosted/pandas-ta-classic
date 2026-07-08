@@ -2,23 +2,20 @@
 """Generate pandas_ta_classic/core.pyi from indicator function signatures."""
 
 import inspect
-import sys
 import types
 import typing
-
-# PEP 604 union type added in Python 3.10. Guard for back-compat.
-_UNION_TYPE = getattr(types, "UnionType", None)
 from pathlib import Path
-
-# Ensure the project root is on sys.path
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
 
 from pandas_ta_classic._meta import Category
 from pandas_ta_classic._indicator_loader import (
     _find_indicator_func,
     _COLUMN_PARAM_TO_COL_KEY,
 )
+
+# PEP 604 union type added in Python 3.10. Guard for back-compat.
+_UNION_TYPE = getattr(types, "UnionType", None)
+
+ROOT = Path(__file__).parent.parent
 
 _RETURN_MAP = {
     "ichimoku": "tuple[Optional[DataFrame], Optional[DataFrame]]",
@@ -134,7 +131,9 @@ def main():
 
     out_path = ROOT / "pandas_ta_classic" / "core.pyi"
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {out_path} ({len(lines)} lines)")
+    # The committed stub is black-formatted; run black afterwards or the
+    # code-quality gate will flag the raw single-line output.
+    print(f"Wrote {out_path} ({len(lines)} lines) — now run: black {out_path}")
 
 
 if __name__ == "__main__":

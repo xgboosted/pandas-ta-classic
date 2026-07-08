@@ -64,7 +64,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
     # Seed BodyLong total (applied to i-2)
     body_long_total = float(arr_bl[body_long_trail - 2 : start_idx - 2].sum())
-    O = ca.open
+    O_ = ca.open
     C = ca.close
 
     for i in range(start_idx, len(out)):
@@ -79,11 +79,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and C[i] > C[i - 1]
             and C[i - 1] > C[i - 2]
             # 2nd opens within/near 1st real body
-            and O[i - 1] > O[i - 2]
-            and O[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
+            and O_[i - 1] > O_[i - 2]
+            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
             # 3rd opens within/near 2nd real body
-            and O[i] > O[i - 1]
-            and O[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
+            and O_[i] > O_[i - 1]
+            and O_[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
             # 1st: long real body
             and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
             # 1st: short upper shadow

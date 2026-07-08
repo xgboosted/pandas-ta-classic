@@ -68,7 +68,7 @@ Calculation:
         length=10, base=2
 
     P = close / SUM(close, length)
-    E = SUM(-P * npLog(P) / npLog(base), length)
+    E = SUM(-P * np.log(P) / np.log(base), length)
 
 Args:
     close (pd.Series): Series of 'close's

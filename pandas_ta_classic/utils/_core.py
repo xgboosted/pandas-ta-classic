@@ -1,8 +1,6 @@
 import logging
 from typing import Any, Optional, Union
 
-import re as re_
-from pathlib import Path
 from sys import float_info as sflt
 
 from numpy import argmax, argmin
@@ -13,11 +11,6 @@ from pandas_ta_classic import Imports
 logger = logging.getLogger(__name__)
 
 
-def _camelCase2Title(x: str) -> str:
-    """https://stackoverflow.com/questions/5020906/python-convert-camel-case-to-space-delimited-using-regex-and-taking-acronyms-in"""
-    return re_.sub("([a-z])([A-Z])", r"\g<1> \g<2>", x).title()
-
-
 def _pos_int(val, default):
     """Return ``int(val)`` when *val* is a positive integer, else *default*."""
     return int(val) if val and val > 0 else default
@@ -26,11 +19,6 @@ def _pos_int(val, default):
 def _pos_float(val, default):
     """Return ``float(val)`` when *val* is a positive float, else *default*."""
     return float(val) if val and val > 0 else default
-
-
-def category_files(category: str) -> list[str]:
-    """Helper function to return all filenames in the category directory."""
-    return [x.stem for x in list(Path(f"pandas_ta_classic/{category}/").glob("*.py")) if x.stem != "__init__"]
 
 
 def apply_offset(

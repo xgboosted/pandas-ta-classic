@@ -1,12 +1,9 @@
 # Linear Regression (LINREG)
 from typing import Any, Optional
 import numpy as np
-from numpy import array as npArray
-from numpy import arctan as npAtan
-from numpy import pi as npPi
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -68,9 +65,9 @@ def _linreg_output(
     if intercept:
         return bs
     if angle:
-        theta = npAtan(m_slopes)
+        theta = np.arctan(m_slopes)
         if degrees:
-            theta *= 180 / npPi
+            theta *= 180 / np.pi
         return theta
     if r:
         y2_sums = (windows * windows).sum(axis=1)
@@ -108,7 +105,7 @@ def linreg(
     # TA-Lib dispatch (not available for `r` or angle-in-radians).
     _use_talib = Imports["talib"] and mode_talib and not r and not (angle and not degrees)
     if _use_talib:
-        _close_arr = npArray(close, dtype=float)
+        _close_arr = np.array(close, dtype=float)
         _talib_fn = _TALIB_DISPATCH.get((angle, intercept, slope, tsf))
         if _talib_fn is not None:
             from importlib import import_module
@@ -130,7 +127,7 @@ def linreg(
 
         from numpy.lib.stride_tricks import sliding_window_view
 
-        windows = sliding_window_view(npArray(close, dtype=float), length)  # (n-L+1, L)
+        windows = sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
         linreg_ = _linreg_output(
             windows,
             x_arr,
@@ -146,7 +143,7 @@ def linreg(
             tsf,
         )
 
-        linreg = Series(np.concatenate([[npNaN] * (length - 1), linreg_]), index=close.index)
+        linreg = Series(np.concatenate([[np.nan] * (length - 1), linreg_]), index=close.index)
 
     # Offset
     linreg = apply_offset(linreg, offset)

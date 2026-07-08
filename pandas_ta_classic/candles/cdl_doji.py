@@ -6,10 +6,10 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    high_low_range,
     is_percent,
+    non_zero_range,
+    verify_series,
 )
-from pandas_ta_classic.utils import real_body, verify_series
 
 
 def cdl_doji(
@@ -42,8 +42,8 @@ def cdl_doji(
     # Calculate Result
     # TA-Lib averages the HL range of the *previous* ``length`` bars
     # (excluding the current bar), so shift the SMA by 1.
-    body = real_body(open_, close).abs()
-    hl_range = high_low_range(high, low).abs()
+    body = non_zero_range(close, open_).abs()
+    hl_range = non_zero_range(high, low).abs()
     hl_range_avg = sma(hl_range, length)
     if hl_range_avg is None:
         return None

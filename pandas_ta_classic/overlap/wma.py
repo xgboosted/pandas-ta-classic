@@ -1,8 +1,9 @@
 # Weighted Moving Average (WMA)
-from typing import Any, Callable, Optional
+from typing import Any, Optional
+import numpy as np
 from pandas import Series
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series, weights
 
 
 def wma(
@@ -30,21 +31,13 @@ def wma(
 
         wma = WMA(close, length)
     else:
-        from numpy import arange as npArange
-        from numpy import dot as npDot
-
         total_weight = 0.5 * length * (length + 1)
-        weights_ = Series(npArange(1, length + 1))
-        weights = weights_ if asc else weights_[::-1]
-
-        def linear(w: Any) -> Callable:
-            def _compute(x: Any) -> float:
-                return npDot(x, w) / total_weight
-
-            return _compute
+        w = np.arange(1, length + 1)
+        if not asc:
+            w = w[::-1]
 
         close_ = close.rolling(length, min_periods=length)
-        wma = close_.apply(linear(weights), raw=True)
+        wma = close_.apply(weights(w), raw=True) / total_weight
 
     # Offset
     wma = apply_offset(wma, offset)

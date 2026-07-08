@@ -40,14 +40,7 @@ REGRESSION (55 indicators)
 
 import json
 import math
-import sys
 from pathlib import Path
-
-# Allow running directly (python path/to/script.py) in addition to
-# the documented module invocation (python -m tests.fixtures.…).
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import numpy as np
 import pandas as pd
@@ -81,9 +74,9 @@ def _load() -> pd.DataFrame:
 
 
 def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
-    o, h, l, c, v = df["open"], df["high"], df["low"], df["close"], df["volume"]
+    o, h, low, c, v = df["open"], df["high"], df["low"], df["close"], df["volume"]
     idx = df.index
-    cv, hv, lv, ov, vv = c.values, h.values, l.values, o.values, v.values
+    cv, hv, lv, ov, vv = c.values, h.values, low.values, o.values, v.values
 
     # ------------------------------------------------------------------
     # Helpers
@@ -473,14 +466,14 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "midprice_14",
             _s(talib.MIDPRICE(hv, lv, 14), "MIDPRICE_14"),
-            ta.midprice(h, l, 14, talib=False),
+            ta.midprice(h, low, 14, talib=False),
         ),
         ("t3_10", _s(talib.T3(cv, 10, 0.7), "T3_10_0.7"), ta.t3(c, 10, talib=False)),
-        ("wcp", _s(talib.WCLPRICE(hv, lv, cv), "WCP"), ta.wcp(h, l, c, talib=False)),
+        ("wcp", _s(talib.WCLPRICE(hv, lv, cv), "WCP"), ta.wcp(h, low, c, talib=False)),
         # Overlap — pure arithmetic (zero library dependency)
-        ("hl2", _s((hv + lv) / 2, "HL2"), ta.hl2(h, l)),
-        ("hlc3", _s((hv + lv + cv) / 3, "HLC3"), ta.hlc3(h, l, c, talib=False)),
-        ("ohlc4", _s((ov + hv + lv + cv) / 4, "OHLC4"), ta.ohlc4(o, h, l, c)),
+        ("hl2", _s((hv + lv) / 2, "HL2"), ta.hl2(h, low)),
+        ("hlc3", _s((hv + lv + cv) / 3, "HLC3"), ta.hlc3(h, low, c, talib=False)),
+        ("ohlc4", _s((ov + hv + lv + cv) / 4, "OHLC4"), ta.ohlc4(o, h, low, c)),
         ("hma_10", _s(_hma10_ref, "HMA_10"), ta.hma(c, length=10)),
         ("vwma_10", _s(_vwma10_ref, "VWMA_10"), ta.vwma(c, v, length=10)),
         # ---- Momentum ----
@@ -497,32 +490,32 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "stoch",
             _df(STOCHk_14_3_3=_stoch_k, STOCHd_14_3_3=_stoch_d),
-            ta.stoch(h, l, c, talib=False),
+            ta.stoch(h, low, c, talib=False),
         ),
         (
             "cci_14",
             _s(talib.CCI(hv, lv, cv, 14), "CCI_14_0.015"),
-            ta.cci(h, l, c, length=14, talib=False),
+            ta.cci(h, low, c, length=14, talib=False),
         ),
         ("roc_10", _s(talib.ROC(cv, 10), "ROC_10"), ta.roc(c, length=10, talib=False)),
         (
             "willr_14",
             _s(talib.WILLR(hv, lv, cv, 14), "WILLR_14"),
-            ta.willr(h, l, c, length=14, talib=False),
+            ta.willr(h, low, c, length=14, talib=False),
         ),
         (
             "apo",
             _s(talib.APO(cv, 12, 26, 0), "APO_12_26"),
             ta.apo(c, 12, 26, talib=False),
         ),
-        ("bop", _s(talib.BOP(ov, hv, lv, cv), "BOP"), ta.bop(o, h, l, c, talib=False)),
+        ("bop", _s(talib.BOP(ov, hv, lv, cv), "BOP"), ta.bop(o, h, low, c, talib=False)),
         ("mom_10", _s(talib.MOM(cv, 10), "MOM_10"), ta.mom(c, length=10, talib=False)),
         (
             "uo",
             _s(talib.ULTOSC(hv, lv, cv, 7, 14, 28), "UO_7_14_28"),
-            ta.uo(h, l, c, talib=False),
+            ta.uo(h, low, c, talib=False),
         ),
-        ("ao", _s(_ao_ref, "AO_5_34"), ta.ao(h, l)),
+        ("ao", _s(_ao_ref, "AO_5_34"), ta.ao(h, low)),
         ("bias_10", _s(_bias10_ref, "BIAS_SMA_10"), ta.bias(c, length=10)),
         ("cfo_10", _s(_cfo10_ref, "CFO_10"), ta.cfo(c, length=10)),
         ("er", _s(_er_ref, "ER_10"), ta.er(c)),
@@ -541,7 +534,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "atr_14",
             _s(talib.ATR(hv, lv, cv, 14), "ATRr_14"),
-            ta.atr(h, l, c, length=14, talib=False),
+            ta.atr(h, low, c, length=14, talib=False),
         ),
         (
             "bbands_20",
@@ -560,26 +553,26 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             "natr_14",
             # Native NATR uses EMA (default mamode='ema') which differs from
             # TA-Lib NATR (RMA). Use the native result as its own oracle.
-            ta.natr(h, l, c, length=14, talib=False),
+            ta.natr(h, low, c, length=14, talib=False),
             None,
         ),
         (
             "true_range",
             _s(talib.TRANGE(hv, lv, cv), "TRUERANGE_1"),
-            ta.true_range(h, l, c, talib=False),
+            ta.true_range(h, low, c, talib=False),
         ),
         (
             "donchian_20",
             _df(DCL_20_20=_don_lower, DCM_20_20=_don_mid, DCU_20_20=_don_upper),
-            ta.donchian(h, l, lower_length=20, upper_length=20),
+            ta.donchian(h, low, lower_length=20, upper_length=20),
         ),
         (
             "kc_20",
             _df(KCLe_20_2=_kc_lower, KCBe_20_2=_kc_basis, KCUe_20_2=_kc_upper),
-            ta.kc(h, l, c, length=20),
+            ta.kc(h, low, c, length=20),
         ),
-        ("massi", _s(_massi_ref, "MASSI_9_25"), ta.massi(h, l)),
-        ("pdist", _s(_pdist_ref, "PDIST"), ta.pdist(o, h, l, c)),
+        ("massi", _s(_massi_ref, "MASSI_9_25"), ta.massi(h, low)),
+        ("pdist", _s(_pdist_ref, "PDIST"), ta.pdist(o, h, low, c)),
         (
             "accbands",
             _df(
@@ -587,50 +580,50 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 ACCBM_20=_accbands_mid_ref,
                 ACCBU_20=_accbands_upper_ref,
             ),
-            ta.accbands(h, l, c),
+            ta.accbands(h, low, c),
         ),
         # ---- Trend ----
         (
             "adx_14",
             _df(ADX_14=_adx_arr, DMP_14=_dmp_arr, DMN_14=_dmn_arr),
-            ta.adx(h, l, c, length=14, talib=False),
+            ta.adx(h, low, c, length=14, talib=False),
         ),
         (
             "aroon_14",
             _df(AROOND_14=_aroon_dn, AROONU_14=_aroon_up, AROONOSC_14=_aroon_osc),
-            ta.aroon(h, l, length=14, talib=False),
+            ta.aroon(h, low, length=14, talib=False),
         ),
         ("decreasing", _s(_decreasing_ref, "DEC_1"), ta.decreasing(c)),
         ("increasing", _s(_increasing_ref, "INC_1"), ta.increasing(c)),
-        ("chop", _s(_chop_ref, "CHOP_14_1_100"), ta.chop(h, l, c)),
+        ("chop", _s(_chop_ref, "CHOP_14_1_100"), ta.chop(h, low, c)),
         ("dpo_14", _s(_dpo14_arr, "DPO_14"), ta.dpo(c, length=14)),
         ("qstick", _s(_qstick_ref, "QS_10"), ta.qstick(o, c)),
         ("vhf", _s(_vhf_ref, "VHF_28"), ta.vhf(c)),
         (
             "vortex",
             _df(VTXP_14=_vtx_p, VTXM_14=_vtx_m),
-            ta.vortex(h, l, c),
+            ta.vortex(h, low, c),
         ),
         # ---- Volume ----
         ("obv", _s(talib.OBV(cv, vv), "OBV"), ta.obv(c, v, talib=False)),
         (
             "mfi_14",
             _s(talib.MFI(hv, lv, cv, vv, 14), "MFI_14"),
-            ta.mfi(h, l, c, v, length=14, talib=False),
+            ta.mfi(h, low, c, v, length=14, talib=False),
         ),
-        ("ad", _s(talib.AD(hv, lv, cv, vv), "AD"), ta.ad(h, l, c, v, talib=False)),
+        ("ad", _s(talib.AD(hv, lv, cv, vv), "AD"), ta.ad(h, low, c, v, talib=False)),
         (
             "adosc",
             _s(talib.ADOSC(hv, lv, cv, vv, 3, 10), "ADOSC_3_10"),
-            ta.adosc(h, l, c, v, talib=False),
+            ta.adosc(h, low, c, v, talib=False),
         ),
-        ("cmf_20", _s(_cmf20_ref, "CMF_20"), ta.cmf(h, l, c, v, length=20)),
+        ("cmf_20", _s(_cmf20_ref, "CMF_20"), ta.cmf(h, low, c, v, length=20)),
         ("efi", _s(_efi_ref, "EFI_13"), ta.efi(c, v)),
-        ("eom", _s(_eom_ref, "EOM_14_100000000"), ta.eom(h, l, c, v)),
+        ("eom", _s(_eom_ref, "EOM_14_100000000"), ta.eom(h, low, c, v)),
         (
             "kvo",
             _df(KVO_34_55_13=_kvo_line, KVOs_34_55_13=_kvo_sig),
-            ta.kvo(h, l, c, v),
+            ta.kvo(h, low, c, v),
         ),
         ("nvi", _s(_nvi_ref, "NVI_1"), ta.nvi(c, v)),
         ("pvi", _s(_pvi_ref, "PVI_1"), ta.pvi(c, v)),
@@ -719,11 +712,11 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         *([("cmo_14", _s(_cmo14_ref, "CMO_14"), ta.cmo(c, length=14, talib=False))] if _cmo14_ref is not None else []),
         ("coppock", _s(_coppock_ref, "COPC_11_14_10"), ta.coppock(c)),
         ("cg", _s(_cg10_ref, "CG_10"), ta.cg(c)),
-        ("pgo_14", _s(_pgo14_ref, "PGO_14"), ta.pgo(h, l, c, length=14)),
+        ("pgo_14", _s(_pgo14_ref, "PGO_14"), ta.pgo(h, low, c, length=14)),
         (
             "eri",
             _df(BULLP_13=_eri_bull_ref, BEARP_13=_eri_bear_ref),
-            ta.eri(h, l, c),
+            ta.eri(h, low, c),
         ),
         (
             "tsi",
@@ -734,7 +727,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         (
             "adxr",
             _df(ADXR_14=_adxr_arr, DMP_14=_dmp_arr, DMN_14=_dmn_arr),
-            ta.adxr(h, l, c, 14, talib=False),
+            ta.adxr(h, low, c, 14, talib=False),
         ),
         (
             "psar",
@@ -744,7 +737,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                     "PSARs_0.02_0.2": np.where(~_sar_long, _sar, np.nan).astype(float),
                 }
             ),
-            ta.psar(h, l, c),
+            ta.psar(h, low, c),
         ),
         # ---- Statistics (additional) — pure pandas/numpy rolling formulas ----
         ("zscore_20", _s(_zscore_ref, "ZS_20"), ta.zscore(c, length=20)),
@@ -767,33 +760,33 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 HA_low=_ha_low_arr,
                 HA_close=_ha_close_arr,
             ),
-            ta.ha(o, h, l, c),
+            ta.ha(o, h, low, c),
         ),
         # ---- CDL patterns — 52 exact TA-Lib matches ----
         (
             "cdl_2crows",
             _s(talib.CDL2CROWS(ov, hv, lv, cv).astype(float), "CDL_2CROWS"),
-            ta.cdl_pattern(o, h, l, c, name="2crows"),
+            ta.cdl_pattern(o, h, low, c, name="2crows"),
         ),
         (
             "cdl_3blackcrows",
             _s(talib.CDL3BLACKCROWS(ov, hv, lv, cv).astype(float), "CDL_3BLACKCROWS"),
-            ta.cdl_pattern(o, h, l, c, name="3blackcrows"),
+            ta.cdl_pattern(o, h, low, c, name="3blackcrows"),
         ),
         (
             "cdl_3inside",
             _s(talib.CDL3INSIDE(ov, hv, lv, cv).astype(float), "CDL_3INSIDE"),
-            ta.cdl_pattern(o, h, l, c, name="3inside"),
+            ta.cdl_pattern(o, h, low, c, name="3inside"),
         ),
         (
             "cdl_3linestrike",
             _s(talib.CDL3LINESTRIKE(ov, hv, lv, cv).astype(float), "CDL_3LINESTRIKE"),
-            ta.cdl_pattern(o, h, l, c, name="3linestrike"),
+            ta.cdl_pattern(o, h, low, c, name="3linestrike"),
         ),
         (
             "cdl_3outside",
             _s(talib.CDL3OUTSIDE(ov, hv, lv, cv).astype(float), "CDL_3OUTSIDE"),
-            ta.cdl_pattern(o, h, l, c, name="3outside"),
+            ta.cdl_pattern(o, h, low, c, name="3outside"),
         ),
         (
             "cdl_3whitesoldiers",
@@ -801,17 +794,17 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDL3WHITESOLDIERS(ov, hv, lv, cv).astype(float),
                 "CDL_3WHITESOLDIERS",
             ),
-            ta.cdl_pattern(o, h, l, c, name="3whitesoldiers"),
+            ta.cdl_pattern(o, h, low, c, name="3whitesoldiers"),
         ),
         (
             "cdl_advanceblock",
             _s(talib.CDLADVANCEBLOCK(ov, hv, lv, cv).astype(float), "CDL_ADVANCEBLOCK"),
-            ta.cdl_pattern(o, h, l, c, name="advanceblock"),
+            ta.cdl_pattern(o, h, low, c, name="advanceblock"),
         ),
         (
             "cdl_belthold",
             _s(talib.CDLBELTHOLD(ov, hv, lv, cv).astype(float), "CDL_BELTHOLD"),
-            ta.cdl_pattern(o, h, l, c, name="belthold"),
+            ta.cdl_pattern(o, h, low, c, name="belthold"),
         ),
         (
             "cdl_closingmarubozu",
@@ -819,7 +812,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLCLOSINGMARUBOZU(ov, hv, lv, cv).astype(float),
                 "CDL_CLOSINGMARUBOZU",
             ),
-            ta.cdl_pattern(o, h, l, c, name="closingmarubozu"),
+            ta.cdl_pattern(o, h, low, c, name="closingmarubozu"),
         ),
         (
             "cdl_counterattack",
@@ -827,7 +820,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLCOUNTERATTACK(ov, hv, lv, cv).astype(float),
                 "CDL_COUNTERATTACK",
             ),
-            ta.cdl_pattern(o, h, l, c, name="counterattack"),
+            ta.cdl_pattern(o, h, low, c, name="counterattack"),
         ),
         (
             "cdl_darkcloudcover",
@@ -835,12 +828,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLDARKCLOUDCOVER(ov, hv, lv, cv).astype(float),
                 "CDL_DARKCLOUDCOVER",
             ),
-            ta.cdl_pattern(o, h, l, c, name="darkcloudcover"),
+            ta.cdl_pattern(o, h, low, c, name="darkcloudcover"),
         ),
         (
             "cdl_dojistar",
             _s(talib.CDLDOJISTAR(ov, hv, lv, cv).astype(float), "CDL_DOJISTAR"),
-            ta.cdl_pattern(o, h, l, c, name="dojistar"),
+            ta.cdl_pattern(o, h, low, c, name="dojistar"),
         ),
         (
             "cdl_dragonflydoji",
@@ -848,12 +841,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLDRAGONFLYDOJI(ov, hv, lv, cv).astype(float),
                 "CDL_DRAGONFLYDOJI",
             ),
-            ta.cdl_pattern(o, h, l, c, name="dragonflydoji"),
+            ta.cdl_pattern(o, h, low, c, name="dragonflydoji"),
         ),
         (
             "cdl_engulfing",
             _s(talib.CDLENGULFING(ov, hv, lv, cv).astype(float), "CDL_ENGULFING"),
-            ta.cdl_pattern(o, h, l, c, name="engulfing"),
+            ta.cdl_pattern(o, h, low, c, name="engulfing"),
         ),
         (
             "cdl_eveningdojistar",
@@ -861,12 +854,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLEVENINGDOJISTAR(ov, hv, lv, cv).astype(float),
                 "CDL_EVENINGDOJISTAR",
             ),
-            ta.cdl_pattern(o, h, l, c, name="eveningdojistar"),
+            ta.cdl_pattern(o, h, low, c, name="eveningdojistar"),
         ),
         (
             "cdl_eveningstar",
             _s(talib.CDLEVENINGSTAR(ov, hv, lv, cv).astype(float), "CDL_EVENINGSTAR"),
-            ta.cdl_pattern(o, h, l, c, name="eveningstar"),
+            ta.cdl_pattern(o, h, low, c, name="eveningstar"),
         ),
         (
             "cdl_gapsidesidewhite",
@@ -874,7 +867,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLGAPSIDESIDEWHITE(ov, hv, lv, cv).astype(float),
                 "CDL_GAPSIDESIDEWHITE",
             ),
-            ta.cdl_pattern(o, h, l, c, name="gapsidesidewhite"),
+            ta.cdl_pattern(o, h, low, c, name="gapsidesidewhite"),
         ),
         (
             "cdl_gravestonedoji",
@@ -882,47 +875,47 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLGRAVESTONEDOJI(ov, hv, lv, cv).astype(float),
                 "CDL_GRAVESTONEDOJI",
             ),
-            ta.cdl_pattern(o, h, l, c, name="gravestonedoji"),
+            ta.cdl_pattern(o, h, low, c, name="gravestonedoji"),
         ),
         (
             "cdl_hammer",
             _s(talib.CDLHAMMER(ov, hv, lv, cv).astype(float), "CDL_HAMMER"),
-            ta.cdl_pattern(o, h, l, c, name="hammer"),
+            ta.cdl_pattern(o, h, low, c, name="hammer"),
         ),
         (
             "cdl_hangingman",
             _s(talib.CDLHANGINGMAN(ov, hv, lv, cv).astype(float), "CDL_HANGINGMAN"),
-            ta.cdl_pattern(o, h, l, c, name="hangingman"),
+            ta.cdl_pattern(o, h, low, c, name="hangingman"),
         ),
         (
             "cdl_harami",
             _s(talib.CDLHARAMI(ov, hv, lv, cv).astype(float), "CDL_HARAMI"),
-            ta.cdl_pattern(o, h, l, c, name="harami"),
+            ta.cdl_pattern(o, h, low, c, name="harami"),
         ),
         (
             "cdl_haramicross",
             _s(talib.CDLHARAMICROSS(ov, hv, lv, cv).astype(float), "CDL_HARAMICROSS"),
-            ta.cdl_pattern(o, h, l, c, name="haramicross"),
+            ta.cdl_pattern(o, h, low, c, name="haramicross"),
         ),
         (
             "cdl_highwave",
             _s(talib.CDLHIGHWAVE(ov, hv, lv, cv).astype(float), "CDL_HIGHWAVE"),
-            ta.cdl_pattern(o, h, l, c, name="highwave"),
+            ta.cdl_pattern(o, h, low, c, name="highwave"),
         ),
         (
             "cdl_hikkake",
             _s(talib.CDLHIKKAKE(ov, hv, lv, cv).astype(float), "CDL_HIKKAKE"),
-            ta.cdl_pattern(o, h, l, c, name="hikkake"),
+            ta.cdl_pattern(o, h, low, c, name="hikkake"),
         ),
         (
             "cdl_hikkakemod",
             _s(talib.CDLHIKKAKEMOD(ov, hv, lv, cv).astype(float), "CDL_HIKKAKEMOD"),
-            ta.cdl_pattern(o, h, l, c, name="hikkakemod"),
+            ta.cdl_pattern(o, h, low, c, name="hikkakemod"),
         ),
         (
             "cdl_homingpigeon",
             _s(talib.CDLHOMINGPIGEON(ov, hv, lv, cv).astype(float), "CDL_HOMINGPIGEON"),
-            ta.cdl_pattern(o, h, l, c, name="homingpigeon"),
+            ta.cdl_pattern(o, h, low, c, name="homingpigeon"),
         ),
         (
             "cdl_identical3crows",
@@ -930,12 +923,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLIDENTICAL3CROWS(ov, hv, lv, cv).astype(float),
                 "CDL_IDENTICAL3CROWS",
             ),
-            ta.cdl_pattern(o, h, l, c, name="identical3crows"),
+            ta.cdl_pattern(o, h, low, c, name="identical3crows"),
         ),
         (
             "cdl_inneck",
             _s(talib.CDLINNECK(ov, hv, lv, cv).astype(float), "CDL_INNECK"),
-            ta.cdl_pattern(o, h, l, c, name="inneck"),
+            ta.cdl_pattern(o, h, low, c, name="inneck"),
         ),
         (
             "cdl_invertedhammer",
@@ -943,12 +936,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLINVERTEDHAMMER(ov, hv, lv, cv).astype(float),
                 "CDL_INVERTEDHAMMER",
             ),
-            ta.cdl_pattern(o, h, l, c, name="invertedhammer"),
+            ta.cdl_pattern(o, h, low, c, name="invertedhammer"),
         ),
         (
             "cdl_ladderbottom",
             _s(talib.CDLLADDERBOTTOM(ov, hv, lv, cv).astype(float), "CDL_LADDERBOTTOM"),
-            ta.cdl_pattern(o, h, l, c, name="ladderbottom"),
+            ta.cdl_pattern(o, h, low, c, name="ladderbottom"),
         ),
         (
             "cdl_longleggeddoji",
@@ -956,22 +949,22 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLLONGLEGGEDDOJI(ov, hv, lv, cv).astype(float),
                 "CDL_LONGLEGGEDDOJI",
             ),
-            ta.cdl_pattern(o, h, l, c, name="longleggeddoji"),
+            ta.cdl_pattern(o, h, low, c, name="longleggeddoji"),
         ),
         (
             "cdl_longline",
             _s(talib.CDLLONGLINE(ov, hv, lv, cv).astype(float), "CDL_LONGLINE"),
-            ta.cdl_pattern(o, h, l, c, name="longline"),
+            ta.cdl_pattern(o, h, low, c, name="longline"),
         ),
         (
             "cdl_marubozu",
             _s(talib.CDLMARUBOZU(ov, hv, lv, cv).astype(float), "CDL_MARUBOZU"),
-            ta.cdl_pattern(o, h, l, c, name="marubozu"),
+            ta.cdl_pattern(o, h, low, c, name="marubozu"),
         ),
         (
             "cdl_matchinglow",
             _s(talib.CDLMATCHINGLOW(ov, hv, lv, cv).astype(float), "CDL_MATCHINGLOW"),
-            ta.cdl_pattern(o, h, l, c, name="matchinglow"),
+            ta.cdl_pattern(o, h, low, c, name="matchinglow"),
         ),
         (
             "cdl_morningdojistar",
@@ -979,27 +972,27 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLMORNINGDOJISTAR(ov, hv, lv, cv).astype(float),
                 "CDL_MORNINGDOJISTAR",
             ),
-            ta.cdl_pattern(o, h, l, c, name="morningdojistar"),
+            ta.cdl_pattern(o, h, low, c, name="morningdojistar"),
         ),
         (
             "cdl_morningstar",
             _s(talib.CDLMORNINGSTAR(ov, hv, lv, cv).astype(float), "CDL_MORNINGSTAR"),
-            ta.cdl_pattern(o, h, l, c, name="morningstar"),
+            ta.cdl_pattern(o, h, low, c, name="morningstar"),
         ),
         (
             "cdl_onneck",
             _s(talib.CDLONNECK(ov, hv, lv, cv).astype(float), "CDL_ONNECK"),
-            ta.cdl_pattern(o, h, l, c, name="onneck"),
+            ta.cdl_pattern(o, h, low, c, name="onneck"),
         ),
         (
             "cdl_piercing",
             _s(talib.CDLPIERCING(ov, hv, lv, cv).astype(float), "CDL_PIERCING"),
-            ta.cdl_pattern(o, h, l, c, name="piercing"),
+            ta.cdl_pattern(o, h, low, c, name="piercing"),
         ),
         (
             "cdl_rickshawman",
             _s(talib.CDLRICKSHAWMAN(ov, hv, lv, cv).astype(float), "CDL_RICKSHAWMAN"),
-            ta.cdl_pattern(o, h, l, c, name="rickshawman"),
+            ta.cdl_pattern(o, h, low, c, name="rickshawman"),
         ),
         (
             "cdl_separatinglines",
@@ -1007,22 +1000,22 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLSEPARATINGLINES(ov, hv, lv, cv).astype(float),
                 "CDL_SEPARATINGLINES",
             ),
-            ta.cdl_pattern(o, h, l, c, name="separatinglines"),
+            ta.cdl_pattern(o, h, low, c, name="separatinglines"),
         ),
         (
             "cdl_shootingstar",
             _s(talib.CDLSHOOTINGSTAR(ov, hv, lv, cv).astype(float), "CDL_SHOOTINGSTAR"),
-            ta.cdl_pattern(o, h, l, c, name="shootingstar"),
+            ta.cdl_pattern(o, h, low, c, name="shootingstar"),
         ),
         (
             "cdl_shortline",
             _s(talib.CDLSHORTLINE(ov, hv, lv, cv).astype(float), "CDL_SHORTLINE"),
-            ta.cdl_pattern(o, h, l, c, name="shortline"),
+            ta.cdl_pattern(o, h, low, c, name="shortline"),
         ),
         (
             "cdl_spinningtop",
             _s(talib.CDLSPINNINGTOP(ov, hv, lv, cv).astype(float), "CDL_SPINNINGTOP"),
-            ta.cdl_pattern(o, h, l, c, name="spinningtop"),
+            ta.cdl_pattern(o, h, low, c, name="spinningtop"),
         ),
         (
             "cdl_stalledpattern",
@@ -1030,7 +1023,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLSTALLEDPATTERN(ov, hv, lv, cv).astype(float),
                 "CDL_STALLEDPATTERN",
             ),
-            ta.cdl_pattern(o, h, l, c, name="stalledpattern"),
+            ta.cdl_pattern(o, h, low, c, name="stalledpattern"),
         ),
         (
             "cdl_sticksandwich",
@@ -1038,32 +1031,32 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLSTICKSANDWICH(ov, hv, lv, cv).astype(float),
                 "CDL_STICKSANDWICH",
             ),
-            ta.cdl_pattern(o, h, l, c, name="sticksandwich"),
+            ta.cdl_pattern(o, h, low, c, name="sticksandwich"),
         ),
         (
             "cdl_takuri",
             _s(talib.CDLTAKURI(ov, hv, lv, cv).astype(float), "CDL_TAKURI"),
-            ta.cdl_pattern(o, h, l, c, name="takuri"),
+            ta.cdl_pattern(o, h, low, c, name="takuri"),
         ),
         (
             "cdl_tasukigap",
             _s(talib.CDLTASUKIGAP(ov, hv, lv, cv).astype(float), "CDL_TASUKIGAP"),
-            ta.cdl_pattern(o, h, l, c, name="tasukigap"),
+            ta.cdl_pattern(o, h, low, c, name="tasukigap"),
         ),
         (
             "cdl_thrusting",
             _s(talib.CDLTHRUSTING(ov, hv, lv, cv).astype(float), "CDL_THRUSTING"),
-            ta.cdl_pattern(o, h, l, c, name="thrusting"),
+            ta.cdl_pattern(o, h, low, c, name="thrusting"),
         ),
         (
             "cdl_tristar",
             _s(talib.CDLTRISTAR(ov, hv, lv, cv).astype(float), "CDL_TRISTAR"),
-            ta.cdl_pattern(o, h, l, c, name="tristar"),
+            ta.cdl_pattern(o, h, low, c, name="tristar"),
         ),
         (
             "cdl_unique3river",
             _s(talib.CDLUNIQUE3RIVER(ov, hv, lv, cv).astype(float), "CDL_UNIQUE3RIVER"),
-            ta.cdl_pattern(o, h, l, c, name="unique3river"),
+            ta.cdl_pattern(o, h, low, c, name="unique3river"),
         ),
         (
             "cdl_upsidegap2crows",
@@ -1071,7 +1064,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLUPSIDEGAP2CROWS(ov, hv, lv, cv).astype(float),
                 "CDL_UPSIDEGAP2CROWS",
             ),
-            ta.cdl_pattern(o, h, l, c, name="upsidegap2crows"),
+            ta.cdl_pattern(o, h, low, c, name="upsidegap2crows"),
         ),
         (
             "cdl_xsidegap3methods",
@@ -1079,7 +1072,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLXSIDEGAP3METHODS(ov, hv, lv, cv).astype(float),
                 "CDL_XSIDEGAP3METHODS",
             ),
-            ta.cdl_pattern(o, h, l, c, name="xsidegap3methods"),
+            ta.cdl_pattern(o, h, low, c, name="xsidegap3methods"),
         ),
         # ---- CDL patterns — 8 no-signal patterns (TA-Lib also returns all-zero) ----
         (
@@ -1088,7 +1081,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDL3STARSINSOUTH(ov, hv, lv, cv).astype(float),
                 "CDL_3STARSINSOUTH",
             ),
-            ta.cdl_pattern(o, h, l, c, name="3starsinsouth"),
+            ta.cdl_pattern(o, h, low, c, name="3starsinsouth"),
         ),
         (
             "cdl_abandonedbaby",
@@ -1096,12 +1089,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLABANDONEDBABY(ov, hv, lv, cv).astype(float),
                 "CDL_ABANDONEDBABY",
             ),
-            ta.cdl_pattern(o, h, l, c, name="abandonedbaby"),
+            ta.cdl_pattern(o, h, low, c, name="abandonedbaby"),
         ),
         (
             "cdl_breakaway",
             _s(talib.CDLBREAKAWAY(ov, hv, lv, cv).astype(float), "CDL_BREAKAWAY"),
-            ta.cdl_pattern(o, h, l, c, name="breakaway"),
+            ta.cdl_pattern(o, h, low, c, name="breakaway"),
         ),
         (
             "cdl_concealbabyswall",
@@ -1109,12 +1102,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLCONCEALBABYSWALL(ov, hv, lv, cv).astype(float),
                 "CDL_CONCEALBABYSWALL",
             ),
-            ta.cdl_pattern(o, h, l, c, name="concealbabyswall"),
+            ta.cdl_pattern(o, h, low, c, name="concealbabyswall"),
         ),
         (
             "cdl_kicking",
             _s(talib.CDLKICKING(ov, hv, lv, cv).astype(float), "CDL_KICKING"),
-            ta.cdl_pattern(o, h, l, c, name="kicking"),
+            ta.cdl_pattern(o, h, low, c, name="kicking"),
         ),
         (
             "cdl_kickingbylength",
@@ -1122,12 +1115,12 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLKICKINGBYLENGTH(ov, hv, lv, cv).astype(float),
                 "CDL_KICKINGBYLENGTH",
             ),
-            ta.cdl_pattern(o, h, l, c, name="kickingbylength"),
+            ta.cdl_pattern(o, h, low, c, name="kickingbylength"),
         ),
         (
             "cdl_mathold",
             _s(talib.CDLMATHOLD(ov, hv, lv, cv).astype(float), "CDL_MATHOLD"),
-            ta.cdl_pattern(o, h, l, c, name="mathold"),
+            ta.cdl_pattern(o, h, low, c, name="mathold"),
         ),
         (
             "cdl_risefall3methods",
@@ -1135,7 +1128,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
                 talib.CDLRISEFALL3METHODS(ov, hv, lv, cv).astype(float),
                 "CDL_RISEFALL3METHODS",
             ),
-            ta.cdl_pattern(o, h, l, c, name="risefall3methods"),
+            ta.cdl_pattern(o, h, low, c, name="risefall3methods"),
         ),
     ]
 
@@ -1146,52 +1139,52 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     # ==================================================================
     reg_indicators: list[tuple] = [
         # ---- Overlap ----
-        ("hilo", ta.hilo(h, l, c), None),
+        ("hilo", ta.hilo(h, low, c), None),
         ("hwma", ta.hwma(c), None),
         ("jma", ta.jma(c), None),
         ("mcgd", ta.mcgd(c), None),
         ("mmar", ta.mmar(c), None),
         ("rainbow", ta.rainbow(c), None),
         ("ssf_10", ta.ssf(c, length=10), None),
-        ("supertrend", ta.supertrend(h, l, c), None),
+        ("supertrend", ta.supertrend(h, low, c), None),
         ("vidya", ta.vidya(c), None),
-        ("vwap", ta.vwap(h, l, c, v), None),
+        ("vwap", ta.vwap(h, low, c, v), None),
         ("zlma_10", ta.zlma(c, length=10), None),
         # ---- Momentum ----
-        ("brar", ta.brar(o, h, l, c), None),
+        ("brar", ta.brar(o, h, low, c), None),
         ("cti", ta.cti(c), None),
-        ("dm_14", ta.dm(h, l, length=14, talib=False), None),
-        ("fisher", ta.fisher(h, l), None),
-        ("inertia", ta.inertia(c, h, l), None),
-        ("kdj", ta.kdj(h, l, c), None),
+        ("dm_14", ta.dm(h, low, length=14, talib=False), None),
+        ("fisher", ta.fisher(h, low), None),
+        ("inertia", ta.inertia(c, h, low), None),
+        ("kdj", ta.kdj(h, low, c), None),
         ("kst", ta.kst(c), None),
         ("lrsi", ta.lrsi(c), None),
         ("psl", ta.psl(c, o), None),
         ("qqe", ta.qqe(c), None),
         ("rsx", ta.rsx(c), None),
-        ("rvgi", ta.rvgi(o, h, l, c), None),
+        ("rvgi", ta.rvgi(o, h, low, c), None),
         ("smi", ta.smi(c), None),
-        ("squeeze", ta.squeeze(h, l, c), None),
-        ("squeeze_pro", ta.squeeze_pro(h, l, c), None),
+        ("squeeze", ta.squeeze(h, low, c), None),
+        ("squeeze_pro", ta.squeeze_pro(h, low, c), None),
         ("stc", ta.stc(c), None),
         ("td_seq", ta.td_seq(c), None),
         ("trixh", ta.trixh(c), None),
         ("vwmacd", ta.vwmacd(c, v), None),
         # ---- Volatility ----
-        ("aberration", ta.aberration(h, l, c), None),
-        ("ce", ta.ce(h, l, c), None),
+        ("aberration", ta.aberration(h, low, c), None),
+        ("ce", ta.ce(h, low, c), None),
         ("hwc", ta.hwc(c), None),
-        ("rvi_vol", ta.rvi(c, h, l), None),
-        ("thermo", ta.thermo(h, l), None),
+        ("rvi_vol", ta.rvi(c, h, low), None),
+        ("thermo", ta.thermo(h, low), None),
         # ---- Trend ----
         ("amat", ta.amat(c, fast=8, slow=21), None),
-        ("cksp", ta.cksp(h, l, c), None),
-        ("cpr", ta.cpr(o, h, l, c), None),
+        ("cksp", ta.cksp(h, low, c), None),
+        ("cpr", ta.cpr(o, h, low, c), None),
         ("decay", ta.decay(c), None),
         ("long_run", ta.long_run(_ema_fast, _ema_slow), None),
-        ("pmax", ta.pmax(h, l, c), None),
+        ("pmax", ta.pmax(h, low, c), None),
         ("short_run", ta.short_run(_ema_fast, _ema_slow), None),
-        ("ttm_trend", ta.ttm_trend(h, l, c), None),
+        ("ttm_trend", ta.ttm_trend(h, low, c), None),
         # ---- Volume ----
         ("aobv", ta.aobv(c, v), None),
         ("vfi", ta.vfi(c, v), None),
@@ -1202,15 +1195,15 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("ebsw", ta.ebsw(c), None),
         # ---- Performance ----
         # ---- Candles ----
-        ("cdl_doji", ta.cdl_doji(o, h, l, c), None),
+        ("cdl_doji", ta.cdl_doji(o, h, low, c), None),
         # cdl_doji uses custom bodyPercent/lookback params that differ from TA-Lib
-        ("cdl_inside", ta.cdl_inside(o, h, l, c), None),
-        ("cdl_z", ta.cdl_z(o, h, l, c), None),
+        ("cdl_inside", ta.cdl_inside(o, h, low, c), None),
+        ("cdl_z", ta.cdl_z(o, h, low, c), None),
         # cdl_inside, cdl_z: no TA-Lib equivalent
         # cdl_pattern (dispatcher): all-pattern aggregate, no TA-Lib equivalent
-        ("cdl_pattern", ta.cdl_pattern(o, h, l, c), None),
+        ("cdl_pattern", ta.cdl_pattern(o, h, low, c), None),
         # ---- Overlap (additional) ----
-        ("ichimoku", ta.ichimoku(h, l, c)[0], None),
+        ("ichimoku", ta.ichimoku(h, low, c)[0], None),
         # ---- Trend (additional) ----
         ("tsignals", ta.tsignals(_trend_bool), None),
         ("xsignals", ta.xsignals(_rsi_14_sig, 70, 30), None),

@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -48,7 +48,7 @@ def vidya(
     m = close.size
     alpha = 2 / (length + 1)
     abs_cmo = _cmo(close, length, drift).abs()
-    vidya_arr = np.full(m, npNaN)
+    vidya_arr = np.full(m, np.nan)
     vidya_arr[length - 1] = close.iloc[:length].mean()  # SMA seed
     cmo_arr = abs_cmo.to_numpy()
     c_arr = close.to_numpy()

@@ -250,14 +250,14 @@ class TestEmvDivisorDefault(TestCase):
 
     def test_emv_default_uses_divisor_10000(self):
         """ta.emv() must match manual calculation with divisor=10000."""
-        h, l, v = self.high, self.low, self.volume
-        hl_range = (h - l).replace(0, float("nan"))
-        midpoint = 0.5 * (h + l)
+        h, low, v = self.high, self.low, self.volume
+        hl_range = (h - low).replace(0, float("nan"))
+        midpoint = 0.5 * (h + low)
         distance = midpoint - midpoint.shift(1)
         box_ratio = (v / 10_000) / hl_range
         expected = distance / box_ratio
 
-        result = ta.emv(h, l, v)
+        result = ta.emv(h, low, v)
         mask = result.notna() & expected.notna()
         self.assertTrue(mask.any())
         np.testing.assert_allclose(
@@ -269,9 +269,9 @@ class TestEmvDivisorDefault(TestCase):
 
     def test_emv_custom_divisor_differs_from_default(self):
         """emv(divisor=1) must produce a different result than the default."""
-        h, l, v = self.high, self.low, self.volume
-        default = ta.emv(h, l, v)
-        custom = ta.emv(h, l, v, divisor=1)
+        h, low, v = self.high, self.low, self.volume
+        default = ta.emv(h, low, v)
+        custom = ta.emv(h, low, v, divisor=1)
 
         mask = default.notna() & custom.notna()
         diff = (default[mask] - custom[mask]).abs()
@@ -401,8 +401,8 @@ class TestHl2Hlc3NoneGuard(TestCase):
     def test_hl2_valid_input_returns_series(self):
         """hl2 with valid inputs must return a non-empty Series named 'HL2'."""
         h = pd.Series([10.0, 11.0, 12.0])
-        l = pd.Series([8.0, 9.0, 10.0])
-        result = ta.hl2(h, l)
+        low = pd.Series([8.0, 9.0, 10.0])
+        result = ta.hl2(h, low)
         self.assertIsNotNone(result)
         self.assertIsInstance(result, pd.Series)
         self.assertEqual(result.name, "HL2")
@@ -411,9 +411,9 @@ class TestHl2Hlc3NoneGuard(TestCase):
     def test_hlc3_valid_input_returns_series(self):
         """hlc3 with valid inputs must return a Series named 'HLC3'."""
         h = pd.Series([12.0, 13.0])
-        l = pd.Series([8.0, 9.0])
+        low = pd.Series([8.0, 9.0])
         c = pd.Series([10.0, 11.0])
-        result = ta.hlc3(h, l, c, talib=False)
+        result = ta.hlc3(h, low, c, talib=False)
         self.assertIsNotNone(result)
         self.assertEqual(result.name, "HLC3")
         np.testing.assert_allclose(result.values, [10.0, 11.0], rtol=1e-9)

@@ -1,7 +1,6 @@
 # Choppiness Index (CHOP)
 from typing import Any, Optional
-from numpy import log10 as npLog10
-from numpy import log as npLn
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.utils import (
@@ -50,9 +49,9 @@ def chop(
 
     chop = scalar
     if ln:
-        chop *= (npLn(atr_sum) - npLn(diff)) / npLn(length)
+        chop *= (np.log(atr_sum) - np.log(diff)) / np.log(length)
     else:
-        chop *= (npLog10(atr_sum) - npLog10(diff)) / npLog10(length)
+        chop *= (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
 
     # Offset
     chop = apply_offset(chop, offset)

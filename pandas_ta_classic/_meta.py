@@ -20,17 +20,7 @@ except ImportError:
         except PackageNotFoundError:
             __version__ = "0.0.0"  # Fallback if package not installed
     except ImportError:
-        # Fallback for Python < 3.8
-        try:
-            from pkg_resources import get_distribution, DistributionNotFound
-
-            try:
-                _dist = get_distribution("pandas-ta-classic")
-                __version__ = _dist.version
-            except DistributionNotFound:
-                __version__ = "0.0.0"  # Fallback if package not installed
-        except ImportError:
-            __version__ = "0.0.0"  # Final fallback
+        __version__ = "0.0.0"  # Final fallback
 
 version = __version__
 
@@ -39,14 +29,12 @@ version = __version__
 Imports = {
     "alpha-vantage": find_spec("alpha_vantage") is not None,
     "backtrader": find_spec("backtrader") is not None,
-    "cython": find_spec("cython") is not None,
     "matplotlib": find_spec("matplotlib") is not None,
     "mplfinance": find_spec("mplfinance") is not None,
     "numba": find_spec("numba") is not None,
     "scipy": find_spec("scipy") is not None,
     "sklearn": find_spec("sklearn") is not None,
     "statsmodels": find_spec("statsmodels") is not None,
-    "stochastic": find_spec("stochastic") is not None,
     "talib": find_spec("talib") is not None,
     "tqdm": find_spec("tqdm") is not None,
     "tulipy": find_spec("tulipy") is not None,

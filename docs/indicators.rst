@@ -378,7 +378,6 @@ Tulipy extras (NumPy wrappers):
 Utility / signal functions (accessible directly or via ``df.ta``):
 
 * *Crossover*: **crossover** (returns Boolean Series that is True on the bar where ``a`` crosses above ``b``)
-* *Crossany*: **crossany** (returns Boolean Series that is True on any bar where ``a`` and ``b`` cross in either direction)
 * *Lag*: **lag** (returns a Series offset by ``n`` periods; equivalent to tulipy ``lag``)
 
 .. include:: indicator_support_matrix.rst

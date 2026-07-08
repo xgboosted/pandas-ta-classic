@@ -1,7 +1,6 @@
 # Volume Profile (VP)
 from typing import Any, Optional
-from numpy import arange as npArange
-from numpy import array_split as npArraySplit
+import numpy as np
 from pandas import cut, concat, DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
 
@@ -69,7 +68,7 @@ def vp(
             ]
         ]
     else:
-        vp_ranges = [vp.iloc[idx] for idx in npArraySplit(npArange(len(vp)), width)]
+        vp_ranges = [vp.iloc[idx] for idx in np.array_split(np.arange(len(vp)), width)]
         result = (
             {
                 low_price_col: r[close_col].min(),

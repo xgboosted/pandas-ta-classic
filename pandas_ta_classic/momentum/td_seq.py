@@ -1,6 +1,6 @@
 # import numpy as np
 from typing import Any, Optional
-from numpy import where as npWhere
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -21,7 +21,7 @@ def td_seq(
     show_all = kwargs.setdefault("show_all", True)
 
     def true_sequence_count(series: Series):
-        index = series.where(series == False).last_valid_index()
+        index = series.where(series.eq(False)).last_valid_index()
 
         if index is None:
             return series.count()
@@ -30,7 +30,7 @@ def td_seq(
 
     def calc_td(series: Series, direction: str, show_all: bool):
         td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
-        td_num = npWhere(td_bool, td_bool.rolling(13, min_periods=0).apply(true_sequence_count), 0)
+        td_num = np.where(td_bool, td_bool.rolling(13, min_periods=0).apply(true_sequence_count), 0)
         td_num = Series(td_num)
 
         if show_all:

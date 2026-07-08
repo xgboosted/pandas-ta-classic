@@ -9,7 +9,7 @@ PIP := $(shell if command -v uv >/dev/null 2>&1; then echo "uv pip"; else echo "
 # Python: use the local venv if it exists, otherwise fall back to system python
 PYTHON := $(shell if [ -f .venv/bin/python ]; then echo ".venv/bin/python"; else echo "python3"; fi)
 
-.PHONY: all help clean caches install install-dev install-all init test test-ext test-metrics test-strats test-ta test-utils test-all fixtures docs docs-serve lint format
+.PHONY: all help clean caches install install-dev install-all init test test-ext test-metrics test-strats test-ta test-utils test-all fixtures docs docs-serve lint format typecheck
 
 # Default target
 all: test
@@ -44,6 +44,7 @@ help:
 	@echo "  make clean            Remove Python cache files"
 	@echo "  make lint             Run code quality checks"
 	@echo "  make format           Format code with black"
+	@echo "  make typecheck        Run mypy against the requires-python floor"
 	@echo ""
 	@echo "Package manager: $(PIP)"
 
@@ -121,9 +122,16 @@ lint:
 	@echo "Running ruff..."
 	ruff check pandas_ta_classic --select E9,F63,F7,F82
 	ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
+	@echo "Checking black/ruff versions match .pre-commit-config.yaml..."
+	$(PYTHON) tools/check_lint_versions.py
 
 format:
 	@echo "Formatting code with black..."
 	black pandas_ta_classic/
-	@echo "Checking import order with isort..."
-	isort pandas_ta_classic/
+
+# Derives the mypy target version from project.requires-python instead of
+# hardcoding it a second time, so the two can't drift out of sync.
+typecheck:
+	@MYPY_PY=$$($(PYTHON) -c "import re, tomllib; print(re.search(r'\d+\.\d+', tomllib.load(open('pyproject.toml', 'rb'))['project']['requires-python']).group())"); \
+	echo "Type checking against Python $$MYPY_PY (from requires-python)..."; \
+	$(PYTHON) -m mypy --python-version $$MYPY_PY

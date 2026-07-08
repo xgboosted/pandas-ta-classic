@@ -1,9 +1,6 @@
 # Super Smoother Filter (SSF)
 from typing import Any, Optional
-from numpy import cos as npCos
-from numpy import exp as npExp
-from numpy import pi as npPi
-from numpy import sqrt as npSqrt
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
@@ -46,9 +43,9 @@ def ssf(
     ssf_arr = c_arr.copy()
 
     if poles == 3:
-        x = npPi / length  # x = PI / n
-        a0 = npExp(-x)  # e^(-x)
-        b0 = 2 * a0 * npCos(npSqrt(3) * x)  # 2e^(-x)*cos(3^(.5) * x)
+        x = np.pi / length  # x = PI / n
+        a0 = np.exp(-x)  # e^(-x)
+        b0 = 2 * a0 * np.cos(np.sqrt(3) * x)  # 2e^(-x)*cos(3^(.5) * x)
         c0 = a0 * a0  # e^(-2x)
 
         c4 = c0 * c0  # e^(-4x)
@@ -59,10 +56,10 @@ def ssf(
         _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4)
 
     else:  # poles == 2
-        x = npPi * npSqrt(2) / length  # x = PI * 2^(.5) / n
-        a0 = npExp(-x)  # e^(-x)
+        x = np.pi * np.sqrt(2) / length  # x = PI * 2^(.5) / n
+        a0 = np.exp(-x)  # e^(-x)
         a1 = -a0 * a0  # -e^(-2x)
-        b1 = 2 * a0 * npCos(x)  # 2e^(-x)*cos(x)
+        b1 = 2 * a0 * np.cos(x)  # 2e^(-x)*cos(x)
         c1 = 1 - a1 - b1  # e^(-2x) - 2e^(-x)*cos(x) + 1
 
         _ssf2_loop(c_arr, ssf_arr, m, c1, b1, a1)

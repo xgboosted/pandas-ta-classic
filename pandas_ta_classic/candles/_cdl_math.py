@@ -78,8 +78,8 @@ del _s, _rt, _ap, _f, _d
 
 
 class CandleArrays:
-    """Holds pre-computed OHLC-derived numpy arrays and provides TA-Lib
-    macro equivalents (``candle_range``, ``candle_average``, etc.)."""
+    """Holds pre-computed OHLC-derived numpy arrays (TA-Lib candle-macro
+    equivalents) shared by the candlestick pattern implementations."""
 
     __slots__ = (
         "_ranges",
@@ -120,46 +120,13 @@ class CandleArrays:
         self.color = np.where(close >= open_, 1, -1)
 
         # Pre-computed range array for each CandleSetting (eliminates
-        # per-call branching in candle_range).
+        # per-call range-type branching).
         _rt_arrays = {
             RangeType.RealBody: self.real_body,
             RangeType.HighLow: self.hl_range,
             RangeType.Shadows: self.shadow_range,
         }
         self._ranges = {s: _rt_arrays[CANDLE_DEFAULTS[s][0]] for s in CandleSetting}
-
-    # -- TA-Lib macro: TA_CANDLERANGE --
-    def candle_range(self, setting: CandleSetting, i: int) -> float:
-        return self._ranges[setting][i]
-
-    # -- TA-Lib macro: TA_CANDLEAVERAGE --
-    def candle_average(self, setting: CandleSetting, period_total: float, i: int) -> float:
-        """Exact replica of TA-Lib's TA_CANDLEAVERAGE macro.
-
-        Formula: ``factor * (sum/period) / (2 if Shadows else 1)``
-        When ``avgPeriod == 0``, uses ``candle_range(setting, i)`` instead of
-        ``sum/period``.
-        """
-        ap = AVG_PERIOD[setting]
-        if ap != 0:
-            return AVG_FACTOR[setting] * period_total
-        return AVG_FACTOR[setting] * self._ranges[setting][i]
-
-    # -- TA-Lib macro: TA_REALBODYGAPUP --
-    def real_body_gap_up(self, i2: int, i1: int) -> bool:
-        return self.body_low[i2] > self.body_high[i1]
-
-    # -- TA-Lib macro: TA_REALBODYGAPDOWN --
-    def real_body_gap_down(self, i2: int, i1: int) -> bool:
-        return self.body_high[i2] < self.body_low[i1]
-
-    # -- TA-Lib macro: TA_CANDLEGAPUP --
-    def candle_gap_up(self, i2: int, i1: int) -> bool:
-        return self.low[i2] > self.high[i1]
-
-    # -- TA-Lib macro: TA_CANDLEGAPDOWN --
-    def candle_gap_down(self, i2: int, i1: int) -> bool:
-        return self.high[i2] < self.low[i1]
 
 
 # ---------------------------------------------------------------------------

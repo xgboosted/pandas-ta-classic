@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import concat, Series
 
-npNaN = np.nan
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -46,7 +46,7 @@ def true_range(
         ranges = [high_low_range, high - prev_close, prev_close - low]
         true_range = concat(ranges, axis=1)
         true_range = true_range.abs().max(axis=1)
-        true_range.iloc[:drift] = npNaN
+        true_range.iloc[:drift] = np.nan
 
     # Offset
     true_range = apply_offset(true_range, offset)

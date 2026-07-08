@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.linreg import linreg
@@ -71,15 +71,15 @@ def _squeeze_detailed(df, squeeze_s, kwargs, prefix="SQZ_"):
     neg_dec *= squeeze_s
     neg_inc *= squeeze_s
 
-    pos_inc.replace(0, npNaN, inplace=True)
-    pos_dec.replace(0, npNaN, inplace=True)
-    neg_dec.replace(0, npNaN, inplace=True)
-    neg_inc.replace(0, npNaN, inplace=True)
+    pos_inc.replace(0, np.nan, inplace=True)
+    pos_dec.replace(0, np.nan, inplace=True)
+    neg_dec.replace(0, np.nan, inplace=True)
+    neg_inc.replace(0, np.nan, inplace=True)
 
     sqz_inc = squeeze_s * increasing(squeeze_s)
     sqz_dec = squeeze_s * decreasing(squeeze_s)
-    sqz_inc.replace(0, npNaN, inplace=True)
-    sqz_dec.replace(0, npNaN, inplace=True)
+    sqz_inc.replace(0, np.nan, inplace=True)
+    sqz_dec.replace(0, np.nan, inplace=True)
 
     sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc = apply_fill([sqz_inc, sqz_dec, pos_inc, pos_dec, neg_dec, neg_inc], **kwargs)
 

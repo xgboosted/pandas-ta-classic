@@ -1,27 +1,81 @@
-name = "pandas-ta-classic"
-
 import logging
 from typing import Any
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
-
-# Import metadata from _meta module to avoid circular imports
+# Metadata comes from _meta to avoid circular imports; it must be imported
+# before core/utils because submodules read Imports off this package.
 from pandas_ta_classic._meta import (
-    Category,
-    Imports,
-    version,
     CANGLE_AGG,
+    Category,
     EXCHANGE_TZ,
+    Imports,
     RATE,
+    version,
+)
+from pandas_ta_classic.core import (
+    AllStrategy,
+    AnalysisIndicators,
+    CommonStrategy,
+    Strategy,
+)
+from pandas_ta_classic.utils import (
+    above,
+    above_value,
+    apply_fill,
+    apply_offset,
+    av,
+    below,
+    below_value,
+    cagr,
+    calmar_ratio,
+    candle_color,
+    combination,
+    cross,
+    cross_value,
+    crossover,
+    df_error_analysis,
+    df_year_to_date,
+    downside_deviation,
+    fibonacci,
+    final_time,
+    get_drift,
+    get_offset,
+    get_time,
+    is_datetime_ordered,
+    is_percent,
+    jensens_alpha,
+    lag,
+    linear_regression,
+    log_max_drawdown,
+    max_drawdown,
+    non_zero_range,
+    np_rolling_moments,
+    optimal_leverage,
+    pascals_triangle,
+    pure_profit_score,
+    recent_maximum_index,
+    recent_minimum_index,
+    sharpe_ratio,
+    signals,
+    signed_series,
+    sortino_ratio,
+    symmetric_triangle,
+    tal_ma,
+    to_utc,
+    total_time,
+    unsigned_differences,
+    verify_series,
+    weights,
+    yf,
+    zero,
 )
 
-# Import core functionality
-from pandas_ta_classic.core import *
-
-# Re-expose the volatility subpackage under its own name.
-# The utils.metrics.volatility() function (same name) would otherwise shadow it
-# after the wildcard import above.
+# The utils.volatility() metric stays off the top-level namespace so it never
+# shadows this subpackage.
+from . import utils
 from . import volatility
+
+name = "pandas-ta-classic"
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __version__ = version
 __description__ = (
@@ -29,6 +83,71 @@ __description__ = (
     "Can be called from a Pandas DataFrame or standalone like TA-Lib. Correlation tested with TA-Lib."
     "This is the classic/community maintained version."
 )
+
+__all__ = [
+    "AllStrategy",
+    "AnalysisIndicators",
+    "CANGLE_AGG",
+    "Category",
+    "CommonStrategy",
+    "EXCHANGE_TZ",
+    "Imports",
+    "RATE",
+    "Strategy",
+    "above",
+    "above_value",
+    "apply_fill",
+    "apply_offset",
+    "av",
+    "below",
+    "below_value",
+    "cagr",
+    "calmar_ratio",
+    "candle_color",
+    "combination",
+    "cross",
+    "cross_value",
+    "crossover",
+    "df_error_analysis",
+    "df_year_to_date",
+    "downside_deviation",
+    "fibonacci",
+    "final_time",
+    "get_drift",
+    "get_offset",
+    "get_time",
+    "is_datetime_ordered",
+    "is_percent",
+    "jensens_alpha",
+    "lag",
+    "linear_regression",
+    "log_max_drawdown",
+    "max_drawdown",
+    "name",
+    "non_zero_range",
+    "np_rolling_moments",
+    "optimal_leverage",
+    "pascals_triangle",
+    "pure_profit_score",
+    "recent_maximum_index",
+    "recent_minimum_index",
+    "sharpe_ratio",
+    "signals",
+    "signed_series",
+    "sortino_ratio",
+    "symmetric_triangle",
+    "tal_ma",
+    "to_utc",
+    "total_time",
+    "unsigned_differences",
+    "utils",
+    "verify_series",
+    "version",
+    "volatility",
+    "weights",
+    "yf",
+    "zero",
+]
 
 
 def __dir__() -> list[str]:

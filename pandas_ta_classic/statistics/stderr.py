@@ -1,7 +1,7 @@
 # Standard Error (STDERR)
 from typing import Any, Optional
 
-from numpy import sqrt as npSqrt
+import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -25,7 +25,7 @@ def stderr(
         return None
 
     # Calculate Result
-    stderr_ = close.rolling(length).std(ddof=ddof) / npSqrt(length)
+    stderr_ = close.rolling(length).std(ddof=ddof) / np.sqrt(length)
 
     # Offset
     stderr_ = apply_offset(stderr_, offset)

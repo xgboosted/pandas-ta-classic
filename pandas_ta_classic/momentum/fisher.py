@@ -3,13 +3,13 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    high_low_range,
+    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._njit import njit
@@ -55,7 +55,7 @@ def fisher(
     highest_hl2 = hl2_.rolling(length).max()
     lowest_hl2 = hl2_.rolling(length).min()
 
-    hlr = high_low_range(highest_hl2, lowest_hl2)
+    hlr = non_zero_range(highest_hl2, lowest_hl2)
     hlr[hlr < 0.001] = 0.001
 
     hl_range = hlr
@@ -109,7 +109,7 @@ Calculation:
 
     v = 0
     m = high.size
-    FISHER = [npNaN for _ in range(0, length - 1)] + [0]
+    FISHER = [np.nan for _ in range(0, length - 1)] + [0]
     for i in range(length, m):
         v = 0.66 * position[i] + 0.67 * v
         if v < -0.99: v = -0.999

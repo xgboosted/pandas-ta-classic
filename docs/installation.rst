@@ -124,7 +124,7 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
      - Effect when installed
    * - TA-Lib
      - **Acceleration backend + oracle**
-      - Core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
+     - Core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
    * - tulipy
      - **Oracle only**
      - Never used as computation backend; only ``test_oracle_tulipy.py`` uses it to verify native output

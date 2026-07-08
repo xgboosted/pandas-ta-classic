@@ -4,7 +4,7 @@ import numpy as np
 from pandas import Series
 from pandas_ta_classic import Imports
 
-npNaN = np.nan
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -42,7 +42,7 @@ def ema(
             fv_pos = None if first_valid is None else close.index.get_loc(first_valid)
             if fv_pos is not None:
                 sma_nth = close.iloc[fv_pos : fv_pos + length].mean()
-                close.iloc[: fv_pos + length - 1] = npNaN
+                close.iloc[: fv_pos + length - 1] = np.nan
                 close.iloc[fv_pos + length - 1] = sma_nth
         ema = close.ewm(span=length, adjust=adjust).mean()
 

@@ -136,36 +136,6 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result, Series)
         npt.assert_array_equal(result, self.crosseddf["crossed"])
 
-    def test_df_dates(self):
-        result = self.utils.df_dates(self.data)
-        self.assertEqual(None, result)
-
-        result = self.utils.df_dates(self.data, "1999-11-01")
-        self.assertEqual(1, result.shape[0])
-
-        result = self.utils.df_dates(
-            self.data,
-            [
-                "1999-11-01",
-                "2020-08-15",
-                "2020-08-24",
-                "2020-08-25",
-                "2020-08-26",
-                "2020-08-27",
-            ],
-        )
-        self.assertEqual(5, result.shape[0])
-
-    def test_df_month_to_date(self):
-        result = self.utils.df_month_to_date(self.data)
-        self.assertIsInstance(result, DataFrame)
-        self.assertLessEqual(len(result), len(self.data))
-
-    def test_df_quarter_to_date(self):
-        result = self.utils.df_quarter_to_date(self.data)
-        self.assertIsInstance(result, DataFrame)
-        self.assertLessEqual(len(result), len(self.data))
-
     def test_df_year_to_date(self):
         result = self.utils.df_year_to_date(self.data)
         self.assertIsInstance(result, DataFrame)
@@ -203,25 +173,6 @@ class TestUtilities(TestCase):
             np.array([1 / 12, 1 / 12, 1 / 6, 1 / 4, 5 / 12]),
         )
 
-    def test_geometric_mean(self):
-        returns = pandas_ta.percent_return(self.data.close)
-        result = self.utils.geometric_mean(returns)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.geometric_mean(Series([12, 14, 11, 8]))
-        self.assertIsInstance(result, float)
-
-        result = self.utils.geometric_mean(Series([100, 50, 0, 25, 0, 60]))
-        self.assertIsInstance(result, float)
-
-        series = Series([0, 1, 2, 3])
-        result = self.utils.geometric_mean(series)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.geometric_mean(-series)
-        self.assertIsInstance(result, int)
-        self.assertAlmostEqual(result, 0)
-
     def test_get_time(self):
         result = self.utils.get_time(to_string=True)
         self.assertIsInstance(result, str)
@@ -245,25 +196,6 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result["r"], float)
         self.assertIsInstance(result["t"], float)
         self.assertIsInstance(result["line"], Series)
-
-    def test_log_geometric_mean(self):
-        returns = pandas_ta.percent_return(self.data.close)
-        result = self.utils.log_geometric_mean(returns)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.log_geometric_mean(Series([12, 14, 11, 8]))
-        self.assertIsInstance(result, float)
-
-        result = self.utils.log_geometric_mean(Series([100, 50, 0, 25, 0, 60]))
-        self.assertIsInstance(result, float)
-
-        series = Series([0, 1, 2, 3])
-        result = self.utils.log_geometric_mean(series)
-        self.assertIsInstance(result, float)
-
-        result = self.utils.log_geometric_mean(-series)
-        self.assertIsInstance(result, int)
-        self.assertAlmostEqual(result, 0)
 
     def test_pascals_triangle(self):
         self.assertIsNone(self.utils.pascals_triangle(inverse=True), None)

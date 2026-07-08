@@ -49,7 +49,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
     # Seed BodyShort total
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
-    O = ca.open
+    O_ = ca.open
     C = ca.close
 
     for i in range(start_idx, len(out)):
@@ -70,11 +70,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
             and C[i] > C[i - 1]
             and C[i - 1] > C[i - 2]
             # 2nd opens within/near 1st real body
-            and O[i - 1] > O[i - 2]
-            and O[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
+            and O_[i - 1] > O_[i - 2]
+            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
             # 3rd opens within/near 2nd real body
-            and O[i] > O[i - 1]
-            and O[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
+            and O_[i] > O_[i - 1]
+            and O_[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
             # 2nd not far shorter than 1st
             and ca.real_body[i - 1] > ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
             # 3rd not far shorter than 2nd

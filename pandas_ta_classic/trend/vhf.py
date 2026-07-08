@@ -1,6 +1,6 @@
 # Vertical Horizontal Filter (VHF)
 from typing import Any, Optional
-from numpy import fabs as npFabs
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -32,8 +32,8 @@ def vhf(
     # Calculate Result
     hcp = close.rolling(length).max()
     lcp = close.rolling(length).min()
-    diff = npFabs(close.diff(drift))
-    vhf = npFabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
+    diff = np.fabs(close.diff(drift))
+    vhf = np.fabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
 
     # Offset
     vhf = apply_offset(vhf, offset)

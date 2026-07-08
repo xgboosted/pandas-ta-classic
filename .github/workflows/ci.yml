@@ -66,6 +66,9 @@ jobs:
         black --quiet pandas_ta_classic/core.pyi
         git diff --exit-code pandas_ta_classic/core.pyi
 
+    - name: Verify black/ruff versions match .pre-commit-config.yaml
+      run: python tools/check_lint_versions.py
+
   # Job 2: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION
   # These versions are used for:
@@ -233,10 +236,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [code-quality, generate-matrix, testing-core, testing-oracle]
     if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      contents: write        # only this job may push; needed to push the branch below
+      pull-requests: write   # needed to open the requires-python bump PR below
     environment:
       name: pypi-production
       url: https://pypi.org/project/pandas-ta-classic/
-    
+
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
       with:
@@ -339,3 +345,56 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: twine upload dist/*
+
+    - name: Open PR to persist requires-python floor
+      # The wheel-building steps above never touch the repository, so the
+      # committed requires-python goes stale each time LATEST_PYTHON_VERSION
+      # advances. Open a PR (never push main directly) with that one-line bump;
+      # {{LATEST-N}} classifier placeholders are re-resolved at every release.
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        NEW_FLOOR="${{ fromJson(needs.generate-matrix.outputs.python-versions)[0] }}"
+
+        # Checkout is the release tag (detached HEAD) with pyproject.toml
+        # dirtied by the classifier-patching step; -f -B resets to clean main.
+        git fetch origin main
+        git checkout -f -B main origin/main
+
+        CURRENT=$(grep -oP 'requires-python = ">=\K[0-9]+\.[0-9]+' pyproject.toml)
+        if [ "$CURRENT" = "$NEW_FLOOR" ]; then
+          echo "requires-python already >=$NEW_FLOOR on main, nothing to persist."
+          exit 0
+        fi
+
+        # Existing branch = a PR for this floor is open, or was closed without
+        # merging (a maintainer decision not to take the bump). Either way,
+        # skip — never reopen.
+        BRANCH="chore/requires-python-$NEW_FLOOR"
+        if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+          echo "Branch $BRANCH already exists on origin, skipping (PR likely already open)."
+          exit 0
+        fi
+
+        sed -i "s/requires-python = \">=$CURRENT\"/requires-python = \">=$NEW_FLOOR\"/" pyproject.toml
+        # sed exits 0 even when it replaces nothing; fail by name instead of
+        # letting `git commit` die later with a cryptic "nothing to commit".
+        if git diff --quiet pyproject.toml; then
+          echo "sed did not update requires-python — pattern in pyproject.toml drifted from this script's expectation." >&2
+          exit 1
+        fi
+
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git checkout -b "$BRANCH"
+        git add pyproject.toml
+        git commit -m "chore: bump requires-python floor to >=$NEW_FLOOR"
+        # Push auth: credentials persisted by actions/checkout + this job's
+        # `contents: write`; gh auth: GH_TOKEN + `pull-requests: write`.
+        git push origin "$BRANCH"
+
+        gh pr create \
+          --base main \
+          --head "$BRANCH" \
+          --title "chore: bump requires-python floor to >=$NEW_FLOOR" \
+          --body "Automated follow-up to release ${{ github.event.release.tag_name }}. The supported Python matrix (generate-matrix job) now starts at $NEW_FLOOR; this brings \`requires-python\` in pyproject.toml back in sync so it doesn't silently drift stale until the next manual edit."

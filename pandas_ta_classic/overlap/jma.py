@@ -1,14 +1,9 @@
 # Jurik Moving Average (JMA)
 from typing import Any, Optional, Union
 import numpy as np
-from numpy import average as npAverage
-from numpy import log as npLog
-from numpy import power as npPower
-from numpy import sqrt as npSqrt
-from numpy import zeros_like as npZeroslike
 from pandas import Series
 
-npNaN = np.nan
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
@@ -48,9 +43,9 @@ def jma(
         return None
 
     # Define base variables
-    jma = npZeroslike(close)
-    volty = npZeroslike(close)
-    v_sum = npZeroslike(close)
+    jma = np.zeros_like(close)
+    volty = np.zeros_like(close)
+    v_sum = np.zeros_like(close)
 
     kv = det0 = det1 = ma2 = 0.0
     jma[0] = ma1 = uBand = lBand = close.iloc[0]
@@ -59,9 +54,9 @@ def jma(
     sum_length = 10
     length = 0.5 * (_length - 1)
     pr = _jma_phase_ratio(phase)
-    length1 = max((npLog(npSqrt(length)) / npLog(2.0)) + 2.0, 0)
+    length1 = max((np.log(np.sqrt(length)) / np.log(2.0)) + 2.0, 0)
     pow1 = max(length1 - 2.0, 0.5)
-    length2 = length1 * npSqrt(length)
+    length2 = length1 * np.sqrt(length)
     bet = length2 / (length2 + 1)
     beta = 0.45 * (_length - 1) / (0.45 * (_length - 1) + 2.0)
 
@@ -76,19 +71,19 @@ def jma(
 
         # Relative price volatility factor
         v_sum[i] = v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
-        avg_volty = npAverage(v_sum[max(i - 65, 0) : i + 1])
+        avg_volty = np.average(v_sum[max(i - 65, 0) : i + 1])
         d_volty = 0 if avg_volty == 0 else volty[i] / avg_volty
-        r_volty = max(1.0, min(npPower(length1, 1 / pow1), d_volty))
+        r_volty = max(1.0, min(np.power(length1, 1 / pow1), d_volty))
 
         # Jurik volatility bands
-        pow2 = npPower(r_volty, pow1)
-        kv = npPower(bet, npSqrt(pow2))
+        pow2 = np.power(r_volty, pow1)
+        kv = np.power(bet, np.sqrt(pow2))
         uBand = price if (del1 > 0) else price - (kv * del1)
         lBand = price if (del2 < 0) else price - (kv * del2)
 
         # Jurik Dynamic Factor
-        power = npPower(r_volty, pow1)
-        alpha = npPower(beta, power)
+        power = np.power(r_volty, pow1)
+        alpha = np.power(beta, power)
 
         # 1st stage - prelimimary smoothing by adaptive EMA
         ma1 = ((1 - alpha) * price) + (alpha * ma1)
@@ -102,7 +97,7 @@ def jma(
         jma[i] = jma[i - 1] + det1
 
     # Remove initial lookback data and convert to pandas frame
-    jma[0 : _length - 1] = npNaN
+    jma[0 : _length - 1] = np.nan
     jma = Series(jma, index=close.index)
 
     # Offset

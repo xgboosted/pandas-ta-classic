@@ -1,7 +1,7 @@
 # Historical Volatility (HVOL)
 from typing import Any, Optional
 
-from numpy import log as npLog, sqrt as npSqrt
+import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -26,8 +26,8 @@ def hvol(
         return None
 
     # Calculate Result
-    log_returns = npLog(close / close.shift(1))
-    hvol_ = 100 * log_returns.rolling(length).std(ddof=1) * npSqrt(annualization)
+    log_returns = np.log(close / close.shift(1))
+    hvol_ = 100 * log_returns.rolling(length).std(ddof=1) * np.sqrt(annualization)
 
     # Offset
     hvol_ = apply_offset(hvol_, offset)
