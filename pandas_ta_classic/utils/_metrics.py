@@ -149,18 +149,18 @@ def optimal_leverage(
     period: Union[float, int] = RATE["TRADING_DAYS_PER_YEAR"],
     log: bool = False,
     capital: float = 1.0,
-    **kwargs: Any,
 ) -> float:
-    """Optimal Leverage of a series. NOTE: Incomplete. Do NOT use.
+    """Optimal Leverage (Kelly-like) of a series.
 
     Args:
         close (pd.Series): Series of 'close's
         benchmark_rate (float): Benchmark Rate to use. Default: 0.0
         period (int, float): Period to use to calculate Mean Annual Return and
             Annual Standard Deviation.
-            Default: None or the default sharpe_ratio.period()
+            Default: RATE["TRADING_DAYS_PER_YEAR"] (252)
         log (bool): If True, calculates log_return. Otherwise it returns
             percent_return. Default: False
+        capital (float): Capital to scale the optimal leverage by. Default: 1.0
 
     >>> result = ta.optimal_leverage(close, benchmark_rate=0.0, log=False)
     """
@@ -172,11 +172,13 @@ def optimal_leverage(
 
     period_mu = period * returns.mean()
     period_std = np.sqrt(period) * returns.std()
+    if period_std == 0:
+        raise ValueError("optimal_leverage: standard deviation of returns is zero")
 
     mean_excess_return = period_mu - benchmark_rate
     opt_leverage = (period_std**-2) * mean_excess_return
 
-    return int(capital * opt_leverage)
+    return capital * opt_leverage
 
 
 def pure_profit_score(close: Series) -> Union[float, int]:

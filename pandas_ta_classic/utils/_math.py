@@ -7,7 +7,6 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 from pandas import DataFrame, Series
 
-from pandas_ta_classic import Imports
 from ._core import verify_series
 
 logger = logging.getLogger(__name__)
@@ -96,7 +95,7 @@ def fibonacci(n: int = 2, **kwargs: Any) -> np.ndarray:
 
 
 def linear_regression(x: Series, y: Series) -> dict:
-    """Classic Linear Regression in Numpy or Scikit-Learn"""
+    """Classic Linear Regression using Numpy"""
     x, y = verify_series(x), verify_series(y)
     m, n = x.size, y.size
 
@@ -104,8 +103,6 @@ def linear_regression(x: Series, y: Series) -> dict:
         logger.error("Linear Regression X and y have unequal total observations: %d != %d", m, n)
         return {}
 
-    if Imports["sklearn"]:
-        return _linear_regression_sklearn(x, y)
     return _linear_regression_np(x, y)
 
 
@@ -183,11 +180,8 @@ def zero(x: Union[int, float]) -> Union[int, float]:
     return 0 if abs(x) < sflt.epsilon else x
 
 
-# TESTING
-
-
 def df_error_analysis(dfA: DataFrame, dfB: DataFrame, **kwargs: Any) -> DataFrame:
-    """DataFrame Correlation Analysis helper"""
+    """Correlation between two DataFrames, used by the test suite for oracle parity checks."""
     corr_method = kwargs.pop("corr_method", "pearson")
 
     # Find their differences and correlation
@@ -206,9 +200,8 @@ def df_error_analysis(dfA: DataFrame, dfB: DataFrame, **kwargs: Any) -> DataFram
     return corr
 
 
-# PRIVATE
 def _linear_regression_np(x: Series, y: Series) -> dict:
-    """Simple Linear Regression in Numpy for two 1d arrays for environments without the sklearn package."""
+    """Simple Linear Regression using Numpy for two 1d arrays."""
     result = {"a": np.nan, "b": np.nan, "r": np.nan, "t": np.nan, "line": np.nan}
     x_sum = x.sum()
     y_sum = y.sum()
@@ -235,22 +228,3 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
         np.seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
 
     return result
-
-
-def _linear_regression_sklearn(x: Series, y: Series) -> dict:
-    """Simple Linear Regression in Scikit Learn for two 1d arrays for
-    environments with the sklearn package."""
-    from sklearn.linear_model import LinearRegression
-
-    X = DataFrame(x)
-    lr = LinearRegression().fit(X, y=y)
-    r = lr.score(X, y=y)
-    a, b = lr.intercept_, lr.coef_[0]
-
-    return {
-        "a": a,
-        "b": b,
-        "r": r,
-        "t": r / np.sqrt((1 - r * r) / (x.size - 2)),
-        "line": a + b * x,
-    }

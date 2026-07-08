@@ -44,9 +44,6 @@ dependencies = [
 [project.optional-dependencies]
 # Core optional runtime dependencies
 optional = [
-    "scipy",
-    "scikit-learn",
-    "statsmodels",
     "tqdm",
 ]
 
@@ -215,7 +212,6 @@ disable_error_code = ["union-attr", "operator", "no-redef", "index", "attr-defin
 [[tool.mypy.overrides]]
 module = [
     "pandas.*",
-    "sklearn.*",
     "alpha_vantage.*",
     "numba",
     "tulipy",

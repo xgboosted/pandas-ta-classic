@@ -28,18 +28,9 @@ version = __version__
 # Keys correspond to optional dependency names defined in pyproject.toml.
 Imports = {
     "alpha-vantage": find_spec("alpha_vantage") is not None,
-    "backtrader": find_spec("backtrader") is not None,
-    "matplotlib": find_spec("matplotlib") is not None,
-    "mplfinance": find_spec("mplfinance") is not None,
-    "numba": find_spec("numba") is not None,
-    "scipy": find_spec("scipy") is not None,
-    "sklearn": find_spec("sklearn") is not None,
-    "statsmodels": find_spec("statsmodels") is not None,
     "talib": find_spec("talib") is not None,
     "tqdm": find_spec("tqdm") is not None,
     "tulipy": find_spec("tulipy") is not None,
-    "vectorbt": find_spec("vectorbt") is not None,
-    "yaml": find_spec("yaml") is not None,
     "yfinance": find_spec("yfinance") is not None,
 }
 

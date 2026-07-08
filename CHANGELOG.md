@@ -19,6 +19,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **All `npX` numpy import aliases removed** (26 aliases, e.g. `npSqrt`, `npArange`, `npNdArray`): modules now use `import numpy as np` + `np.x` directly. Internal only; no public API change.
 * **Explicit package namespace**: `pandas_ta_classic/__init__.py`, `core.py`, and `utils/__init__.py` no longer use star imports — every re-export is explicit with `__all__` defined. All documented names (utility functions, metrics, `Strategy`, lazy-loaded indicators) are unchanged. Incidental namespace leaks (e.g. `ta.np`, `ta.pd`, `ta.DataFrame`, `ta.logger`) are gone; import these from their real homes.
 * **Lint-clean repo**: `ruff check .` passes with zero errors and zero per-file ignores. Ambiguous variables renamed (`O` → `O_` in candle loops, `l` → `low` in tests); `sys.path` bootstrap hacks removed from `tests/fixtures/`, `tools/`, and `docs/conf.py` (the editable install makes them redundant); notebook cells reordered to import-first.
+* **`linear_regression()` always uses the numpy implementation**: the `"r"` key is now consistently the Pearson correlation coefficient. Previously, environments with scikit-learn installed silently used `LinearRegression.score()` (R²) instead, so results depended on the environment. Affects `pure_profit_score`.
+* **`optimal_leverage()` returns a float**: the result is no longer truncated with `int()`, the `capital` argument is documented, the unused `**kwargs` parameter is removed, and the "Incomplete. Do NOT use" docstring warning is removed. Zero-variance input now raises `ValueError` (previously crashed with `OverflowError`).
 
 ### Deprecated
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
@@ -29,6 +31,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`high_low_range()` / `real_body()` wrappers** (`utils/_candles.py`): call sites now use `non_zero_range()` directly (`real_body(open_, close)` ≡ `non_zero_range(close, open_)`).
 * **`ytd` alias**: use `df_year_to_date()`. Internal `_camelCase2Title` inlined at its single call site.
 * **Unused dev/optional dependencies**: `stochastic` (never imported), `cython` (no `.pyx` sources), `pytest-cov` and `pytest-benchmark` (no coverage/benchmark runs), `isort` (black owns formatting). Corresponding `Imports` probes and the Makefile isort step removed.
+* **Unused hard dependencies**: `scipy`, `scikit-learn`, and `statsmodels` dropped from `[project.dependencies]` — nothing in the package imports them anymore. `_linear_regression_sklearn()` removed (see Changed). Stale `Imports` probes pruned (`backtrader`, `matplotlib`, `mplfinance`, `numba`, `scipy`, `sklearn`, `statsmodels`, `vectorbt`, `yaml`); numba acceleration is unaffected (`utils/_njit.py` self-detects numba).
 
 ### Fixed
 * **Cross-package indicator imports**: A submodule import could overwrite a re-exported function of the same name on the parent package (e.g. `from pandas_ta_classic.volatility import atr` occasionally returned the `atr` *module* instead of the function). Resolved.
