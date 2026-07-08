@@ -1,6 +1,7 @@
+import math
 from unittest import TestCase
 
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from tests.config import get_sample_data
 import pandas_ta_classic as pandas_ta
@@ -94,17 +95,20 @@ class TestUtilityMetrics(TestCase):
 
     def test_optimal_leverage(self):
         result = pandas_ta.optimal_leverage(self.close)
-        self.assertIsInstance(result, int)
+        self.assertIsInstance(result, float)
+        self.assertTrue(math.isfinite(result))
         result = pandas_ta.optimal_leverage(self.close, log=True)
-        self.assertIsInstance(result, int)
+        self.assertIsInstance(result, float)
+        self.assertTrue(math.isfinite(result))
+        constant = Series([100.0] * 60)
+        with self.assertRaises(ValueError):
+            pandas_ta.optimal_leverage(constant)
 
     def test_pure_profit_score(self):
         result = pandas_ta.pure_profit_score(self.close)
         self.assertGreaterEqual(result, 0)
 
     def test_sharpe_ratio(self):
-        import math
-
         result = pandas_ta.sharpe_ratio(self.close)
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
