@@ -47,7 +47,7 @@ We welcome contributions from the community! This document provides guidelines a
  uv pip install -e ".[dev]"          # Development dependencies
  uv pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
  uv pip install -e ".[docs]"         # Documentation dependencies
- uv pip install -e ".[optional]"     # Optional runtime features (scipy, numba, etc.)
+ uv pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  uv pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
  uv pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt, yfinance
  uv pip install -e ".[performance]"  # Numba acceleration
@@ -62,7 +62,7 @@ We welcome contributions from the community! This document provides guidelines a
  pip install -e ".[dev]"          # Development dependencies
  pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
  pip install -e ".[docs]"         # Documentation dependencies
- pip install -e ".[optional]"     # Optional runtime features (scipy, numba, etc.)
+ pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
  pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt, yfinance
  pip install -e ".[performance]"  # Numba acceleration
