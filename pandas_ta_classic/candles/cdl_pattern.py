@@ -162,11 +162,11 @@ def cdl_pattern(
     if type(name) is str:
         name = [name]
 
-    tala = None
+    tala: Any = None
     if Imports["talib"]:
         import talib.abstract as tala
 
-    result = {}
+    result: dict = {}
     for n in name:
         _run_one_cdl_pattern(
             n,
