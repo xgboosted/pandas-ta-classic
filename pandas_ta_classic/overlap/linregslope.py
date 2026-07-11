@@ -8,6 +8,7 @@ from pandas_ta_classic.utils import get_offset, verify_series
 def linregslope(
     close: Series,
     length: Optional[int] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -23,7 +24,7 @@ def linregslope(
     if close is None:
         return None
 
-    return linreg(close, length=length, offset=offset, slope=True)
+    return linreg(close, length=length, talib=talib, offset=offset, slope=True)
 
 
 linregslope.__doc__ = """Linear Regression Slope (LINEARREG_SLOPE)

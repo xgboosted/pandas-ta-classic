@@ -2,12 +2,14 @@ from typing import Any, Optional
 
 from pandas import Series
 
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def rolling_max(
     close: Series,
     length: Optional[int] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -17,9 +19,15 @@ def rolling_max(
         raise ValueError(f"length must be positive, got {length}")
     close = verify_series(close, length)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
     if close is None:
         return None
-    result = close.rolling(length).max()
+    if Imports["talib"] and mode_talib:
+        from talib import MAX
+
+        result = MAX(close, length)
+    else:
+        result = close.rolling(length).max()
     result = apply_offset(result, offset)
     result = apply_fill(result, **kwargs)
     result.name = f"MAX_{length}"

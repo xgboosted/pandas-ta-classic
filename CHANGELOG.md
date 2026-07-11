@@ -12,6 +12,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **Type stubs for `AnalysisIndicators`** (`pandas_ta_classic/core.pyi`): IDE autocomplete and mypy now see full method signatures for every indicator.
 
 ### Changed
+* **TA-Lib passthrough for 7 more indicators**: `rolling_sum`, `rolling_max`, `rolling_min`, `mama`, `linregslope`, `linregangle`, and `linregintercept` now accept `talib=True` to dispatch to their TA-Lib counterparts (`SUM`, `MAX`, `MIN`, `MAMA`, `LINEARREG_SLOPE/ANGLE/INTERCEPT`). Native and TA-Lib outputs match to floating-point precision.
+* **Index operators documented as window-relative**: `maxindex`, `minindex`, and `minmaxindex` docstrings now state plainly that they return the 0-based index *within* the rolling window (0..length-1, "bars back") — not TA-Lib's absolute array index. These are intentionally *not* given a `talib=True` passthrough: TA-Lib's `MAXINDEX`/`MININDEX`/`MINMAXINDEX` use a different (absolute) convention and tulipy has no equivalent, so the divergence is by design, not an oversight.
 * **Faster cold import (~3–4×)**: `import pandas_ta_classic` takes ~280 ms (was ~930 ms) because indicator functions load on demand. Public API unchanged.
 * **Math operators individually importable**: Each math/trig operator (`add`, `sub`, `mult`, `div`, `rolling_max/min/sum`, `acos`, `cos`, `exp`, `ln`, …) now lives in its own submodule, e.g. `from pandas_ta_classic.math.add import add`.
 * **`combination()` delegates to `math.comb`**: Replaces the hand-rolled nCr loop. Signature and results unchanged; the unused `multichoose` kwarg alias was dropped (use `repetition`).
