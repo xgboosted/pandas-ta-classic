@@ -24,6 +24,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Deprecated
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
+* **`tsignals` `drift` parameter**: Passing `drift` now emits a `DeprecationWarning` and the value is ignored — trade signals are always computed with a 1-period difference. The parameter will be removed in a future release.
+* **Inactive `drift` parameters on `cfo`, `inertia`, `kst`, `rsx`, `chop`, `accbands`, `kvo`**: These indicators accepted a `drift` parameter that never entered their calculation (dead since the upstream template). Passing `drift` now emits a `DeprecationWarning`; the value has never affected the result and the parameter will be removed in a future release. Misleading docstrings were corrected (e.g. `cfo`'s "short period", `chop`'s `ATR(drift)` pseudocode).
 
 ### Removed
 * **Dead code (audit, zero callers)**: `BasePandasObject` and `_check_na_columns()` in `core.py`; CPR helpers `round_to_strike`, `calculate_option_strikes`, `detect_cpr_breakout`, `detect_cpr_rejection`; math utils `geometric_mean`, `log_geometric_mean`, and the hand-rolled `erf`; time utils `df_dates`, `df_month_to_date`/`mtd`, `df_quarter_to_date`/`qtd`; `category_files()`; six unused `CandleArrays` helper methods; the `pkg_resources` Python < 3.8 fallback in `_meta.py`; `tests/context.py` and other unused test scaffolding.
@@ -34,6 +36,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **Unused hard dependencies**: `scipy`, `scikit-learn`, and `statsmodels` dropped from `[project.dependencies]` — nothing in the package imports them anymore. `_linear_regression_sklearn()` removed (see Changed). Stale `Imports` probes pruned (`backtrader`, `matplotlib`, `mplfinance`, `numba`, `scipy`, `sklearn`, `statsmodels`, `vectorbt`, `yaml`); numba acceleration is unaffected (`utils/_njit.py` self-detects numba).
 
 ### Fixed
+* **`tsignals` `drift` corrupted trade signals**: `trends.diff(drift)` computed entries/exits against the state `drift` bars ago instead of the previous bar, so `drift != 1` reported spurious entries mid-trend and missed real crossovers (contradicting the documented `diff()` behavior). Now always uses a 1-period difference. Output at the default (`drift=1`) is unchanged.
 * **Cross-package indicator imports**: A submodule import could overwrite a re-exported function of the same name on the parent package (e.g. `from pandas_ta_classic.volatility import atr` occasionally returned the `atr` *module* instead of the function). Resolved.
 * **Test-fixture regen no longer drops `cmo_14` entries** when running tests without tulipy installed. Generators now merge with existing JSON instead of overwriting.
 
