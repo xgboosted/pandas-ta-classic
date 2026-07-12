@@ -13,6 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 * **`td_seq` ~3500× faster (numba)**: the Tom DeMark Sequential consecutive-run count replaced `rolling(13).apply(python_callback)` with a numba `@njit` loop (`~1912 ms` → `~0.5 ms` per 5000-bar call, the single largest indicator bottleneck). Bit-for-bit identical; falls back to a plain Python loop without numba. Reproduce with `python tools/bench_indicators.py`.
+* **`hilo` ~250× faster (numba)**: the Gann HiLo per-bar `.iloc[]` state loop moved into a numba `@njit` kernel over numpy arrays (`~130 ms` → `~0.5 ms` per 5000-bar call). Output is identical for all `mamode`s; falls back to a plain Python loop without numba.
 * **Faster cold import (~3–4×)**: `import pandas_ta_classic` takes ~280 ms (was ~930 ms) because indicator functions load on demand. Public API unchanged.
 * **Math operators individually importable**: Each math/trig operator (`add`, `sub`, `mult`, `div`, `rolling_max/min/sum`, `acos`, `cos`, `exp`, `ln`, …) now lives in its own submodule, e.g. `from pandas_ta_classic.math.add import add`.
 * **`combination()` delegates to `math.comb`**: Replaces the hand-rolled nCr loop. Signature and results unchanged; the unused `multichoose` kwarg alias was dropped (use `repetition`).
