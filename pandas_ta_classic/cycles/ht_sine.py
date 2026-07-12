@@ -1,12 +1,14 @@
 # Hilbert Transform - SineWave (HT_SINE)
 from typing import Any, Optional
 from pandas import DataFrame, Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ht_sine(
     close: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -14,14 +16,20 @@ def ht_sine(
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    ht = hilbert_result(close, ht_start=37)
-    sine = Series(ht["sine"], index=close.index)
-    lead_sine = Series(ht["lead_sine"], index=close.index)
+    if Imports["talib"] and mode_talib:
+        from talib import HT_SINE
+
+        sine, lead_sine = HT_SINE(close)
+    else:
+        ht = hilbert_result(close, ht_start=37)
+        sine = Series(ht["sine"], index=close.index)
+        lead_sine = Series(ht["lead_sine"], index=close.index)
 
     # Offset
     sine, lead_sine = apply_offset([sine, lead_sine], offset)
@@ -51,6 +59,8 @@ Sources:
 
 Args:
     close (pd.Series): Series of 'close's
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
