@@ -10,7 +10,42 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    color,
+    body_hi,
+    body_lo,
+    arr_bl,
+    arr_bs,
+    out,
+    start_idx,
+    body_long_trail,
+    body_short_trail,
+    body_long_total,
+    body_short_total,
+    f_bl,
+    f_bs,
+):
+    for i in range(start_idx, len(out)):
+        if real_body[i - 1] > f_bl * body_long_total and real_body[i] <= f_bs * body_short_total:  # 1st: long  # 2nd: short
+            hi_i = body_hi[i]
+            lo_i = body_lo[i]
+            hi_p = body_hi[i - 1]
+            lo_p = body_lo[i - 1]
+            if hi_i < hi_p and lo_i > lo_p:
+                out[i] = -color[i - 1] * 100
+            elif hi_i <= hi_p and lo_i >= lo_p:
+                out[i] = -color[i - 1] * 80
+
+        body_long_total += arr_bl[i - 1] - arr_bl[body_long_trail]
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
+        body_long_trail += 1
+        body_short_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -31,24 +66,23 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_short_trail = start_idx - body_short_period
     body_long_total = float(arr_bl[body_long_trail : start_idx - 1].sum())
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
-            and ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyShort] * body_short_total  # 1st: long
-        ):  # 2nd: short
-            hi_i = body_hi[i]
-            lo_i = body_lo[i]
-            hi_p = body_hi[i - 1]
-            lo_p = body_lo[i - 1]
-            if hi_i < hi_p and lo_i > lo_p:
-                out[i] = -ca.color[i - 1] * 100
-            elif hi_i <= hi_p and lo_i >= lo_p:
-                out[i] = -ca.color[i - 1] * 80
 
-        body_long_total += arr_bl[i - 1] - arr_bl[body_long_trail]
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-        body_long_trail += 1
-        body_short_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.color,
+        body_hi,
+        body_lo,
+        arr_bl,
+        arr_bs,
+        out,
+        start_idx,
+        body_long_trail,
+        body_short_trail,
+        body_long_total,
+        body_short_total,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.BodyShort],
+    )
 
 
 def cdl_harami(

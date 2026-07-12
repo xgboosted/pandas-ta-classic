@@ -10,7 +10,44 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    real_body,
+    close,
+    arr_bl,
+    arr_eq,
+    out,
+    start_idx,
+    equal_trail,
+    body_long_trail,
+    equal_total,
+    body_long_total_1,
+    body_long_total_0,
+    f_bl,
+    f_eq,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            color[i - 1] == -color[i]  # opposite candles
+            and real_body[i - 1] > f_bl * body_long_total_1  # 1st long
+            and real_body[i] > f_bl * body_long_total_0  # 2nd long
+            and close[i] <= close[i - 1] + f_eq * equal_total  # equal closes
+            and close[i] >= close[i - 1] - f_eq * equal_total
+        ):
+            out[i] = color[i] * 100
+
+        equal_total += arr_eq[i - 1] - arr_eq[equal_trail - 1]
+        for totIdx in range(1, -1, -1):
+            body_long_total_1 if totIdx == 1 else body_long_total_0
+        body_long_total_1 += arr_bl[i - 1] - arr_bl[body_long_trail - 1]
+        body_long_total_0 += arr_bl[i] - arr_bl[body_long_trail]
+        equal_trail += 1
+        body_long_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -42,23 +79,22 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         body_long_total_0 += arr_bl[i]
         i += 1
 
-    for i in range(start_idx, len(out)):
-        if (
-            ca.color[i - 1] == -ca.color[i]  # opposite candles
-            and ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_1  # 1st long
-            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_0  # 2nd long
-            and ca.close[i] <= ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total  # equal closes
-            and ca.close[i] >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
-        ):
-            out[i] = ca.color[i] * 100
-
-        equal_total += arr_eq[i - 1] - arr_eq[equal_trail - 1]
-        for totIdx in range(1, -1, -1):
-            body_long_total_1 if totIdx == 1 else body_long_total_0
-        body_long_total_1 += arr_bl[i - 1] - arr_bl[body_long_trail - 1]
-        body_long_total_0 += arr_bl[i] - arr_bl[body_long_trail]
-        equal_trail += 1
-        body_long_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.real_body,
+        ca.close,
+        arr_bl,
+        arr_eq,
+        out,
+        start_idx,
+        equal_trail,
+        body_long_trail,
+        equal_total,
+        body_long_total_1,
+        body_long_total_0,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.Equal],
+    )
 
 
 def cdl_counterattack(
