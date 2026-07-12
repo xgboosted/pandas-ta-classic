@@ -35,6 +35,8 @@ last *length* bars.  Equivalent to ta.linreg(..., angle=True).
 Args:
     close (pd.Series): Series of 'close' prices
     length (int): Lookback period. Default: 14
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): Periods to offset. Default: 0
 
 Returns:
