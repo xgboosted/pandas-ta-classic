@@ -10,7 +10,36 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    upper_shadow,
+    lower_shadow,
+    color,
+    arr_bs,
+    arr_ss,
+    out,
+    start_idx,
+    body_short_trail,
+    shadow_short_trail,
+    body_short_total,
+    shadow_short_total,
+    f_bs,
+    f_ss,
+):
+    for i in range(start_idx, len(out)):
+        if real_body[i] < f_bs * body_short_total and upper_shadow[i] < f_ss * shadow_short_total and lower_shadow[i] < f_ss * shadow_short_total:
+            out[i] = color[i] * 100
+
+        # Update trailing windows
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
+        shadow_short_total += arr_ss[i] - arr_ss[shadow_short_trail]
+        body_short_trail += 1
+        shadow_short_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -28,19 +57,23 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     shadow_short_trail = start_idx - shadow_short_period
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
     shadow_short_total = float(arr_ss[shadow_short_trail:start_idx].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.real_body[i] < AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
-            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
-            and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowShort] * shadow_short_total
-        ):
-            out[i] = ca.color[i] * 100
 
-        # Update trailing windows
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-        shadow_short_total += arr_ss[i] - arr_ss[shadow_short_trail]
-        body_short_trail += 1
-        shadow_short_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.upper_shadow,
+        ca.lower_shadow,
+        ca.color,
+        arr_bs,
+        arr_ss,
+        out,
+        start_idx,
+        body_short_trail,
+        shadow_short_trail,
+        body_short_total,
+        shadow_short_total,
+        AVG_FACTOR[CandleSetting.BodyShort],
+        AVG_FACTOR[CandleSetting.ShadowShort],
+    )
 
 
 def cdl_shortline(
