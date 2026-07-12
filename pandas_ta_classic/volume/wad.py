@@ -1,6 +1,7 @@
 # Williams Accumulation/Distribution (WAD)
 from typing import Any, Optional
 
+import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -27,8 +28,11 @@ def wad(
     prev_close = close.shift(1)
 
     # True Range High and True Range Low
-    trh = high.combine(prev_close, max)
-    trl = low.combine(prev_close, min)
+    # np.fmax/fmin are the vectorised equivalents of combine(max/min): they
+    # ignore the NaN in prev_close[0] just like Python's max(high, nan) -> high
+    # (that first bar is masked out below anyway).
+    trh = np.fmax(high, prev_close)
+    trl = np.fmin(low, prev_close)
 
     # Accumulation/Distribution for each bar
     ad_day = Series(0.0, index=close.index)
