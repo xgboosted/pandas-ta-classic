@@ -10,7 +10,41 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    upper_shadow,
+    lower_shadow,
+    arr_bd,
+    arr_svl,
+    arr_svs,
+    out,
+    start_idx,
+    body_doji_trail,
+    shadow_vs_trail,
+    shadow_vl_trail,
+    body_doji_total,
+    shadow_vs_total,
+    shadow_vl_total,
+    f_bd,
+    f_svs,
+    f_svl,
+):
+    for i in range(start_idx, len(out)):
+        if real_body[i] <= f_bd * body_doji_total and upper_shadow[i] < f_svs * shadow_vs_total and lower_shadow[i] > f_svl * arr_svl[i]:
+            out[i] = 100
+
+        # Update trailing windows
+        body_doji_total += arr_bd[i] - arr_bd[body_doji_trail]
+        shadow_vs_total += arr_svs[i] - arr_svs[shadow_vs_trail]
+        shadow_vl_total += arr_svl[i] - arr_svl[shadow_vl_trail]
+        body_doji_trail += 1
+        shadow_vs_trail += 1
+        shadow_vl_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -32,21 +66,26 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_doji_total = float(arr_bd[body_doji_trail:start_idx].sum())
     shadow_vs_total = float(arr_svs[shadow_vs_trail:start_idx].sum())
     shadow_vl_total = float(arr_svl[shadow_vl_trail:start_idx].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
-            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total
-            and ca.lower_shadow[i] > AVG_FACTOR[CandleSetting.ShadowVeryLong] * arr_svl[i]
-        ):
-            out[i] = 100
 
-        # Update trailing windows
-        body_doji_total += arr_bd[i] - arr_bd[body_doji_trail]
-        shadow_vs_total += arr_svs[i] - arr_svs[shadow_vs_trail]
-        shadow_vl_total += arr_svl[i] - arr_svl[shadow_vl_trail]
-        body_doji_trail += 1
-        shadow_vs_trail += 1
-        shadow_vl_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.upper_shadow,
+        ca.lower_shadow,
+        arr_bd,
+        arr_svl,
+        arr_svs,
+        out,
+        start_idx,
+        body_doji_trail,
+        shadow_vs_trail,
+        shadow_vl_trail,
+        body_doji_total,
+        shadow_vs_total,
+        shadow_vl_total,
+        AVG_FACTOR[CandleSetting.BodyDoji],
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+        AVG_FACTOR[CandleSetting.ShadowVeryLong],
+    )
 
 
 def cdl_takuri(
