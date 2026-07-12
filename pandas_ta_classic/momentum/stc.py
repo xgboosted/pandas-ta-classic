@@ -9,6 +9,31 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _stc_smooth(src, lowest, rng, guard, factor):
+    """Stochastic-of-source followed by the STC smoothing recursion.
+
+    ``guard`` selects when the stochastic is recomputed vs. held from the
+    previous bar (the two STC passes gate on different series — the rolling
+    minimum for the first pass, the rolling range for the second). Rounding
+    to 8 decimals is cumulative, so it must stay inside the loop to match the
+    original bit-for-bit.
+    """
+    m = src.shape[0]
+    stoch = src.copy()
+    out = src.copy()
+    stoch[0] = 0.0
+    out[0] = 0.0
+    for i in range(1, m):
+        if guard[i] > 0:
+            stoch[i] = 100.0 * ((src[i] - lowest[i]) / rng[i])
+        else:
+            stoch[i] = stoch[i - 1]
+        out[i] = round(out[i - 1] + factor * (stoch[i] - out[i - 1]), 8)
+    return out
 
 
 def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
@@ -168,37 +193,27 @@ Returns:
 
 def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> list:
     # ACTUAL Calculation part, which is shared between operation modes
-    # 1St : Stochastic of MACD
+    # 1st: Stochastic of MACD (gated on the rolling minimum)
     lowest_xmacd = xmacd.rolling(tclength).min()  # min value in interval tclen
     xmacd_range = non_zero_range(xmacd.rolling(tclength).max(), lowest_xmacd)
-    m = len(xmacd)
+    pf_arr = _stc_smooth(
+        xmacd.to_numpy(dtype=float),
+        lowest_xmacd.to_numpy(dtype=float),
+        xmacd_range.to_numpy(dtype=float),
+        lowest_xmacd.to_numpy(dtype=float),
+        factor,
+    )
+    pf = Series(pf_arr, index=close.index)
 
-    # %Fast K of MACD
-    stoch1, pf = list(xmacd), list(xmacd)
-    stoch1[0], pf[0] = 0, 0
-    for i in range(1, m):
-        if lowest_xmacd.iloc[i] > 0:
-            stoch1[i] = 100 * ((xmacd.iloc[i] - lowest_xmacd.iloc[i]) / xmacd_range.iloc[i])
-        else:
-            stoch1[i] = stoch1[i - 1]
-        # Smoothed Calculation for % Fast D of MACD
-        pf[i] = round(pf[i - 1] + (factor * (stoch1[i] - pf[i - 1])), 8)
-
-    pf = Series(pf, index=close.index)
-
-    # 2nd : Stochastic of smoothed Percent Fast D, 'PF', above
+    # 2nd: Stochastic of smoothed Percent Fast D, 'PF', above (gated on the range)
     lowest_pf = pf.rolling(tclength).min()
     pf_range = non_zero_range(pf.rolling(tclength).max(), lowest_pf)
+    pff_arr = _stc_smooth(
+        pf_arr,
+        lowest_pf.to_numpy(dtype=float),
+        pf_range.to_numpy(dtype=float),
+        pf_range.to_numpy(dtype=float),
+        factor,
+    )
 
-    # % of Fast K of PF
-    stoch2, pff = list(xmacd), list(xmacd)
-    stoch2[0], pff[0] = 0, 0
-    for i in range(1, m):
-        if pf_range.iloc[i] > 0:
-            stoch2[i] = 100 * ((pf.iloc[i] - lowest_pf.iloc[i]) / pf_range.iloc[i])
-        else:
-            stoch2[i] = stoch2[i - 1]
-        # Smoothed Calculation for % Fast D of PF
-        pff[i] = round(pff[i - 1] + (factor * (stoch2[i] - pff[i - 1])), 8)
-
-    return [pff, pf]
+    return [pff_arr, pf]
