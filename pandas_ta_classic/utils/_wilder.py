@@ -16,6 +16,29 @@ References
 import numpy as np
 from pandas import Series
 
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _wilder_smooth_nb(arr: np.ndarray, length: int, seed: float) -> np.ndarray:
+    # ``seed`` is pre-computed by the caller with numpy so the cumulative sum
+    # matches bit-for-bit; the kernel only runs the deterministic scalar
+    # recursion.
+    n = len(arr)
+    result = np.full(n, np.nan)
+    result[length - 1] = seed
+
+    value = seed
+    for i in range(length, n):
+        raw_i = arr[i]
+        if np.isnan(raw_i):
+            result[i] = value  # carry forward on NaN input
+        else:
+            value = value - value / length + raw_i
+            result[i] = value
+
+    return result
+
 
 def wilder_smooth(raw: Series, length: int) -> Series:
     """Apply Wilder's cumulative smoothing to *raw*.
@@ -37,21 +60,9 @@ def wilder_smooth(raw: Series, length: int) -> Series:
     """
     arr = raw.to_numpy(dtype=float)
     n = len(arr)
-
-    result = np.full(n, np.nan)
     if n < length:
-        return Series(result, index=raw.index)
+        return Series(np.full(n, np.nan), index=raw.index)
 
     seed = float(np.nansum(arr[1:length]))
-    result[length - 1] = seed
-
-    value = seed
-    for i in range(length, n):
-        raw_i = arr[i]
-        if np.isnan(raw_i):
-            result[i] = value  # carry forward on NaN input
-        else:
-            value = value - value / length + raw_i
-            result[i] = value
-
+    result = _wilder_smooth_nb(arr, length, seed)
     return Series(result, index=raw.index)
