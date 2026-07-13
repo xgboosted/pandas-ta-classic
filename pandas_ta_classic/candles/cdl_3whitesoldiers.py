@@ -10,7 +10,90 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    upper_shadow,
+    real_body,
+    O_,
+    C,
+    arr_bs,
+    arr_fr,
+    arr_nr,
+    arr_svs,
+    out,
+    start_idx,
+    svs_trail,
+    near_trail,
+    far_trail,
+    body_short_trail,
+    svs_total_2,
+    svs_total_1,
+    svs_total_0,
+    near_total_2,
+    near_total_1,
+    far_total_2,
+    far_total_1,
+    body_short_total,
+    f_svs,
+    f_near,
+    f_far,
+    f_bs,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st white
+            color[i - 2] == 1
+            # 1st: very short upper shadow
+            and upper_shadow[i - 2] < f_svs * svs_total_2
+            # 2nd white
+            and color[i - 1] == 1
+            # 2nd: very short upper shadow
+            and upper_shadow[i - 1] < f_svs * svs_total_1
+            # 3rd white
+            and color[i] == 1
+            # 3rd: very short upper shadow
+            and upper_shadow[i] < f_svs * svs_total_0
+            # Consecutive higher closes
+            and C[i] > C[i - 1]
+            and C[i - 1] > C[i - 2]
+            # 2nd opens within/near 1st real body
+            and O_[i - 1] > O_[i - 2]
+            and O_[i - 1] <= C[i - 2] + f_near * near_total_2
+            # 3rd opens within/near 2nd real body
+            and O_[i] > O_[i - 1]
+            and O_[i] <= C[i - 1] + f_near * near_total_1
+            # 2nd not far shorter than 1st
+            and real_body[i - 1] > real_body[i - 2] - f_far * far_total_2
+            # 3rd not far shorter than 2nd
+            and real_body[i] > real_body[i - 1] - f_far * far_total_1
+            # 3rd: not short real body
+            and real_body[i] > f_bs * body_short_total
+        ):
+            out[i] = 100  # Always bullish
+
+        # Update ShadowVeryShort totals [2], [1], [0]
+        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
+        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
+        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
+
+        # Update Far and Near totals [2], [1]
+        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
+        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
+        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
+        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
+
+        # Update BodyShort total
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
+
+        svs_trail += 1
+        near_trail += 1
+        far_trail += 1
+        body_short_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -49,59 +132,36 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
     # Seed BodyShort total
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
-    O_ = ca.open
-    C = ca.close
 
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st white
-            ca.color[i - 2] == 1
-            # 1st: very short upper shadow
-            and ca.upper_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
-            # 2nd white
-            and ca.color[i - 1] == 1
-            # 2nd: very short upper shadow
-            and ca.upper_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
-            # 3rd white
-            and ca.color[i] == 1
-            # 3rd: very short upper shadow
-            and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
-            # Consecutive higher closes
-            and C[i] > C[i - 1]
-            and C[i - 1] > C[i - 2]
-            # 2nd opens within/near 1st real body
-            and O_[i - 1] > O_[i - 2]
-            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
-            # 3rd opens within/near 2nd real body
-            and O_[i] > O_[i - 1]
-            and O_[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
-            # 2nd not far shorter than 1st
-            and ca.real_body[i - 1] > ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
-            # 3rd not far shorter than 2nd
-            and ca.real_body[i] > ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1
-            # 3rd: not short real body
-            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
-        ):
-            out[i] = 100  # Always bullish
-
-        # Update ShadowVeryShort totals [2], [1], [0]
-        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
-        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
-
-        # Update Far and Near totals [2], [1]
-        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
-        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
-        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
-        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
-
-        # Update BodyShort total
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-
-        svs_trail += 1
-        near_trail += 1
-        far_trail += 1
-        body_short_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.upper_shadow,
+        ca.real_body,
+        ca.open,
+        ca.close,
+        arr_bs,
+        arr_fr,
+        arr_nr,
+        arr_svs,
+        out,
+        start_idx,
+        svs_trail,
+        near_trail,
+        far_trail,
+        body_short_trail,
+        svs_total_2,
+        svs_total_1,
+        svs_total_0,
+        near_total_2,
+        near_total_1,
+        far_total_2,
+        far_total_1,
+        body_short_total,
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+        AVG_FACTOR[CandleSetting.Near],
+        AVG_FACTOR[CandleSetting.Far],
+        AVG_FACTOR[CandleSetting.BodyShort],
+    )
 
 
 def cdl_3whitesoldiers(

@@ -10,7 +10,80 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    real_body,
+    upper_shadow,
+    O_,
+    C,
+    arr_bl,
+    arr_bs,
+    arr_nr,
+    arr_svs,
+    out,
+    start_idx,
+    body_long_trail,
+    body_short_trail,
+    svs_trail,
+    near_trail,
+    body_long_total_2,
+    body_long_total_1,
+    body_short_total,
+    svs_total,
+    near_total_2,
+    near_total_1,
+    f_bl,
+    f_svs,
+    f_near,
+    f_bs,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st white
+            color[i - 2] == 1
+            # 2nd white
+            and color[i - 1] == 1
+            # 3rd white
+            and color[i] == 1
+            # Consecutive higher closes
+            and C[i] > C[i - 1]
+            and C[i - 1] > C[i - 2]
+            # 1st: long real body
+            and real_body[i - 2] > f_bl * body_long_total_2
+            # 2nd: long real body
+            and real_body[i - 1] > f_bl * body_long_total_1
+            # 2nd: very short upper shadow
+            and upper_shadow[i - 1] < f_svs * svs_total
+            # 2nd opens within/near 1st real body: opens above 1st open
+            and O_[i - 1] > O_[i - 2]
+            # 2nd opens at or below 1st close + Near average
+            and O_[i - 1] <= C[i - 2] + f_near * near_total_2
+            # 3rd: small real body
+            and real_body[i] < f_bs * body_short_total
+            # 3rd rides on the shoulder of 2nd real body
+            and O_[i] >= C[i - 1] - real_body[i] - f_near * near_total_1
+        ):
+            out[i] = -100
+
+        # Update BodyLong and Near totals (indices 2 and 1)
+        body_long_total_2 += arr_bl[i - 2] - arr_bl[body_long_trail - 2]
+        body_long_total_1 += arr_bl[i - 1] - arr_bl[body_long_trail - 1]
+        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
+        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
+        # Update BodyShort total (index 0 / current bar)
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
+        # Update ShadowVeryShort total (index 1 / bar i-1)
+        svs_total += arr_svs[i - 1] - arr_svs[svs_trail - 1]
+
+        body_long_trail += 1
+        body_short_trail += 1
+        svs_trail += 1
+        near_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -52,51 +125,34 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Seed Near totals for i-2 and i-1 (indices 2, 1)
     near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
     near_total_1 = float(arr_nr[near_trail - 1 : start_idx - 1].sum())
-    O_ = ca.open
-    C = ca.close
 
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st white
-            ca.color[i - 2] == 1
-            # 2nd white
-            and ca.color[i - 1] == 1
-            # 3rd white
-            and ca.color[i] == 1
-            # Consecutive higher closes
-            and C[i] > C[i - 1]
-            and C[i - 1] > C[i - 2]
-            # 1st: long real body
-            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_2
-            # 2nd: long real body
-            and ca.real_body[i - 1] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total_1
-            # 2nd: very short upper shadow
-            and ca.upper_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
-            # 2nd opens within/near 1st real body: opens above 1st open
-            and O_[i - 1] > O_[i - 2]
-            # 2nd opens at or below 1st close + Near average
-            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
-            # 3rd: small real body
-            and ca.real_body[i] < AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
-            # 3rd rides on the shoulder of 2nd real body
-            and O_[i] >= C[i - 1] - ca.real_body[i] - AVG_FACTOR[CandleSetting.Near] * near_total_1
-        ):
-            out[i] = -100
-
-        # Update BodyLong and Near totals (indices 2 and 1)
-        body_long_total_2 += arr_bl[i - 2] - arr_bl[body_long_trail - 2]
-        body_long_total_1 += arr_bl[i - 1] - arr_bl[body_long_trail - 1]
-        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
-        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
-        # Update BodyShort total (index 0 / current bar)
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-        # Update ShadowVeryShort total (index 1 / bar i-1)
-        svs_total += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-
-        body_long_trail += 1
-        body_short_trail += 1
-        svs_trail += 1
-        near_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.real_body,
+        ca.upper_shadow,
+        ca.open,
+        ca.close,
+        arr_bl,
+        arr_bs,
+        arr_nr,
+        arr_svs,
+        out,
+        start_idx,
+        body_long_trail,
+        body_short_trail,
+        svs_trail,
+        near_trail,
+        body_long_total_2,
+        body_long_total_1,
+        body_short_total,
+        svs_total,
+        near_total_2,
+        near_total_1,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+        AVG_FACTOR[CandleSetting.Near],
+        AVG_FACTOR[CandleSetting.BodyShort],
+    )
 
 
 def cdl_stalledpattern(

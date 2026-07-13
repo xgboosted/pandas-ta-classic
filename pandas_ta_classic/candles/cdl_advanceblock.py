@@ -10,7 +10,110 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    real_body,
+    upper_shadow,
+    O_,
+    C,
+    arr_bl,
+    arr_fr,
+    arr_nr,
+    arr_sl,
+    arr_ss,
+    out,
+    start_idx,
+    shadow_short_trail,
+    shadow_long_trail,
+    near_trail,
+    far_trail,
+    body_long_trail,
+    ss_total_2,
+    ss_total_1,
+    ss_total_0,
+    sl_total_1,
+    sl_total_0,
+    near_total_2,
+    near_total_1,
+    far_total_2,
+    far_total_1,
+    body_long_total,
+    f_near,
+    f_bl,
+    f_ss,
+    f_far,
+    f_sl,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st white
+            color[i - 2] == 1
+            # 2nd white
+            and color[i - 1] == 1
+            # 3rd white
+            and color[i] == 1
+            # Consecutive higher closes
+            and C[i] > C[i - 1]
+            and C[i - 1] > C[i - 2]
+            # 2nd opens within/near 1st real body
+            and O_[i - 1] > O_[i - 2]
+            and O_[i - 1] <= C[i - 2] + f_near * near_total_2
+            # 3rd opens within/near 2nd real body
+            and O_[i] > O_[i - 1]
+            and O_[i] <= C[i - 1] + f_near * near_total_1
+            # 1st: long real body
+            and real_body[i - 2] > f_bl * body_long_total
+            # 1st: short upper shadow
+            and upper_shadow[i - 2] < f_ss * ss_total_2
+            # Signs of weakening (any of 4 sub-conditions)
+            and (
+                # Sub-condition 1: 2nd far smaller than 1st AND
+                # 3rd not longer than 2nd
+                (real_body[i - 1] < real_body[i - 2] - f_far * far_total_2 and real_body[i] < real_body[i - 1] + f_near * near_total_1)
+                # Sub-condition 2: 3rd far smaller than 2nd
+                or (real_body[i] < real_body[i - 1] - f_far * far_total_1)
+                # Sub-condition 3: progressively smaller bodies AND
+                # (3rd or 2nd has non-short upper shadow)
+                or (
+                    real_body[i] < real_body[i - 1]
+                    and real_body[i - 1] < real_body[i - 2]
+                    and (upper_shadow[i] > f_ss * ss_total_0 or upper_shadow[i - 1] > f_ss * ss_total_1)
+                )
+                # Sub-condition 4: 3rd smaller than 2nd AND
+                # 3rd has long upper shadow
+                or (real_body[i] < real_body[i - 1] and upper_shadow[i] > f_sl * arr_sl[i])
+            )
+        ):
+            out[i] = -100  # Always bearish
+
+        # Update ShadowShort totals [2], [1], [0]
+        ss_total_2 += arr_ss[i - 2] - arr_ss[shadow_short_trail - 2]
+        ss_total_1 += arr_ss[i - 1] - arr_ss[shadow_short_trail - 1]
+        ss_total_0 += arr_ss[i] - arr_ss[shadow_short_trail]
+
+        # Update ShadowLong totals [1], [0]
+        sl_total_1 += arr_sl[i - 1] - arr_sl[shadow_long_trail - 1]
+        sl_total_0 += arr_sl[i] - arr_sl[shadow_long_trail]
+
+        # Update Far and Near totals [2], [1]
+        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
+        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
+        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
+        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
+
+        # Update BodyLong total (applied to i-2)
+        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail - 2]
+
+        shadow_short_trail += 1
+        shadow_long_trail += 1
+        near_trail += 1
+        far_trail += 1
+        body_long_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -64,80 +167,41 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
     # Seed BodyLong total (applied to i-2)
     body_long_total = float(arr_bl[body_long_trail - 2 : start_idx - 2].sum())
-    O_ = ca.open
-    C = ca.close
 
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st white
-            ca.color[i - 2] == 1
-            # 2nd white
-            and ca.color[i - 1] == 1
-            # 3rd white
-            and ca.color[i] == 1
-            # Consecutive higher closes
-            and C[i] > C[i - 1]
-            and C[i - 1] > C[i - 2]
-            # 2nd opens within/near 1st real body
-            and O_[i - 1] > O_[i - 2]
-            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Near] * near_total_2
-            # 3rd opens within/near 2nd real body
-            and O_[i] > O_[i - 1]
-            and O_[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
-            # 1st: long real body
-            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
-            # 1st: short upper shadow
-            and ca.upper_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_2
-            # Signs of weakening (any of 4 sub-conditions)
-            and (
-                # Sub-condition 1: 2nd far smaller than 1st AND
-                # 3rd not longer than 2nd
-                (
-                    ca.real_body[i - 1] < ca.real_body[i - 2] - AVG_FACTOR[CandleSetting.Far] * far_total_2
-                    and ca.real_body[i] < ca.real_body[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total_1
-                )
-                # Sub-condition 2: 3rd far smaller than 2nd
-                or (ca.real_body[i] < ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Far] * far_total_1)
-                # Sub-condition 3: progressively smaller bodies AND
-                # (3rd or 2nd has non-short upper shadow)
-                or (
-                    ca.real_body[i] < ca.real_body[i - 1]
-                    and ca.real_body[i - 1] < ca.real_body[i - 2]
-                    and (
-                        ca.upper_shadow[i] > AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_0
-                        or ca.upper_shadow[i - 1] > AVG_FACTOR[CandleSetting.ShadowShort] * ss_total_1
-                    )
-                )
-                # Sub-condition 4: 3rd smaller than 2nd AND
-                # 3rd has long upper shadow
-                or (ca.real_body[i] < ca.real_body[i - 1] and ca.upper_shadow[i] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i])
-            )
-        ):
-            out[i] = -100  # Always bearish
-
-        # Update ShadowShort totals [2], [1], [0]
-        ss_total_2 += arr_ss[i - 2] - arr_ss[shadow_short_trail - 2]
-        ss_total_1 += arr_ss[i - 1] - arr_ss[shadow_short_trail - 1]
-        ss_total_0 += arr_ss[i] - arr_ss[shadow_short_trail]
-
-        # Update ShadowLong totals [1], [0]
-        sl_total_1 += arr_sl[i - 1] - arr_sl[shadow_long_trail - 1]
-        sl_total_0 += arr_sl[i] - arr_sl[shadow_long_trail]
-
-        # Update Far and Near totals [2], [1]
-        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
-        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
-        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
-        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
-
-        # Update BodyLong total (applied to i-2)
-        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail - 2]
-
-        shadow_short_trail += 1
-        shadow_long_trail += 1
-        near_trail += 1
-        far_trail += 1
-        body_long_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.real_body,
+        ca.upper_shadow,
+        ca.open,
+        ca.close,
+        arr_bl,
+        arr_fr,
+        arr_nr,
+        arr_sl,
+        arr_ss,
+        out,
+        start_idx,
+        shadow_short_trail,
+        shadow_long_trail,
+        near_trail,
+        far_trail,
+        body_long_trail,
+        ss_total_2,
+        ss_total_1,
+        ss_total_0,
+        sl_total_1,
+        sl_total_0,
+        near_total_2,
+        near_total_1,
+        far_total_2,
+        far_total_1,
+        body_long_total,
+        AVG_FACTOR[CandleSetting.Near],
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.ShadowShort],
+        AVG_FACTOR[CandleSetting.Far],
+        AVG_FACTOR[CandleSetting.ShadowLong],
+    )
 
 
 def cdl_advanceblock(

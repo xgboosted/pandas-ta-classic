@@ -10,7 +10,66 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    lower_shadow,
+    O_,
+    C,
+    arr_eq,
+    arr_svs,
+    out,
+    start_idx,
+    svs_trail,
+    equal_trail,
+    svs_total_2,
+    svs_total_1,
+    svs_total_0,
+    equal_total_2,
+    equal_total_1,
+    f_svs,
+    f_eq,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st black
+            color[i - 2] == -1
+            # very short lower shadow
+            and lower_shadow[i - 2] < f_svs * svs_total_2
+            # 2nd black
+            and color[i - 1] == -1
+            # very short lower shadow
+            and lower_shadow[i - 1] < f_svs * svs_total_1
+            # 3rd black
+            and color[i] == -1
+            # very short lower shadow
+            and lower_shadow[i] < f_svs * svs_total_0
+            # Three declining closes
+            and C[i - 2] > C[i - 1]
+            and C[i - 1] > C[i]
+            # 2nd opens very close to 1st close
+            and O_[i - 1] <= C[i - 2] + f_eq * equal_total_2
+            and O_[i - 1] >= C[i - 2] - f_eq * equal_total_2
+            # 3rd opens very close to 2nd close
+            and O_[i] <= C[i - 1] + f_eq * equal_total_1
+            and O_[i] >= C[i - 1] - f_eq * equal_total_1
+        ):
+            out[i] = -100
+
+        # Update ShadowVeryShort totals
+        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
+        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
+        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
+        # Update Equal totals
+        equal_total_2 += arr_eq[i - 2] - arr_eq[equal_trail - 2]
+        equal_total_1 += arr_eq[i - 1] - arr_eq[equal_trail - 1]
+
+        svs_trail += 1
+        equal_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -36,45 +95,26 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Seed Equal totals for i-2, i-1 (indices 2, 1)
     equal_total_2 = float(arr_eq[equal_trail - 2 : start_idx - 2].sum())
     equal_total_1 = float(arr_eq[equal_trail - 1 : start_idx - 1].sum())
-    O_ = ca.open
-    C = ca.close
 
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st black
-            ca.color[i - 2] == -1
-            # very short lower shadow
-            and ca.lower_shadow[i - 2] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_2
-            # 2nd black
-            and ca.color[i - 1] == -1
-            # very short lower shadow
-            and ca.lower_shadow[i - 1] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_1
-            # 3rd black
-            and ca.color[i] == -1
-            # very short lower shadow
-            and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total_0
-            # Three declining closes
-            and C[i - 2] > C[i - 1]
-            and C[i - 1] > C[i]
-            # 2nd opens very close to 1st close
-            and O_[i - 1] <= C[i - 2] + AVG_FACTOR[CandleSetting.Equal] * equal_total_2
-            and O_[i - 1] >= C[i - 2] - AVG_FACTOR[CandleSetting.Equal] * equal_total_2
-            # 3rd opens very close to 2nd close
-            and O_[i] <= C[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total_1
-            and O_[i] >= C[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total_1
-        ):
-            out[i] = -100
-
-        # Update ShadowVeryShort totals
-        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
-        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
-        # Update Equal totals
-        equal_total_2 += arr_eq[i - 2] - arr_eq[equal_trail - 2]
-        equal_total_1 += arr_eq[i - 1] - arr_eq[equal_trail - 1]
-
-        svs_trail += 1
-        equal_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.lower_shadow,
+        ca.open,
+        ca.close,
+        arr_eq,
+        arr_svs,
+        out,
+        start_idx,
+        svs_trail,
+        equal_trail,
+        svs_total_2,
+        svs_total_1,
+        svs_total_0,
+        equal_total_2,
+        equal_total_1,
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+        AVG_FACTOR[CandleSetting.Equal],
+    )
 
 
 def cdl_identical3crows(
