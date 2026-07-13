@@ -111,12 +111,55 @@ def bench(names: list[str], rows: int, repeats: int) -> list[dict]:
     return results
 
 
+def profile(names: list[str], rows: int, top: int) -> None:
+    """cProfile the whole indicator set once and rank hot functions.
+
+    Surfaces per-call overhead (Python callbacks, rolling.apply, per-bar loops)
+    that a pure wall-clock ranking under-weights. High ``ncalls`` on a project
+    function is a vectorise/njit candidate.
+    """
+    import cProfile
+    import pstats
+
+    df = make_ohlcv(rows)
+    accs = [getattr(df.ta, n, None) for n in names]
+    accs = [a for a in accs if a is not None]
+    for a in accs:  # warm up (numba JIT + import side effects out of the profile)
+        try:
+            a()
+        except Exception:  # noqa: BLE001
+            pass
+
+    pr = cProfile.Profile()
+    pr.enable()
+    for a in accs:
+        try:
+            a()
+        except Exception:  # noqa: BLE001
+            pass
+    pr.disable()
+
+    stats = pstats.Stats(pr)
+    for sort_key in ("tottime", "ncalls"):
+        print(f"\n=== top {top} by {sort_key} ===")
+        stats.sort_stats(sort_key).print_stats(top)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("names", nargs="*", help="indicator names to benchmark (default: all)")
     parser.add_argument("--rows", type=int, default=5000, help="number of bars (default: 5000)")
     parser.add_argument("--repeats", type=int, default=7, help="timed runs per indicator (default: 7)")
     parser.add_argument("--top", type=int, default=None, help="print only the N slowest (default: all)")
+    parser.add_argument(
+        "--profile",
+        type=int,
+        nargs="?",
+        const=25,
+        default=None,
+        metavar="N",
+        help="cProfile the run and print the top N hot functions by tottime and ncalls (default N: 25)",
+    )
     args = parser.parse_args(argv)
 
     warnings.filterwarnings("ignore")
@@ -126,6 +169,10 @@ def main(argv: list[str] | None = None) -> int:
     numba = _numba_active()
     print(f"numba: {'ACTIVE - JIT speedups apply' if numba else 'ABSENT - @njit falls back to plain Python'}")
     print(f"rows: {args.rows}   repeats: {args.repeats}   indicators: {len(names)}\n")
+
+    if args.profile is not None:
+        profile(names, args.rows, args.profile)
+        return 0
 
     results = bench(names, args.rows, args.repeats)
     ok = [r for r in results if r["status"] == "ok"]
