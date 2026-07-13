@@ -6,6 +6,22 @@ from pandas import Series
 from pandas_ta_classic.candles._cdl_math import (
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _detect_nb(color, open_, close, body_hi, body_lo, out, start_idx):
+    for i in range(start_idx, len(out)):
+        if (
+            color[i - 2] == color[i - 1]
+            and color[i - 1] == -color[i]
+            and open_[i] < body_hi[i - 1]
+            and open_[i] > body_lo[i - 1]
+            and close[i] < body_hi[i - 2]
+            and close[i] > body_lo[i - 2]
+            and ((color[i - 2] == 1 and body_lo[i - 1] > body_hi[i - 2]) or (color[i - 2] == -1 and body_hi[i - 1] < body_lo[i - 2]))
+        ):
+            out[i] = color[i - 2] * 100
 
 
 def _detect(ca, out, **kwargs):
@@ -16,17 +32,7 @@ def _detect(ca, out, **kwargs):
     body_hi = ca.body_high
     body_lo = ca.body_low
 
-    for i in range(start_idx, len(out)):
-        if (
-            ca.color[i - 2] == ca.color[i - 1]
-            and ca.color[i - 1] == -ca.color[i]
-            and ca.open[i] < body_hi[i - 1]
-            and ca.open[i] > body_lo[i - 1]
-            and ca.close[i] < body_hi[i - 2]
-            and ca.close[i] > body_lo[i - 2]
-            and ((ca.color[i - 2] == 1 and body_lo[i - 1] > body_hi[i - 2]) or (ca.color[i - 2] == -1 and body_hi[i - 1] < body_lo[i - 2]))
-        ):
-            out[i] = ca.color[i - 2] * 100
+    _detect_nb(ca.color, ca.open, ca.close, body_hi, body_lo, out, start_idx)
 
 
 def cdl_xsidegap3methods(

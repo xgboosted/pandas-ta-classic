@@ -10,7 +10,65 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    color,
+    O_,
+    H,
+    C,
+    body_hi,
+    body_lo,
+    arr_bl,
+    arr_bs,
+    body_total,
+    out,
+    start_idx,
+    body_short_trail,
+    body_long_trail,
+    f_bl,
+    f_bs,
+    penetration,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st long, then 3 small
+            real_body[i - 4] > f_bl * body_total[4]
+            and real_body[i - 3] < f_bs * body_total[3]
+            and real_body[i - 2] < f_bs * body_total[2]
+            and real_body[i - 1] < f_bs * body_total[1]
+            # white, black, ?, ?, white
+            and color[i - 4] == 1
+            and color[i - 3] == -1
+            and color[i] == 1
+            # upside gap 1st to 2nd
+            and body_lo[i - 3] > body_hi[i - 4]
+            # 3rd to 4th hold within 1st: part of real body within 1st body
+            and min(O_[i - 2], C[i - 2]) < C[i - 4]
+            and min(O_[i - 1], C[i - 1]) < C[i - 4]
+            # reaction days penetrate first body less than penetration %
+            and min(O_[i - 2], C[i - 2]) > C[i - 4] - real_body[i - 4] * penetration
+            and min(O_[i - 1], C[i - 1]) > C[i - 4] - real_body[i - 4] * penetration
+            # 2nd to 4th are falling
+            and max(C[i - 2], O_[i - 2]) < O_[i - 3]
+            and max(C[i - 1], O_[i - 1]) < max(C[i - 2], O_[i - 2])
+            # 5th opens above the prior close
+            and O_[i] > C[i - 1]
+            # 5th closes above the highest high of the reaction days
+            and C[i] > max(max(H[i - 3], H[i - 2]), H[i - 1])
+        ):
+            out[i] = 100  # Always bullish
+
+        # Update totals
+        body_total[4] += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
+        for k in range(3, 0, -1):
+            body_total[k] += arr_bs[i - k] - arr_bs[body_short_trail - k]
+        body_short_trail += 1
+        body_long_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -33,7 +91,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_long_trail = start_idx - body_long_period
 
     # Seed body totals: [0]=unused, [1..3]=BodyShort at i-1..i-3, [4]=BodyLong at i-4
-    body_total = [0.0, 0.0, 0.0, 0.0, 0.0]
+    body_total = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
     # Seed BodyShort totals for i-3, i-2, i-1
     j = body_short_trail
@@ -49,45 +107,25 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         body_total[4] += arr_bl[j - 4]
         j += 1
 
-    O_ = ca.open
-    H = ca.high
-    C = ca.close
-
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st long, then 3 small
-            ca.real_body[i - 4] > AVG_FACTOR[CandleSetting.BodyLong] * body_total[4]
-            and ca.real_body[i - 3] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[3]
-            and ca.real_body[i - 2] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[2]
-            and ca.real_body[i - 1] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[1]
-            # white, black, ?, ?, white
-            and ca.color[i - 4] == 1
-            and ca.color[i - 3] == -1
-            and ca.color[i] == 1
-            # upside gap 1st to 2nd
-            and body_lo[i - 3] > body_hi[i - 4]
-            # 3rd to 4th hold within 1st: part of real body within 1st body
-            and min(O_[i - 2], C[i - 2]) < C[i - 4]
-            and min(O_[i - 1], C[i - 1]) < C[i - 4]
-            # reaction days penetrate first body less than penetration %
-            and min(O_[i - 2], C[i - 2]) > C[i - 4] - ca.real_body[i - 4] * penetration
-            and min(O_[i - 1], C[i - 1]) > C[i - 4] - ca.real_body[i - 4] * penetration
-            # 2nd to 4th are falling
-            and max(C[i - 2], O_[i - 2]) < O_[i - 3]
-            and max(C[i - 1], O_[i - 1]) < max(C[i - 2], O_[i - 2])
-            # 5th opens above the prior close
-            and O_[i] > C[i - 1]
-            # 5th closes above the highest high of the reaction days
-            and C[i] > max(max(H[i - 3], H[i - 2]), H[i - 1])
-        ):
-            out[i] = 100  # Always bullish
-
-        # Update totals
-        body_total[4] += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
-        for k in range(3, 0, -1):
-            body_total[k] += arr_bs[i - k] - arr_bs[body_short_trail - k]
-        body_short_trail += 1
-        body_long_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.color,
+        ca.open,
+        ca.high,
+        ca.close,
+        body_hi,
+        body_lo,
+        arr_bl,
+        arr_bs,
+        body_total,
+        out,
+        start_idx,
+        body_short_trail,
+        body_long_trail,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.BodyShort],
+        penetration,
+    )
 
 
 def cdl_mathold(
