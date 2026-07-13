@@ -12,7 +12,7 @@ def npround(close: Series, offset: Optional[int] = None, **kwargs: Any) -> Optio
     if close is None:
         return None
     offset = get_offset(offset)
-    result = close.apply(np.round)
+    result = np.round(close)
     result = apply_offset(result, offset)
     result = apply_fill(result, **kwargs)
     result.name = "ROUND"

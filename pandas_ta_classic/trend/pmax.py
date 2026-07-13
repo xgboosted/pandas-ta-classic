@@ -6,8 +6,10 @@ from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _pmax_trend_arrays(close_arr, pmax_up_arr, pmax_down_arr):
     """Compute PMAX trend direction and band arrays.
 
@@ -22,11 +24,12 @@ def _pmax_trend_arrays(close_arr, pmax_up_arr, pmax_down_arr):
             place).
 
     Returns:
-        list[float]: PMAX values for each bar (``NaN`` for the first element).
+        np.ndarray: PMAX values for each bar (``NaN`` for the first element).
     """
     n = len(close_arr)
-    trend_arr = [1] * n
-    pmax_result = [np.nan] + [0.0] * (n - 1)
+    trend_arr = np.ones(n, dtype=np.int64)
+    pmax_result = np.empty(n)
+    pmax_result[0] = np.nan
     for i in range(1, n):
         if close_arr[i - 1] > pmax_up_arr[i - 1]:
             pmax_up_arr[i] = max(pmax_up_arr[i], pmax_up_arr[i - 1])
