@@ -13,6 +13,18 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _kama_nb(sc, close, length):
+    m = close.size
+    result = np.full(m, np.nan)
+    if length - 1 < m:
+        result[length - 1] = close[length - 1]
+    for i in range(length, m):
+        result[i] = sc[i] * close[i] + (1 - sc[i]) * result[i - 1]
+    return result
 
 
 def kama(
@@ -58,11 +70,7 @@ def kama(
         x = er * (fr - sr) + sr
         sc = x * x
 
-        m = close.size
-        result = [np.nan for _ in range(0, length - 1)] + [close.iloc[length - 1]]
-        for i in range(length, m):
-            result.append(sc.iloc[i] * close.iloc[i] + (1 - sc.iloc[i]) * result[i - 1])
-
+        result = _kama_nb(sc.to_numpy(dtype=float), close.to_numpy(dtype=float), length)
         kama = Series(result, index=close.index)
 
     # Offset
