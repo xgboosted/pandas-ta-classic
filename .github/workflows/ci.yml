@@ -171,11 +171,12 @@ jobs:
 
     - name: Verify oracle dependencies import
       run: |
+        # tulipy is unmaintained (no wheels for CPython >=3.12); its oracle
+        # values are frozen in tests/fixtures/tulipy_oracle.json, so no tulipy
+        # install is needed at test time. Only talib is imported live here.
         python - << 'PY'
         import talib
-        import tulipy
         print(f"talib import OK: {talib.__name__}")
-        print(f"tulipy import OK: {tulipy.__name__}")
         PY
 
     - name: Run oracle test suites (talib + tulipy)

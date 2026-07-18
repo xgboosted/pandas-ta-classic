@@ -47,12 +47,14 @@ optional = [
     "tqdm",
 ]
 
-# External oracle libraries for parity tests
+# External oracle library for parity tests.
+# tulipy (unmaintained; no wheels for CPython >=3.12) is NOT listed here: its
+# oracle values are frozen in tests/fixtures/tulipy_oracle.json and compared on
+# every Python version with no tulipy install. To regenerate that snapshot,
+# install tulipy manually on CPython <3.12 and run
+# tests/fixtures/generate_tulipy_oracle.py.
 oracle = [
     "ta-lib>=0.6.8",
-    # tulipy is unmaintained (last release 2020, no wheels for CPython >=3.12).
-    # Gated so `[oracle]`/`[all]` still install on modern Python; ta-lib remains the primary oracle.
-    "tulipy>=0.4.0; python_version < '3.12'",
 ]
 
 # CI code quality tools
