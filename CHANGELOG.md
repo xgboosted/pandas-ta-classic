@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **backtrader integration** (`docs/tutorials/backtrader.md`, `examples/backtrader_strategy.py`): Precompute-then-feed pattern using dynamic `PandasData` subclass (`make_feed()`); covers single-output, multi-output (MACD), and OHLCV-dependent (ATR) indicators. Added `backtrader` to `integration` optional dependencies.
 * **vectorbt integration tutorial** (`docs/tutorials/vectorbt.md`): Documented the `df.ta.tsignals()` → `vbt.Portfolio.from_signals()` integration pattern, including multi-output indicator handling and benchmark comparison.
 * **Type stubs for `AnalysisIndicators`** (`pandas_ta_classic/core.pyi`): IDE autocomplete and mypy now see full method signatures for every indicator.
+* **`ichimoku()` single-DataFrame return** (`as_dataframe=True`): opt in to a single DataFrame of the visible period instead of the legacy `(visible, span)` tuple. Pass `append_span=True` to also append the future-dated projected span rows. `append_span` is now a real parameter on the underlying `ichimoku()` function (previously accessor-only) and is forwarded by `df.ta.ichimoku()`.
 
 ### Changed
 * **Faster cold import (~3–4×)**: `import pandas_ta_classic` takes ~280 ms (was ~930 ms) because indicator functions load on demand. Public API unchanged.
@@ -23,6 +24,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`optimal_leverage()` returns a float**: the result is no longer truncated with `int()`, the `capital` argument is documented, the unused `**kwargs` parameter is removed, and the "Incomplete. Do NOT use" docstring warning is removed. Zero-variance input now raises `ValueError` (previously crashed with `OverflowError`).
 
 ### Deprecated
+* **`ichimoku()` tuple return**: returning a `(visible, span)` tuple is deprecated and now emits a `DeprecationWarning`. Pass `as_dataframe=True` to opt in to the single-DataFrame return (add `append_span=True` for the projected span rows), or `as_dataframe=False` to keep the tuple without warning. The accessor `df.ta.ichimoku()` already returns a DataFrame and is unaffected.
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
 
 ### Removed
