@@ -190,6 +190,11 @@ constants
 ``constants(append: bool, values: list | np.ndarray)`` — adds or removes
 constant horizontal-line columns from the DataFrame.
 
+.. deprecated:: 0.6.53
+   ``df.ta.constants()`` is deprecated and will be removed in a future release;
+   adding horizontal charting lines is out of scope for a technical-analysis
+   library. Assign the columns directly instead, e.g. ``df["0"] = 0``.
+
 .. code-block:: python
 
     import numpy as np

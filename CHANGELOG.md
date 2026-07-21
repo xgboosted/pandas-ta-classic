@@ -23,6 +23,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`optimal_leverage()` returns a float**: the result is no longer truncated with `int()`, the `capital` argument is documented, the unused `**kwargs` parameter is removed, and the "Incomplete. Do NOT use" docstring warning is removed. Zero-variance input now raises `ValueError` (previously crashed with `OverflowError`).
 
 ### Deprecated
+* **`df.ta.constants()`**: emits a `FutureWarning` and will be removed in a future release. Adding horizontal charting lines is out of scope for a technical-analysis library; assign the columns directly instead (e.g. `df["0"] = 0`).
+* **Top-level `pandas_ta_classic.get_time` and `pandas_ta_classic.EXCHANGE_TZ`**: emit a `FutureWarning` when accessed as public names and will be removed in a future release; wall-clock / exchange-timezone helpers are out of scope for a TA library. The functions still back the internal Strategy run-timer (imported from `pandas_ta_classic._meta` / `pandas_ta_classic.utils`), so normal indicator and Strategy usage is unaffected and warning-free.
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
 
 ### Removed
