@@ -893,10 +893,10 @@ class AnalysisIndicators(PandasObject):
             setattr(type(self), name, wrapper)
         return wrapper.__get__(self, type(self))
 
-    # ichimoku is the only explicit wrapper left: it returns a (Series, DataFrame)
-    # tuple and supports an `append_span` flag that controls whether the span
-    # DataFrame is also appended. _post_process doesn't handle tuples, so the
-    # generic __getattr__ wrapper-factory cannot replace this one.
+    # ichimoku is the only explicit wrapper left: the underlying function still
+    # supports a legacy (visible, span) tuple return. This wrapper opts in to
+    # the single-DataFrame return (as_dataframe=True) and forwards append_span,
+    # so _post_process can handle it like any other indicator.
     def ichimoku(
         self,
         tenkan=None,
@@ -909,17 +909,16 @@ class AnalysisIndicators(PandasObject):
     ):
         """Ichimoku Kinkō Hyō.
 
-        The span DataFrame (projected Senkou A/B values for the next kijun
-        periods) is only accessible by calling ta.ichimoku() directly or by
-        passing append_span=True to this accessor. When append_span=True and
-        append=True, span columns are appended alongside the main result.
+        Returns a single DataFrame of the visible period columns. Pass
+        append_span=True to also append the future-dated span rows (projected
+        Senkou A/B for the next kijun periods).
         """
         from pandas_ta_classic.overlap.ichimoku import ichimoku as _ichimoku
 
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
         close = self._get_column(kwargs.pop("close", "close"))
-        result, span = _ichimoku(
+        result = _ichimoku(
             high=high,
             low=low,
             close=close,
@@ -928,11 +927,10 @@ class AnalysisIndicators(PandasObject):
             senkou=senkou,
             include_chikou=include_chikou,
             offset=offset,
+            as_dataframe=True,
+            append_span=append_span,
             **kwargs,
         )
         self._add_prefix_suffix(result, **kwargs)
         self._append(result, **kwargs)
-        if append_span and span is not None:
-            self._add_prefix_suffix(span, **kwargs)
-            self._append(span, **kwargs)
         return self._post_process(result, **kwargs)

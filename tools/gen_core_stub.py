@@ -18,17 +18,28 @@ _UNION_TYPE = getattr(types, "UnionType", None)
 ROOT = Path(__file__).parent.parent
 
 _RETURN_MAP = {
-    "ichimoku": "tuple[Optional[DataFrame], Optional[DataFrame]]",
+    # The accessor always opts in to the single-DataFrame return internally
+    # (as_dataframe=True is hardcoded in core.py); it never returns the tuple.
+    "ichimoku": "Optional[DataFrame]",
+}
+
+# Params the underlying indicator function accepts but the hand-written
+# accessor wrapper in core.py does not expose (it hardcodes the value
+# instead). Stubbing these would advertise a kwarg that raises
+# "got multiple values" at runtime if a caller actually passes it.
+_PARAM_EXCLUDE_MAP = {
+    "ichimoku": {"as_dataframe"},
 }
 
 
 def _build_method_stub(name: str, func) -> str:
     sig = inspect.signature(func)
+    excluded_params = _PARAM_EXCLUDE_MAP.get(name, frozenset())
 
     # Build param list: self + non-column params
     parts = ["self"]
     for pname, param in sig.parameters.items():
-        if pname in _COLUMN_PARAM_TO_COL_KEY:
+        if pname in _COLUMN_PARAM_TO_COL_KEY or pname in excluded_params:
             continue
         if param.kind == inspect.Parameter.VAR_KEYWORD:
             parts.append("**kwargs: Any")
