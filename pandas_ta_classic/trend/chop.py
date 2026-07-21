@@ -1,4 +1,5 @@
 # Choppiness Index (CHOP)
+import warnings
 from typing import Any, Optional
 import numpy as np
 from pandas import Series
@@ -6,7 +7,6 @@ from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
-    get_drift,
     get_offset,
     verify_series,
 )
@@ -33,7 +33,12 @@ def chop(
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
-    drift = get_drift(drift)
+    if drift is not None:
+        warnings.warn(
+            "The 'drift' parameter of chop() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     offset = get_offset(offset)
 
     if high is None or low is None or close is None:
@@ -47,11 +52,10 @@ def chop(
         return None
     atr_sum = atr_.rolling(length).sum()
 
-    chop = scalar
     if ln:
-        chop *= (np.log(atr_sum) - np.log(diff)) / np.log(length)
+        chop = scalar * (np.log(atr_sum) - np.log(diff)) / np.log(length)
     else:
-        chop *= (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
+        chop = scalar * (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
 
     # Offset
     chop = apply_offset(chop, offset)
@@ -79,11 +83,11 @@ Sources:
 
 Calculation:
     Default Inputs:
-        length=14, scalar=100, drift=1
+        length=14, scalar=100
     HH = high.rolling(length).max()
     LL = low.rolling(length).min()
 
-    ATR_SUM = SUM(ATR(drift), length)
+    ATR_SUM = SUM(ATR, length)
     CHOP = scalar * (LOG10(ATR_SUM) - LOG10(HH - LL))
     CHOP /= LOG10(length)
 
@@ -95,7 +99,8 @@ Args:
     atr_length (int): Length for ATR. Default: 1
     ln (bool): If True, uses ln otherwise log10. Default: False
     scalar (float): How much to magnify. Default: 100
-    drift (int): The difference period. Default: 1
+    drift (int): Deprecated and ignored. Never affected the result. This
+        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

@@ -53,6 +53,14 @@ class TestTrendExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_1_9", "CKSPs_10_1_9"])
 
+    def test_cpr_ext(self):
+        # Regression: the generic accessor maps the open_ param to the 'open'
+        # column. A bare 'open' param made df.ta.cpr() silently return the
+        # unchanged input frame instead of computing CPR.
+        result = self.data.ta.cpr()
+        self.assertIsInstance(result, DataFrame)
+        self.assertIn("CPR_PIVOT", result.columns)
+
     def test_decay_ext(self):
         self.data.ta.decay(append=True)
         self.assertIsInstance(self.data, DataFrame)

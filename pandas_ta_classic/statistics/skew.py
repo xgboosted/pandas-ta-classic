@@ -1,5 +1,5 @@
 # Skew (SKEW)
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import numpy as np
 from pandas import Series
@@ -34,6 +34,7 @@ def skew(
     m2, m3 = np_rolling_moments(close.values, length, 2, 3, min_periods=min_periods)
     # n_eff[i] is the actual window size at position i (scalar for the common
     # case where min_periods == length).
+    n_eff: Union[np.ndarray, np.float64]
     if min_periods < length:
         n_eff = np.full(len(close), np.float64(length))
         for pos in range(min_periods - 1, min(length - 1, len(close))):
