@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Optional, TypeGuard, Union
 
 from sys import float_info as sflt
 
@@ -86,7 +86,7 @@ def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
         return False
 
 
-def is_percent(x: Optional[Union[int, float]]) -> bool:
+def is_percent(x: Optional[Union[int, float]]) -> TypeGuard[Union[int, float]]:
     if isinstance(x, (int, float)):
         return x is not None and x >= 0 and x <= 100
     return False

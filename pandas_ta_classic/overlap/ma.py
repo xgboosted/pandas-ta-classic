@@ -69,6 +69,7 @@ def ma(name: Optional[str] = None, source: Optional[Series] = None, **kwargs: An
     if name is None and source is None:
         return list(_MA_DISPATCH.keys())
 
-    _name = name.lower() if isinstance(name, str) else None
-    fn = _MA_DISPATCH.get(_name, ema)
+    if not isinstance(name, str):
+        return ema(source, **kwargs)
+    fn = _MA_DISPATCH.get(name.lower(), ema)
     return fn(source, **kwargs)

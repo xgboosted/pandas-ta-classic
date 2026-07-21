@@ -47,11 +47,10 @@ def chop(
         return None
     atr_sum = atr_.rolling(length).sum()
 
-    chop = scalar
     if ln:
-        chop *= (np.log(atr_sum) - np.log(diff)) / np.log(length)
+        chop = scalar * (np.log(atr_sum) - np.log(diff)) / np.log(length)
     else:
-        chop *= (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
+        chop = scalar * (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
 
     # Offset
     chop = apply_offset(chop, offset)
