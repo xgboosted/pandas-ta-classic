@@ -402,10 +402,9 @@ class AnalysisIndicators:
         senkou: Optional[int] = None,
         include_chikou: bool = True,
         offset: Optional[int] = None,
-        as_dataframe: Optional[bool] = None,
         append_span: bool = False,
         **kwargs: Any,
-    ) -> tuple[Optional[DataFrame], Optional[DataFrame]]: ...
+    ) -> Optional[DataFrame]: ...
     def jma(
         self, length: Optional[Union[int, float]] = None, phase: Optional[float] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[Series]: ...
