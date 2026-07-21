@@ -3,10 +3,12 @@ from typing import Any
 
 # Metadata comes from _meta to avoid circular imports; it must be imported
 # before core/utils because submodules read Imports off this package.
+# EXCHANGE_TZ is intentionally NOT imported here: it is deprecated as a public
+# top-level name and served lazily (with a FutureWarning) via __getattr__.
+# Internal callers import it directly from pandas_ta_classic._meta.
 from pandas_ta_classic._meta import (
     CANGLE_AGG,
     Category,
-    EXCHANGE_TZ,
     Imports,
     RATE,
     version,
@@ -39,7 +41,6 @@ from pandas_ta_classic.utils import (
     final_time,
     get_drift,
     get_offset,
-    get_time,
     is_datetime_ordered,
     is_percent,
     jensens_alpha,
@@ -90,7 +91,6 @@ __all__ = [
     "CANGLE_AGG",
     "Category",
     "CommonStrategy",
-    "EXCHANGE_TZ",
     "Imports",
     "RATE",
     "Strategy",
@@ -115,7 +115,6 @@ __all__ = [
     "final_time",
     "get_drift",
     "get_offset",
-    "get_time",
     "is_datetime_ordered",
     "is_percent",
     "jensens_alpha",
@@ -193,6 +192,8 @@ def __getattr__(name: str) -> Any:
         return ALL_PATTERNS
 
     # CDL_PATTERN_NAMES: deprecated alias — use ALL_PATTERNS
+    # Not cached via setattr: caching would resolve future lookups directly off
+    # the module dict, bypassing __getattr__ (and the warning) after first use.
     if name == "CDL_PATTERN_NAMES":
         import warnings
 
@@ -203,8 +204,31 @@ def __getattr__(name: str) -> Any:
         )
         from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 
-        setattr(sys.modules[__name__], name, ALL_PATTERNS)
         return ALL_PATTERNS
+
+    # get_time / EXCHANGE_TZ: deprecated as public top-level names. These are
+    # wall-clock / exchange-timezone helpers unrelated to computing indicators;
+    # they remain available (internally used by the Strategy run timer) but the
+    # public exports emit a FutureWarning. Internal code imports them from
+    # pandas_ta_classic._meta / pandas_ta_classic.utils directly (no warning).
+    # Not cached via setattr, same reason as CDL_PATTERN_NAMES above — the
+    # warning must fire on every access, not just the first.
+    if name in ("get_time", "EXCHANGE_TZ"):
+        import warnings
+
+        warnings.warn(
+            f"pandas_ta_classic.{name} is deprecated and will be removed in a "
+            "future release; time/exchange-clock helpers are out of scope for a "
+            "technical-analysis library.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        _obj: Any
+        if name == "get_time":
+            from pandas_ta_classic.utils import get_time as _obj
+        else:
+            from pandas_ta_classic._meta import EXCHANGE_TZ as _obj
+        return _obj
 
     # Individual candle-pattern submodules (cdl_*) not tracked in Category
     # → return the submodule (mimics old `from candles import *` behaviour)

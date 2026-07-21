@@ -13,10 +13,13 @@ try:
 except ImportError:
     # Fallback: try to get version from installed package metadata
     try:
-        from importlib.metadata import version, PackageNotFoundError
+        from importlib.metadata import (
+            version as _dist_version,
+            PackageNotFoundError,
+        )
 
         try:
-            __version__ = version("pandas-ta-classic")
+            __version__ = _dist_version("pandas-ta-classic")
         except PackageNotFoundError:
             __version__ = "0.0.0"  # Fallback if package not installed
     except ImportError:

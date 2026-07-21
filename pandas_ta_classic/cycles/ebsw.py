@@ -27,7 +27,7 @@ def ebsw(
     # variables
     alpha1 = HP = 0  # alpha and HighPass
     a1 = b1 = c1 = c2 = c3 = 0
-    Filt = Pwr = Wave = 0
+    Filt = Pwr = Wave = 0.0
 
     lastClose = lastHP = 0
     FilterHist = [0, 0]  # Filter history
