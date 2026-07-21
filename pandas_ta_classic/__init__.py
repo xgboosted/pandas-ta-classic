@@ -223,6 +223,7 @@ def __getattr__(name: str) -> Any:
             FutureWarning,
             stacklevel=2,
         )
+        _obj: Any
         if name == "get_time":
             from pandas_ta_classic.utils import get_time as _obj
         else:
