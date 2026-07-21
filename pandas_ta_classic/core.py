@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
 from typing import Any, Optional
-from warnings import simplefilter
+from warnings import simplefilter, warn
 
 import pandas as pd
 import numpy as np
@@ -519,6 +519,14 @@ class AnalysisIndicators(PandasObject):
             Returns nothing to the user.  Either adds or removes constant ranges
             from the working DataFrame.
         """
+        warn(
+            "df.ta.constants() is deprecated and will be removed in a future "
+            "release; adding horizontal charting lines is out of scope for a "
+            "technical-analysis library. Assign the columns directly, e.g. "
+            "df['0'] = 0.",
+            FutureWarning,
+            stacklevel=2,
+        )
         if isinstance(values, (np.ndarray, list)):
             if append:
                 for x in values:

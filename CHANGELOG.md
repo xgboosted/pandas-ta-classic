@@ -24,6 +24,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`tal_ma()` no longer needs TA-Lib and fails fast**: the MA-name→`MA_Type` mapping is now a plain dict of the (frozen) TA-Lib enum values, so `tal_ma("ema") == 1` regardless of whether TA-Lib is installed (previously it silently returned `0`/SMA when TA-Lib was absent). Unknown names now raise `ValueError` and non-string input raises `TypeError` instead of silently defaulting to SMA. Callers (`bbands`, `ppo`, `apo`) already normalise `mamode` to a valid string, so their behaviour is unchanged.
 
 ### Deprecated
+* **`df.ta.constants()`**: emits a `FutureWarning` and will be removed in a future release. Adding horizontal charting lines is out of scope for a technical-analysis library; assign the columns directly instead (e.g. `df["0"] = 0`).
+* **Top-level `pandas_ta_classic.get_time` and `pandas_ta_classic.EXCHANGE_TZ`**: emit a `FutureWarning` when accessed as public names and will be removed in a future release; wall-clock / exchange-timezone helpers are out of scope for a TA library. The functions still back the internal Strategy run-timer (imported from `pandas_ta_classic._meta` / `pandas_ta_classic.utils`), so normal indicator and Strategy usage is unaffected and warning-free.
 * **`CDL_PATTERN_NAMES`**: Use `ALL_PATTERNS` instead. Accessing the old name emits a `DeprecationWarning`.
 
 ### Removed
