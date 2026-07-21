@@ -34,7 +34,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **Unused hard dependencies**: `scipy`, `scikit-learn`, and `statsmodels` dropped from `[project.dependencies]` — nothing in the package imports them anymore. `_linear_regression_sklearn()` removed (see Changed). Stale `Imports` probes pruned (`backtrader`, `matplotlib`, `mplfinance`, `numba`, `scipy`, `sklearn`, `statsmodels`, `vectorbt`, `yaml`); numba acceleration is unaffected (`utils/_njit.py` self-detects numba).
 
 ### Fixed
-* **`cdl_counterattack` dead loop removed**: an inner `for` loop evaluated a ternary expression and discarded it (ruff B018); the rolling-window updates on the following lines already carry the intended behavior. Output is unchanged.
+* **`cpr` accessor path silently returned the input frame**: the `open` input parameter was named `open` (bare) instead of the `open_` convention. The DataFrame accessor's generic column mapper only maps the `open_` param to the `open` column, so `df.ta.cpr()` never fetched open prices, `cpr()` returned `None`, and the accessor fell back to the unchanged input DataFrame. Renamed the parameter to `open_`; positional calls are unaffected.
 * **Cross-package indicator imports**: A submodule import could overwrite a re-exported function of the same name on the parent package (e.g. `from pandas_ta_classic.volatility import atr` occasionally returned the `atr` *module* instead of the function). Resolved.
 * **Test-fixture regen no longer drops `cmo_14` entries** when running tests without tulipy installed. Generators now merge with existing JSON instead of overwriting.
 

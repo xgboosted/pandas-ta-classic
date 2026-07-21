@@ -564,7 +564,6 @@ class AnalysisIndicators:
     ) -> Optional[DataFrame]: ...
     def cpr(
         self,
-        open: Series,
         method: str = 'classic',
         timeframe: str = 'daily',
         interval: Optional[str] = None,
