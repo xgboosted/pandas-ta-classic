@@ -157,11 +157,10 @@ print(df.tail())
 import pandas as pd
 import pandas_ta_classic as ta
 
-# Create empty DataFrame
-df = pd.DataFrame()
-
-# Fetch data (requires yfinance)
-df = df.ta.ticker("AAPL", period="1y")
+# Fetch data with yfinance directly (df.ta.ticker() is deprecated —
+# see examples/fetch_market_data.py)
+import yfinance as yf
+df = yf.download("AAPL", period="1y")
 
 # Add indicators
 df.ta.sma(length=20, append=True)
@@ -447,7 +446,7 @@ Now that you've got the basics, explore more:
 | Custom strategy | `ta.Strategy(name="My", ta=[...])` |
 | List categories | `print(ta.Category)` |
 | Get help | `help(ta.sma)` |
-| Fetch data | `df.ta.ticker("AAPL")` |
+| Fetch data | `yf.download("AAPL")` (via yfinance; `df.ta.ticker()` deprecated) |
 
 ## Need Help?
 

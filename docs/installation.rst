@@ -19,9 +19,9 @@ Optional Dependencies
 For enhanced functionality, consider installing:
 
 - **TA-Lib**: Optional — all 62 CDL patterns work natively without it (see :ref:`Installing TA-Lib` below)
-- **tulipy**: Optional — oracle-only; used by ``test_oracle_tulipy.py`` for parity verification, never as a computation backend
-- **yfinance**: For downloading stock data with ``df.ta.ticker()``
-- **vectorbt**: For backtesting integration
+- **tulipy**: Optional — only needed to *regenerate* the frozen oracle golden file (``tests/fixtures/generate_tulipy_oracle.py`` on CPython <3.12); ``test_oracle_tulipy.py`` compares against the committed snapshot and no longer imports tulipy at test time
+- **yfinance / alpha-vantage**: For downloading OHLCV data (``pip install pandas-ta-classic[data]``). Note: the built-in ``df.ta.ticker()`` / ``ta.yf()`` / ``ta.av()`` helpers are deprecated — call yfinance / alpha-vantage directly and pass the DataFrame in (see ``examples/fetch_market_data.py``)
+- **vectorbt / backtrader / backtesting**: For backtesting integration (``pip install pandas-ta-classic[backtest]``)
 - **pytest + Hypothesis**: For running the test suite and property-based tests (``pip install pandas-ta-classic[test]``)
 
 Installation Methods
