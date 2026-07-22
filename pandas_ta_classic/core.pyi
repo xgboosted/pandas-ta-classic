@@ -408,8 +408,9 @@ class AnalysisIndicators:
         senkou: Optional[int] = None,
         include_chikou: bool = True,
         offset: Optional[int] = None,
+        append_span: bool = False,
         **kwargs: Any,
-    ) -> tuple[Optional[DataFrame], Optional[DataFrame]]: ...
+    ) -> Optional[DataFrame]: ...
     def jma(
         self, length: Optional[Union[int, float]] = None, phase: Optional[float] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[Series]: ...
@@ -581,7 +582,6 @@ class AnalysisIndicators:
     ) -> Optional[DataFrame]: ...
     def cpr(
         self,
-        open: Series,
         method: str = 'classic',
         timeframe: str = 'daily',
         interval: Optional[str] = None,

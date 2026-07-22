@@ -71,7 +71,7 @@ def _cpr_build_dataframe(pivot_result, levels, width_analysis, price_position, v
 
 
 def cpr(
-    open: Series,
+    open_: Series,
     high: Series,
     low: Series,
     close: Series,
@@ -101,17 +101,17 @@ def cpr(
         levels = "standard"
 
     length = 1  # For verify_series
-    open = verify_series(open, length)
+    open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
 
-    if _any_none(open, high, low, close):
+    if _any_none(open_, high, low, close):
         return None
 
     # Prepare DataFrame for OHLCV processing
-    ohlcv_df = DataFrame({"open": open, "high": high, "low": low, "close": close})
+    ohlcv_df = DataFrame({"open": open_, "high": high, "low": low, "close": close})
     if volume is not None:
         ohlcv_df["volume"] = volume
 
@@ -383,7 +383,7 @@ Calculation:
         S2 = Pivot - (H - L)
 
 Args:
-    open (pd.Series): Series of 'open's
+    open_ (pd.Series): Series of 'open's
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's

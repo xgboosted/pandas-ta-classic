@@ -1,8 +1,17 @@
 # Ichimoku Kinko Hyo (ICHIMOKU)
-from typing import Any, Optional
-from pandas import date_range, DataFrame, RangeIndex, Timedelta, Series
+import warnings
+from typing import Any, Optional, Union
+from pandas import concat, date_range, DataFrame, RangeIndex, Timedelta, Series
 from .midprice import midprice
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+_ICHIMOKU_TUPLE_DEPRECATION = (
+    "ichimoku() returning a (visible, span) tuple is deprecated and will be "
+    "removed in the next major release. Pass as_dataframe=True to opt in to "
+    "the new single-DataFrame return now, or as_dataframe=False to silence "
+    "this warning while keeping the tuple. The accessor df.ta.ichimoku() "
+    "already returns a DataFrame and is unaffected."
+)
 
 
 def ichimoku(
@@ -14,8 +23,10 @@ def ichimoku(
     senkou: Optional[int] = None,
     include_chikou: bool = True,
     offset: Optional[int] = None,
+    as_dataframe: Optional[bool] = None,
+    append_span: bool = False,
     **kwargs: Any,
-) -> tuple[Optional[DataFrame], Optional[DataFrame]]:
+) -> Union[tuple[Optional[DataFrame], Optional[DataFrame]], Optional[DataFrame]]:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
     tenkan = int(tenkan) if tenkan and tenkan > 0 else 9
     kijun = int(kijun) if kijun and kijun > 0 else 26
@@ -28,8 +39,12 @@ def ichimoku(
     if not kwargs.get("lookahead", True):
         include_chikou = False
 
+    if as_dataframe is None:
+        warnings.warn(_ICHIMOKU_TUPLE_DEPRECATION, DeprecationWarning, stacklevel=2)
+    return_tuple = as_dataframe is not True
+
     if high is None or low is None or close is None:
-        return None, None
+        return (None, None) if return_tuple else None
 
     # Calculate Result
     tenkan_sen = midprice(high=high, low=low, length=tenkan)
@@ -92,7 +107,20 @@ def ichimoku(
     spandf.name = f"ICHISPAN_{tenkan}_{kijun}"
     spandf.category = "overlap"
 
-    return ichimokudf, spandf
+    if return_tuple:
+        return ichimokudf, spandf
+
+    # Single-DataFrame return (opt-in via as_dataframe=True). By default the
+    # future-dated span rows are omitted (visible period only). append_span=True
+    # appends them: concat drops the monkey-patched name/category attrs, so
+    # reassign. Span rows carry only ISA/ISB; ITS/IKS/ICS are NaN there.
+    if not append_span:
+        return ichimokudf
+
+    combined = concat([ichimokudf, spandf], axis=0)
+    combined.name = ichimokudf.name
+    combined.category = "overlap"
+    return combined
 
 
 ichimoku.__doc__ = """Ichimoku Kinkō Hyō (ichimoku)
@@ -125,14 +153,26 @@ Args:
     senkou (int): Senkou period. Default: 52
     include_chikou (bool): Whether to include chikou component. Default: True
     offset (int): How many periods to offset the result. Default: 0
+    as_dataframe (bool): Return type selector. None (default) returns the
+        legacy ``(visible, span)`` tuple and emits a DeprecationWarning.
+        True returns a single DataFrame. False returns the tuple without
+        warning. Default: None
+    append_span (bool): Only used when as_dataframe is True. When False
+        (default) the returned DataFrame holds the visible period only.
+        When True the future-dated span rows (projected Senkou A/B) are
+        appended as extra rows. Ignored for the tuple return, which always
+        exposes the span separately. Default: False
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: Two DataFrames.
+    Tuple[pd.DataFrame, pd.DataFrame] (as_dataframe is None or False):
         For the visible period: spanA, spanB, tenkan_sen, kijun_sen,
             and chikou_span columns
         For the forward looking period: spanA and spanB columns
+    pd.DataFrame (as_dataframe is True): the visible period columns. With
+        append_span=True the future-dated span rows are appended (only
+        spanA/spanB populated there; tenkan_sen/kijun_sen/chikou_span NaN)
 """
