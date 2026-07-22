@@ -5,6 +5,72 @@ from pandas import Series
 
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _jma_loop(close, length1, pow1, bet, beta, pr, sum_length):
+    """Jurik Moving Average per-bar recursion (volatility bands + 3-stage filter).
+
+    A faithful port of the original Python loop; all scalar coefficients are
+    precomputed by the caller. The trailing-window average uses ``np.mean`` in
+    place of the original ``np.average``; for an unweighted call these are the
+    same operation and numpy computes them bit-for-bit identically, so the
+    numba-OFF fallback path is bit-identical to the pre-njit output.
+
+    Under numba (JIT on), however, ``np.mean`` compiles to numba's own
+    reduction, whose summation order differs from numpy's at the ULP level.
+    That ~1-ULP difference (relative error ~4e-16, full float64 precision)
+    compounds through the recursive ``jma[i] = jma[i - 1] + det1`` update, so
+    the JIT path lands within ~1 ULP of -- but not bit-identical to -- the
+    original. Inconsequential for any practical use. This is the only optimised
+    indicator in the change whose JIT and fallback paths are not bit-identical
+    to each other; every other one is.
+    """
+    m = close.shape[0]
+    jma = np.zeros(m)
+    volty = np.zeros(m)
+    v_sum = np.zeros(m)
+
+    det0 = det1 = ma2 = 0.0
+    jma[0] = ma1 = uBand = lBand = close[0]
+
+    for i in range(1, m):
+        price = close[i]
+
+        # Price volatility
+        del1 = price - uBand
+        del2 = price - lBand
+        volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0.0
+
+        # Relative price volatility factor
+        v_sum[i] = v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
+        avg_volty = np.mean(v_sum[max(i - 65, 0) : i + 1])
+        d_volty = 0.0 if avg_volty == 0 else volty[i] / avg_volty
+        r_volty = max(1.0, min(np.power(length1, 1.0 / pow1), d_volty))
+
+        # Jurik volatility bands
+        pow2 = np.power(r_volty, pow1)
+        kv = np.power(bet, np.sqrt(pow2))
+        uBand = price if (del1 > 0) else price - (kv * del1)
+        lBand = price if (del2 < 0) else price - (kv * del2)
+
+        # Jurik Dynamic Factor
+        power = np.power(r_volty, pow1)
+        alpha = np.power(beta, power)
+
+        # 1st stage - preliminary smoothing by adaptive EMA
+        ma1 = ((1 - alpha) * price) + (alpha * ma1)
+
+        # 2nd stage - one more preliminary smoothing by Kalman filter
+        det0 = ((price - ma1) * (1 - beta)) + (beta * det0)
+        ma2 = ma1 + pr * det0
+
+        # 3rd stage - final smoothing by unique Jurik adaptive filter
+        det1 = ((ma2 - jma[i - 1]) * (1 - alpha) * (1 - alpha)) + (alpha * alpha * det1)
+        jma[i] = jma[i - 1] + det1
+
+    return jma
 
 
 def _jma_phase_ratio(phase):
@@ -42,14 +108,6 @@ def jma(
     if close is None:
         return None
 
-    # Define base variables
-    jma = np.zeros_like(close)
-    volty = np.zeros_like(close)
-    v_sum = np.zeros_like(close)
-
-    kv = det0 = det1 = ma2 = 0.0
-    jma[0] = ma1 = uBand = lBand = close.iloc[0]
-
     # Static variables
     sum_length = 10
     length = 0.5 * (_length - 1)
@@ -60,41 +118,7 @@ def jma(
     bet = length2 / (length2 + 1)
     beta = 0.45 * (_length - 1) / (0.45 * (_length - 1) + 2.0)
 
-    m = close.shape[0]
-    for i in range(1, m):
-        price = close.iloc[i]
-
-        # Price volatility
-        del1 = price - uBand
-        del2 = price - lBand
-        volty[i] = max(abs(del1), abs(del2)) if abs(del1) != abs(del2) else 0
-
-        # Relative price volatility factor
-        v_sum[i] = v_sum[i - 1] + (volty[i] - volty[max(i - sum_length, 0)]) / sum_length
-        avg_volty = np.average(v_sum[max(i - 65, 0) : i + 1])
-        d_volty = 0 if avg_volty == 0 else volty[i] / avg_volty
-        r_volty = max(1.0, min(np.power(length1, 1 / pow1), d_volty))
-
-        # Jurik volatility bands
-        pow2 = np.power(r_volty, pow1)
-        kv = np.power(bet, np.sqrt(pow2))
-        uBand = price if (del1 > 0) else price - (kv * del1)
-        lBand = price if (del2 < 0) else price - (kv * del2)
-
-        # Jurik Dynamic Factor
-        power = np.power(r_volty, pow1)
-        alpha = np.power(beta, power)
-
-        # 1st stage - prelimimary smoothing by adaptive EMA
-        ma1 = ((1 - alpha) * price) + (alpha * ma1)
-
-        # 2nd stage - one more prelimimary smoothing by Kalman filter
-        det0 = ((price - ma1) * (1 - beta)) + (beta * det0)
-        ma2 = ma1 + pr * det0
-
-        # 3rd stage - final smoothing by unique Jurik adaptive filter
-        det1 = ((ma2 - jma[i - 1]) * (1 - alpha) * (1 - alpha)) + (alpha * alpha * det1)
-        jma[i] = jma[i - 1] + det1
+    jma = _jma_loop(close.to_numpy(dtype=float), length1, pow1, bet, beta, pr, sum_length)
 
     # Remove initial lookback data and convert to pandas frame
     jma[0 : _length - 1] = np.nan

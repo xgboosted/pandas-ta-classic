@@ -6,6 +6,32 @@ from pandas import DataFrame, Series
 
 from .ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _hilo_loop(close: np.ndarray, high_ma: np.ndarray, low_ma: np.ndarray):
+    """Stateful Gann HiLo switch: pick the low/high MA on breakouts, else hold.
+
+    Mirrors the original per-bar loop exactly; NaN comparisons resolve to
+    False just like pandas, so the warmup zone stays NaN.
+    """
+    m = close.shape[0]
+    hilo = np.full(m, np.nan)
+    long = np.full(m, np.nan)
+    short = np.full(m, np.nan)
+    for i in range(1, m):
+        if close[i] > high_ma[i - 1]:
+            hilo[i] = low_ma[i]
+            long[i] = low_ma[i]
+        elif close[i] < low_ma[i - 1]:
+            hilo[i] = high_ma[i]
+            short[i] = high_ma[i]
+        else:
+            hilo[i] = hilo[i - 1]
+            long[i] = hilo[i - 1]
+            short[i] = hilo[i - 1]
+    return hilo, long, short
 
 
 def hilo(
@@ -33,11 +59,6 @@ def hilo(
         return None
 
     # Calculate Result
-    m = close.size
-    hilo = Series(np.nan, index=close.index)
-    long = Series(np.nan, index=close.index)
-    short = Series(np.nan, index=close.index)
-
     high_ma = ma(mamode, high, length=high_length)
     if high_ma is None:
         return None
@@ -45,14 +66,10 @@ def hilo(
     if low_ma is None:
         return None
 
-    for i in range(1, m):
-        if close.iloc[i] > high_ma.iloc[i - 1]:
-            hilo.iloc[i] = long.iloc[i] = low_ma.iloc[i]
-        elif close.iloc[i] < low_ma.iloc[i - 1]:
-            hilo.iloc[i] = short.iloc[i] = high_ma.iloc[i]
-        else:
-            hilo.iloc[i] = hilo.iloc[i - 1]
-            long.iloc[i] = short.iloc[i] = hilo.iloc[i - 1]
+    hilo_arr, long_arr, short_arr = _hilo_loop(close.to_numpy(dtype=float), high_ma.to_numpy(dtype=float), low_ma.to_numpy(dtype=float))
+    hilo = Series(hilo_arr, index=close.index)
+    long = Series(long_arr, index=close.index)
+    short = Series(short_arr, index=close.index)
 
     # Offset
     hilo, long, short = apply_offset([hilo, long, short], offset)

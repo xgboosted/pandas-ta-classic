@@ -10,7 +10,65 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    color,
+    O_,
+    H,
+    L,
+    C,
+    arr_bl,
+    arr_bs,
+    body_total,
+    out,
+    start_idx,
+    body_short_trail,
+    body_long_trail,
+    f_bl,
+    f_bs,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st long, then 3 small, 5th long
+            real_body[i - 4] > f_bl * body_total[4]
+            and real_body[i - 3] < f_bs * body_total[3]
+            and real_body[i - 2] < f_bs * body_total[2]
+            and real_body[i - 1] < f_bs * body_total[1]
+            and real_body[i] > f_bl * body_total[0]
+            # white, 3 black, white  ||  black, 3 white, black
+            and color[i - 4] == -color[i - 3]
+            and color[i - 3] == color[i - 2]
+            and color[i - 2] == color[i - 1]
+            and color[i - 1] == -color[i]
+            # 2nd to 4th hold within 1st: part of real body within 1st range
+            and min(O_[i - 3], C[i - 3]) < H[i - 4]
+            and max(O_[i - 3], C[i - 3]) > L[i - 4]
+            and min(O_[i - 2], C[i - 2]) < H[i - 4]
+            and max(O_[i - 2], C[i - 2]) > L[i - 4]
+            and min(O_[i - 1], C[i - 1]) < H[i - 4]
+            and max(O_[i - 1], C[i - 1]) > L[i - 4]
+            # 2nd to 4th are falling (rising)
+            and C[i - 2] * color[i - 4] < C[i - 3] * color[i - 4]
+            and C[i - 1] * color[i - 4] < C[i - 2] * color[i - 4]
+            # 5th opens above (below) the prior close
+            and O_[i] * color[i - 4] > C[i - 1] * color[i - 4]
+            # 5th closes above (below) the 1st close
+            and C[i] * color[i - 4] > C[i - 4] * color[i - 4]
+        ):
+            out[i] = 100 * color[i - 4]
+
+        # Update totals
+        body_total[4] += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
+        for k in range(3, 0, -1):
+            body_total[k] += arr_bs[i - k] - arr_bs[body_short_trail - k]
+        body_total[0] += arr_bl[i] - arr_bl[body_long_trail]
+        body_short_trail += 1
+        body_long_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -29,7 +87,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_long_trail = start_idx - body_long_period
 
     # [0]=BodyLong at i, [1..3]=BodyShort at i-1..i-3, [4]=BodyLong at i-4
-    body_total = [0.0, 0.0, 0.0, 0.0, 0.0]
+    body_total = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
     # Seed BodyShort totals for i-3, i-2, i-1
     j = body_short_trail
@@ -46,48 +104,23 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         body_total[0] += arr_bl[j]
         j += 1
 
-    O_ = ca.open
-    H = ca.high
-    L = ca.low
-    C = ca.close
-
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st long, then 3 small, 5th long
-            ca.real_body[i - 4] > AVG_FACTOR[CandleSetting.BodyLong] * body_total[4]
-            and ca.real_body[i - 3] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[3]
-            and ca.real_body[i - 2] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[2]
-            and ca.real_body[i - 1] < AVG_FACTOR[CandleSetting.BodyShort] * body_total[1]
-            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_total[0]
-            # white, 3 black, white  ||  black, 3 white, black
-            and ca.color[i - 4] == -ca.color[i - 3]
-            and ca.color[i - 3] == ca.color[i - 2]
-            and ca.color[i - 2] == ca.color[i - 1]
-            and ca.color[i - 1] == -ca.color[i]
-            # 2nd to 4th hold within 1st: part of real body within 1st range
-            and min(O_[i - 3], C[i - 3]) < H[i - 4]
-            and max(O_[i - 3], C[i - 3]) > L[i - 4]
-            and min(O_[i - 2], C[i - 2]) < H[i - 4]
-            and max(O_[i - 2], C[i - 2]) > L[i - 4]
-            and min(O_[i - 1], C[i - 1]) < H[i - 4]
-            and max(O_[i - 1], C[i - 1]) > L[i - 4]
-            # 2nd to 4th are falling (rising)
-            and C[i - 2] * ca.color[i - 4] < C[i - 3] * ca.color[i - 4]
-            and C[i - 1] * ca.color[i - 4] < C[i - 2] * ca.color[i - 4]
-            # 5th opens above (below) the prior close
-            and O_[i] * ca.color[i - 4] > C[i - 1] * ca.color[i - 4]
-            # 5th closes above (below) the 1st close
-            and C[i] * ca.color[i - 4] > C[i - 4] * ca.color[i - 4]
-        ):
-            out[i] = 100 * ca.color[i - 4]
-
-        # Update totals
-        body_total[4] += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
-        for k in range(3, 0, -1):
-            body_total[k] += arr_bs[i - k] - arr_bs[body_short_trail - k]
-        body_total[0] += arr_bl[i] - arr_bl[body_long_trail]
-        body_short_trail += 1
-        body_long_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.color,
+        ca.open,
+        ca.high,
+        ca.low,
+        ca.close,
+        arr_bl,
+        arr_bs,
+        body_total,
+        out,
+        start_idx,
+        body_short_trail,
+        body_long_trail,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.BodyShort],
+    )
 
 
 def cdl_risefall3methods(

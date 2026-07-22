@@ -1,9 +1,10 @@
 # Aroon (AROON)
 from typing import Any, Optional
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils import recent_maximum_index, recent_minimum_index
+from pandas_ta_classic.utils._core import _sliding_argextreme
 
 
 def aroon(
@@ -34,8 +35,8 @@ def aroon(
         aroon_down, aroon_up = AROON(high, low, length)
         aroon_osc = AROONOSC(high, low, length)
     else:
-        periods_from_hh = high.rolling(length + 1).apply(recent_maximum_index, raw=True)
-        periods_from_ll = low.rolling(length + 1).apply(recent_minimum_index, raw=True)
+        periods_from_hh = _sliding_argextreme(high, length + 1, np.argmax, reverse=True)
+        periods_from_ll = _sliding_argextreme(low, length + 1, np.argmin, reverse=True)
 
         aroon_up = aroon_down = scalar
         aroon_up *= 1 - (periods_from_hh / length)

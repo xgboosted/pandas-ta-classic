@@ -10,7 +10,44 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    real_body,
+    open_,
+    body_hi,
+    body_lo,
+    arr_eq,
+    arr_nr,
+    out,
+    start_idx,
+    near_trail,
+    equal_trail,
+    near_total,
+    equal_total,
+    f_near,
+    f_eq,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            ((body_lo[i - 1] > body_hi[i - 2] and body_lo[i] > body_hi[i - 2]) or (body_hi[i - 1] < body_lo[i - 2] and body_hi[i] < body_lo[i - 2]))
+            and color[i - 1] == 1  # 2nd: white
+            and color[i] == 1  # 3rd: white
+            and real_body[i] >= real_body[i - 1] - f_near * near_total  # same size
+            and real_body[i] <= real_body[i - 1] + f_near * near_total
+            and open_[i] >= open_[i - 1] - f_eq * equal_total  # same open
+            and open_[i] <= open_[i - 1] + f_eq * equal_total
+        ):
+            out[i] = 100 if body_lo[i - 1] > body_hi[i - 2] else -100
+
+        near_total += arr_nr[i - 1] - arr_nr[near_trail - 1]
+        equal_total += arr_eq[i - 1] - arr_eq[equal_trail - 1]
+        near_trail += 1
+        equal_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -42,22 +79,23 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         equal_total += arr_eq[i - 1]
         i += 1
 
-    for i in range(start_idx, len(out)):
-        if (
-            ((body_lo[i - 1] > body_hi[i - 2] and body_lo[i] > body_hi[i - 2]) or (body_hi[i - 1] < body_lo[i - 2] and body_hi[i] < body_lo[i - 2]))
-            and ca.color[i - 1] == 1  # 2nd: white
-            and ca.color[i] == 1  # 3rd: white
-            and ca.real_body[i] >= ca.real_body[i - 1] - AVG_FACTOR[CandleSetting.Near] * near_total  # same size
-            and ca.real_body[i] <= ca.real_body[i - 1] + AVG_FACTOR[CandleSetting.Near] * near_total
-            and ca.open[i] >= ca.open[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total  # same open
-            and ca.open[i] <= ca.open[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
-        ):
-            out[i] = 100 if body_lo[i - 1] > body_hi[i - 2] else -100
-
-        near_total += arr_nr[i - 1] - arr_nr[near_trail - 1]
-        equal_total += arr_eq[i - 1] - arr_eq[equal_trail - 1]
-        near_trail += 1
-        equal_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.real_body,
+        ca.open,
+        body_hi,
+        body_lo,
+        arr_eq,
+        arr_nr,
+        out,
+        start_idx,
+        near_trail,
+        equal_trail,
+        near_total,
+        equal_total,
+        AVG_FACTOR[CandleSetting.Near],
+        AVG_FACTOR[CandleSetting.Equal],
+    )
 
 
 def cdl_gapsidesidewhite(

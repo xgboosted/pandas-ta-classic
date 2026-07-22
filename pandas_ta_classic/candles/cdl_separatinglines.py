@@ -9,6 +9,47 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    real_body,
+    open_,
+    upper_shadow,
+    lower_shadow,
+    arr_bl,
+    arr_eq,
+    arr_svs,
+    out,
+    start_idx,
+    shadow_vs_trail,
+    body_long_trail,
+    equal_trail,
+    shadow_vs_total,
+    body_long_total,
+    equal_total,
+    f_bl,
+    f_eq,
+    f_svs,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            color[i - 1] == -color[i]
+            and open_[i] <= open_[i - 1] + f_eq * equal_total
+            and open_[i] >= open_[i - 1] - f_eq * equal_total
+            and real_body[i] > f_bl * body_long_total
+            and ((color[i] == 1 and lower_shadow[i] < f_svs * shadow_vs_total) or (color[i] == -1 and upper_shadow[i] < f_svs * shadow_vs_total))
+        ):
+            out[i] = color[i] * 100
+
+        shadow_vs_total += arr_svs[i] - arr_svs[shadow_vs_trail]
+        body_long_total += arr_bl[i] - arr_bl[body_long_trail]
+        equal_total += arr_eq[i - 1] - arr_eq[equal_trail]
+        shadow_vs_trail += 1
+        body_long_trail += 1
+        equal_trail += 1
 
 
 def _detect(ca, out, **kwargs):
@@ -30,25 +71,28 @@ def _detect(ca, out, **kwargs):
     shadow_vs_total = float(arr_svs[shadow_vs_trail:start_idx].sum())
     body_long_total = float(arr_bl[body_long_trail:start_idx].sum())
     equal_total = float(arr_eq[equal_trail : start_idx - 1].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.color[i - 1] == -ca.color[i]
-            and ca.open[i] <= ca.open[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
-            and ca.open[i] >= ca.open[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
-            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
-            and (
-                (ca.color[i] == 1 and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
-                or (ca.color[i] == -1 and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
-            )
-        ):
-            out[i] = ca.color[i] * 100
 
-        shadow_vs_total += arr_svs[i] - arr_svs[shadow_vs_trail]
-        body_long_total += arr_bl[i] - arr_bl[body_long_trail]
-        equal_total += arr_eq[i - 1] - arr_eq[equal_trail]
-        shadow_vs_trail += 1
-        body_long_trail += 1
-        equal_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.real_body,
+        ca.open,
+        ca.upper_shadow,
+        ca.lower_shadow,
+        arr_bl,
+        arr_eq,
+        arr_svs,
+        out,
+        start_idx,
+        shadow_vs_trail,
+        body_long_trail,
+        equal_trail,
+        shadow_vs_total,
+        body_long_total,
+        equal_total,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.Equal],
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+    )
 
 
 def cdl_separatinglines(

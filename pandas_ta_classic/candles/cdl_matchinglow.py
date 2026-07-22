@@ -9,6 +9,17 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _detect_nb(color, close, arr_eq, out, start_idx, equal_trail, equal_total, f_eq):
+    for i in range(start_idx, len(out)):
+        if color[i - 1] == -1 and color[i] == -1 and close[i] <= close[i - 1] + f_eq * equal_total and close[i] >= close[i - 1] - f_eq * equal_total:
+            out[i] = 100
+
+        equal_total += arr_eq[i - 1] - arr_eq[equal_trail]
+        equal_trail += 1
 
 
 def _detect(ca, out, **kwargs):
@@ -22,17 +33,17 @@ def _detect(ca, out, **kwargs):
 
     equal_trail = start_idx - 1 - equal_period
     equal_total = float(arr_eq[equal_trail : start_idx - 1].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.color[i - 1] == -1
-            and ca.color[i] == -1
-            and ca.close[i] <= ca.close[i - 1] + AVG_FACTOR[CandleSetting.Equal] * equal_total
-            and ca.close[i] >= ca.close[i - 1] - AVG_FACTOR[CandleSetting.Equal] * equal_total
-        ):
-            out[i] = 100
 
-        equal_total += arr_eq[i - 1] - arr_eq[equal_trail]
-        equal_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.close,
+        arr_eq,
+        out,
+        start_idx,
+        equal_trail,
+        equal_total,
+        AVG_FACTOR[CandleSetting.Equal],
+    )
 
 
 def cdl_matchinglow(

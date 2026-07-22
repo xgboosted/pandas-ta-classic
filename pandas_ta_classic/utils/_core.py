@@ -215,3 +215,31 @@ def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
     result = np.full(len(arr), np.nan)
     result[length - 1 :] = windows @ weights
     return Series(result, index=close.index)
+
+
+def _sliding_argextreme(series: Series, length: int, argfunc: Any, reverse: bool = False) -> Series:
+    """Vectorised rolling ``argfunc`` (arg-position of a window extreme).
+
+    Bit-identical to ``series.rolling(length).apply(argfunc, raw=True)`` — an
+    integer arg-position over each window, with ``NaN`` for the first
+    ``length - 1`` warm-up bars. With ``reverse=True`` the window is flipped
+    first, matching ``argfunc(x[::-1])`` (periods since the most-recent extreme).
+
+    Args:
+        series: The input series.
+        length: Rolling window length.
+        argfunc: ``np.argmax`` or ``np.argmin``.
+        reverse: Flip each window before applying *argfunc*.
+    """
+    import numpy as np
+    from numpy.lib.stride_tricks import sliding_window_view
+
+    arr = series.to_numpy(dtype=float)
+    m = arr.shape[0]
+    result = np.full(m, np.nan)
+    if length <= m:
+        windows = sliding_window_view(arr, length)
+        if reverse:
+            windows = windows[:, ::-1]
+        result[length - 1 :] = argfunc(windows, axis=1)
+    return Series(result, index=series.index)

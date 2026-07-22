@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _sliding_argextreme
 
 
 def minmaxindex(
@@ -28,8 +29,8 @@ def minmaxindex(
     offset = get_offset(offset)
     if close is None:
         return None
-    mn_idx = close.rolling(length).apply(np.argmin, raw=True)
-    mx_idx = close.rolling(length).apply(np.argmax, raw=True)
+    mn_idx = _sliding_argextreme(close, length, np.argmin)
+    mx_idx = _sliding_argextreme(close, length, np.argmax)
     mn_idx, mx_idx = apply_offset([mn_idx, mx_idx], offset)
     mn_idx, mx_idx = apply_fill([mn_idx, mx_idx], **kwargs)
     mn_idx.name = f"MINIDX_{length}"

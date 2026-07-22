@@ -4,8 +4,10 @@ import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
 
 
+@njit(cache=True)
 def _mama_loop(
     close_arr: np.ndarray,
     m: int,

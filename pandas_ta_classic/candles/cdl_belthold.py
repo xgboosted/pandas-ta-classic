@@ -10,7 +10,38 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    upper_shadow,
+    lower_shadow,
+    color,
+    arr_bl,
+    arr_svs,
+    out,
+    start_idx,
+    body_long_trail,
+    shadow_vs_trail,
+    body_long_total,
+    shadow_vs_total,
+    f_bl,
+    f_svs,
+):
+    for i in range(start_idx, len(out)):
+        if real_body[i] > f_bl * body_long_total and (
+            (color[i] == 1 and lower_shadow[i] < f_svs * shadow_vs_total) or (color[i] == -1 and upper_shadow[i] < f_svs * shadow_vs_total)
+        ):
+            out[i] = color[i] * 100
+
+        # Update trailing windows
+        body_long_total += arr_bl[i] - arr_bl[body_long_trail]
+        shadow_vs_total += arr_svs[i] - arr_svs[shadow_vs_trail]
+        body_long_trail += 1
+        shadow_vs_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -28,18 +59,23 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     shadow_vs_trail = start_idx - shadow_vs_period
     body_long_total = float(arr_bl[body_long_trail:start_idx].sum())
     shadow_vs_total = float(arr_svs[shadow_vs_trail:start_idx].sum())
-    for i in range(start_idx, len(out)):
-        if ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total and (
-            (ca.color[i] == 1 and ca.lower_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
-            or (ca.color[i] == -1 and ca.upper_shadow[i] < AVG_FACTOR[CandleSetting.ShadowVeryShort] * shadow_vs_total)
-        ):
-            out[i] = ca.color[i] * 100
 
-        # Update trailing windows
-        body_long_total += arr_bl[i] - arr_bl[body_long_trail]
-        shadow_vs_total += arr_svs[i] - arr_svs[shadow_vs_trail]
-        body_long_trail += 1
-        shadow_vs_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.upper_shadow,
+        ca.lower_shadow,
+        ca.color,
+        arr_bl,
+        arr_svs,
+        out,
+        start_idx,
+        body_long_trail,
+        shadow_vs_trail,
+        body_long_total,
+        shadow_vs_total,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+    )
 
 
 def cdl_belthold(

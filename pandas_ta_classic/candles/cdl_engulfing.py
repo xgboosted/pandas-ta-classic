@@ -7,23 +7,28 @@ from pandas_ta_classic.candles._cdl_math import (
     CandleArrays,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
 
 
-def _is_bullish_engulf(ca, i):
-    return (
-        ca.color[i] == 1
-        and ca.color[i - 1] == -1
-        and ((ca.close[i] >= ca.open[i - 1] and ca.open[i] < ca.close[i - 1]) or (ca.close[i] > ca.open[i - 1] and ca.open[i] <= ca.close[i - 1]))
-    )
-
-
-def _is_bearish_engulf(ca, i):
-    return (
-        ca.color[i] == -1
-        and ca.color[i - 1] == 1
-        and ((ca.open[i] >= ca.close[i - 1] and ca.close[i] < ca.open[i - 1]) or (ca.open[i] > ca.close[i - 1] and ca.close[i] <= ca.open[i - 1]))
-    )
+@njit(cache=True)
+def _detect_nb(color, open_, close, out, start_idx):
+    for i in range(start_idx, len(out)):
+        bullish = (
+            color[i] == 1
+            and color[i - 1] == -1
+            and ((close[i] >= open_[i - 1] and open_[i] < close[i - 1]) or (close[i] > open_[i - 1] and open_[i] <= close[i - 1]))
+        )
+        bearish = (
+            color[i] == -1
+            and color[i - 1] == 1
+            and ((open_[i] >= close[i - 1] and close[i] < open_[i - 1]) or (open_[i] > close[i - 1] and close[i] <= open_[i - 1]))
+        )
+        if bullish or bearish:
+            if open_[i] != close[i - 1] and close[i] != open_[i - 1]:
+                out[i] = color[i] * 100
+            else:
+                out[i] = color[i] * 80
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -32,12 +37,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     if start_idx >= len(out):
         return
 
-    for i in range(start_idx, len(out)):
-        if _is_bullish_engulf(ca, i) or _is_bearish_engulf(ca, i):
-            if ca.open[i] != ca.close[i - 1] and ca.close[i] != ca.open[i - 1]:
-                out[i] = ca.color[i] * 100
-            else:
-                out[i] = ca.color[i] * 80
+    _detect_nb(ca.color, ca.open, ca.close, out, start_idx)
 
 
 def cdl_engulfing(

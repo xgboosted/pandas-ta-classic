@@ -10,7 +10,51 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    upper_shadow,
+    O_,
+    H,
+    C,
+    arr_svs,
+    out,
+    start_idx,
+    svs_trail,
+    svs_total,
+    f_svs,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # First three are black candlesticks
+            color[i - 4] == -1
+            and color[i - 3] == -1
+            and color[i - 2] == -1
+            # With consecutively lower opens
+            and O_[i - 4] > O_[i - 3]
+            and O_[i - 3] > O_[i - 2]
+            # And consecutively lower closes
+            and C[i - 4] > C[i - 3]
+            and C[i - 3] > C[i - 2]
+            # 4th: black with an upper shadow
+            and color[i - 1] == -1
+            and upper_shadow[i - 1] > f_svs * svs_total
+            # 5th: white
+            and color[i] == 1
+            # That opens above prior candle's body (open, since bearish)
+            and O_[i] > O_[i - 1]
+            # And closes above prior candle's high
+            and C[i] > H[i - 1]
+        ):
+            out[i] = 100
+
+        # Update total: add current range, subtract trailing range
+        svs_total += arr_svs[i - 1] - arr_svs[svs_trail - 1]
+        svs_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -27,37 +71,20 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
     # Seed ShadowVeryShort total: applied to bar i-1
     svs_total = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
-    O_ = ca.open
-    H = ca.high
-    C = ca.close
 
-    for i in range(start_idx, len(out)):
-        if (
-            # First three are black candlesticks
-            ca.color[i - 4] == -1
-            and ca.color[i - 3] == -1
-            and ca.color[i - 2] == -1
-            # With consecutively lower opens
-            and O_[i - 4] > O_[i - 3]
-            and O_[i - 3] > O_[i - 2]
-            # And consecutively lower closes
-            and C[i - 4] > C[i - 3]
-            and C[i - 3] > C[i - 2]
-            # 4th: black with an upper shadow
-            and ca.color[i - 1] == -1
-            and ca.upper_shadow[i - 1] > AVG_FACTOR[CandleSetting.ShadowVeryShort] * svs_total
-            # 5th: white
-            and ca.color[i] == 1
-            # That opens above prior candle's body (open, since bearish)
-            and O_[i] > O_[i - 1]
-            # And closes above prior candle's high
-            and C[i] > H[i - 1]
-        ):
-            out[i] = 100
-
-        # Update total: add current range, subtract trailing range
-        svs_total += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-        svs_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.upper_shadow,
+        ca.open,
+        ca.high,
+        ca.close,
+        arr_svs,
+        out,
+        start_idx,
+        svs_trail,
+        svs_total,
+        AVG_FACTOR[CandleSetting.ShadowVeryShort],
+    )
 
 
 def cdl_ladderbottom(

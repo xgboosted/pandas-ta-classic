@@ -10,7 +10,41 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    color,
+    real_body,
+    body_hi,
+    body_lo,
+    open_,
+    close,
+    arr_bl,
+    out,
+    start_idx,
+    body_long_trail,
+    body_long_total,
+    f_bl,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            color[i - 2] == 1  # 1st: white
+            and real_body[i - 2] > f_bl * body_long_total  # long
+            and color[i - 1] == -1  # 2nd: black
+            and body_lo[i - 1] > body_hi[i - 2]  # gapping up
+            and color[i] == -1  # 3rd: black
+            and open_[i] < open_[i - 1]
+            and open_[i] > close[i - 1]  # opening within 2nd rb
+            and close[i] > open_[i - 2]
+            and close[i] < close[i - 2]  # closing within 1st rb
+        ):
+            out[i] = -100
+
+        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
+        body_long_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -27,22 +61,21 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
 
     body_long_trail = start_idx - 2 - body_long_period
     body_long_total = float(arr_bl[body_long_trail : start_idx - 2].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.color[i - 2] == 1  # 1st: white
-            and ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total  # long
-            and ca.color[i - 1] == -1  # 2nd: black
-            and body_lo[i - 1] > body_hi[i - 2]  # gapping up
-            and ca.color[i] == -1  # 3rd: black
-            and ca.open[i] < ca.open[i - 1]
-            and ca.open[i] > ca.close[i - 1]  # opening within 2nd rb
-            and ca.close[i] > ca.open[i - 2]
-            and ca.close[i] < ca.close[i - 2]  # closing within 1st rb
-        ):
-            out[i] = -100
 
-        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
-        body_long_trail += 1
+    _detect_nb(
+        ca.color,
+        ca.real_body,
+        body_hi,
+        body_lo,
+        ca.open,
+        ca.close,
+        arr_bl,
+        out,
+        start_idx,
+        body_long_trail,
+        body_long_total,
+        AVG_FACTOR[CandleSetting.BodyLong],
+    )
 
 
 def cdl_2crows(

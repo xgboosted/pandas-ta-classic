@@ -10,7 +10,55 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    color,
+    close,
+    body_hi,
+    body_lo,
+    arr_bd,
+    arr_bl,
+    arr_bs,
+    out,
+    start_idx,
+    body_long_trail,
+    body_doji_trail,
+    body_short_trail,
+    body_long_total,
+    body_doji_total,
+    body_short_total,
+    f_bl,
+    f_bd,
+    f_bs,
+    penetration,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            # 1st: long black
+            real_body[i - 2] > f_bl * body_long_total
+            and color[i - 2] == -1
+            # 2nd: doji gapping down
+            and real_body[i - 1] <= f_bd * body_doji_total
+            and body_hi[i - 1] < body_lo[i - 2]
+            # 3rd: longer than short, white, closing well within 1st rb
+            and real_body[i] > f_bs * body_short_total
+            and color[i] == 1
+            and close[i] > close[i - 2] + real_body[i - 2] * penetration
+        ):
+            out[i] = 100
+
+        # Update trailing windows
+        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
+        body_doji_total += arr_bd[i - 1] - arr_bd[body_doji_trail]
+        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
+        body_long_trail += 1
+        body_doji_trail += 1
+        body_short_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -43,28 +91,29 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_long_total = float(arr_bl[body_long_trail : start_idx - 2].sum())
     body_doji_total = float(arr_bd[body_doji_trail : start_idx - 1].sum())
     body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            # 1st: long black
-            ca.real_body[i - 2] > AVG_FACTOR[CandleSetting.BodyLong] * body_long_total
-            and ca.color[i - 2] == -1
-            # 2nd: doji gapping down
-            and ca.real_body[i - 1] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
-            and body_hi[i - 1] < body_lo[i - 2]
-            # 3rd: longer than short, white, closing well within 1st rb
-            and ca.real_body[i] > AVG_FACTOR[CandleSetting.BodyShort] * body_short_total
-            and ca.color[i] == 1
-            and ca.close[i] > ca.close[i - 2] + ca.real_body[i - 2] * penetration
-        ):
-            out[i] = 100
 
-        # Update trailing windows
-        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
-        body_doji_total += arr_bd[i - 1] - arr_bd[body_doji_trail]
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-        body_long_trail += 1
-        body_doji_trail += 1
-        body_short_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.color,
+        ca.close,
+        body_hi,
+        body_lo,
+        arr_bd,
+        arr_bl,
+        arr_bs,
+        out,
+        start_idx,
+        body_long_trail,
+        body_doji_trail,
+        body_short_trail,
+        body_long_total,
+        body_doji_total,
+        body_short_total,
+        AVG_FACTOR[CandleSetting.BodyLong],
+        AVG_FACTOR[CandleSetting.BodyDoji],
+        AVG_FACTOR[CandleSetting.BodyShort],
+        penetration,
+    )
 
 
 def cdl_morningdojistar(

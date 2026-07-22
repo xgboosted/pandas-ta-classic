@@ -1,8 +1,27 @@
-# import numpy as np
 from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+# TD Sequential caps the consecutive run at the 13-bar setup/countdown window.
+_TD_WINDOW = 13
+
+
+@njit(cache=True)
+def _td_run_capped(td_bool: np.ndarray) -> np.ndarray:
+    """Length of the consecutive-True run ending at each bar, capped at 13.
+
+    Equivalent to the original ``rolling(13).apply(true_sequence_count)``:
+    the run resets on every False and never exceeds the 13-bar window.
+    """
+    n = td_bool.shape[0]
+    out = np.zeros(n, dtype=np.float64)
+    count = 0
+    for i in range(n):
+        count = count + 1 if td_bool[i] else 0
+        out[i] = count if count < _TD_WINDOW else _TD_WINDOW
+    return out
 
 
 def td_seq(
@@ -20,18 +39,9 @@ def td_seq(
     asint = asint if isinstance(asint, bool) else False
     show_all = kwargs.setdefault("show_all", True)
 
-    def true_sequence_count(series: Series):
-        index = series.where(series.eq(False)).last_valid_index()
-
-        if index is None:
-            return series.count()
-        s = series[series.index > index]
-        return s.count()
-
     def calc_td(series: Series, direction: str, show_all: bool):
         td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
-        td_num = np.where(td_bool, td_bool.rolling(13, min_periods=0).apply(true_sequence_count), 0)
-        td_num = Series(td_num)
+        td_num = Series(_td_run_capped(td_bool.to_numpy()))
 
         if show_all:
             td_num = td_num.mask(td_num == 0)

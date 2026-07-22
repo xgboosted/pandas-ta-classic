@@ -4,6 +4,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _sliding_argextreme
 
 
 def maxindex(
@@ -26,7 +27,7 @@ def maxindex(
     offset = get_offset(offset)
     if close is None:
         return None
-    result = close.rolling(length).apply(np.argmax, raw=True)
+    result = _sliding_argextreme(close, length, np.argmax)
     result = apply_offset(result, offset)
     result = apply_fill(result, **kwargs)
     result.name = f"MAXINDEX_{length}"

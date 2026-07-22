@@ -10,7 +10,51 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._njit import njit
 import numpy as np
+
+
+@njit(cache=True)
+def _detect_nb(
+    real_body,
+    lower_shadow,
+    upper_shadow,
+    body_hi,
+    body_lo,
+    low,
+    hl_range,
+    arr_bd,
+    arr_sl,
+    arr_nr,
+    out,
+    start_idx,
+    body_doji_trail,
+    shadow_long_trail,
+    near_trail,
+    body_doji_total,
+    shadow_long_total,
+    near_total,
+    f_bd,
+    f_sl,
+    f_near,
+):
+    for i in range(start_idx, len(out)):
+        if (
+            real_body[i] <= f_bd * body_doji_total
+            and lower_shadow[i] > f_sl * arr_sl[i]
+            and upper_shadow[i] > f_sl * arr_sl[i]
+            and (body_lo[i] <= low[i] + hl_range[i] / 2.0 + f_near * near_total)
+            and (body_hi[i] >= low[i] + hl_range[i] / 2.0 - f_near * near_total)
+        ):
+            out[i] = 100
+
+        # Update trailing windows
+        body_doji_total += arr_bd[i] - arr_bd[body_doji_trail]
+        shadow_long_total += arr_sl[i] - arr_sl[shadow_long_trail]
+        near_total += arr_nr[i] - arr_nr[near_trail]
+        body_doji_trail += 1
+        shadow_long_trail += 1
+        near_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
@@ -34,23 +78,30 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     body_doji_total = float(arr_bd[body_doji_trail:start_idx].sum())
     shadow_long_total = float(arr_sl[shadow_long_trail:start_idx].sum())
     near_total = float(arr_nr[near_trail:start_idx].sum())
-    for i in range(start_idx, len(out)):
-        if (
-            ca.real_body[i] <= AVG_FACTOR[CandleSetting.BodyDoji] * body_doji_total
-            and ca.lower_shadow[i] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i]
-            and ca.upper_shadow[i] > AVG_FACTOR[CandleSetting.ShadowLong] * arr_sl[i]
-            and (body_lo[i] <= ca.low[i] + ca.hl_range[i] / 2.0 + AVG_FACTOR[CandleSetting.Near] * near_total)
-            and (body_hi[i] >= ca.low[i] + ca.hl_range[i] / 2.0 - AVG_FACTOR[CandleSetting.Near] * near_total)
-        ):
-            out[i] = 100
 
-        # Update trailing windows
-        body_doji_total += arr_bd[i] - arr_bd[body_doji_trail]
-        shadow_long_total += arr_sl[i] - arr_sl[shadow_long_trail]
-        near_total += arr_nr[i] - arr_nr[near_trail]
-        body_doji_trail += 1
-        shadow_long_trail += 1
-        near_trail += 1
+    _detect_nb(
+        ca.real_body,
+        ca.lower_shadow,
+        ca.upper_shadow,
+        body_hi,
+        body_lo,
+        ca.low,
+        ca.hl_range,
+        arr_bd,
+        arr_sl,
+        arr_nr,
+        out,
+        start_idx,
+        body_doji_trail,
+        shadow_long_trail,
+        near_trail,
+        body_doji_total,
+        shadow_long_total,
+        near_total,
+        AVG_FACTOR[CandleSetting.BodyDoji],
+        AVG_FACTOR[CandleSetting.ShadowLong],
+        AVG_FACTOR[CandleSetting.Near],
+    )
 
 
 def cdl_rickshawman(

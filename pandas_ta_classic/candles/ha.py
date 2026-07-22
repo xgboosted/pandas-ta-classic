@@ -1,7 +1,20 @@
 # Heikin Ashi (HA)
 from typing import Any, Optional
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _ha_open(first: float, ha_close: np.ndarray) -> np.ndarray:
+    """Recursive Heikin-Ashi open: HA_open[i] = (HA_open[i-1] + HA_close[i-1]) / 2."""
+    m = ha_close.shape[0]
+    out = np.empty(m)
+    out[0] = first
+    for i in range(1, m):
+        out[i] = 0.5 * (out[i - 1] + ha_close[i - 1])
+    return out
 
 
 def ha(
@@ -24,20 +37,17 @@ def ha(
         return None
 
     # Calculate Result
-    m = close.size
+    ha_close = 0.25 * (open_ + high + low + close)
+    ha_open = _ha_open(0.5 * (open_.iloc[0] + close.iloc[0]), ha_close.to_numpy(dtype=float))
     df = DataFrame(
         {
-            "HA_open": 0.5 * (open_.iloc[0] + close.iloc[0]),
+            "HA_open": ha_open,
             "HA_high": high,
             "HA_low": low,
-            "HA_close": 0.25 * (open_ + high + low + close),
-        }
+            "HA_close": ha_close,
+        },
+        index=close.index,
     )
-
-    ha_open_col = df.columns.get_loc("HA_open")
-    ha_close_col = df.columns.get_loc("HA_close")
-    for i in range(1, m):
-        df.iat[i, ha_open_col] = 0.5 * (df.iat[i - 1, ha_open_col] + df.iat[i - 1, ha_close_col])
 
     df["HA_high"] = df[["HA_open", "HA_high", "HA_close"]].max(axis=1)
     df["HA_low"] = df[["HA_open", "HA_low", "HA_close"]].min(axis=1)
