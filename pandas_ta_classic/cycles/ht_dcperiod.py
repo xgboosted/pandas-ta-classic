@@ -1,12 +1,14 @@
 # Hilbert Transform - Dominant Cycle Period (HT_DCPERIOD)
 from typing import Any, Optional
 from pandas import Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ht_dcperiod(
     close: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -14,13 +16,19 @@ def ht_dcperiod(
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    ht = hilbert_result(close)
-    result = Series(ht["smooth_period"], index=close.index)
+    if Imports["talib"] and mode_talib:
+        from talib import HT_DCPERIOD
+
+        result = HT_DCPERIOD(close)
+    else:
+        ht = hilbert_result(close)
+        result = Series(ht["smooth_period"], index=close.index)
 
     # Offset
     result = apply_offset(result, offset)
@@ -44,6 +52,8 @@ Sources:
 
 Args:
     close (pd.Series): Series of 'close's
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
