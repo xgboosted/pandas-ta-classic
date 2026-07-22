@@ -8,6 +8,7 @@ from pandas_ta_classic.utils import get_offset, verify_series
 def linregangle(
     close: Series,
     length: Optional[int] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -23,7 +24,7 @@ def linregangle(
     if close is None:
         return None
 
-    return linreg(close, length=length, offset=offset, angle=True, degrees=True)
+    return linreg(close, length=length, talib=talib, offset=offset, angle=True, degrees=True)
 
 
 linregangle.__doc__ = """Linear Regression Angle (LINEARREG_ANGLE)
@@ -34,6 +35,8 @@ last *length* bars.  Equivalent to ta.linreg(..., angle=True).
 Args:
     close (pd.Series): Series of 'close' prices
     length (int): Lookback period. Default: 14
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): Periods to offset. Default: 0
 
 Returns:

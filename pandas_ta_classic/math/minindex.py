@@ -13,9 +13,14 @@ def minindex(
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
-    """Index of the Minimum value over *length* periods (TA-Lib: MININDEX).
+    """Window-relative index of the Minimum value over *length* periods.
 
-    Returns 0-based index within the rolling window.
+    Named after TA-Lib's MININDEX, but the convention differs on purpose: this
+    returns the 0-based index *within* the rolling window (0..length-1), i.e.
+    how many bars back the low sits, not TA-Lib's absolute array index. There
+    is deliberately no ``talib`` passthrough — TA-Lib's MININDEX would return
+    different values, and neither tulipy nor Tulip Indicators expose an
+    equivalent.
     """
     length = int(length) if length and length > 0 else 30
     close = verify_series(close, length)

@@ -1,5 +1,6 @@
 import logging
 import re
+import warnings
 from pandas import DataFrame
 from pandas_ta_classic import Imports, version
 from .._time import df_year_to_date
@@ -65,6 +66,15 @@ def yf(ticker: str, **kwargs):
         Exits if the DataFrame is empty or None
         Otherwise it returns a DataFrame of the Chart History
     """
+    warnings.warn(
+        "pandas_ta_classic.yf() (and df.ta.ticker()) is deprecated and will be "
+        "removed in a future release; data fetching is out of scope for a "
+        "technical-analysis library. Use yfinance directly and pass the "
+        "resulting OHLCV DataFrame to pandas-ta-classic. See "
+        "examples/fetch_market_data.py.",
+        FutureWarning,
+        stacklevel=2,
+    )
     verbose = kwargs.pop("verbose", False)
     if ticker is not None and isinstance(ticker, str) and len(ticker):
         ticker = ticker.upper()

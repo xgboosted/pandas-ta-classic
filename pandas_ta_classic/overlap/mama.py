@@ -2,6 +2,7 @@
 from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
@@ -247,6 +248,7 @@ def mama(
     close: Series,
     fastlimit: Optional[float] = None,
     slowlimit: Optional[float] = None,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -256,16 +258,22 @@ def mama(
     slowlimit = float(slowlimit) if slowlimit and slowlimit > 0 else 0.05
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    c_arr = close.to_numpy(dtype=float)
-    m = c_arr.shape[0]
-    mama_arr, fama_arr = _mama_loop(c_arr, m, fastlimit, slowlimit)
-    mama_s = Series(mama_arr, index=close.index)
-    fama_s = Series(fama_arr, index=close.index)
+    if Imports["talib"] and mode_talib:
+        from talib import MAMA
+
+        mama_s, fama_s = MAMA(close, fastlimit, slowlimit)
+    else:
+        c_arr = close.to_numpy(dtype=float)
+        m = c_arr.shape[0]
+        mama_arr, fama_arr = _mama_loop(c_arr, m, fastlimit, slowlimit)
+        mama_s = Series(mama_arr, index=close.index)
+        fama_s = Series(fama_arr, index=close.index)
 
     # Offset
     mama_s, fama_s = apply_offset([mama_s, fama_s], offset)
@@ -307,6 +315,8 @@ Args:
     close (pd.Series): Series of 'close's
     fastlimit (float): Upper bound for the adaptive alpha. Default: 0.5
     slowlimit (float): Lower bound for the adaptive alpha. Default: 0.05
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

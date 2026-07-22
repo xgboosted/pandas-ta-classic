@@ -47,10 +47,14 @@ optional = [
     "tqdm",
 ]
 
-# External oracle libraries for parity tests
+# External oracle library for parity tests.
+# tulipy (unmaintained; no wheels for CPython >=3.12) is NOT listed here: its
+# oracle values are frozen in tests/fixtures/tulipy_oracle.json and compared on
+# every Python version with no tulipy install. To regenerate that snapshot,
+# install tulipy manually on CPython <3.12 and run
+# tests/fixtures/generate_tulipy_oracle.py.
 oracle = [
     "ta-lib>=0.6.8",
-    "tulipy>=0.4.0",
 ]
 
 # CI code quality tools
@@ -105,18 +109,30 @@ performance = [
     "numba>=0.58.0"
 ]
 
-# Data sources and external integrations
-integration = [
-    "backtesting",
-    "vectorbt",
-    "backtrader", 
+# Data source integrations (used by utils/data — lazy-imported at call time)
+data = [
     "yfinance",
     "alpha-vantage"
 ]
 
-# Complete environment with all features
+# Backtesting integrations (docs/examples only — not imported by the library)
+backtest = [
+    "backtesting",
+    "vectorbt",
+    "backtrader"
+]
+
+# Back-compat alias for the previous combined extra
+integration = [
+    "pandas-ta-classic[data,backtest]"
+]
+
+# Complete environment with all features.
+# Excludes `data`/`backtest`: those pull unmaintained, platform-fragile packages
+# (alpha-vantage, backtrader, vectorbt) that break `[all]` installs on newer
+# Python/OS combos. Install them explicitly via `[data]` / `[backtest]` when needed.
 all = [
-    "pandas-ta-classic[optional,oracle,dev,test,docs,performance,integration]"
+    "pandas-ta-classic[optional,oracle,dev,test,docs,performance]"
 ]
 
 [project.urls]

@@ -1,12 +1,14 @@
 # Hilbert Transform - Phasor Components (HT_PHASOR)
 from typing import Any, Optional
 from pandas import DataFrame, Series
+from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ht_phasor(
     close: Series,
+    talib: Optional[bool] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -14,14 +16,20 @@ def ht_phasor(
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
+    mode_talib = bool(talib) if isinstance(talib, bool) else False
 
     if close is None:
         return None
 
     # Calculate Result
-    ht = hilbert_result(close)
-    inphase = Series(ht["in_phase"], index=close.index)
-    quadrature = Series(ht["quadrature"], index=close.index)
+    if Imports["talib"] and mode_talib:
+        from talib import HT_PHASOR
+
+        inphase, quadrature = HT_PHASOR(close)
+    else:
+        ht = hilbert_result(close)
+        inphase = Series(ht["in_phase"], index=close.index)
+        quadrature = Series(ht["quadrature"], index=close.index)
 
     # Offset
     inphase, quadrature = apply_offset([inphase, quadrature], offset)
@@ -51,6 +59,8 @@ Sources:
 
 Args:
     close (pd.Series): Series of 'close's
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
