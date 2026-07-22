@@ -92,13 +92,16 @@ Using `uv`:
 git clone https://github.com/xgboosted/pandas-ta-classic.git
 cd pandas-ta-classic
 
-# Install with all dependencies
+# Install with all core dependencies (excludes the platform-fragile
+# data/backtest extras — install those explicitly if needed)
 uv pip install -e ".[all]"
 
 # Or install specific dependency groups:
 uv pip install -e ".[dev]" # Development tools
 uv pip install -e ".[optional]" # Optional runtime features
-uv pip install -e ".[oracle]" # Oracle parity libs: TA-Lib + tulipy
+uv pip install -e ".[oracle]" # Oracle parity lib: TA-Lib
+uv pip install -e ".[data]" # Data sources: yfinance, alpha-vantage
+uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 ```
 
 Using `pip`:
@@ -107,13 +110,16 @@ Using `pip`:
 git clone https://github.com/xgboosted/pandas-ta-classic.git
 cd pandas-ta-classic
 
-# Install with all dependencies
+# Install with all core dependencies (excludes the platform-fragile
+# data/backtest extras — install those explicitly if needed)
 pip install -e ".[all]"
 
 # Or install specific dependency groups:
 pip install -e ".[dev]" # Development tools
 pip install -e ".[optional]" # Optional runtime features
-pip install -e ".[oracle]" # Oracle parity libs: TA-Lib + tulipy
+pip install -e ".[oracle]" # Oracle parity lib: TA-Lib
+pip install -e ".[data]" # Data sources: yfinance, alpha-vantage
+pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 ```
 
 ### Basic Usage
@@ -124,8 +130,10 @@ import pandas_ta_classic as ta
 
 # Load your data
 df = pd.read_csv("path/to/symbol.csv")
-# OR if you have yfinance installed
-df = df.ta.ticker("aapl")
+# OR fetch OHLCV with yfinance directly (df.ta.ticker() is deprecated —
+# see examples/fetch_market_data.py):
+# import yfinance as yf
+# df = yf.download("AAPL", period="1y")
 
 # Calculate indicators
 df.ta.sma(length=20, append=True) # Simple Moving Average
@@ -151,7 +159,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
 - **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
-- **tulipy Integration (oracle only)** - parity test oracle; `test_oracle_tulipy.py` verifies native output against tulipy; never used as computation backend
+- **tulipy Integration (frozen oracle only)** - `test_oracle_tulipy.py` verifies native output against a committed golden snapshot of tulipy's output (`tests/fixtures/tulipy_oracle.json`); tulipy itself is no longer installed at test time, only to regenerate the snapshot; never used as a computation backend
 - **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
 - **backtrader Integration** — precompute-then-feed pattern with dynamic `PandasData` subclass; runnable example in ``examples/backtrader_strategy.py``
 - **Vectorbt Integration** - compatible with popular backtesting framework
@@ -185,8 +193,8 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 | Library | Role | Effect when installed |
 |---------|------|-----------------------|
-| TA-Lib | **Acceleration backend + oracle** | Core indicators — native by default, opt-in via `talib=True`; also used in `test_oracle_talib.py` for parity checks |
-| tulipy | **Oracle only** | Never used as computation backend; only `test_oracle_tulipy.py` uses it to verify native output |
+| TA-Lib | **Acceleration backend + live oracle** | Core indicators — native by default, opt-in via `talib=True`; also used live in `test_oracle_talib.py` for parity checks |
+| tulipy | **Frozen oracle only** | Not a computation backend and not installed at test time; `test_oracle_tulipy.py` compares against a committed golden snapshot of tulipy's output. tulipy is only needed to *regenerate* that snapshot (CPython <3.12) |
 
 | Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
 |------|--------------------------|----------------------|
@@ -206,16 +214,16 @@ df.ta.ema(length=20, talib=True) # use TA-Lib
 Installing oracle libraries:
 ```bash
 # uv
-uv pip install pandas-ta-classic[oracle] # installs both TA-Lib and tulipy
+uv pip install pandas-ta-classic[oracle] # installs TA-Lib (the live oracle)
 uv pip install TA-Lib # TA-Lib only (also enables acceleration backend)
-uv pip install tulipy # tulipy only (oracle test use only)
 # pip
-pip install pandas-ta-classic[oracle] # installs both TA-Lib and tulipy
+pip install pandas-ta-classic[oracle] # installs TA-Lib (the live oracle)
 pip install TA-Lib # TA-Lib only (also enables acceleration backend)
-pip install tulipy # tulipy only (oracle test use only)
+# tulipy is only needed to regenerate the frozen oracle snapshot (CPython <3.12):
+pip install tulipy && python tests/fixtures/generate_tulipy_oracle.py
 ```
 
-> **Note:** Both oracle test suites (`test_oracle_talib.py`, `test_oracle_tulipy.py`) are guarded with `@unittest.skipUnless` and skip automatically when the respective library is not installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
+> **Note:** `test_oracle_talib.py` skips automatically (`@unittest.skipUnless`) when TA-Lib is not installed. `test_oracle_tulipy.py` runs on every Python version against the committed `tulipy_oracle.json` snapshot (skips only if that fixture is missing) — it does **not** require tulipy installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
 
 **Performance boost:** Install `numba` for 6–230× speedups on computation-heavy indicators:
 - Using `uv`: `uv pip install pandas-ta-classic[performance]`
