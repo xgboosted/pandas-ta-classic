@@ -13,17 +13,19 @@ def _jma_loop(close, length1, pow1, bet, beta, pr, sum_length):
     """Jurik Moving Average per-bar recursion (volatility bands + 3-stage filter).
 
     A faithful port of the original Python loop; all scalar coefficients are
-    precomputed by the caller. ``np.mean`` over the trailing window is the
-    unweighted equivalent of the original ``np.average``, but not bit-identical
-    to it: numpy's internal reduction order for ``np.average`` differs from
-    ``np.mean`` even for these small (<=66-element) windows, and neither is
-    reproducible by a hand-written loop (verified: a manual left-to-right sum
-    mismatches numpy's own ``np.average`` in ~55% of random small-array trials
-    -- it isn't simple sequential accumulation). The resulting max deviation
-    from the pre-njit output is ~1 ULP (relative error ~4e-16, i.e. full
-    float64 precision) compounded through the ``jma[i] = jma[i - 1] + det1``
-    recursion -- inconsequential for any practical use, but this indicator is
-    numerically equivalent rather than bit-for-bit identical to the original.
+    precomputed by the caller. The trailing-window average uses ``np.mean`` in
+    place of the original ``np.average``; for an unweighted call these are the
+    same operation and numpy computes them bit-for-bit identically, so the
+    numba-OFF fallback path is bit-identical to the pre-njit output.
+
+    Under numba (JIT on), however, ``np.mean`` compiles to numba's own
+    reduction, whose summation order differs from numpy's at the ULP level.
+    That ~1-ULP difference (relative error ~4e-16, full float64 precision)
+    compounds through the recursive ``jma[i] = jma[i - 1] + det1`` update, so
+    the JIT path lands within ~1 ULP of -- but not bit-identical to -- the
+    original. Inconsequential for any practical use. This is the only optimised
+    indicator in the change whose JIT and fallback paths are not bit-identical
+    to each other; every other one is.
     """
     m = close.shape[0]
     jma = np.zeros(m)
