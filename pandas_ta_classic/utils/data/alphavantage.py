@@ -1,4 +1,5 @@
 import logging
+import warnings
 from pandas import DataFrame
 from pandas_ta_classic import Imports, version
 
@@ -25,6 +26,14 @@ def _normalize_alpha_vantage_df(df: DataFrame, ticker: str) -> DataFrame:
 
 
 def av(ticker: str, **kwargs):
+    warnings.warn(
+        "pandas_ta_classic.av() is deprecated and will be removed in a future "
+        "release; data fetching is out of scope for a technical-analysis "
+        "library. Use the alpha-vantage package directly and pass the resulting "
+        "OHLCV DataFrame to pandas-ta-classic. See examples/fetch_market_data.py.",
+        FutureWarning,
+        stacklevel=2,
+    )
     logger.debug(f"kwargs: {kwargs}")
     verbose = kwargs.pop("verbose", False)
     kind = kwargs.pop("kind", "history")

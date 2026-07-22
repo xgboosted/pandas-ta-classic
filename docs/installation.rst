@@ -77,13 +77,16 @@ Using ``uv``:
     cd pandas-ta-classic
     
     # Install in editable mode with all dependencies
+    # (excludes data/backtest — install those explicitly, see below)
     uv pip install -e ".[all]"
-    
+
     # Or install specific dependency groups:
     uv pip install -e ".[dev]"      # Development tools
     uv pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
     uv pip install -e ".[optional]" # Optional features like TA-Lib
     uv pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
+    uv pip install -e ".[data]"     # Data sources: yfinance, alpha-vantage
+    uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 
 Using ``pip``:
 
@@ -94,13 +97,16 @@ Using ``pip``:
     cd pandas-ta-classic
     
     # Install in editable mode with all dependencies
+    # (excludes data/backtest — install those explicitly, see below)
     pip install -e ".[all]"
-    
+
     # Or install specific dependency groups:
     pip install -e ".[dev]"      # Development tools
     pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
     pip install -e ".[optional]" # Optional features like TA-Lib
     pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
+    pip install -e ".[data]"     # Data sources: yfinance, alpha-vantage
+    pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 
 .. note::
    **Development Installation Requirements**:

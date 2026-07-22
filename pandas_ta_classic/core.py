@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
 from typing import Any, Optional
-from warnings import simplefilter, warn
+from warnings import catch_warnings, simplefilter, warn
 
 import pandas as pd
 import numpy as np
@@ -856,11 +856,21 @@ class AnalysisIndicators(PandasObject):
             Exits if the DataFrame is empty or None
             Otherwise it returns a DataFrame
         """
+        warn(
+            "df.ta.ticker() is deprecated and will be removed in a future "
+            "release; data fetching is out of scope for a technical-analysis "
+            "library. Use yfinance directly and pass the resulting OHLCV "
+            "DataFrame to pandas-ta-classic. See examples/fetch_market_data.py.",
+            FutureWarning,
+            stacklevel=2,
+        )
         kwargs.pop("ds", None)
         strategy = kwargs.pop("strategy", None)
 
-        # Fetch the Data
-        df = yf(ticker, **kwargs)
+        # Fetch the Data (suppress yf()'s own FutureWarning; already warned above)
+        with catch_warnings():
+            simplefilter("ignore", FutureWarning)
+            df = yf(ticker, **kwargs)
 
         if df is None:
             return
