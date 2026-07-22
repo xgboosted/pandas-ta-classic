@@ -26,8 +26,7 @@ try:
     import tulipy as tp
 except ImportError as exc:  # pragma: no cover - generator guard
     raise SystemExit(
-        "tulipy is required to regenerate the oracle golden file and is only "
-        "installable on CPython <3.12. Run this script there."
+        "tulipy is required to regenerate the oracle golden file and is only " "installable on CPython <3.12. Run this script there."
     ) from exc
 
 _HERE = Path(__file__).parent
