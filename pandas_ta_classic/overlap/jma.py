@@ -14,7 +14,16 @@ def _jma_loop(close, length1, pow1, bet, beta, pr, sum_length):
 
     A faithful port of the original Python loop; all scalar coefficients are
     precomputed by the caller. ``np.mean`` over the trailing window is the
-    unweighted equivalent of the original ``np.average``.
+    unweighted equivalent of the original ``np.average``, but not bit-identical
+    to it: numpy's internal reduction order for ``np.average`` differs from
+    ``np.mean`` even for these small (<=66-element) windows, and neither is
+    reproducible by a hand-written loop (verified: a manual left-to-right sum
+    mismatches numpy's own ``np.average`` in ~55% of random small-array trials
+    -- it isn't simple sequential accumulation). The resulting max deviation
+    from the pre-njit output is ~1 ULP (relative error ~4e-16, i.e. full
+    float64 precision) compounded through the ``jma[i] = jma[i - 1] + det1``
+    recursion -- inconsequential for any practical use, but this indicator is
+    numerically equivalent rather than bit-for-bit identical to the original.
     """
     m = close.shape[0]
     jma = np.zeros(m)
