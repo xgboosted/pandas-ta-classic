@@ -1,4 +1,5 @@
 # Klinger Volume Oscillator (KVO)
+import warnings
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.hlc3 import hlc3
@@ -6,7 +7,6 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
-    get_drift,
     get_offset,
     signed_series,
     verify_series,
@@ -37,7 +37,12 @@ def kvo(
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
-    drift = get_drift(drift)
+    if drift is not None:
+        warnings.warn(
+            "The 'drift' parameter of kvo() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     offset = get_offset(offset)
 
     if high is None or low is None or close is None or volume is None:
@@ -88,7 +93,7 @@ Sources:
 
 Calculation:
     Default Inputs:
-        fast=34, slow=55, signal=13, drift=1
+        fast=34, slow=55, signal=13
     EMA = Exponential Moving Average
 
     SV = volume * signed_series(HLC3, 1)

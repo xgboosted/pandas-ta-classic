@@ -42,8 +42,6 @@ def _detect_nb(
             out[i] = color[i] * 100
 
         equal_total += arr_eq[i - 1] - arr_eq[equal_trail - 1]
-        for totIdx in range(1, -1, -1):
-            body_long_total_1 if totIdx == 1 else body_long_total_0
         body_long_total_1 += arr_bl[i - 1] - arr_bl[body_long_trail - 1]
         body_long_total_0 += arr_bl[i] - arr_bl[body_long_trail]
         equal_trail += 1

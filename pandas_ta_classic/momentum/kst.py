@@ -1,11 +1,11 @@
 # Know Sure Thing (KST)
+import warnings
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .roc import roc
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
-    get_drift,
     get_offset,
     verify_series,
 )
@@ -42,7 +42,12 @@ def kst(
     signal = _pos_int(signal, 9)
     _length = max(roc1, roc2, roc3, roc4, sma1, sma2, sma3, sma4, signal)
     close = verify_series(close, _length)
-    drift = get_drift(drift)
+    if drift is not None:
+        warnings.warn(
+            "The 'drift' parameter of kst() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     offset = get_offset(offset)
 
     if close is None:
@@ -87,7 +92,7 @@ Sources:
 Calculation:
     Default Inputs:
         roc1=10, roc2=15, roc3=20, roc4=30,
-        sma1=10, sma2=10, sma3=10, sma4=15, signal=9, drift=1
+        sma1=10, sma2=10, sma3=10, sma4=15, signal=9
     ROC = Rate of Change
     SMA = Simple Moving Average
     rocsma1 = SMA(ROC(close, roc1), sma1)
@@ -109,7 +114,8 @@ Args:
     sma3 (int): SMA 3 period. Default: 10
     sma4 (int): SMA 4 period. Default: 15
     signal (int): It's period. Default: 9
-    drift (int): The difference period. Default: 1
+    drift (int): Deprecated and ignored. Never affected the result. This
+        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

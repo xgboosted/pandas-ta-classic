@@ -1,3 +1,4 @@
+import warnings
 from tests.config import get_sample_data
 
 from unittest import TestCase
@@ -78,14 +79,29 @@ class TestOverlapExtension(TestCase):
         from tests.config import get_sample_data
 
         data = get_sample_data()
-        data.ta.ichimoku(append=True, append_span=True)
+        # append_span is a functional flag forwarded to the underlying
+        # function; it emits no DeprecationWarning.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            data.ta.ichimoku(append=True, append_span=True)
         self.assertIsInstance(data, DataFrame)
-        # Span columns (ISA_9, ISB_26) should be present after append_span=True
+        # Span columns (ISA_9, ISB_26) should be present
         self.assertIn("ISA_9", data.columns)
         self.assertIn("ISB_26", data.columns)
         # Main ichimoku columns should also be present
         self.assertIn("ITS_9", data.columns)
         self.assertIn("IKS_26", data.columns)
+
+    def test_ichimoku_accessor_no_warning(self):
+        from tests.config import get_sample_data
+
+        data = get_sample_data()
+        # The accessor opts in to as_dataframe=True internally, so no
+        # DeprecationWarning reaches accessor users.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            data.ta.ichimoku(append=True)
+        self.assertIsInstance(data, DataFrame)
 
     def test_ichimoku_ext(self):
         self.data.ta.ichimoku(append=True)
