@@ -46,13 +46,13 @@ def xsignals(
     if not long:
         trends = 1 - trends
 
-    tskwargs = {
-        "asbool": asbool,
-        "trade_offset": trade_offset,
-        "trend_reset": trend_reset,
-        "offset": offset,
-    }
-    df = tsignals(trends, **tskwargs)
+    df = tsignals(
+        trends,
+        asbool=asbool,
+        trade_offset=trade_offset,
+        trend_reset=trend_reset,
+        offset=offset,
+    )
 
     # Offset handled by tsignals
     df = apply_fill(df, **kwargs)

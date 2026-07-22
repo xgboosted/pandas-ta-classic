@@ -235,54 +235,13 @@ module = [
 ]
 ignore_missing_imports = true
 
-# Per-module overrides for pre-existing code issues that require logic changes
-# (not annotation-only) to fix properly.
+# TA-Lib ships typed stubs, but its Function API is polymorphic at runtime
+# (Series in -> Series out) while the stubs declare every function as returning
+# ndarray unconditionally. mypy believes the stub, infers `result: ndarray` from
+# the talib branch, then reports false-positive assignment/arg-type errors when
+# the actual Series result flows through apply_offset/apply_fill. Skip following
+# talib's stubs so its symbols resolve to Any (we do not type-check talib itself).
 [[tool.mypy.overrides]]
-module = "pandas_ta_classic.core"
-# assignment: wildcard imports (from .performance import *) shadow module names
-#   with function names — same __init__.py re-export pattern as no-redef.
-# arg-type: Strategy(ta=None) — None is intentional sentinel for "all indicators".
-# return-value: version property returns importlib version string, typed as
-#   Callable by mypy due to _meta.py import pattern.
-disable_error_code = ["assignment", "arg-type", "return-value"]
-
-
-[[tool.mypy.overrides]]
-module = "pandas_ta_classic._meta"
-# _meta.py re-assigns `version` from importlib.metadata.version (Callable)
-# to a str — pre-existing structural pattern.
-disable_error_code = ["assignment"]
-
-[[tool.mypy.overrides]]
-module = [
-    "pandas_ta_classic.trend.increasing",
-    "pandas_ta_classic.trend.decreasing",
-    "pandas_ta_classic.candles.cdl_doji",
-]
-# float(Optional[float]) false positive: is_percent()/is_volatility() guards
-# against None at runtime, but mypy can't narrow the type without TypeGuard
-# (available only in typing_extensions for Python <3.10).
-disable_error_code = ["arg-type"]
-
-[[tool.mypy.overrides]]
-module = "pandas_ta_classic.trend.xsignals"
-# **dict[str, Optional[int]] unpacking into tsignals() positional args —
-# pre-existing call pattern that mypy cannot verify via **kwargs unpacking.
-disable_error_code = ["arg-type"]
-
-[[tool.mypy.overrides]]
-module = [
-    "pandas_ta_classic.volatility.bbands",
-    "pandas_ta_classic.volatility.atr",
-    "pandas_ta_classic.trend.aroon",
-    "pandas_ta_classic.overlap.trima",
-    "pandas_ta_classic.overlap.t3",
-    "pandas_ta_classic.overlap.dema",
-    "pandas_ta_classic.momentum.macd",
-    "pandas_ta_classic.momentum.dm",
-]
-# Under numpy 2.0 + Python 3.9, numpy stubs type arithmetic results as
-# ndarray[Any, dtype[floating[_64Bit]]] precisely, causing false-positive
-# assignment errors when the variable is later reassigned with Optional[Any]
-# or Union types from pandas operations. Not reproducible under Python 3.13.
-disable_error_code = ["assignment"]
+module = ["talib", "talib.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true

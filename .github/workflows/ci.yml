@@ -27,12 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
 
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
 
@@ -81,7 +81,7 @@ jobs:
       python-versions: ${{ steps.versions.outputs.python-versions }}
     
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
 
@@ -118,12 +118,12 @@ jobs:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.python-versions) }}
     
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -154,12 +154,12 @@ jobs:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.python-versions) }}
 
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -196,12 +196,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
 
@@ -245,7 +245,7 @@ jobs:
       url: https://pypi.org/project/pandas-ta-classic/
 
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       with:
         fetch-depth: 0  # Full history needed for setuptools-scm
     
@@ -292,7 +292,7 @@ jobs:
         echo "Version $NEW_VERSION is unique and ready for release!"
     
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ env.LATEST_PYTHON_VERSION }}
     

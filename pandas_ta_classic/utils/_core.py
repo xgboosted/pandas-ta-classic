@@ -1,12 +1,11 @@
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Optional, TypeGuard, Union
 
 from sys import float_info as sflt
 
 from numpy import argmax, argmin
 from pandas import DataFrame, Series
 from pandas.api.types import is_datetime64_any_dtype
-from pandas_ta_classic import Imports
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,7 @@ def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
         return False
 
 
-def is_percent(x: Optional[Union[int, float]]) -> bool:
+def is_percent(x: Optional[Union[int, float]]) -> TypeGuard[Union[int, float]]:
     if isinstance(x, (int, float)):
         return x is not None and x >= 0 and x <= 100
     return False
@@ -125,31 +124,35 @@ def signed_series(series: Series, initial: Optional[int] = None) -> Series:
     return sign
 
 
-def tal_ma(name: str) -> Any:
-    """Helper Function that returns the Enum value for TA Lib's MA Type"""
-    if Imports["talib"] and isinstance(name, str) and len(name) > 1:
-        from talib import MA_Type
+# TA-Lib MA_Type enum values are frozen ABI constants, so they are mapped
+# directly here rather than importing talib just to read them. This keeps
+# tal_ma usable (and testable) without the optional talib dependency.
+_TAL_MA_TYPES = {
+    "sma": 0,
+    "ema": 1,
+    "wma": 2,
+    "dema": 3,
+    "tema": 4,
+    "trima": 5,
+    "kama": 6,
+    "mama": 7,
+    "t3": 8,
+}
 
-        name = name.lower()
-        if name == "sma":
-            return MA_Type.SMA  # 0
-        if name == "ema":
-            return MA_Type.EMA  # 1
-        if name == "wma":
-            return MA_Type.WMA  # 2
-        if name == "dema":
-            return MA_Type.DEMA  # 3
-        if name == "tema":
-            return MA_Type.TEMA  # 4
-        if name == "trima":
-            return MA_Type.TRIMA  # 5
-        if name == "kama":
-            return MA_Type.KAMA  # 6
-        if name == "mama":
-            return MA_Type.MAMA  # 7
-        if name == "t3":
-            return MA_Type.T3  # 8
-    return 0  # Default: SMA -> 0
+
+def tal_ma(name: str) -> int:
+    """Return the TA-Lib MA_Type enum value for an MA name (``sma``..``t3``).
+
+    Raises:
+        TypeError: if *name* is not a string.
+        ValueError: if *name* is not a recognised TA-Lib MA type.
+    """
+    if not isinstance(name, str):
+        raise TypeError(f"tal_ma expects a str MA name, got {type(name).__name__}")
+    key = name.lower()
+    if key not in _TAL_MA_TYPES:
+        raise ValueError(f"Unknown TA-Lib MA type {name!r}; valid: {sorted(_TAL_MA_TYPES)}")
+    return _TAL_MA_TYPES[key]
 
 
 def unsigned_differences(series: Series, amount: Optional[int] = None, **kwargs: Any) -> tuple[Series, Series]:

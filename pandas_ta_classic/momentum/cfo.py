@@ -1,11 +1,11 @@
 # Chande Forecast Oscillator (CFO)
+import warnings
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
-    get_drift,
     get_offset,
     verify_series,
 )
@@ -24,7 +24,12 @@ def cfo(
     length = int(length) if length and length > 0 else 9
     scalar = float(scalar) if scalar else 100
     close = verify_series(close, length)
-    drift = get_drift(drift)
+    if drift is not None:
+        warnings.warn(
+            "The 'drift' parameter of cfo() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     offset = get_offset(offset)
 
     if close is None:
@@ -59,7 +64,7 @@ Sources:
 
 Calculation:
     Default Inputs:
-        length=9, drift=1, scalar=100
+        length=9, scalar=100
     LINREG = Linear Regression
 
     CFO = scalar * (close - LINERREG(length, tdf=True)) / close
@@ -68,7 +73,8 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): The period. Default: 9
     scalar (float): How much to magnify. Default: 100
-    drift (int): The short period. Default: 1
+    drift (int): Deprecated and ignored. Never affected the result. This
+        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

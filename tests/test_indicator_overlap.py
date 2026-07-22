@@ -2,6 +2,7 @@ from tests.assertions import assert_indicator_standard, assert_talib, IndicatorS
 from tests.config import get_sample_data
 import pandas_ta_classic as pandas_ta
 
+import warnings
 from unittest import TestCase
 from pandas import DataFrame, Series
 
@@ -185,11 +186,49 @@ class TestOverlap(TestCase):
         )
 
     def test_ichimoku(self):
-        ichimoku, span = pandas_ta.ichimoku(self.high, self.low, self.close)
+        # Legacy tuple return (as_dataframe defaults to None) still works but
+        # emits a DeprecationWarning.
+        with self.assertWarns(DeprecationWarning):
+            ichimoku, span = pandas_ta.ichimoku(self.high, self.low, self.close)
         self.assertIsInstance(ichimoku, DataFrame)
         self.assertIsInstance(span, DataFrame)
         self.assertEqual(ichimoku.name, "ICHIMOKU_9_26_52")
         self.assertEqual(span.name, "ICHISPAN_9_26")
+
+    def test_ichimoku_as_dataframe(self):
+        # Default append_span=False: visible period only, no future-dated rows.
+        result = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "ICHIMOKU_9_26_52")
+        self.assertEqual(result.category, "overlap")
+        self.assertEqual(
+            list(result.columns),
+            ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"],
+        )
+        self.assertEqual(len(result), len(self.close))
+
+    def test_ichimoku_as_dataframe_append_span(self):
+        kijun = 26
+        result = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=True, append_span=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "ICHIMOKU_9_26_52")
+        self.assertEqual(
+            list(result.columns),
+            ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"],
+        )
+        # Length = visible rows (len close) + future-dated span rows (kijun).
+        self.assertEqual(len(result), len(self.close) + kijun)
+        # Span rows: only ISA/ISB populated; ITS/IKS/ICS are NaN.
+        span_rows = result.iloc[-kijun:]
+        self.assertTrue(span_rows[["ITS_9", "IKS_26", "ICS_26"]].isna().all().all())
+        self.assertTrue(span_rows["ISA_9"].notna().any())
+
+    def test_ichimoku_as_dataframe_false_no_warning(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            result = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=False)
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
 
     def test_linreg(self):
         result = pandas_ta.linreg(self.close, talib=False)
