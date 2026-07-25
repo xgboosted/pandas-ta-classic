@@ -30,7 +30,7 @@ def main() -> int:
     lint_pins = pyproject["project"]["optional-dependencies"]["lint"]
     # A pin that doesn't match (or a missing tool) leaves its entry unset,
     # which the mismatch check below reports as `tool: ...=None` and fails.
-    pyproject_versions = {m[1]: m[2] for pin in lint_pins if (m := re.match(r"([a-zA-Z_-]+)(?:>=|==)(.+)", pin))}
+    pyproject_versions = {m[1]: m[2] for pin in lint_pins if (m := re.match(r"([a-zA-Z_-]+)>=(.+)", pin))}
 
     # The config is a repo-controlled flat file, so a regex pairing each
     # `repo:` with the `rev:` on the next line beats a PyYAML dependency.
