@@ -55,14 +55,13 @@ jobs:
     
     - name: Run Ruff linting
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        ruff check pandas_ta_classic --select E9,F63,F7,F82
-        # full default rule set + ICN over the whole repo, using pyproject's
-        # config. --select above overrides that config, so without this step
-        # star imports (F403), imports after code (E402), ambiguous names
-        # (E741) and the numpy import convention (ICN) are not gated anywhere.
+        # Blocking gate over the whole repo. Rule set is the explicit
+        # select = ["E4","E7","E9","F","ICN"] in pyproject's [tool.ruff.lint]
+        # (star imports F403, imports-after-code E402, ambiguous names E741,
+        # syntax/undefined-name E9/F, and the numpy import convention ICN).
         ruff check .
-        # report broader lint issues without failing this non-critical pass
+        # Advisory only (--exit-zero never fails the build): broader signal
+        # ruff can surface but that we don't gate on.
         ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 
     - name: Verify core.pyi is in sync with generator

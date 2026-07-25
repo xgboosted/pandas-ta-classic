@@ -9,7 +9,7 @@
 - **Testing:** pytest (primary, matches CI). Run `pytest tests/ -v` for full suite (oracle deps required; see Validation section), or the smallest relevant test module for the changed area (e.g., `pytest tests/test_indicator_momentum.py -v`). Hypothesis property-based tests also use pytest.
 - **GitHub interactions:** Use the GitHub MCP server exclusively; do not use GitLens or GitKraken tools for GitHub operations. Server name: `github-mcp-server` (verify via your agent's MCP list). Use its tools for PRs, issues, reviews, and comments.
 - **Commits:** Never automatically stage or commit changes; every change must be manually reviewed before being committed
-- **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` before opening. Never force-push to `main`.
+- **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/` and `ruff check .` before opening. Never force-push to `main`.
 - **Documentation:** Update docstrings and `docs/` when behavior, indicators, or public usage change. Docs built with Sphinx + ReadTheDocs theme + MyST Parser, deployed to GitHub Pages.
 - **CHANGELOG:** Use an `[Unreleased]` section at the top of `CHANGELOG.md` for changes merged to `main` that have not yet been tagged. Every PR that lands on `main` adds its entry there. At release time, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and tag. Keep a Changelog format.
 - **Releases:** Always create annotated tags: `git tag -a X.Y.Z -m "X.Y.Z"` then `git push origin X.Y.Z`. Annotated tags carry tagger identity and timestamp needed for setuptools-scm and GitHub release attribution. Never use lightweight tags (`git tag X.Y.Z`) — they carry no metadata and produce ambiguous version strings.
@@ -127,12 +127,12 @@ After each coding session, execute the code/module in local venv and troubleshoo
 ## Formatting and Linting
 
 - **black** — formatter: `line-length=150`, `skip-string-normalization = true` (keep quotes as-is). CI runs `black --check --diff pandas_ta_classic/`. Apply locally with `black pandas_ta_classic/`. Black owns formatting.
-- **ruff** — linter only (ruff format is disabled; black owns formatting). Critical checks: `--select E9,F63,F7,F82`. Repo-wide check: `ruff check .` — blocking; rule set is an **explicit** `select = ["E4","E7","E9","F","ICN"]` in `[tool.ruff.lint]`, *not* `extend-select`, because ruff's default selection expanded in 0.16 (adding I001 etc.) and rode over the gate. Advisory checks: `--extend-select C901,E501 --exit-zero`.
+- **ruff** — linter only (ruff format is disabled; black owns formatting). The single blocking check is `ruff check .` — its rule set is an **explicit** `select = ["E4","E7","E9","F","ICN"]` in `[tool.ruff.lint]`, *not* `extend-select`, because ruff's default selection expanded in 0.16 (adding I001 etc.) and rode over the gate. `E9,F63,F7,F82` (syntax / undefined names) are a subset of `E9,F`, so they need no separate step. Advisory (non-blocking): `--extend-select C901,E501 --exit-zero`.
 - **ruff/black are pinned exactly** (`==`, not `>=`) in `[project.optional-dependencies].lint` — an unbounded pin let CI install a newer ruff with a different default rule set. Bump deliberately, in lockstep with `.pre-commit-config.yaml`, and re-run `ruff check .`.
-- **`--select` replaces the configured rule set, it does not add to it.** `ruff check pandas_ta_classic --select E9,F63,F7,F82` therefore does *not* run `F403`, `E402`, `E741` or `ICN`. Only the bare `ruff check .` enforces those, which is why it is a separate blocking step.
+- **`--select` replaces the configured rule set, it does not add to it.** That is why the gate is a bare `ruff check .` (which reads `[tool.ruff.lint]`), not a `--select` command — a `--select E9,F63,F7,F82` invocation would silently skip `F403`, `E402`, `E741` and `ICN`. It is also why `[tool.ruff.lint]` pins an explicit `select` list rather than riding on ruff's mutable default.
 - Config in `pyproject.toml` under `[tool.black]`, `[tool.ruff]`, and `[tool.ruff.lint]`
 - If black and ruff format disagree on a region, lock it with `# fmt: off` / `# fmt: on`
-- **Gate condition:** all three must return EXIT=0 before the task is considered complete — `black --check --diff pandas_ta_classic/`, `ruff check pandas_ta_classic --select E9,F63,F7,F82`, and `ruff check .`. If black reports a reformat, run `black pandas_ta_classic/` then re-check. `make lint` runs these together.
+- **Gate condition:** both must return EXIT=0 before the task is considered complete — `black --check --diff pandas_ta_classic/` and `ruff check .`. If black reports a reformat, run `black pandas_ta_classic/` then re-check. `make lint` runs these together.
 - **Dual config pattern:** black/ruff versions appear in two places — `pyproject.toml` under `[project.optional-dependencies].lint` (CI installs via `pip install -e ".[lint]"`) AND `.pre-commit-config.yaml` under each hook's `rev`. When bumping a version, update BOTH. Enforced: `tools/check_lint_versions.py` (run by the CI `code-quality` job and `make lint`) fails on any mismatch.
 
 ## Imports and Paths
@@ -160,7 +160,7 @@ These are repo-wide. Some are enforced, some are convention — the distinction 
 
 #### Convention checklist (run before finishing)
 
-The gated patterns are covered by the **Gate condition** above (`black --check`, the two `ruff check` steps). The manual conventions have no CI backstop, so run these greps before considering a task complete — **each must return no output.** A hit means a convention was violated; fix it or justify the exception in review.
+The gated patterns are covered by the **Gate condition** above (`black --check` and `ruff check .`). The manual conventions have no CI backstop, so run these greps before considering a task complete — **each must return no output.** A hit means a convention was violated; fix it or justify the exception in review.
 
 ```bash
 # 1. Deferred numpy/pandas (hard-dep) imports inside def bodies — must be module-scope
@@ -182,7 +182,7 @@ Not greppable, so verify by review: **dead code** (a helper/const/import your ch
 
 | Job | Description |
 |---|---|
-| `code-quality` | Black formatting check + Ruff linting (critical, repo-wide `ruff check .`, advisory) + `core.pyi` sync + `tools/check_lint_versions.py` |
+| `code-quality` | Black formatting check + Ruff linting (blocking `ruff check .` + advisory `--exit-zero` pass) + `core.pyi` sync + `tools/check_lint_versions.py` |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
@@ -236,10 +236,7 @@ python -c "import pandas_ta_classic; print(pandas_ta_classic.version)"
 # Formatting check
 black --check --diff pandas_ta_classic/
 
-# Linting (critical errors only)
-ruff check pandas_ta_classic --select E9,F63,F7,F82
-
-# Linting (repo-wide, blocking — the only step that runs F403/E402/E741/ICN)
+# Linting (repo-wide, blocking — the CI gate; runs E9/F, F403, E402, E741, ICN)
 ruff check .
 
 # Linting (advisory — non-blocking in CI)
