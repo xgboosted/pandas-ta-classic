@@ -102,7 +102,10 @@ def bench(names: list[str], rows: int, repeats: int) -> list[dict]:
         talib_ms = None
         if talib_available and _has_talib_param(name):
             try:
-                f = lambda: acc(talib=True)
+
+                def f(acc=acc):
+                    return acc(talib=True)
+
                 f()
                 talib_ms = _time(f, repeats)
             except Exception:

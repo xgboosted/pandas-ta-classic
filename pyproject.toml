@@ -184,16 +184,17 @@ banned-from = ["numpy", "numpy.lib.stride_tricks"]
 [tool.ruff.lint.per-file-ignores]
 # Library code (pandas_ta_classic/) carries no per-file ignores — its handful of
 # intentional broad catches use inline `# noqa` with a reason instead. The
-# ignores below are for non-shipped code where ruff's script-oriented rules
-# flag legitimate idioms:
-#   examples — interactive notebook/demo idioms: `#!pip install` cells (EXE),
-#     bare display expressions (B018), demo date literals (DTZ001), an
-#     illustrative raise-string (B016), and best-effort broad catches.
-"examples/**" = ["EXE001", "EXE005", "B016", "B018", "DTZ001", "BLE001"]
-#   tools — dev scripts run via `python tools/x.py` (shebang present but file
-#     not marked executable) with intentional best-effort benchmark swallows.
-"tools/**" = ["EXE001", "S110", "B023", "BLE001"]
-#   tests — deliberately catch broadly to assert failure modes.
+# remaining ignores are for non-shipped code where the finding is a genuine
+# idiom, not a fixable defect (fixable ones — EXE shebangs, dead expressions,
+# closure bugs — were fixed rather than ignored):
+#   examples — a demo-only error-path string raise (B016), demo date literals
+#     without tzinfo (DTZ001), and a best-effort broad catch in a demo loader.
+"examples/**" = ["B016", "BLE001", "DTZ001"]
+#   tools — benchmark warmup deliberately swallows failures (S110) and catches
+#     broadly because it runs arbitrary indicators (BLE001).
+"tools/**" = ["S110", "BLE001"]
+#   tests — deliberately catch broadly to assert failure modes (ruff's own docs
+#     recommend per-file-ignoring these in test code).
 "tests/**" = ["BLE001", "S112"]
 
 [tool.setuptools]

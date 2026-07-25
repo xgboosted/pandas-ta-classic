@@ -129,6 +129,7 @@ class Watchlist:
             self.file_path.mkdir(parents=True, exist_ok=True)
 
     def _drop_columns(self, df: pd.DataFrame, cols: list | None = None) -> pd.DataFrame:
+        """Helper methods to drop columns silently."""
         if cols is None or not isinstance(cols, list):
             cols = [
                 "Unnamed: 0",
@@ -138,9 +139,6 @@ class Watchlist:
                 "dividend",
                 "dividends",
             ]
-        else:
-            cols
-        """Helper methods to drop columns silently."""
         df_columns = list(df.columns)
         if any(_ in df_columns for _ in cols):
             if self.debug:
