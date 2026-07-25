@@ -8,15 +8,19 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0
     hooks:
-      - id: ruff
-        args: [--select, "E9,F63,F7,F82"]
-        files: ^pandas_ta_classic/
+      # Runs the same gate as CI: `ruff check` reading [tool.ruff.lint] over all
+      # changed files (no narrow --select that would skip ICN/UP/I/F403, no
+      # package-only `files:` restriction). Black stays package-only above,
+      # matching CI's `black --check pandas_ta_classic/`.
+      - id: ruff-check
 
   - repo: local
     hooks:
       - id: gen-core-stub
         name: Regenerate core.pyi
-        entry: bash -c 'python tools/gen_core_stub.py && black --quiet pandas_ta_classic/core.pyi'
+        # Same pipeline as CI: gen -> ruff --fix (PEP 604 / import order) -> black,
+        # so the regenerated stub matches lint-fixed, formatted source.
+        entry: bash -c 'python tools/gen_core_stub.py && ruff check --fix --quiet pandas_ta_classic/core.pyi && black --quiet pandas_ta_classic/core.pyi'
         language: system
         pass_filenames: false
         files: ^pandas_ta_classic/.+\.py$
