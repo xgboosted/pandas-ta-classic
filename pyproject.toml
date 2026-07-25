@@ -245,15 +245,18 @@ strict_optional = true
 #   name. mypy sees this as a redefinition, but it works correctly at runtime.
 disable_error_code = ["union-attr", "operator", "no-redef", "index", "attr-defined"]
 
-# Third-party dependencies that ship no py.typed marker / stubs (verified via
-# `mypy --python-version 3.9` with ignore_missing_imports unset: these are the
-# only packages that raise import-untyped). Scoped instead of a blanket
-# ignore_missing_imports=true so new dependencies are still checked by default.
+# Optional third-party dependencies that are absent in the CI code-quality env
+# (only hard deps + lint tools are installed there) and/or ship no py.typed
+# marker. Each is imported lazily behind an `Imports[...]` guard; ignore missing
+# imports so mypy resolves them to Any instead of erroring. Scoped per-module
+# (not a blanket ignore_missing_imports=true) so a genuinely new, unhandled
+# dependency is still surfaced.
 [[tool.mypy.overrides]]
 module = [
     "pandas.*",
     "numba",
     "tulipy",
+    "tqdm",
 ]
 ignore_missing_imports = true
 
