@@ -134,7 +134,7 @@ After each coding session, execute the code/module in local venv and troubleshoo
 - **Generated `core.pyi`** is normalized with `ruff check --fix` before `black`, so the stub matches lint-fixed, PEP-604 source. The pipeline is **gen → ruff --fix → black** and lives in three places that must stay in lockstep: the CI `code-quality` job (`gen → ruff --fix → black → git diff --exit-code`), the `.pre-commit-config.yaml` `gen-core-stub` local hook (same three commands), and any manual regeneration. If you change `tools/gen_core_stub.py` or that pipeline, update all three — a missing `ruff --fix` step regenerates un-modernized `Optional[...]` stubs and reports the file dirty.
 - Config in `pyproject.toml` under `[tool.black]`, `[tool.ruff]`, and `[tool.ruff.lint]`
 - If black and ruff format disagree on a region, lock it with `# fmt: off` / `# fmt: on`
-- **Gate condition:** both must return EXIT=0 before the task is considered complete — `black --check --diff pandas_ta_classic/` and `ruff check .`. If black reports a reformat, run `black pandas_ta_classic/` then re-check. `make lint` runs these together.
+- **Gate condition:** all three must return EXIT=0 before the task is considered complete — `black --check --diff pandas_ta_classic/`, `ruff check .`, and `make typecheck` (mypy against the `requires-python` floor). If black reports a reformat, run `black pandas_ta_classic/` then re-check. `make lint` runs the black/ruff checks together.
 - **Dual config pattern:** black/ruff versions appear in two places — `pyproject.toml` under `[project.optional-dependencies].lint` (CI installs via `pip install -e ".[lint]"`) AND `.pre-commit-config.yaml` under each hook's `rev`. When bumping a version, update BOTH. Enforced: `tools/check_lint_versions.py` (run by the CI `code-quality` job and `make lint`) fails on any mismatch.
 
 ## Imports and Paths
@@ -184,7 +184,7 @@ Not greppable, so verify by review: **dead code** (a helper/const/import your ch
 
 | Job | Description |
 |---|---|
-| `code-quality` | Black formatting check + Ruff linting (blocking `ruff check .` + advisory `--exit-zero` pass) + `core.pyi` sync + `tools/check_lint_versions.py` |
+| `code-quality` | Black formatting check + Ruff linting (blocking `ruff check .` + advisory `--exit-zero` pass) + `core.pyi` sync + `tools/check_lint_versions.py` + `mypy` type-check (against the `requires-python` floor) |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
