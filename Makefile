@@ -129,9 +129,9 @@ format:
 	@echo "Formatting code with black..."
 	black pandas_ta_classic/
 
-# Derives the mypy target version from project.requires-python instead of
-# hardcoding it a second time, so the two can't drift out of sync.
+# Target 3.12 (not the 3.10 requires-python floor): numpy 2.x stubs use PEP 695
+# `type` statements that mypy cannot parse below 3.12, so type-checking at 3.10
+# is not possible with modern numpy. Runtime 3.10/3.11 support is covered by the
+# test matrix, not mypy.
 typecheck:
-	@MYPY_PY=$$($(PYTHON) -c "import re, tomllib; print(re.search(r'\d+\.\d+', tomllib.load(open('pyproject.toml', 'rb'))['project']['requires-python']).group())"); \
-	echo "Type checking against Python $$MYPY_PY (from requires-python)..."; \
-	$(PYTHON) -m mypy --python-version $$MYPY_PY
+	$(PYTHON) -m mypy --python-version 3.12

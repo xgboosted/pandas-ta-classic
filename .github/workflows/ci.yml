@@ -77,12 +77,11 @@ jobs:
       run: python tools/check_lint_versions.py
 
     - name: Type-check with mypy
-      # Derive the target version from project.requires-python (same as
-      # `make typecheck`) so mypy checks against the supported floor.
-      run: |
-        MYPY_PY=$(python -c "import re, tomllib; print(re.search(r'\d+\.\d+', tomllib.load(open('pyproject.toml', 'rb'))['project']['requires-python']).group())")
-        echo "Type checking against Python $MYPY_PY (from requires-python)"
-        python -m mypy --python-version "$MYPY_PY"
+      # Target 3.12, not the 3.10 requires-python floor: numpy 2.x ships PEP 695
+      # `type` statements in its stubs that mypy cannot parse below 3.12, so
+      # type-checking at 3.10 is not possible with modern numpy. Runtime support
+      # for the 3.10/3.11 floor is verified by the testing-core matrix instead.
+      run: python -m mypy --python-version 3.12
 
   # Job 2: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION

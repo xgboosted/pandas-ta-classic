@@ -267,3 +267,8 @@ ignore_missing_imports = true
 module = ["talib", "talib.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
+# talib is an optional dependency, absent in the CI code-quality env. Without
+# this, mypy reports import-not-found for every deferred `import talib`. With it,
+# an absent talib resolves to Any (which is what follow_imports=skip does when
+# it *is* installed).
+ignore_missing_imports = true
