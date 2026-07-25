@@ -67,6 +67,10 @@ jobs:
     - name: Verify core.pyi is in sync with generator
       run: |
         python tools/gen_core_stub.py
+        # Normalize the generated stub the same way source is linted (PEP 604
+        # annotations via UP, import order via I) before comparing, so the
+        # committed stub matches gen + lint-fix + format.
+        ruff check --fix --quiet pandas_ta_classic/core.pyi
         black --quiet pandas_ta_classic/core.pyi
         git diff --exit-code pandas_ta_classic/core.pyi
 

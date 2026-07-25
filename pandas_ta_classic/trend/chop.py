@@ -1,29 +1,31 @@
 # Choppiness Index (CHOP)
 import warnings
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
-from pandas_ta_classic.volatility.atr import atr
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.volatility.atr import atr
 
 
 def chop(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    atr_length: Optional[int] = None,
-    ln: Optional[bool] = None,
-    scalar: Optional[float] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    atr_length: int | None = None,
+    ln: bool | None = None,
+    scalar: float | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Choppiness Index (CHOP)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 14

@@ -1,7 +1,9 @@
 # Super Smoother Filter (SSF)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
@@ -22,11 +24,11 @@ def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
 
 def ssf(
     close: Series,
-    length: Optional[int] = None,
-    poles: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    poles: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Ehler's Super Smoother Filter (SSF)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

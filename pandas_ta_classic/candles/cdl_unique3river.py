@@ -1,5 +1,5 @@
 # Candle Unique 3 River (CDL_UNIQUE3RIVER)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -90,10 +90,10 @@ def cdl_unique3river(
     high: Series,
     low: Series,
     close: Series,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Candle Pattern: Unique Three River"""
     return run_pattern(
         open_,

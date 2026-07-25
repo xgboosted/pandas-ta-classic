@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -8,9 +8,9 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 def div(
     series_a: Series,
     series_b: Series,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Element-wise division of two Series (TA-Lib: DIV)."""
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)

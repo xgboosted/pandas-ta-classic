@@ -1,11 +1,13 @@
 # Price Volume Rank (PVR)
-from typing import Any, Optional
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from typing import Any
+
 import numpy as np
 from pandas import Series
 
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
-def pvr(close: Series, volume: Series, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]:
+
+def pvr(close: Series, volume: Series, offset: int | None = None, **kwargs: Any) -> Series | None:
     """Indicator: Price Volume Rank"""
     # Validate arguments
     close = verify_series(close)

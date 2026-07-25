@@ -167,15 +167,11 @@ exclude = [
 line-length = 150
 
 [tool.ruff.lint]
-# Explicit rule set — NOT `extend-select`, which rides on ruff's *default*
-# selection, and that default expanded in ruff 0.16 (adding I001 import-sorting,
-# RUF, BLE, ...). Fixing the rules here keeps the gate identical across ruff
-# versions, so the `>=` lint pins can float without the gate silently widening.
-# This set == ruff's pre-0.16 default (E4, E7, E9, F) plus ICN. ICN001 enforces
-# the conventional import aliases (numpy as np, pandas as pd); ICN003, via the
-# banned-from list below, rejects `from numpy import x` in any form — including
-# the `as npX` aliases that were removed repo-wide.
-select = ["E4", "E7", "E9", "F", "ICN"]
+# Ride on ruff's default rule set (latest ruff, via the `>=` pin) plus ICN.
+# ICN001 enforces the conventional import aliases (numpy as np, pandas as pd);
+# ICN003, via the banned-from list below, rejects `from numpy import x` in any
+# form — including the `as npX` aliases that were removed repo-wide.
+extend-select = ["ICN"]
 
 [tool.ruff.lint.flake8-import-conventions]
 # numpy and its stride_tricks submodule: both are reached through the `np`
@@ -184,6 +180,21 @@ select = ["E4", "E7", "E9", "F", "ICN"]
 # the established style here, used at 300+ sites including every indicator
 # signature.
 banned-from = ["numpy", "numpy.lib.stride_tricks"]
+
+[tool.ruff.lint.per-file-ignores]
+# Library code (pandas_ta_classic/) carries no per-file ignores — its handful of
+# intentional broad catches use inline `# noqa` with a reason instead. The
+# ignores below are for non-shipped code where ruff's script-oriented rules
+# flag legitimate idioms:
+#   examples — interactive notebook/demo idioms: `#!pip install` cells (EXE),
+#     bare display expressions (B018), demo date literals (DTZ001), an
+#     illustrative raise-string (B016), and best-effort broad catches.
+"examples/**" = ["EXE001", "EXE005", "B016", "B018", "DTZ001", "BLE001"]
+#   tools — dev scripts run via `python tools/x.py` (shebang present but file
+#     not marked executable) with intentional best-effort benchmark swallows.
+"tools/**" = ["EXE001", "S110", "B023", "BLE001"]
+#   tests — deliberately catch broadly to assert failure modes.
+"tests/**" = ["BLE001", "S112"]
 
 [tool.setuptools]
 packages = [

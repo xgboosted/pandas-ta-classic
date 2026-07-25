@@ -1,7 +1,9 @@
 # Klinger Volume Oscillator (KVO)
 import warnings
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
@@ -18,14 +20,14 @@ def kvo(
     low: Series,
     close: Series,
     volume: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    signal: Optional[int] = None,
-    mamode: Optional[str] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    signal: int | None = None,
+    mamode: str | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Klinger Volume Oscillator (KVO)"""
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 34

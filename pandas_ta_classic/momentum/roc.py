@@ -1,19 +1,22 @@
 # Rate of Change (ROC)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
-from .mom import mom
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .mom import mom
 
 
 def roc(
     close: Series,
-    length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    scalar: float | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Rate of Change (ROC)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

@@ -16,14 +16,15 @@ from __future__ import annotations
 import importlib
 import sys
 import types
-from typing import Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 
 def install_lazy_subpackage(
     module_name: str,
     *,
-    aliases: Optional[Mapping[str, str]] = None,
-    special: Optional[Mapping[str, tuple]] = None,
+    aliases: Mapping[str, str] | None = None,
+    special: Mapping[str, tuple] | None = None,
 ) -> None:
     """Replace ``sys.modules[module_name]`` with a lazy-loading module.
 

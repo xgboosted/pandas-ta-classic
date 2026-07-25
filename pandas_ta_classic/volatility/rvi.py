@@ -1,14 +1,15 @@
 # Relative Volatility Index (RVI)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics.stdev import stdev
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset
-from pandas_ta_classic.utils import unsigned_differences, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, unsigned_differences, verify_series
 from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
-def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Optional[Series]:
+def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Series | None:
     """Core RVI computation for a single source series."""
     std = stdev(source, length)
     pos, neg = unsigned_differences(source, amount=drift)
@@ -52,17 +53,17 @@ def _rvi_mode(refined, thirds, high, low, close, length, scalar, mamode, drift):
 
 def rvi(
     close: Series,
-    high: Optional[Series] = None,
-    low: Optional[Series] = None,
-    length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    refined: Optional[bool] = None,
-    thirds: Optional[bool] = None,
-    mamode: Optional[str] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    high: Series | None = None,
+    low: Series | None = None,
+    length: int | None = None,
+    scalar: float | None = None,
+    refined: bool | None = None,
+    thirds: bool | None = None,
+    mamode: str | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Relative Volatility Index (RVI)"""
     # Validate arguments
     length = _pos_int(length, 14)

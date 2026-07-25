@@ -1,5 +1,6 @@
 # Parabolic SAR (PSAR)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
 
@@ -11,8 +12,8 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._core import _pos_float
+from pandas_ta_classic.utils._njit import njit
 
 
 def _psar_falling(high: Series, low: Series, drift: int = 1) -> bool:
@@ -70,14 +71,14 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
 def psar(
     high: Series,
     low: Series,
-    close: Optional[Series] = None,
-    af0: Optional[float] = None,
-    af: Optional[float] = None,
-    max_af: Optional[float] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    close: Series | None = None,
+    af0: float | None = None,
+    af: float | None = None,
+    max_af: float | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Parabolic Stop and Reverse (PSAR)"""
     # Validate Arguments
     high = verify_series(high)

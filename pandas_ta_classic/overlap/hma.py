@@ -1,17 +1,20 @@
 # Hull Moving Average (HMA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
-from .wma import wma
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .wma import wma
 
 
 def hma(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Hull Moving Average (HMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

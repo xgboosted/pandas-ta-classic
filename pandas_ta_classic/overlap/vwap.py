@@ -1,9 +1,9 @@
 # Volume Weighted Average Price (VWAP)
 import logging
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
 
-from .hlc3 import hlc3
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -11,6 +11,8 @@ from pandas_ta_classic.utils import (
     is_datetime_ordered,
     verify_series,
 )
+
+from .hlc3 import hlc3
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +22,10 @@ def vwap(
     low: Series,
     close: Series,
     volume: Series,
-    anchor: Optional[str] = None,
-    offset: Optional[int] = None,
+    anchor: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Volume Weighted Average Price (VWAP)"""
     # Validate Arguments
     high = verify_series(high)

@@ -1,24 +1,27 @@
 # Archer On Balance Volume (AOBV)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
-from .obv import obv
+
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
+from .obv import obv
+
 
 def aobv(
     close: Series,
     volume: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    max_lookback: Optional[int] = None,
-    min_lookback: Optional[int] = None,
-    mamode: Optional[str] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    max_lookback: int | None = None,
+    min_lookback: int | None = None,
+    mamode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Archer On Balance Volume (AOBV)"""
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 4

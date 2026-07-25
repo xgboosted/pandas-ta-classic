@@ -1,6 +1,10 @@
 # Zero Lag Moving Average (ZLMA)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
 from .dema import dema
 from .ema import ema
 from .hma import hma
@@ -13,7 +17,6 @@ from .tema import tema
 from .trima import trima
 from .vidya import vidya
 from .wma import wma
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 # Dispatch table: mamode string → MA function.
 # "ema" is the catch-all default so it is looked up via dict.get(name, ema).
@@ -35,11 +38,11 @@ _ZLMA_DISPATCH = {
 
 def zlma(
     close: Series,
-    length: Optional[int] = None,
-    mamode: Optional[str] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    mamode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Zero Lag Moving Average (ZLMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

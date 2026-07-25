@@ -1,9 +1,10 @@
 # Inertia (INERTIA)
 import warnings
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.volatility.rvi import rvi
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -11,6 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.volatility.rvi import rvi
 
 
 def _inertia_rvi_mode(close, high, low, rvi_length, scalar, refined, thirds, mamode):
@@ -57,19 +59,19 @@ def _inertia_rvi_mode(close, high, low, rvi_length, scalar, refined, thirds, mam
 
 
 def inertia(
-    close: Optional[Series] = None,
-    high: Optional[Series] = None,
-    low: Optional[Series] = None,
-    length: Optional[int] = None,
-    rvi_length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    refined: Optional[bool] = None,
-    thirds: Optional[bool] = None,
-    mamode: Optional[str] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    close: Series | None = None,
+    high: Series | None = None,
+    low: Series | None = None,
+    length: int | None = None,
+    rvi_length: int | None = None,
+    scalar: float | None = None,
+    refined: bool | None = None,
+    thirds: bool | None = None,
+    mamode: str | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Inertia (INERTIA)"""
     # Validate Arguments
     length = _pos_int(length, 20)

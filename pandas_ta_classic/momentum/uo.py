@@ -1,6 +1,8 @@
 # Ultimate Oscillator (UO)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -51,17 +53,17 @@ def uo(
     high: Series,
     low: Series,
     close: Series,
-    fast: Optional[int] = None,
-    medium: Optional[int] = None,
-    slow: Optional[int] = None,
-    fast_w: Optional[float] = None,
-    medium_w: Optional[float] = None,
-    slow_w: Optional[float] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    medium: int | None = None,
+    slow: int | None = None,
+    fast_w: float | None = None,
+    medium_w: float | None = None,
+    slow_w: float | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Ultimate Oscillator (UO)"""
     # Validate arguments
     fast = _pos_int(fast, 7)

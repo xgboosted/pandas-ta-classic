@@ -1,8 +1,9 @@
 # Relative Strength Xtra (RSX)
 import warnings
-from typing import Any, Optional, Union
+from typing import Any
+
 import numpy as np
-from pandas import concat, DataFrame, Series
+from pandas import DataFrame, Series, concat
 
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -58,10 +59,8 @@ def _rsx_loop(c_arr, length, m):
                 f90 = 0.0
         if f88 < f90 and v20 > 0.0000000001:
             v4 = (v14 / v20 + 1.0) * 50.0
-            if v4 > 100.0:
-                v4 = 100.0
-            if v4 < 0.0:
-                v4 = 0.0
+            v4 = min(v4, 100.0)
+            v4 = max(v4, 0.0)
         else:
             v4 = 50.0
         result[i] = v4
@@ -70,11 +69,11 @@ def _rsx_loop(c_arr, length, m):
 
 def rsx(
     close: Series,
-    length: Optional[int] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Union[Series, DataFrame]]:
+) -> Series | DataFrame | None:
     """Indicator: Relative Strength Xtra (inspired by Jurik RSX)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14

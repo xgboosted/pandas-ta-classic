@@ -1,6 +1,8 @@
 # TRIX (TRIX)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -13,14 +15,14 @@ from pandas_ta_classic.utils import (
 
 def trix(
     close: Series,
-    length: Optional[int] = None,
-    signal: Optional[int] = None,
-    scalar: Optional[float] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    signal: int | None = None,
+    scalar: float | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Trix (TRIX)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30

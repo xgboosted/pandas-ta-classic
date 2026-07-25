@@ -14,8 +14,10 @@ except ImportError:
     # Fallback: try to get version from installed package metadata
     try:
         from importlib.metadata import (
-            version as _dist_version,
             PackageNotFoundError,
+        )
+        from importlib.metadata import (
+            version as _dist_version,
         )
 
         try:

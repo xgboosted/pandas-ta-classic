@@ -1,7 +1,8 @@
 # Vortex Indicator (VORTEX)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
-from pandas_ta_classic.volatility.true_range import true_range
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -9,17 +10,18 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.volatility.true_range import true_range
 
 
 def vortex(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Vortex"""
     # Validate arguments
     length = length if length and length > 0 else 14

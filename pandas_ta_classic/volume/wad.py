@@ -1,5 +1,5 @@
 # Williams Accumulation/Distribution (WAD)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -11,9 +11,9 @@ def wad(
     high: Series,
     low: Series,
     close: Series,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Williams Accumulation/Distribution (WAD)"""
     # Validate Arguments
     high = verify_series(high)

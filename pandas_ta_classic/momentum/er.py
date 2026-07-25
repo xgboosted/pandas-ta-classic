@@ -1,6 +1,8 @@
 # Efficiency Ratio (ER)
-from typing import Any, Optional, Union
-from pandas import DataFrame, concat, Series
+from typing import Any
+
+from pandas import DataFrame, Series, concat
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -13,11 +15,11 @@ from pandas_ta_classic.utils import (
 
 def er(
     close: Series,
-    length: Optional[int] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Union[Series, DataFrame]]:
+) -> Series | DataFrame | None:
     """Indicator: Efficiency Ratio (ER)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 10

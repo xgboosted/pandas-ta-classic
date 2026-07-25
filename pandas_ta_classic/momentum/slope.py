@@ -1,19 +1,21 @@
 # Slope (SLOPE)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def slope(
     close: Series,
-    length: Optional[int] = None,
-    as_angle: Optional[bool] = None,
-    to_degrees: Optional[bool] = None,
-    vertical: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    as_angle: bool | None = None,
+    to_degrees: bool | None = None,
+    vertical: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Slope"""
     # Validate arguments
     length = int(length) if length and length > 0 else 1

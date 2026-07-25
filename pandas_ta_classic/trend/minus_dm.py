@@ -1,6 +1,8 @@
 # Minus Directional Movement (MINUS_DM)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -15,12 +17,12 @@ from pandas_ta_classic.utils import (
 def minus_dm(
     high: Series,
     low: Series,
-    length: Optional[int] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Minus Directional Movement (-DM, MINUS_DM)
 
     Raw Wilder-smoothed negative directional movement.

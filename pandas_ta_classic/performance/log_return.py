@@ -1,17 +1,19 @@
 # Log Return (LOG_RETURN)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def log_return(
     close: Series,
-    length: Optional[int] = None,
-    cumulative: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    cumulative: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Log Return"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 1

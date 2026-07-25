@@ -3,12 +3,14 @@ import importlib
 import logging
 import os
 from collections.abc import Sequence
-from typing import Any, Optional, Union
-from pandas import Series, DataFrame
+from typing import Any
+
+from pandas import DataFrame, Series
+
+from pandas_ta_classic import Imports
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 from . import cdl_doji, cdl_inside
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic import Imports
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +97,7 @@ def _discover_native_patterns() -> dict:
             func = getattr(mod, mod_name, None)
             if callable(func):
                 native[pattern_name] = func
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - a broken pattern module must not abort loading the rest
             logger.warning("Failed to load CDL pattern '%s': %s", mod_name, exc)
     return native
 
@@ -133,11 +135,11 @@ def cdl_pattern(
     high: Series,
     low: Series,
     close: Series,
-    name: Union[str, Sequence[str]] = "all",
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    name: str | Sequence[str] = "all",
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Candle Pattern"""
     # Validate Arguments
     open_ = verify_series(open_)

@@ -1,19 +1,22 @@
 # T3 (T3)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
-from .ema import _ema_chain
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .ema import _ema_chain
 
 
 def t3(
     close: Series,
-    length: Optional[int] = None,
-    a: Optional[float] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    a: float | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: T3"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

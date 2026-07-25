@@ -1,6 +1,8 @@
 # Price Volume Trend (PVT)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.momentum.roc import roc
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -14,10 +16,10 @@ from pandas_ta_classic.utils import (
 def pvt(
     close: Series,
     volume: Series,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Price-Volume Trend (PVT)"""
     # Validate arguments
     close = verify_series(close)

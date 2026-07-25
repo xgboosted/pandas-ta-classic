@@ -1,8 +1,8 @@
 # Squeeze (SQUEEZE)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
-
 
 from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.overlap.ema import ema
@@ -10,11 +10,10 @@ from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.trend.decreasing import decreasing
 from pandas_ta_classic.trend.increasing import increasing
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, unsigned_differences, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset
-from pandas_ta_classic.utils import unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def _squeeze_simplify_columns(df, n=3):
@@ -95,17 +94,17 @@ def squeeze(
     high: Series,
     low: Series,
     close: Series,
-    bb_length: Optional[int] = None,
-    bb_std: Optional[float] = None,
-    kc_length: Optional[int] = None,
-    kc_scalar: Optional[float] = None,
-    mom_length: Optional[int] = None,
-    mom_smooth: Optional[int] = None,
-    use_tr: Optional[bool] = None,
-    mamode: Optional[str] = None,
-    offset: Optional[int] = None,
+    bb_length: int | None = None,
+    bb_std: float | None = None,
+    kc_length: int | None = None,
+    kc_scalar: float | None = None,
+    mom_length: int | None = None,
+    mom_smooth: int | None = None,
+    use_tr: bool | None = None,
+    mamode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ)"""
     # Validate arguments
     bb_length = _pos_int(bb_length, 20)

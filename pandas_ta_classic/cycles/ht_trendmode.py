@@ -1,7 +1,9 @@
 # Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -9,10 +11,10 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def ht_trendmode(
     close: Series,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Hilbert Transform - Trend vs Cycle Mode"""
     # Validate Arguments
     close = verify_series(close)

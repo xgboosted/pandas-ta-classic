@@ -1,5 +1,6 @@
 # SuperTrend (SUPERTREND)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
 
@@ -38,11 +39,11 @@ def supertrend(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    multiplier: Optional[float] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    multiplier: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Supertrend"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 7

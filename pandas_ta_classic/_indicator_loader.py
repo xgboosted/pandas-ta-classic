@@ -3,9 +3,10 @@
 import functools
 import importlib
 import inspect
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
-from pandas_ta_classic._meta import Category, _MATH_ALIASES
+from pandas_ta_classic._meta import _MATH_ALIASES, Category
 
 # Maps function param name → DataFrame column key
 _COLUMN_PARAM_TO_COL_KEY: dict[str, str] = {
@@ -29,7 +30,7 @@ _INDICATOR_TO_CATEGORY: dict[str, str] = {ind: cat for cat, indicators in Catego
 _INDICATOR_TO_CATEGORY.update({alias: "math" for alias in _MATH_ALIASES})
 
 
-def _find_indicator_func(name: str) -> Optional[Callable]:
+def _find_indicator_func(name: str) -> Callable | None:
     """Lazy-import and return the indicator function, or None if unknown."""
     cat = _INDICATOR_TO_CATEGORY.get(name)
     if cat is None:

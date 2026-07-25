@@ -39,6 +39,8 @@ from ._metrics import (
     pure_profit_score,
     sharpe_ratio,
     sortino_ratio,
+)
+from ._metrics import (
     volatility as volatility,
 )
 from ._signals import (

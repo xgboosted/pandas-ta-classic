@@ -1,19 +1,21 @@
 # Percentage Volume Oscillator (PVO)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def pvo(
     volume: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    signal: Optional[int] = None,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    signal: int | None = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Percentage Volume Oscillator (PVO)"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 12
@@ -49,7 +51,6 @@ def pvo(
     signalma.name = f"PVOs{_props}"
     pvo.category = histogram.category = signalma.category = "momentum"
 
-    #
     data = {pvo.name: pvo, histogram.name: histogram, signalma.name: signalma}
     df = DataFrame(data)
     df.name = pvo.name

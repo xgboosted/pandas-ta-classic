@@ -1,6 +1,8 @@
 # Ease of Movement (EMV)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -15,10 +17,10 @@ def emv(
     high: Series,
     low: Series,
     volume: Series,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Ease of Movement (EMV)
 
     Raw (unsmoothed) Ease of Movement oscillator.

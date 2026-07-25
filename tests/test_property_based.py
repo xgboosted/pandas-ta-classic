@@ -29,7 +29,8 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import HealthCheck, assume, given, settings, strategies as st
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 
 import pandas_ta_classic as ta

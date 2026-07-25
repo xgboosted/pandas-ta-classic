@@ -83,8 +83,8 @@ def ni_method(self, length=None, offset=None, **kwargs):
 
 # Demonstration of the custom indicator
 if __name__ == "__main__":
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     print("Testing custom NI (Example Indicator) function...")
 

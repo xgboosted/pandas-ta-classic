@@ -1,7 +1,8 @@
 # Average True Range (ATR)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
-from .true_range import true_range
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
@@ -12,18 +13,20 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 
+from .true_range import true_range
+
 
 def atr(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    mamode: Optional[str] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    mamode: str | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Average True Range (ATR)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14

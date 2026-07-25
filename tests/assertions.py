@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 import pandas.testing as pdt
 from pandas import DataFrame, Series
@@ -14,10 +15,10 @@ class IndicatorSpec:
     args: list[Any]
     expected_name: str
     expected_type: type = Series
-    expected_columns: Optional[list[str]] = None
-    none_arg_idx: Optional[int] = 0
+    expected_columns: list[str] | None = None
+    none_arg_idx: int | None = 0
     kwargs: dict = field(default_factory=dict)
-    length_override: Optional[int] = None
+    length_override: int | None = None
 
 
 def assert_offset(test_case, func, args, **kwargs):

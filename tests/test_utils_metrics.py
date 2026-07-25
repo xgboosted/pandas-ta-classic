@@ -4,8 +4,8 @@ from unittest import TestCase
 import numpy as np
 from pandas import DataFrame, Series
 
-from tests.config import get_sample_data
 import pandas_ta_classic as pandas_ta
+from tests.config import get_sample_data
 
 
 class TestUtilityMetrics(TestCase):

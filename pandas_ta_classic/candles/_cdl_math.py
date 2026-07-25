@@ -4,9 +4,9 @@ Underscore prefix ensures ``_build_category_dict()`` in ``_meta.py`` ignores thi
 file during auto-discovery.
 """
 
-from typing import Any, Callable, Optional
-
+from collections.abc import Callable
 from enum import IntEnum
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -148,10 +148,10 @@ def run_pattern(
     close: Series,
     detect_fn: Callable,
     name: str,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Validate OHLC, build CandleArrays, run *detect_fn*, finalize result.
 
     Args:

@@ -121,14 +121,10 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         else:
             period[i] = period[i - 1]
 
-        if period[i] > 1.5 * period[i - 1]:
-            period[i] = 1.5 * period[i - 1]
-        if period[i] < 0.67 * period[i - 1]:
-            period[i] = 0.67 * period[i - 1]
-        if period[i] < 6.0:
-            period[i] = 6.0
-        if period[i] > 50.0:
-            period[i] = 50.0
+        period[i] = min(period[i], 1.5 * period[i - 1])
+        period[i] = max(period[i], 0.67 * period[i - 1])
+        period[i] = max(period[i], 6.0)
+        period[i] = min(period[i], 50.0)
 
         period[i] = 0.2 * period[i] + 0.8 * period[i - 1]
         smooth_period_arr[i] = 0.33 * period[i] + 0.67 * smooth_period_arr[i - 1]
@@ -176,8 +172,7 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         # Instantaneous Trendline (ITrend)
         dc_per = max(int(sp + 0.5), 1)
         start_idx = i - dc_per + 1
-        if start_idx < 0:
-            start_idx = 0
+        start_idx = max(start_idx, 0)
         it_trend[i] = (close_cumsum[i + 1] - close_cumsum[start_idx]) / dc_per
         trendline_arr[i] = (
             4.0 * it_trend[i]

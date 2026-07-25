@@ -1,11 +1,11 @@
-from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
 from unittest import TestCase
 
 import numpy as np
-from pandas import DataFrame, Series
 import pandas as pd
+from pandas import DataFrame, Series
+
+import pandas_ta_classic as pandas_ta
+from tests.config import get_sample_data
 
 data = {
     "zero": [0, 0],

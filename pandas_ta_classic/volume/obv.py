@@ -1,6 +1,8 @@
 # On Balance Volume (OBV)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -14,10 +16,10 @@ from pandas_ta_classic.utils import (
 def obv(
     close: Series,
     volume: Series,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: On Balance Volume (OBV)"""
     # Validate arguments
     close = verify_series(close)

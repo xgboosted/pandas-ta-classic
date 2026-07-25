@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -9,10 +9,10 @@ from pandas_ta_classic.utils._core import _sliding_argextreme
 
 def minmaxindex(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Window-relative Min and Max indices over *length* periods.
 
     Returns a DataFrame with columns ``MINIDX_<n>`` and ``MAXIDX_<n>``, each a
