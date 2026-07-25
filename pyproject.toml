@@ -59,7 +59,7 @@ oracle = [
 
 # CI code quality tools
 lint = [
-    "ruff>=0.15.20",
+    "ruff>=0.16.0",
     "black>=26.5.1",
 ]
 
