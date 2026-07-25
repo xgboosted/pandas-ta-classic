@@ -59,8 +59,11 @@ oracle = [
 
 # CI code quality tools
 lint = [
-    "ruff>=0.15.20",
-    "black>=26.5.1",
+    # Pinned exactly (not >=): an unbounded pin let CI install ruff 0.16, whose
+    # default rule set expanded and broke the gate. Bump deliberately, in lockstep
+    # with .pre-commit-config.yaml, and re-validate. Enforced: tools/check_lint_versions.py.
+    "ruff==0.15.20",
+    "black==26.5.1",
 ]
 
 # PyPI publishing tools
@@ -167,11 +170,14 @@ exclude = [
 line-length = 150
 
 [tool.ruff.lint]
-# Default (E4, E7, E9, F) plus ICN. ICN001 enforces ruff's conventional import
-# aliases (numpy as np, pandas as pd, ...) across the repo; ICN003, via the
-# banned-from list below, additionally rejects `from numpy import x` in any
+# Explicit rule set — NOT `extend-select`, which rides on ruff's *default*
+# selection, and that default expanded in ruff 0.16 (adding I001 import-sorting,
+# RUF, BLE, ...). Pinning the rules here keeps the gate identical across ruff
+# versions. This set == ruff's pre-0.16 default (E4, E7, E9, F) plus ICN.
+# ICN001 enforces the conventional import aliases (numpy as np, pandas as pd);
+# ICN003, via the banned-from list below, rejects `from numpy import x` in any
 # form — including the `as npX` aliases that were removed repo-wide.
-extend-select = ["ICN"]
+select = ["E4", "E7", "E9", "F", "ICN"]
 
 [tool.ruff.lint.flake8-import-conventions]
 # numpy and its stride_tricks submodule: both are reached through the `np`

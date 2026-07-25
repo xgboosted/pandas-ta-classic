@@ -127,7 +127,8 @@ After each coding session, execute the code/module in local venv and troubleshoo
 ## Formatting and Linting
 
 - **black** — formatter: `line-length=150`, `skip-string-normalization = true` (keep quotes as-is). CI runs `black --check --diff pandas_ta_classic/`. Apply locally with `black pandas_ta_classic/`. Black owns formatting.
-- **ruff** — linter only (ruff format is disabled; black owns formatting). Critical checks: `--select E9,F63,F7,F82`. Repo-wide check: `ruff check .` (default `E4,E7,E9,F` plus `ICN`, from `[tool.ruff.lint]`) — blocking. Advisory checks: `--extend-select C901,E501 --exit-zero`.
+- **ruff** — linter only (ruff format is disabled; black owns formatting). Critical checks: `--select E9,F63,F7,F82`. Repo-wide check: `ruff check .` — blocking; rule set is an **explicit** `select = ["E4","E7","E9","F","ICN"]` in `[tool.ruff.lint]`, *not* `extend-select`, because ruff's default selection expanded in 0.16 (adding I001 etc.) and rode over the gate. Advisory checks: `--extend-select C901,E501 --exit-zero`.
+- **ruff/black are pinned exactly** (`==`, not `>=`) in `[project.optional-dependencies].lint` — an unbounded pin let CI install a newer ruff with a different default rule set. Bump deliberately, in lockstep with `.pre-commit-config.yaml`, and re-run `ruff check .`.
 - **`--select` replaces the configured rule set, it does not add to it.** `ruff check pandas_ta_classic --select E9,F63,F7,F82` therefore does *not* run `F403`, `E402`, `E741` or `ICN`. Only the bare `ruff check .` enforces those, which is why it is a separate blocking step.
 - Config in `pyproject.toml` under `[tool.black]`, `[tool.ruff]`, and `[tool.ruff.lint]`
 - If black and ruff format disagree on a region, lock it with `# fmt: off` / `# fmt: on`
