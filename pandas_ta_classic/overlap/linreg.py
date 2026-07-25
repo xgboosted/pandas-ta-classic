@@ -125,9 +125,7 @@ def linreg(
         x2_sum = length * (length - 1) * (2 * length - 1) / 6
         divisor = length * x2_sum - x_sum * x_sum
 
-        from numpy.lib.stride_tricks import sliding_window_view
-
-        windows = sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
+        windows = np.lib.stride_tricks.sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
         linreg_ = _linreg_output(
             windows,
             x_arr,

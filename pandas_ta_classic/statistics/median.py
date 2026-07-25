@@ -2,7 +2,6 @@
 from typing import Any, Optional
 
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -29,7 +28,7 @@ def median(
     n = len(values)
     result_arr = np.full(n, np.nan, dtype=np.float64)
     if n >= length:
-        windows = sliding_window_view(values, length)
+        windows = np.lib.stride_tricks.sliding_window_view(values, length)
         result_arr[length - 1 :] = np.median(windows, axis=1)
     if min_periods < length:
         for pos in range(min_periods - 1, min(length - 1, n)):

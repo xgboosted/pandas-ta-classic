@@ -98,8 +98,6 @@ def _sarext_native_result(
     offsetonreverse,
 ):
     """Run the native SAREXT computation and return a signed Series."""
-    from pandas import Series as _Series
-
     falling = _sarext_falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if startvalue != 0.0:
         sar = startvalue
@@ -131,7 +129,7 @@ def _sarext_native_result(
         long_arr,
         np.where(~np.isnan(short_arr), -short_arr, np.nan),
     )
-    return _Series(result, index=high.index)
+    return Series(result, index=high.index)
 
 
 def sarext(

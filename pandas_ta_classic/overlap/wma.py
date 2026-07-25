@@ -17,7 +17,8 @@ def wma(
     """Indicator: Weighted Moving Average (WMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
-    asc = asc if asc else True
+    if asc is not None and not asc:
+        raise ValueError("asc=False is not implemented; wma weights are always ascending")
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False
@@ -33,8 +34,6 @@ def wma(
     else:
         total_weight = 0.5 * length * (length + 1)
         w = np.arange(1, length + 1)
-        if not asc:
-            w = w[::-1]
 
         close_ = close.rolling(length, min_periods=length)
         wma = close_.apply(weights(w), raw=True) / total_weight
@@ -76,7 +75,9 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
-    asc (bool): Recent values weigh more. Default: True
+    asc (bool): Accepted for backwards compatibility. Weights are always
+        ascending (recent values weigh more); passing False raises
+        ValueError. Default: True
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: False
     offset (int): How many periods to offset the result. Default: 0

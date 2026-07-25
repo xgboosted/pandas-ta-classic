@@ -1,7 +1,6 @@
 # Laguerre Relative Strength Index (Laguerre RSI)
 from typing import Any, Optional
 import numpy as np
-from numpy import maximum, where, zeros
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
@@ -46,18 +45,18 @@ def lrsi(
     l0, l1, l2, l3 = _lrsi_loop(c_arr, n, gamma)
 
     # Calculate Laguerre RSI components (vectorized)
-    cu = zeros(n)
-    cd = zeros(n)
+    cu = np.zeros(n)
+    cd = np.zeros(n)
 
-    cu += maximum(l0 - l1, 0)
-    cd += maximum(l1 - l0, 0)
-    cu += maximum(l1 - l2, 0)
-    cd += maximum(l2 - l1, 0)
-    cu += maximum(l2 - l3, 0)
-    cd += maximum(l3 - l2, 0)
+    cu += np.maximum(l0 - l1, 0)
+    cd += np.maximum(l1 - l0, 0)
+    cu += np.maximum(l1 - l2, 0)
+    cd += np.maximum(l2 - l1, 0)
+    cu += np.maximum(l2 - l3, 0)
+    cd += np.maximum(l3 - l2, 0)
 
     denominator = cu + cd
-    denominator = where(denominator == 0, 1, denominator)
+    denominator = np.where(denominator == 0, 1, denominator)
     lrsi = Series(100 * cu / denominator, index=close.index)
 
     # Offset

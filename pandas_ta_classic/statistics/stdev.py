@@ -1,6 +1,6 @@
 # Standard Deviation (STDEV)
 from typing import Any, Optional
-from numpy import sqrt as npsqrt
+import numpy as np
 from pandas import Series
 from .variance import variance
 from pandas_ta_classic import Imports
@@ -35,7 +35,7 @@ def stdev(
         _variance = variance(close=close, length=length, ddof=ddof, talib=False)
         if _variance is None:
             return None
-        stdev = _variance.apply(npsqrt)
+        stdev = _variance.apply(np.sqrt)
 
     # Offset
     stdev = apply_offset(stdev, offset)

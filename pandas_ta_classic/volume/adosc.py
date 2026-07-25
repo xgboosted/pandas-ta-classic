@@ -1,5 +1,6 @@
 # Accumulation/Distribution Oscillator (ADOSC)
 from typing import Any, Optional
+import numpy as np
 from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
@@ -40,8 +41,6 @@ def adosc(
 
         adosc = ADOSC(high, low, close, volume, fast, slow)
     else:
-        import numpy as np
-
         ad_ = ad(high=high, low=low, close=close, volume=volume, open_=open_)
         ad_arr = ad_.to_numpy(dtype=float)
         m = ad_arr.shape[0]

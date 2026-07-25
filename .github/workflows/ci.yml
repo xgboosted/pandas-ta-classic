@@ -57,6 +57,11 @@ jobs:
       run: |
         # stop the build if there are Python syntax errors or undefined names
         ruff check pandas_ta_classic --select E9,F63,F7,F82
+        # full default rule set + ICN over the whole repo, using pyproject's
+        # config. --select above overrides that config, so without this step
+        # star imports (F403), imports after code (E402), ambiguous names
+        # (E741) and the numpy import convention (ICN) are not gated anywhere.
+        ruff check .
         # report broader lint issues without failing this non-critical pass
         ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 

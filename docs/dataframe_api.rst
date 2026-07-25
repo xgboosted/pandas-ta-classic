@@ -225,22 +225,19 @@ indicators
     # Return the list excluding specific indicators
     ind_list = df.ta.indicators(as_list=True, exclude=["vp", "td_seq"])
 
-ticker
-~~~~~~
+Fetching data
+~~~~~~~~~~~~~
 
-.. deprecated:: 0.6.53
-   ``df.ta.ticker()`` (and ``ta.yf()`` / ``ta.av()``) is deprecated and will be
-   removed in a future release; data fetching is out of scope for a
-   technical-analysis library. It emits a ``FutureWarning``. Fetch OHLCV with
-   yfinance / alpha-vantage directly and pass the DataFrame to pandas-ta-classic
-   — see ``examples/fetch_market_data.py`` for the replacement patterns.
+.. versionchanged:: 0.6.53
+   The built-in ``df.ta.ticker()`` helper (and ``ta.yf()`` / ``ta.av()``) was
+   **removed** — data fetching is out of scope for a technical-analysis
+   library. Fetch OHLCV with yfinance / alpha-vantage directly and pass the
+   DataFrame to pandas-ta-classic; see ``examples/fetch_market_data.py`` for the
+   replacement patterns.
 
 .. code-block:: python
 
-    # Deprecated — emits FutureWarning (requires the [data] extra)
-    df = df.ta.ticker("AAPL")
-
-    # Preferred: fetch with yfinance directly, then use pandas-ta-classic
+    # Fetch with yfinance directly, then use pandas-ta-classic
     import yfinance as yf
     df = yf.download("AAPL", period="1y", interval="1d")
     df.ta.rsi(append=True)

@@ -30,8 +30,6 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     determinism (pandas 2.x vs 3.x can round higher-order moments
     differently).
     """
-    from numpy.lib.stride_tricks import sliding_window_view
-
     if min_periods is None:
         min_periods = length
 
@@ -43,7 +41,7 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
 
     # Vectorised computation over all full-length windows.
     if n >= length:
-        windows = sliding_window_view(arr, length)
+        windows = np.lib.stride_tricks.sliding_window_view(arr, length)
         mean = windows.mean(axis=1, keepdims=True)
         dev = windows - mean
         for i, k in enumerate(orders):
@@ -64,8 +62,14 @@ def combination(**kwargs: Any) -> int:
     """nCr combinatorics — wraps math.comb."""
     n = int(abs(kwargs.pop("n", 1)))
     r = int(abs(kwargs.pop("r", 0)))
-    if kwargs.pop("repetition", False):
+    # `multichoose` is a long-standing alias for `repetition`; both pops must run
+    # so neither is left in kwargs to trip the unknown-argument check below.
+    repetition = kwargs.pop("repetition", False)
+    multichoose = kwargs.pop("multichoose", False)
+    if repetition or multichoose:
         n = n + r - 1
+    if kwargs:
+        raise TypeError(f"combination() got unexpected keyword arguments: {sorted(kwargs)}")
     return comb(n, r)
 
 

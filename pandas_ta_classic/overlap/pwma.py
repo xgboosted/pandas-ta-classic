@@ -21,7 +21,8 @@ def pwma(
     """Indicator: Pascals Weighted Moving Average (PWMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
-    asc = asc if asc else True
+    if asc is not None and not asc:
+        raise ValueError("asc=False is not implemented; pwma weights are always ascending")
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -66,7 +67,9 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period.  Default: 10
-    asc (bool): Recent values weigh more. Default: True
+    asc (bool): Accepted for backwards compatibility. Weights are always
+        ascending (recent values weigh more); passing False raises
+        ValueError. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

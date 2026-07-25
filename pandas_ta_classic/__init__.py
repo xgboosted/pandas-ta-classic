@@ -24,7 +24,6 @@ from pandas_ta_classic.utils import (
     above_value,
     apply_fill,
     apply_offset,
-    av,
     below,
     below_value,
     cagr,
@@ -66,7 +65,6 @@ from pandas_ta_classic.utils import (
     unsigned_differences,
     verify_series,
     weights,
-    yf,
     zero,
 )
 
@@ -98,7 +96,6 @@ __all__ = [
     "above_value",
     "apply_fill",
     "apply_offset",
-    "av",
     "below",
     "below_value",
     "cagr",
@@ -144,7 +141,6 @@ __all__ = [
     "version",
     "volatility",
     "weights",
-    "yf",
     "zero",
 ]
 

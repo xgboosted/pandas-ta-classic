@@ -109,12 +109,6 @@ performance = [
     "numba>=0.58.0"
 ]
 
-# Data source integrations (used by utils/data — lazy-imported at call time)
-data = [
-    "yfinance",
-    "alpha-vantage"
-]
-
 # Backtesting integrations (docs/examples only — not imported by the library)
 backtest = [
     "backtesting",
@@ -124,13 +118,13 @@ backtest = [
 
 # Back-compat alias for the previous combined extra
 integration = [
-    "pandas-ta-classic[data,backtest]"
+    "pandas-ta-classic[backtest]"
 ]
 
 # Complete environment with all features.
-# Excludes `data`/`backtest`: those pull unmaintained, platform-fragile packages
-# (alpha-vantage, backtrader, vectorbt) that break `[all]` installs on newer
-# Python/OS combos. Install them explicitly via `[data]` / `[backtest]` when needed.
+# Excludes `backtest`: it pulls unmaintained, platform-fragile packages
+# (backtrader, vectorbt) that break `[all]` installs on newer Python/OS combos.
+# Install them explicitly via `[backtest]` when needed.
 all = [
     "pandas-ta-classic[optional,oracle,dev,test,docs,performance]"
 ]
@@ -172,6 +166,21 @@ exclude = [
 ]
 line-length = 150
 
+[tool.ruff.lint]
+# Default (E4, E7, E9, F) plus ICN. ICN001 enforces ruff's conventional import
+# aliases (numpy as np, pandas as pd, ...) across the repo; ICN003, via the
+# banned-from list below, additionally rejects `from numpy import x` in any
+# form — including the `as npX` aliases that were removed repo-wide.
+extend-select = ["ICN"]
+
+[tool.ruff.lint.flake8-import-conventions]
+# numpy and its stride_tricks submodule: both are reached through the `np`
+# alias (`np.sqrt`, `np.lib.stride_tricks.sliding_window_view`), never imported
+# by name. pandas stays off the list on purpose: `from pandas import Series` is
+# the established style here, used at 300+ sites including every indicator
+# signature.
+banned-from = ["numpy", "numpy.lib.stride_tricks"]
+
 [tool.setuptools]
 packages = [
     "pandas_ta_classic",
@@ -183,7 +192,6 @@ packages = [
     "pandas_ta_classic.statistics",
     "pandas_ta_classic.trend",
     "pandas_ta_classic.utils",
-    "pandas_ta_classic.utils.data",
     "pandas_ta_classic.volatility",
     "pandas_ta_classic.volume"
 ]
@@ -228,10 +236,8 @@ disable_error_code = ["union-attr", "operator", "no-redef", "index", "attr-defin
 [[tool.mypy.overrides]]
 module = [
     "pandas.*",
-    "alpha_vantage.*",
     "numba",
     "tulipy",
-    "yfinance",
 ]
 ignore_missing_imports = true
 

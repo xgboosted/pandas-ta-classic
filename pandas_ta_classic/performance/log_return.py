@@ -1,6 +1,6 @@
 # Log Return (LOG_RETURN)
 from typing import Any, Optional
-from numpy import log as nplog
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -24,9 +24,9 @@ def log_return(
 
     # Calculate Result
     if cumulative:
-        log_return = nplog(close / close.iloc[0])
+        log_return = np.log(close / close.iloc[0])
     else:
-        log_return = nplog(close / close.shift(length))  # nplog(close).diff(length)
+        log_return = np.log(close / close.shift(length))  # np.log(close).diff(length)
 
     # Offset
     log_return = apply_offset(log_return, offset)

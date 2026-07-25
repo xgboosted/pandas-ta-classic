@@ -1,7 +1,6 @@
 # Drawdown (DRAWDOWN)
 from typing import Any, Optional
-from numpy import log as nplog
-from numpy import seterr
+import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -19,10 +18,10 @@ def drawdown(close: Series, offset: Optional[int] = None, **kwargs: Any) -> Opti
     dd = max_close - close
     dd_pct = 1 - (close / max_close)
 
-    _np_err = seterr()
-    seterr(divide="ignore", invalid="ignore")
-    dd_log = nplog(max_close) - nplog(close)
-    seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
+    _np_err = np.seterr()
+    np.seterr(divide="ignore", invalid="ignore")
+    dd_log = np.log(max_close) - np.log(close)
+    np.seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
 
     # Offset
     dd, dd_pct, dd_log = apply_offset([dd, dd_pct, dd_log], offset)

@@ -12,13 +12,7 @@ as-is.
 
 import contextlib
 import io
-import sys
 from importlib.util import find_spec
-from pathlib import Path
-
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
 
 # TA-Lib not installed — cannot regenerate; use committed fixtures.
 if find_spec("talib") is not None:

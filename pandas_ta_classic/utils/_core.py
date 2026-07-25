@@ -3,7 +3,7 @@ from typing import Any, Optional, TypeGuard, Union
 
 from sys import float_info as sflt
 
-from numpy import argmax, argmin
+import numpy as np
 from pandas import DataFrame, Series
 from pandas.api.types import is_datetime64_any_dtype
 
@@ -101,11 +101,11 @@ def non_zero_range(high: Series, low: Series) -> Series:
 
 
 def recent_maximum_index(x: Series) -> int:
-    return int(argmax(x[::-1]))
+    return int(np.argmax(x[::-1]))
 
 
 def recent_minimum_index(x: Series) -> int:
-    return int(argmin(x[::-1]))
+    return int(np.argmin(x[::-1]))
 
 
 def signed_series(series: Series, initial: Optional[int] = None) -> Series:
@@ -207,11 +207,8 @@ def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
         A Series aligned with *close*, with ``NaN`` for the first
         ``length - 1`` positions.
     """
-    import numpy as np
-    from numpy.lib.stride_tricks import sliding_window_view
-
     arr = close.to_numpy(dtype=float)
-    windows = sliding_window_view(arr, length)
+    windows = np.lib.stride_tricks.sliding_window_view(arr, length)
     result = np.full(len(arr), np.nan)
     result[length - 1 :] = windows @ weights
     return Series(result, index=close.index)
@@ -231,14 +228,11 @@ def _sliding_argextreme(series: Series, length: int, argfunc: Any, reverse: bool
         argfunc: ``np.argmax`` or ``np.argmin``.
         reverse: Flip each window before applying *argfunc*.
     """
-    import numpy as np
-    from numpy.lib.stride_tricks import sliding_window_view
-
     arr = series.to_numpy(dtype=float)
     m = arr.shape[0]
     result = np.full(m, np.nan)
     if length <= m:
-        windows = sliding_window_view(arr, length)
+        windows = np.lib.stride_tricks.sliding_window_view(arr, length)
         if reverse:
             windows = windows[:, ::-1]
         result[length - 1 :] = argfunc(windows, axis=1)

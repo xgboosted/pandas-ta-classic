@@ -54,7 +54,7 @@ def ma(name: Optional[str] = None, source: Optional[Series] = None, **kwargs: An
     Examples:
         ema8 = ta.ma("ema", df.close, length=8)
         sma50 = ta.ma("sma", df.close, length=50)
-        pwma10 = ta.ma("pwma", df.close, length=10, asc=False)
+        pwma10 = ta.ma("pwma", df.close, length=10)
 
     Args:
         name (str): One of the Available MAs. Default: "ema"

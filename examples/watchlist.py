@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import Tuple
 
+import numpy as np  # pip install numpy
 import pandas as pd  # pip install pandas
+
+import pandas_ta_classic as ta  # pip install pandas-ta-classic
 
 # Optional imports for data sources - will gracefully handle missing dependencies
 try:
@@ -14,10 +17,6 @@ except ImportError:
     YFINANCE_AVAILABLE = False
     print("[!] yfinance not available. Install with: pip install yfinance")
 
-from numpy import arange as npArange
-from numpy import append as npAppend
-from numpy import array as npArray
-
 try:
     import alphaVantageAPI as AV  # pip install alphaVantage-api
 
@@ -25,8 +24,6 @@ try:
 except ImportError:
     ALPHAVANTAGE_AVAILABLE = False
     print("[!] alphaVantageAPI not available. Install with: pip install alphaVantage-api")
-
-import pandas_ta_classic as ta  # pip install pandas-ta-classic
 
 
 def colors(colors: str = None, default: str = "GrRd"):
@@ -162,9 +159,9 @@ class Watchlist(object):
     def _plot(self, df, mas: bool = True, constants: bool = False, **kwargs) -> None:
 
         if constants:
-            chart_lines = npAppend(npArange(-5, 6, 1), npArange(-100, 110, 10))
+            chart_lines = np.append(np.arange(-5, 6, 1), np.arange(-100, 110, 10))
             df.ta.constants(True, chart_lines)  # Adding the constants for the charts
-            df.ta.constants(False, npArray([-60, -40, 40, 60]))  # Removing some constants from the DataFrame
+            df.ta.constants(False, np.array([-60, -40, 40, 60]))  # Removing some constants from the DataFrame
             if self.verbose:
                 print(f"[i] {df.ticker} constants added.")
 

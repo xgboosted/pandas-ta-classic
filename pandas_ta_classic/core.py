@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
 from typing import Any, Optional
-from warnings import catch_warnings, simplefilter, warn
+from warnings import simplefilter, warn
 
 import pandas as pd
 import numpy as np
@@ -12,7 +12,7 @@ from pandas.core.base import PandasObject
 
 from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version, _MATH_ALIASES
 from pandas_ta_classic._indicator_loader import _find_indicator_func, _make_ta_wrapper
-from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time, yf
+from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
 
 logger = logging.getLogger(__name__)
 
@@ -815,76 +815,6 @@ class AnalysisIndicators(PandasObject):
 
         if returns:
             return self._df
-
-    def ticker(self, ticker: str, **kwargs):
-        """ticker
-
-        This method downloads Historical Data if the package yfinance is installed.
-        Additionally it can run a ta.Strategy; Builtin or Custom. It returns a
-        DataFrame if there the DataFrame is not empty, otherwise it exits. For
-        additional yfinance arguments, use help(ta.yf).
-
-        Historical Data
-        >>> df = df.ta.ticker("aapl")
-        More specifically
-        >>> df = df.ta.ticker("aapl", period="max", interval="1d", kind=None)
-
-        Changing the period of Historical Data
-        Period is used instead of start/end
-        >>> df = df.ta.ticker("aapl", period="1y")
-
-        Changing the period and interval of Historical Data
-        Retrieves the past year in weeks
-        >>> df = df.ta.ticker("aapl", period="1y", interval="1wk")
-        Retrieves the past month in hours
-        >>> df = df.ta.ticker("aapl", period="1mo", interval="1h")
-
-        Show everything
-        >>> df = df.ta.ticker("aapl", kind="all")
-
-        Args:
-            ticker (str): Any string for a ticker you would use with yfinance.
-                Default: "SPY"
-        Kwargs:
-            kind (str): Options see above. Default: "history"
-            strategy (str | ta.Strategy): Which strategy to apply after
-                downloading chart history. Default: None
-
-            See help(ta.yf) for additional kwargs
-
-        Returns:
-            Exits if the DataFrame is empty or None
-            Otherwise it returns a DataFrame
-        """
-        warn(
-            "df.ta.ticker() is deprecated and will be removed in a future "
-            "release; data fetching is out of scope for a technical-analysis "
-            "library. Use yfinance directly and pass the resulting OHLCV "
-            "DataFrame to pandas-ta-classic. See examples/fetch_market_data.py.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        kwargs.pop("ds", None)
-        strategy = kwargs.pop("strategy", None)
-
-        # Fetch the Data (suppress yf()'s own FutureWarning; already warned above)
-        with catch_warnings():
-            simplefilter("ignore", FutureWarning)
-            df = yf(ticker, **kwargs)
-
-        if df is None:
-            return
-        if df.empty:
-            logger.error(f"DataFrame is empty: {df.shape}")
-            return
-        if kwargs.pop("lc_cols", False):
-            df.index.name = df.index.name.lower()
-            df.columns = df.columns.str.lower()
-        self._df = df
-
-        if strategy is not None:
-            self.strategy(strategy, **kwargs)
-        return df
 
     def __getattr__(self, name: str) -> Any:
         # Avoid infinite recursion for private/dunder attributes

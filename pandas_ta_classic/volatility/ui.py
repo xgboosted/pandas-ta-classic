@@ -1,6 +1,6 @@
 # Ulcer Index (UI)
 from typing import Any, Optional
-from numpy import sqrt as npsqrt
+import numpy as np
 from pandas import Series
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -32,9 +32,9 @@ def ui(
     everget = kwargs.pop("everget", False)
     if everget:
         # Everget uses SMA instead of SUM for calculation
-        ui = (sma(d2, length) / length).apply(npsqrt)
+        ui = (sma(d2, length) / length).apply(np.sqrt)
     else:
-        ui = (d2.rolling(length).sum() / length).apply(npsqrt)
+        ui = (d2.rolling(length).sum() / length).apply(np.sqrt)
 
     # Offset
     ui = apply_offset(ui, offset)
