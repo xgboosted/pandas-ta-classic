@@ -2,9 +2,10 @@
 Priority 4 — Snapshot regression tests.
 
 Each test re-computes an indicator on SPY_D.csv and compares spot-check
-values at five fixed positional indices against stored golden snapshots:
-
-    indices: 50, 200, 500, 1500, 3000
+values at 24 fixed positional indices against stored golden snapshots,
+spanning index 50 through the final bar at 5221.  Spacing is tighter near the
+warmup edge, where initialisation bugs live.  Checkpoints where an indicator
+is still NaN are stored as null and skipped.
 
 This catches algorithm regressions that only affect the interior of the
 series (e.g. EMA initialisation, window boundary handling) — complementing
@@ -17,104 +18,37 @@ Run the full suite:
 import json
 import math
 from pathlib import Path
+from typing import Callable
 from unittest import TestCase
 
 import pandas as pd
 
-import pandas_ta_classic as ta
+from tests.assertions import golden_value_close as _approx_equal
+
+# The indicator set is imported rather than restated: test_indicator_values.py
+# already builds all 223 tracked results with the same parameters the
+# generators use, and a second hand-maintained copy here had silently drifted
+# to a 43-entry subset, leaving 180 stored snapshots asserted by nothing.
+from tests.test_indicator_values import _compute_all, _load_data
 
 # ---------------------------------------------------------------------------
-# Load snapshots and sample data
+# Load snapshots
 # ---------------------------------------------------------------------------
 
 _SNAP_PATH = Path(__file__).parent / "fixtures" / "regression_snapshots.json"
 with open(_SNAP_PATH) as _fh:
     _SNAPSHOTS: dict[str, dict] = json.load(_fh)
 
-_DATA_PATH = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
-
-
-def _load_data() -> pd.DataFrame:
-    df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df.drop(columns=["Unnamed: 0"], inplace=True, errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df
-
-
-# ---------------------------------------------------------------------------
-# Same indicator compute function re-used from generate_fixtures
-# ---------------------------------------------------------------------------
-
-
-def _compute_all(df: pd.DataFrame) -> dict[str, object]:
-    o, h, low, c, v = df["open"], df["high"], df["low"], df["close"], df["volume"]
-    return {
-        "sma_20": ta.sma(c, length=20),
-        "ema_20": ta.ema(c, length=20, talib=False),
-        "dema_10": ta.dema(c, length=10, talib=False),
-        "tema_10": ta.tema(c, length=10, talib=False),
-        "wma_10": ta.wma(c, length=10, talib=False),
-        "hma_10": ta.hma(c, length=10),
-        "alma_10": ta.alma(c, length=10),
-        "trima_10": ta.trima(c, length=10, talib=False),
-        "hl2": ta.hl2(h, low),
-        "hlc3": ta.hlc3(h, low, c, talib=False),
-        "ohlc4": ta.ohlc4(o, h, low, c),
-        "rsi_14": ta.rsi(c, length=14, talib=False),
-        "macd_12_26_9": ta.macd(c, fast=12, slow=26, signal=9, talib=False),
-        "stoch": ta.stoch(h, low, c, talib=False),
-        "cci_14": ta.cci(h, low, c, length=14, talib=False),
-        "roc_10": ta.roc(c, length=10, talib=False),
-        "willr_14": ta.willr(h, low, c, length=14, talib=False),
-        "ao": ta.ao(h, low),
-        "bop": ta.bop(o, h, low, c, talib=False),
-        "mom_10": ta.mom(c, length=10, talib=False),
-        "atr_14": ta.atr(h, low, c, length=14, talib=False),
-        "bbands_20": ta.bbands(c, length=20, talib=False),
-        "donchian_20": ta.donchian(h, low, lower_length=20, upper_length=20),
-        "kc_20": ta.kc(h, low, c, length=20),
-        "natr_14": ta.natr(h, low, c, length=14, talib=False),
-        "true_range": ta.true_range(h, low, c, talib=False),
-        "adx_14": ta.adx(h, low, c, length=14, talib=False),
-        "aroon_14": ta.aroon(h, low, length=14, talib=False),
-        "psar": ta.psar(h, low, c),
-        "decreasing": ta.decreasing(c),
-        "increasing": ta.increasing(c),
-        "obv": ta.obv(c, v, talib=False),
-        "mfi_14": ta.mfi(h, low, c, v, length=14, talib=False),
-        "cmf_20": ta.cmf(h, low, c, v, length=20),
-        "ad": ta.ad(h, low, c, v, talib=False),
-        "stdev_20": ta.stdev(c, length=20, talib=False),
-        "zscore_20": ta.zscore(c, length=20),
-        "kurtosis_20": ta.kurtosis(c, length=20),
-        "skew_20": ta.skew(c, length=20),
-        "ebsw": ta.ebsw(c),
-        "log_return": ta.log_return(c),
-        "percent_return": ta.percent_return(c),
-        "ha": ta.ha(o, h, low, c),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Tolerance — same as test_indicator_values.py
-# ---------------------------------------------------------------------------
-
-REL_TOL = 1e-4
-
-
-def _approx_equal(actual: float, expected: float) -> bool:
-    if expected == 0.0:
-        return abs(actual) <= REL_TOL
-    return abs(actual - expected) / abs(expected) <= REL_TOL
-
-
 # ---------------------------------------------------------------------------
 # Test class
+#
+# Tolerance is shared with test_indicator_values.py: snapshots carry the same
+# round(v, 8) quantisation, so the same floor applies.
 # ---------------------------------------------------------------------------
 
 
 class TestRegressionSnapshots(TestCase):
-    """Spot-check indicator values at five interior positions across SPY_D.csv."""
+    """Spot-check indicator values at 24 fixed positions across SPY_D.csv."""
 
     @classmethod
     def setUpClass(cls):
@@ -144,7 +78,18 @@ class TestRegressionSnapshots(TestCase):
                 for idx_str, expected_val in checkpoints.items():
                     idx = int(idx_str)
                     with self.subTest(idx=idx):
-                        if expected_val is None:
+                        if idx >= len(series):
+                            # The generator stores null for out-of-range
+                            # positions.  A few indicators return a series
+                            # shorter than the input (vp aggregates into 10
+                            # bins, tos_stdevall into 30), so every checkpoint
+                            # falls past the end.  Requiring null here turns
+                            # the mismatch into a length-regression check.
+                            self.assertIsNone(
+                                expected_val,
+                                f"{fixture_key!r}[{col!r}] at idx={idx}: result has only " f"{len(series)} rows but snapshot holds {expected_val}",
+                            )
+                        elif expected_val is None:
                             # Snapshot was NaN — actual must also be NaN
                             actual = series.iloc[idx]
                             self.assertTrue(
@@ -167,144 +112,31 @@ class TestRegressionSnapshots(TestCase):
                                 f"{fixture_key!r}[{col!r}] at idx={idx}: " f"actual={actual:.8f} != snapshot={expected_val:.8f}",
                             )
 
-    # ------------------------------------------------------------------
-    # One test per fixture key (43 total)
-    # ------------------------------------------------------------------
 
-    # Overlap
-    def test_sma_20(self):
-        self._check_snapshot("sma_20")
+# ---------------------------------------------------------------------------
+# One test method per snapshot key, generated from the JSON itself.
+#
+# These used to be hand-written, which meant the test set and the snapshot
+# file could drift apart -- and they had, badly: 180 of the 223 stored
+# snapshots were asserted by nothing at all, including 55 of the 57
+# indicators that have no independent oracle and are therefore protected by
+# the snapshot alone.  Generating from _SNAPSHOTS makes that drift
+# impossible.
+# ---------------------------------------------------------------------------
 
-    def test_ema_20(self):
-        self._check_snapshot("ema_20")
 
-    def test_dema_10(self):
-        self._check_snapshot("dema_10")
+def _make_snapshot_test(fixture_key: str) -> Callable[[TestRegressionSnapshots], None]:
+    def test(self: TestRegressionSnapshots) -> None:
+        self._check_snapshot(fixture_key)
 
-    def test_tema_10(self):
-        self._check_snapshot("tema_10")
+    test.__name__ = f"test_{fixture_key}"
+    test.__doc__ = f"Snapshot regression for {fixture_key!r}."
+    return test
 
-    def test_wma_10(self):
-        self._check_snapshot("wma_10")
 
-    def test_hma_10(self):
-        self._check_snapshot("hma_10")
+def _attach_snapshot_tests() -> None:
+    for fixture_key in sorted(_SNAPSHOTS):
+        setattr(TestRegressionSnapshots, f"test_{fixture_key}", _make_snapshot_test(fixture_key))
 
-    def test_alma_10(self):
-        self._check_snapshot("alma_10")
 
-    def test_trima_10(self):
-        self._check_snapshot("trima_10")
-
-    def test_hl2(self):
-        self._check_snapshot("hl2")
-
-    def test_hlc3(self):
-        self._check_snapshot("hlc3")
-
-    def test_ohlc4(self):
-        self._check_snapshot("ohlc4")
-
-    # Momentum
-    def test_rsi_14(self):
-        self._check_snapshot("rsi_14")
-
-    def test_macd_12_26_9(self):
-        self._check_snapshot("macd_12_26_9")
-
-    def test_stoch(self):
-        self._check_snapshot("stoch")
-
-    def test_cci_14(self):
-        self._check_snapshot("cci_14")
-
-    def test_roc_10(self):
-        self._check_snapshot("roc_10")
-
-    def test_willr_14(self):
-        self._check_snapshot("willr_14")
-
-    def test_ao(self):
-        self._check_snapshot("ao")
-
-    def test_bop(self):
-        self._check_snapshot("bop")
-
-    def test_mom_10(self):
-        self._check_snapshot("mom_10")
-
-    # Volatility
-    def test_atr_14(self):
-        self._check_snapshot("atr_14")
-
-    def test_bbands_20(self):
-        self._check_snapshot("bbands_20")
-
-    def test_donchian_20(self):
-        self._check_snapshot("donchian_20")
-
-    def test_kc_20(self):
-        self._check_snapshot("kc_20")
-
-    def test_natr_14(self):
-        self._check_snapshot("natr_14")
-
-    def test_true_range(self):
-        self._check_snapshot("true_range")
-
-    # Trend
-    def test_adx_14(self):
-        self._check_snapshot("adx_14")
-
-    def test_aroon_14(self):
-        self._check_snapshot("aroon_14")
-
-    def test_psar(self):
-        self._check_snapshot("psar")
-
-    def test_decreasing(self):
-        self._check_snapshot("decreasing")
-
-    def test_increasing(self):
-        self._check_snapshot("increasing")
-
-    # Volume
-    def test_obv(self):
-        self._check_snapshot("obv")
-
-    def test_mfi_14(self):
-        self._check_snapshot("mfi_14")
-
-    def test_cmf_20(self):
-        self._check_snapshot("cmf_20")
-
-    def test_ad(self):
-        self._check_snapshot("ad")
-
-    # Statistics
-    def test_stdev_20(self):
-        self._check_snapshot("stdev_20")
-
-    def test_zscore_20(self):
-        self._check_snapshot("zscore_20")
-
-    def test_kurtosis_20(self):
-        self._check_snapshot("kurtosis_20")
-
-    def test_skew_20(self):
-        self._check_snapshot("skew_20")
-
-    # Cycles
-    def test_ebsw(self):
-        self._check_snapshot("ebsw")
-
-    # Performance
-    def test_log_return(self):
-        self._check_snapshot("log_return")
-
-    def test_percent_return(self):
-        self._check_snapshot("percent_return")
-
-    # Candles
-    def test_ha(self):
-        self._check_snapshot("ha")
+_attach_snapshot_tests()

@@ -18,6 +18,7 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
+import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
 from tests.config import get_sample_data
 
 
