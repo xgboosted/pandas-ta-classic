@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
-from typing import Any, Optional
+from typing import Any, Hashable, Optional
 from warnings import catch_warnings, simplefilter, warn
 
 import pandas as pd
@@ -11,7 +11,7 @@ import numpy as np
 from pandas.core.base import PandasObject
 
 from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version, _MATH_ALIASES
-from pandas_ta_classic._indicator_loader import _find_indicator_func, _make_ta_wrapper
+from pandas_ta_classic._indicator_loader import _COLUMN_KWARG_KEYS, _DEFAULT_COLUMN_NAMES, _find_indicator_func, _make_ta_wrapper
 from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time, yf
 
 logger = logging.getLogger(__name__)
@@ -199,7 +199,10 @@ class AnalysisIndicators(PandasObject):
     def __init__(self, pandas_obj):
         self._validate(pandas_obj)
         self._df = pandas_obj
-        self._last_run = get_time(self._exchange, to_string=True)
+        # pandas 3 dropped accessor caching: 'df.ta' builds a new instance on
+        # every access, so settable state lives in df.attrs (like '_ta_chain')
+        # instead of on the instance, which would be discarded immediately.
+        self._df.attrs.setdefault("_ta_last_run", get_time(self.exchange, to_string=True))
 
     @staticmethod
     def _validate(obj: tuple[pd.DataFrame, pd.Series]):
@@ -232,7 +235,7 @@ class AnalysisIndicators(PandasObject):
 
             # Run the indicator
             result = fn(**kwargs)
-            self._last_run = get_time(self.exchange, to_string=True)  # Save when it completed it's run
+            self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)  # Save when it completed it's run
 
             if timed:
                 if result is not None:
@@ -248,45 +251,45 @@ class AnalysisIndicators(PandasObject):
     @property
     def adjusted(self) -> Optional[str]:
         """property: df.ta.adjusted"""
-        return self._adjusted
+        return self._df.attrs.get("_ta_adjusted", self._adjusted)
 
     @adjusted.setter
     def adjusted(self, value: str) -> None:
         """property: df.ta.adjusted = 'adj_close'"""
         if value is not None and isinstance(value, str):
-            self._adjusted = value
+            self._df.attrs["_ta_adjusted"] = value
         else:
-            self._adjusted = None
+            self._df.attrs["_ta_adjusted"] = None
 
     @property
     def cores(self) -> int:
         """Returns the categories."""
-        return self._cores
+        return self._df.attrs.get("_ta_cores", self._cores)
 
     @cores.setter
     def cores(self, value: int) -> None:
         """property: df.ta.cores = integer"""
         cpus = cpu_count()
         if value is not None and isinstance(value, int):
-            self._cores = int(value) if 0 <= value <= cpus else cpus
+            self._df.attrs["_ta_cores"] = int(value) if 0 <= value <= cpus else cpus
         else:
-            self._cores = cpus
+            self._df.attrs["_ta_cores"] = cpus
 
     @property
     def exchange(self) -> str:
         """Returns the current Exchange. Default: "NYSE"."""
-        return self._exchange
+        return self._df.attrs.get("_ta_exchange", self._exchange)
 
     @exchange.setter
     def exchange(self, value: str) -> None:
         """property: df.ta.exchange = "LSE" """
         if value is not None and isinstance(value, str) and value in EXCHANGE_TZ:
-            self._exchange = value
+            self._df.attrs["_ta_exchange"] = value
 
     @property
     def last_run(self) -> Optional[str]:
         """Returns the time when the DataFrame was last run."""
-        return self._last_run
+        return self._df.attrs.get("_ta_last_run", self._last_run)
 
     # Public Get DataFrame Properties
     @property
@@ -310,15 +313,15 @@ class AnalysisIndicators(PandasObject):
     @property
     def time_range(self) -> float:
         """Returns the time ranges of the DataFrame as a float. Default is in "years". help(ta.toal_time)"""
-        return total_time(self._df, self._time_range)
+        return total_time(self._df, self._df.attrs.get("_ta_time_range", self._time_range))
 
     @time_range.setter
     def time_range(self, value: str) -> None:
         """property: df.ta.time_range = "years" (Default)"""
         if value is not None and isinstance(value, str):
-            self._time_range = value
+            self._df.attrs["_ta_time_range"] = value
         else:
-            self._time_range = "years"
+            self._df.attrs["_ta_time_range"] = "years"
 
     @property
     def to_utc(self) -> None:
@@ -422,6 +425,51 @@ class AnalysisIndicators(PandasObject):
             cols = ", ".join(list(df.columns))
             logger.warning(f"[X] Column '{series}' not found. Available columns: {cols}")
             return None
+
+    def _matching_column(self, name: str) -> Optional[Hashable]:
+        """The column '_get_column' would resolve *name* to, or None.
+
+        Mirrors _get_column()'s lookup order: the exact name first, then the
+        case-insensitive prefix match.
+        """
+        columns = self._df.columns
+        if name in columns:
+            return name
+        # Index.str is unavailable on a non-string column Index; _get_column
+        # cannot resolve a prefix match there either, so there is nothing
+        # further to look up.
+        if columns.inferred_type != "string":
+            return None
+        matches = [i for i, hit in enumerate(columns.str.match(name, case=False)) if hit]
+        return columns[matches[0]] if matches else None
+
+    def _worker_columns(self, kwarg_sources: list[dict]) -> list:
+        """The columns a Multiprocessing worker can actually reach for.
+
+        An indicator only ever sees the default OHLCV columns, whatever a
+        ``close="my_col"``-style kwarg points at, and ``df.ta.adjusted``.
+        Everything else — a previous strategy() run's output, unrelated user
+        columns — would be pickled onto the Pool task pipe for nothing.
+
+        Args:
+            kwarg_sources (list of dict): Every kwargs mapping that will reach
+                an indicator call, i.e. the shared strategy kwargs plus each
+                per-indicator dict of a Custom Strategy.
+
+        Returns:
+            list: Column labels, in DataFrame order.
+        """
+        requested = set(_DEFAULT_COLUMN_NAMES)
+        if self.adjusted is not None:
+            requested.add(self.adjusted)
+        for source in kwarg_sources:
+            for key in _COLUMN_KWARG_KEYS:
+                value = source.get(key)
+                if isinstance(value, str):
+                    requested.add(value)
+
+        resolved = {column for column in (self._matching_column(name) for name in requested) if column is not None}
+        return [column for column in self._df.columns if column in resolved]
 
     def _indicators_by_category(self, name: str) -> Optional[list]:
         """Returns indicators by Categorical name."""
@@ -718,13 +766,17 @@ class AnalysisIndicators(PandasObject):
         if use_multiprocessing:
             _total_ta = len(ta)
 
-            # Create a lightweight copy of self that contains only the
-            # original OHLCV columns.  Without this, each imap() call
-            # pickles self._df (which grows as indicators are appended),
-            # causing pandas BlockManager integrity errors in workers and
-            # pool deadlocks.
+            # Create a lightweight copy of self holding only the columns an
+            # indicator can reach (see _worker_columns).  Without this, each
+            # imap() call pickles the whole of self._df -- which grows as
+            # indicators are appended -- causing pandas BlockManager integrity
+            # errors in workers and pool deadlocks.  On Windows the oversized
+            # pickle also fails the overlapped WriteFile on the task pipe
+            # outright with 'OSError: [WinError 1450] Insufficient system
+            # resources'.
+            kwarg_sources = [kwargs, *ta] if mode["custom"] else [kwargs]
             slim = copy(self)
-            slim._df = self._df[self._df.columns[:initial_column_count]].copy()
+            slim._df = self._df[self._worker_columns(kwarg_sources)].copy()
 
             # Python 3.12 warns when forking from a multi-threaded process.
             # Use spawn context explicitly to avoid unsafe fork behavior.
@@ -776,7 +828,7 @@ class AnalysisIndicators(PandasObject):
                 pool.join()
 
             del slim
-            self._last_run = get_time(self.exchange, to_string=True)
+            self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)
 
         else:
             # Without multiprocessing:
@@ -804,12 +856,12 @@ class AnalysisIndicators(PandasObject):
                 else:
                     for ind in ta:
                         getattr(self, ind)(*(), **kwargs)
-                self._last_run = get_time(self.exchange, to_string=True)
+                self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)
 
         if verbose:
             logger.info(f"Total indicators: {len(ta)}")
             logger.info(f"Columns added: {len(self._df.columns) - initial_column_count}")
-            logger.info(f"Last Run: {self._last_run}")
+            logger.info(f"Last Run: {self.last_run}")
         if timed:
             logger.info(f"Runtime: {final_time(stime)}")
 
@@ -892,6 +944,14 @@ class AnalysisIndicators(PandasObject):
             raise AttributeError(name)
         func = _find_indicator_func(name)
         if func is None:
+            # A property getter raising AttributeError lands here too: Python
+            # cannot tell "no such attribute" from "the descriptor failed", so
+            # reporting a missing attribute would replace the real error (and
+            # its traceback) with a false one.  Re-run the descriptor directly
+            # -- that path bypasses __getattr__ -- to surface the actual cause.
+            descriptor = getattr(type(self), name, None)
+            if descriptor is not None:
+                return descriptor.__get__(self, type(self))
             raise AttributeError(f"'AnalysisIndicators' object has no attribute '{name}'")
         wrapper = _make_ta_wrapper(func)
         wrapper.__name__ = name

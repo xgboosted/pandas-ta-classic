@@ -13,12 +13,16 @@ Covers:
     documented.
 """
 
-from unittest import TestCase
+from unittest import TestCase, skipIf
 
 import numpy as np
 import pandas as pd
 
 from tests.config import get_sample_data
+
+# pandas 3 removed accessor caching; pandas 2 still caches df.ta on the
+# instance.  Only the premise test below depends on which one is installed.
+_PANDAS_MAJOR = int(pd.__version__.split(".")[0])
 
 
 class TestAccessorHelperClassification(TestCase):
@@ -203,6 +207,89 @@ class TestAccessorTimeRange(TestCase):
         val = self.df.ta.time_range
         self.assertIsInstance(val, float)
         self.assertGreater(val, 0)
+
+
+class TestAccessorSettablePropertiesPersist(TestCase):
+    """Assignments to df.ta.<property> must survive the next df.ta access.
+
+    pandas 3 dropped accessor caching, so ``df.ta`` builds a fresh
+    AnalysisIndicators every time.  State kept on the instance is discarded
+    the moment it is assigned; it has to live on the DataFrame.
+
+    The requirement is version independent — storing the state on the
+    DataFrame is correct whether or not the accessor happens to be cached —
+    so every test here runs on both pandas 2 and 3.  Only the premise test
+    below observes the caching behaviour itself, and that does differ.
+    """
+
+    def setUp(self):
+        self.df = get_sample_data()
+
+    @skipIf(_PANDAS_MAJOR < 3, "pandas 2 still caches the accessor on the instance")
+    def test_accessor_is_rebuilt_per_access(self):
+        """The premise these tests guard against, on pandas 3.
+
+        pandas 2 returns the cached accessor, so ``df.ta is df.ta`` there.
+        That is why this one assertion is gated while the persistence tests
+        are not: the bug they cover is invisible under caching but the fix
+        must hold either way.
+        """
+        self.assertIsNot(self.df.ta, self.df.ta)
+
+    def test_cores_persists(self):
+        self.df.ta.cores = 0
+        self.assertEqual(self.df.ta.cores, 0)
+
+    def test_adjusted_persists(self):
+        self.df.ta.adjusted = "adj_close"
+        self.assertEqual(self.df.ta.adjusted, "adj_close")
+        self.df.ta.adjusted = None
+        self.assertIsNone(self.df.ta.adjusted)
+
+    def test_exchange_persists(self):
+        self.df.ta.exchange = "LSE"
+        self.assertEqual(self.df.ta.exchange, "LSE")
+
+    def test_time_range_unit_persists(self):
+        self.df.ta.time_range = "years"
+        years = self.df.ta.time_range
+        self.df.ta.time_range = "months"
+        self.assertGreater(self.df.ta.time_range, years)
+
+    def test_settings_do_not_leak_to_other_frames(self):
+        self.df.ta.cores = 0
+        self.df.ta.exchange = "LSE"
+        other = get_sample_data()
+        self.assertNotEqual(other.ta.cores, 0)
+        self.assertEqual(other.ta.exchange, "NYSE")
+
+
+class TestAccessorPropertyErrorsAreNotMasked(TestCase):
+    """A failing property must not be reported as a missing attribute.
+
+    An AttributeError raised inside a property getter makes Python fall back
+    to __getattr__, which used to answer "no attribute '<name>'" — replacing
+    the real cause, with no exception chaining to recover it from.
+    """
+
+    def setUp(self):
+        # RangeIndex: the time-based properties cannot work on it.
+        self.df = pd.DataFrame({"close": [1.0, 2.0]})
+
+    def test_to_utc_reports_the_real_failure(self):
+        with self.assertRaises(AttributeError) as ctx:
+            self.df.ta.to_utc
+        self.assertIn("tz_localize", str(ctx.exception))
+
+    def test_time_range_reports_the_real_failure(self):
+        with self.assertRaises(AttributeError) as ctx:
+            self.df.ta.time_range
+        self.assertNotIn("has no attribute 'time_range'", str(ctx.exception))
+
+    def test_unknown_attribute_still_reports_missing(self):
+        with self.assertRaises(AttributeError) as ctx:
+            self.df.ta.definitely_not_an_indicator
+        self.assertIn("has no attribute 'definitely_not_an_indicator'", str(ctx.exception))
 
 
 class TestAccessorToUtcProperty(TestCase):
