@@ -60,6 +60,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **Cross-package indicator imports**: A submodule import could overwrite a re-exported function of the same name on the parent package (e.g. `from pandas_ta_classic.volatility import atr` occasionally returned the `atr` *module* instead of the function). Resolved.
 * **Test-fixture regen no longer drops `cmo_14` entries** when running tests without tulipy installed. Generators now merge with existing JSON instead of overwriting.
 
+### Documentation
+* **Quickstart troubleshooting: all-NaN results after resampling** (`docs/quickstart.md`): a NaN row *inside* the series — what `df.resample('D')` inserts for every weekend on a weekday-only feed — is a different failure from having too little data, and the existing entry pointed at the wrong diagnosis. 81 of 224 indicators return all-`NaN` on a 300-row daily frame with weekend gaps (`sma`, `stoch`, `macd`, `linreg`, `willr`, `stdev` among them) while `ema`, `rma` and `atr` still produce values, because a `rolling(length)` window needs `length` consecutive non-NaN bars and an `ewm` recursion does not. Documents the asymmetry and the fix (`dropna()` the resampled frame before computing, and assign the result back).
+
 ## [0.6.52] - 2026-06-25
 
 ### Added

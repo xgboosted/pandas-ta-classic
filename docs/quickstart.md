@@ -404,6 +404,31 @@ if len(df) >= 20:
  df.ta.sma(length=20, append=True)
 ```
 
+### Issue: "All NaN values" after resampling
+
+**Cause:** A gap *inside* the series, rather than too little data. `df.resample('D')` on a
+feed that only trades on weekdays inserts a NaN row for every weekend, and many indicators
+cannot see past those rows. On a 300-row daily frame with weekend gaps, 81 of 224 indicators
+return all-NaN — among them `sma`, `stoch`, `macd`, `linreg`, `willr` and `stdev` — while
+`ema`, `rma` and `atr` still produce values.
+
+Which side an indicator falls on depends on its internals: a `rolling(length)` window needs
+`length` consecutive non-NaN bars, an `ewm` recursion does not. So two indicators called with
+the same `length` can legitimately start at different bars on gapped data.
+
+**Solution:** Drop the empty periods before computing, not after:
+
+```python
+# resample() emits one row per calendar period, gap or not
+daily = df.resample('D').agg({'open': 'first', 'high': 'max',
+                              'low': 'min', 'close': 'last'})
+
+daily = daily.dropna()  # drop the empty periods first
+daily.ta.sma(length=14, append=True)
+```
+
+`dropna()` returns a copy, so `daily.dropna()` on a line of its own does nothing — assign it back.
+
 ### Issue: "Import Error: No module named 'pandas_ta_classic'"
 
 **Solution:** Verify installation:
