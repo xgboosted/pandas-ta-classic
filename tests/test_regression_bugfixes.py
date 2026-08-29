@@ -13,7 +13,9 @@ Covered fixes:
   5. zscore            — column name is ZS_{length} (was Z_{length})
   6. rvgi              — returns 3 columns including histogram (RVGIh_*)
   7. hl2 / hlc3        — return None on invalid input; respect fillna kwarg
-  8. cdl_z             — full=True path uses bfill() (pandas 3.0 compatible)
+  8. cdl_z             — full=True uses an anchored (expanding) Z Score; the
+                         old bfill() copied the last bar's value onto every
+                         earlier row (issue #149 follow-up)
   9. edecay            — multiplicative decay floored at close (not additive)
  10. psl               — open_ branch returns None when verify_series returns None
  11. apply_fill        — fillna kwarg is honoured by hl2, hlc3, avgprice, emv, edecay
@@ -420,39 +422,63 @@ class TestHl2Hlc3NoneGuard(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Fix 8: cdl_z full=True uses bfill() — pandas 3.0 compatible
+# Fix 8: cdl_z full=True is an anchored (expanding) Z Score
+#
+# The previous implementation set the window to close.size -- so only the final
+# bar had a value -- and then back-filled, which copied that single value onto
+# every earlier row. The column was constant and built entirely out of future
+# data. full=True now standardises each bar against bars 0..t only.
 # ---------------------------------------------------------------------------
 
 
-class TestCdlZBfill(TestCase):
-    """cdl_z(full=True) must back-fill early NaN values (bfill fix)."""
+class TestCdlZAnchored(TestCase):
+    """cdl_z(full=True) must be an anchored Z Score, not a back-filled constant."""
 
     @classmethod
     def setUpClass(cls):
         cls.df = get_sample_data()
+        cls.full = ta.cdl_z(
+            cls.df["open"],
+            cls.df["high"],
+            cls.df["low"],
+            cls.df["close"],
+            full=True,
+        )
+        cls.open_col = next(c for c in cls.full.columns if "open" in c.lower())
 
     @classmethod
     def tearDownClass(cls):
         del cls.df
+        del cls.full
 
-    def test_cdlz_full_true_no_leading_nans(self):
-        """cdl_z(full=True) result must have no NaN in the open_Z column."""
-        result = ta.cdl_z(
-            self.df["open"],
-            self.df["high"],
-            self.df["low"],
-            self.df["close"],
-            full=True,
+    def test_cdlz_full_true_returns_dataframe(self):
+        self.assertIsInstance(self.full, pd.DataFrame)
+
+    def test_cdlz_full_true_only_first_bar_is_nan(self):
+        """One bar cannot have a standard deviation; every later bar must."""
+        self.assertEqual(1, self.full[self.open_col].isna().sum())
+        self.assertTrue(np.isnan(self.full[self.open_col].iloc[0]))
+
+    def test_cdlz_full_true_is_not_constant(self):
+        """The bfill bug produced one repeated value for the whole column."""
+        self.assertGreater(self.full[self.open_col].dropna().nunique(), 1)
+
+    def test_cdlz_full_true_matches_expanding_zscore(self):
+        open_ = self.df["open"]
+        expanding = open_.expanding(min_periods=2)
+        expected = (open_ - expanding.mean()) / expanding.std(ddof=1)
+        pd.testing.assert_series_equal(
+            self.full[self.open_col],
+            expected,
+            check_names=False,
         )
-        self.assertIsNotNone(result)
-        self.assertIsInstance(result, pd.DataFrame)
-        open_col = next(c for c in result.columns if "open" in c.lower())
-        nan_count = result[open_col].isna().sum()
-        self.assertEqual(
-            nan_count,
-            0,
-            f"cdl_z(full=True) must bfill all NaNs; found {nan_count} NaN values",
-        )
+
+    def test_cdlz_full_true_does_not_use_future_bars(self):
+        """Values for the first K bars must not change when more bars arrive."""
+        cut = len(self.df) // 2
+        head = self.df.head(cut)
+        prefix = ta.cdl_z(head["open"], head["high"], head["low"], head["close"], full=True)
+        pd.testing.assert_frame_equal(self.full.iloc[:cut], prefix)
 
     def test_cdlz_full_false_has_leading_nans(self):
         """cdl_z(full=False) must have leading NaN values (warmup period)."""

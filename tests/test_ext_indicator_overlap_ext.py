@@ -2,7 +2,7 @@ import warnings
 from tests.config import get_sample_data
 
 from unittest import TestCase
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 
 class TestOverlapExtension(TestCase):
@@ -290,7 +290,9 @@ class TestOverlapExtension(TestCase):
         self.assertEqual(list(self.data.columns[-2:]), ["MAMA_0.5_0.05", "FAMA_0.5_0.05"])
 
     def test_mavp_ext(self):
-        self.data.ta.mavp(append=True)
+        periods = Series([5, 10, 20] * (len(self.data) // 3 + 1)).iloc[: len(self.data)]
+        periods.index = self.data.index
+        self.data.ta.mavp(periods=periods, append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "MAVP_2_30")
 
