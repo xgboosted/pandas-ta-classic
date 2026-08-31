@@ -20,7 +20,7 @@ import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
     _find_indicator_func,
 )
-from pandas_ta_classic._meta import Category
+from pandas_ta_classic._meta import Category, _VALID_CATEGORIES
 
 from tests.config import get_sample_data
 
@@ -175,6 +175,17 @@ class TestModuleGetattr(unittest.TestCase):
         self.assertIsInstance(mod, types.ModuleType)
         self.assertTrue(hasattr(mod, "cdl_2crows"), "submodule must contain its pattern function")
 
+    def test_cdl_shorthand_access(self):
+        """ta.cdl is the shorthand wrapper from candles/cdl_pattern.py.
+
+        It has no submodule of its own and is not a Category entry, so it
+        needs its own branch in __getattr__ — it regressed to AttributeError
+        when the categories stopped being imported eagerly.
+        """
+        self.assertTrue(callable(pandas_ta_classic.cdl))
+        self.assertIs(pandas_ta_classic.cdl, pandas_ta_classic.candles.cdl)
+        self.assertIn("cdl", dir(pandas_ta_classic))
+
     def test_cdl_pattern_names_deprecation(self):
         """Accessing CDL_PATTERN_NAMES emits DeprecationWarning, returns ALL_PATTERNS."""
         with warnings.catch_warnings(record=True) as w:
@@ -220,6 +231,56 @@ class TestDirCompleteness(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Regression tests
 # ---------------------------------------------------------------------------
+
+
+class TestCategoryAttrAccess(unittest.TestCase):
+    """Regression: `ta.<category>` must resolve deterministically in a fresh
+    interpreter, not only after some other indicator has been loaded first.
+    """
+
+    def test_all_categories_in_dir(self):
+        """Every category subpackage name is advertised by dir().
+
+        They are deliberately absent from __all__, which lists the eagerly
+        bound names; the categories resolve through __getattr__ instead,
+        exactly like the indicator functions.
+        """
+        for cat in sorted(_VALID_CATEGORIES):
+            self.assertIn(cat, dir(pandas_ta_classic), f"{cat!r} missing from dir(pandas_ta_classic)")
+
+    def test_category_attr_resolves_without_prior_indicator_access(self):
+        """`ta.<category>` must be a module in a fresh interpreter, before
+        any indicator function has been accessed — regression for the
+        order-dependent AttributeError reported against docs/quickstart.md.
+        """
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        script = (
+            "import sys\n"
+            "import types\n"
+            "import pandas_ta_classic as ta\n"
+            "from pandas_ta_classic._meta import _VALID_CATEGORIES\n"
+            # Resolving a category through __getattr__ must not cost anything
+            # at import time, so none of them may be loaded yet. performance is
+            # exempt: utils/_metrics.py imports from it at module scope, so it
+            # loads eagerly for an unrelated reason.
+            "for cat in sorted(_VALID_CATEGORIES - {'performance'}):\n"
+            "    assert f'pandas_ta_classic.{cat}' not in sys.modules, f'{cat} imported eagerly'\n"
+            "for cat in sorted(_VALID_CATEGORIES):\n"
+            "    assert hasattr(ta, cat), f'hasattr failed for {cat}'\n"
+            "    assert isinstance(getattr(ta, cat), types.ModuleType), cat\n"
+            "print('OK')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=str(Path(__file__).resolve().parents[1]),
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("OK", result.stdout)
 
 
 class TestRegression(unittest.TestCase):
