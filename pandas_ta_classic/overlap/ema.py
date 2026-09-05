@@ -126,7 +126,9 @@ def _ema_chain(close: Series, length: int, depth: int, **kwargs):
         e = ema(close=feed, length=length, talib=False, **kwargs)
         if e is None:
             return None
-        results.append(e)
+        # Each stage is fed a trimmed series, so reindex before handing it back:
+        # callers combine the stages arithmetically and expect close's index.
+        results.append(e.reindex(close.index))
         # Strip leading NaN so the next EMA seeds at the right bar.
         fvi = e.first_valid_index()
         if fvi is None:

@@ -70,6 +70,11 @@ def stoch(
         if stoch_d is None:
             return None
 
+        # The warmup slices above shorten %K and %D; restore the caller's index
+        # so the result lines up bar for bar with close.
+        stoch_k = stoch_k.reindex(close.index)
+        stoch_d = stoch_d.reindex(close.index)
+
     # Offset
     stoch_k, stoch_d = apply_offset([stoch_k, stoch_d], offset)
 
