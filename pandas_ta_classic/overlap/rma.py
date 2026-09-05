@@ -23,10 +23,14 @@ def rma(
 
     # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
     close = close.copy()
-    sma_nth = close.iloc[0:length].mean()
-    close.iloc[: length - 1] = np.nan
-    close.iloc[length - 1] = sma_nth
-    rma = close.ewm(alpha=alpha, adjust=False).mean()
+    if length > close.size:
+        # No SMA seed exists, so the average is undefined at every position.
+        rma = Series(np.nan, index=close.index)
+    else:
+        sma_nth = close.iloc[0:length].mean()
+        close.iloc[: length - 1] = np.nan
+        close.iloc[length - 1] = sma_nth
+        rma = close.ewm(alpha=alpha, adjust=False).mean()
 
     # Offset
     rma = apply_offset(rma, offset)

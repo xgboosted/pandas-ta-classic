@@ -135,6 +135,19 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
 
         # DC Phase — TA-Lib uses int(smoothPeriod + 0.5) for rounding
         sp = smooth_period_arr[i]
+        if not np.isfinite(sp):
+            # A NaN anywhere in the input poisons the recursion, so the smoothed
+            # period — and every value derived from it — is undefined from here
+            # on. TA-Lib requires NaN-free input; emit NaN rather than crash in
+            # int(nan), so the indicator propagates NaN instead of raising.
+            dc_phase_arr[i] = np.nan
+            in_phase_arr[i] = np.nan
+            quad_arr[i] = np.nan
+            sine_arr[i] = np.nan
+            lead_sine_arr[i] = np.nan
+            trendline_arr[i] = np.nan
+            trend_mode_arr[i] = np.nan
+            continue
         dc_period_int = max(int(sp + 0.5), 1)
         real_part = 0.0
         imag_part = 0.0

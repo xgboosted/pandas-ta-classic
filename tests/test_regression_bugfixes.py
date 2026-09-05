@@ -23,11 +23,28 @@ Covered fixes:
  15. cmf               — invalid optional open_ returns None instead of crashing
  16. psar              — invalid optional close returns None instead of crashing
  17. dema/tema/t3/trima/cci/natr — talib=False propagated to sub-indicator calls
+ 18. dm                — short input returns None (min_length was missing), matching
+                         plus_dm/minus_dm and the documented short-input contract
+ 19. cdl_pattern       — short input no longer raises AttributeError; sub-patterns
+                         that return None are skipped instead of dereferenced
+ 20. ema               — the SMA seed no longer indexes past the end when fewer
+                         than `length` valid values follow the first valid one;
+                         fixes IndexError in 14 chained indicators (trix, tsi,
+                         qqe, ppo, pvo, ...) on clean data with default args
+ 21. ht_* (_hilbert)   — a single NaN in the input propagates as NaN instead of
+                         raising ValueError in int(nan) at the DCPeriod rounding
+ 22. candle_color      — a NaN open/close yields NaN instead of raising
+                         IntCastingNaNError; affects cdl_inside and cdl_pattern
+ 23. rma / linreg /    — short-window hardening: these three sites crashed if the
+     _sliding_weighted_   verify_series min_length guard was bypassed. Not
+     ma                   reachable through the public API; guarded anyway
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
 """
 
+import importlib
+import inspect
 import math
 from unittest import TestCase
 
@@ -895,3 +912,386 @@ class TestTalibFalsePropagation(TestCase):
         """natr(talib=False) returns a Series."""
         result = ta.natr(self.high, self.low, self.close, talib=False)
         self.assertIsInstance(result, pd.Series)
+
+
+# ---------------------------------------------------------------------------
+# Fix 18: dm short-input guard
+# ---------------------------------------------------------------------------
+
+
+class TestDmShortInputGuard(TestCase):
+    """dm() passed no min_length to verify_series, so its guard never fired.
+
+    Every comparable indicator (adx, plus_dm, minus_dm) returns None when the
+    input is shorter than `length`; dm returned a DataFrame computed from too
+    few rows.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data()
+        cls.high = df["high"]
+        cls.low = df["low"]
+
+    def test_short_input_returns_none(self):
+        """Fewer rows than the default length of 14 → None."""
+        result = ta.dm(self.high.iloc[:3], self.low.iloc[:3])
+        self.assertIsNone(result)
+
+    def test_short_input_matches_sibling_indicators(self):
+        """dm agrees with plus_dm/minus_dm/adx on the same short input."""
+        high, low = self.high.iloc[:3], self.low.iloc[:3]
+        self.assertIsNone(ta.dm(high, low))
+        self.assertIsNone(ta.plus_dm(high, low))
+        self.assertIsNone(ta.minus_dm(high, low))
+
+    def test_explicit_length_still_guarded(self):
+        """An explicit length longer than the input is guarded too."""
+        self.assertIsNone(ta.dm(self.high.iloc[:10], self.low.iloc[:10], length=20))
+
+    def test_sufficient_input_still_returns_dataframe(self):
+        """Normal-length input is unaffected."""
+        result = ta.dm(self.high, self.low)
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# Fix 19: cdl_pattern None-check on pta_patterns results
+# ---------------------------------------------------------------------------
+
+
+class TestCdlPatternShortInput(TestCase):
+    """cdl_pattern() dereferenced `.name` on a sub-pattern result without checking it.
+
+    `cdl_doji` has a default length of 10, so on a short frame it returns None
+    and the aggregation raised `AttributeError: 'NoneType' object has no
+    attribute 'name'`. The native-pattern branch already had this guard.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data()
+        cls.open_ = df["open"].iloc[:3]
+        cls.high = df["high"].iloc[:3]
+        cls.low = df["low"].iloc[:3]
+        cls.close = df["close"].iloc[:3]
+
+    def test_short_input_does_not_raise(self):
+        """Short input returns a result instead of raising."""
+        result = ta.cdl_pattern(self.open_, self.high, self.low, self.close)
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_uncomputable_subpattern_is_skipped(self):
+        """doji needs 10 rows, so its column is absent rather than fatal."""
+        result = ta.cdl_pattern(self.open_, self.high, self.low, self.close)
+        self.assertNotIn("CDL_DOJI_10", result.columns)
+        self.assertIn("CDL_INSIDE", result.columns)
+
+    def test_named_uncomputable_pattern_returns_none(self):
+        """Asking only for a pattern that cannot be computed yields None."""
+        result = ta.cdl_pattern(self.open_, self.high, self.low, self.close, name="doji")
+        self.assertIsNone(result)
+
+    def test_accessor_path_does_not_raise(self):
+        """The same call through df.ta.cdl_pattern() is fixed as well."""
+        df = pd.DataFrame(
+            {
+                "open": self.open_,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+            }
+        )
+        result = df.ta.cdl_pattern()
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# Fix 20: ema SMA-seed bounds check
+# ---------------------------------------------------------------------------
+
+
+class TestEmaSeedBounds(TestCase):
+    """ema() seeded at `fv_pos + length - 1` without checking that it exists.
+
+    verify_series' min_length models a single window, but chained indicators
+    compound their lookback: trix applies ema three times, so each inner call's
+    NaN prefix pushes the seed position further out. Once it passed the end of
+    the series, `.iloc[]` raised "IndexError: iloc cannot enlarge its target
+    object" on clean data with default arguments.
+    """
+
+    def test_trix_on_thirty_clean_rows(self):
+        """The minimal user-facing reproducer: 30 rows, defaults, no NaN."""
+        result = ta.trix(pd.Series(range(1, 31), dtype=float))
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_chained_ema_over_nan_prefix(self):
+        """A NaN prefix from an inner call no longer pushes the seed off the end."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        result = ta.ema(ta.sma(close, length=190), length=20)
+        self.assertIsInstance(result, pd.Series)
+        self.assertTrue(result.isna().all(), "undefined EMA must be all-NaN")
+
+    def test_affected_indicators_no_longer_raise(self):
+        """Each indicator, at a row count that previously raised."""
+        cases = {
+            "efi": 13, "inertia": 20, "kc": 20, "pgo": 14, "ppo": 26,
+            "pvo": 26, "qqe": 27, "rvi": 14, "smi": 20, "thermo": 20,
+            "trix": 30, "trixh": 18, "tsi": 25, "zlma": 10,
+        }
+        rng = np.random.default_rng(0)
+        for name, rows in cases.items():
+            with self.subTest(indicator=name, rows=rows):
+                base = 100 + np.cumsum(rng.normal(0, 1, rows))
+                index = pd.date_range("2020-01-01", periods=rows, freq="D")
+                func = getattr(ta, name)
+                kwargs = {}
+                for param in inspect.signature(func).parameters:
+                    if param == "close":
+                        kwargs[param] = pd.Series(base, index=index)
+                    elif param == "high":
+                        kwargs[param] = pd.Series(base + 1.0, index=index)
+                    elif param == "low":
+                        kwargs[param] = pd.Series(base - 1.0, index=index)
+                    elif param == "open_":
+                        kwargs[param] = pd.Series(base - 0.5, index=index)
+                    elif param == "volume":
+                        kwargs[param] = pd.Series(
+                            rng.integers(1_000, 5_000, rows).astype(float), index=index
+                        )
+                func(**kwargs)  # must not raise
+
+    def test_strategy_on_short_frame(self):
+        """df.ta.strategy("all") on 20 clean rows previously raised IndexError."""
+        rows = 20
+        rng = np.random.default_rng(0)
+        base = 100 + np.cumsum(rng.normal(0, 1, rows))
+        df = pd.DataFrame(
+            {
+                "open": base - 0.5,
+                "high": base + 1.0,
+                "low": base - 1.0,
+                "close": base,
+                "volume": rng.integers(1_000, 5_000, rows).astype(float),
+            },
+            index=pd.date_range("2020-01-01", periods=rows, freq="D"),
+        )
+        df.ta.strategy("all", cores=0)  # must not raise
+
+    def test_ample_input_seed_unchanged(self):
+        """Normal-length input keeps the TA-Lib lookback: length-1 leading NaN."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        result = ta.ema(close, length=20)
+        self.assertEqual(result.isna().sum(), 19)
+        self.assertTrue(np.isfinite(result.iloc[19:]).all())
+
+    def test_bbands_with_zlma_mamode(self):
+        """bbands(mamode="zlma") on 5 rows previously raised through ema."""
+        result = ta.bbands(pd.Series([1.0, 2.0, 3.0, 4.0, 5.0]), mamode="zlma")
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# Fix 21: _hilbert NaN handling
+# ---------------------------------------------------------------------------
+
+
+class TestHilbertNanInput(TestCase):
+    """The Hilbert Transform loop crashed in int(nan) on any NaN input.
+
+    `dc_period_int = max(int(sp + 0.5), 1)` raised "ValueError: cannot convert
+    float NaN to integer" once a NaN reached the smoothed period, which a single
+    NaN anywhere in the input guarantees. This contradicted the documented
+    contract that an indicator may propagate NaN but must not crash.
+    """
+
+    HT_NAMES = (
+        "ht_trendline",
+        "ht_dcperiod",
+        "ht_dcphase",
+        "ht_sine",
+        "ht_phasor",
+        "ht_trendmode",
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.clean = pd.Series(100 + np.cumsum(np.random.default_rng(7).normal(0, 1, 200)))
+        cls.with_nan = cls.clean.copy()
+        cls.with_nan.iloc[50] = np.nan
+
+    def test_single_nan_does_not_raise(self):
+        """One NaN mid-series returns a result for every ht_* indicator."""
+        for name in self.HT_NAMES:
+            with self.subTest(indicator=name):
+                result = getattr(ta, name)(self.with_nan)
+                self.assertIsNotNone(result)
+                self.assertIsInstance(result, (pd.Series, pd.DataFrame))
+
+    def test_nan_propagates_after_the_gap(self):
+        """The recursion is poisoned from the NaN onward, so output goes NaN."""
+        result = ta.ht_trendline(self.with_nan)
+        self.assertTrue(result.iloc[54:].isna().all())
+
+    def test_values_before_the_gap_are_unaffected(self):
+        """Bars before the NaN keep the values computed from clean input."""
+        clean_result = ta.ht_trendline(self.clean)
+        nan_result = ta.ht_trendline(self.with_nan)
+        mask = clean_result.iloc[:47].notna()
+        np.testing.assert_allclose(
+            nan_result.iloc[:47][mask].values,
+            clean_result.iloc[:47][mask].values,
+            rtol=1e-12,
+        )
+
+    def test_inf_does_not_raise(self):
+        """±Inf is the other half of the documented edge-case contract."""
+        with_inf = self.clean.copy()
+        with_inf.iloc[50] = np.inf
+        for name in self.HT_NAMES:
+            with self.subTest(indicator=name):
+                self.assertIsNotNone(getattr(ta, name)(with_inf))
+
+    def test_clean_input_still_produces_values(self):
+        """No NaN anywhere: the guard must not fire."""
+        result = ta.ht_trendline(self.clean)
+        self.assertGreater(int(np.isfinite(result).sum()), 100)
+
+
+# ---------------------------------------------------------------------------
+# Fix 22: candle_color NaN handling
+# ---------------------------------------------------------------------------
+
+
+class TestCandleColorNanInput(TestCase):
+    """candle_color() did `close.copy().astype(int)`, which raises on NaN.
+
+    pandas cannot cast NaN to int, so `IntCastingNaNError` propagated out of
+    cdl_inside and cdl_pattern for any input carrying a NaN -- which is what
+    every chained indicator produces.
+    """
+
+    def test_clean_input_keeps_int_dtype(self):
+        """Fully defined input keeps the historical integer dtype."""
+        open_ = pd.Series([1.0, 2.0, 3.0])
+        close = pd.Series([2.0, 1.0, 3.0])
+        result = ta.candle_color(open_, close)
+        self.assertEqual(result.dtype, np.dtype("int64"))
+        self.assertEqual(result.tolist(), [1, -1, 1])
+
+    def test_nan_yields_nan_not_a_colour(self):
+        """An undefined candle is NaN, not silently classified as bearish."""
+        open_ = pd.Series([1.0, 2.0, 3.0])
+        close = pd.Series([2.0, np.nan, 3.0])
+        result = ta.candle_color(open_, close)
+        self.assertTrue(np.isnan(result.iloc[1]))
+        self.assertEqual(result.iloc[0], 1.0)
+        self.assertEqual(result.iloc[2], 1.0)
+
+    def test_cdl_inside_with_nan_does_not_raise(self):
+        """cdl_inside previously raised IntCastingNaNError."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        close.iloc[50] = np.nan
+        result = ta.cdl_inside(close, close + 1, close - 1, close)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_cdl_pattern_with_nan_does_not_raise(self):
+        """The aggregation path is fixed as well."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        close.iloc[50] = np.nan
+        result = ta.cdl_pattern(close - 0.5, close + 1, close - 1, close)
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_asbool_path_unaffected(self):
+        """asbool=True never calls candle_color."""
+        close = pd.Series(np.arange(1.0, 51.0))
+        result = ta.cdl_inside(close - 0.5, close + 1, close - 1, close, asbool=True)
+        self.assertEqual(result.dtype, np.dtype("bool"))
+
+
+# ---------------------------------------------------------------------------
+# Fix 23: short-window hardening for rma, linreg and _sliding_weighted_ma
+# ---------------------------------------------------------------------------
+
+
+class TestShortWindowHardening(TestCase):
+    """Three sites that crashed when handed a window longer than the series.
+
+    None of them is reachable through the public API: verify_series' min_length
+    guard blocks every route found while probing (oversized single and multi
+    window arguments, every mamode, the accessor and strategy paths, NaN-prefixed
+    input, and chained calls). They are hardened regardless, because the ema
+    seeding bug (fix 20) was equally unreachable until someone worked out which
+    composition of indicators exposed it -- min_length models a single window,
+    while real lookback is compositional.
+
+    Reaching the guarded branches therefore requires bypassing verify_series,
+    which is what these tests do.
+    """
+
+    @staticmethod
+    def _passthrough(series, min_length=None):
+        """verify_series without the min_length short-circuit."""
+        return series if isinstance(series, pd.Series) else None
+
+    def _without_guard(self, dotted_name):
+        """Swap verify_series in a module for the pass-through, restoring after.
+
+        The module has to be resolved by name: ``pandas_ta_classic.overlap``
+        re-exports each indicator function under the same name as its submodule,
+        so plain attribute access returns the function, not the module.
+        """
+        module = importlib.import_module(dotted_name)
+        original = module.verify_series
+        module.verify_series = self._passthrough
+        self.addCleanup(setattr, module, "verify_series", original)
+        return module
+
+    def test_sliding_weighted_ma_window_longer_than_series(self):
+        """The helper is directly callable and must not build an empty view."""
+        from pandas_ta_classic.utils._core import _sliding_weighted_ma
+
+        close = pd.Series([1.0, 2.0, 3.0])
+        result = _sliding_weighted_ma(close, 10, np.ones(10))
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(len(result), 3)
+        self.assertTrue(result.isna().all())
+
+    def test_sliding_weighted_ma_exact_fit(self):
+        """length == len(series) still produces the single valid window."""
+        from pandas_ta_classic.utils._core import _sliding_weighted_ma
+
+        close = pd.Series([1.0, 2.0, 3.0])
+        result = _sliding_weighted_ma(close, 3, np.ones(3))
+        self.assertEqual(result.iloc[-1], 6.0)
+        self.assertTrue(result.iloc[:2].isna().all())
+
+    def test_rma_without_guard(self):
+        """rma seeded at iloc[length - 1] without checking it exists."""
+        module = self._without_guard("pandas_ta_classic.overlap.rma")
+        result = module.rma(pd.Series([1.0, 2.0, 3.0]), length=10)
+        self.assertIsInstance(result, pd.Series)
+        self.assertTrue(result.isna().all())
+
+    def test_linreg_without_guard(self):
+        """linreg built a sliding window wider than the input array."""
+        module = self._without_guard("pandas_ta_classic.overlap.linreg")
+        result = module.linreg(pd.Series([1.0, 2.0, 3.0]), length=10, talib=False)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(len(result), 3)
+        self.assertTrue(result.isna().all())
+
+    def test_alma_without_guard(self):
+        """alma reaches _sliding_weighted_ma, so it is covered too."""
+        module = self._without_guard("pandas_ta_classic.overlap.alma")
+        result = module.alma(pd.Series([1.0, 2.0, 3.0]), length=10)
+        self.assertIsInstance(result, pd.Series)
+        self.assertTrue(result.isna().all())
+
+    def test_valid_input_unaffected(self):
+        """Ample input keeps its usual lookback in all three."""
+        close = pd.Series(np.arange(1.0, 101.0))
+        self.assertEqual(ta.rma(close, length=10).isna().sum(), 9)
+        self.assertEqual(ta.linreg(close, length=10, talib=False).isna().sum(), 9)
+        self.assertEqual(ta.alma(close, length=10).isna().sum(), 9)

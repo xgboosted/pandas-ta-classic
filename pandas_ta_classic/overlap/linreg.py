@@ -127,23 +127,27 @@ def linreg(
 
         from numpy.lib.stride_tricks import sliding_window_view
 
-        windows = sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
-        linreg_ = _linreg_output(
-            windows,
-            x_arr,
-            x_sum,
-            x2_sum,
-            divisor,
-            length,
-            slope,
-            intercept,
-            angle,
-            degrees,
-            r,
-            tsf,
-        )
+        if length > close.size:
+            # Not a single full window fits, so every position is undefined.
+            linreg = Series(np.nan, index=close.index)
+        else:
+            windows = sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
+            linreg_ = _linreg_output(
+                windows,
+                x_arr,
+                x_sum,
+                x2_sum,
+                divisor,
+                length,
+                slope,
+                intercept,
+                angle,
+                degrees,
+                r,
+                tsf,
+            )
 
-        linreg = Series(np.concatenate([[np.nan] * (length - 1), linreg_]), index=close.index)
+            linreg = Series(np.concatenate([[np.nan] * (length - 1), linreg_]), index=close.index)
 
     # Offset
     linreg = apply_offset(linreg, offset)
