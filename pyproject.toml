@@ -119,7 +119,8 @@ data = [
 backtest = [
     "backtesting",
     "vectorbt",
-    "backtrader"
+    "backtrader",
+    "manifoldbt"
 ]
 
 # Back-compat alias for the previous combined extra
