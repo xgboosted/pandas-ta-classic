@@ -289,6 +289,6 @@ Verify your installation:
     print(sma)
     
     # List all available indicators
-    print(f"Available indicators: {len(df.ta.indicators())}")
+    print(f"Available indicators: {len(df.ta.indicators(as_list=True))}")
 
 If this runs without errors, you're ready to use Pandas TA Classic!

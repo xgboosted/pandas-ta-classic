@@ -13,6 +13,8 @@ Covers:
     documented.
 """
 
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest import TestCase
 
 import numpy as np
@@ -116,6 +118,20 @@ class TestAccessorHelperClassification(TestCase):
         self.assertNotIn("sma", filtered)
         # All other indicators still present
         self.assertIn("ema", filtered)
+
+    # ------------------------------------------------------------------
+    # Default call prints to stdout and returns None — Issue #152
+    # ------------------------------------------------------------------
+
+    def test_default_call_prints_to_stdout(self):
+        """indicators() must print to stdout, not to a logger with a NullHandler."""
+        buffer = StringIO()
+        with redirect_stdout(buffer):
+            result = self.df.ta.indicators()
+        output = buffer.getvalue()
+        self.assertIsNone(result, "indicators() without as_list=True must return None")
+        self.assertIn("Total Indicators & Utilities:", output)
+        self.assertIn("sma", output)
 
 
 class TestAccessorPrefixSuffixKwargs(TestCase):

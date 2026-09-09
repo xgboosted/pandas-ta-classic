@@ -602,9 +602,9 @@ class AnalysisIndicators(PandasObject):
 
         s = f"{header}\nTotal Indicators & Utilities: {total_indicators + len(ALL_PATTERNS)}\n"
         if total_indicators > 0:
-            logger.info(f"{s}Abbreviations:\n    {', '.join(ta_indicators)}\n\nCandle Patterns:\n    {', '.join(ALL_PATTERNS)}")
+            print(f"{s}Abbreviations:\n    {', '.join(ta_indicators)}\n\nCandle Patterns:\n    {', '.join(ALL_PATTERNS)}")
         else:
-            logger.info(s)
+            print(s)
 
     def strategy(self, *args, **kwargs):
         """Strategy Method
