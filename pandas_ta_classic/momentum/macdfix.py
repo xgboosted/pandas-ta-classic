@@ -1,6 +1,8 @@
 # MACD with Fixed Periods (MACDFIX)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.momentum.macd import macd
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -8,11 +10,11 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def macdfix(
     close: Series,
-    signal: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    signal: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: MACD with Fixed Periods (MACDFIX)
 
     MACD with fixed fast=12, slow=26, variable signal period.

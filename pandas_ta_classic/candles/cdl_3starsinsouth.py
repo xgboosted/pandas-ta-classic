@@ -1,6 +1,7 @@
 # Candle Three Stars In The South (CDL_3STARSINSOUTH)
-from typing import Any, Optional
+from typing import Any
 
+import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
@@ -11,7 +12,6 @@ from pandas_ta_classic.candles._cdl_math import (
     run_pattern,
 )
 from pandas_ta_classic.utils._njit import njit
-import numpy as np
 
 
 @njit(cache=True)
@@ -171,10 +171,10 @@ def cdl_3starsinsouth(
     high: Series,
     low: Series,
     close: Series,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Candle Pattern: Three Stars In The South
 
     A 3-candle bullish reversal pattern. All three candles are bearish.

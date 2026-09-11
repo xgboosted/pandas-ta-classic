@@ -1,6 +1,8 @@
 # Candle Z (CDL_Z)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.statistics.zscore import zscore
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -10,12 +12,12 @@ def cdl_z(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    full: Optional[bool] = None,
-    ddof: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    full: bool | None = None,
+    ddof: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Candle Type - Z Score"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30

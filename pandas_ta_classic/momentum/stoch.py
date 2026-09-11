@@ -1,6 +1,8 @@
 # Stochastic Oscillator (STOCH)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
@@ -16,14 +18,14 @@ def stoch(
     high: Series,
     low: Series,
     close: Series,
-    k: Optional[int] = None,
-    d: Optional[int] = None,
-    smooth_k: Optional[int] = None,
-    mamode: Optional[str] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    k: int | None = None,
+    d: int | None = None,
+    smooth_k: int | None = None,
+    mamode: str | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Stochastic Oscillator (STOCH)"""
     # Validate arguments
     k = k if k and k > 0 else 14

@@ -1,8 +1,8 @@
 """Fetch OHLCV market data, then run pandas-ta-classic indicators on it.
 
 Data fetching is intentionally *out of scope* for pandas-ta-classic: the built-in
-``df.ta.ticker()`` / ``ta.yf()`` / ``ta.av()`` helpers are deprecated and will be
-removed in a future release. Fetch data with the provider library directly and
+``df.ta.ticker()`` / ``ta.yf()`` / ``ta.av()`` helpers were removed in 0.6.53.
+Fetch data with the provider library directly and
 pass the resulting DataFrame to the library. This file shows the replacement
 patterns for yfinance and Alpha Vantage.
 

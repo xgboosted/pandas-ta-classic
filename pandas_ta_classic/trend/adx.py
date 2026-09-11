@@ -1,9 +1,10 @@
 # Average Directional Movement Index (ADX)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
-from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,21 +13,22 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
+from pandas_ta_classic.volatility.atr import atr
 
 
 def adx(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    lensig: Optional[int] = None,
-    scalar: Optional[float] = None,
-    mamode: Optional[str] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    lensig: int | None = None,
+    scalar: float | None = None,
+    mamode: str | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: ADX"""
     # Validate Arguments
     length = length if length and length > 0 else 14

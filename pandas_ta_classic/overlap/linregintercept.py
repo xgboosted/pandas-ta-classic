@@ -1,17 +1,19 @@
 # Linear Regression Intercept (LINEARREG_INTERCEPT)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
 def linregintercept(
     close: Series,
-    length: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Linear Regression Intercept (LINEARREG_INTERCEPT)
 
     The y-intercept of the linear regression line.

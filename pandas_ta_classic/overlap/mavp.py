@@ -1,6 +1,6 @@
 # Moving Average with Variable Period (MAVP)
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -35,14 +35,14 @@ def _mavp_sma_values(close_arr, per_arr):
 
 def mavp(
     close: Series,
-    periods: Optional[Series] = None,
-    minperiod: Optional[int] = None,
-    maxperiod: Optional[int] = None,
-    mamode: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    periods: Series | None = None,
+    minperiod: int | None = None,
+    maxperiod: int | None = None,
+    mamode: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Moving Average with Variable Period (MAVP)"""
     # Validate Arguments
     minperiod = int(minperiod) if minperiod and minperiod >= 2 else 2

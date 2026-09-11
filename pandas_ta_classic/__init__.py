@@ -8,9 +8,9 @@ from typing import Any
 # Internal callers import it directly from pandas_ta_classic._meta.
 from pandas_ta_classic._meta import (
     CANGLE_AGG,
+    RATE,
     Category,
     Imports,
-    RATE,
     version,
 )
 from pandas_ta_classic.core import (
@@ -24,7 +24,6 @@ from pandas_ta_classic.utils import (
     above_value,
     apply_fill,
     apply_offset,
-    av,
     below,
     below_value,
     cagr,
@@ -66,14 +65,12 @@ from pandas_ta_classic.utils import (
     unsigned_differences,
     verify_series,
     weights,
-    yf,
     zero,
 )
 
 # The utils.volatility() metric stays off the top-level namespace so it never
 # shadows this subpackage.
-from . import utils
-from . import volatility
+from . import utils, volatility
 
 name = "pandas-ta-classic"
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -86,19 +83,18 @@ __description__ = (
 )
 
 __all__ = [
+    "CANGLE_AGG",
+    "RATE",
     "AllStrategy",
     "AnalysisIndicators",
-    "CANGLE_AGG",
     "Category",
     "CommonStrategy",
     "Imports",
-    "RATE",
     "Strategy",
     "above",
     "above_value",
     "apply_fill",
     "apply_offset",
-    "av",
     "below",
     "below_value",
     "cagr",
@@ -144,7 +140,6 @@ __all__ = [
     "version",
     "volatility",
     "weights",
-    "yf",
     "zero",
 ]
 
@@ -169,9 +164,10 @@ def __getattr__(name: str) -> Any:
     """
     import importlib
     import sys
+
     from pandas_ta_classic._indicator_loader import (
-        _find_indicator_func,
         _INDICATOR_TO_CATEGORY,
+        _find_indicator_func,
     )
 
     # Regular indicators in Category → return the function

@@ -1,5 +1,5 @@
 # Candle Upside/Downside Gap Three Methods (CDL_XSIDEGAP3METHODS)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -40,10 +40,10 @@ def cdl_xsidegap3methods(
     high: Series,
     low: Series,
     close: Series,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Candle Pattern: Upside/Downside Gap Three Methods"""
     return run_pattern(
         open_,

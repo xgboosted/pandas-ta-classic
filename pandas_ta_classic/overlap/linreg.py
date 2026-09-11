@@ -1,8 +1,8 @@
 # Linear Regression (LINREG)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
-
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -81,11 +81,11 @@ def _linreg_output(
 
 def linreg(
     close: Series,
-    length: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Linear Regression"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14
@@ -125,9 +125,7 @@ def linreg(
         x2_sum = length * (length - 1) * (2 * length - 1) / 6
         divisor = length * x2_sum - x_sum * x_sum
 
-        from numpy.lib.stride_tricks import sliding_window_view
-
-        windows = sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
+        windows = np.lib.stride_tricks.sliding_window_view(np.array(close, dtype=float), length)  # (n-L+1, L)
         linreg_ = _linreg_output(
             windows,
             x_arr,

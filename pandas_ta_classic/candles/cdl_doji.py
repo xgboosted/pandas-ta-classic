@@ -1,6 +1,8 @@
 # Candle Doji (CDL_DOJI)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -17,13 +19,13 @@ def cdl_doji(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    factor: Optional[float] = None,
-    scalar: Optional[float] = None,
+    length: int | None = None,
+    factor: float | None = None,
+    scalar: float | None = None,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Candle Type - Doji"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

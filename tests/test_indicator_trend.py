@@ -1,9 +1,11 @@
-from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
-from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
 from unittest import TestCase
+
+import numpy as np
 from pandas import DataFrame, Series
+
+import pandas_ta_classic as pandas_ta
+from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
+from tests.config import get_sample_data
 
 try:
     import talib
@@ -516,8 +518,6 @@ class TestTrend(TestCase):
         )
 
     def test_cpr_empty_series(self):
-        from pandas import Series
-
         empty_series = Series(dtype=float)
         with self.assertLogs("pandas_ta_classic.utils._core", level="WARNING") as cm:
             result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
@@ -529,8 +529,6 @@ class TestTrend(TestCase):
         self.assertIsNone(result)
 
     def test_cpr_with_nans(self):
-        import numpy as np
-
         open_with_nan = self.open.copy()
         open_with_nan.iloc[0:5] = np.nan
         result = pandas_ta.cpr(open_with_nan, self.high, self.low, self.close)

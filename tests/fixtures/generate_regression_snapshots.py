@@ -27,7 +27,7 @@ import pandas as pd
 
 # Re-use the same indicator compute function from generate_fixtures to stay
 # in sync with the full set of 43 tracked indicators.
-from tests.fixtures.generate_fixtures import _load, _indicators
+from tests.fixtures.generate_fixtures import _indicators, _load
 
 # ---------------------------------------------------------------------------
 # Snapshot configuration

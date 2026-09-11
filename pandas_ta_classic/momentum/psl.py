@@ -1,7 +1,9 @@
 # Psychological Line (PSL)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -13,13 +15,13 @@ from pandas_ta_classic.utils import (
 
 def psl(
     close: Series,
-    open_: Optional[Series] = None,
-    length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    open_: Series | None = None,
+    length: int | None = None,
+    scalar: float | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Psychological Line (PSL)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 12

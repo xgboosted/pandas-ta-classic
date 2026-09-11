@@ -9,7 +9,7 @@
 - **Testing:** pytest (primary, matches CI). Run `pytest tests/ -v` for full suite (oracle deps required; see Validation section), or the smallest relevant test module for the changed area (e.g., `pytest tests/test_indicator_momentum.py -v`). Hypothesis property-based tests also use pytest.
 - **GitHub interactions:** Use the GitHub MCP server exclusively; do not use GitLens or GitKraken tools for GitHub operations. Server name: `github-mcp-server` (verify via your agent's MCP list). Use its tools for PRs, issues, reviews, and comments.
 - **Commits:** Never automatically stage or commit changes; every change must be manually reviewed before being committed
-- **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` before opening. Never force-push to `main`.
+- **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/` and `ruff check .` before opening. Never force-push to `main`.
 - **Documentation:** Update docstrings and `docs/` when behavior, indicators, or public usage change. Docs built with Sphinx + ReadTheDocs theme + MyST Parser, deployed to GitHub Pages.
 - **CHANGELOG:** Use an `[Unreleased]` section at the top of `CHANGELOG.md` for changes merged to `main` that have not yet been tagged. Every PR that lands on `main` adds its entry there. At release time, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and tag. Keep a Changelog format.
 - **Releases:** Always create annotated tags: `git tag -a X.Y.Z -m "X.Y.Z"` then `git push origin X.Y.Z`. Annotated tags carry tagger identity and timestamp needed for setuptools-scm and GitHub release attribution. Never use lightweight tags (`git tag X.Y.Z`) — they carry no metadata and produce ambiguous version strings.
@@ -127,10 +127,14 @@ After each coding session, execute the code/module in local venv and troubleshoo
 ## Formatting and Linting
 
 - **black** — formatter: `line-length=150`, `skip-string-normalization = true` (keep quotes as-is). CI runs `black --check --diff pandas_ta_classic/`. Apply locally with `black pandas_ta_classic/`. Black owns formatting.
-- **ruff** — linter only (ruff format is disabled; black owns formatting). Critical checks: `--select E9,F63,F7,F82`. Advisory checks: `--extend-select C901,E501 --exit-zero`.
-- Config in `pyproject.toml` under `[tool.black]` and `[tool.ruff]`
+- **ruff** — linter only (ruff format is disabled; black owns formatting). The single blocking check is `ruff check .`. Its rule set is ruff's **default** (via `extend-select = ["ICN"]` in `[tool.ruff.lint]`) — which as of 0.16 is broad: pyupgrade `UP` (PEP 604 `X | None`), isort `I`, bugbear `B`, `SIM`, `PL`, `RUF`, plus `ICN`. Because the gate rides on the default, a ruff version bump can widen it; if a bump adds findings, either fix them or scope the rule out. Advisory (non-blocking): `--extend-select C901,E501 --exit-zero`.
+- **`--select` replaces the configured rule set, it does not add to it.** The gate is a bare `ruff check .` (which reads `[tool.ruff.lint]`), never a `--select` command — a `--select E9,F63,F7,F82` invocation would silently skip everything else (`F403`, `E402`, `ICN`, `UP`, `I`, …). `E9,F63,F7,F82` are a subset of the default, so they need no separate step.
+- **pre-commit runs the same ruff gate as CI.** The `.pre-commit-config.yaml` `ruff-check` hook reads `[tool.ruff.lint]` (no narrow `--select`, no package-only `files:` restriction), so a local commit catches the same findings CI does. Black stays package-only in pre-commit, matching CI's `black --check pandas_ta_classic/`.
+- **Per-file ignores** (`[tool.ruff.lint.per-file-ignores]`) scope script-oriented rules out of non-shipped code only (`examples/` notebook idioms, `tools/`/`tests/` best-effort catches). **Library code (`pandas_ta_classic/`) carries none** — its few intentional broad catches / accessor-contract raises use inline `# noqa: <rule> - <reason>` so they stay visible. Keep it that way: prefer a justified inline `# noqa` in library code over widening a per-file ignore.
+- **Generated `core.pyi`** is normalized with `ruff check --fix` before `black`, so the stub matches lint-fixed, PEP-604 source. The pipeline is **gen → ruff --fix → black** and lives in three places that must stay in lockstep: the CI `code-quality` job (`gen → ruff --fix → black → git diff --exit-code`), the `.pre-commit-config.yaml` `gen-core-stub` local hook (same three commands), and any manual regeneration. If you change `tools/gen_core_stub.py` or that pipeline, update all three — a missing `ruff --fix` step regenerates un-modernized `Optional[...]` stubs and reports the file dirty.
+- Config in `pyproject.toml` under `[tool.black]`, `[tool.ruff]`, and `[tool.ruff.lint]`
 - If black and ruff format disagree on a region, lock it with `# fmt: off` / `# fmt: on`
-- **Gate condition:** `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` must both return EXIT=0 before the task is considered complete. If black reports a reformat, run `black pandas_ta_classic/` then re-check.
+- **Gate condition:** all three must return EXIT=0 before the task is considered complete — `black --check --diff pandas_ta_classic/`, `ruff check .`, and `make typecheck` (mypy at Python 3.12). If black reports a reformat, run `black pandas_ta_classic/` then re-check. `make lint` runs the black/ruff checks together.
 - **Dual config pattern:** black/ruff versions appear in two places — `pyproject.toml` under `[project.optional-dependencies].lint` (CI installs via `pip install -e ".[lint]"`) AND `.pre-commit-config.yaml` under each hook's `rev`. When bumping a version, update BOTH. Enforced: `tools/check_lint_versions.py` (run by the CI `code-quality` job and `make lint`) fails on any mismatch.
 
 ## Imports and Paths
@@ -142,11 +146,45 @@ After each coding session, execute the code/module in local venv and troubleshoo
 - Within a category, relative imports use flat names: `from .sma import sma`
 - Version auto-generated by setuptools-scm in `pandas_ta_classic/_version.py` (gitignored)
 
+### Import Conventions
+
+These are repo-wide. Some are enforced, some are convention — the distinction is marked.
+
+- **numpy is `import numpy as np`, used as `np.sqrt`, `np.nan`, `np.ndarray`** — *enforced:* ruff `ICN001` rejects a non-`np` alias and `ICN003` (`banned-from = ["numpy"]`) rejects `from numpy import x` in every form, including the old `npX` aliases (`npSqrt`, `npArange`, `npNaN`, `nplog`, `npsqrt`) that were removed repo-wide. Submodule imports such as `from numpy.lib.stride_tricks import sliding_window_view` are allowed.
+- **pandas is `from pandas import Series, DataFrame`** — *convention.* Deliberately the mirror of numpy and deliberately **not** in `banned-from`: indicator signatures read `def rsi(close: Series, ...)`, used at 300+ sites. `import pandas as pd` is used in `core.py` and tests; only the alias is gated (ruff `ICN001`).
+- **No star imports.** Every re-export is explicit with an `__all__` list — see `pandas_ta_classic/__init__.py` and `utils/__init__.py`. Category subpackages get `__all__` at runtime from `_lazy_subpackage.install_lazy_subpackage()`. *Enforced:* ruff `F403` via `ruff check .`.
+- **Deferred (function-body) imports are for optional dependencies only** — `talib`, `tulipy`, `tqdm`, and lazy-loading machinery. numpy and pandas are hard dependencies and must be imported at module scope. *Convention (not gated):* ruff's `PLC0415` cannot enforce it — it flags the ~90 intentional optional-dep deferrals too — so keep this in review. Grep for hard-dep imports inside `def` bodies (indented, and excluding first-party `pandas_ta_classic`): `grep -rnE "^ +(import (numpy|pandas)\b|from (numpy|pandas) import)" pandas_ta_classic/`.
+- **No `sys.path` bootstrapping** anywhere in `tests/`, `tools/`, or `docs/`; the editable install makes it redundant. The one in `custom.py` is exempt because it is functional (it adds the user's own indicator directory at runtime). *Convention (not gated):* check with `grep -rn "sys.path" pandas_ta_classic/ tests/ tools/ docs/`.
+- **`logger = logging.getLogger(__name__)` goes after the import block**, not between imports. *Enforced:* ruff `E402` via `ruff check .`.
+- **Prefer stdlib over hand-rolled math** — e.g. `combination()` wraps `math.comb`. Do not reintroduce hand-rolled `nCr`, `erf`, factorial, or gcd loops. *Convention.*
+- **Dead code goes.** A helper with zero callers is deleted, not kept "just in case", and its now-unused constants and imports go with it. Verify callers by searching the whole repo including the defining file — a scan that skips same-file references produces false positives. *Convention.*
+- **No import cruft left behind.** No `pkg_resources` fallbacks (setuptools-scm owns versioning in `_version.py`; the Python <3.8 shim was removed). No commented-out import lines (e.g. a stray `# from numpy import sqrt as npsqrt`) — ruff parses code, not comments, so `ICN` cannot catch these. *Convention:* `grep -rnE "pkg_resources|^\s*#\s*(from|import) (numpy|pandas)" pandas_ta_classic/`.
+
+#### Convention checklist (run before finishing)
+
+The gated patterns are covered by the **Gate condition** above (`black --check`, `ruff check .`, and `make typecheck`). The manual conventions have no CI backstop, so run these greps before considering a task complete — **each must return no output.** A hit means a convention was violated; fix it or justify the exception in review.
+
+```bash
+# 1. Deferred numpy/pandas (hard-dep) imports inside def bodies — must be module-scope
+grep -rnE "^ +(import (numpy|pandas)\b|from (numpy|pandas) import)" pandas_ta_classic/
+
+# 2. sys.path writes outside custom.py (the editable install makes them redundant)
+grep -rnE "sys\.path\.(insert|append)" pandas_ta_classic/ tests/ tools/ docs/ | grep -v "custom.py"
+
+# 3. Import cruft: pkg_resources fallbacks + commented-out numpy/pandas imports
+grep -rnE "pkg_resources|^\s*#\s*(from|import) (numpy|pandas)" pandas_ta_classic/
+
+# 4. Hand-rolled math that stdlib covers (nCr loop, A&S erf constant)
+grep -rnE "reduce\(mul|numerator // denominator|0\.3275911" pandas_ta_classic/
+```
+
+Not greppable, so verify by review: **dead code** (a helper/const/import your change orphaned — search the whole repo *including the defining file* for callers before deleting or keeping) and the general **stdlib-over-hand-rolled** preference.
+
 ## CI Pipeline (6 jobs)
 
 | Job | Description |
 |---|---|
-| `code-quality` | Black formatting check + Ruff linting (critical + advisory) |
+| `code-quality` | Black formatting check + Ruff linting (blocking `ruff check .` + advisory `--exit-zero` pass) + `core.pyi` sync + `tools/check_lint_versions.py` + `mypy` type-check (Python 3.12 — numpy 2.x stubs can't be checked below 3.12; runtime floor covered by the test matrix) |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
@@ -200,8 +238,8 @@ python -c "import pandas_ta_classic; print(pandas_ta_classic.version)"
 # Formatting check
 black --check --diff pandas_ta_classic/
 
-# Linting (critical errors only)
-ruff check pandas_ta_classic --select E9,F63,F7,F82
+# Linting (repo-wide, blocking — the CI gate; runs E9/F, F403, E402, E741, ICN)
+ruff check .
 
 # Linting (advisory — non-blocking in CI)
 ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero

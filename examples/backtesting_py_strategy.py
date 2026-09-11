@@ -1,8 +1,9 @@
 import pandas as pd
-import pandas_ta_classic as ta
 from backtesting import Backtest, Strategy
-from backtesting.test import GOOG
 from backtesting.lib import crossover
+from backtesting.test import GOOG
+
+import pandas_ta_classic as ta
 
 _ = ta.__name__  # registers df.ta accessor
 
@@ -35,9 +36,8 @@ class SMACrossover(Strategy):
         if crossover(self.sma_fast, self.sma_slow):
             if not self.position:
                 self.buy(size=0.1)
-        elif crossover(self.sma_slow, self.sma_fast):
-            if self.position:
-                self.position.close()
+        elif crossover(self.sma_slow, self.sma_fast) and self.position:
+            self.position.close()
 
 
 if __name__ == '__main__':

@@ -1,7 +1,9 @@
 # Heikin Ashi (HA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
@@ -22,9 +24,9 @@ def ha(
     high: Series,
     low: Series,
     close: Series,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Candle Type - Heikin Ashi"""
     # Validate Arguments
     open_ = verify_series(open_)
@@ -97,7 +99,7 @@ Calculation:
     the first HA open. The high of the period will be the first HA high,
     and the low will be the first HA low. With the first HA calculated,
     it is now possible to continue computing the HA candles per the formulas.
-​​
+\u200b\u200b
 Args:
     open_ (pd.Series): Series of 'open's
     high (pd.Series): Series of 'high's

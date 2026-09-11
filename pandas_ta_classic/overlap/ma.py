@@ -1,5 +1,6 @@
 # Moving Average (MA)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
 
 from .dema import dema
@@ -44,7 +45,7 @@ _MA_DISPATCH = {
 }
 
 
-def ma(name: Optional[str] = None, source: Optional[Series] = None, **kwargs: Any) -> Optional[Series]:
+def ma(name: str | None = None, source: Series | None = None, **kwargs: Any) -> Series | None:
     """Simple MA Utility for easier MA selection
 
     Available MAs:
@@ -54,7 +55,7 @@ def ma(name: Optional[str] = None, source: Optional[Series] = None, **kwargs: An
     Examples:
         ema8 = ta.ma("ema", df.close, length=8)
         sma50 = ta.ma("sma", df.close, length=50)
-        pwma10 = ta.ma("pwma", df.close, length=10, asc=False)
+        pwma10 = ta.ma("pwma", df.close, length=10)
 
     Args:
         name (str): One of the Available MAs. Default: "ema"

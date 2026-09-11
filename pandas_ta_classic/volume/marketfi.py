@@ -1,5 +1,5 @@
 # Market Facilitation Index (MARKETFI)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -16,9 +16,9 @@ def marketfi(
     high: Series,
     low: Series,
     volume: Series,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Market Facilitation Index (MARKETFI)"""
     # Validate Arguments
     high = verify_series(high)

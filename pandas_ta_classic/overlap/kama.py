@@ -1,8 +1,8 @@
 # Kaufman Adaptive Moving Average (KAMA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
-
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
@@ -29,14 +29,14 @@ def _kama_nb(sc, close, length):
 
 def kama(
     close: Series,
-    length: Optional[int] = None,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Kaufman's Adaptive Moving Average (KAMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

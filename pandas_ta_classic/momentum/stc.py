@@ -1,6 +1,8 @@
 # Schaff Trend Cycle (STC)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -79,13 +81,13 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
 
 def stc(
     close: Series,
-    tclength: Optional[int] = None,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    factor: Optional[float] = None,
-    offset: Optional[int] = None,
+    tclength: int | None = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    factor: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Schaff Trend Cycle (STC)"""
     # Validate arguments
     tclength = int(tclength) if tclength and tclength > 0 else 10

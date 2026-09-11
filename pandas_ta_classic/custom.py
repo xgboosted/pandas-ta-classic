@@ -3,9 +3,8 @@ import logging
 import os
 import sys
 import types
-
-from os.path import abspath, join, exists, basename, splitext
 from glob import glob
+from os.path import abspath, basename, exists, join, splitext
 
 import pandas_ta_classic
 from pandas_ta_classic import AnalysisIndicators
@@ -246,7 +245,7 @@ def load_indicator_module(name):
     # load module
     try:
         module = importlib.import_module(name)
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001 - user modules can fail in arbitrary ways; report and exit cleanly
         logger.error("An error occurred when attempting to load module %s: %s", name, ex)
         sys.exit(1)
 

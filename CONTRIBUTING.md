@@ -197,12 +197,12 @@ def indicator_name(close: pd.Series, length: Optional[int] = None) -> pd.Series:
 #### Python Style Guide
 - Follow PEP 8
 - Use Black for formatting: `black pandas_ta_classic/` (line-length=150, skip-string-normalization)
-- Use Ruff for linting: `ruff check pandas_ta_classic --select E9,F63,F7,F82`
+- Use Ruff for linting: `ruff check .` (the repo-wide blocking gate; rule set is the explicit `select` in `[tool.ruff.lint]`)
 - Use type hints for all functions
 - Maximum line length: 150 characters (Black config)
 - f-strings preferred over `.format()` or `%`-formatting
 
-**Gate condition:** both `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` must return EXIT=0 before opening a PR. CI enforces this in the `code-quality` job.
+**Gate condition:** both `black --check --diff pandas_ta_classic/` and `ruff check .` must return EXIT=0 before opening a PR. CI enforces this in the `code-quality` job.
 
 #### Import Organization
 ```python
@@ -271,7 +271,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
 
 5. **PR Requirements**
  - [ ] `black --check --diff pandas_ta_classic/` passes (EXIT=0)
- - [ ] `ruff check pandas_ta_classic --select E9,F63,F7,F82` passes (EXIT=0)
+ - [ ] `ruff check .` passes (EXIT=0)
  - [ ] `pytest tests/ -v` passes
  - [ ] Documentation updated (docstrings + `docs/` if behavior changed)
  - [ ] Type hints included on all new function signatures

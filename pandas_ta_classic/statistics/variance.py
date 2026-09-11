@@ -1,9 +1,9 @@
 # Variance (VARIANCE)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -29,7 +29,7 @@ def _numpy_rolling_variance(values, length, ddof, min_periods):
     n = len(values)
     result_arr = np.full(n, np.nan, dtype=np.float64)
     if n >= length:
-        windows = sliding_window_view(values, length)
+        windows = np.lib.stride_tricks.sliding_window_view(values, length)
         with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
             result_arr[length - 1 :] = windows.var(axis=1, ddof=ddof)
     if min_periods < length:
@@ -42,12 +42,12 @@ def _numpy_rolling_variance(values, length, ddof, min_periods):
 
 def variance(
     close: Series,
-    length: Optional[int] = None,
-    ddof: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    ddof: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Variance"""
     # Validate Arguments
     length = int(length) if length and length > 1 else 30

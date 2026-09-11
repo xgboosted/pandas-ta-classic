@@ -1,6 +1,8 @@
 # Mass Index (MASSI)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -14,11 +16,11 @@ from pandas_ta_classic.utils import (
 def massi(
     high: Series,
     low: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Mass Index (MASSI)"""
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 9

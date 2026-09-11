@@ -1,6 +1,8 @@
 # Elder Force Index (EFI)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -14,12 +16,12 @@ from pandas_ta_classic.utils import (
 def efi(
     close: Series,
     volume: Series,
-    length: Optional[int] = None,
-    mamode: Optional[str] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    mamode: str | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Elder's Force Index (EFI)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 13

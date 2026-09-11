@@ -1,8 +1,9 @@
 # Know Sure Thing (KST)
 import warnings
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
-from .roc import roc
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -11,22 +12,24 @@ from pandas_ta_classic.utils import (
 )
 from pandas_ta_classic.utils._core import _pos_int
 
+from .roc import roc
+
 
 def kst(
     close: Series,
-    roc1: Optional[int] = None,
-    roc2: Optional[int] = None,
-    roc3: Optional[int] = None,
-    roc4: Optional[int] = None,
-    sma1: Optional[int] = None,
-    sma2: Optional[int] = None,
-    sma3: Optional[int] = None,
-    sma4: Optional[int] = None,
-    signal: Optional[int] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    roc1: int | None = None,
+    roc2: int | None = None,
+    roc3: int | None = None,
+    roc4: int | None = None,
+    sma1: int | None = None,
+    sma2: int | None = None,
+    sma3: int | None = None,
+    sma4: int | None = None,
+    signal: int | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: 'Know Sure Thing' (KST)"""
     # Validate arguments
     roc1 = _pos_int(roc1, 10)

@@ -1,6 +1,8 @@
 # TTM Trend (TTM_TREND)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
@@ -9,10 +11,10 @@ def ttm_trend(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: TTM Trend (TTM_TRND)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 6

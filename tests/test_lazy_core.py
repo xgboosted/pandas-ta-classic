@@ -16,12 +16,10 @@ import unittest
 import warnings
 
 import pandas_ta_classic
-
 from pandas_ta_classic._indicator_loader import (
     _find_indicator_func,
 )
 from pandas_ta_classic._meta import Category
-
 from tests.config import get_sample_data
 
 # ---------------------------------------------------------------------------
@@ -59,7 +57,7 @@ class TestLazySubpackage(unittest.TestCase):
         mod = importlib.import_module("pandas_ta_classic.trend.adx")
 
         # The parent package's attr must be the *function*, not the module
-        import pandas_ta_classic.trend as trend
+        from pandas_ta_classic import trend
 
         self.assertTrue(
             callable(trend.adx),
@@ -70,7 +68,7 @@ class TestLazySubpackage(unittest.TestCase):
 
     def test_dir_returns_known_names(self):
         """__dir__ on a lazy subpackage returns sorted indicator names."""
-        import pandas_ta_classic.overlap as overlap
+        from pandas_ta_classic import overlap
 
         names = dir(overlap)
         self.assertIsInstance(names, list)

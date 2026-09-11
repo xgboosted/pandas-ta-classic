@@ -11,8 +11,9 @@ version than CI.
 
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).parent.parent
 
@@ -26,7 +27,8 @@ REPO_TO_TOOL = {
 
 
 def main() -> int:
-    pyproject = tomllib.load(open(ROOT / "pyproject.toml", "rb"))
+    with open(ROOT / "pyproject.toml", "rb") as _f:
+        pyproject = tomllib.load(_f)
     lint_pins = pyproject["project"]["optional-dependencies"]["lint"]
     # A pin that doesn't match (or a missing tool) leaves its entry unset,
     # which the mismatch check below reports as `tool: ...=None` and fails.

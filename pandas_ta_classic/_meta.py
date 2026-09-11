@@ -14,8 +14,10 @@ except ImportError:
     # Fallback: try to get version from installed package metadata
     try:
         from importlib.metadata import (
-            version as _dist_version,
             PackageNotFoundError,
+        )
+        from importlib.metadata import (
+            version as _dist_version,
         )
 
         try:
@@ -30,11 +32,9 @@ version = __version__
 # Import availability checks
 # Keys correspond to optional dependency names defined in pyproject.toml.
 Imports = {
-    "alpha-vantage": find_spec("alpha_vantage") is not None,
     "talib": find_spec("talib") is not None,
     "tqdm": find_spec("tqdm") is not None,
     "tulipy": find_spec("tulipy") is not None,
-    "yfinance": find_spec("yfinance") is not None,
 }
 
 

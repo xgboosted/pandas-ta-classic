@@ -1,5 +1,5 @@
 # Historical Volatility – annualised (tulipy: VOLATILITY)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -9,10 +9,10 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def avolume(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Annualised Historical Volatility (tulipy: VOLATILITY)
 
     Standard deviation of logarithmic returns, scaled by sqrt(252) to

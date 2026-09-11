@@ -1,6 +1,8 @@
 # Percentage Price Oscillator (PPO)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
@@ -42,15 +44,15 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
 
 def ppo(
     close: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    signal: Optional[int] = None,
-    scalar: Optional[float] = None,
-    mamode: Optional[str] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    signal: int | None = None,
+    scalar: float | None = None,
+    mamode: str | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Percentage Price Oscillator (PPO)"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 12

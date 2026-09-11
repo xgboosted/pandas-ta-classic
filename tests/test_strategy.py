@@ -2,12 +2,12 @@
 # in order to successfully run
 from multiprocessing import cpu_count
 from time import perf_counter
-
-from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
 from unittest import TestCase
+
 from pandas import DataFrame
+
+import pandas_ta_classic as pandas_ta
+from tests.config import get_sample_data
 
 # Strategy Testing Parameters
 cores = cpu_count()

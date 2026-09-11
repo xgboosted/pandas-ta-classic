@@ -6,8 +6,8 @@ ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH)
 groups, plus tulipy extras (ABS, ROUND, TRUNC, TODEG, TORAD).
 """
 
-from pandas_ta_classic._meta import _MATH_ALIASES
 from pandas_ta_classic._lazy_subpackage import install_lazy_subpackage
+from pandas_ta_classic._meta import _MATH_ALIASES
 
 install_lazy_subpackage(
     __name__,

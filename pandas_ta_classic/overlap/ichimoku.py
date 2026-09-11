@@ -1,9 +1,12 @@
 # Ichimoku Kinko Hyo (ICHIMOKU)
 import warnings
-from typing import Any, Optional, Union
-from pandas import concat, date_range, DataFrame, RangeIndex, Timedelta, Series
-from .midprice import midprice
+from typing import Any
+
+from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .midprice import midprice
 
 _ICHIMOKU_TUPLE_DEPRECATION = (
     "ichimoku() returning a (visible, span) tuple is deprecated and will be "
@@ -18,15 +21,15 @@ def ichimoku(
     high: Series,
     low: Series,
     close: Series,
-    tenkan: Optional[int] = None,
-    kijun: Optional[int] = None,
-    senkou: Optional[int] = None,
+    tenkan: int | None = None,
+    kijun: int | None = None,
+    senkou: int | None = None,
     include_chikou: bool = True,
-    offset: Optional[int] = None,
-    as_dataframe: Optional[bool] = None,
+    offset: int | None = None,
+    as_dataframe: bool | None = None,
     append_span: bool = False,
     **kwargs: Any,
-) -> Union[tuple[Optional[DataFrame], Optional[DataFrame]], Optional[DataFrame]]:
+) -> tuple[DataFrame | None, DataFrame | None] | DataFrame | None:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
     tenkan = int(tenkan) if tenkan and tenkan > 0 else 9
     kijun = int(kijun) if kijun and kijun > 0 else 26

@@ -1,20 +1,20 @@
 # Exponential Moving Average (EMA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic import Imports
-
-
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def ema(
     close: Series,
-    length: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Exponential Moving Average (EMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

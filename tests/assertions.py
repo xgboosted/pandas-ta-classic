@@ -1,6 +1,8 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
+import pandas.testing as pdt
 from pandas import DataFrame, Series
 
 CORRELATION = "corr"
@@ -13,10 +15,10 @@ class IndicatorSpec:
     args: list[Any]
     expected_name: str
     expected_type: type = Series
-    expected_columns: Optional[list[str]] = None
-    none_arg_idx: Optional[int] = 0
+    expected_columns: list[str] | None = None
+    none_arg_idx: int | None = 0
     kwargs: dict = field(default_factory=dict)
-    length_override: Optional[int] = None
+    length_override: int | None = None
 
 
 def assert_offset(test_case, func, args, **kwargs):
@@ -42,8 +44,6 @@ def assert_none_guard(test_case, func, args, none_arg_idx=0, **kwargs):
 
 
 def assert_talib(test_case, result, expected, correlation_threshold=None):
-    import pandas.testing as pdt
-
     try:
         if isinstance(result, DataFrame) and isinstance(expected, DataFrame):
             pdt.assert_frame_equal(result, expected, check_dtype=False)

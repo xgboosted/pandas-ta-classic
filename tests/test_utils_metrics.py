@@ -1,10 +1,11 @@
 import math
 from unittest import TestCase
 
+import numpy as np
 from pandas import DataFrame, Series
 
-from tests.config import get_sample_data
 import pandas_ta_classic as pandas_ta
+from tests.config import get_sample_data
 
 
 class TestUtilityMetrics(TestCase):
@@ -36,8 +37,6 @@ class TestUtilityMetrics(TestCase):
         result = pandas_ta.calmar_ratio(self.close)
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
-
-        import numpy as np
 
         result = pandas_ta.calmar_ratio(self.close, years=0)
         self.assertTrue(np.isnan(result))

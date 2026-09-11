@@ -1,16 +1,18 @@
 # Volume Profile (VP)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
-from pandas import cut, concat, DataFrame, Series
+from pandas import DataFrame, Series, concat, cut
+
 from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
 
 
 def vp(
     close: Series,
     volume: Series,
-    width: Optional[int] = None,
+    width: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Volume Profile (VP)"""
     # Validate arguments
     width = int(width) if width and width > 0 else 10

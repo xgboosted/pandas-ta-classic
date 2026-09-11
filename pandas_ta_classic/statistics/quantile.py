@@ -1,8 +1,7 @@
 # Quantile (QUANTILE)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -10,11 +9,11 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def quantile(
     close: Series,
-    length: Optional[int] = None,
-    q: Optional[float] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    q: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Quantile"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
@@ -31,7 +30,7 @@ def quantile(
     n = len(values)
     result_arr = np.full(n, np.nan, dtype=np.float64)
     if n >= length:
-        windows = sliding_window_view(values, length)
+        windows = np.lib.stride_tricks.sliding_window_view(values, length)
         result_arr[length - 1 :] = np.quantile(windows, q, axis=1)
     if min_periods < length:
         for pos in range(min_periods - 1, min(length - 1, n)):

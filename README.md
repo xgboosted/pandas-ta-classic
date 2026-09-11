@@ -100,7 +100,6 @@ uv pip install -e ".[all]"
 uv pip install -e ".[dev]" # Development tools
 uv pip install -e ".[optional]" # Optional runtime features
 uv pip install -e ".[oracle]" # Oracle parity lib: TA-Lib
-uv pip install -e ".[data]" # Data sources: yfinance, alpha-vantage
 uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 ```
 
@@ -118,7 +117,6 @@ pip install -e ".[all]"
 pip install -e ".[dev]" # Development tools
 pip install -e ".[optional]" # Optional runtime features
 pip install -e ".[oracle]" # Oracle parity lib: TA-Lib
-pip install -e ".[data]" # Data sources: yfinance, alpha-vantage
 pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 ```
 
@@ -130,7 +128,7 @@ import pandas_ta_classic as ta
 
 # Load your data
 df = pd.read_csv("path/to/symbol.csv")
-# OR fetch OHLCV with yfinance directly (df.ta.ticker() is deprecated —
+# OR fetch OHLCV with yfinance directly (df.ta.ticker() was removed in 0.6.53 —
 # see examples/fetch_market_data.py):
 # import yfinance as yf
 # df = yf.download("AAPL", period="1y")

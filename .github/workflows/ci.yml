@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies and quality tools
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[lint]"
+        pip install -e ".[lint]" mypy
 
     - name: Display package version from git
       run: |
@@ -55,19 +55,33 @@ jobs:
     
     - name: Run Ruff linting
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        ruff check pandas_ta_classic --select E9,F63,F7,F82
-        # report broader lint issues without failing this non-critical pass
+        # Blocking gate over the whole repo. Rule set is ruff's default plus ICN
+        # (extend-select in pyproject's [tool.ruff.lint]) — pyupgrade UP, isort I,
+        # bugbear B, SIM, PL, RUF, F403/E402/E741, and the numpy import convention.
+        ruff check .
+        # Advisory only (--exit-zero never fails the build): broader signal
+        # ruff can surface but that we don't gate on.
         ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 
     - name: Verify core.pyi is in sync with generator
       run: |
         python tools/gen_core_stub.py
+        # Normalize the generated stub the same way source is linted (PEP 604
+        # annotations via UP, import order via I) before comparing, so the
+        # committed stub matches gen + lint-fix + format.
+        ruff check --fix --quiet pandas_ta_classic/core.pyi
         black --quiet pandas_ta_classic/core.pyi
         git diff --exit-code pandas_ta_classic/core.pyi
 
     - name: Verify black/ruff versions match .pre-commit-config.yaml
       run: python tools/check_lint_versions.py
+
+    - name: Type-check with mypy
+      # Target 3.12, not the 3.10 requires-python floor: numpy 2.x ships PEP 695
+      # `type` statements in its stubs that mypy cannot parse below 3.12, so
+      # type-checking at 3.10 is not possible with modern numpy. Runtime support
+      # for the 3.10/3.11 floor is verified by the testing-core matrix instead.
+      run: python -m mypy --python-version 3.12
 
   # Job 2: Generate Python version matrix dynamically
   # Computes 5 Python versions (LATEST and 4 previous minor versions) from LATEST_PYTHON_VERSION

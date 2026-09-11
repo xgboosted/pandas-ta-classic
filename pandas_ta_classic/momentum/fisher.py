@@ -1,8 +1,8 @@
 # Fisher Transform (FISHER)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
-
 
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import (
@@ -33,11 +33,11 @@ def _fisher_loop(pos_arr, m, length):
 def fisher(
     high: Series,
     low: Series,
-    length: Optional[int] = None,
-    signal: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    signal: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Fisher Transform (FISHT)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 9

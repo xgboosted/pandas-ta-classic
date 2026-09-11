@@ -3,16 +3,16 @@ from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
-from typing import Any, Optional
-from warnings import catch_warnings, simplefilter, warn
+from typing import Any
+from warnings import simplefilter, warn
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from pandas.core.base import PandasObject
 
-from pandas_ta_classic._meta import Category, EXCHANGE_TZ, Imports, version, _MATH_ALIASES
 from pandas_ta_classic._indicator_loader import _find_indicator_func, _make_ta_wrapper
-from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time, yf
+from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
+from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class Strategy:
     # Helpful. More descriptive version or notes or w/e.
     description: str = "TA Description"
     # Optional. Gets Exchange Time and Local Time execution time
-    created: Optional[str] = field(default_factory=lambda: get_time(to_string=True))
+    created: str | None = field(default_factory=lambda: get_time(to_string=True))
 
     def __post_init__(self):
         required_args = ["[X] Strategy requires the following argument(s):"]
@@ -204,12 +204,14 @@ class AnalysisIndicators(PandasObject):
     @staticmethod
     def _validate(obj: tuple[pd.DataFrame, pd.Series]):
         if not isinstance(obj, pd.DataFrame) and not isinstance(obj, pd.Series):
-            raise AttributeError("[X] Must be either a Pandas Series or DataFrame.")
+            # AttributeError (not TypeError) by pandas accessor contract: it makes
+            # `df.ta` register as unavailable rather than raising on attribute access.
+            raise AttributeError("[X] Must be either a Pandas Series or DataFrame.")  # noqa: TRY004
 
     # DataFrame Behavioral Methods
     def __call__(
         self,
-        kind: Optional[str] = None,
+        kind: str | None = None,
         timed: bool = False,
         version: bool = False,
         **kwargs,
@@ -246,7 +248,7 @@ class AnalysisIndicators(PandasObject):
 
     # Public Get/Set DataFrame Properties
     @property
-    def adjusted(self) -> Optional[str]:
+    def adjusted(self) -> str | None:
         """property: df.ta.adjusted"""
         return self._adjusted
 
@@ -284,7 +286,7 @@ class AnalysisIndicators(PandasObject):
             self._exchange = value
 
     @property
-    def last_run(self) -> Optional[str]:
+    def last_run(self) -> str | None:
         """Returns the time when the DataFrame was last run."""
         return self._last_run
 
@@ -423,7 +425,7 @@ class AnalysisIndicators(PandasObject):
             logger.warning(f"[X] Column '{series}' not found. Available columns: {cols}")
             return None
 
-    def _indicators_by_category(self, name: str) -> Optional[list]:
+    def _indicators_by_category(self, name: str) -> list | None:
         """Returns indicators by Categorical name."""
         return Category[name] if name in self.categories else None
 
@@ -444,7 +446,7 @@ class AnalysisIndicators(PandasObject):
         if not isinstance(result, (pd.Series, pd.DataFrame)):
             if verbose:
                 logger.error("The result was not a Series or DataFrame.")
-            return self._df if chain_mode else self._df
+            return self._df
         # Append only specific columns to the dataframe (via
         # 'col_numbers':(0,1,3) for example)
         result = (
@@ -476,13 +478,13 @@ class AnalysisIndicators(PandasObject):
         mode = {"all": False, "category": False, "custom": False}
         if isinstance(arg, str):
             if arg.lower() == "all":
-                name, mode["all"] = name, True
+                mode["all"] = True
             if arg.lower() in self.categories:
                 name, mode["category"] = arg, True
         if isinstance(arg, Strategy):
             strategy_ = arg
             if strategy_.ta is None or strategy_.name.lower() == "all":
-                name, mode["all"] = name, True
+                mode["all"] = True
             elif strategy_.name.lower() in self.categories:
                 name, mode["category"] = strategy_.name, True
             else:
@@ -815,76 +817,6 @@ class AnalysisIndicators(PandasObject):
 
         if returns:
             return self._df
-
-    def ticker(self, ticker: str, **kwargs):
-        """ticker
-
-        This method downloads Historical Data if the package yfinance is installed.
-        Additionally it can run a ta.Strategy; Builtin or Custom. It returns a
-        DataFrame if there the DataFrame is not empty, otherwise it exits. For
-        additional yfinance arguments, use help(ta.yf).
-
-        Historical Data
-        >>> df = df.ta.ticker("aapl")
-        More specifically
-        >>> df = df.ta.ticker("aapl", period="max", interval="1d", kind=None)
-
-        Changing the period of Historical Data
-        Period is used instead of start/end
-        >>> df = df.ta.ticker("aapl", period="1y")
-
-        Changing the period and interval of Historical Data
-        Retrieves the past year in weeks
-        >>> df = df.ta.ticker("aapl", period="1y", interval="1wk")
-        Retrieves the past month in hours
-        >>> df = df.ta.ticker("aapl", period="1mo", interval="1h")
-
-        Show everything
-        >>> df = df.ta.ticker("aapl", kind="all")
-
-        Args:
-            ticker (str): Any string for a ticker you would use with yfinance.
-                Default: "SPY"
-        Kwargs:
-            kind (str): Options see above. Default: "history"
-            strategy (str | ta.Strategy): Which strategy to apply after
-                downloading chart history. Default: None
-
-            See help(ta.yf) for additional kwargs
-
-        Returns:
-            Exits if the DataFrame is empty or None
-            Otherwise it returns a DataFrame
-        """
-        warn(
-            "df.ta.ticker() is deprecated and will be removed in a future "
-            "release; data fetching is out of scope for a technical-analysis "
-            "library. Use yfinance directly and pass the resulting OHLCV "
-            "DataFrame to pandas-ta-classic. See examples/fetch_market_data.py.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        kwargs.pop("ds", None)
-        strategy = kwargs.pop("strategy", None)
-
-        # Fetch the Data (suppress yf()'s own FutureWarning; already warned above)
-        with catch_warnings():
-            simplefilter("ignore", FutureWarning)
-            df = yf(ticker, **kwargs)
-
-        if df is None:
-            return
-        if df.empty:
-            logger.error(f"DataFrame is empty: {df.shape}")
-            return
-        if kwargs.pop("lc_cols", False):
-            df.index.name = df.index.name.lower()
-            df.columns = df.columns.str.lower()
-        self._df = df
-
-        if strategy is not None:
-            self.strategy(strategy, **kwargs)
-        return df
 
     def __getattr__(self, name: str) -> Any:
         # Avoid infinite recursion for private/dunder attributes

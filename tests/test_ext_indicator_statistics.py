@@ -1,7 +1,8 @@
-from tests.config import get_sample_data
-
 from unittest import TestCase
+
 from pandas import DataFrame
+
+from tests.config import get_sample_data
 
 
 class TestStatisticsExtension(TestCase):

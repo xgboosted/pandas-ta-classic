@@ -20,7 +20,7 @@ For enhanced functionality, consider installing:
 
 - **TA-Lib**: Optional — all 62 CDL patterns work natively without it (see :ref:`Installing TA-Lib` below)
 - **tulipy**: Optional — only needed to *regenerate* the frozen oracle golden file (``tests/fixtures/generate_tulipy_oracle.py`` on CPython <3.12); ``test_oracle_tulipy.py`` compares against the committed snapshot and no longer imports tulipy at test time
-- **yfinance / alpha-vantage**: For downloading OHLCV data (``pip install pandas-ta-classic[data]``). Note: the built-in ``df.ta.ticker()`` / ``ta.yf()`` / ``ta.av()`` helpers are deprecated — call yfinance / alpha-vantage directly and pass the DataFrame in (see ``examples/fetch_market_data.py``)
+- **yfinance / alpha-vantage**: For downloading OHLCV data — install directly (``pip install yfinance alpha-vantage``). The built-in ``df.ta.ticker()`` / ``ta.yf()`` / ``ta.av()`` helpers were removed in 0.6.53; call yfinance / alpha-vantage directly and pass the DataFrame in (see ``examples/fetch_market_data.py``)
 - **vectorbt / backtrader / backtesting**: For backtesting integration (``pip install pandas-ta-classic[backtest]``)
 - **pytest + Hypothesis**: For running the test suite and property-based tests (``pip install pandas-ta-classic[test]``)
 
@@ -85,7 +85,6 @@ Using ``uv``:
     uv pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
     uv pip install -e ".[optional]" # Optional features like TA-Lib
     uv pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
-    uv pip install -e ".[data]"     # Data sources: yfinance, alpha-vantage
     uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 
 Using ``pip``:
@@ -105,7 +104,6 @@ Using ``pip``:
     pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
     pip install -e ".[optional]" # Optional features like TA-Lib
     pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
-    pip install -e ".[data]"     # Data sources: yfinance, alpha-vantage
     pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 
 .. note::

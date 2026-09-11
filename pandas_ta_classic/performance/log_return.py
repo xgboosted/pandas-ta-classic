@@ -1,17 +1,19 @@
 # Log Return (LOG_RETURN)
-from typing import Any, Optional
-from numpy import log as nplog
+from typing import Any
+
+import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def log_return(
     close: Series,
-    length: Optional[int] = None,
-    cumulative: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    cumulative: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Log Return"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 1
@@ -24,9 +26,9 @@ def log_return(
 
     # Calculate Result
     if cumulative:
-        log_return = nplog(close / close.iloc[0])
+        log_return = np.log(close / close.iloc[0])
     else:
-        log_return = nplog(close / close.shift(length))  # nplog(close).diff(length)
+        log_return = np.log(close / close.shift(length))  # np.log(close).diff(length)
 
     # Offset
     log_return = apply_offset(log_return, offset)

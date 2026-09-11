@@ -1,5 +1,5 @@
 # Kurtosis (KURTOSIS)
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -15,10 +15,10 @@ from pandas_ta_classic.utils import (
 
 def kurtosis(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Kurtosis"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 30
@@ -34,7 +34,7 @@ def kurtosis(
     # n_eff[i] is the actual window size used at position i.  When
     # min_periods == length (the default) every position uses length, so a
     # scalar is sufficient and avoids the array-allocation overhead.
-    n_eff: Union[np.ndarray, np.float64]
+    n_eff: np.ndarray | np.float64
     if min_periods < length:
         n_eff = np.full(len(close), np.float64(length))
         for pos in range(min_periods - 1, min(length - 1, len(close))):

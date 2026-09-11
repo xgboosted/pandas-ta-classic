@@ -157,7 +157,7 @@ print(df.tail())
 import pandas as pd
 import pandas_ta_classic as ta
 
-# Fetch data with yfinance directly (df.ta.ticker() is deprecated —
+# Fetch data with yfinance directly (df.ta.ticker() was removed in 0.6.53 —
 # see examples/fetch_market_data.py)
 import yfinance as yf
 df = yf.download("AAPL", period="1y")
@@ -446,7 +446,7 @@ Now that you've got the basics, explore more:
 | Custom strategy | `ta.Strategy(name="My", ta=[...])` |
 | List categories | `print(ta.Category)` |
 | Get help | `help(ta.sma)` |
-| Fetch data | `yf.download("AAPL")` (via yfinance; `df.ta.ticker()` deprecated) |
+| Fetch data | `yf.download("AAPL")` (via yfinance; `df.ta.ticker()` was removed in 0.6.53) |
 
 ## Need Help?
 

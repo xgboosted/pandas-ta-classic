@@ -1,7 +1,9 @@
 # McGinley Dynamic (MCGD)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
@@ -13,8 +15,7 @@ def _mcgd_loop(c_arr, n, c, length):
     for i in range(1, n):
         if result[i - 1] != 0:
             denom = c * length * (c_arr[i] / result[i - 1]) ** 4
-            if denom < 1e-10:
-                denom = 1e-10
+            denom = max(denom, 1e-10)
             result[i] = result[i - 1] + (c_arr[i] - result[i - 1]) / denom
         else:
             result[i] = c_arr[i]
@@ -23,11 +24,11 @@ def _mcgd_loop(c_arr, n, c, length):
 
 def mcgd(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
-    c: Optional[float] = None,
+    length: int | None = None,
+    offset: int | None = None,
+    c: float | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: McGinley Dynamic Indicator"""
     # Validate arguments
     length = int(length) if length and length > 0 else 10

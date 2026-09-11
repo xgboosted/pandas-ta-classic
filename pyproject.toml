@@ -59,7 +59,7 @@ oracle = [
 
 # CI code quality tools
 lint = [
-    "ruff>=0.15.20",
+    "ruff>=0.16.0",
     "black>=26.5.1",
 ]
 
@@ -109,12 +109,6 @@ performance = [
     "numba>=0.58.0"
 ]
 
-# Data source integrations (used by utils/data — lazy-imported at call time)
-data = [
-    "yfinance",
-    "alpha-vantage"
-]
-
 # Backtesting integrations (docs/examples only — not imported by the library)
 backtest = [
     "backtesting",
@@ -124,13 +118,13 @@ backtest = [
 
 # Back-compat alias for the previous combined extra
 integration = [
-    "pandas-ta-classic[data,backtest]"
+    "pandas-ta-classic[backtest]"
 ]
 
 # Complete environment with all features.
-# Excludes `data`/`backtest`: those pull unmaintained, platform-fragile packages
-# (alpha-vantage, backtrader, vectorbt) that break `[all]` installs on newer
-# Python/OS combos. Install them explicitly via `[data]` / `[backtest]` when needed.
+# Excludes `backtest`: it pulls unmaintained, platform-fragile packages
+# (backtrader, vectorbt) that break `[all]` installs on newer Python/OS combos.
+# Install them explicitly via `[backtest]` when needed.
 all = [
     "pandas-ta-classic[optional,oracle,dev,test,docs,performance]"
 ]
@@ -172,6 +166,37 @@ exclude = [
 ]
 line-length = 150
 
+[tool.ruff.lint]
+# Ride on ruff's default rule set (latest ruff, via the `>=` pin) plus ICN.
+# ICN001 enforces the conventional import aliases (numpy as np, pandas as pd);
+# ICN003, via the banned-from list below, rejects `from numpy import x` in any
+# form — including the `as npX` aliases that were removed repo-wide.
+extend-select = ["ICN"]
+
+[tool.ruff.lint.flake8-import-conventions]
+# numpy and its stride_tricks submodule: both are reached through the `np`
+# alias (`np.sqrt`, `np.lib.stride_tricks.sliding_window_view`), never imported
+# by name. pandas stays off the list on purpose: `from pandas import Series` is
+# the established style here, used at 300+ sites including every indicator
+# signature.
+banned-from = ["numpy", "numpy.lib.stride_tricks"]
+
+[tool.ruff.lint.per-file-ignores]
+# Library code (pandas_ta_classic/) carries no per-file ignores — its handful of
+# intentional broad catches use inline `# noqa` with a reason instead. The
+# remaining ignores are for non-shipped code where the finding is a genuine
+# idiom, not a fixable defect (fixable ones — EXE shebangs, dead expressions,
+# closure bugs — were fixed rather than ignored):
+#   examples — a demo-only error-path string raise (B016) and demo date
+#     literals without tzinfo (DTZ001).
+"examples/**" = ["B016", "DTZ001"]
+#   tools — benchmark warmup deliberately swallows failures (S110) and catches
+#     broadly because it runs arbitrary indicators (BLE001).
+"tools/**" = ["S110", "BLE001"]
+#   tests — deliberately catch broadly to assert failure modes (ruff's own docs
+#     recommend per-file-ignoring these in test code).
+"tests/**" = ["BLE001", "S112"]
+
 [tool.setuptools]
 packages = [
     "pandas_ta_classic",
@@ -183,7 +208,6 @@ packages = [
     "pandas_ta_classic.statistics",
     "pandas_ta_classic.trend",
     "pandas_ta_classic.utils",
-    "pandas_ta_classic.utils.data",
     "pandas_ta_classic.volatility",
     "pandas_ta_classic.volume"
 ]
@@ -221,17 +245,18 @@ strict_optional = true
 #   name. mypy sees this as a redefinition, but it works correctly at runtime.
 disable_error_code = ["union-attr", "operator", "no-redef", "index", "attr-defined"]
 
-# Third-party dependencies that ship no py.typed marker / stubs (verified via
-# `mypy --python-version 3.9` with ignore_missing_imports unset: these are the
-# only packages that raise import-untyped). Scoped instead of a blanket
-# ignore_missing_imports=true so new dependencies are still checked by default.
+# Optional third-party dependencies that are absent in the CI code-quality env
+# (only hard deps + lint tools are installed there) and/or ship no py.typed
+# marker. Each is imported lazily behind an `Imports[...]` guard; ignore missing
+# imports so mypy resolves them to Any instead of erroring. Scoped per-module
+# (not a blanket ignore_missing_imports=true) so a genuinely new, unhandled
+# dependency is still surfaced.
 [[tool.mypy.overrides]]
 module = [
     "pandas.*",
-    "alpha_vantage.*",
     "numba",
     "tulipy",
-    "yfinance",
+    "tqdm",
 ]
 ignore_missing_imports = true
 
@@ -245,3 +270,8 @@ ignore_missing_imports = true
 module = ["talib", "talib.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
+# talib is an optional dependency, absent in the CI code-quality env. Without
+# this, mypy reports import-not-found for every deferred `import talib`. With it,
+# an absent talib resolves to Any (which is what follow_imports=skip does when
+# it *is* installed).
+ignore_missing_imports = true

@@ -1,5 +1,5 @@
 # Parabolic SAR Extended (SAREXT)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -12,8 +12,8 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._core import _pos_float
+from pandas_ta_classic.utils._njit import njit
 
 
 def _sarext_falling(high: Series, low: Series, drift: int = 1) -> bool:
@@ -98,8 +98,6 @@ def _sarext_native_result(
     offsetonreverse,
 ):
     """Run the native SAREXT computation and return a signed Series."""
-    from pandas import Series as _Series
-
     falling = _sarext_falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
     if startvalue != 0.0:
         sar = startvalue
@@ -131,24 +129,24 @@ def _sarext_native_result(
         long_arr,
         np.where(~np.isnan(short_arr), -short_arr, np.nan),
     )
-    return _Series(result, index=high.index)
+    return Series(result, index=high.index)
 
 
 def sarext(
     high: Series,
     low: Series,
-    startvalue: Optional[float] = None,
-    offsetonreverse: Optional[float] = None,
-    accelerationinitlong: Optional[float] = None,
-    accelerationlong: Optional[float] = None,
-    accelerationmaxlong: Optional[float] = None,
-    accelerationinitshort: Optional[float] = None,
-    accelerationshort: Optional[float] = None,
-    accelerationmaxshort: Optional[float] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    startvalue: float | None = None,
+    offsetonreverse: float | None = None,
+    accelerationinitlong: float | None = None,
+    accelerationlong: float | None = None,
+    accelerationmaxlong: float | None = None,
+    accelerationinitshort: float | None = None,
+    accelerationshort: float | None = None,
+    accelerationmaxshort: float | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Parabolic SAR Extended (SAREXT)"""
     # Validate Arguments
     high = verify_series(high)

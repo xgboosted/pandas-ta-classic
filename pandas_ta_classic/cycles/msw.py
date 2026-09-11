@@ -1,5 +1,5 @@
 # Mesa Sine Wave (MSW)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -10,10 +10,10 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def msw(
     close: Series,
-    period: Optional[int] = None,
-    offset: Optional[int] = None,
+    period: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Mesa Sine Wave (MSW)
 
     Identifies cycles using a DFT-based approach from Ehlers (2001).

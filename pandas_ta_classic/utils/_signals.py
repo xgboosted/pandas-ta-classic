@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from pandas import DataFrame, Series
 
@@ -14,9 +14,9 @@ def _above_below(
     series_b: Series,
     above: bool = True,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
 
@@ -48,7 +48,7 @@ def above(
     series_a: Series,
     series_b: Series,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
 ) -> Series:
     return _above_below(series_a, series_b, above=True, asint=asint, offset=offset, **kwargs)
@@ -58,9 +58,9 @@ def above_value(
     series_a: Series,
     value: float,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     if not isinstance(value, (int, float, complex)):
         logger.error("value is not a number")
         return None
@@ -76,7 +76,7 @@ def below(
     series_a: Series,
     series_b: Series,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
 ) -> Series:
     return _above_below(series_a, series_b, above=False, asint=asint, offset=offset, **kwargs)
@@ -86,9 +86,9 @@ def below_value(
     series_a: Series,
     value: float,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     if not isinstance(value, (int, float, complex)):
         logger.error("value is not a number")
         return None
@@ -104,9 +104,9 @@ def cross_value(
     value: float,
     above: bool = True,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     series_a = verify_series(series_a)
     if series_a is None:
         return None
@@ -120,9 +120,9 @@ def cross(
     series_b: Series,
     above: bool = True,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     series_a = verify_series(series_a)
     series_b = verify_series(series_b)
 
@@ -208,14 +208,14 @@ def _add_series_signals(df, indicator, xserie, cross_series, is_above, offset):
 
 def signals(
     indicator: Series,
-    xa: Optional[float],
-    xb: Optional[float],
+    xa: float | None,
+    xb: float | None,
     cross_values: bool,
-    xserie: Optional[Series],
-    xserie_a: Optional[Series],
-    xserie_b: Optional[Series],
+    xserie: Series | None,
+    xserie_a: Series | None,
+    xserie_b: Series | None,
     cross_series: bool,
-    offset: Optional[int],
+    offset: int | None,
 ) -> DataFrame:
     df = DataFrame()
 
@@ -241,9 +241,9 @@ def crossover(
     series_a: Series,
     series_b: Series,
     asint: bool = True,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Crossover: series_a crosses above series_b (tulipy: CROSSOVER).
 
     Returns 1 on bars where series_a crosses from below to above series_b,
@@ -259,10 +259,10 @@ def crossover(
 
 def lag(
     close: Series,
-    period: Optional[int] = None,
-    offset: Optional[int] = None,
+    period: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Lag / Shift (tulipy: LAG).
 
     Returns close shifted back by *period* bars.  Equivalent to

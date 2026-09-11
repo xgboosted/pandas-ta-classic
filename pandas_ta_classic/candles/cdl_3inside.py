@@ -1,5 +1,5 @@
 # Candle Three Inside Up/Down (CDL_3INSIDE)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -93,10 +93,10 @@ def cdl_3inside(
     high: Series,
     low: Series,
     close: Series,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Candle Pattern: Three Inside Up/Down"""
     return run_pattern(
         open_,

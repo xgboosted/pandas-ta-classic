@@ -21,6 +21,7 @@ All tests use the SPY_D.csv sample dataset (5241 rows, 1999-2020).
 """
 
 import math
+from pathlib import Path
 from unittest import TestCase
 
 import pandas as pd
@@ -31,7 +32,7 @@ import pandas_ta_classic as ta
 # Shared data
 # ---------------------------------------------------------------------------
 
-_DATA_PATH = __import__("pathlib").Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
+_DATA_PATH = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
 
 
 def _load() -> pd.DataFrame:

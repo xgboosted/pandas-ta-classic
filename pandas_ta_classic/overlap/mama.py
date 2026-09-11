@@ -1,7 +1,9 @@
 # MESA Adaptive Moving Average (MAMA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
@@ -200,13 +202,11 @@ def _mama_loop(
         # Delta Phase -> Alpha
         delta_phase = prev_phase - phase
         prev_phase = phase
-        if delta_phase < 1.0:
-            delta_phase = 1.0
+        delta_phase = max(delta_phase, 1.0)
 
         if delta_phase > 1.0:
             alpha = fastlimit / delta_phase
-            if alpha < slowlimit:
-                alpha = slowlimit
+            alpha = max(alpha, slowlimit)
         else:
             alpha = fastlimit
 
@@ -228,10 +228,8 @@ def _mama_loop(
         if im != 0.0 and re != 0.0:
             period = 360.0 / (np.arctan(im / re) * rad2deg)
 
-        if period > 1.5 * prev_period:
-            period = 1.5 * prev_period
-        if period < 0.67 * prev_period:
-            period = 0.67 * prev_period
+        period = min(period, 1.5 * prev_period)
+        period = max(period, 0.67 * prev_period)
         if period < 6.0:
             period = 6.0
         elif period > 50.0:
@@ -246,12 +244,12 @@ def _mama_loop(
 
 def mama(
     close: Series,
-    fastlimit: Optional[float] = None,
-    slowlimit: Optional[float] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    fastlimit: float | None = None,
+    slowlimit: float | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: MESA Adaptive Moving Average (MAMA)"""
     # Validate Arguments
     fastlimit = float(fastlimit) if fastlimit and fastlimit > 0 else 0.5

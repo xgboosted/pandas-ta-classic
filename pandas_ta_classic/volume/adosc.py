@@ -1,9 +1,13 @@
 # Accumulation/Distribution Oscillator (ADOSC)
-from typing import Any, Optional
+from typing import Any
+
+import numpy as np
 from pandas import Series
-from .ad import ad
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .ad import ad
 
 
 def adosc(
@@ -11,13 +15,13 @@ def adosc(
     low: Series,
     close: Series,
     volume: Series,
-    open_: Optional[Series] = None,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    open_: Series | None = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Accumulation/Distribution Oscillator"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 3
@@ -40,8 +44,6 @@ def adosc(
 
         adosc = ADOSC(high, low, close, volume, fast, slow)
     else:
-        import numpy as np
-
         ad_ = ad(high=high, low=low, close=close, volume=volume, open_=open_)
         ad_arr = ad_.to_numpy(dtype=float)
         m = ad_arr.shape[0]
