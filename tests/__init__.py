@@ -1,32 +1,27 @@
-"""Regenerate JSON fixture files before running any tests.
+"""Test package bootstrap.
 
-When TA-Lib is installed the expected-values and regression-snapshot
-JSON files are rebuilt from the oracle library + the native code under
-test.  This ensures the fixtures are always in sync with the current
-algorithms.
+Puts the project root on ``sys.path`` so ``from tests.config import ...``
+resolves regardless of the directory pytest was invoked from.
 
-If TA-Lib is not available the generators are skipped — existing
-fixture files (which should be committed to the repo) will be used
-as-is.
+Fixture files are **not** regenerated here.  ``tests/fixtures/*.json`` are
+frozen golden values: they are the source of truth, not a cache of a
+computation.  Regenerating them as a side effect of running the tests
+destroys the two properties they exist to provide —
+
+* a golden value that the test run rewrites cannot detect a development
+  error, because the buggy output simply becomes the new expectation;
+* a golden value recomputed from ``pandas``/TA-Lib inherits those
+  libraries' version-to-version floating-point drift, so the file churns
+  on dependency upgrades that changed nothing in this package.
+
+Regeneration is a deliberate, reviewed step — run ``make fixtures`` (or
+``python -m tests.fixtures.generate_fixtures``) after an intentional
+algorithm change and commit the resulting diff alongside it.
 """
 
-import contextlib
-import io
 import sys
-from importlib.util import find_spec
 from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
-
-# TA-Lib not installed — cannot regenerate; use committed fixtures.
-if find_spec("talib") is not None:
-    from tests.fixtures.generate_fixtures import generate as _gen_fixtures
-    from tests.fixtures.generate_regression_snapshots import generate as _gen_snapshots
-
-    _null = io.StringIO()
-    with contextlib.redirect_stdout(_null), contextlib.redirect_stderr(_null):
-        _gen_fixtures()
-        _gen_snapshots()
-    print("[fixtures] regenerated expected_values.json + regression_snapshots.json")

@@ -2,8 +2,8 @@
 Priority 1 — Golden fixture tests.
 
 Each test asserts two things for every column of every tracked indicator:
-  1. The last non-NaN value matches the stored golden value within a relative
-     tolerance of 1e-4 (0.01 %).
+  1. The last non-NaN value matches the stored golden value within
+     GOLDEN_ATOL + GOLDEN_RTOL * |golden| (see tests/assertions.py).
   2. The number of non-NaN rows matches the stored count exactly.
 
 To regenerate fixtures after an intentional algorithm change run:
@@ -18,6 +18,7 @@ from unittest import TestCase
 import pandas as pd
 
 import pandas_ta_classic as ta
+from tests.assertions import golden_value_close as _approx_equal
 
 # ---------------------------------------------------------------------------
 # Load fixtures & sample data
@@ -300,14 +301,8 @@ def _compute_all(df: pd.DataFrame) -> dict[str, object]:
 # Tolerance
 # ---------------------------------------------------------------------------
 
-REL_TOL = 1e-4  # 0.01 % relative tolerance for floating-point comparisons
-
-
-def _approx_equal(actual: float, expected: float) -> bool:
-    """Return True when |actual - expected| / |expected| <= REL_TOL."""
-    if expected == 0.0:
-        return abs(actual) <= REL_TOL
-    return abs(actual - expected) / abs(expected) <= REL_TOL
+# Comparison lives in tests/assertions.py — see there for how GOLDEN_ATOL and
+# GOLDEN_RTOL were derived, and why both terms are needed.
 
 
 # ---------------------------------------------------------------------------

@@ -1,12 +1,22 @@
 """
 Generate golden fixture values for test_indicator_values.py.
 
-Run this script manually whenever indicator algorithms are intentionally changed:
+Run this script manually — and ONLY — when indicator algorithms are
+intentionally changed:
 
     python -m tests.fixtures.generate_fixtures
 
-The script writes tests/fixtures/expected_values.json. Commit the updated file
-alongside the algorithm change so CI continues to pass.
+The script writes tests/fixtures/expected_values.json.  That file is the
+source of truth, not a cache: this script only *proposes* new values.
+Review ``git diff tests/fixtures/expected_values.json`` line by line and
+commit it alongside the algorithm change that justifies it.
+
+Never invoke this from a test run or a test target.  A golden value that the
+test run rewrites cannot detect a development error — the buggy output just
+becomes the new expectation.  It also imports the reference libraries'
+version-to-version floating-point drift into the repository (pandas 2.x and
+3.x disagree on rolling kurtosis in the 8th decimal), producing fixture churn
+on dependency upgrades that changed nothing in this package.
 
 Reference strategy
 ------------------
@@ -21,8 +31,10 @@ REFERENCE (168 indicators)
     52 CDL patterns use TA-Lib as oracle (exact element-wise match confirmed).
     8 CDL patterns never fire on SPY data so TA-Lib still provides a valid
     independent oracle (both TA-Lib and pandas-ta return all-zero on this dataset).
-    Statistics (zscore, kurtosis, skew, median, quantile, mad, entropy) use
-    pure pandas/numpy rolling formulas.  correl uses talib.CORREL; slope uses
+    Statistics (zscore, kurtosis, skew, median, quantile, mad, entropy, beta,
+    ui) are evaluated in exact rational arithmetic by
+    ``tests/fixtures/exact_reference.py`` — pandas rolling was version
+    dependent here.  correl uses talib.CORREL; slope uses
     talib.LINEARREG_SLOPE.
 
 REGRESSION (55 indicators)
@@ -54,6 +66,17 @@ except ImportError:
     _HAS_TULIPY = False
 
 import pandas_ta_classic as ta
+from tests.fixtures.exact_reference import (
+    rolling_beta,
+    rolling_entropy,
+    rolling_kurtosis,
+    rolling_mad,
+    rolling_median,
+    rolling_quantile,
+    rolling_skew,
+    rolling_ui,
+    rolling_zscore,
+)
 
 # ---------------------------------------------------------------------------
 # Load sample data
@@ -121,24 +144,16 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     _sar = talib.SAR(hv, lv, 0.02, 0.2)
     _sar_long = _sar < cv  # long when SAR < price
     _adxr_arr = talib.ADXR(hv, lv, cv, 14)
-    # Pure-pandas rolling oracles for statistics
-    _zscore_ref = (c - c.rolling(20).mean()) / c.rolling(20).std()
-    _kurt_ref = c.rolling(20).kurt()
-    _skew_ref = c.rolling(20).skew()
-    _median_ref = c.rolling(14).median()
-    _quantile_ref = c.rolling(14).quantile(0.5)
-    _mad_ref = c.rolling(10).apply(lambda x: float(np.mean(np.abs(x - x.mean()))), raw=True)
-
-    def _rolling_entropy(s, n):
-        def _ent(x):
-            x = np.abs(x)
-            p = x / x.sum()
-            p = p[p > 0]
-            return float(-np.sum(p * np.log2(p)))
-
-        return s.rolling(n).apply(_ent, raw=True)
-
-    _entropy_ref = _rolling_entropy(c, 10)
+    # Exact rational-arithmetic oracles for statistics.  These used to call
+    # pandas rolling, which made the golden values depend on the installed
+    # pandas version — see tests/fixtures/exact_reference.py for the details.
+    _zscore_ref = rolling_zscore(c, 20)
+    _kurt_ref = rolling_kurtosis(c, 20)
+    _skew_ref = rolling_skew(c, 20)
+    _median_ref = rolling_median(c, 14)
+    _quantile_ref = rolling_quantile(c, 14, 0.5)
+    _mad_ref = rolling_mad(c, 10)
+    _entropy_ref = rolling_entropy(c, 10)
 
     # ------------------------------------------------------------------
     # Pre-computes for indicators upgraded from REGRESSION → REFERENCE
@@ -411,14 +426,10 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
 
     # ---- Statistics -----------------------------------------------------
     # BETA_30: rolling Cov(c_ret, o_ret) / Var(o_ret) over 30 bars
-    _c_ret = c / c.shift(1) - 1
-    _o_ret = o / o.shift(1) - 1
-    _beta30_ref = _c_ret.rolling(30).cov(_o_ret) / _o_ret.rolling(30).var()
+    _beta30_ref = rolling_beta(c, o, 30)
 
     # UI_14: sqrt(mean(dd_pct²,14))  where dd_pct=(close-rollmax)/rollmax*100
-    _ui_rmax = c.rolling(14).max()
-    _ui14_dd = (c - _ui_rmax) / _ui_rmax * 100
-    _ui14_ref = np.sqrt((_ui14_dd**2).rolling(14).mean())
+    _ui14_ref = rolling_ui(c, 14)
 
     # ---- Performance ----------------------------------------------------
     # DRAWDOWN: cummax-based arithmetic
@@ -739,7 +750,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
             ),
             ta.psar(h, low, c),
         ),
-        # ---- Statistics (additional) — pure pandas/numpy rolling formulas ----
+        # ---- Statistics (additional) — exact rational-arithmetic oracles ----
         ("zscore_20", _s(_zscore_ref, "ZS_20"), ta.zscore(c, length=20)),
         ("kurtosis_20", _s(_kurt_ref, "KURT_20"), ta.kurtosis(c, length=20)),
         ("skew_20", _s(_skew_ref, "SKEW_20"), ta.skew(c, length=20)),
@@ -1286,7 +1297,9 @@ def generate() -> None:
 
     with open(out_path, "w") as fh:
         json.dump(fixtures, fh, indent=2)
-    print(f"\nWrote {len(fixtures)} fixtures → {out_path}")
+    # ASCII only: this now prints to a real console (it used to be swallowed by
+    # a redirect_stdout in tests/__init__.py) and cp1252 cannot encode U+2192.
+    print(f"\nWrote {len(fixtures)} fixtures -> {out_path}")
 
 
 if __name__ == "__main__":

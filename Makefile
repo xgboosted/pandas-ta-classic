@@ -26,7 +26,7 @@ help:
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test             Run all tests"
-	@echo "  make test-all         Regenerate fixtures, then run all tests"
+	@echo "  make test-all         Run all tests against the committed fixtures"
 	@echo "  make test-ta          Run indicator tests"
 	@echo "  make test-ext         Run extended indicator tests"
 	@echo "  make test-utils       Run utility tests"
@@ -80,16 +80,19 @@ test-ta:
 test-utils:
 	$(PYTHON) -m unittest tests.test_utils -v
 
-# Regenerate JSON fixture files from TA-Lib oracle + native code
+# Regenerate JSON fixture files from TA-Lib oracle + native code.
+# Deliberate step only — run after an INTENTIONAL algorithm change and review
+# the resulting diff before committing.  Never wire this into a test target:
+# a golden value the test run rewrites cannot detect a development error.
 fixtures:
 	@echo "Regenerating expected_values.json..."
 	$(PYTHON) -m tests.fixtures.generate_fixtures
 	@echo "Regenerating regression_snapshots.json..."
 	$(PYTHON) -m tests.fixtures.generate_regression_snapshots
-	@echo "Fixtures regenerated."
+	@echo "Fixtures regenerated — review 'git diff tests/fixtures/' before committing."
 
-# Regenerate fixtures then run the full test suite
-test-all: fixtures
+# Run the full test suite against the committed fixtures
+test-all:
 	@echo "Running full test suite..."
 	$(PYTHON) -m unittest discover tests/ -v
 

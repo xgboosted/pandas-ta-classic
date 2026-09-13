@@ -20,6 +20,7 @@ from unittest import TestCase, skipIf
 import numpy as np
 import pandas as pd
 
+import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
 from tests.config import get_sample_data
 
 # pandas 3 removed accessor caching; pandas 2 still caches df.ta on the
