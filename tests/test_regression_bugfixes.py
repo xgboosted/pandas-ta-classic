@@ -32,7 +32,8 @@ Covered fixes:
                          fixes IndexError in 14 chained indicators (trix, tsi,
                          qqe, ppo, pvo, ...) on clean data with default args
  21. ht_* (_hilbert)   — a single NaN in the input propagates as NaN instead of
-                         raising ValueError in int(nan) at the DCPeriod rounding
+                         raising ValueError in int(nan) at the DCPeriod rounding;
+                         a leading NaN run is skipped, as TA-Lib does
  22. candle_color      — a NaN open/close yields NaN instead of raising
                          IntCastingNaNError; affects cdl_inside and cdl_pattern
  23. rma / linreg /    — short-window hardening: these three sites crashed if the
@@ -46,7 +47,7 @@ Run:
 import importlib
 import inspect
 import math
-from unittest import TestCase
+from unittest import TestCase, skipIf
 
 import numpy as np
 import pandas as pd
@@ -1157,6 +1158,36 @@ class TestHilbertNanInput(TestCase):
         """No NaN anywhere: the guard must not fire."""
         result = ta.ht_trendline(self.clean)
         self.assertGreater(int(np.isfinite(result).sum()), 100)
+
+    def test_nan_prefix_is_skipped(self):
+        """A leading NaN run (chained input) starts the transform after it.
+
+        Without the skip the prefix poisoned the recursion and every ht_*
+        output was all-NaN. The result past the prefix must equal the result
+        on the series with the prefix removed.
+        """
+        prefixed = self.clean.copy()
+        prefixed.iloc[:10] = np.nan
+        trimmed = self.clean.iloc[10:].reset_index(drop=True)
+        for name in self.HT_NAMES:
+            with self.subTest(indicator=name):
+                with_prefix = np.asarray(getattr(ta, name)(prefixed), dtype=float)[10:]
+                without = np.asarray(getattr(ta, name)(trimmed), dtype=float)
+                np.testing.assert_array_equal(with_prefix, without)
+                self.assertTrue(np.isfinite(with_prefix).any())
+
+    @skipIf(not ta.Imports["talib"], "TA-Lib not installed")
+    def test_nan_prefix_matches_talib(self):
+        """TA-Lib skips a leading NaN run; the native path must agree."""
+        import talib
+
+        prefixed = self.clean.copy()
+        prefixed.iloc[:10] = np.nan
+        native = ta.ht_trendline(prefixed).to_numpy()
+        oracle = talib.HT_TRENDLINE(prefixed.to_numpy())
+        both = np.isfinite(native) & np.isfinite(oracle)
+        self.assertGreater(int(both.sum()), 100)
+        np.testing.assert_allclose(native[both], oracle[both], rtol=1e-9)
 
 
 # ---------------------------------------------------------------------------

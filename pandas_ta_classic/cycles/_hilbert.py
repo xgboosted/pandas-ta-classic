@@ -254,29 +254,22 @@ def hilbert_result(close: Series, ht_start: int = 12) -> dict:
     Returns:
         Dict with keys: ``smooth_period``, ``dc_phase``, ``in_phase``,
         ``quadrature``, ``sine``, ``lead_sine``, ``trend_mode``,
-        ``trendline``.
+        ``trendline``, and ``first_valid`` (position of the first finite
+        close; the arrays are NaN before it).
     """
     c_arr = close.to_numpy(dtype=float)
     m = c_arr.shape[0]
 
-    (
-        smooth_period,
-        dc_phase,
-        in_phase,
-        quadrature,
-        sine,
-        lead_sine,
-        trend_mode,
-        trendline,
-    ) = _hilbert_transform_loop(c_arr, m, ht_start)
+    # A leading NaN run -- what every chained indicator produces -- would
+    # poison the recursion for the whole series. Start at the first finite
+    # close instead, as TA-Lib does, and leave the prefix NaN.
+    finite = np.flatnonzero(np.isfinite(c_arr))
+    first_valid = int(finite[0]) if finite.size else m
+    prefix = np.full(first_valid, np.nan)
 
-    return {
-        "smooth_period": smooth_period,
-        "dc_phase": dc_phase,
-        "in_phase": in_phase,
-        "quadrature": quadrature,
-        "sine": sine,
-        "lead_sine": lead_sine,
-        "trend_mode": trend_mode,
-        "trendline": trendline,
-    }
+    arrays = _hilbert_transform_loop(c_arr[first_valid:], m - first_valid, ht_start)
+    keys = ("smooth_period", "dc_phase", "in_phase", "quadrature", "sine", "lead_sine", "trend_mode", "trendline")
+
+    result = {key: np.concatenate([prefix, arr]) for key, arr in zip(keys, arrays)}
+    result["first_valid"] = first_valid
+    return result
