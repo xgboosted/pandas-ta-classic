@@ -27,7 +27,7 @@ def ht_sine(
 
         sine, lead_sine = HT_SINE(close)
     else:
-        ht = hilbert_result(close, ht_start=37)
+        ht = hilbert_result(close, ht_start=37, lookback=63)
         sine = Series(ht["sine"], index=close.index)
         lead_sine = Series(ht["lead_sine"], index=close.index)
 

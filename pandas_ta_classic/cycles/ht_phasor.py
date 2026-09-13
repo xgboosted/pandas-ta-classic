@@ -27,7 +27,7 @@ def ht_phasor(
 
         inphase, quadrature = HT_PHASOR(close)
     else:
-        ht = hilbert_result(close)
+        ht = hilbert_result(close, lookback=32)
         inphase = Series(ht["in_phase"], index=close.index)
         quadrature = Series(ht["quadrature"], index=close.index)
 

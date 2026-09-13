@@ -464,33 +464,33 @@
   "ht_dcperiod": {
     "HT_DCPERIOD": {
       "last_value": 25.52929044,
-      "non_nan_count": 5241
+      "non_nan_count": 5209
     }
   },
   "ht_dcphase": {
     "HT_DCPHASE": {
       "last_value": 191.18202694,
-      "non_nan_count": 5204
+      "non_nan_count": 5178
     }
   },
   "ht_phasor": {
     "HT_PHASOR_INPHASE": {
       "last_value": 2.10316245,
-      "non_nan_count": 5229
+      "non_nan_count": 5209
     },
     "HT_PHASOR_QUAD": {
       "last_value": 7.16467137,
-      "non_nan_count": 5229
+      "non_nan_count": 5209
     }
   },
   "ht_sine": {
     "HT_SINE": {
       "last_value": -0.19392663,
-      "non_nan_count": 5204
+      "non_nan_count": 5178
     },
     "HT_LEADSINE": {
       "last_value": -0.83080992,
-      "non_nan_count": 5204
+      "non_nan_count": 5178
     }
   },
   "ht_trendmode": {
@@ -502,7 +502,7 @@
   "ht_trendline": {
     "HT_TRENDLINE": {
       "last_value": 334.58340235,
-      "non_nan_count": 5204
+      "non_nan_count": 5178
     }
   },
   "log_return": {

@@ -1,6 +1,5 @@
 # Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)
 from typing import Any, Optional
-import numpy as np
 from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
@@ -28,15 +27,17 @@ def ht_trendmode(
 
         result = HT_TRENDMODE(close).astype(int)
     else:
-        ht = hilbert_result(close, ht_start=37)
+        ht = hilbert_result(close, ht_start=37, lookback=63)
         result = Series(ht["trend_mode"], index=close.index)
-        # TA-Lib lookback for HT_TRENDMODE is 63; the Hilbert variables
-        # have not converged before that.  Blank the warmup zone so the
-        # fillna below converts them to 0, matching TA-Lib output.
-        result.iloc[: ht["first_valid"] + 63] = np.nan
-
-        # Convert to int, treating NaN as 0 to match TA-Lib output
-        result = result.fillna(-1).astype(int).replace(-1, 0)
+        # TA-Lib reports 0 through its lookback of 63 bars (and any leading
+        # NaN run before it).
+        result.iloc[: ht["first_valid"] + 63] = 0.0
+        # Past the lookback, NaN marks bars whose trend mode is undefined
+        # because a non-finite input poisoned the recursion. Report them
+        # instead of silently turning them into 0 ("cycle mode"); fully
+        # defined input keeps the historical int dtype.
+        if result.notna().all():
+            result = result.astype(int)
 
     # Offset
     result = apply_offset(result, offset)
