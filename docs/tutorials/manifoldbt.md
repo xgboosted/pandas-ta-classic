@@ -6,6 +6,8 @@
 pip install manifoldbt
 ```
 
+> **License note:** `manifoldbt` is proprietary software distributed as binary wheels only. It is not an optional dependency of `pandas-ta-classic` and is not installed by any extra; check its license terms before use.
+
 ---
 
 ## 1. The Integration Pattern
