@@ -15,7 +15,7 @@ Covers:
 
 from contextlib import redirect_stdout
 from io import StringIO
-from unittest import TestCase
+from unittest import TestCase, skipIf
 
 import numpy as np
 import pandas as pd
