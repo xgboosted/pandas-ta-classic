@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -41,6 +42,7 @@ def _ema_aligned(arr, m, period, seed_end):
     return result
 
 
+@skip_leading_nan("close")
 def macd(
     close: Series,
     fast: Optional[int] = None,

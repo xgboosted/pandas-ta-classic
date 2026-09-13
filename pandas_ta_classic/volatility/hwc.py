@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 @njit(cache=True)
@@ -67,6 +68,7 @@ def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval):
     return df
 
 
+@skip_leading_nan("close")
 def hwc(
     close: Series,
     na: Optional[float] = None,

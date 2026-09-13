@@ -4,6 +4,7 @@ import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 @njit(cache=True)
@@ -20,6 +21,7 @@ def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
     return ssf_arr
 
 
+@skip_leading_nan("close")
 def ssf(
     close: Series,
     length: Optional[int] = None,

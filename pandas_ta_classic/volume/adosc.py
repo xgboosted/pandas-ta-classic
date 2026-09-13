@@ -4,8 +4,10 @@ from pandas import Series
 from .ad import ad
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
+@skip_leading_nan("high", "low", "close", "volume")
 def adosc(
     high: Series,
     low: Series,

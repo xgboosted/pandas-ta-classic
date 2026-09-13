@@ -41,6 +41,8 @@ Covered fixes:
  23. rma / linreg /    — short-window hardening: these three sites crashed if the
      _sliding_weighted_   verify_series min_length guard was bypassed. Not
      ma                   reachable through the public API; guarded anyway
+ 27. skip_leading_nan  — 14 indicators returned all-NaN on chained input (a
+                          leading NaN run); they now compute on the rows after it
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1352,3 +1354,52 @@ class TestShortWindowHardening(TestCase):
         self.assertEqual(ta.rma(close, length=10).isna().sum(), 9)
         self.assertEqual(ta.linreg(close, length=10, talib=False).isna().sum(), 9)
         self.assertEqual(ta.alma(close, length=10).isna().sum(), 9)
+
+
+# ---------------------------------------------------------------------------
+# Fix 27: indicators that went all-NaN on a leading NaN run
+# ---------------------------------------------------------------------------
+
+
+class TestLeadingNanRun(TestCase):
+    """Recursive indicators seeded from bar 0 returned all-NaN on chained input.
+
+    A 30-bar NaN prefix -- what any indicator's output starts with -- made
+    adosc, fisher, hwc, hwma, jma, kama, lrsi, macd, macdfix, mama, mcgd,
+    ssf, tos_stdevall and vidya return NaN for every bar.
+    """
+
+    PREFIX = 30
+    NAMES = ("adosc", "fisher", "hwc", "hwma", "jma", "kama", "lrsi", "macd", "macdfix", "mama", "mcgd", "ssf", "tos_stdevall", "vidya")
+
+    @classmethod
+    def setUpClass(cls):
+        data = get_sample_data().iloc[:600].reset_index(drop=True)
+        cls.prefixed = data.copy()
+        cls.prefixed.iloc[: cls.PREFIX] = np.nan
+        cls.trimmed = data.iloc[cls.PREFIX :].reset_index(drop=True)
+
+    def _call(self, name, frame):
+        fn = getattr(ta, name)
+        params = inspect.signature(fn).parameters
+        cols = {p: frame["open" if p == "open_" else p] for p in ("high", "low", "close", "volume") if p in params}
+        return fn(**cols)
+
+    def test_prefix_result_equals_trimmed_result(self):
+        for name in self.NAMES:
+            with self.subTest(indicator=name):
+                with_prefix = np.asarray(self._call(name, self.prefixed), dtype=float)[self.PREFIX :]
+                without = np.asarray(self._call(name, self.trimmed), dtype=float)
+                self.assertTrue(np.isfinite(with_prefix).any(), f"{name} is still all-NaN")
+                np.testing.assert_allclose(with_prefix, without, rtol=1e-12, atol=1e-12, equal_nan=True)
+
+    def test_result_keeps_index_name_and_category(self):
+        result = ta.macd(self.prefixed["close"])
+        self.assertTrue(result.index.equals(self.prefixed.index))
+        self.assertEqual(result.name, "MACD_12_26_9")
+        self.assertEqual(result.category, "momentum")
+
+    def test_accessor_signature_unchanged(self):
+        """The decorator must keep inspect.signature, which the df.ta wrapper builds on."""
+        self.assertEqual(list(inspect.signature(ta.macd).parameters)[:4], ["close", "fast", "slow", "signal"])
+        self.assertEqual(self.prefixed.ta.macd().shape, (600, 3))

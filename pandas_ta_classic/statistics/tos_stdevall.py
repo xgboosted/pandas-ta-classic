@@ -4,8 +4,10 @@ from typing import Any, Optional
 import numpy as np
 from pandas import DataFrame, DatetimeIndex, Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
+@skip_leading_nan("close")
 def tos_stdevall(
     close: Series,
     length: Optional[int] = None,

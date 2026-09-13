@@ -1,8 +1,11 @@
+import functools
+import inspect
 import logging
-from typing import Any, Optional, TypeGuard, Union
+from typing import Any, Callable, Optional, TypeGuard, Union
 
 from sys import float_info as sflt
 
+import numpy as np
 from numpy import argmax, argmin
 from pandas import DataFrame, Series
 from pandas.api.types import is_datetime64_any_dtype
@@ -90,6 +93,55 @@ def is_percent(x: Optional[Union[int, float]]) -> TypeGuard[Union[int, float]]:
     if isinstance(x, (int, float)):
         return x is not None and x >= 0 and x <= 100
     return False
+
+
+def leading_nan_rows(*series: Series) -> int:
+    """Number of leading rows before every series has a finite value."""
+    finite = np.isfinite(np.vstack([s.to_numpy(dtype=float) for s in series])).all(axis=0)
+    hits = np.flatnonzero(finite)
+    return int(hits[0]) if hits.size else finite.size
+
+
+def skip_leading_nan(*names: str) -> Callable:
+    """Compute an indicator on the rows after a leading NaN run, then pad back.
+
+    Chained input (another indicator's output) always starts with NaN. A
+    recursion seeded from the first bar carries that NaN forward forever, so
+    the whole result came back NaN. The decorated function instead receives
+    every Series argument trimmed to start at the first row where all of
+    *names* are finite; its result is reindexed to the original index, with
+    ``name`` and ``category`` preserved. Input without a leading NaN run, or
+    that is entirely NaN, is passed through unchanged.
+    """
+
+    def decorator(fn: Callable) -> Callable:
+        sig = inspect.signature(fn)
+
+        @functools.wraps(fn)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            bound = sig.bind_partial(*args, **kwargs)
+            primary = [bound.arguments.get(n) for n in names]
+            if not all(isinstance(s, Series) for s in primary) or len({s.size for s in primary}) != 1:
+                return fn(*args, **kwargs)
+            size = primary[0].size
+            start = leading_nan_rows(*primary)
+            if not 0 < start < size:
+                return fn(*args, **kwargs)
+            for key, value in bound.arguments.items():
+                if isinstance(value, Series) and value.size == size:
+                    bound.arguments[key] = value.iloc[start:]
+            result = fn(*bound.args, **bound.kwargs)
+            if result is None:
+                return None
+            padded = result.reindex(primary[0].index)
+            for attr in ("name", "category"):
+                if hasattr(result, attr):
+                    setattr(padded, attr, getattr(result, attr))
+            return padded
+
+        return wrapper
+
+    return decorator
 
 
 def non_zero_range(high: Series, low: Series) -> Series:

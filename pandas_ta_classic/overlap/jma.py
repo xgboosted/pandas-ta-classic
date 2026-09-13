@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 @njit(cache=True)
@@ -92,6 +93,7 @@ def _jma_phase_ratio(phase):
     return 1.5 + phase * 0.01
 
 
+@skip_leading_nan("close")
 def jma(
     close: Series,
     length: Optional[Union[int, float]] = None,
