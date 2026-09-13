@@ -27,7 +27,7 @@ def ht_dcphase(
 
         result = HT_DCPHASE(close)
     else:
-        ht = hilbert_result(close, ht_start=37)
+        ht = hilbert_result(close, ht_start=37, lookback=63)
         result = Series(ht["dc_phase"], index=close.index)
 
     # Offset

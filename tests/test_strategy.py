@@ -6,7 +6,7 @@ from time import perf_counter
 from tests.config import get_sample_data
 import pandas_ta_classic as pandas_ta
 
-from unittest import TestCase
+from unittest import TestCase, mock
 from pandas import DataFrame
 
 # Strategy Testing Parameters
@@ -344,3 +344,24 @@ class TestStrategyDataclass(TestCase):
         s = pandas_ta.Strategy("TestStrat", ta=[])
         self.assertIsInstance(s.created, str)
         self.assertGreater(len(s.created), 0)
+
+
+class TestStrategyWorkerPayload(TestCase):
+    """Guards the multiprocessing call site, not just the helper."""
+
+    def test_multiprocessing_ships_the_worker_slice(self):
+        """strategy() must pickle only _worker_columns(), not the whole frame.
+
+        Asserting on _worker_columns() alone leaves the call site unguarded:
+        replacing the slice with a full copy passed every other test while
+        restoring the 1244 MB task payload.
+        """
+        data = get_sample_data().iloc[:300].copy()
+        data["unrelated"] = 1.0
+        data.ta.cores = 2
+        cls = type(data.ta)
+        with mock.patch.object(cls, "_worker_columns", autospec=True, side_effect=cls._worker_columns) as spy:
+            data.ta.strategy("Volatility")
+        spy.assert_called()
+        shipped = spy.side_effect(data.ta, [{}])
+        self.assertNotIn("unrelated", shipped)

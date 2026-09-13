@@ -241,7 +241,7 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
     )
 
 
-def hilbert_result(close: Series, ht_start: int = 12) -> dict:
+def hilbert_result(close: Series, ht_start: int = 12, lookback: int = 0) -> dict:
     """Run the Hilbert Transform and return all intermediate arrays.
 
     Args:
@@ -250,6 +250,9 @@ def hilbert_result(close: Series, ht_start: int = 12) -> dict:
             TA-Lib uses 12 for HT_DCPERIOD/HT_PHASOR (lookback 32)
             and 37 for HT_DCPHASE/HT_SINE/HT_TRENDMODE/HT_TRENDLINE
             (lookback 63).
+        lookback: Bars after the first finite close that are reported as NaN
+            because the recursion has not converged -- TA-Lib's lookback for
+            the calling indicator (32 or 63). 0 leaves the arrays untouched.
 
     Returns:
         Dict with keys: ``smooth_period``, ``dc_phase``, ``in_phase``,
@@ -271,5 +274,10 @@ def hilbert_result(close: Series, ht_start: int = 12) -> dict:
     keys = ("smooth_period", "dc_phase", "in_phase", "quadrature", "sine", "lead_sine", "trend_mode", "trendline")
 
     result = {key: np.concatenate([prefix, arr]) for key, arr in zip(keys, arrays)}
+    # Values inside TA-Lib's lookback (including the 0.0 placeholders the loop
+    # writes before ht_start) come from an unconverged recursion; TA-Lib does
+    # not report them, so neither do we.
+    for arr in result.values():
+        arr[: first_valid + lookback] = np.nan
     result["first_valid"] = first_valid
     return result

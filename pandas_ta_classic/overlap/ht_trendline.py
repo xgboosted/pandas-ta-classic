@@ -27,7 +27,7 @@ def ht_trendline(
 
         result = HT_TRENDLINE(close)
     else:
-        ht = hilbert_result(close, ht_start=37)
+        ht = hilbert_result(close, ht_start=37, lookback=63)
         result = Series(ht["trendline"], index=close.index)
 
     # Offset
