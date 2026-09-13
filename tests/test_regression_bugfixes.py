@@ -41,6 +41,9 @@ Covered fixes:
  23. rma / linreg /    — short-window hardening: these three sites crashed if the
      _sliding_weighted_   verify_series min_length guard was bypassed. Not
      ma                   reachable through the public API; guarded anyway
+ 24. run_pattern       — a leading NaN run no longer poisons the running candle
+     (candles)            averages; cdl_pattern on chained input reported 0 for
+                          33 of 62 patterns instead of TA-Lib's signals
  25. rma / Wilder DM   — rma seeds after a leading NaN run; plus_dm, minus_dm,
      family               dx and adx use TA-Lib's Wilder seeding, so ADX is no
                           longer up to ~50% off TA-Lib in its first bars
@@ -1355,6 +1358,58 @@ class TestShortWindowHardening(TestCase):
         self.assertEqual(ta.rma(close, length=10).isna().sum(), 9)
         self.assertEqual(ta.linreg(close, length=10, talib=False).isna().sum(), 9)
         self.assertEqual(ta.alma(close, length=10).isna().sum(), 9)
+
+
+# ---------------------------------------------------------------------------
+# Fix 24: run_pattern skips a leading NaN run
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternNanPrefix(TestCase):
+    """Native candle patterns reported 0 everywhere after a NaN prefix.
+
+    run_pattern built its running body/shadow averages from index 0, so a
+    NaN prefix -- what chained input always has -- made every later average
+    NaN, every comparison False, and every signal 0. With a 30-bar prefix on
+    600 SPY bars, 33 of 62 cdl_pattern columns were all-zero (CDL_3INSIDE: 0
+    signals vs TA-Lib's 10).
+    """
+
+    PREFIX = 30
+
+    @classmethod
+    def setUpClass(cls):
+        data = get_sample_data().iloc[:600].reset_index(drop=True)
+        cls.prefixed = data.copy()
+        cls.prefixed.iloc[: cls.PREFIX] = np.nan
+        cls.trimmed = data.iloc[cls.PREFIX :].reset_index(drop=True)
+
+    def _patterns(self, frame):
+        return ta.cdl_pattern(frame["open"], frame["high"], frame["low"], frame["close"])
+
+    def test_prefix_result_equals_trimmed_result(self):
+        """Past the prefix, every pattern matches the run on the trimmed series."""
+        with_prefix = self._patterns(self.prefixed).iloc[self.PREFIX :].reset_index(drop=True)
+        without = self._patterns(self.trimmed)
+        for col in without.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(with_prefix[col].to_numpy(), without[col].to_numpy())
+
+    def test_prefix_does_not_silence_patterns(self):
+        """A pattern that fires on the trimmed series still fires with the prefix."""
+        with_prefix = self._patterns(self.prefixed)
+        self.assertGreater(int((with_prefix["CDL_3INSIDE"] != 0).sum()), 0)
+
+    @skipIf(not ta.Imports["talib"], "TA-Lib not installed")
+    def test_prefix_matches_talib(self):
+        """TA-Lib skips the NaN prefix; the native patterns must agree bar for bar."""
+        import talib
+
+        ohlc = [self.prefixed[k].to_numpy() for k in ("open", "high", "low", "close")]
+        native = self._patterns(self.prefixed)
+        for name in ("3INSIDE", "BELTHOLD", "CLOSINGMARUBOZU", "ENGULFING", "HAMMER"):
+            with self.subTest(pattern=name):
+                np.testing.assert_array_equal(native[f"CDL_{name}"].to_numpy(), getattr(talib, f"CDL{name}")(*ohlc).astype(float))
 
 
 # ---------------------------------------------------------------------------
