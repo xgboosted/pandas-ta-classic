@@ -112,7 +112,8 @@ def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offse
     col_name = f"CDL_{n.upper()}"
     if n in pta_patterns:
         pattern_result = pta_patterns[n](open_, high, low, close, offset=offset, scalar=scalar, **kwargs)
-        result[pattern_result.name] = pattern_result
+        if pattern_result is not None:
+            result[pattern_result.name] = pattern_result
     elif n in _NATIVE_PATTERNS:
         pattern_result = _NATIVE_PATTERNS[n](open_, high, low, close, scalar=scalar, offset=offset, **kwargs)
         if pattern_result is not None:

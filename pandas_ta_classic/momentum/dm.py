@@ -27,8 +27,8 @@ def dm(
     # Validate Arguments
     length = int(length) if length and length > 0 else 14
     mamode = mamode.lower() if mamode and isinstance(mamode, str) else "rma"
-    high = verify_series(high)
-    low = verify_series(low)
+    high = verify_series(high, length)
+    low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False

@@ -93,11 +93,14 @@ def is_percent(x: Optional[Union[int, float]]) -> TypeGuard[Union[int, float]]:
 
 
 def non_zero_range(high: Series, low: Series) -> Series:
-    """Returns the difference of two series and adds epsilon to any zero values.  This occurs commonly in crypto data when 'high' = 'low'."""
+    """Returns the difference of two series, replacing exact zeros with epsilon.  This occurs commonly in crypto data when 'high' = 'low'.
+
+    The replacement is pointwise: a flat bar at row ``t`` only affects row ``t``.
+    Rows with a non-zero range keep their exact difference, so the value at row
+    ``t`` never depends on bars at ``t + 1`` or later.
+    """
     diff = high - low
-    if diff.eq(0).any().any():
-        diff += sflt.epsilon
-    return diff
+    return diff.where(diff != 0, sflt.epsilon)
 
 
 def recent_maximum_index(x: Series) -> int:
@@ -211,9 +214,10 @@ def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
     from numpy.lib.stride_tricks import sliding_window_view
 
     arr = close.to_numpy(dtype=float)
-    windows = sliding_window_view(arr, length)
     result = np.full(len(arr), np.nan)
-    result[length - 1 :] = windows @ weights
+    if length <= arr.shape[0]:
+        windows = sliding_window_view(arr, length)
+        result[length - 1 :] = windows @ weights
     return Series(result, index=close.index)
 
 
