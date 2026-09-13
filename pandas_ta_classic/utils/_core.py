@@ -211,9 +211,10 @@ def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
     from numpy.lib.stride_tricks import sliding_window_view
 
     arr = close.to_numpy(dtype=float)
-    windows = sliding_window_view(arr, length)
     result = np.full(len(arr), np.nan)
-    result[length - 1 :] = windows @ weights
+    if length <= arr.shape[0]:
+        windows = sliding_window_view(arr, length)
+        result[length - 1 :] = windows @ weights
     return Series(result, index=close.index)
 
 
