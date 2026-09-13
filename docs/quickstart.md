@@ -312,11 +312,11 @@ import pandas_ta_classic as ta
 print(ta.Category)
 
 # List indicators by category
-print(ta.momentum) # All momentum indicators
-print(ta.overlap) # All overlap indicators
-print(ta.trend) # All trend indicators
-print(ta.volatility) # All volatility indicators
-print(ta.volume) # All volume indicators
+print(ta.Category["momentum"]) # All momentum indicators
+print(ta.Category["overlap"]) # All overlap indicators
+print(ta.Category["trend"]) # All trend indicators
+print(ta.Category["volatility"]) # All volatility indicators
+print(ta.Category["volume"]) # All volume indicators
 ```
 
 ### Get Help on Indicators
