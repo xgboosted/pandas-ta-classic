@@ -445,7 +445,7 @@ class AnalysisIndicators:
     ) -> Optional[DataFrame]: ...
     def mavp(
         self,
-        periods: Optional[Series] = None,
+        periods: Series,
         minperiod: Optional[int] = None,
         maxperiod: Optional[int] = None,
         mamode: Optional[int] = None,

@@ -696,6 +696,7 @@ class AnalysisIndicators(PandasObject):
             "cross_value",
             # "data", # reserved
             "long_run",
+            "mavp",  # Requires a per-bar 'periods' Series
             "short_run",
             "td_seq",  # Performance exclusion
             "tsignals",

@@ -122,6 +122,9 @@ def detect_virgin_cpr(high: Series, low: Series, tc: Series, bc: Series, lookfor
     in the next N periods after the CPR was formed. These levels often act as
     strong support/resistance when tested later.
 
+    Not causal: the flag at bar ``i`` is decided by bars ``i + 1 .. i + lookforward``,
+    so it is unavailable in real time and must not gate backtest entries.
+
     Args:
         high: High price series
         low: Low price series
