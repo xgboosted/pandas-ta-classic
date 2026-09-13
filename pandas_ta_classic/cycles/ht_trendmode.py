@@ -33,7 +33,7 @@ def ht_trendmode(
         # TA-Lib lookback for HT_TRENDMODE is 63; the Hilbert variables
         # have not converged before that.  Blank the warmup zone so the
         # fillna below converts them to 0, matching TA-Lib output.
-        result.iloc[:63] = np.nan
+        result.iloc[: ht["first_valid"] + 63] = np.nan
 
         # Convert to int, treating NaN as 0 to match TA-Lib output
         result = result.fillna(-1).astype(int).replace(-1, 0)

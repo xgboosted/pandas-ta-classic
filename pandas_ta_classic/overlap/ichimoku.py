@@ -6,11 +6,13 @@ from .midprice import midprice
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 _ICHIMOKU_TUPLE_DEPRECATION = (
-    "ichimoku() returning a (visible, span) tuple is deprecated and will be "
-    "removed in the next major release. Pass as_dataframe=True to opt in to "
-    "the new single-DataFrame return now, or as_dataframe=False to silence "
-    "this warning while keeping the tuple. The accessor df.ta.ichimoku() "
-    "already returns a DataFrame and is unaffected."
+    "ichimoku() returning a (visible, span) tuple is deprecated. The default "
+    "return becomes a single DataFrame in the next breaking release, and the "
+    "tuple is removed in the breaking release after that. Pass as_dataframe=True to "
+    "migrate now; add append_span=True to also get the projected span rows. "
+    "as_dataframe=False keeps the tuple and silences this warning for now, "
+    "but it is deprecated too and will be removed with the tuple. The "
+    "accessor df.ta.ichimoku() already returns a DataFrame and is unaffected."
 )
 
 
@@ -156,7 +158,8 @@ Args:
     as_dataframe (bool): Return type selector. None (default) returns the
         legacy ``(visible, span)`` tuple and emits a DeprecationWarning.
         True returns a single DataFrame. False returns the tuple without
-        warning. Default: None
+        warning; it is a temporary escape hatch, deprecated as well and
+        removed together with the tuple return. Default: None
     append_span (bool): Only used when as_dataframe is True. When False
         (default) the returned DataFrame holds the visible period only.
         When True the future-dated span rows (projected Senkou A/B) are

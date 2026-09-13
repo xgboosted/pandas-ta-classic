@@ -135,6 +135,19 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
 
         # DC Phase — TA-Lib uses int(smoothPeriod + 0.5) for rounding
         sp = smooth_period_arr[i]
+        if not np.isfinite(sp):
+            # A NaN anywhere in the input poisons the recursion, so the smoothed
+            # period — and every value derived from it — is undefined from here
+            # on. TA-Lib requires NaN-free input; emit NaN rather than crash in
+            # int(nan), so the indicator propagates NaN instead of raising.
+            dc_phase_arr[i] = np.nan
+            in_phase_arr[i] = np.nan
+            quad_arr[i] = np.nan
+            sine_arr[i] = np.nan
+            lead_sine_arr[i] = np.nan
+            trendline_arr[i] = np.nan
+            trend_mode_arr[i] = np.nan
+            continue
         dc_period_int = max(int(sp + 0.5), 1)
         real_part = 0.0
         imag_part = 0.0
@@ -241,29 +254,22 @@ def hilbert_result(close: Series, ht_start: int = 12) -> dict:
     Returns:
         Dict with keys: ``smooth_period``, ``dc_phase``, ``in_phase``,
         ``quadrature``, ``sine``, ``lead_sine``, ``trend_mode``,
-        ``trendline``.
+        ``trendline``, and ``first_valid`` (position of the first finite
+        close; the arrays are NaN before it).
     """
     c_arr = close.to_numpy(dtype=float)
     m = c_arr.shape[0]
 
-    (
-        smooth_period,
-        dc_phase,
-        in_phase,
-        quadrature,
-        sine,
-        lead_sine,
-        trend_mode,
-        trendline,
-    ) = _hilbert_transform_loop(c_arr, m, ht_start)
+    # A leading NaN run -- what every chained indicator produces -- would
+    # poison the recursion for the whole series. Start at the first finite
+    # close instead, as TA-Lib does, and leave the prefix NaN.
+    finite = np.flatnonzero(np.isfinite(c_arr))
+    first_valid = int(finite[0]) if finite.size else m
+    prefix = np.full(first_valid, np.nan)
 
-    return {
-        "smooth_period": smooth_period,
-        "dc_phase": dc_phase,
-        "in_phase": in_phase,
-        "quadrature": quadrature,
-        "sine": sine,
-        "lead_sine": lead_sine,
-        "trend_mode": trend_mode,
-        "trendline": trendline,
-    }
+    arrays = _hilbert_transform_loop(c_arr[first_valid:], m - first_valid, ht_start)
+    keys = ("smooth_period", "dc_phase", "in_phase", "quadrature", "sine", "lead_sine", "trend_mode", "trendline")
+
+    result = {key: np.concatenate([prefix, arr]) for key, arr in zip(keys, arrays)}
+    result["first_valid"] = first_valid
+    return result

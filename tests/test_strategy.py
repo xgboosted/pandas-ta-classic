@@ -104,6 +104,25 @@ class TestStrategyMethods(TestCase):
         self.data.ta.strategy(self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed)
         self.category = "All Multiruns with diff Args"  # Rename for Speed Table
 
+    def test_worker_columns_carry_only_reachable_columns(self):
+        """Only columns an indicator can reach may be shipped to the Pool.
+
+        The worker copy used to be sliced on the pre-run column count, which on
+        a second run already included the first run's indicators.  The oversized
+        pickle killed the Windows task pipe with WinError 1450.
+        """
+        self.category = "Momentum"
+        ohlcv = list(self.data.columns)
+        self.data["unrelated"] = 1.0
+
+        self.data.ta.strategy(self.category, length=10, verbose=verbose, timed=strategy_timed)
+        self.assertGreater(len(self.data.columns), len(ohlcv) + 1)
+
+        # Neither the first run's output nor an unreferenced user column.
+        self.assertEqual(self.data.ta._worker_columns([{}]), ohlcv)
+        # Unless an indicator is explicitly pointed at it.
+        self.assertEqual(self.data.ta._worker_columns([{"close": "unrelated"}]), ohlcv + ["unrelated"])
+
     # @skip
     def test_candles_category(self):
         self.category = "Candles"
