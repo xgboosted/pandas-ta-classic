@@ -41,16 +41,13 @@ def plus_dm(
 
         result = _PLUS_DM(high, low, timeperiod=length)
     else:
-        from pandas_ta_classic.overlap.ma import ma
+        from pandas_ta_classic.utils._wilder import wilder_smooth
 
         up = high - high.shift(drift)
         dn = low.shift(drift) - low
         pos_ = ((up > dn) & (up > 0)) * up
         pos_ = pos_.apply(zero)
-        result = ma("rma", pos_, length=length)
-        if result is None:
-            return None
-        result = result * length  # Wilder's raw DM
+        result = wilder_smooth(pos_, length)  # Wilder's raw DM, TA-Lib seeding
 
     # Offset
     result = apply_offset(result, offset)
