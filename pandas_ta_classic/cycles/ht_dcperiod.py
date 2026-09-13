@@ -27,7 +27,7 @@ def ht_dcperiod(
 
         result = HT_DCPERIOD(close)
     else:
-        ht = hilbert_result(close)
+        ht = hilbert_result(close, lookback=32)
         result = Series(ht["smooth_period"], index=close.index)
 
     # Offset

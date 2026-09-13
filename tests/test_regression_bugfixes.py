@@ -41,6 +41,9 @@ Covered fixes:
  23. rma / linreg /    — short-window hardening: these three sites crashed if the
      _sliding_weighted_   verify_series min_length guard was bypassed. Not
      ma                   reachable through the public API; guarded anyway
+ 26. ht_* warmup /     — values inside TA-Lib's lookback are NaN (ht_dcperiod
+     ht_trendmode         reported 0.0 for its first 12 bars), and ht_trendmode
+                          reports NaN, not 0, for bars made undefined by a NaN
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1352,3 +1355,62 @@ class TestShortWindowHardening(TestCase):
         self.assertEqual(ta.rma(close, length=10).isna().sum(), 9)
         self.assertEqual(ta.linreg(close, length=10, talib=False).isna().sum(), 9)
         self.assertEqual(ta.alma(close, length=10).isna().sum(), 9)
+
+
+# ---------------------------------------------------------------------------
+# Fix 26: ht_* lookback and ht_trendmode undefined bars
+# ---------------------------------------------------------------------------
+
+
+class TestHilbertLookbackAndUndefinedBars(TestCase):
+    """ht_* reported unconverged values TA-Lib does not, and ht_trendmode
+    turned undefined bars into 0.
+
+    ht_dcperiod returned 0.0 for its first 12 bars and every ht_* emitted
+    20-26 values inside TA-Lib's lookback (32 or 63 bars). After a mid-series
+    NaN, ht_trendmode converted the NaN it could not compute into 0 -- a
+    valid-looking "cycle mode" for every remaining bar.
+    """
+
+    HT_NAMES = ("ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine", "ht_trendmode", "ht_trendline")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.close = get_sample_data()["close"].iloc[:700].reset_index(drop=True)
+
+    @skipIf(not ta.Imports["talib"], "TA-Lib not installed")
+    def test_nan_positions_match_talib(self):
+        import talib
+
+        refs = {
+            "ht_dcperiod": lambda a: talib.HT_DCPERIOD(a),
+            "ht_dcphase": lambda a: talib.HT_DCPHASE(a),
+            "ht_phasor": lambda a: np.column_stack(talib.HT_PHASOR(a)),
+            "ht_sine": lambda a: np.column_stack(talib.HT_SINE(a)),
+            "ht_trendmode": lambda a: talib.HT_TRENDMODE(a).astype(float),
+            "ht_trendline": lambda a: talib.HT_TRENDLINE(a),
+        }
+        for prefix in (0, 37):
+            series = self.close.copy()
+            series.iloc[:prefix] = np.nan
+            for name in self.HT_NAMES:
+                with self.subTest(indicator=name, prefix=prefix):
+                    native = np.asarray(getattr(ta, name)(series), dtype=float).reshape(len(series), -1)
+                    oracle = np.asarray(refs[name](series.to_numpy()), dtype=float).reshape(len(series), -1)
+                    np.testing.assert_array_equal(np.isnan(native), np.isnan(oracle))
+                    np.testing.assert_allclose(native[~np.isnan(oracle)], oracle[~np.isnan(oracle)], rtol=1e-9, atol=1e-9)
+
+    def test_dcperiod_warmup_is_nan_not_zero(self):
+        result = ta.ht_dcperiod(self.close)
+        self.assertTrue(result.iloc[:32].isna().all())
+        self.assertFalse((result == 0).any())
+
+    def test_trendmode_undefined_bars_are_nan(self):
+        gapped = self.close.copy()
+        gapped.iloc[300] = np.nan
+        result = ta.ht_trendmode(gapped)
+        self.assertTrue(result.iloc[301:].isna().all())
+        self.assertTrue(result.iloc[:300].notna().all())
+
+    def test_trendmode_clean_input_keeps_int_dtype(self):
+        self.assertTrue(str(ta.ht_trendmode(self.close).dtype).startswith("int"))
