@@ -280,6 +280,53 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertNotEqual(other.ta.cores, 0)
         self.assertEqual(other.ta.exchange, "NYSE")
 
+    def test_accessing_df_ta_does_not_mutate_attrs(self):
+        """Touching df.ta must not write into the caller's DataFrame.attrs."""
+        before = dict(self.df.attrs)
+        _ = self.df.ta
+        _ = self.df.ta.cores
+        self.assertEqual(self.df.attrs, before)
+        self.assertIsNone(self.df.ta.last_run)
+
+    def test_last_run_set_after_an_indicator_runs(self):
+        self.df.ta(kind="sma", length=10)
+        self.assertIsInstance(self.df.ta.last_run, str)
+
+
+class TestAccessorAdjustedColumn(TestCase):
+    """df.ta.adjusted replaces the default close column, as documented.
+
+    It used to be stored (and, since the pandas 3 fix, persisted) but never
+    read: every indicator wrapper passed the literal "close", so the adjusted
+    column was ignored.
+    """
+
+    def setUp(self):
+        self.df = get_sample_data().iloc[:300].copy()
+        self.df["adj_close"] = self.df["close"] * 0.5
+
+    def test_adjusted_feeds_default_close(self):
+        self.df.ta.adjusted = "adj_close"
+        expected = self.df["adj_close"].rolling(10).mean()
+        np.testing.assert_allclose(self.df.ta.sma(length=10).to_numpy(), expected.to_numpy(), equal_nan=True)
+
+    def test_explicit_close_overrides_adjusted(self):
+        self.df.ta.adjusted = "adj_close"
+        expected = self.df["close"].rolling(10).mean()
+        np.testing.assert_allclose(self.df.ta.sma(length=10, close="close").to_numpy(), expected.to_numpy(), equal_nan=True)
+
+    def test_resetting_adjusted_restores_close(self):
+        self.df.ta.adjusted = "adj_close"
+        self.df.ta.adjusted = None
+        expected = self.df["close"].rolling(10).mean()
+        np.testing.assert_allclose(self.df.ta.sma(length=10).to_numpy(), expected.to_numpy(), equal_nan=True)
+
+    def test_adjusted_leaves_high_and_low_alone(self):
+        """Only the close column is adjusted; high/low still come from their columns."""
+        self.df.ta.adjusted = "adj_close"
+        result = self.df.ta.hl2()
+        np.testing.assert_allclose(result.to_numpy(), ((self.df["high"] + self.df["low"]) / 2).to_numpy())
+
 
 class TestAccessorPropertyErrorsAreNotMasked(TestCase):
     """A failing property must not be reported as a missing attribute.

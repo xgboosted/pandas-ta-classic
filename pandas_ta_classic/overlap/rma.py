@@ -23,13 +23,19 @@ def rma(
 
     # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
     close = close.copy()
-    if length > close.size:
+    # Seed on the first `length` values after any leading NaN run, as ema()
+    # does. Seeding on iloc[0:length] averaged whatever valid values the NaN
+    # prefix left (chained input: dx, the DM series), so every value derived
+    # from that seed started from the wrong level.
+    first_valid = close.first_valid_index()
+    fv_pos = None if first_valid is None else close.index.get_loc(first_valid)
+    if fv_pos is None or fv_pos + length > close.size:
         # No SMA seed exists, so the average is undefined at every position.
         rma = Series(np.nan, index=close.index)
     else:
-        sma_nth = close.iloc[0:length].mean()
-        close.iloc[: length - 1] = np.nan
-        close.iloc[length - 1] = sma_nth
+        sma_nth = close.iloc[fv_pos : fv_pos + length].mean()
+        close.iloc[: fv_pos + length - 1] = np.nan
+        close.iloc[fv_pos + length - 1] = sma_nth
         rma = close.ewm(alpha=alpha, adjust=False).mean()
 
     # Offset

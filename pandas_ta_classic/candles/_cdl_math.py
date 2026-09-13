@@ -186,17 +186,19 @@ def run_pattern(
     offset = get_offset(offset)
     scalar = float(scalar) if scalar else 100
 
-    ca = CandleArrays(
-        open_.to_numpy(dtype=float),
-        high.to_numpy(dtype=float),
-        low.to_numpy(dtype=float),
-        close.to_numpy(dtype=float),
-    )
-
+    arrays = [s.to_numpy(dtype=float) for s in (open_, high, low, close)]
     n = len(close)
     out = np.zeros(n, dtype=np.double)
 
-    detect_fn(ca, out, **kwargs)
+    # A leading NaN run -- what every chained input produces -- would poison
+    # the running body/shadow averages for the whole series, so every later
+    # comparison is False and the pattern silently reports 0. Start at the
+    # first bar with all four prices finite, as TA-Lib does.
+    finite = np.flatnonzero(np.isfinite(np.vstack(arrays)).all(axis=0))
+    first_valid = int(finite[0]) if finite.size else n
+    if first_valid < n:
+        ca = CandleArrays(*(a[first_valid:] for a in arrays))
+        detect_fn(ca, out[first_valid:], **kwargs)
 
     # Scale output (TA-Lib outputs ±100; scalar lets callers adjust)
     if scalar != 100:

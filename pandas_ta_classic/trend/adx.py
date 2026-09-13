@@ -4,6 +4,8 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.volatility.atr import atr
+from pandas_ta_classic.volatility.true_range import true_range
+from pandas_ta_classic.utils._wilder import wilder_di
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -51,10 +53,6 @@ def adx(
         dmp = Series(PLUS_DI(high, low, close, length), index=close.index)
         dmn = Series(MINUS_DI(high, low, close, length), index=close.index)
     else:
-        atr_ = atr(high=high, low=low, close=close, length=length)
-        if atr_ is None:
-            return None
-
         up = high - high.shift(drift)  # high.diff(drift)
         dn = low.shift(drift) - low  # low.diff(-drift).shift(drift)
 
@@ -64,15 +62,28 @@ def adx(
         pos = pos.apply(zero)
         neg = neg.apply(zero)
 
-        k = scalar / atr_
-        _dmp_ma = ma(mamode, pos, length=length)
-        if _dmp_ma is None:
-            return None
-        _dmn_ma = ma(mamode, neg, length=length)
-        if _dmn_ma is None:
-            return None
-        dmp = k * _dmp_ma
-        dmn = k * _dmn_ma
+        if mamode == "rma":
+            # Wilder's smoothing with TA-Lib's seeding (sum of the first
+            # length-1 values). Smoothing DM and TR with the SMA-seeded rma
+            # instead started every DI/DX/ADX value from a different level
+            # and left ADX up to ~50% off TA-Lib in the first bars.
+            tr = true_range(high=high, low=low, close=close, drift=drift)
+            if tr is None:
+                return None
+            dmp, dmn = wilder_di(pos, neg, tr, length, scalar)
+        else:
+            atr_ = atr(high=high, low=low, close=close, length=length)
+            if atr_ is None:
+                return None
+            k = scalar / atr_
+            _dmp_ma = ma(mamode, pos, length=length)
+            if _dmp_ma is None:
+                return None
+            _dmn_ma = ma(mamode, neg, length=length)
+            if _dmn_ma is None:
+                return None
+            dmp = k * _dmp_ma
+            dmn = k * _dmn_ma
 
         dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
         adx_arr = ma(mamode, dx, length=lensig)

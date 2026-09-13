@@ -99,7 +99,7 @@ def _make_ta_wrapper(func: Callable) -> Callable:
         # Always extract required column values from DataFrame
         for param_name in col_params_required:
             col_key = _COLUMN_PARAM_TO_COL_KEY[param_name]
-            col_val = kwargs.pop(col_key, col_key)
+            col_val = kwargs.pop(col_key, self._default_column(col_key))
             if col_val is None:
                 raise ValueError(f"'{col_key}' cannot be None; pass a Series or column name string")
             call_kwargs[param_name] = self._get_column(col_val)
@@ -112,7 +112,7 @@ def _make_ta_wrapper(func: Callable) -> Callable:
         # Handle series_a / series_b: pop aliases in order, fallback to default column
         for param_name in series_col_params:
             aliases, default_col = _SERIES_COLUMN_PARAMS[param_name]
-            col_val = default_col
+            col_val = self._default_column(default_col)
             for alias in aliases:
                 if alias in kwargs:
                     col_val = kwargs.pop(alias)

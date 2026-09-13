@@ -194,7 +194,6 @@ class AnalysisIndicators(PandasObject):
     _df = pd.DataFrame()
     _exchange = "NYSE"
     _time_range = "years"
-    _last_run = get_time(_exchange, to_string=True)
 
     def __init__(self, pandas_obj):
         self._validate(pandas_obj)
@@ -202,7 +201,8 @@ class AnalysisIndicators(PandasObject):
         # pandas 3 dropped accessor caching: 'df.ta' builds a new instance on
         # every access, so settable state lives in df.attrs (like '_ta_chain')
         # instead of on the instance, which would be discarded immediately.
-        self._df.attrs.setdefault("_ta_last_run", get_time(self.exchange, to_string=True))
+        # Nothing is written here: merely accessing df.ta must not mutate the
+        # caller's DataFrame.
 
     @staticmethod
     def _validate(obj: tuple[pd.DataFrame, pd.Series]):
@@ -288,8 +288,8 @@ class AnalysisIndicators(PandasObject):
 
     @property
     def last_run(self) -> Optional[str]:
-        """Returns the time when the DataFrame was last run."""
-        return self._df.attrs.get("_ta_last_run", self._last_run)
+        """Returns when df.ta(kind=...) or df.ta.strategy() last ran on the DataFrame, or None."""
+        return self._df.attrs.get("_ta_last_run")
 
     # Public Get DataFrame Properties
     @property
@@ -398,6 +398,16 @@ class AnalysisIndicators(PandasObject):
         else:
             ind_name = kwargs["col_names"][0] if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple) else result.name
             df[ind_name] = result
+
+    def _default_column(self, name: str) -> str:
+        """The column an indicator reads when the caller names none.
+
+        'close' resolves to df.ta.adjusted when that is set; every other
+        column name is returned unchanged.
+        """
+        if name == "close" and self.adjusted is not None:
+            return self.adjusted
+        return name
 
     def _get_column(self, series):
         """Attempts to get the correct series or 'column' and return it."""
@@ -988,7 +998,7 @@ class AnalysisIndicators(PandasObject):
 
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
-        close = self._get_column(kwargs.pop("close", "close"))
+        close = self._get_column(kwargs.pop("close", self._default_column("close")))
         result = _ichimoku(
             high=high,
             low=low,
