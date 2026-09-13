@@ -46,7 +46,12 @@ def true_range(
         ranges = [high_low_range, high - prev_close, prev_close - low]
         true_range = concat(ranges, axis=1)
         true_range = true_range.abs().max(axis=1)
-        true_range.iloc[:drift] = np.nan
+        # True range needs a previous close. max(axis=1) skips NaN, so the
+        # first bar after a leading NaN run silently became high - low; blank
+        # it like row 0, as TA-Lib does. A NaN mid-series is left as before.
+        finite = (high.notna() & low.notna() & close.notna()).to_numpy()
+        start = int(finite.argmax()) if finite.any() else len(finite)
+        true_range.iloc[: start + drift] = np.nan
 
     # Offset
     true_range = apply_offset(true_range, offset)

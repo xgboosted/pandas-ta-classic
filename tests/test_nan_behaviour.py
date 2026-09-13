@@ -109,14 +109,6 @@ class TestWarmupNanPrefix(TestCase):
         length = 10
         self._assert_warmup(ta.zscore(_C, length), length - 1, "zscore")
 
-    def test_rsi_warmup(self):
-        length = 14
-        self._assert_warmup(ta.rsi(_C, length, talib=False), length - 1, "rsi")
-
-    def test_atr_warmup(self):
-        length = 14
-        self._assert_warmup(ta.atr(_H, _L, _C, length, talib=False), length - 1, "atr")
-
     def test_cci_warmup(self):
         length = 14
         self._assert_warmup(ta.cci(_H, _L, _C, length, talib=False), length - 1, "cci")
@@ -126,6 +118,17 @@ class TestWarmupNanPrefix(TestCase):
         self._assert_warmup(ta.willr(_H, _L, _C, length, talib=False), length - 1, "willr")
 
     # --- length warmup (diff / rate: first valid value at index = length) ---
+
+    def test_rsi_warmup(self):
+        # Wilder smoothing of a diff: the first diff is undefined, so the SMA
+        # seed needs `length` more bars -- TA-Lib's RSI lookback is `length`.
+        length = 14
+        self._assert_warmup(ta.rsi(_C, length, talib=False), length, "rsi")
+
+    def test_atr_warmup(self):
+        # True range needs the previous close; TA-Lib's ATR lookback is `length`.
+        length = 14
+        self._assert_warmup(ta.atr(_H, _L, _C, length, talib=False), length, "atr")
 
     def test_roc_warmup(self):
         length = 10
@@ -261,9 +264,10 @@ class TestBoundaryLength(TestCase):
         )
 
     def test_rsi_boundary(self):
-        # RSI needs length rows to produce 1 valid output (warmup = length-1)
+        # RSI needs length+1 rows to produce 1 valid output (warmup = length):
+        # the first row has no price change to smooth.
         length = 14
-        c, *_ = self._exact(length)
+        c, *_ = self._exact(length + 1)
         result = ta.rsi(c, length=length, talib=False)
         self.assertIsNotNone(result)
         self.assertEqual(

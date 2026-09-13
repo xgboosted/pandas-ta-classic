@@ -59,8 +59,20 @@ def dx(
         pos = pos.apply(zero)
         neg = neg.apply(zero)
 
-        dmp = ma(mamode, pos, length=length)
-        dmn = ma(mamode, neg, length=length)
+        if mamode == "rma":
+            # TA-Lib seeding (see utils/_wilder.py); DX is a ratio of the two
+            # smoothed DMs, so true range cancels and is not needed. The seed
+            # bar is not reported: TA-Lib's DX lookback is `length`.
+            from pandas_ta_classic.utils._wilder import wilder_smooth
+
+            dmp = wilder_smooth(pos, length)
+            dmn = wilder_smooth(neg, length)
+            seed = dmp.first_valid_index()
+            if seed is not None:
+                dmp[seed] = dmn[seed] = float("nan")
+        else:
+            dmp = ma(mamode, pos, length=length)
+            dmn = ma(mamode, neg, length=length)
 
         if dmp is None or dmn is None:
             return None

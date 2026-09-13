@@ -44,6 +44,9 @@ Covered fixes:
  24. run_pattern       — a leading NaN run no longer poisons the running candle
      (candles)            averages; cdl_pattern on chained input reported 0 for
                           33 of 62 patterns instead of TA-Lib's signals
+ 25. rma / Wilder DM   — rma seeds after a leading NaN run; plus_dm, minus_dm,
+     family               dx and adx use TA-Lib's Wilder seeding, so ADX is no
+                          longer up to ~50% off TA-Lib in its first bars
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1407,3 +1410,92 @@ class TestCandlePatternNanPrefix(TestCase):
         for name in ("3INSIDE", "BELTHOLD", "CLOSINGMARUBOZU", "ENGULFING", "HAMMER"):
             with self.subTest(pattern=name):
                 np.testing.assert_array_equal(native[f"CDL_{name}"].to_numpy(), getattr(talib, f"CDL{name}")(*ohlc).astype(float))
+
+
+# ---------------------------------------------------------------------------
+# Fix 25: rma NaN-prefix seed and TA-Lib Wilder seeding for the ADX family
+# ---------------------------------------------------------------------------
+
+
+class TestWilderSeeding(TestCase):
+    """rma seeded on iloc[0:length] even when that window started with NaN.
+
+    Chained input (dx, the DM series, true range) always starts with NaN, so
+    the seed averaged a partial window and every later value inherited the
+    wrong starting level. The ADX family also used that SMA seed where TA-Lib
+    uses Wilder's running sum of the first length-1 values: on SPY, ADX_14 was
+    up to 49.7% off TA-Lib in its first bars and started 14 bars early.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data().iloc[:2000]
+
+    def test_rma_prefix_result_equals_trimmed_result(self):
+        close = self.df["close"].reset_index(drop=True)
+        prefixed = close.copy()
+        prefixed.iloc[:20] = np.nan
+        with_prefix = ta.rma(prefixed, length=14).to_numpy()[20:]
+        without = ta.rma(close.iloc[20:].reset_index(drop=True), length=14).to_numpy()
+        np.testing.assert_array_equal(with_prefix, without)
+
+    def test_wilder_smooth_prefix_result_equals_trimmed_result(self):
+        from pandas_ta_classic.utils._wilder import wilder_smooth
+
+        raw = self.df["high"].diff().clip(lower=0).reset_index(drop=True)
+        prefixed = raw.copy()
+        prefixed.iloc[:20] = np.nan
+        with_prefix = wilder_smooth(prefixed, 14).to_numpy()[19:]
+        without = wilder_smooth(raw.iloc[19:].reset_index(drop=True), 14).to_numpy()
+        np.testing.assert_array_equal(with_prefix, without)
+
+    def test_true_range_undefined_after_nan_prefix(self):
+        """The first bar after a NaN prefix has no previous close, like row 0."""
+        h, low, c = (self.df[k].reset_index(drop=True).copy() for k in ("high", "low", "close"))
+        for s in (h, low, c):
+            s.iloc[:20] = np.nan
+        tr = ta.true_range(h, low, c)
+        self.assertTrue(tr.iloc[:21].isna().all())
+        self.assertTrue(np.isfinite(tr.iloc[21]))
+
+    @skipIf(not ta.Imports["talib"], "TA-Lib not installed")
+    def test_adx_family_matches_talib_with_nan_prefix(self):
+        import talib
+
+        frame = self.df[["high", "low", "close"]].reset_index(drop=True).copy()
+        frame.iloc[:25] = np.nan
+        h, low, c = (frame[k] for k in ("high", "low", "close"))
+        H, L, C = (x.to_numpy() for x in (h, low, c))
+        cases = {
+            "ADX": (ta.adx(h, low, c, length=14).iloc[:, 0], talib.ADX(H, L, C, 14)),
+            "ATR": (ta.atr(h, low, c, length=14), talib.ATR(H, L, C, 14)),
+            "TRANGE": (ta.true_range(h, low, c), talib.TRANGE(H, L, C)),
+            "RSI": (ta.rsi(c, length=14), talib.RSI(C, 14)),
+        }
+        for name, (native, oracle) in cases.items():
+            with self.subTest(indicator=name):
+                native = native.to_numpy(dtype=float)
+                np.testing.assert_array_equal(np.isnan(native), np.isnan(oracle))
+                np.testing.assert_allclose(native[~np.isnan(oracle)], oracle[~np.isnan(oracle)], rtol=1e-10)
+
+    @skipIf(not ta.Imports["talib"], "TA-Lib not installed")
+    def test_adx_family_matches_talib_from_the_first_bar(self):
+        import talib
+
+        h, low, c = (self.df[k] for k in ("high", "low", "close"))
+        H, L, C = (x.to_numpy() for x in (h, low, c))
+        adx = ta.adx(h, low, c, length=14)
+        cases = {
+            "ADX": (adx.iloc[:, 0], talib.ADX(H, L, C, 14)),
+            "PLUS_DI": (adx.iloc[:, 1], talib.PLUS_DI(H, L, C, 14)),
+            "MINUS_DI": (adx.iloc[:, 2], talib.MINUS_DI(H, L, C, 14)),
+            "ADXR": (ta.adxr(h, low, c, length=14).iloc[:, 0], talib.ADXR(H, L, C, 14)),
+            "DX": (ta.dx(h, low, c, length=14), talib.DX(H, L, C, 14)),
+            "PLUS_DM": (ta.plus_dm(h, low, length=14), talib.PLUS_DM(H, L, 14)),
+            "MINUS_DM": (ta.minus_dm(h, low, length=14), talib.MINUS_DM(H, L, 14)),
+        }
+        for name, (native, oracle) in cases.items():
+            with self.subTest(indicator=name):
+                native = native.to_numpy(dtype=float)
+                np.testing.assert_array_equal(np.isnan(native), np.isnan(oracle))
+                np.testing.assert_allclose(native[~np.isnan(oracle)], oracle[~np.isnan(oracle)], rtol=1e-10)

@@ -41,16 +41,13 @@ def minus_dm(
 
         result = _MINUS_DM(high, low, timeperiod=length)
     else:
-        from pandas_ta_classic.overlap.ma import ma
+        from pandas_ta_classic.utils._wilder import wilder_smooth
 
         up = high - high.shift(drift)
         dn = low.shift(drift) - low
         neg_ = ((dn > up) & (dn > 0)) * dn
         neg_ = neg_.apply(zero)
-        result = ma("rma", neg_, length=length)
-        if result is None:
-            return None
-        result = result * length  # Wilder's raw DM
+        result = wilder_smooth(neg_, length)  # Wilder's raw DM, TA-Lib seeding
 
     # Offset
     result = apply_offset(result, offset)
