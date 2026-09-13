@@ -4,6 +4,7 @@ import numpy as np
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 @njit(cache=True)
@@ -23,6 +24,7 @@ def _hwma_loop(c_arr, m, na, nb, nc):
     return result
 
 
+@skip_leading_nan("close")
 def hwma(
     close: Series,
     na: Optional[float] = None,

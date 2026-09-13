@@ -11,8 +11,10 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
+@skip_leading_nan("close")
 def vidya(
     close: Series,
     length: Optional[int] = None,

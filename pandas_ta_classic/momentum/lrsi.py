@@ -5,6 +5,7 @@ from numpy import maximum, where, zeros
 from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 @njit(cache=True)
@@ -22,6 +23,7 @@ def _lrsi_loop(c_arr, n, gamma):
     return l0, l1, l2, l3
 
 
+@skip_leading_nan("close")
 def lrsi(
     close: Series,
     length: Optional[int] = None,

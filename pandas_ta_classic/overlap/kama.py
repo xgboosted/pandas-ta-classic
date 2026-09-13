@@ -14,6 +14,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._core import skip_leading_nan
 
 
 @njit(cache=True)
@@ -27,6 +28,7 @@ def _kama_nb(sc, close, length):
     return result
 
 
+@skip_leading_nan("close")
 def kama(
     close: Series,
     length: Optional[int] = None,
