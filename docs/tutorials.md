@@ -13,6 +13,7 @@ Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 - [Tutorial 7: Multi-Timeframe Analysis](#tutorial-7-multi-timeframe-analysis)
 - [Tutorial 8: Creating Custom Indicators](#tutorial-8-creating-custom-indicators)
 - [Tutorial 9: Candlestick Pattern Recognition](#tutorial-9-candlestick-pattern-recognition)
+- [Tutorial 10: Integrating with manifoldbt](#tutorial-10-integrating-with-manifoldbt)
 
 ```{toctree}
 :hidden:
@@ -21,6 +22,7 @@ Step-by-step tutorials for common workflows with **Pandas TA Classic**.
 tutorials/backtesting_py
 tutorials/backtrader
 tutorials/vectorbt
+tutorials/manifoldbt
 ```
 
 ---
@@ -806,6 +808,15 @@ plt.show()
 - Combine patterns with momentum indicators
 - Backtest pattern effectiveness on your specific instrument
 - All 62 candlestick patterns are natively implemented (TA-Lib optional for selected core indicators)
+
+---
+
+(tutorial-10-integrating-with-manifoldbt)=
+## Tutorial 10: Integrating with manifoldbt
+
+Use pandas-ta-classic by precomputing indicators and registering them as an exogenous series.
+
+See the complete **[manifoldbt integration guide](tutorials/manifoldbt)** for a full walkthrough and runnable example (`examples/manifoldbt_strategy.py`).
 
 ---
 

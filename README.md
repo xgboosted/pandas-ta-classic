@@ -36,6 +36,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
  - Integrating with backtesting.py
  - Integrating with backtrader
  - Integrating with VectorBT
+ - Integrating with manifoldbt
  - Multi-Timeframe Analysis
  - Creating Custom Indicators
  - Candlestick Pattern Recognition
@@ -163,6 +164,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
 - **backtrader Integration** — precompute-then-feed pattern with dynamic `PandasData` subclass; runnable example in ``examples/backtrader_strategy.py``
 - **Vectorbt Integration** - compatible with popular backtesting framework
+- **manifoldbt Integration** - precompute-then-register pattern using exogenous series; runnable example in ``examples/manifoldbt_strategy.py``
 - **Custom Indicators** - easily create and chain your own indicators
 
 ## Documentation
