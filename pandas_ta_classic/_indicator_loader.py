@@ -24,6 +24,15 @@ _SERIES_COLUMN_PARAMS: dict[str, tuple] = {
 
 _ALWAYS_FETCH: frozenset[str] = frozenset({"close", "high", "low", "volume"})
 
+# Every kwarg key a caller can use to point an indicator at a column, and the
+# column names used when no such kwarg is given.  Derived from the maps above
+# so that adding a column param keeps AnalysisIndicators._worker_columns()
+# (which decides what reaches a Multiprocessing worker) correct.
+_COLUMN_KWARG_KEYS: frozenset[str] = frozenset(_COLUMN_PARAM_TO_COL_KEY.values()).union(*(aliases for aliases, _ in _SERIES_COLUMN_PARAMS.values()))
+_DEFAULT_COLUMN_NAMES: frozenset[str] = frozenset(_COLUMN_PARAM_TO_COL_KEY.values()) | frozenset(
+    default for _, default in _SERIES_COLUMN_PARAMS.values()
+)
+
 # Reverse lookup: indicator name → category name (built once at import)
 _INDICATOR_TO_CATEGORY: dict[str, str] = {ind: cat for cat, indicators in Category.items() for ind in indicators}
 _INDICATOR_TO_CATEGORY.update({alias: "math" for alias in _MATH_ALIASES})
