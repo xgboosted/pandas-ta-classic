@@ -1,0 +1,9 @@
+# Every PR appends bullets under the [Unreleased] heading, so any two open PRs
+# touch the same lines and conflict there by construction. `union` keeps both
+# sides instead of stopping the merge.
+#
+# It is not free. A PR that *edits* an existing bullet rather than appending a
+# new one gets both the old and the new line, which lands as a visible duplicate
+# instead of a conflict. Read the [Unreleased] section after merging anything
+# that rewrote existing entries.
+CHANGELOG.md merge=union
