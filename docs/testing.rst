@@ -81,8 +81,10 @@ Regression Tests
 
 **Why:** Prevent reintroduction of known bugs and catch silent value drift.
 
-- ``test_regression.py`` — Spot-checks indicator values at 5 fixed indices
-  (50, 200, 500, 1500, 3000) against stored fixture data.
+- ``test_regression.py`` — Spot-checks all 223 tracked indicators at 24 fixed
+  indices spanning 50 to 5221 (the final bar) against stored snapshot data.
+  Test methods are generated from ``regression_snapshots.json`` itself, so the
+  asserted set cannot drift from the stored set.
 - ``test_regression_bugfixes.py`` — Pins ~12 documented fixes from CHANGELOG.
 - ``test_indicator_values.py`` — Golden fixture tests: checks last non-NaN
   values and per-column NaN counts against snapshots in ``tests/fixtures/``.
@@ -219,13 +221,14 @@ Running All Tests
 
 .. code-block:: bash
 
-   # Full test suite (primary — matches CI, auto-regenerates fixture JSONs)
+   # Full test suite (primary — matches CI)
    python -m unittest discover tests/ -v
 
-   # Regenerate fixtures then run all tests (recommended after indicator changes)
+   # Same, via make
    make test-all
 
-   # Regenerate fixture JSONs only (requires TA-Lib installed)
+   # Regenerate fixture JSONs (requires TA-Lib; only after an intentional
+   # algorithm change — review the diff before committing)
    make fixtures
 
    # pytest equivalent
@@ -239,9 +242,10 @@ Fixture Files
 -------------
 
 ``tests/fixtures/expected_values.json`` and
-``tests/fixtures/regression_snapshots.json`` are **generated** files.
-They are rebuilt automatically when ``tests/`` is imported (before any
-test runs) if TA-Lib is available.  Manual regeneration:
+``tests/fixtures/regression_snapshots.json`` are **frozen** golden files.
+They are the source of truth and are never rewritten by a test run.
+Regeneration is a deliberate, reviewed step, performed only when an
+indicator algorithm changed on purpose:
 
 .. code-block:: bash
 
@@ -249,4 +253,98 @@ test runs) if TA-Lib is available.  Manual regeneration:
    python -m tests.fixtures.generate_regression_snapshots
 
 Both scripts can also be invoked directly (``python tests/fixtures/generate_*.py``)
-and require the project root to be on ``sys.path``.
+and require the project root to be on ``sys.path``.  Always review
+``git diff tests/fixtures/`` before committing the result.
+
+Why they must stay frozen
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The golden files exist to provide two properties, and regenerating them
+during a test run destroys both:
+
+*Detecting development errors.*  If the test run rewrites the expectation
+from the code under test, a bug simply becomes the new expectation and the
+test passes.  This is not hypothetical — with regeneration enabled, changing
+the kurtosis excess-adjustment constant from ``3.0`` to ``2.9`` (a ~5 %
+error) still passed ``test_regression.py``, and a 7 % error injected into
+``psl`` passed every fixture test, because both JSON files were silently
+rewritten first.
+
+*Independence from dependency versions.*  ``expected_values.json`` derives
+166 of its 223 entries from an external reference.  Recomputing at test time
+imports that reference's floating-point behaviour, and one of those
+references used to be ``pandas`` rolling: ``pandas`` 3.x and 2.x disagree on
+``rolling().kurt()`` in the 8th decimal, because ``roll_kurt`` accumulates
+running power sums whose error grows with series length (≈1.5e-8 over 5222
+rows on pandas 3.0, ≈6.9e-10 on pandas 2.3, versus ≈1e-14 for this
+package's own scratch-recomputed ``np_rolling_moments``).  A frozen literal
+has neither problem.
+
+Exact reference values
+~~~~~~~~~~~~~~~~~~~~~~
+
+``tests/fixtures/exact_reference.py`` replaces the ``pandas`` rolling oracles
+for the statistics group (zscore, kurtosis, skew, median, quantile, mad,
+entropy, beta, ui).  It reads the exact decimal written in the CSV
+(``Fraction(str(x))``, not the float64 approximation), evaluates the textbook
+formula in exact rational arithmetic, and converts to float only at the end.
+The result is the mathematically correct value for the input data, identical
+on every platform and dependency version, and still derived independently of
+the code under test.
+
+``tests/test_exact_reference.py`` guards that module — CI would otherwise
+never execute it, since it only runs during ``make fixtures``.  Its
+comparison against ``pandas`` rolling is a deliberately loose smoke test
+(``atol=1e-4``, ``rtol=1e-3``), sized to clear pandas' own divergence from
+exact arithmetic, which reaches 1.7e-5 absolute on ``kurt`` across the SPY
+series.  It must never be tightened into an equality check.
+
+Comparison tolerance
+~~~~~~~~~~~~~~~~~~~~
+
+``test_indicator_values.py`` and ``test_regression.py`` share one criterion,
+defined in ``tests/assertions.py``::
+
+    |actual - golden| <= GOLDEN_ATOL + GOLDEN_RTOL * |golden|
+    GOLDEN_ATOL = 1e-8
+    GOLDEN_RTOL = 1e-6
+
+Both terms are load-bearing.  The JSON files store ``round(v, 8)``, so no
+comparison can be tighter than the last stored decimal — that is the absolute
+floor.  The relative term covers large-magnitude indicators where float64
+cannot represent 8 decimals at all: ``ad`` peaks near 3.8e10, where one ULP is
+already ~7.6e-6.  With only the absolute term the large columns overrun by
+~2.7e4x; with only the relative term the small ones overrun on storage
+rounding.
+
+Measured across all 423 tracked columns the worst native-vs-golden
+disagreement needs a relative term of 3.6e-15, so ``GOLDEN_RTOL`` keeps nine
+orders of margin for platform and BLAS differences across the 3.10–3.14 CI
+matrix.  Snapshot checkpoints use at most 29 % of the budget.
+
+This replaced a flat ``REL_TOL = 1e-4``, which was ~10 orders looser than the
+data required.  Concretely: perturbing the kurtosis excess-adjustment constant
+from ``3.0`` to ``3.000001`` moves the golden value by 1.2e-6 — inside the old
+1e-5 budget and therefore invisible, but 11x over the new one.
+
+Snapshot coverage
+~~~~~~~~~~~~~~~~~
+
+``regression_snapshots.json`` stores all 223 tracked indicators, but
+``test_regression.py`` used to assert a hand-written list of 43 — the other
+180 were generated and never checked.  That gap covered 55 of the 57
+indicators which have no independent oracle and are therefore protected by
+their snapshot alone.  Test methods are now generated from the snapshot keys,
+so the two cannot diverge again.
+
+Indicators whose output is shorter than the input (``vp`` aggregates into 10
+volume bins, ``tos_stdevall`` into 30) have every checkpoint past the end of
+their result.  Those store ``null`` and are asserted to stay out of range,
+which makes the checkpoint a length-regression check; their values are
+covered by ``test_indicator_values.py`` instead.
+
+Note what a snapshot can and cannot do.  It is taken from this package's own
+output, so it detects *change*, never *correctness*.  The 57 oracle-less
+indicators still have no independent verification of their mathematics — the
+long-term fix is a deliberately naive reference implementation per indicator,
+written from the published formula, added incrementally.

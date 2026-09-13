@@ -216,7 +216,7 @@ indicators
 
 .. code-block:: python
 
-    # Print all available indicators to the log
+    # Print all available indicators to stdout (returns None)
     df.ta.indicators()
 
     # Return indicators as a Python list

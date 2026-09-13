@@ -345,21 +345,38 @@ class TestOverlap(TestCase):
             ),
         )
 
+    def _mavp_periods(self):
+        """A per-bar window schedule; mavp has no default for this."""
+        cycle = [5, 10, 20]
+        values = [cycle[i % len(cycle)] for i in range(len(self.close))]
+        return Series(values, index=self.close.index, dtype=float)
+
     def test_mavp(self):
         assert_indicator_standard(
             self,
             IndicatorSpec(
                 func=pandas_ta.mavp,
                 args=[self.close],
+                kwargs={"periods": self._mavp_periods()},
                 expected_name="MAVP_2_30",
             ),
         )
+
+    def test_mavp_requires_periods(self):
+        """`periods` has no causal default, so it is a required argument."""
+        with self.assertRaises(TypeError):
+            pandas_ta.mavp(self.close)
+
+    def test_mavp_accessor_without_periods_raises(self):
+        """The accessor fills missing required args with None; that must not pass silently."""
+        with self.assertRaises(ValueError):
+            self.data.ta.mavp()
 
     def test_mavp_unsupported_mamode_warns(self):
         import pytest
 
         with pytest.warns(UserWarning, match="Results will use SMA"):
-            result = pandas_ta.mavp(self.close, mamode=1, talib=False)
+            result = pandas_ta.mavp(self.close, periods=self._mavp_periods(), mamode=1, talib=False)
         self.assertIsInstance(result, Series)
 
     def test_mcgd(self):

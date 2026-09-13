@@ -1,4 +1,5 @@
 # Volume Profile (VP)
+import warnings
 from typing import Any, Optional
 import numpy as np
 from pandas import cut, concat, DataFrame, Series
@@ -13,6 +14,19 @@ def vp(
 ) -> Optional[DataFrame]:
     """Indicator: Volume Profile (VP)"""
     # Validate arguments
+    # `lookahead=False` asks for output a bar could have produced in real time.
+    # There is no such mode here -- the whole series is aggregated into bins --
+    # so decline instead of handing back forward-looking values under a keyword
+    # that promises the opposite.
+    if not kwargs.get("lookahead", True):
+        warnings.warn(
+            "vp() has no causal mode: the whole series is aggregated into price bins, so the result is a profile rather than a time series. "
+            "Returning None because lookahead=False was requested.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+
     width = int(width) if width and width > 0 else 10
     close = verify_series(close, width)
     volume = verify_series(volume, width)
@@ -95,6 +109,14 @@ vp.__doc__ = """Volume Profile (VP)
 
 Calculates the Volume Profile by slicing price into ranges.
 Note: Value Area is not calculated.
+
+Warning:
+    Not causal, and not a time series. The whole input is aggregated into price
+    bins, so every row of the result reflects the entire series including bars
+    that had not happened yet at any given point. Use it for analysis, never as
+    a backtest signal. Passing lookahead=False emits a UserWarning and returns
+    None, so a pipeline that asks for backtest-safe output does not silently
+    receive this one.
 
 Sources:
     https://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:volume_by_price

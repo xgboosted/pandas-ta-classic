@@ -40,10 +40,17 @@ def ema(
             # TA-Lib's EMA lookback behaviour for chained/lagged inputs.
             first_valid = close.first_valid_index()
             fv_pos = None if first_valid is None else close.index.get_loc(first_valid)
-            if fv_pos is not None:
+            if fv_pos is not None and fv_pos + length <= close.size:
                 sma_nth = close.iloc[fv_pos : fv_pos + length].mean()
                 close.iloc[: fv_pos + length - 1] = np.nan
                 close.iloc[fv_pos + length - 1] = sma_nth
+            elif fv_pos is not None:
+                # Fewer than `length` valid values follow the first valid one, so
+                # the SMA seed does not exist and the EMA is undefined throughout.
+                # Callers reach this by chaining (trix applies ema three times, so
+                # each inner NaN prefix pushes the seed further out), which the
+                # single-window min_length check in verify_series cannot model.
+                close.iloc[:] = np.nan
         ema = close.ewm(span=length, adjust=adjust).mean()
 
     # Offset
@@ -126,7 +133,9 @@ def _ema_chain(close: Series, length: int, depth: int, **kwargs):
         e = ema(close=feed, length=length, talib=False, **kwargs)
         if e is None:
             return None
-        results.append(e)
+        # Each stage is fed a trimmed series, so reindex before handing it back:
+        # callers combine the stages arithmetically and expect close's index.
+        results.append(e.reindex(close.index))
         # Strip leading NaN so the next EMA seeds at the right bar.
         fvi = e.first_valid_index()
         if fvi is None:
