@@ -41,7 +41,7 @@ def td_seq(
 
     def calc_td(series: Series, direction: str, show_all: bool):
         td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
-        td_num = Series(_td_run_capped(td_bool.to_numpy()))
+        td_num = Series(_td_run_capped(td_bool.to_numpy()), index=series.index)
 
         if show_all:
             td_num = td_num.mask(td_num == 0)
