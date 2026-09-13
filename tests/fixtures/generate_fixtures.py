@@ -1203,7 +1203,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         # cdl_pattern (dispatcher): all-pattern aggregate, no TA-Lib equivalent
         ("cdl_pattern", ta.cdl_pattern(o, h, low, c), None),
         # ---- Overlap (additional) ----
-        ("ichimoku", ta.ichimoku(h, low, c)[0], None),
+        ("ichimoku", ta.ichimoku(h, low, c, as_dataframe=True), None),
         # ---- Trend (additional) ----
         ("tsignals", ta.tsignals(_trend_bool), None),
         ("xsignals", ta.xsignals(_rsi_14_sig, 70, 30), None),

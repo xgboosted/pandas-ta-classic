@@ -135,7 +135,7 @@ class AnalysisIndicators(PandasObject):
     If you do not want to use a DataFrame Extension, just call it normally.
     >>> sma10 = ta.sma(df["Close"]) # Default length=10
     >>> sma50 = ta.sma(df["Close"], length=50)
-    >>> ichimoku, span = ta.ichimoku(df["High"], df["Low"], df["Close"])
+    >>> ichimoku = ta.ichimoku(df["High"], df["Low"], df["Close"], as_dataframe=True)
 
     Args:
         kind (str, optional): Default: None. Kind is the 'name' of the indicator.
@@ -149,8 +149,8 @@ class AnalysisIndicators(PandasObject):
     Returns:
         Most Indicators will return a Pandas Series. Others like MACD, BBANDS,
         KC, et al will return a Pandas DataFrame. Ichimoku returns a single
-        DataFrame for the known period; the forward-looking Span DataFrame is
-        only available through the underlying ``pandas_ta.ichimoku()`` function.
+        DataFrame for the known period; pass ``append_span=True`` to also get
+        the forward-looking Span rows.
 
     Let's get started!
 
