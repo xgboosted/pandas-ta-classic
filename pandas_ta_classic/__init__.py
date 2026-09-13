@@ -11,6 +11,7 @@ from pandas_ta_classic._meta import (
     Category,
     Imports,
     RATE,
+    _VALID_CATEGORIES,
     version,
 )
 from pandas_ta_classic.core import (
@@ -70,10 +71,7 @@ from pandas_ta_classic.utils import (
     zero,
 )
 
-# The utils.volatility() metric stays off the top-level namespace so it never
-# shadows this subpackage.
 from . import utils
-from . import volatility
 
 name = "pandas-ta-classic"
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -154,7 +152,8 @@ def __dir__() -> list[str]:
 
     names = set(globals().keys())
     names.update(_INDICATOR_TO_CATEGORY.keys())
-    names.add("ALL_PATTERNS")
+    names.update(_VALID_CATEGORIES)
+    names.update(("ALL_PATTERNS", "cdl"))
     return sorted(names)
 
 
@@ -183,6 +182,26 @@ def __getattr__(name: str) -> Any:
             raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")
         setattr(sys.modules[__name__], name, func)  # cache in module dict
         return func
+
+    # Category subpackages (momentum, overlap, trend, volume, statistics,
+    # candles, cycles, math; also volatility/performance, which are already
+    # bound above/transitively but are handled here too so the guarantee
+    # holds even if that changes) — resolved lazily via PEP 562 so
+    # `ta.<category>` is deterministic regardless of what has already been
+    # accessed, without importing all 10 categories at package-import time.
+    if name in _VALID_CATEGORIES:
+        mod = importlib.import_module(f"{__name__}.{name}")
+        setattr(sys.modules[__name__], name, mod)  # cache in module dict
+        return mod
+
+    # cdl: the shorthand candle-pattern wrapper. It lives inside
+    # candles/cdl_pattern.py rather than a cdl.py of its own, so it is not a
+    # Category entry and neither branch above finds it.
+    if name == "cdl":
+        from pandas_ta_classic.candles.cdl_pattern import cdl
+
+        setattr(sys.modules[__name__], name, cdl)  # cache in module dict
+        return cdl
 
     # ALL_PATTERNS: canonical public name for the candle pattern name list
     if name == "ALL_PATTERNS":
