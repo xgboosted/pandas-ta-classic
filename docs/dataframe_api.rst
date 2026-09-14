@@ -190,7 +190,7 @@ constants
 ``constants(append: bool, values: list | np.ndarray)`` — adds or removes
 constant horizontal-line columns from the DataFrame.
 
-.. deprecated:: 0.6.53
+.. deprecated:: 0.8.32
    ``df.ta.constants()`` is deprecated and will be removed in a future release;
    adding horizontal charting lines is out of scope for a technical-analysis
    library. Assign the columns directly instead, e.g. ``df["0"] = 0``.
@@ -228,7 +228,7 @@ indicators
 ticker
 ~~~~~~
 
-.. deprecated:: 0.6.53
+.. deprecated:: 0.8.32
    ``df.ta.ticker()`` (and ``ta.yf()`` / ``ta.av()``) is deprecated and will be
    removed in a future release; data fetching is out of scope for a
    technical-analysis library. It emits a ``FutureWarning``. Fetch OHLCV with

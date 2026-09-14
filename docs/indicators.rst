@@ -238,7 +238,7 @@ Moving averages and trend-following indicators:
 * *Hull Exponential Moving Average*: **hma**
 * *Hilbert Transform Instantaneous Trendline*: **ht_trendline**
 * *Holt-Winter Moving Average*: **hwma**
-* *Ichimoku Kinkō Hyō*: **ichimoku** (The ``ta.ichimoku()`` function returns two DataFrames: the known-period Ichimoku DataFrame and a forward-looking Span DataFrame. The DataFrame Extension Method ``df.ta.ichimoku()`` returns a single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
+* *Ichimoku Kinkō Hyō*: **ichimoku** (By default ``ta.ichimoku()`` returns two DataFrames: the known-period Ichimoku DataFrame and a forward-looking Span DataFrame. This tuple return is deprecated and emits a ``DeprecationWarning``; pass ``as_dataframe=True`` to get a single DataFrame, which becomes the default in the next breaking release. The DataFrame Extension Method ``df.ta.ichimoku()`` returns a single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
 * *Jurik Moving Average*: **jma**
 * *Kaufman's Adaptive Moving Average*: **kama**
 * *Linear Regression*: **linreg**
