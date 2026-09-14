@@ -443,79 +443,19 @@ class TestTrend(TestCase):
         )
 
     def test_cpr_invalid_method(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cpr,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CPR",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "CPR_TC",
-                    "CPR_PIVOT",
-                    "CPR_BC",
-                    "CPR_R1",
-                    "CPR_R2",
-                    "CPR_S1",
-                    "CPR_S2",
-                    "CPR_WIDTH",
-                    "CPR_WIDTH_PCT",
-                    "CPR_WIDTH_CLASS",
-                    "CPR_POSITION",
-                ],
-                kwargs={"method": "invalid_method"},
-            ),
-        )
+        # An unknown choice used to fall back to the default silently.
+        with self.assertRaisesRegex(ValueError, r"cpr\(\) method must be one of"):
+            pandas_ta.cpr(self.open, self.high, self.low, self.close, method="invalid_method")
 
     def test_cpr_invalid_timeframe(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cpr,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CPR",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "CPR_TC",
-                    "CPR_PIVOT",
-                    "CPR_BC",
-                    "CPR_R1",
-                    "CPR_R2",
-                    "CPR_S1",
-                    "CPR_S2",
-                    "CPR_WIDTH",
-                    "CPR_WIDTH_PCT",
-                    "CPR_WIDTH_CLASS",
-                    "CPR_POSITION",
-                ],
-                kwargs={"timeframe": "invalid_timeframe"},
-            ),
-        )
+        # An unknown choice used to fall back to the default silently.
+        with self.assertRaisesRegex(ValueError, r"cpr\(\) timeframe must be one of"):
+            pandas_ta.cpr(self.open, self.high, self.low, self.close, timeframe="invalid_timeframe")
 
     def test_cpr_invalid_levels(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cpr,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CPR",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "CPR_TC",
-                    "CPR_PIVOT",
-                    "CPR_BC",
-                    "CPR_R1",
-                    "CPR_R2",
-                    "CPR_S1",
-                    "CPR_S2",
-                    "CPR_WIDTH",
-                    "CPR_WIDTH_PCT",
-                    "CPR_WIDTH_CLASS",
-                    "CPR_POSITION",
-                ],
-                kwargs={"levels": "invalid_levels"},
-            ),
-        )
+        # An unknown choice used to fall back to the default silently.
+        with self.assertRaisesRegex(ValueError, r"cpr\(\) levels must be one of"):
+            pandas_ta.cpr(self.open, self.high, self.low, self.close, levels="invalid_levels")
 
     def test_cpr_empty_series(self):
         empty_series = Series(dtype=float)

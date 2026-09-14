@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param
 from pandas_ta_classic.utils._wilder import wilder_di
 from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.volatility.true_range import true_range
@@ -33,16 +34,16 @@ def adx(
 ) -> DataFrame | None:
     """Indicator: ADX"""
     # Validate Arguments
-    length = length if length and length > 0 else 14
-    lensig = lensig if lensig and lensig > 0 else length
-    mamode = mamode if isinstance(mamode, str) else "rma"
-    scalar = float(scalar) if scalar else 100
+    length = _pos_int(length, 14, "length")
+    lensig = _pos_int(lensig, length, "lensig")
+    mamode = _str_param(mamode, "rma", "mamode")
+    scalar = _number(scalar, 100, "scalar")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None

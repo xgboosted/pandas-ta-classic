@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def ttm_trend(
@@ -17,7 +18,7 @@ def ttm_trend(
 ) -> DataFrame | None:
     """Indicator: TTM Trend (TTM_TRND)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 6
+    length = _pos_int(length, 6, "length")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

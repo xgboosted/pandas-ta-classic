@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
 
 
 def stoch(
@@ -28,16 +29,16 @@ def stoch(
 ) -> DataFrame | None:
     """Indicator: Stochastic Oscillator (STOCH)"""
     # Validate arguments
-    k = k if k and k > 0 else 14
-    d = d if d and d > 0 else 3
-    smooth_k = smooth_k if smooth_k and smooth_k > 0 else 3
+    k = _pos_int(k, 14, "k")
+    d = _pos_int(d, 3, "d")
+    smooth_k = _pos_int(smooth_k, 3, "smooth_k")
     _length = max(k, d, smooth_k)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mamode = _str_param(mamode, "sma", "mamode")
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None

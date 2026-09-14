@@ -4,6 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _str_param
 from pandas_ta_classic.utils._cpr import (
     calculate_cpr_width,
     calculate_price_position,
@@ -89,17 +90,9 @@ def cpr(
 ) -> DataFrame | None:
     """Indicator: CPR (Central Pivot Range)"""
     # Validate arguments
-    method = method.lower() if isinstance(method, str) else "classic"
-    if method not in ["classic", "camarilla", "fibonacci", "woodie"]:
-        method = "classic"
-
-    timeframe = timeframe.lower() if isinstance(timeframe, str) else "daily"
-    if timeframe not in ["intraday", "daily", "weekly", "monthly"]:
-        timeframe = "daily"
-
-    levels = levels.lower() if isinstance(levels, str) else "standard"
-    if levels not in ["basic", "standard", "extended", "all"]:
-        levels = "standard"
+    method = _str_param(method, "classic", "method", choices={"classic", "camarilla", "fibonacci", "woodie"})
+    timeframe = _str_param(timeframe, "daily", "timeframe", choices={"intraday", "daily", "weekly", "monthly"})
+    levels = _str_param(levels, "standard", "levels", choices={"basic", "standard", "extended", "all"})
 
     length = 1  # For verify_series
     open_ = verify_series(open_, length)

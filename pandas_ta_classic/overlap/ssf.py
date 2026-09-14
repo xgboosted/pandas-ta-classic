@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -33,7 +33,7 @@ def ssf(
 ) -> Series | None:
     """Indicator: Ehler's Super Smoother Filter (SSF)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     poles = int(poles) if poles in [2, 3] else 2
     close = verify_series(close, length)
     offset = get_offset(offset)

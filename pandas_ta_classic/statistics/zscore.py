@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def zscore(
@@ -16,8 +17,8 @@ def zscore(
 ) -> Series | None:
     """Indicator: Z Score"""
     # Validate Arguments
-    length = int(length) if length and length > 1 else 30
-    std = float(std) if std and std > 1 else 1
+    length = _pos_int(length, 30, "length", gt=1)
+    std = _pos_float(std, 1, "std", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

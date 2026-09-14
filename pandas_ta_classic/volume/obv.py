@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param
 
 
 def obv(
@@ -27,7 +28,7 @@ def obv(
     if close is None or volume is None:
         return None
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     # Calculate Result
     if Imports["talib"] and mode_talib:

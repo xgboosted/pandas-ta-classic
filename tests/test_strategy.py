@@ -99,7 +99,9 @@ class TestStrategyMethods(TestCase):
     # @skipUnless(verbose, "verbose mode only")
     def test_all_multiparams_strategy(self):
         self.category = "All"
-        self.data.ta.strategy(self.category, length=10, verbose=verbose, timed=strategy_timed)
+        # A broadcast value an indicator cannot use raises (ebsw needs length > 38),
+        # so exclude it rather than let the default be substituted silently.
+        self.data.ta.strategy(self.category, length=10, exclude=["ebsw"], verbose=verbose, timed=strategy_timed)
         self.data.ta.strategy(self.category, length=50, verbose=verbose, timed=strategy_timed)
         self.data.ta.strategy(self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed)
         self.category = "All Multiruns with diff Args"  # Rename for Speed Table

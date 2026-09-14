@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int
 
 
 def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):
@@ -66,19 +66,19 @@ def uo(
 ) -> Series | None:
     """Indicator: Ultimate Oscillator (UO)"""
     # Validate arguments
-    fast = _pos_int(fast, 7)
-    fast_w = _pos_float(fast_w, 4.0)
-    medium = _pos_int(medium, 14)
-    medium_w = _pos_float(medium_w, 2.0)
-    slow = _pos_int(slow, 28)
-    slow_w = _pos_float(slow_w, 1.0)
+    fast = _pos_int(fast, 7, "fast")
+    fast_w = _pos_float(fast_w, 4.0, "fast_w")
+    medium = _pos_int(medium, 14, "medium")
+    medium_w = _pos_float(medium_w, 2.0, "medium_w")
+    slow = _pos_int(slow, 28, "slow")
+    slow_w = _pos_float(slow_w, 1.0, "slow_w")
     _length = max(fast, medium, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None

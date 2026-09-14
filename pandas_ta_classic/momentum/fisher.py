@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -42,8 +42,8 @@ def fisher(
 ) -> DataFrame | None:
     """Indicator: Fisher Transform (FISHT)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 9
-    signal = int(signal) if signal and signal > 0 else 1
+    length = _pos_int(length, 9, "length")
+    signal = _pos_int(signal, 1, "signal")
     _length = max(length, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

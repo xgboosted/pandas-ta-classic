@@ -15,6 +15,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def qstick(
@@ -26,7 +27,7 @@ def qstick(
 ) -> Series | None:
     """Indicator: Q Stick"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     ma = kwargs.pop("ma", "sma")
     open_ = verify_series(open_, length)
     close = verify_series(close, length)

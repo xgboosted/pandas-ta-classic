@@ -4,6 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int
 from pandas_ta_classic.volatility.atr import atr
 
 
@@ -21,9 +22,9 @@ def cksp(
     """Indicator: Chande Kroll Stop (CKSP)"""
     # Validate Arguments
     # TV defaults=(10,1,9), book defaults = (10,3,20)
-    p = int(p) if p and p > 0 else 10
-    x = float(x) if x and x > 0 else 1 if tvmode is True else 3
-    q = int(q) if q and q > 0 else 9 if tvmode is True else 20
+    p = _pos_int(p, 10, "p")
+    x = _pos_float(x, 1 if tvmode is True else 3, "x")
+    q = _pos_int(q, 9 if tvmode is True else 20, "q")
     _length = max(p, q, x)
 
     high = verify_series(high, _length)
@@ -33,7 +34,7 @@ def cksp(
         return None
 
     offset = get_offset(offset)
-    tvmode = tvmode if isinstance(tvmode, bool) else True
+    tvmode = _bool_param(tvmode, True, "tvmode")
     mamode = "rma" if tvmode is True else "sma"
 
     # Calculate Result

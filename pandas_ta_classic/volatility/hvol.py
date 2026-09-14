@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def hvol(
@@ -16,9 +17,9 @@ def hvol(
 ) -> Series | None:
     """Indicator: Historical Volatility (HVOL)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 20
+    length = _pos_int(length, 20, "length")
     # Annualization factor: 252 for daily, 52 for weekly, 12 for monthly
-    annualization = float(annualization) if annualization and annualization > 0 else 252
+    annualization = _pos_float(annualization, 252, "annualization")
     close = verify_series(close, length + 1)
     offset = get_offset(offset)
 

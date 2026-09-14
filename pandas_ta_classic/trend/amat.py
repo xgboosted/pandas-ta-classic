@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 from .long_run import long_run
 from .short_run import short_run
@@ -21,10 +22,10 @@ def amat(
 ) -> DataFrame | None:
     """Indicator: Archer Moving Averages Trends (AMAT)"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 8
-    slow = int(slow) if slow and slow > 0 else 21
-    lookback = int(lookback) if lookback and lookback > 0 else 2
-    mamode = mamode.lower() if isinstance(mamode, str) else "ema"
+    fast = _pos_int(fast, 8, "fast")
+    slow = _pos_int(slow, 21, "slow")
+    lookback = _pos_int(lookback, 2, "lookback")
+    mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
     if "length" in kwargs:

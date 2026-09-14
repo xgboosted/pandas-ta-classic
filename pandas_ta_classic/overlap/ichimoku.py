@@ -5,6 +5,7 @@ from typing import Any
 from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .midprice import midprice
 
@@ -30,9 +31,9 @@ def ichimoku(
     **kwargs: Any,
 ) -> tuple[DataFrame | None, DataFrame | None] | DataFrame | None:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
-    tenkan = int(tenkan) if tenkan and tenkan > 0 else 9
-    kijun = int(kijun) if kijun and kijun > 0 else 26
-    senkou = int(senkou) if senkou and senkou > 0 else 52
+    tenkan = _pos_int(tenkan, 9, "tenkan")
+    kijun = _pos_int(kijun, 26, "kijun")
+    senkou = _pos_int(senkou, 52, "senkou")
     _length = max(tenkan, kijun, senkou)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

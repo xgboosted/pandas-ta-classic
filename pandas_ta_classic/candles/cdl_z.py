@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.statistics.zscore import zscore
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def _anchored_zscore(series: Series) -> Series:
@@ -37,8 +38,8 @@ def cdl_z(
 ) -> DataFrame | None:
     """Indicator: Candle Type - Z Score"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 30
-    ddof = int(ddof) if ddof and ddof >= 0 and ddof < length else 1
+    length = _pos_int(length, 30, "length", gt=1)  # zscore needs at least two rows
+    ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)

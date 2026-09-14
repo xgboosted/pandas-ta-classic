@@ -6,6 +6,7 @@ from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param
 
 
 def ht_trendmode(
@@ -18,7 +19,7 @@ def ht_trendmode(
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

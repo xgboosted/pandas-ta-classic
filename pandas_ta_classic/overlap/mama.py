@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -254,11 +254,11 @@ def mama(
 ) -> DataFrame | None:
     """Indicator: MESA Adaptive Moving Average (MAMA)"""
     # Validate Arguments
-    fastlimit = float(fastlimit) if fastlimit and fastlimit > 0 else 0.5
-    slowlimit = float(slowlimit) if slowlimit and slowlimit > 0 else 0.05
+    fastlimit = _pos_float(fastlimit, 0.5, "fastlimit")
+    slowlimit = _pos_float(slowlimit, 0.05, "slowlimit")
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

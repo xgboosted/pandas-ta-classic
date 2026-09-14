@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def stderr(
@@ -16,8 +17,8 @@ def stderr(
 ) -> Series | None:
     """Indicator: Standard Error (STDERR)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
-    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 1
+    length = _pos_int(length, 14, "length")
+    ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

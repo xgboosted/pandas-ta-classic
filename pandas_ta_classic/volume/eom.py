@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def eom(
@@ -28,8 +29,8 @@ def eom(
 ) -> Series | None:
     """Indicator: Ease of Movement (EOM)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
-    divisor = divisor if divisor and divisor > 0 else 100000000
+    length = _pos_int(length, 14, "length")
+    divisor = _pos_float(divisor, 100000000, "divisor")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def avolume(
@@ -22,7 +23,7 @@ def avolume(
 
     tulipy name: VOLATILITY.
     """
-    length = int(length) if length and length > 0 else 20
+    length = _pos_int(length, 20, "length")
     close = verify_series(close, length + 1)
     offset = get_offset(offset)
 

@@ -8,6 +8,7 @@ from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.statistics.mad import mad
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int
 
 
 def cci(
@@ -22,13 +23,13 @@ def cci(
 ) -> Series | None:
     """Indicator: Commodity Channel Index (CCI)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
-    c = float(c) if c and c > 0 else 0.015
+    length = _pos_int(length, 14, "length")
+    c = _pos_float(c, 0.015, "c")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None

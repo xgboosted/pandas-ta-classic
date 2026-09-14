@@ -70,7 +70,8 @@ def ma(name: str | None = None, source: Series | None = None, **kwargs: Any) -> 
     if name is None and source is None:
         return list(_MA_DISPATCH.keys())
 
-    if not isinstance(name, str):
+    if name is None:
         return ema(source, **kwargs)
-    fn = _MA_DISPATCH.get(name.lower(), ema)
-    return fn(source, **kwargs)
+    if not isinstance(name, str) or name.lower() not in _MA_DISPATCH:
+        raise ValueError(f"ma() name must be one of {sorted(_MA_DISPATCH)}, got {name!r}")
+    return _MA_DISPATCH[name.lower()](source, **kwargs)

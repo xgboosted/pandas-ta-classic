@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     np_rolling_moments,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def kurtosis(
@@ -21,7 +22,7 @@ def kurtosis(
 ) -> Series | None:
     """Indicator: Kurtosis"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 30
+    length = _pos_int(length, 30, "length")
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)

@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 # TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
 _TALIB_DISPATCH = {
@@ -88,7 +89,7 @@ def linreg(
 ) -> Series | None:
     """Indicator: Linear Regression"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     angle = kwargs.pop("angle", False)
@@ -97,7 +98,7 @@ def linreg(
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

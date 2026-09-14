@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 
 def kvo(
@@ -28,10 +29,10 @@ def kvo(
 ) -> DataFrame | None:
     """Indicator: Klinger Volume Oscillator (KVO)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 34
-    slow = int(slow) if slow and slow > 0 else 55
-    signal = int(signal) if signal and signal > 0 else 13
-    mamode = mamode.lower() if mamode and isinstance(mamode, str) else "ema"
+    fast = _pos_int(fast, 34, "fast")
+    slow = _pos_int(slow, 55, "slow")
+    signal = _pos_int(signal, 13, "signal")
+    mamode = _str_param(mamode, "ema", "mamode")
     _length = max(fast, slow, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

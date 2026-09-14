@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def slope(
@@ -18,9 +19,10 @@ def slope(
 ) -> Series | None:
     """Indicator: Slope"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 1
-    as_angle = bool(isinstance(as_angle, bool))
-    to_degrees = bool(isinstance(to_degrees, bool))
+    length = _pos_int(length, 1, "length")
+    # was bool(isinstance(x, bool)), which turned as_angle=False into True
+    as_angle = _bool_param(as_angle, False, "as_angle")
+    to_degrees = _bool_param(to_degrees, False, "to_degrees")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

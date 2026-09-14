@@ -8,7 +8,7 @@ from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simpl
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
@@ -32,14 +32,14 @@ def squeeze_pro(
 ) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ) PRO"""
     # Validate arguments
-    bb_length = _pos_int(bb_length, 20)
-    bb_std = _pos_float(bb_std, 2.0)
-    kc_length = _pos_int(kc_length, 20)
-    kc_scalar_wide = _pos_float(kc_scalar_wide, 2)
-    kc_scalar_normal = _pos_float(kc_scalar_normal, 1.5)
-    kc_scalar_narrow = _pos_float(kc_scalar_narrow, 1)
-    mom_length = _pos_int(mom_length, 12)
-    mom_smooth = _pos_int(mom_smooth, 6)
+    bb_length = _pos_int(bb_length, 20, "bb_length")
+    bb_std = _pos_float(bb_std, 2.0, "bb_std")
+    kc_length = _pos_int(kc_length, 20, "kc_length")
+    kc_scalar_wide = _pos_float(kc_scalar_wide, 2, "kc_scalar_wide")
+    kc_scalar_normal = _pos_float(kc_scalar_normal, 1.5, "kc_scalar_normal")
+    kc_scalar_narrow = _pos_float(kc_scalar_narrow, 1, "kc_scalar_narrow")
+    mom_length = _pos_int(mom_length, 12, "mom_length")
+    mom_smooth = _pos_int(mom_smooth, 6, "mom_smooth")
 
     _length = max(bb_length, kc_length, mom_length, mom_smooth)
     high = verify_series(high, _length)
@@ -55,7 +55,7 @@ def squeeze_pro(
     use_tr = kwargs.setdefault("tr", True)
     asint = kwargs.pop("asint", True)
     detailed = kwargs.pop("detailed", False)
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    mamode = _str_param(mamode, "sma", "mamode")
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)

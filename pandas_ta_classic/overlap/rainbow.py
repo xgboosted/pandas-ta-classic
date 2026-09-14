@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def rainbow(
@@ -15,7 +16,7 @@ def rainbow(
 ) -> DataFrame | None:
     """Indicator: Rainbow Charts"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 2
+    length = _pos_int(length, 2, "length")
     num_ribbons = int(kwargs.pop("num_ribbons", 10)) if "num_ribbons" in kwargs else 10
     close = verify_series(close, length * num_ribbons)
     offset = get_offset(offset)

@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
 
 
 def apo(
@@ -25,14 +26,14 @@ def apo(
 ) -> Series | None:
     """Indicator: Absolute Price Oscillator (APO)"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 12
-    slow = int(slow) if slow and slow > 0 else 26
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow))
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    mamode = _str_param(mamode, "sma", "mamode")
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

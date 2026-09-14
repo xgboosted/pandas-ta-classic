@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -41,13 +41,13 @@ def kama(
 ) -> Series | None:
     """Indicator: Kaufman's Adaptive Moving Average (KAMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
-    fast = int(fast) if fast and fast > 0 else 2
-    slow = int(slow) if slow and slow > 0 else 30
+    length = _pos_int(length, 10, "length")
+    fast = _pos_int(fast, 2, "fast")
+    slow = _pos_int(slow, 30, "slow")
     close = verify_series(close, max(fast, slow, length))
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

@@ -6,6 +6,7 @@ import numpy as np
 from pandas import DataFrame, Series, concat, cut
 
 from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def vp(
@@ -29,7 +30,7 @@ def vp(
         )
         return None
 
-    width = int(width) if width and width > 0 else 10
+    width = _pos_int(width, 10, "width")
     close = verify_series(close, width)
     volume = verify_series(volume, width)
     sort_close = kwargs.pop("sort_close", False)

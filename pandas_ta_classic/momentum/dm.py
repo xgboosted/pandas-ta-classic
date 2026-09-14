@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
 
 
 def dm(
@@ -27,13 +28,13 @@ def dm(
 ) -> DataFrame | None:
     """Indicator: DM"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
-    mamode = mamode.lower() if mamode and isinstance(mamode, str) else "rma"
+    length = _pos_int(length, 14, "length")
+    mamode = _str_param(mamode, "rma", "mamode")
     high = verify_series(high, length)
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None

@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
 
 from .rsi import rsi
 
@@ -58,14 +59,14 @@ def stochrsi(
 ) -> DataFrame | None:
     """Indicator: Stochastic RSI Oscillator (STOCHRSI)"""
     # Validate arguments
-    length = length if length and length > 0 else 14
-    rsi_length = rsi_length if rsi_length and rsi_length > 0 else 14
-    k = k if k and k > 0 else 3
-    d = d if d and d > 0 else 3
+    length = _pos_int(length, 14, "length")
+    rsi_length = _pos_int(rsi_length, 14, "rsi_length")
+    k = _pos_int(k, 3, "k")
+    d = _pos_int(d, 3, "d")
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
-    mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mamode = _str_param(mamode, "sma", "mamode")
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

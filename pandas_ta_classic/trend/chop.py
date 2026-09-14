@@ -10,6 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int
 from pandas_ta_classic.volatility.atr import atr
 
 
@@ -26,10 +27,10 @@ def chop(
 ) -> Series | None:
     """Indicator: Choppiness Index (CHOP)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
-    atr_length = int(atr_length) if atr_length is not None and atr_length > 0 else 1
-    ln = bool(ln) if isinstance(ln, bool) else False
-    scalar = float(scalar) if scalar else 100
+    length = _pos_int(length, 14, "length")
+    atr_length = _pos_int(atr_length, 1, "atr_length")
+    ln = _bool_param(ln, False, "ln")
+    scalar = _number(scalar, 100, "scalar")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

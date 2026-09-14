@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .atr import atr
 
@@ -20,8 +21,8 @@ def aberration(
 ) -> DataFrame | None:
     """Indicator: Aberration (ABER)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 5
-    atr_length = int(atr_length) if atr_length and atr_length > 0 else 15
+    length = _pos_int(length, 5, "length")
+    atr_length = _pos_int(atr_length, 15, "atr_length")
     _length = max(atr_length, length)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

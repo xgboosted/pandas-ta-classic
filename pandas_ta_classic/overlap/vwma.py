@@ -4,6 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .sma import sma
 
@@ -17,7 +18,7 @@ def vwma(
 ) -> Series | None:
     """Indicator: Volume Weighted Moving Average (VWMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     offset = get_offset(offset)

@@ -30,17 +30,17 @@ def kst(
 ) -> DataFrame | None:
     """Indicator: 'Know Sure Thing' (KST)"""
     # Validate arguments
-    roc1 = _pos_int(roc1, 10)
-    roc2 = _pos_int(roc2, 15)
-    roc3 = _pos_int(roc3, 20)
-    roc4 = _pos_int(roc4, 30)
+    roc1 = _pos_int(roc1, 10, "roc1")
+    roc2 = _pos_int(roc2, 15, "roc2")
+    roc3 = _pos_int(roc3, 20, "roc3")
+    roc4 = _pos_int(roc4, 30, "roc4")
 
-    sma1 = _pos_int(sma1, 10)
-    sma2 = _pos_int(sma2, 10)
-    sma3 = _pos_int(sma3, 10)
-    sma4 = _pos_int(sma4, 15)
+    sma1 = _pos_int(sma1, 10, "sma1")
+    sma2 = _pos_int(sma2, 10, "sma2")
+    sma3 = _pos_int(sma3, 10, "sma3")
+    sma4 = _pos_int(sma4, 15, "sma4")
 
-    signal = _pos_int(signal, 9)
+    signal = _pos_int(signal, 9, "signal")
     _length = max(roc1, roc2, roc3, roc4, sma1, sma2, sma3, sma4, signal)
     close = verify_series(close, _length)
     offset = get_offset(offset)

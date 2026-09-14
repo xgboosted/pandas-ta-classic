@@ -5,6 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 
 def decay(
@@ -17,8 +18,9 @@ def decay(
 ) -> Series | None:
     """Indicator: Decay"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 5
-    mode = mode.lower() if isinstance(mode, str) else "linear"
+    length = _pos_int(length, 5, "length")
+    mode = _str_param(mode, "linear", "mode", choices={"linear", "exp", "exponential"})
+    kind = _str_param(kind, "linear", "kind", choices={"linear", "exp", "exponential"})
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -27,7 +29,7 @@ def decay(
 
     # Calculate Result
     _mode = "L"
-    if mode == "exp" or kind == "exponential":
+    if mode in ("exp", "exponential") or kind in ("exp", "exponential"):
         _mode = "EXP"
         diff = close.shift(1) - np.exp(-length)
     else:  # "linear"

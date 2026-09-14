@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     pascals_triangle,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _sliding_weighted_ma
+from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma
 
 
 def pwma(
@@ -22,7 +22,7 @@ def pwma(
 ) -> Series | None:
     """Indicator: Pascals Weighted Moving Average (PWMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

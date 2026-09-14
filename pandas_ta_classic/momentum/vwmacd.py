@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.vwma import vwma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def vwmacd(
@@ -18,9 +19,9 @@ def vwmacd(
 ) -> DataFrame | None:
     """Indicator: Volume Weighted MACD (VWMACD)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 12
-    slow = int(slow) if slow and slow > 0 else 26
-    signal = int(signal) if signal and signal > 0 else 9
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    signal = _pos_int(signal, 9, "signal")
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))

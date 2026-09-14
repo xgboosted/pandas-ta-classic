@@ -7,6 +7,7 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 from .obv import obv
 
@@ -24,13 +25,13 @@ def aobv(
 ) -> DataFrame | None:
     """Indicator: Archer On Balance Volume (AOBV)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 4
-    slow = int(slow) if slow and slow > 0 else 12
-    max_lookback = int(max_lookback) if max_lookback and max_lookback > 0 else 2
-    min_lookback = int(min_lookback) if min_lookback and min_lookback > 0 else 2
+    fast = _pos_int(fast, 4, "fast")
+    slow = _pos_int(slow, 12, "slow")
+    max_lookback = _pos_int(max_lookback, 2, "max_lookback")
+    min_lookback = _pos_int(min_lookback, 2, "min_lookback")
     if slow < fast:
         fast, slow = slow, fast
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)

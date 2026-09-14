@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def psl(
@@ -24,8 +25,8 @@ def psl(
 ) -> Series | None:
     """Indicator: Psychological Line (PSL)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 12
-    scalar = float(scalar) if scalar and scalar > 0 else 100
+    length = _pos_int(length, 12, "length")
+    scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

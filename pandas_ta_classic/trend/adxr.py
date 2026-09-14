@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.trend.adx import adx
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def adxr(
@@ -23,13 +24,13 @@ def adxr(
 ) -> DataFrame | None:
     """Indicator: Average Directional Movement Index Rating (ADXR)"""
     # Validate Arguments
-    length = length if length and length > 0 else 14
-    lensig = lensig if lensig and lensig > 0 else length
+    length = _pos_int(length, 14, "length")
+    lensig = _pos_int(lensig, length, "lensig")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None

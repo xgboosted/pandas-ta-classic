@@ -273,20 +273,22 @@ class TestUtilities(TestCase):
         self.assertNotEqual(self.utils.zero(1), 0)
 
     def test_get_drift(self):
-        for s in [0, None, "", [], {}]:
-            self.assertIsInstance(self.utils.get_drift(s), int)
-
-        self.assertEqual(self.utils.get_drift(0), 1)
-        self.assertEqual(self.utils.get_drift(1.1), 1)
-        self.assertEqual(self.utils.get_drift(-1.1), 1)
+        self.assertEqual(self.utils.get_drift(None), 1)
+        self.assertEqual(self.utils.get_drift(3), 3)
+        # 0, negatives, fractions, bools and non-numbers used to become 1 silently
+        for bad in (0, -1, 1.1, True, "", [], {}):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, "drift must be an integer > 0"):
+                self.utils.get_drift(bad)
 
     def test_get_offset(self):
-        for s in [0, None, "", [], {}]:
-            self.assertIsInstance(self.utils.get_offset(s), int)
-
+        self.assertEqual(self.utils.get_offset(None), 0)
         self.assertEqual(self.utils.get_offset(0), 0)
-        self.assertEqual(self.utils.get_offset(-1.1), 0)
         self.assertEqual(self.utils.get_offset(1), 1)
+        self.assertEqual(self.utils.get_offset(-2), -2)
+        # fractions, bools and non-numbers used to become 0 silently
+        for bad in (-1.1, 2.5, True, "", [], {}):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, "offset must be an integer"):
+                self.utils.get_offset(bad)
 
     def test_to_utc(self):
         result = self.utils.to_utc(self.data.copy())

@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def rvgi(
@@ -25,8 +26,8 @@ def rvgi(
 ) -> DataFrame | None:
     """Indicator: Relative Vigor Index (RVGI)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
-    swma_length = int(swma_length) if swma_length and swma_length > 0 else 4
+    length = _pos_int(length, 14, "length")
+    swma_length = _pos_int(swma_length, 4, "swma_length")
     _length = max(length, swma_length)
     open_ = verify_series(open_, _length)
     high = verify_series(high, _length)

@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def kdj(
@@ -24,8 +25,8 @@ def kdj(
 ) -> DataFrame | None:
     """Indicator: KDJ (KDJ)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 9
-    signal = int(signal) if signal and signal > 0 else 3
+    length = _pos_int(length, 9, "length")
+    signal = _pos_int(signal, 3, "signal")
     _length = max(length, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

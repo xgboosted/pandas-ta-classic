@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -90,10 +91,10 @@ def stc(
 ) -> DataFrame | None:
     """Indicator: Schaff Trend Cycle (STC)"""
     # Validate arguments
-    tclength = int(tclength) if tclength and tclength > 0 else 10
-    fast = int(fast) if fast and fast > 0 else 12
-    slow = int(slow) if slow and slow > 0 else 26
-    factor = float(factor) if factor and factor > 0 else 0.5
+    tclength = _pos_int(tclength, 10, "tclength")
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    factor = _pos_float(factor, 0.5, "factor")
     if slow < fast:  # mandatory condition, but might be confusing
         fast, slow = slow, fast
     _length = max(tclength, fast, slow)

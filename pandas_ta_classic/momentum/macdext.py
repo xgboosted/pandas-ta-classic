@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 # TA-Lib MA type integer → string kind for native fallback
 _MATYPE_TO_KIND = {
@@ -66,17 +66,17 @@ def macdext(
     0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3.
     """
     # Validate Arguments
-    fast = _pos_int(fast, 12)
-    slow = _pos_int(slow, 26)
-    signal = _pos_int(signal, 9)
-    fastmatype = int(fastmatype) if fastmatype is not None and fastmatype >= 0 else 1
-    slowmatype = int(slowmatype) if slowmatype is not None and slowmatype >= 0 else 1
-    signalmatype = int(signalmatype) if signalmatype is not None and signalmatype >= 0 else 1
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    signal = _pos_int(signal, 9, "signal")
+    fastmatype = _pos_int(fastmatype, 1, "fastmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
+    slowmatype = _pos_int(slowmatype, 1, "slowmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
+    signalmatype = _pos_int(signalmatype, 1, "signalmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, slow + signal)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

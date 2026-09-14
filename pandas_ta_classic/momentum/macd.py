@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, skip_leading_nan
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -55,14 +55,14 @@ def macd(
 ) -> DataFrame | None:
     """Indicator: Moving Average, Convergence/Divergence (MACD)"""
     # Validate arguments
-    fast = _pos_int(fast, 12)
-    slow = _pos_int(slow, 26)
-    signal = _pos_int(signal, 9)
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    signal = _pos_int(signal, 9, "signal")
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

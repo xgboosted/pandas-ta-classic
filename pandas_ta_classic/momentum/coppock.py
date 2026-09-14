@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.wma import wma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .roc import roc
 
@@ -19,9 +20,9 @@ def coppock(
 ) -> Series | None:
     """Indicator: Coppock Curve (COPC)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
-    fast = int(fast) if fast and fast > 0 else 11
-    slow = int(slow) if slow and slow > 0 else 14
+    length = _pos_int(length, 10, "length")
+    fast = _pos_int(fast, 11, "fast")
+    slow = _pos_int(slow, 14, "slow")
     close = verify_series(close, max(length, fast, slow))
     offset = get_offset(offset)
 

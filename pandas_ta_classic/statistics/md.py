@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.statistics.mad import mad
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def md(
@@ -18,7 +19,7 @@ def md(
     Rolling mean of absolute deviations from the rolling mean.
     Equivalent to ta.mad.  tulipy name: MD.
     """
-    length = int(length) if length and length > 0 else 30
+    length = _pos_int(length, 30, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

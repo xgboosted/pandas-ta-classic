@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -46,8 +47,8 @@ def supertrend(
 ) -> DataFrame | None:
     """Indicator: Supertrend"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 7
-    multiplier = float(multiplier) if multiplier and multiplier > 0 else 3.0
+    length = _pos_int(length, 7, "length")
+    multiplier = _pos_float(multiplier, 3.0, "multiplier")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

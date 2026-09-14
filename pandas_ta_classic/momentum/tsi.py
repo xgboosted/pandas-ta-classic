@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _number, _pos_int, _str_param
 
 
 def tsi(
@@ -27,16 +28,16 @@ def tsi(
 ) -> DataFrame | None:
     """Indicator: True Strength Index (TSI)"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 13
-    slow = int(slow) if slow and slow > 0 else 25
-    signal = int(signal) if signal and signal > 0 else 13
+    fast = _pos_int(fast, 13, "fast")
+    slow = _pos_int(slow, 25, "slow")
+    signal = _pos_int(signal, 13, "signal")
     # if slow < fast:
     #     fast, slow = slow, fast
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, max(fast, slow))
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     if "length" in kwargs:
         kwargs.pop("length")
 

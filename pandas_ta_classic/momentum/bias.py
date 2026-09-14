@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 
 def bias(
@@ -16,8 +17,8 @@ def bias(
 ) -> Series | None:
     """Indicator: Bias (BIAS)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 26
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    length = _pos_int(length, 26, "length")
+    mamode = _str_param(mamode, "sma", "mamode")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

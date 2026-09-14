@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def edecay(
@@ -19,7 +20,7 @@ def edecay(
     Formula: result[i] = max(close[i], result[i-1] * exp(-1/length))
     tulipy name: EDECAY.
     """
-    length = int(length) if length and length > 0 else 5
+    length = _pos_int(length, 5, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

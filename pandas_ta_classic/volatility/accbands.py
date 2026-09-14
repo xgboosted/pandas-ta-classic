@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 
 
 def accbands(
@@ -25,9 +26,9 @@ def accbands(
 ) -> DataFrame | None:
     """Indicator: Acceleration Bands (ACCBANDS)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 20
-    c = float(c) if c and c > 0 else 4
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    length = _pos_int(length, 20, "length")
+    c = _pos_float(c, 4, "c")
+    mamode = _str_param(mamode, "sma", "mamode")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

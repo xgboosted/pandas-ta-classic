@@ -12,6 +12,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _number
 
 # ---------------------------------------------------------------------------
 # Enums (mirror TA-Lib ta_defs.h)
@@ -182,7 +183,7 @@ def run_pattern(
         return None
 
     offset = get_offset(offset)
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
 
     arrays = [s.to_numpy(dtype=float) for s in (open_, high, low, close)]
     n = len(close)

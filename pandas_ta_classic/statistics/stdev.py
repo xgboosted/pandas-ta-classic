@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 from .variance import variance
 
@@ -20,11 +21,11 @@ def stdev(
 ) -> Series | None:
     """Indicator: Standard Deviation"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 30
-    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 0
+    length = _pos_int(length, 30, "length", gt=1)  # variance needs at least two rows
+    ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
