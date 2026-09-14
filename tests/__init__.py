@@ -1,7 +1,8 @@
-"""Test package bootstrap.
+"""Test package.
 
-Puts the project root on ``sys.path`` so ``from tests.config import ...``
-resolves regardless of the directory pytest was invoked from.
+``from tests.config import ...`` resolves without a ``sys.path`` hack: pytest
+puts the project root on the path for this rootdir package, and the package
+itself is installed in editable mode.
 
 Fixture files are **not** regenerated here.  ``tests/fixtures/*.json`` are
 frozen golden values: they are the source of truth, not a cache of a
@@ -18,10 +19,3 @@ Regeneration is a deliberate, reviewed step — run ``make fixtures`` (or
 ``python -m tests.fixtures.generate_fixtures``) after an intentional
 algorithm change and commit the resulting diff alongside it.
 """
-
-import sys
-from pathlib import Path
-
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))

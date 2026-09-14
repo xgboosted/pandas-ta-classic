@@ -276,8 +276,6 @@ def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
         A Series aligned with *close*, with ``NaN`` for the first
         ``length - 1`` positions.
     """
-    import numpy as np
-
     arr = close.to_numpy(dtype=float)
     result = np.full(len(arr), np.nan)
     if length <= arr.shape[0]:
@@ -300,8 +298,6 @@ def _sliding_argextreme(series: Series, length: int, argfunc: Any, reverse: bool
         argfunc: ``np.argmax`` or ``np.argmin``.
         reverse: Flip each window before applying *argfunc*.
     """
-    import numpy as np
-
     arr = series.to_numpy(dtype=float)
     m = arr.shape[0]
     result = np.full(m, np.nan)

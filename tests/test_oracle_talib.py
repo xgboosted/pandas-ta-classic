@@ -15,6 +15,7 @@ left as silent failures.
 """
 
 import unittest
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ except ImportError:
 
 import pandas_ta_classic as ta
 
-_DATA_PATH = __import__("pathlib").Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
+_DATA_PATH = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
 
 
 class _SpyDataMixin:

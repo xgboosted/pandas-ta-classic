@@ -62,8 +62,6 @@ CANDLE_DEFAULTS = {
 # Pre-computed average parameters (module-level for direct access in _detect)
 # ---------------------------------------------------------------------------
 
-AVG_PERIOD = {s: CANDLE_DEFAULTS[s][1] for s in CandleSetting}
-
 AVG_FACTOR = {}
 for _s in CandleSetting:
     _rt, _ap, _f = CANDLE_DEFAULTS[_s]
