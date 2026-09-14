@@ -28,7 +28,11 @@ def pvt(
     offset = get_offset(offset)
 
     # Calculate Result
-    pv = roc(close=close, length=drift) * volume
+    roc_ = roc(close=close, length=drift)
+    if roc_ is None:
+        # Fewer rows than drift: there is no rate of change to accumulate.
+        return None
+    pv = roc_ * volume
     pvt = pv.cumsum()
 
     # Offset

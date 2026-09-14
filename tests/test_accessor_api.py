@@ -293,6 +293,29 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertIsInstance(self.df.ta.last_run, str)
 
 
+class TestAccessorNonSeriesColumnArgument(TestCase):
+    """Issue #145: df.ta.sma(close=df.close.values) was a silent no-op.
+
+    _get_column returned None for anything that was not a Series or a column
+    name, and None is the "argument not given" value, so nothing warned.
+    """
+
+    def test_ndarray_column_argument_warns(self):
+        df = get_sample_data().iloc[:100]
+        with self.assertWarns(FutureWarning) as ctx:
+            df.ta.sma(length=10, close=df["close"].to_numpy())
+        self.assertIn("sma() expected a pandas Series but got ndarray", str(ctx.warning))
+        self.assertEqual(ctx.filename, __file__)
+
+    def test_series_column_argument_does_not_warn(self):
+        import warnings
+
+        df = get_sample_data().iloc[:100]
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            self.assertEqual(df.ta.sma(length=10, close=df["close"]).notna().sum(), 91)
+
+
 class TestAccessorAdjustedColumn(TestCase):
     """df.ta.adjusted replaces the default close column, as documented.
 

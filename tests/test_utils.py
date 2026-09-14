@@ -488,6 +488,36 @@ class TestNoneGuards(TestCase):
         result = pandas_ta.utils.verify_series(self.c, 4)
         self.assertIsInstance(result, Series)
 
+    def test_verify_series_non_series_warns_and_returns_none(self):
+        """Issue #145 case (A): non-Series input is a caller error.
+
+        It still returns None during the deprecation window, but warns with a
+        FutureWarning that names the indicator and points at the caller's line.
+        """
+        import warnings
+
+        for bad in (self.c.to_numpy(), list(self.c), self.c.to_frame(), 5, "close"):
+            with self.subTest(kind=type(bad).__name__):
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    result = pandas_ta.sma(bad, 3)
+                self.assertIsNone(result)
+                future = [w for w in caught if issubclass(w.category, FutureWarning)]
+                self.assertEqual(len(future), 1)
+                self.assertIn("sma() expected a pandas Series", str(future[0].message))
+                self.assertIn(type(bad).__name__, str(future[0].message))
+                self.assertEqual(future[0].filename, __file__)
+
+    def test_verify_series_none_and_short_series_do_not_warn(self):
+        """Case (B) and omitted optional arguments stay silent."""
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            self.assertIsNone(pandas_ta.utils.verify_series(None))
+            self.assertIsNone(pandas_ta.utils.verify_series(self.c, 10))
+            self.assertIsNotNone(pandas_ta.ad(self.h, self.l, self.c, Series([1.0] * len(self.c)), open_=None))
+
     # ---- candles ----
 
     def test_none_guard_cdl_doji(self):

@@ -11,6 +11,11 @@ from pandas_ta_classic.utils._core import _pos_float, _pos_int
 def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Optional[Series]:
     """Core RVI computation for a single source series."""
     std = stdev(source, length)
+    if std is None:
+        # stdev needs more rows than rvi's own guard checks (variance widens
+        # length=1 to its default window), so propagate None instead of
+        # multiplying by it.
+        return None
     pos, neg = unsigned_differences(source, amount=drift)
     pos_std = pos * std
     neg_std = neg * std
