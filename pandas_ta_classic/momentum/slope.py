@@ -13,7 +13,6 @@ def slope(
     length: int | None = None,
     as_angle: bool | None = None,
     to_degrees: bool | None = None,
-    vertical: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:

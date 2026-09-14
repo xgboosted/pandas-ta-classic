@@ -156,7 +156,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
 - **Strategy System** with multiprocessing support for bulk indicator processing
 - **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
-- **Pandas DataFrame Extension** for seamless integration (`df.ta.indicator()`)
+- **Pandas DataFrame Extension** for seamless integration (`df.ta.<indicator>()`, e.g. `df.ta.rsi()`)
 - **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
 - **tulipy Integration (frozen oracle only)** - `test_oracle_tulipy.py` verifies native output against a committed golden snapshot of tulipy's output (`tests/fixtures/tulipy_oracle.json`); tulipy itself is no longer installed at test time, only to regenerate the snapshot; never used as a computation backend
 - **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
