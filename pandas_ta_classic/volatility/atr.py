@@ -43,7 +43,8 @@ def atr(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default drift; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and drift == 1:
         from talib import ATR
 
         atr = ATR(high, low, close, length)

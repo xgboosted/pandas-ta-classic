@@ -39,7 +39,8 @@ def plus_dm(
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default drift; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and drift == 1:
         from talib import PLUS_DM as _PLUS_DM
 
         result = _PLUS_DM(high, low, timeperiod=length)

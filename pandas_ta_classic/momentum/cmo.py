@@ -37,7 +37,8 @@ def cmo(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default drift, scalar; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100 and drift == 1:
         from talib import CMO
 
         cmo = CMO(close, length)

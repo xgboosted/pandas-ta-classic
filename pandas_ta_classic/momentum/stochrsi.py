@@ -71,7 +71,8 @@ def stochrsi(
     if close is None:
         return None
 
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and mamode == "sma":
         from talib import STOCHRSI as _STOCHRSI
 
         fastk, fastd = _STOCHRSI(close, timeperiod=length, fastk_period=length, fastd_period=d)
