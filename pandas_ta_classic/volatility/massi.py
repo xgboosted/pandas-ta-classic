@@ -32,8 +32,9 @@ def massi(
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
-    if "length" in kwargs:
-        kwargs.pop("length")
+    # A strategy-wide length (df.ta.strategy(..., length=N)) has no meaning here and the
+    # inner calls set length themselves; drop it so it cannot collide with their keyword.
+    kwargs.pop("length", None)
 
     if high is None or low is None:
         return None
