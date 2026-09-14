@@ -1,5 +1,4 @@
 # Trend Signals (TSIGNALS)
-import warnings
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.utils import (
@@ -15,7 +14,6 @@ def tsignals(
     asbool: Optional[bool] = None,
     trend_reset: int = 0,
     trade_offset: Optional[int] = None,
-    drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -29,14 +27,6 @@ def tsignals(
     trend_reset = int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
     if trade_offset != 0:
         trade_offset = int(trade_offset) if trade_offset and isinstance(trade_offset, int) else 0
-    if drift is not None:
-        warnings.warn(
-            "The 'drift' parameter of tsignals() is deprecated and ignored; "
-            "trade signals are always computed with a 1-period difference. "
-            "It will be removed in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     offset = get_offset(offset)
 
     # Calculate Result
@@ -103,8 +93,6 @@ Args:
     trend_reset (value): Value used to identify if a trend has ended. Default: 0
     trade_offset (value): Value used shift the trade entries/exits Use 1 for
         backtesting and 0 for live. Default: 0
-    drift (int): Deprecated and ignored. Trade signals always use a 1-period
-        difference. This parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
