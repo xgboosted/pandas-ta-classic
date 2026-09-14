@@ -217,13 +217,7 @@ class AnalysisIndicators:
     def rsx(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | DataFrame | None: ...
     def rvgi(self, length: int | None = None, swma_length: int | None = None, offset: int | None = None, **kwargs: Any) -> DataFrame | None: ...
     def slope(
-        self,
-        length: int | None = None,
-        as_angle: bool | None = None,
-        to_degrees: bool | None = None,
-        vertical: bool | None = None,
-        offset: int | None = None,
-        **kwargs: Any,
+        self, length: int | None = None, as_angle: bool | None = None, to_degrees: bool | None = None, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
     def smc_sweep(self, length: int | None = None, wick_mult: float | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def smi(

@@ -152,3 +152,8 @@ def test_behaviour_fixes_from_the_same_sweep():
     # decay: mode="exponential" used to run the linear decay
     assert ta.decay(close > close.shift(), mode="exponential").name.startswith("EXPDECAY")
 
+
+def test_slope_has_no_vertical_parameter():
+    """vertical was accepted and never used; it is gone from the signature."""
+    assert "vertical" not in inspect.signature(ta.slope).parameters
+
