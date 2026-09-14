@@ -80,7 +80,9 @@ class TestMomentum(TestCase):
     def test_apo(self):
         result = pandas_ta.apo(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.APO(self.close), correlation_threshold=0.99)
+            # matype=0 (SMA) explicitly: apo's default mamode is 'sma', and TA-Lib 0.8.0
+            # changed APO's default matype from 0 (SMA) to 1 (EMA).
+            assert_talib(self, result, talib.APO(self.close, 12, 26, 0), correlation_threshold=0.99)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -442,7 +444,7 @@ class TestMomentum(TestCase):
             assert_talib(
                 self,
                 result["PPO_12_26_9"],
-                talib.PPO(self.close),
+                talib.PPO(self.close, 12, 26, 0),  # matype=0: TA-Lib 0.8.0 default is EMA; ppo defaults to SMA
                 correlation_threshold=0.99,
             )
         assert_indicator_standard(
