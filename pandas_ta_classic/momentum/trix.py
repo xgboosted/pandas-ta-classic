@@ -84,7 +84,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 18
+    length (int): It's period. Default: 30
     signal (int): It's period. Default: 9
     scalar (float): How much to magnify. Default: 100
     drift (int): The difference period. Default: 1

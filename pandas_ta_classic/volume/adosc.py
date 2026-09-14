@@ -101,8 +101,8 @@ Args:
     close (pd.Series): Series of 'close's
     open (pd.Series): Series of 'open's
     volume (pd.Series): Series of 'volume's
-    fast (int): The short period. Default: 12
-    slow (int): The long period. Default: 26
+    fast (int): The short period. Default: 3
+    slow (int): The long period. Default: 10
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: False
     offset (int): How many periods to offset the result. Default: 0

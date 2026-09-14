@@ -76,7 +76,7 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
-    length (int): The short period. Default: 13
+    length (int): The short period. Default: 1
     initial (int): The short period. Default: 1000
     offset (int): How many periods to offset the result. Default: 0
 
