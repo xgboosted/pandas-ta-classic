@@ -1,8 +1,8 @@
 # Variable Index Dynamic Average (VIDYA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
-
 
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -17,11 +17,11 @@ from pandas_ta_classic.utils._core import skip_leading_nan
 @skip_leading_nan("close")
 def vidya(
     close: Series,
-    length: Optional[int] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Variable Index Dynamic Average (VIDYA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 14

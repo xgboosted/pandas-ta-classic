@@ -1,6 +1,8 @@
 # BRAR (Bull and Bear Ratio)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -16,12 +18,12 @@ def brar(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    scalar: float | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: BRAR (BRAR)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 26

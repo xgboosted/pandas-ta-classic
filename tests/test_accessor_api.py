@@ -19,7 +19,7 @@ from unittest import TestCase, skipIf
 import numpy as np
 import pandas as pd
 
-import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
+import pandas_ta_classic
 from tests.config import get_sample_data
 
 # pandas 3 removed accessor caching; pandas 2 still caches df.ta on the
@@ -48,7 +48,7 @@ class TestAccessorHelperClassification(TestCase):
     def test_data_fetching_api_removed(self):
         """df.ta.ticker, ta.yf and ta.av raise AttributeError, not a lookup of an indicator."""
         with self.assertRaises(AttributeError):
-            self.df.ta.ticker
+            _ = self.df.ta.ticker
         for name in ("yf", "av"):
             with self.subTest(name=name):
                 self.assertFalse(hasattr(pandas_ta_classic, name))
@@ -363,17 +363,17 @@ class TestAccessorPropertyErrorsAreNotMasked(TestCase):
 
     def test_to_utc_reports_the_real_failure(self):
         with self.assertRaises(AttributeError) as ctx:
-            self.df.ta.to_utc
+            _ = self.df.ta.to_utc
         self.assertIn("tz_localize", str(ctx.exception))
 
     def test_time_range_reports_the_real_failure(self):
         with self.assertRaises(AttributeError) as ctx:
-            self.df.ta.time_range
+            _ = self.df.ta.time_range
         self.assertNotIn("has no attribute 'time_range'", str(ctx.exception))
 
     def test_unknown_attribute_still_reports_missing(self):
         with self.assertRaises(AttributeError) as ctx:
-            self.df.ta.definitely_not_an_indicator
+            _ = self.df.ta.definitely_not_an_indicator
         self.assertIn("has no attribute 'definitely_not_an_indicator'", str(ctx.exception))
 
 

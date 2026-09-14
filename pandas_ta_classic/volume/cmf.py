@@ -1,6 +1,8 @@
 # Chaikin Money Flow (CMF)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -15,11 +17,11 @@ def cmf(
     low: Series,
     close: Series,
     volume: Series,
-    open_: Optional[Series] = None,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    open_: Series | None = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Chaikin Money Flow (CMF)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 20

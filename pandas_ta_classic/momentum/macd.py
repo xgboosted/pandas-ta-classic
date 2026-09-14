@@ -1,7 +1,9 @@
 # Moving Average Convergence Divergence (MACD)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
-from pandas import concat, DataFrame, Series
+from pandas import DataFrame, Series, concat
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import (
@@ -11,8 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -45,13 +46,13 @@ def _ema_aligned(arr, m, period, seed_end):
 @skip_leading_nan("close")
 def macd(
     close: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    signal: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    signal: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Moving Average, Convergence/Divergence (MACD)"""
     # Validate arguments
     fast = _pos_int(fast, 12)

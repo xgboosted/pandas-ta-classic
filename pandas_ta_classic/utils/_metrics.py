@@ -1,16 +1,16 @@
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 import numpy as np
 from pandas import Series, Timedelta
 
-
-from ._core import verify_series
-from ._time import total_time
-from ._math import linear_regression
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance.drawdown import drawdown
 from pandas_ta_classic.performance.log_return import log_return
 from pandas_ta_classic.performance.percent_return import percent_return
+
+from ._core import verify_series
+from ._math import linear_regression
+from ._time import total_time
 
 
 def cagr(close: Series) -> float:
@@ -113,7 +113,7 @@ def log_max_drawdown(close: Series) -> float:
     return log_return - max_drawdown(close, method="log")
 
 
-def max_drawdown(close: Series, method: Optional[str] = None, all: bool = False) -> Union[float, dict[str, float]]:
+def max_drawdown(close: Series, method: str | None = None, all: bool = False) -> float | dict[str, float]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
     Args:
@@ -146,7 +146,7 @@ def max_drawdown(close: Series, method: Optional[str] = None, all: bool = False)
 def optimal_leverage(
     close: Series,
     benchmark_rate: float = 0.0,
-    period: Union[float, int] = RATE["TRADING_DAYS_PER_YEAR"],
+    period: float = RATE["TRADING_DAYS_PER_YEAR"],
     log: bool = False,
     capital: float = 1.0,
 ) -> float:
@@ -181,7 +181,7 @@ def optimal_leverage(
     return capital * opt_leverage
 
 
-def pure_profit_score(close: Series) -> Union[float, int]:
+def pure_profit_score(close: Series) -> float | int:
     """Pure Profit Score of a series.
 
     Args:
@@ -205,7 +205,7 @@ def sharpe_ratio(
     benchmark_rate: float = 0.0,
     log: bool = False,
     use_cagr: bool = False,
-    period: Union[float, int] = RATE["TRADING_DAYS_PER_YEAR"],
+    period: float = RATE["TRADING_DAYS_PER_YEAR"],
 ) -> float:
     """Sharpe Ratio of a series.
 

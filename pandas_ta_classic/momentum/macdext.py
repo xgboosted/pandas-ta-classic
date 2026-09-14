@@ -1,6 +1,6 @@
 # MACD Extended (MACDEXT)
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -49,16 +49,16 @@ def _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype):
 
 def macdext(
     close: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    signal: Optional[int] = None,
-    fastmatype: Optional[int] = None,
-    slowmatype: Optional[int] = None,
-    signalmatype: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    signal: int | None = None,
+    fastmatype: int | None = None,
+    slowmatype: int | None = None,
+    signalmatype: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: MACD Extended (MACDEXT)
 
     MACD with independently controllable MA types for fast, slow, and signal

@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+
 from pandas import read_csv
 
 VERBOSE = False

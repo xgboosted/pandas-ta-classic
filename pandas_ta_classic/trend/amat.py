@@ -1,21 +1,24 @@
 # Archer Moving Averages Trends (AMAT)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
-from .long_run import long_run
-from .short_run import short_run
+
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
+from .long_run import long_run
+from .short_run import short_run
+
 
 def amat(
-    close: Optional[Series] = None,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    lookback: Optional[int] = None,
-    mamode: Optional[str] = None,
-    offset: Optional[int] = None,
+    close: Series | None = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    lookback: int | None = None,
+    mamode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Archer Moving Averages Trends (AMAT)"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 8

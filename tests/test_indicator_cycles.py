@@ -1,9 +1,10 @@
-from tests.assertions import assert_indicator_standard, IndicatorSpec
-from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
 from unittest import TestCase
+
 from pandas import DataFrame
+
+import pandas_ta_classic as pandas_ta
+from tests.assertions import IndicatorSpec, assert_indicator_standard
+from tests.config import get_sample_data
 
 
 class TestCycles(TestCase):

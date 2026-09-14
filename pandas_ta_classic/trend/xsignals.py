@@ -1,12 +1,13 @@
 # Cross Signals (XSIGNALS)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
 
+from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
+from pandas_ta_classic.utils._signals import cross_value
 
 from .tsignals import tsignals
-from pandas_ta_classic.utils._signals import cross_value
-from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
 
 
 def xsignals(
@@ -15,12 +16,12 @@ def xsignals(
     xb: float,
     above: bool = True,
     long: bool = True,
-    asbool: Optional[bool] = None,
+    asbool: bool | None = None,
     trend_reset: int = 0,
-    trade_offset: Optional[int] = None,
-    offset: Optional[int] = None,
+    trade_offset: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Cross Signals"""
     # Validate Arguments
     signal = verify_series(signal)

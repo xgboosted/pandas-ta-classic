@@ -2,12 +2,11 @@ import functools
 import inspect
 import logging
 import sys
-from typing import Any, Callable, Optional, TypeGuard, Union
-
+from collections.abc import Callable
 from sys import float_info as sflt
+from typing import Any, TypeGuard
 
 import numpy as np
-from numpy import argmax, argmin
 from pandas import DataFrame, Series
 from pandas.api.types import is_datetime64_any_dtype
 
@@ -25,9 +24,9 @@ def _pos_float(val, default):
 
 
 def apply_offset(
-    series: Union[Series, DataFrame, list[Union[Series, DataFrame]]],
+    series: Series | DataFrame | list[Series | DataFrame],
     offset: int = 0,
-) -> Union[Series, DataFrame, list[Union[Series, DataFrame]]]:
+) -> Series | DataFrame | list[Series | DataFrame]:
     """Shift one or more Series/DataFrames by *offset* periods.
 
     Args:
@@ -43,9 +42,9 @@ def apply_offset(
 
 
 def apply_fill(
-    series: Union[Series, DataFrame, list[Union[Series, DataFrame]]],
+    series: Series | DataFrame | list[Series | DataFrame],
     **kwargs: Any,
-) -> Union[Series, DataFrame, list[Union[Series, DataFrame]]]:
+) -> Series | DataFrame | list[Series | DataFrame]:
     """Apply fillna and fill_method from kwargs to one or more Series/DataFrames.
 
     Args:
@@ -69,17 +68,17 @@ def apply_fill(
     return series
 
 
-def get_drift(x: Optional[int]) -> int:
+def get_drift(x: int | None) -> int:
     """Returns an int if not zero, otherwise defaults to one."""
     return int(x) if isinstance(x, int) and x != 0 else 1
 
 
-def get_offset(x: Optional[int]) -> int:
+def get_offset(x: int | None) -> int:
     """Returns an int, otherwise defaults to zero."""
     return int(x) if isinstance(x, int) else 0
 
 
-def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
+def is_datetime_ordered(df: DataFrame | Series) -> bool:
     """Returns True if the index is a datetime and ordered."""
     index_is_datetime = is_datetime64_any_dtype(df.index)
     if not index_is_datetime or len(df.index) < 2:
@@ -90,7 +89,7 @@ def is_datetime_ordered(df: Union[DataFrame, Series]) -> bool:
         return False
 
 
-def is_percent(x: Optional[Union[int, float]]) -> TypeGuard[Union[int, float]]:
+def is_percent(x: float | None) -> TypeGuard[int | float]:
     if isinstance(x, (int, float)):
         return x is not None and x >= 0 and x <= 100
     return False
@@ -157,14 +156,14 @@ def non_zero_range(high: Series, low: Series) -> Series:
 
 
 def recent_maximum_index(x: Series) -> int:
-    return int(argmax(x[::-1]))
+    return int(np.argmax(x[::-1]))
 
 
 def recent_minimum_index(x: Series) -> int:
-    return int(argmin(x[::-1]))
+    return int(np.argmin(x[::-1]))
 
 
-def signed_series(series: Series, initial: Optional[int] = None) -> Series:
+def signed_series(series: Series, initial: int | None = None) -> Series:
     """Returns a Signed Series with or without an initial value
 
     Default Example:
@@ -211,7 +210,7 @@ def tal_ma(name: str) -> int:
     return _TAL_MA_TYPES[key]
 
 
-def unsigned_differences(series: Series, amount: Optional[int] = None, **kwargs: Any) -> tuple[Series, Series]:
+def unsigned_differences(series: Series, amount: int | None = None, **kwargs: Any) -> tuple[Series, Series]:
     """Unsigned Differences
     Returns two Series, an unsigned positive and unsigned negative series based
     on the differences of the original series. The positive series are only the
@@ -240,7 +239,7 @@ def unsigned_differences(series: Series, amount: Optional[int] = None, **kwargs:
     return positive, negative
 
 
-def verify_series(series: Series, min_length: Optional[Union[int, float]] = None) -> Optional[Series]:
+def verify_series(series: Series, min_length: float | None = None) -> Series | None:
     """If a Pandas Series and it meets the min_length of the indicator return it.
 
     Returns None for a Series shorter than *min_length* (an ordinary data
@@ -278,12 +277,11 @@ def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:
         ``length - 1`` positions.
     """
     import numpy as np
-    from numpy.lib.stride_tricks import sliding_window_view
 
     arr = close.to_numpy(dtype=float)
     result = np.full(len(arr), np.nan)
     if length <= arr.shape[0]:
-        windows = sliding_window_view(arr, length)
+        windows = np.lib.stride_tricks.sliding_window_view(arr, length)
         result[length - 1 :] = windows @ weights
     return Series(result, index=close.index)
 
@@ -303,13 +301,12 @@ def _sliding_argextreme(series: Series, length: int, argfunc: Any, reverse: bool
         reverse: Flip each window before applying *argfunc*.
     """
     import numpy as np
-    from numpy.lib.stride_tricks import sliding_window_view
 
     arr = series.to_numpy(dtype=float)
     m = arr.shape[0]
     result = np.full(m, np.nan)
     if length <= m:
-        windows = sliding_window_view(arr, length)
+        windows = np.lib.stride_tricks.sliding_window_view(arr, length)
         if reverse:
             windows = windows[:, ::-1]
         result[length - 1 :] = argfunc(windows, axis=1)

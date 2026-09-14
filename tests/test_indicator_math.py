@@ -1,13 +1,14 @@
+from unittest import TestCase
+
+from pandas import DataFrame
+
+import pandas_ta_classic as pandas_ta
 from tests.assertions import (
+    IndicatorSpec,
     assert_indicator_standard,
     assert_talib,
-    IndicatorSpec,
 )
 from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
-from unittest import TestCase
-from pandas import DataFrame
 
 try:
     import talib

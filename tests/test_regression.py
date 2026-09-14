@@ -17,8 +17,8 @@ Run the full suite:
 
 import json
 import math
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 from unittest import TestCase
 
 import pandas as pd

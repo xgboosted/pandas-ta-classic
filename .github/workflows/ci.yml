@@ -55,16 +55,22 @@ jobs:
     
     - name: Run Ruff linting
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        ruff check pandas_ta_classic --select E9,F63,F7,F82
-        # report broader lint issues without failing this non-critical pass
+        # Blocking gate over the whole repo: ruff's default rule set plus ICN,
+        # configured in pyproject's [tool.ruff.lint].
+        ruff check .
+        # Advisory only: complexity and line length, never fails the build
         ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero
 
     - name: Verify core.pyi is in sync with generator
       run: |
         python tools/gen_core_stub.py
+        ruff check --fix --quiet pandas_ta_classic/core.pyi
         black --quiet pandas_ta_classic/core.pyi
         git diff --exit-code pandas_ta_classic/core.pyi
+
+    - name: Type-check with mypy
+      # Target version comes from project.requires-python (see the Makefile).
+      run: make typecheck PYTHON=python
 
     - name: Verify black/ruff versions match .pre-commit-config.yaml
       run: python tools/check_lint_versions.py

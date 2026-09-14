@@ -8,6 +8,8 @@ The leading underscore keeps ``_meta.py`` from registering this file as an
 indicator.
 """
 
+from typing import Any
+
 import numpy as np
 from pandas import Series
 
@@ -121,14 +123,10 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         else:
             period[i] = period[i - 1]
 
-        if period[i] > 1.5 * period[i - 1]:
-            period[i] = 1.5 * period[i - 1]
-        if period[i] < 0.67 * period[i - 1]:
-            period[i] = 0.67 * period[i - 1]
-        if period[i] < 6.0:
-            period[i] = 6.0
-        if period[i] > 50.0:
-            period[i] = 50.0
+        period[i] = min(period[i], 1.5 * period[i - 1])
+        period[i] = max(period[i], 0.67 * period[i - 1])
+        period[i] = max(period[i], 6.0)
+        period[i] = min(period[i], 50.0)
 
         period[i] = 0.2 * period[i] + 0.8 * period[i - 1]
         smooth_period_arr[i] = 0.33 * period[i] + 0.67 * smooth_period_arr[i - 1]
@@ -189,8 +187,7 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         # Instantaneous Trendline (ITrend)
         dc_per = max(int(sp + 0.5), 1)
         start_idx = i - dc_per + 1
-        if start_idx < 0:
-            start_idx = 0
+        start_idx = max(start_idx, 0)
         it_trend[i] = (close_cumsum[i + 1] - close_cumsum[start_idx]) / dc_per
         trendline_arr[i] = (
             4.0 * it_trend[i]
@@ -273,7 +270,7 @@ def hilbert_result(close: Series, ht_start: int = 12, lookback: int = 0) -> dict
     arrays = _hilbert_transform_loop(c_arr[first_valid:], m - first_valid, ht_start)
     keys = ("smooth_period", "dc_phase", "in_phase", "quadrature", "sine", "lead_sine", "trend_mode", "trendline")
 
-    result = {key: np.concatenate([prefix, arr]) for key, arr in zip(keys, arrays)}
+    result: dict[str, Any] = {key: np.concatenate([prefix, arr]) for key, arr in zip(keys, arrays)}
     # Values inside TA-Lib's lookback (including the 0.0 placeholders the loop
     # writes before ht_start) come from an unconverged recursion; TA-Lib does
     # not report them, so neither do we.

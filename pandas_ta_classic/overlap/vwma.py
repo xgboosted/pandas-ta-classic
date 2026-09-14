@@ -1,17 +1,20 @@
 # Volume Weighted Moving Average (VWMA)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
-from .sma import sma
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .sma import sma
 
 
 def vwma(
     close: Series,
     volume: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Volume Weighted Moving Average (VWMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

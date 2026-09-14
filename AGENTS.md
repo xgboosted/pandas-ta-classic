@@ -9,7 +9,7 @@
 - **Testing:** pytest (primary, matches CI). Run `pytest tests/ -v` for full suite (oracle deps required; see Validation section), or the smallest relevant test module for the changed area (e.g., `pytest tests/test_indicator_momentum.py -v`). Hypothesis property-based tests also use pytest.
 - **GitHub interactions:** Use the GitHub MCP server exclusively; do not use GitLens or GitKraken tools for GitHub operations. Server name: `github-mcp-server` (verify via your agent's MCP list). Use its tools for PRs, issues, reviews, and comments.
 - **Commits:** Never automatically stage or commit changes; every change must be manually reviewed before being committed
-- **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` before opening. Never force-push to `main`.
+- **Branches:** Name as `feat/<topic>`, `fix/<topic>`, `ci/<topic>`, `docs/<topic>`. One logical change per PR. PR title: `type(scope): short description`. Run `black --check --diff pandas_ta_classic/`, `ruff check .` and `make typecheck` before opening. Never force-push to `main`.
 - **Documentation:** Update docstrings and `docs/` when behavior, indicators, or public usage change. Docs built with Sphinx + ReadTheDocs theme + MyST Parser, deployed to GitHub Pages.
 - **CHANGELOG:** Use an `[Unreleased]` section at the top of `CHANGELOG.md` for changes merged to `main` that have not yet been tagged. Every PR that lands on `main` adds its entry there. At release time, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and tag. Keep a Changelog format.
 - **Releases:** Always create annotated tags: `git tag -a X.Y.Z -m "X.Y.Z"` then `git push origin X.Y.Z`. Annotated tags carry tagger identity and timestamp needed for setuptools-scm and GitHub release attribution. Never use lightweight tags (`git tag X.Y.Z`) — they carry no metadata and produce ambiguous version strings.
@@ -127,10 +127,11 @@ After each coding session, execute the code/module in local venv and troubleshoo
 ## Formatting and Linting
 
 - **black** — formatter: `line-length=150`, `skip-string-normalization = true` (keep quotes as-is). CI runs `black --check --diff pandas_ta_classic/`. Apply locally with `black pandas_ta_classic/`. Black owns formatting.
-- **ruff** — linter only (ruff format is disabled; black owns formatting). Critical checks: `--select E9,F63,F7,F82`. Advisory checks: `--extend-select C901,E501 --exit-zero`.
-- Config in `pyproject.toml` under `[tool.black]` and `[tool.ruff]`
+- **ruff** — linter only (ruff format is disabled; black owns formatting). Gate: `ruff check .` over the whole repo, using ruff's default rule set plus `ICN` from `[tool.ruff.lint]` (`numpy` is always `np.`, never `from numpy import`). The `>=` pin floats, so new default rules are adopted, not suppressed: fix the code. Library code has no per-file ignores; an unavoidable exception gets an inline `# noqa: <rule>` with a reason. Advisory: `ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero`.
+- Config in `pyproject.toml` under `[tool.black]`, `[tool.ruff]` and `[tool.ruff.lint]`
+- **mypy** — `make typecheck` (target version read from `project.requires-python`); blocking in CI.
 - If black and ruff format disagree on a region, lock it with `# fmt: off` / `# fmt: on`
-- **Gate condition:** `black --check --diff pandas_ta_classic/` and `ruff check pandas_ta_classic --select E9,F63,F7,F82` must both return EXIT=0 before the task is considered complete. If black reports a reformat, run `black pandas_ta_classic/` then re-check.
+- **Gate condition:** `black --check --diff pandas_ta_classic/`, `ruff check .` and `make typecheck` must all return EXIT=0 before the task is considered complete. If black reports a reformat, run `black pandas_ta_classic/` then re-check.
 - **Dual config pattern:** black/ruff versions appear in two places — `pyproject.toml` under `[project.optional-dependencies].lint` (CI installs via `pip install -e ".[lint]"`) AND `.pre-commit-config.yaml` under each hook's `rev`. When bumping a version, update BOTH. Enforced: `tools/check_lint_versions.py` (run by the CI `code-quality` job and `make lint`) fails on any mismatch.
 
 ## Imports and Paths
@@ -146,7 +147,7 @@ After each coding session, execute the code/module in local venv and troubleshoo
 
 | Job | Description |
 |---|---|
-| `code-quality` | Black formatting check + Ruff linting (critical + advisory) |
+| `code-quality` | Black formatting check, `ruff check .` (blocking) + advisory ruff, mypy, core.pyi sync, lint-version parity |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
@@ -200,8 +201,11 @@ python -c "import pandas_ta_classic; print(pandas_ta_classic.version)"
 # Formatting check
 black --check --diff pandas_ta_classic/
 
-# Linting (critical errors only)
-ruff check pandas_ta_classic --select E9,F63,F7,F82
+# Linting (blocking gate: ruff default rules + ICN)
+ruff check .
+
+# Type checking (blocking gate)
+make typecheck
 
 # Linting (advisory — non-blocking in CI)
 ruff check pandas_ta_classic --extend-select C901,E501 --exit-zero

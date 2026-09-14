@@ -1,9 +1,9 @@
 # Quantitative Qualitative Estimation (QQE)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
 
-from .rsi import rsi
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -13,6 +13,8 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._njit import njit
+
+from .rsi import rsi
 
 
 @njit(cache=True)
@@ -64,14 +66,14 @@ def _qqe_loop(rsi_arr, ub_arr, lb_arr, m):
 
 def qqe(
     close: Series,
-    length: Optional[int] = None,
-    smooth: Optional[int] = None,
-    factor: Optional[float] = None,
-    mamode: Optional[str] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    smooth: int | None = None,
+    factor: float | None = None,
+    mamode: str | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Quantitative Qualitative Estimation (QQE)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 14

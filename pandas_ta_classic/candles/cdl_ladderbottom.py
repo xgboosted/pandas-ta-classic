@@ -1,6 +1,7 @@
 # Candle Ladder Bottom (CDL_LADDERBOTTOM)
-from typing import Any, Optional
+from typing import Any
 
+import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
@@ -11,7 +12,6 @@ from pandas_ta_classic.candles._cdl_math import (
     run_pattern,
 )
 from pandas_ta_classic.utils._njit import njit
-import numpy as np
 
 
 @njit(cache=True)
@@ -92,10 +92,10 @@ def cdl_ladderbottom(
     high: Series,
     low: Series,
     close: Series,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Candle Pattern: Ladder Bottom
 
     A 5-candle bullish reversal pattern. Three consecutive black candles

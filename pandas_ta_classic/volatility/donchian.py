@@ -1,17 +1,19 @@
 # Donchian Channels (DONCHIAN)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def donchian(
     high: Series,
     low: Series,
-    lower_length: Optional[int] = None,
-    upper_length: Optional[int] = None,
-    offset: Optional[int] = None,
+    lower_length: int | None = None,
+    upper_length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Donchian Channels (DC)"""
     # Validate arguments
     lower_length = int(lower_length) if lower_length and lower_length > 0 else 20

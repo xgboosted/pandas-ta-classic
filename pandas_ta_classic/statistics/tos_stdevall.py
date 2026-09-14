@@ -1,8 +1,11 @@
 # TOS Standard Deviation All (TOS_STDEVALL)
 import warnings
-from typing import Any, Optional
+from itertools import pairwise
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, DatetimeIndex, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import skip_leading_nan
 
@@ -10,12 +13,12 @@ from pandas_ta_classic.utils._core import skip_leading_nan
 @skip_leading_nan("close")
 def tos_stdevall(
     close: Series,
-    length: Optional[int] = None,
-    stds: Optional[list[int]] = None,
-    ddof: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    stds: list[int] | None = None,
+    ddof: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: TD Ameritrade's Think or Swim Standard Deviation All"""
     # Validate Arguments
     # `lookahead=False` asks for output a bar could have produced in real time.
@@ -36,7 +39,7 @@ def tos_stdevall(
     stds = stds if isinstance(stds, list) and len(stds) > 0 else [1, 2, 3]
     if min(stds) <= 0:
         return None
-    if not all(i < j for i, j in zip(stds, stds[1:])):
+    if not all(i < j for i, j in pairwise(stds)):
         stds = stds[::-1]
     offset = get_offset(offset)
 

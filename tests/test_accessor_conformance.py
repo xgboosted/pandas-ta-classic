@@ -1,8 +1,9 @@
+from unittest import TestCase
+
+from pandas import DataFrame, Series
+
 import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
 from tests.config import get_sample_data
-
-from unittest import TestCase
-from pandas import DataFrame, Series
 
 
 class TestAccessorConformance(TestCase):
@@ -27,7 +28,7 @@ class TestAccessorConformance(TestCase):
         for name in indicator_names:
             try:
                 result = getattr(self.data.ta, name)()
-            except Exception:
+            except Exception:  # noqa: BLE001, S112 - indicators that need extra inputs are out of scope here
                 continue
 
             if not isinstance(result, (Series, DataFrame)):

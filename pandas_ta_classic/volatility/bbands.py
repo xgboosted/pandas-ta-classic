@@ -1,6 +1,8 @@
 # Bollinger Bands (BBANDS)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics.stdev import stdev
@@ -43,14 +45,14 @@ def _bbands_native(close, length, std, ddof, mamode, kwargs):
 
 def bbands(
     close: Series,
-    length: Optional[int] = None,
-    std: Optional[float] = None,
+    length: int | None = None,
+    std: float | None = None,
     ddof: int = 0,
-    mamode: Optional[str] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    mamode: str | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Bollinger Bands (BBANDS)"""
     # Validate arguments
     length = int(length) if length and length > 1 else 5

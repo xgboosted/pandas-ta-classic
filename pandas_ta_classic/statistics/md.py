@@ -1,16 +1,18 @@
 # Mean Deviation (MD)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic.statistics.mad import mad
 from pandas_ta_classic.utils import get_offset, verify_series
 
 
 def md(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Mean Deviation (MD)
 
     Rolling mean of absolute deviations from the rolling mean.

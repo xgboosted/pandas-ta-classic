@@ -1,7 +1,9 @@
 # Aroon (AROON)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _sliding_argextreme
@@ -10,12 +12,12 @@ from pandas_ta_classic.utils._core import _sliding_argextreme
 def aroon(
     high: Series,
     low: Series,
-    length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    scalar: float | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Aroon & Aroon Oscillator"""
     # Validate Arguments
     length = length if length and length > 0 else 14

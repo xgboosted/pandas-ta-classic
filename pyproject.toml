@@ -59,8 +59,9 @@ oracle = [
 
 # CI code quality tools
 lint = [
-    "ruff>=0.15.20",
+    "ruff>=0.16.0",
     "black>=26.5.1",
+    "mypy>=1.0.0",
 ]
 
 # PyPI publishing tools
@@ -165,6 +166,17 @@ exclude = [
     "*.egg-info",
 ]
 line-length = 150
+
+[tool.ruff.lint]
+# ruff's default rule set (floating with the `>=` pin) plus ICN. ICN001 enforces
+# the conventional aliases (numpy as np, pandas as pd); ICN003 with banned-from
+# rejects `from numpy import x`, so numpy is always reached through `np.`.
+extend-select = ["ICN"]
+
+[tool.ruff.lint.flake8-import-conventions]
+# pandas is deliberately not banned: `from pandas import Series` is the house
+# style in every indicator signature.
+banned-from = ["numpy", "numpy.lib.stride_tricks"]
 
 [tool.setuptools]
 packages = [

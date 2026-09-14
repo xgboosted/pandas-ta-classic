@@ -1,5 +1,5 @@
 # Stochastic Fast (STOCHF)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import DataFrame, Series
 
@@ -46,13 +46,13 @@ def stochf(
     high: Series,
     low: Series,
     close: Series,
-    fastk: Optional[int] = None,
-    fastd: Optional[int] = None,
-    mamode: Optional[str] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    fastk: int | None = None,
+    fastd: int | None = None,
+    mamode: str | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Stochastic Fast (STOCHF)"""
     # Validate Arguments
     fastk = fastk if fastk and fastk > 0 else 5

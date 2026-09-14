@@ -1,19 +1,22 @@
 # Stochastic Momentum Index (SMI)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
-from .tsi import tsi
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .tsi import tsi
 
 
 def smi(
     close: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    signal: Optional[int] = None,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    signal: int | None = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: SMI Ergodic Indicator (SMIIO)"""
     # Validate arguments
     fast = int(fast) if fast and fast > 0 else 5

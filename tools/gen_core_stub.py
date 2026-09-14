@@ -6,11 +6,11 @@ import types
 import typing
 from pathlib import Path
 
-from pandas_ta_classic._meta import Category
 from pandas_ta_classic._indicator_loader import (
-    _find_indicator_func,
     _COLUMN_PARAM_TO_COL_KEY,
+    _find_indicator_func,
 )
+from pandas_ta_classic._meta import Category
 
 # PEP 604 union type added in Python 3.10. Guard for back-compat.
 _UNION_TYPE = getattr(types, "UnionType", None)
@@ -49,7 +49,7 @@ def _build_method_stub(name: str, func) -> str:
                 annotation = f": {_format_annotation(param.annotation)}"
             default = ""
             if param.default is not inspect.Parameter.empty:
-                default = f" = {repr(param.default)}"
+                default = f" = {param.default!r}"
             parts.append(f"{pname}{annotation}{default}")
 
     # Return type
@@ -133,11 +133,7 @@ def main():
             func = _find_indicator_func(ind_name)
             if func is None:
                 continue
-            try:
-                stub = _build_method_stub(ind_name, func)
-                lines.append(stub)
-            except Exception as e:
-                lines.append(f"    def {ind_name}(self, **kwargs: Any) -> Optional[Union[Series, DataFrame]]: ...  # stub-gen failed: {e}")
+            lines.append(_build_method_stub(ind_name, func))
         lines.append("")
 
     out_path = ROOT / "pandas_ta_classic" / "core.pyi"

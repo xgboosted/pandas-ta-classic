@@ -1,6 +1,8 @@
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
 
@@ -20,16 +22,16 @@ def _td_run_capped(td_bool: np.ndarray) -> np.ndarray:
     count = 0
     for i in range(n):
         count = count + 1 if td_bool[i] else 0
-        out[i] = count if count < _TD_WINDOW else _TD_WINDOW
+        out[i] = min(_TD_WINDOW, count)
     return out
 
 
 def td_seq(
     close: Series,
-    asint: Optional[bool] = None,
-    offset: Optional[int] = None,
+    asint: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Tom Demark Sequential (TD_SEQ)"""
     # Validate arguments
     close = verify_series(close)

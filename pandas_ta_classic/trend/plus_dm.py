@@ -1,6 +1,8 @@
 # Plus Directional Movement (PLUS_DM)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -15,12 +17,12 @@ from pandas_ta_classic.utils import (
 def plus_dm(
     high: Series,
     low: Series,
-    length: Optional[int] = None,
-    talib: Optional[bool] = None,
-    drift: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    talib: bool | None = None,
+    drift: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Plus Directional Movement (+DM, PLUS_DM)
 
     Raw Wilder-smoothed positive directional movement.

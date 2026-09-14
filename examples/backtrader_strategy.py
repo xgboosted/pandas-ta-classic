@@ -1,7 +1,8 @@
+import backtrader as bt
 import numpy as np
 import pandas as pd
+
 import pandas_ta_classic as ta
-import backtrader as bt
 
 _ = ta.__name__  # registers df.ta accessor
 

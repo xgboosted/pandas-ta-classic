@@ -74,7 +74,6 @@ import pandas as pd
 import pandas_ta_classic as ta
 from tests.config import get_sample_data
 
-
 # ---------------------------------------------------------------------------
 # Fix 1: stdev / variance ddof default = 0 (population)
 # ---------------------------------------------------------------------------

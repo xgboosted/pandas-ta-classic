@@ -1,10 +1,11 @@
-from tests.assertions import assert_indicator_standard, assert_talib, IndicatorSpec
-from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
 import warnings
 from unittest import TestCase
+
 from pandas import DataFrame, Series
+
+import pandas_ta_classic as pandas_ta
+from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
+from tests.config import get_sample_data
 
 try:
     import talib
@@ -621,9 +622,9 @@ class TestOverlap(TestCase):
     def test_weighted_ma_asc(self):
         """asc=False was forced back to True, so it returned the ascending result."""
         import numpy as np
+        from pandas.testing import assert_series_equal
 
         from pandas_ta_classic.utils import fibonacci
-        from pandas.testing import assert_series_equal
 
         close = self.close.iloc[:200]
         arr = close.to_numpy(dtype=float)

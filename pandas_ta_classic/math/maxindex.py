@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -9,10 +9,10 @@ from pandas_ta_classic.utils._core import _sliding_argextreme
 
 def maxindex(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Window-relative index of the Maximum value over *length* periods.
 
     Named after TA-Lib's MAXINDEX, but the convention differs on purpose: this

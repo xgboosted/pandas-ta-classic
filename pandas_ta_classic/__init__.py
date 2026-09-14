@@ -7,11 +7,11 @@ from typing import Any
 # top-level name and served lazily (with a FutureWarning) via __getattr__.
 # Internal callers import it directly from pandas_ta_classic._meta.
 from pandas_ta_classic._meta import (
+    _VALID_CATEGORIES,
     CANGLE_AGG,
+    RATE,
     Category,
     Imports,
-    RATE,
-    _VALID_CATEGORIES,
     version,
 )
 from pandas_ta_classic.core import (
@@ -82,13 +82,13 @@ __description__ = (
 )
 
 __all__ = [
+    "CANGLE_AGG",
+    "RATE",
     "AllStrategy",
     "AnalysisIndicators",
-    "CANGLE_AGG",
     "Category",
     "CommonStrategy",
     "Imports",
-    "RATE",
     "Strategy",
     "above",
     "above_value",
@@ -164,9 +164,10 @@ def __getattr__(name: str) -> Any:
     """
     import importlib
     import sys
+
     from pandas_ta_classic._indicator_loader import (
-        _find_indicator_func,
         _INDICATOR_TO_CATEGORY,
+        _find_indicator_func,
     )
 
     # Regular indicators in Category → return the function
