@@ -42,7 +42,7 @@ class Strategy:
     """
 
     name: str  # = None # Required.
-    ta: list = field(default_factory=list)  # Required.
+    ta: list | None = field(default_factory=list)  # Required. None means every indicator.
     # Helpful. More descriptive version or notes or w/e.
     description: str = "TA Description"
     # Optional. Gets Exchange Time and Local Time execution time
@@ -727,16 +727,15 @@ class AnalysisIndicators(PandasObject):
         if mode["all"] or mode["category"]:
             excluded += user_excluded
 
-        # Collect the indicators, remove excluded or include kwarg["append"]
+        # Collect the indicators, remove excluded or include kwarg["append"].
+        # Work on copies: `Category` lists and the caller's Strategy.ta are shared
+        # objects, and removing from them would leak into later runs.
+        ta: list
         if mode["category"]:
-            ta = self._indicators_by_category(name.lower())
-            for x in excluded:
-                if x in ta:
-                    ta.remove(x)
+            ta = [x for x in Category[name.lower()] if x not in excluded]
         elif mode["custom"]:
-            ta = args[0].ta
-            for kwds in ta:
-                kwds["append"] = True
+            # custom mode implies a list: _resolve_strategy_args routes ta=None to "all"
+            ta = [{**kwds, "append": True} for kwds in args[0].ta]
         elif mode["all"]:
             ta = self.indicators(as_list=True, exclude=excluded)
         else:
@@ -750,8 +749,8 @@ class AnalysisIndicators(PandasObject):
             if isinstance(kwds, dict) and "length" in kwds and kwds["length"] > self._df.shape[0]:
                 removal.append(kwds)
         if len(removal) > 0:
-            for x in removal:
-                ta.remove(x)
+            for kwds in removal:
+                ta.remove(kwds)
 
         verbose = kwargs.pop("verbose", False)
         if verbose:
@@ -776,8 +775,7 @@ class AnalysisIndicators(PandasObject):
                 use_multiprocessing = False
 
         if Imports["tqdm"]:
-            # from tqdm import tqdm
-            from tqdm import tqdm
+            from tqdm import tqdm  # type: ignore[import-untyped]  # optional; ships no stubs
 
         if use_multiprocessing:
             _total_ta = len(ta)
