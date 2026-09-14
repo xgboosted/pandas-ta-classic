@@ -5,7 +5,7 @@ from typing import Any
 from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 
 from .midprice import midprice
 
@@ -17,6 +17,7 @@ _ICHIMOKU_TUPLE_DEPRECATION = (
 )
 
 
+@nan_on_short_input
 def ichimoku(
     high: Series,
     low: Series,

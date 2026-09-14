@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.rvi import rvi
 
 
@@ -57,6 +57,7 @@ def _inertia_rvi_mode(close, high, low, rvi_length, scalar, refined, thirds, mam
     return "", rvi(close, length=rvi_length, scalar=scalar, mamode=mamode)
 
 
+@nan_on_short_input
 def inertia(
     close: Series | None = None,
     high: Series | None = None,

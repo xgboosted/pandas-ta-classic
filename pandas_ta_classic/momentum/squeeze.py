@@ -11,7 +11,7 @@ from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.trend.decreasing import decreasing
 from pandas_ta_classic.trend.increasing import increasing
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
@@ -90,6 +90,7 @@ def _squeeze_detailed(df, squeeze_s, kwargs, prefix="SQZ_"):
     df[f"{prefix}NINC"] = neg_inc
 
 
+@nan_on_short_input
 def squeeze(
     high: Series,
     low: Series,

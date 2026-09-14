@@ -4,7 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
-from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
+from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard, assert_talib
 from tests.config import get_sample_data
 
 try:
@@ -466,7 +466,7 @@ class TestTrend(TestCase):
             any("Series has 0 rows" in message for message in cm.output),
             f"Expected empty-series validation warning in logs: {cm.output}",
         )
-        self.assertIsNone(result)
+        assert_all_nan(self, result)
 
     def test_cpr_with_nans(self):
         open_with_nan = self.open.copy()

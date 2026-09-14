@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -132,6 +132,7 @@ def _sarext_native_result(
     return Series(result, index=high.index)
 
 
+@nan_on_short_input
 def sarext(
     high: Series,
     low: Series,

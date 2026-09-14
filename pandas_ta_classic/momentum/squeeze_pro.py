@@ -8,11 +8,12 @@ from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simpl
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
 
+@nan_on_short_input
 def squeeze_pro(
     high: Series,
     low: Series,
@@ -48,7 +49,10 @@ def squeeze_pro(
     offset = get_offset(offset)
 
     if not (kc_scalar_wide > kc_scalar_normal > kc_scalar_narrow):
-        return None
+        raise ValueError(
+            "squeeze_pro() needs kc_scalar_wide > kc_scalar_normal > kc_scalar_narrow, "
+            f"got {kc_scalar_wide}, {kc_scalar_normal}, {kc_scalar_narrow}"
+        )
     if high is None or low is None or close is None:
         return None
 

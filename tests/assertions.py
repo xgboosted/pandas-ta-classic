@@ -2,6 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
 import pandas.testing as pdt
 from pandas import DataFrame, Series
 
@@ -65,6 +66,18 @@ def assert_length_in_name(test_case, func, args, length, **kwargs):
     result = func(*args, length=length, **kwargs)
     test_case.assertIsNotNone(result)
     test_case.assertIn(str(length), result.name)
+
+
+def assert_all_nan(test_case, result, index=None):
+    """Input shorter than the window yields an all-NaN Series/DataFrame, not None (issue #145, case B).
+
+    When *index* is given, the result must be aligned to it.
+    """
+    test_case.assertIsInstance(result, (Series, DataFrame), f"expected an all-NaN result, got {type(result).__name__}")
+    if index is not None:
+        test_case.assertTrue(result.index.equals(index), "all-NaN result must keep the input index")
+    values = result.to_numpy(dtype=float)
+    test_case.assertTrue(values.size == 0 or bool(np.isnan(values).all()), "short-input result must be all NaN")
 
 
 def assert_none_guard(test_case, func, args, none_arg_idx=0, **kwargs):

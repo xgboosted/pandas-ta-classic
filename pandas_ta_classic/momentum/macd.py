@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -43,6 +43,7 @@ def _ema_aligned(arr, m, period, seed_end):
     return result
 
 
+@nan_on_short_input
 @skip_leading_nan("close")
 def macd(
     close: Series,

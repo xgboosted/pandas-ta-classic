@@ -12,9 +12,10 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
+@nan_on_short_input
 def minus_dm(
     high: Series,
     low: Series,

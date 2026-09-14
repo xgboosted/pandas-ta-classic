@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -67,6 +67,7 @@ def _rsx_loop(c_arr, length, m):
     return result
 
 
+@nan_on_short_input
 def rsx(
     close: Series,
     length: int | None = None,

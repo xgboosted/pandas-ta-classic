@@ -4,8 +4,10 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import nan_on_short_input
 
 
+@nan_on_short_input
 def log10(close: Series, offset: int | None = None, **kwargs: Any) -> Series | None:
     """Vector Log10 (TA-Lib: LOG10)."""
     close = verify_series(close)

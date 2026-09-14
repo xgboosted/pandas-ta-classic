@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 # TA-Lib MA type integer → string kind for native fallback
 _MATYPE_TO_KIND = {
@@ -47,6 +47,7 @@ def _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype):
             )
 
 
+@nan_on_short_input
 def macdext(
     close: Series,
     fast: int | None = None,

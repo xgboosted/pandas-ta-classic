@@ -11,9 +11,10 @@ from pandas_ta_classic.utils import (
     verify_series,
     weights,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 
 
+@nan_on_short_input
 def swma(
     close: Series,
     length: int | None = None,

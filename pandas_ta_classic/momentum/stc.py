@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -80,6 +80,7 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
     return fastma - slowma
 
 
+@nan_on_short_input
 def stc(
     close: Series,
     tclength: int | None = None,

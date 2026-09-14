@@ -157,3 +157,10 @@ def test_slope_has_no_vertical_parameter():
     """vertical was accepted and never used; it is gone from the signature."""
     assert "vertical" not in inspect.signature(ta.slope).parameters
 
+
+def test_squeeze_pro_rejects_unordered_scalars():
+    """An unordered set of Keltner scalars used to return None silently."""
+    frame = get_sample_data().iloc[:300]
+    with pytest.raises(ValueError, match=r"kc_scalar_wide > kc_scalar_normal > kc_scalar_narrow"):
+        ta.squeeze_pro(frame.high, frame.low, frame.close, kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2)
+

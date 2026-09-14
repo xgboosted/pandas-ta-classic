@@ -33,6 +33,7 @@ import numpy as np
 import pandas as pd
 
 import pandas_ta_classic as ta
+from tests.assertions import assert_all_nan
 
 # ---------------------------------------------------------------------------
 # Shared synthetic OHLCV data — 200 rows, fully controlled seed
@@ -175,56 +176,56 @@ class TestTooShortInput(TestCase):
         c, *_ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.sma(c, length=20)
-        self.assertIsNone(result, "sma should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_ema_too_short(self):
         c, *_ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.ema(c, length=20, talib=False)
-        self.assertIsNone(result, "ema should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_rsi_too_short(self):
         c, *_ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.rsi(c, length=14, talib=False)
-        self.assertIsNone(result, "rsi should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_atr_too_short(self):
         c, h, low, _ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(h, low, c, length=14, talib=False)
-        self.assertIsNone(result, "atr should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_roc_too_short(self):
         c, *_ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.roc(c, length=10, talib=False)
-        self.assertIsNone(result, "roc should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_stdev_too_short(self):
         c, *_ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.stdev(c, length=20, talib=False)
-        self.assertIsNone(result, "stdev should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_bbands_too_short(self):
         c, *_ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.bbands(c, length=20, talib=False)
-        self.assertIsNone(result, "bbands should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_adx_too_short(self):
         c, h, low, _ = self._short(5)
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.adx(h, low, c, length=14, talib=False)
-        self.assertIsNone(result, "adx should return None when len < length")
+        assert_all_nan(self, result)
 
     def test_smc_sweep_too_short(self):
         c, h, low, _ = self._short(14)
         o = _O.iloc[:14]
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.smc_sweep(o, h, low, c, length=15)
-        self.assertIsNone(result, "smc_sweep should return None when len < length")
+        assert_all_nan(self, result)
 
 
 # ---------------------------------------------------------------------------

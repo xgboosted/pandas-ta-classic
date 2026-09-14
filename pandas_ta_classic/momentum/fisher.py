@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -31,6 +31,7 @@ def _fisher_loop(pos_arr, m, length):
     return result
 
 
+@nan_on_short_input
 @skip_leading_nan("high", "low")
 def fisher(
     high: Series,

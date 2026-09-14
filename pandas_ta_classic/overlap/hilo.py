@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 from .ma import ma
@@ -36,6 +36,7 @@ def _hilo_loop(close: np.ndarray, high_ma: np.ndarray, low_ma: np.ndarray):
     return hilo, long, short
 
 
+@nan_on_short_input
 def hilo(
     high: Series,
     low: Series,

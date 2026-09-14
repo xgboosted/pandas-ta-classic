@@ -12,9 +12,10 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 
 
+@nan_on_short_input
 def kvo(
     high: Series,
     low: Series,

@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -68,6 +68,7 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
     return long_arr, short_arr, af_arr, reversal_arr
 
 
+@nan_on_short_input
 def psar(
     high: Series,
     low: Series,

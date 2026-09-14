@@ -12,11 +12,12 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
 
 from .true_range import true_range
 
 
+@nan_on_short_input
 def atr(
     high: Series,
     low: Series,

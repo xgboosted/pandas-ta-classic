@@ -13,12 +13,13 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._wilder import wilder_di
 from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.volatility.true_range import true_range
 
 
+@nan_on_short_input
 def adx(
     high: Series,
     low: Series,

@@ -17,6 +17,16 @@ Indicators Reference
 .. note::
    The category system now uses **dynamic discovery** - indicators are automatically detected from the package structure, ensuring the list is always up-to-date with available indicators.
 
+Input Shorter Than the Window
+-----------------------------
+
+An indicator handed fewer rows than its window returns an all-NaN result, the
+same way ``close.rolling(50).mean()`` does on 10 rows. The result keeps the
+input's index and the usual name and columns, so
+``df.ta.sma(length=50, append=True)`` on a short frame adds an all-NaN
+``SMA_50`` column instead of nothing. Before 0.9.0 these calls returned
+``None``; test for short data with ``result.isna().all()``.
+
 Lookahead Bias and Causality
 -----------------------------
 

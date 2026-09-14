@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
 
 from .rsi import rsi
 
@@ -46,6 +46,7 @@ def _stochrsi_result_df(k_series, d_series, length, rsi_length, k, d):
     return df
 
 
+@nan_on_short_input
 def stochrsi(
     close: Series,
     length: int | None = None,

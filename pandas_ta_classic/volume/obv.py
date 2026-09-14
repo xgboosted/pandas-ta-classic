@@ -11,9 +11,10 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 
 
+@nan_on_short_input
 def obv(
     close: Series,
     volume: Series,

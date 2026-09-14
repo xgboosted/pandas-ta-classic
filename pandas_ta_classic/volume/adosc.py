@@ -6,11 +6,12 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
 
 from .ad import ad
 
 
+@nan_on_short_input
 @skip_leading_nan("high", "low", "close", "volume")
 def adosc(
     high: Series,

@@ -11,13 +11,14 @@ from pandas_ta_classic.utils import (
     is_datetime_ordered,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _str_param
+from pandas_ta_classic.utils._core import _str_param, nan_on_short_input
 
 from .hlc3 import hlc3
 
 logger = logging.getLogger(__name__)
 
 
+@nan_on_short_input
 def vwap(
     high: Series,
     low: Series,

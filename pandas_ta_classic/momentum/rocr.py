@@ -5,9 +5,10 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
+@nan_on_short_input
 def rocr(
     close: Series,
     length: int | None = None,

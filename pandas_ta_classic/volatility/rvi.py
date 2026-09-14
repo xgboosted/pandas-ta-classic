@@ -6,7 +6,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Series | None:
@@ -55,6 +55,7 @@ def _rvi_mode(refined, thirds, high, low, close, length, scalar, mamode, drift):
     return (result, "") if result is not None else None
 
 
+@nan_on_short_input
 def rvi(
     close: Series,
     high: Series | None = None,

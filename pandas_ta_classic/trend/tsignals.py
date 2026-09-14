@@ -9,9 +9,10 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 
 
+@nan_on_short_input
 def tsignals(
     trend: Series,
     asbool: bool | None = None,

@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
 
 
 def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
@@ -44,6 +44,7 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
     return ppo_s, histogram, signalma
 
 
+@nan_on_short_input
 def ppo(
     close: Series,
     fast: int | None = None,

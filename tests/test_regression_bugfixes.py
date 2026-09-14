@@ -72,6 +72,7 @@ import numpy as np
 import pandas as pd
 
 import pandas_ta_classic as ta
+from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
 
 # ---------------------------------------------------------------------------
@@ -979,18 +980,18 @@ class TestDmShortInputGuard(TestCase):
     def test_short_input_returns_none(self):
         """Fewer rows than the default length of 14 → None."""
         result = ta.dm(self.high.iloc[:3], self.low.iloc[:3])
-        self.assertIsNone(result)
+        assert_all_nan(self, result)
 
     def test_short_input_matches_sibling_indicators(self):
         """dm agrees with plus_dm/minus_dm/adx on the same short input."""
         high, low = self.high.iloc[:3], self.low.iloc[:3]
-        self.assertIsNone(ta.dm(high, low))
-        self.assertIsNone(ta.plus_dm(high, low))
-        self.assertIsNone(ta.minus_dm(high, low))
+        assert_all_nan(self, ta.dm(high, low))
+        assert_all_nan(self, ta.plus_dm(high, low))
+        assert_all_nan(self, ta.minus_dm(high, low))
 
     def test_explicit_length_still_guarded(self):
         """An explicit length longer than the input is guarded too."""
-        self.assertIsNone(ta.dm(self.high.iloc[:10], self.low.iloc[:10], length=20))
+        assert_all_nan(self, ta.dm(self.high.iloc[:10], self.low.iloc[:10], length=20))
 
     def test_sufficient_input_still_returns_dataframe(self):
         """Normal-length input is unaffected."""
@@ -1033,7 +1034,7 @@ class TestCdlPatternShortInput(TestCase):
     def test_named_uncomputable_pattern_returns_none(self):
         """Asking only for a pattern that cannot be computed yields None."""
         result = ta.cdl_pattern(self.open_, self.high, self.low, self.close, name="doji")
-        self.assertIsNone(result)
+        assert_all_nan(self, result)
 
     def test_accessor_path_does_not_raise(self):
         """The same call through df.ta.cdl_pattern() is fixed as well."""
@@ -1639,7 +1640,7 @@ class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
         cls.df = get_sample_data().iloc[:200]
 
     def test_pvt_drift_longer_than_input(self):
-        self.assertIsNone(ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
+        assert_all_nan(self, ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
 
     def test_rvi_length_one_is_rejected(self):
         # variance used to widen length=1 to its default window; since 0.9.0
@@ -1658,7 +1659,7 @@ class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
         np.testing.assert_array_equal(symmetric_triangle(1, weighted=True), np.array([1.0]))
 
     def test_tos_stdevall_needs_two_points(self):
-        self.assertIsNone(ta.tos_stdevall(self.df.close.iloc[:1]))
+        assert_all_nan(self, ta.tos_stdevall(self.df.close.iloc[:1]))
         self.assertIsNotNone(ta.tos_stdevall(self.df.close.iloc[:2]))
 
 

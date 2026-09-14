@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _str_param
+from pandas_ta_classic.utils._core import _str_param, nan_on_short_input
 from pandas_ta_classic.utils._cpr import (
     calculate_cpr_width,
     calculate_price_position,
@@ -72,6 +72,7 @@ def _cpr_build_dataframe(pivot_result, levels, width_analysis, price_position, v
     return cprdf
 
 
+@nan_on_short_input
 def cpr(
     open_: Series,
     high: Series,

@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -243,6 +243,7 @@ def _mama_loop(
     return mama_out, fama_out
 
 
+@nan_on_short_input
 @skip_leading_nan("close")
 def mama(
     close: Series,

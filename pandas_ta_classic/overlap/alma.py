@@ -5,9 +5,10 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _sliding_weighted_ma
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _sliding_weighted_ma, nan_on_short_input
 
 
+@nan_on_short_input
 def alma(
     close: Series,
     length: int | None = None,
