@@ -5,12 +5,13 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 
 from .long_run import long_run
 from .short_run import short_run
 
 
+@nan_on_short_input
 def amat(
     close: Series | None = None,
     fast: int | None = None,

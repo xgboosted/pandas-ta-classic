@@ -5,11 +5,13 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
+from pandas_ta_classic.utils._core import nan_on_short_input
 from pandas_ta_classic.utils._signals import cross_value
 
 from .tsignals import tsignals
 
 
+@nan_on_short_input
 def xsignals(
     signal: Series,
     xa: float,

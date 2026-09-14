@@ -7,9 +7,10 @@ import numpy as np
 from pandas import DataFrame, DatetimeIndex, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
 
 
+@nan_on_short_input
 @skip_leading_nan("close")
 def tos_stdevall(
     close: Series,
@@ -41,7 +42,7 @@ def tos_stdevall(
     elif not (isinstance(stds, list) and stds):
         raise ValueError(f"tos_stdevall() stds must be a non-empty list of numbers, got {stds!r}")
     if min(stds) <= 0:
-        return None
+        raise ValueError(f"tos_stdevall() stds must all be > 0, got {stds!r}")
     if not all(i < j for i, j in pairwise(stds)):
         stds = stds[::-1]
     offset = get_offset(offset)

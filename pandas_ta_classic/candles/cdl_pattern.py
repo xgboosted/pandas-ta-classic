@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number
+from pandas_ta_classic.utils._core import _number, nan_on_short_input
 
 from . import cdl_doji, cdl_inside
 
@@ -132,6 +132,7 @@ def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offse
         logger.warning("Please install TA-Lib to use %s. (pip install TA-Lib)", n)
 
 
+@nan_on_short_input
 def cdl_pattern(
     open_: Series,
     high: Series,

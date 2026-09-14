@@ -3,6 +3,8 @@ from typing import Any
 
 from pandas import Series
 
+from pandas_ta_classic.utils._core import nan_on_short_input
+
 from .dema import dema
 from .ema import ema
 from .fwma import fwma
@@ -45,6 +47,7 @@ _MA_DISPATCH = {
 }
 
 
+@nan_on_short_input
 def ma(name: str | None = None, source: Series | None = None, **kwargs: Any) -> Series | None:
     """Simple MA Utility for easier MA selection
 

@@ -6,6 +6,7 @@ import pandas_ta_classic as pandas_ta
 from tests.assertions import (
     CORRELATION_THRESHOLD,
     IndicatorSpec,
+    assert_all_nan,
     assert_indicator_standard,
     assert_talib,
 )
@@ -188,9 +189,10 @@ class TestStatistics(TestCase):
         # stds unsorted → auto-reversed and still computes
         self.assertIsNotNone(pandas_ta.tos_stdevall(self.close, stds=[3, 2, 1]))
         # stds contains non-positive value → return None
-        self.assertIsNone(pandas_ta.tos_stdevall(self.close, stds=[0, 1, 2]))
+        with self.assertRaisesRegex(ValueError, r"stds must all be > 0"):  # invalid argument, not short input
+            pandas_ta.tos_stdevall(self.close, stds=[0, 1, 2])
         # length larger than data → verify_series returns None → return None
-        self.assertIsNone(pandas_ta.tos_stdevall(self.close.iloc[:5], length=30))
+        assert_all_nan(self, pandas_ta.tos_stdevall(self.close.iloc[:5], length=30))
 
     def test_variance(self):
         result = assert_indicator_standard(

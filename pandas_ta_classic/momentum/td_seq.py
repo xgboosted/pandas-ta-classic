@@ -4,7 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 # TD Sequential caps the consecutive run at the 13-bar setup/countdown window.
@@ -27,6 +27,7 @@ def _td_run_capped(td_bool: np.ndarray) -> np.ndarray:
     return out
 
 
+@nan_on_short_input
 def td_seq(
     close: Series,
     asint: bool | None = None,

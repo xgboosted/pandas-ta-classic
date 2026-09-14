@@ -11,9 +11,10 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 
 
+@nan_on_short_input
 def efi(
     close: Series,
     volume: Series,

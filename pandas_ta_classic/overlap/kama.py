@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -28,6 +28,7 @@ def _kama_nb(sc, close, length):
     return result
 
 
+@nan_on_short_input
 @skip_leading_nan("close")
 def kama(
     close: Series,

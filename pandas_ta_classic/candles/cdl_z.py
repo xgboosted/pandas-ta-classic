@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.statistics.zscore import zscore
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 
 
 def _anchored_zscore(series: Series) -> Series:
@@ -25,6 +25,7 @@ def _anchored_zscore(series: Series) -> Series:
     return (series - expanding.mean()) / expanding.std(ddof=1)
 
 
+@nan_on_short_input
 def cdl_z(
     open_: Series,
     high: Series,

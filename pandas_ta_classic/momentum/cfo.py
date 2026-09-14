@@ -10,9 +10,10 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int
+from pandas_ta_classic.utils._core import _number, _pos_int, nan_on_short_input
 
 
+@nan_on_short_input
 def cfo(
     close: Series,
     length: int | None = None,

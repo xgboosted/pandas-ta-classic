@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 # TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
 _TALIB_DISPATCH = {
@@ -80,6 +80,7 @@ def _linreg_output(
     return m_slopes * (length - 1) + bs
 
 
+@nan_on_short_input
 def linreg(
     close: Series,
     length: int | None = None,

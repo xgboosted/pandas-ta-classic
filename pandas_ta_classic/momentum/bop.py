@@ -11,9 +11,10 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number
+from pandas_ta_classic.utils._core import _bool_param, _number, nan_on_short_input
 
 
+@nan_on_short_input
 def bop(
     open_: Series,
     high: Series,

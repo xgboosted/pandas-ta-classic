@@ -4,7 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 
 from .dema import dema
 from .ema import ema
@@ -37,6 +37,7 @@ _ZLMA_DISPATCH = {
 }
 
 
+@nan_on_short_input
 def zlma(
     close: Series,
     length: int | None = None,

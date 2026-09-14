@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.volatility.atr import atr
 
@@ -47,6 +47,7 @@ def _pmax_trend_arrays(close_arr, pmax_up_arr, pmax_down_arr):
     return pmax_result
 
 
+@nan_on_short_input
 def pmax(
     high: Series,
     low: Series,

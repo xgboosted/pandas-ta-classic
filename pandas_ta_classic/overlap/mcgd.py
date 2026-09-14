@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -23,6 +23,7 @@ def _mcgd_loop(c_arr, n, c, length):
     return result
 
 
+@nan_on_short_input
 @skip_leading_nan("close")
 def mcgd(
     close: Series,

@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, nan_on_short_input
 
 
 def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):
@@ -49,6 +49,7 @@ def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, d
     return 100 * weights / total_weight
 
 
+@nan_on_short_input
 def uo(
     high: Series,
     low: Series,

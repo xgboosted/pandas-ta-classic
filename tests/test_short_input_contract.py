@@ -1,33 +1,25 @@
-"""Characterization tests for indicator behaviour on below-minimum input.
+"""Contract tests for indicator behaviour on below-minimum input (issue #145, case B).
 
-These tests record what the library does TODAY when a Series is shorter than the
-indicator's window. They are not an endorsement of that behaviour -- they exist so
-that any future change to it shows up as an explicit, reviewable diff of these
-tables rather than as a silent flip.
+When a Series is shorter than an indicator's window, the indicator returns an
+all-NaN result with the input's index, the same way ``close.rolling(50).mean()``
+on 10 rows returns 10 NaNs. Before 0.9.0 it returned ``None``, which silently
+dropped the column in ``df.ta.<indicator>(append=True)``.
 
-The documented contract lives in ``test_indicator_edge_cases.py``::
+Two tables pin the two outcomes on a 3-row OHLCV frame:
 
-    When one OHLCV component is shorter than required (below minimum threshold)
-    the indicator must return None rather than raise.
-
-Two tables below pin the two observed outcomes on a 3-row OHLCV frame:
-
-``RETURNS_NONE``
-    The indicator's window exceeds the input length and ``verify_series`` was
-    given a ``min_length``, so the guard fires and ``None`` comes back.
+``RETURNS_ALL_NAN``
+    The indicator's window exceeds the input length. The result is all NaN,
+    indexed like ``close`` and shaped like a normal result (same name and
+    columns as a call on long input).
 
 ``RETURNS_SERIES``
     The indicator either has no window parameter (elementwise transforms such as
     ``hl2``, ``ohlc4``, ``bop``) or its default window is <= 3, so 3 rows is
-    enough. Returning a Series here is correct.
+    enough to compute real values.
 
     ``cdl_pattern`` belongs here because its native sub-patterns need only a few
     bars; the ones that need more (``doji``, window 10) are skipped rather than
     returned as columns.
-
-Both tables reflect the state after the ``dm`` and ``cdl_pattern`` short-input
-fixes. Before those, ``dm`` returned a DataFrame from 3 rows despite a default
-``length`` of 14, and ``cdl_pattern`` raised ``AttributeError``.
 """
 
 from __future__ import annotations
@@ -41,6 +33,7 @@ import pytest
 import pandas_ta_classic as ta
 
 _N_SHORT = 3
+_N_LONG = 400
 
 # Series-valued parameters the harness knows how to synthesise.
 _SERIES_PARAMS = frozenset({"open_", "open", "high", "low", "close", "volume", "benchmark"})
@@ -64,8 +57,8 @@ def _frame_kwargs(name: str, frame: dict[str, pd.Series]) -> dict:
     return {}
 
 
-# Indicators that return ``None`` when handed fewer rows than their window.
-RETURNS_NONE = frozenset(
+# Indicators whose window exceeds a 3-row input: they return an all-NaN result.
+RETURNS_ALL_NAN = frozenset(
     {
         "aberration",
         "accbands",
@@ -308,18 +301,27 @@ def _short_frame(n: int = _N_SHORT) -> dict[str, pd.Series]:
     }
 
 
-def _call(name: str):
+def _call(name: str, n: int = _N_SHORT):
     """Call *name* with every price-like argument its signature accepts."""
     func = getattr(ta, name)
-    frame = _short_frame()
+    frame = _short_frame(n)
     kwargs = {param: frame[param] for param in inspect.signature(func).parameters if param in _SERIES_PARAMS}
     return func(**kwargs, **_frame_kwargs(name, frame))
 
 
-@pytest.mark.parametrize("name", sorted(RETURNS_NONE))
-def test_short_input_returns_none(name: str) -> None:
-    """Below-minimum input yields ``None`` -- the documented contract."""
-    assert _call(name) is None, f"{name} no longer returns None on {_N_SHORT} rows"
+@pytest.mark.parametrize("name", sorted(RETURNS_ALL_NAN))
+def test_short_input_returns_all_nan(name: str) -> None:
+    """Below-minimum input yields an all-NaN result on the input index, shaped like a normal result."""
+    short = _call(name)
+    assert isinstance(short, (pd.Series, pd.DataFrame)), f"{name} returned {type(short).__name__} on {_N_SHORT} rows"
+    assert np.isnan(short.to_numpy(dtype=float)).all(), f"{name} returned values on {_N_SHORT} rows"
+    full = _call(name, _N_LONG)
+    # Row-aligned indicators keep the input index; binned ones (vp) keep their bin index.
+    expected_index = _short_frame()["close"].index if len(full) == _N_LONG else full.index
+    assert short.index.equals(expected_index)
+    assert short.name == full.name
+    if isinstance(full, pd.DataFrame):
+        assert list(short.columns) == list(full.columns)
 
 
 @pytest.mark.parametrize("name", sorted(RETURNS_SERIES))
@@ -351,6 +353,6 @@ def test_tables_cover_every_indicator() -> None:
     discovered = {
         name for names in ta.Category.values() for name in names if callable(getattr(ta, name, None)) and not inspect.isclass(getattr(ta, name))
     }
-    classified = RETURNS_NONE | RETURNS_SERIES | _EXCLUDED
+    classified = RETURNS_ALL_NAN | RETURNS_SERIES | _EXCLUDED
     unclassified = discovered - classified
-    assert not unclassified, "unclassified indicator(s): " f"{sorted(unclassified)} -- add each to RETURNS_NONE or RETURNS_SERIES"
+    assert not unclassified, "unclassified indicator(s): " f"{sorted(unclassified)} -- add each to RETURNS_ALL_NAN or RETURNS_SERIES"

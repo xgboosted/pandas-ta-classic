@@ -10,9 +10,10 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma
+from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma, nan_on_short_input
 
 
+@nan_on_short_input
 def fwma(
     close: Series,
     length: int | None = None,

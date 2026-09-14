@@ -5,11 +5,12 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 
 from .atr import atr
 
 
+@nan_on_short_input
 def aberration(
     high: Series,
     low: Series,

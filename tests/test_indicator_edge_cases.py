@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 
 import pandas_ta_classic as ta
+from tests.assertions import assert_all_nan
 
 # ---------------------------------------------------------------------------
 # Shared synthetic series
@@ -221,22 +222,22 @@ class TestMismatchedLengths(TestCase):
         """atr with h shorter than the minimum requirement must return None."""
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(_H.iloc[:5], _L, _C, length=14, talib=False)
-        self.assertIsNone(result, "atr should return None when h is shorter than required")
+        assert_all_nan(self, result)
 
     def test_atr_l_too_short_returns_none(self):
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(_H, _L.iloc[:5], _C, length=14, talib=False)
-        self.assertIsNone(result, "atr should return None when l is shorter than required")
+        assert_all_nan(self, result)
 
     def test_atr_c_too_short_returns_none(self):
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.atr(_H, _L, _C.iloc[:5], length=14, talib=False)
-        self.assertIsNone(result, "atr should return None when c is shorter than required")
+        assert_all_nan(self, result)
 
     def test_adx_h_too_short_returns_none(self):
         with self.assertLogs("pandas_ta_classic", level="WARNING"):
             result = ta.adx(_H.iloc[:5], _L, _C, length=14, talib=False)
-        self.assertIsNone(result, "adx should return None when h is shorter than required")
+        assert_all_nan(self, result)
 
     def test_obv_short_volume_limits_output(self):
         """

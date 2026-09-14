@@ -5,6 +5,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
+from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
 
 data = {
@@ -538,111 +539,111 @@ class TestNoneGuards(TestCase):
     # ---- candles ----
 
     def test_none_guard_cdl_doji(self):
-        self.assertIsNone(pandas_ta.cdl_doji(self.o, self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.cdl_doji(self.o, self.h, self.l, self.c))
 
     # ---- cycles ----
 
     def test_none_guard_dsp(self):
-        self.assertIsNone(pandas_ta.dsp(self.c))
+        assert_all_nan(self, pandas_ta.dsp(self.c))
 
     # ---- momentum ----
 
     def test_none_guard_ao(self):
-        self.assertIsNone(pandas_ta.ao(self.h, self.l))
+        assert_all_nan(self, pandas_ta.ao(self.h, self.l))
 
     def test_none_guard_cci(self):
-        self.assertIsNone(pandas_ta.cci(self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.cci(self.h, self.l, self.c))
 
     def test_none_guard_cfo(self):
-        self.assertIsNone(pandas_ta.cfo(self.c))
+        assert_all_nan(self, pandas_ta.cfo(self.c))
 
     def test_none_guard_coppock(self):
-        self.assertIsNone(pandas_ta.coppock(self.c))
+        assert_all_nan(self, pandas_ta.coppock(self.c))
 
     def test_none_guard_cti(self):
-        self.assertIsNone(pandas_ta.cti(self.c))
+        assert_all_nan(self, pandas_ta.cti(self.c))
 
     def test_none_guard_eri(self):
-        self.assertIsNone(pandas_ta.eri(self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.eri(self.h, self.l, self.c))
 
     def test_none_guard_inertia(self):
-        self.assertIsNone(pandas_ta.inertia(self.c))
+        assert_all_nan(self, pandas_ta.inertia(self.c))
 
     def test_none_guard_kdj(self):
-        self.assertIsNone(pandas_ta.kdj(self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.kdj(self.h, self.l, self.c))
 
     def test_none_guard_macd(self):
-        self.assertIsNone(pandas_ta.macd(self.c))
+        assert_all_nan(self, pandas_ta.macd(self.c))
 
     def test_none_guard_po(self):
-        self.assertIsNone(pandas_ta.po(self.c))
+        assert_all_nan(self, pandas_ta.po(self.c))
 
     def test_none_guard_qqe(self):
-        self.assertIsNone(pandas_ta.qqe(self.c))
+        assert_all_nan(self, pandas_ta.qqe(self.c))
 
     def test_none_guard_smi(self):
-        self.assertIsNone(pandas_ta.smi(self.c))
+        assert_all_nan(self, pandas_ta.smi(self.c))
 
     def test_none_guard_squeeze(self):
-        self.assertIsNone(pandas_ta.squeeze(self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.squeeze(self.h, self.l, self.c))
 
     def test_none_guard_squeeze_pro(self):
-        self.assertIsNone(pandas_ta.squeeze_pro(self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.squeeze_pro(self.h, self.l, self.c))
 
     def test_none_guard_trix(self):
-        self.assertIsNone(pandas_ta.trix(self.c))
+        assert_all_nan(self, pandas_ta.trix(self.c))
 
     # ---- overlap ----
 
     def test_none_guard_dema(self):
-        self.assertIsNone(pandas_ta.dema(self.c))
+        assert_all_nan(self, pandas_ta.dema(self.c))
 
     def test_none_guard_hma(self):
-        self.assertIsNone(pandas_ta.hma(self.c))
+        assert_all_nan(self, pandas_ta.hma(self.c))
 
     def test_none_guard_mmar(self):
-        self.assertIsNone(pandas_ta.mmar(self.c))
+        assert_all_nan(self, pandas_ta.mmar(self.c))
 
     def test_none_guard_t3(self):
         # default length=5; 4-row series is shorter than 5
-        self.assertIsNone(pandas_ta.t3(self.c))
+        assert_all_nan(self, pandas_ta.t3(self.c))
 
     def test_none_guard_tema(self):
-        self.assertIsNone(pandas_ta.tema(self.c))
+        assert_all_nan(self, pandas_ta.tema(self.c))
 
     def test_none_guard_trima(self):
-        self.assertIsNone(pandas_ta.trima(self.c))
+        assert_all_nan(self, pandas_ta.trima(self.c))
 
     def test_none_guard_zlma(self):
-        self.assertIsNone(pandas_ta.zlma(self.c))
+        assert_all_nan(self, pandas_ta.zlma(self.c))
 
     # ---- statistics ----
 
     def test_none_guard_stdev(self):
-        self.assertIsNone(pandas_ta.stdev(self.c))
+        assert_all_nan(self, pandas_ta.stdev(self.c))
 
     def test_none_guard_zscore(self):
-        self.assertIsNone(pandas_ta.zscore(self.c))
+        assert_all_nan(self, pandas_ta.zscore(self.c))
 
     # ---- trend ----
 
     def test_none_guard_dpo(self):
-        self.assertIsNone(pandas_ta.dpo(self.c))
+        assert_all_nan(self, pandas_ta.dpo(self.c))
 
     def test_none_guard_qstick(self):
-        self.assertIsNone(pandas_ta.qstick(self.o, self.c))
+        assert_all_nan(self, pandas_ta.qstick(self.o, self.c))
 
     # ---- volatility ----
 
     def test_none_guard_bbands(self):
         # default length=5; 4-row series is shorter than 5
-        self.assertIsNone(pandas_ta.bbands(self.c))
+        assert_all_nan(self, pandas_ta.bbands(self.c))
 
     def test_none_guard_massi(self):
-        self.assertIsNone(pandas_ta.massi(self.h, self.l))
+        assert_all_nan(self, pandas_ta.massi(self.h, self.l))
 
     def test_none_guard_supertrend(self):
-        self.assertIsNone(pandas_ta.supertrend(self.h, self.l, self.c))
+        assert_all_nan(self, pandas_ta.supertrend(self.h, self.l, self.c))
 
 
 class TestNpRollingMoments(TestCase):

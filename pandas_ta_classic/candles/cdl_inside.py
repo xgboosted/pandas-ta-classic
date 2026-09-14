@@ -4,8 +4,10 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, candle_color, get_offset, verify_series
+from pandas_ta_classic.utils._core import nan_on_short_input
 
 
+@nan_on_short_input
 def cdl_inside(
     open_: Series,
     high: Series,

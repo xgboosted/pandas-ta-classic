@@ -11,9 +11,10 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 
 
+@nan_on_short_input
 def ad(
     high: Series,
     low: Series,

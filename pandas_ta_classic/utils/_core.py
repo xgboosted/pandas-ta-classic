@@ -1,15 +1,17 @@
+import contextvars
 import functools
 import inspect
 import logging
 import math
 import sys
+import warnings
 from collections.abc import Callable
 from numbers import Real
 from sys import float_info as sflt
 from typing import Any, TypeGuard
 
 import numpy as np
-from pandas import DataFrame, Series
+from pandas import DataFrame, DatetimeIndex, RangeIndex, Series, date_range
 from pandas.api.types import is_datetime64_any_dtype
 
 logger = logging.getLogger(__name__)
@@ -207,6 +209,103 @@ def skip_leading_nan(*names: str) -> Callable:
     return decorator
 
 
+# Nesting depth of nan_on_short_input calls: only the outermost indicator call
+# converts a short-input None into an all-NaN result, so indicators calling
+# each other internally keep seeing None and their early returns still work.
+_INDICATOR_DEPTH: contextvars.ContextVar[int] = contextvars.ContextVar("pandas_ta_classic_indicator_depth", default=0)
+_PROBE_ROWS = 1000
+_PROBE_MAX_ROWS = 50_000
+
+
+def _probe_inputs(arguments: dict, rows: int) -> dict:
+    """Replace every Series argument with a long, well-formed synthetic series.
+
+    Values are deterministic OHLCV-shaped data on the same index type as the
+    caller's first Series, so every indicator can run on them.
+    """
+    first = next(v for v in arguments.values() if isinstance(v, Series))
+    if isinstance(first.index, DatetimeIndex):
+        end = first.index[-1] if len(first.index) else "2024-01-01"
+        index = date_range(end=end, periods=rows, freq="D", tz=first.index.tz)
+    else:
+        index = RangeIndex(rows)
+    rng = np.random.default_rng(0)
+    close = 100 + np.cumsum(rng.normal(0, 1, rows))
+    open_ = np.concatenate(([close[0]], close[:-1]))
+    columns = {
+        "open_": open_,
+        "high": np.maximum(open_, close) + rng.random(rows),
+        "low": np.minimum(open_, close) - rng.random(rows),
+        "volume": rng.integers(1_000, 100_000, rows).astype(float),
+        "periods": np.full(rows, 10.0),
+        "trend": (np.arange(rows) // 20 % 2).astype(int),
+    }
+    return {key: (Series(columns.get(key, close), index=index) if isinstance(value, Series) else value) for key, value in arguments.items()}
+
+
+def _nan_like(template: Any, index: Any, rows: int) -> Any:
+    """All-NaN copy of *template*'s structure (name, columns, category) on *index*."""
+    target = index if len(template) == rows else template.index  # non-time-series output (vp bins) keeps its own rows
+    if isinstance(template, DataFrame):
+        out: Any = DataFrame(np.nan, index=target, columns=template.columns, dtype=float)
+    else:
+        out = Series(np.nan, index=target, name=template.name, dtype=float)
+    for attr in ("name", "category"):
+        if hasattr(template, attr):
+            setattr(out, attr, getattr(template, attr))
+    return out
+
+
+def nan_on_short_input(fn: Callable) -> Callable:
+    """Return an all-NaN result instead of None when the input is shorter than the window (issue #145, case B).
+
+    ``close.rolling(50).mean()`` on 10 rows returns 10 NaNs; an indicator did
+    the same job by returning None, which silently dropped the column in
+    ``df.ta.<indicator>(append=True)`` and turned into someone else's error
+    downstream. When the outermost call returns None although Series were
+    passed, the call is repeated on long synthetic data of the same shape to
+    learn the output's name, columns and category, and an all-NaN result with
+    the caller's index is returned. A None that the synthetic call reproduces
+    (a required input missing) stays None.
+    """
+    sig = inspect.signature(fn)
+
+    @functools.wraps(fn)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if _INDICATOR_DEPTH.get():
+            return fn(*args, **kwargs)
+        token = _INDICATOR_DEPTH.set(1)
+        try:
+            result = fn(*args, **kwargs)
+            if result is not None:
+                return result
+            bound = sig.bind(*args, **kwargs)
+            series = {k: v for k, v in bound.arguments.items() if isinstance(v, Series)}
+            if not series:
+                return None
+            # results align to close, like a normal result; otherwise to the first Series
+            first = series.get("close", next(iter(series.values())))
+            numbers = [
+                v
+                for v in list(bound.arguments.values()) + list(bound.arguments.get("kwargs", {}).values())
+                if isinstance(v, Real) and not isinstance(v, bool)
+            ]
+            # long enough for any window the caller asked for; capped so a large non-window
+            # number (e.g. eom's divisor) cannot request millions of rows
+            rows = min(_PROBE_MAX_ROWS, max([_PROBE_ROWS] + [int(3 * abs(v)) + 10 for v in numbers if math.isfinite(v)]))
+            bound.arguments.update(_probe_inputs(bound.arguments, rows))
+            with warnings.catch_warnings():  # the caller's call already warned; the probe must not repeat it
+                warnings.simplefilter("ignore")
+                template = fn(*bound.args, **bound.kwargs)
+            if template is None or isinstance(template, tuple):
+                return result
+            return _nan_like(template, first.index, rows)
+        finally:
+            _INDICATOR_DEPTH.reset(token)
+
+    return wrapper
+
+
 def non_zero_range(high: Series, low: Series) -> Series:
     """Returns the difference of two series, replacing exact zeros with epsilon.  This occurs commonly in crypto data when 'high' = 'low'.
 
@@ -307,6 +406,8 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
 
     Returns None for a Series shorter than *min_length* (an ordinary data
     condition) and for ``None`` (an optional argument that was not given).
+    Indicators wrapped in :func:`nan_on_short_input` turn the short-input None
+    into an all-NaN result for their callers.
 
     Anything else -- a list, a numpy array, a DataFrame -- is a caller error
     and raises TypeError, so the mistake surfaces where it was made rather than
@@ -315,7 +416,7 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
     has_length = min_length is not None and isinstance(min_length, int)
     if series is not None and isinstance(series, Series):
         if has_length and series.size < min_length:
-            logger.warning(f"[X] Series has {series.size} rows but indicator requires" f" at least {min_length}. Returning None.")
+            logger.warning(f"[X] Series has {series.size} rows but indicator requires" f" at least {min_length}; the result is all NaN.")
             return None
         return series
     if series is not None:

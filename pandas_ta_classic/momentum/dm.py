@@ -13,9 +13,10 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
 
 
+@nan_on_short_input
 def dm(
     high: Series,
     low: Series,
