@@ -26,6 +26,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`combination(multichoose=True)` was silently ignored** (split from #142): the `multichoose` alias for `repetition` was dropped in the 0.8.32 dead-code audit, so it returned nCr (e.g. 210) instead of nCr with repetition (715). The alias is restored, and an unknown keyword (e.g. a misspelled `repetiton=`) now raises `TypeError` instead of being ignored.
 
 ### Documentation
+* **Example notebooks no longer use the `Watchlist` data fetcher** (ported from #142): `examples/watchlist.py` keeps only the `colors()` palette helper; `AIExample.ipynb` and `PandasTA_Strategy_Examples.ipynb` download with `yfinance` directly, and `example.ipynb` drops its optional `alphaVantageAPI` import. `docs/dataframe_api.rst` gains a "Fetching data" note saying `df.ta.ticker()`, `ta.yf()` and `ta.av()` were removed after their 0.8.32 deprecation.
 * **Quickstart troubleshooting: non-Series input** (`docs/quickstart.md`): documents the `TypeError` from issue #145 — pass `df['close']`, not `df['close'].values`.
 * **Release docs sync**: `deprecated::` directives in `docs/dataframe_api.rst` now name 0.8.32, the release that shipped the deprecations, instead of the placeholder 0.6.53; the `ichimoku` entry in `docs/indicators.rst` notes the tuple-return deprecation and `as_dataframe=True`; the gapped-data count in `docs/quickstart.md` no longer quotes a single-dataset figure; `AGENTS.md` no longer claims candle pattern tests are absent from CI.
 
