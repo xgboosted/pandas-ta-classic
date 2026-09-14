@@ -205,9 +205,10 @@ fallback_version = "0.0.0"  # Fallback if not in a git repository
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]
-# python_version intentionally omitted here to avoid duplicating the floor in
-# `project.requires-python` above. `make typecheck` derives it from that field
-# and passes it via `--python-version` (which always overrides this file).
+# python_version is passed by `make typecheck` (--python-version 3.12). It is not
+# the 3.10 requires-python floor: numpy >= 2.5 stubs use PEP 695 `type`
+# statements that mypy cannot parse below 3.12. The testing-core matrix covers
+# runtime support for 3.10 and 3.11.
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -248,3 +249,6 @@ ignore_missing_imports = true
 module = ["talib", "talib.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
+# talib is optional and absent from the CI code-quality environment; resolve it
+# to Any there instead of reporting import-not-found at every deferred import.
+ignore_missing_imports = true

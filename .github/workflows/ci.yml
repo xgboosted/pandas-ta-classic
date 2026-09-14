@@ -69,7 +69,7 @@ jobs:
         git diff --exit-code pandas_ta_classic/core.pyi
 
     - name: Type-check with mypy
-      # Target version comes from project.requires-python (see the Makefile).
+      # Targets Python 3.12 (see the Makefile): numpy >= 2.5 stubs need it.
       run: make typecheck PYTHON=python
 
     - name: Verify black/ruff versions match .pre-commit-config.yaml
