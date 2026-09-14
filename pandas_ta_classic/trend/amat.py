@@ -28,8 +28,9 @@ def amat(
     mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
-    if "length" in kwargs:
-        kwargs.pop("length")
+    # A strategy-wide length (df.ta.strategy(..., length=N)) has no meaning here and the
+    # inner calls set length themselves; drop it so it cannot collide with their keyword.
+    kwargs.pop("length", None)
 
     if close is None:
         return None

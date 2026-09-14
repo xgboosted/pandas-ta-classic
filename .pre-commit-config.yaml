@@ -1,3 +1,8 @@
+# `pre-commit install` sets up both hook types; the formatting and lint hooks run on
+# commit, the type check (about a minute) runs on push.
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
 repos:
   - repo: https://github.com/psf/black
     rev: 26.5.1
@@ -19,3 +24,13 @@ repos:
         language: system
         pass_filenames: false
         files: ^pandas_ta_classic/.+\.py$
+
+      # Same type check as CI's code-quality job (`make typecheck`: the package, then
+      # core.py on its own because core.pyi shadows it).
+      - id: mypy-typecheck
+        name: Type-check (make typecheck)
+        entry: make typecheck
+        language: system
+        pass_filenames: false
+        types: [python]
+        stages: [pre-push]
