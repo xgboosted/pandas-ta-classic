@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _number, _pos_int
 
 
 def brar(
@@ -28,7 +28,7 @@ def brar(
     """Indicator: BRAR (BRAR)"""
     # Validate Arguments
     length = _pos_int(length, 26, "length")
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)

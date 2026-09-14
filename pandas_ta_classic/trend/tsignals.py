@@ -9,6 +9,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param
 
 
 def tsignals(
@@ -25,7 +26,7 @@ def tsignals(
     if trend is None:
         return None
 
-    asbool = bool(asbool) if isinstance(asbool, bool) else False
+    asbool = _bool_param(asbool, False, "asbool")
     trend_reset = int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
     if trade_offset != 0:
         trade_offset = int(trade_offset) if trade_offset and isinstance(trade_offset, int) else 0

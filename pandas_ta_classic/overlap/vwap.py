@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     is_datetime_ordered,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _str_param
 
 from .hlc3 import hlc3
 
@@ -32,7 +33,7 @@ def vwap(
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
-    anchor = anchor.upper() if anchor and isinstance(anchor, str) and len(anchor) >= 1 else "D"
+    anchor = _str_param(anchor, "D", "anchor", lower=False).upper()
     offset = get_offset(offset)
 
     if high is None or low is None or close is None or volume is None:

@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def plus_dm(
@@ -34,7 +34,7 @@ def plus_dm(
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None

@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param
 
 
 def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
@@ -59,13 +59,13 @@ def ppo(
     fast = _pos_int(fast, 12, "fast")
     slow = _pos_int(slow, 26, "slow")
     signal = _pos_int(signal, 9, "signal")
-    scalar = float(scalar) if scalar else 100
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    scalar = _number(scalar, 100, "scalar")
+    mamode = _str_param(mamode, "sma", "mamode")
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

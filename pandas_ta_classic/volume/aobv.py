@@ -7,7 +7,7 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 from .obv import obv
 
@@ -31,7 +31,7 @@ def aobv(
     min_lookback = _pos_int(min_lookback, 2, "min_lookback")
     if slow < fast:
         fast, slow = slow, fast
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)

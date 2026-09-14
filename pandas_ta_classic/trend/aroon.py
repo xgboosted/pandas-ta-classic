@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _sliding_argextreme
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _sliding_argextreme
 
 
 def aroon(
@@ -21,11 +21,11 @@ def aroon(
     """Indicator: Aroon & Aroon Oscillator"""
     # Validate Arguments
     length = _pos_int(length, 14, "length")
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
     high = verify_series(high, length)
     low = verify_series(low, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None

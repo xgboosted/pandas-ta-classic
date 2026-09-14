@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param
 
 
 def dx(
@@ -32,13 +32,13 @@ def dx(
     # Validate Arguments
     length = _pos_int(length, 14, "length")
     scalar = _pos_float(scalar, 100, "scalar")
-    mamode = mamode.lower() if isinstance(mamode, str) else "rma"
+    mamode = _str_param(mamode, "rma", "mamode")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None

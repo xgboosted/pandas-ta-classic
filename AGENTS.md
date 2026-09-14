@@ -158,7 +158,7 @@ Repo-wide. Each rule is marked *enforced* (ruff fails the build) or *convention*
 - **`logger = logging.getLogger(__name__)` goes after the import block.** *Enforced:* `E402`.
 - **Prefer stdlib over hand-rolled math**, e.g. `combination()` wraps `math.comb`. Do not reintroduce hand-rolled nCr, erf, factorial or gcd loops. *Convention.*
 - **Dead code goes.** A helper with no callers is deleted, together with the constants and imports only it used. Search the whole repo, including the defining file, before deciding. *Convention.*
-- **Validate numeric parameters with `_pos_int` / `_pos_float`** (`utils/_core.py`), e.g. `length = _pos_int(length, 10, "length")` or `_pos_float(na, 0.2, "na", lt=1)`. `None` selects the default; any other invalid value (0, negative, NaN, bool, a fractional int) raises `ValueError` naming the indicator and parameter. Never write `x = int(x) if x and x > 0 else default`, which silently replaces bad input. If an indicator passes its value to another indicator with a stricter bound, give it the same bound so the error names the function the user called. *Convention:* grep 5 below.
+- **Validate numeric parameters with `_pos_int` / `_pos_float` / `_number`** (`utils/_core.py`), e.g. `length = _pos_int(length, 10, "length")`, `_pos_float(na, 0.2, "na", lt=1)` or `scalar = _number(scalar, 100, "scalar")` (any finite number); `drift` and `offset` go through `get_drift` / `get_offset`; flags use `_bool_param(talib, False, "talib")` and string options `_str_param(method, "classic", "method", choices={...})`. `None` selects the default; any other invalid value (0, negative, NaN, bool, a fractional int) raises `ValueError` naming the indicator and parameter. Never write `x = int(x) if x and x > 0 else default`, which silently replaces bad input. If an indicator passes its value to another indicator with a stricter bound, give it the same bound so the error names the function the user called. *Convention:* grep 5 below.
 - **No import cruft.** No `pkg_resources` fallbacks (setuptools-scm owns the version) and no commented-out import lines; ruff reads code, not comments. *Convention.*
 
 #### Convention checklist (run before finishing)
@@ -178,8 +178,8 @@ grep -rnE "pkg_resources|^\s*#\s*(from|import) (numpy|pandas)" pandas_ta_classic
 # 4. Hand-rolled math that stdlib covers (nCr loop, Abramowitz-Stegun erf constant)
 grep -rnE "reduce\(mul|numerator // denominator|0\.3275911" pandas_ta_classic/
 
-# 5. Numeric parameters validated by a silent-default guard instead of _pos_int/_pos_float
-grep -rnE "^\s+(\w+) = ((int|float)\()?\1\)? if \1 and \1 [<>]" pandas_ta_classic/
+# 5. Numeric parameters validated by a silent-default guard instead of _pos_int/_pos_float/_number
+grep -rnE "^\s+(\w+) = ((int|float)\()?\1\)? if (\1 and \1 [<>]|\1 else|\1 is not None|isinstance\(\1)" pandas_ta_classic/
 ```
 
 Not greppable, so check in review: **dead code** your change orphaned, and the **stdlib over hand-rolled** preference.

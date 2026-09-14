@@ -16,7 +16,7 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
 from tests.config import get_sample_data
 
 _GUARD = re.compile(r"_pos_(?:int|float)\((\w+),")
@@ -88,3 +88,67 @@ def test_direct_call_message_names_indicator_and_value():
         ta.sma(close, length=0)
     with pytest.raises(ValueError, match=r"^ebsw\(\) length must be an integer > 38, got 10$"):
         ta.ebsw(close, length=10)
+
+
+def test_number_accepts_zero_and_negatives_but_not_junk():
+    assert _number(None, 100, "scalar") == 100
+    assert _number(0, 100, "scalar") == 0.0  # used to become 100
+    assert _number(-2, 100, "scalar") == -2.0
+    for bad in (np.nan, float("inf"), True, "100"):
+        with pytest.raises(ValueError, match="scalar must be a number"):
+            _number(bad, 100, "scalar")
+
+
+def test_scalar_zero_is_honoured_and_drift_offset_are_validated():
+    close = get_sample_data().close.iloc[:200]
+    assert (ta.rsi(close, scalar=0).dropna() == 0).all()  # used to be ta.rsi(close) * 1
+    with pytest.raises(ValueError, match=r"^rsi\(\) drift must be an integer > 0, got 0$"):
+        ta.rsi(close, drift=0)
+    with pytest.raises(ValueError, match=r"^rsi\(\) offset must be an integer, got 2.5$"):
+        ta.rsi(close, offset=2.5)
+    assert ta.rsi(close, offset=-1).equals(ta.rsi(close).shift(-1))  # negative offsets stay allowed
+
+
+def test_bool_param_rejects_non_bools():
+    def ema(talib=None):
+        return _bool_param(talib, False, "talib")
+
+    assert ema() is False
+    assert ema(True) is True
+    assert ema(np.bool_(True)) is True
+    for bad in (1, 0, "True", []):  # talib=1 used to mean False
+        with pytest.raises(ValueError, match=r"ema\(\) talib must be True or False"):
+            ema(bad)
+
+
+def test_str_param_rejects_non_strings_and_unknown_choices():
+    def cpr(method=None):
+        return _str_param(method, "classic", "method", choices={"classic", "woodie"})
+
+    assert cpr() == "classic"
+    assert cpr("WOODIE") == "woodie"
+    for bad in (1, "", "fibonaci"):
+        with pytest.raises(ValueError, match=r"cpr\(\) method must be"):
+            cpr(bad)
+
+
+def test_behaviour_fixes_from_the_same_sweep():
+    close = get_sample_data().close.iloc[:200]
+    # slope: as_angle=bool(isinstance(as_angle, bool)) made as_angle=False return angles
+    assert ta.slope(close, as_angle=False).equals(ta.slope(close))
+    assert not ta.slope(close, as_angle=True).equals(ta.slope(close))
+    # ma: an unknown name used to return an EMA
+    with pytest.raises(ValueError, match=r"ma\(\) name must be one of"):
+        ta.ma("emaa", close)
+    assert ta.ma(None, close).equals(ta.ema(close))
+    # mamode is validated through ma()
+    with pytest.raises(ValueError, match=r"mamode must be a non-empty string"):
+        ta.apo(close, mamode=123)
+    with pytest.raises(ValueError, match=r"ma\(\) name must be one of"):
+        ta.apo(close, mamode="foo")
+    # tos_stdevall: a bad stds used to become [1, 2, 3]
+    with pytest.raises(ValueError, match=r"stds must be a non-empty list"):
+        ta.tos_stdevall(close, stds=2)
+    # decay: mode="exponential" used to run the linear decay
+    assert ta.decay(close > close.shift(), mode="exponential").name.startswith("EXPDECAY")
+

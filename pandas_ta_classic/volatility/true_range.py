@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param
 
 
 def true_range(
@@ -33,7 +34,7 @@ def true_range(
         return None
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     # Calculate Result
     if Imports["talib"] and mode_talib:

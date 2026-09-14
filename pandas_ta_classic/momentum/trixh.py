@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.trix import trix
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _number, _pos_int
 
 
 def trixh(
@@ -21,7 +21,7 @@ def trixh(
     # Validate arguments
     length = _pos_int(length, 18, "length")
     signal = _pos_int(signal, 9, "signal")
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

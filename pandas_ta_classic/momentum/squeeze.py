@@ -11,7 +11,7 @@ from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.trend.decreasing import decreasing
 from pandas_ta_classic.trend.increasing import increasing
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
@@ -126,7 +126,7 @@ def squeeze(
     asint = kwargs.pop("asint", True)
     detailed = kwargs.pop("detailed", False)
     lazybear = kwargs.pop("lazybear", False)
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    mamode = _str_param(mamode, "sma", "mamode")
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)

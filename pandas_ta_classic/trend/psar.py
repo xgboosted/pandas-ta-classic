@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _pos_float
+from pandas_ta_classic.utils._core import _bool_param, _pos_float
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -87,7 +87,7 @@ def psar(
     af0 = _pos_float(af0, af, "af0")
     max_af = _pos_float(max_af, 0.2, "max_af")
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None

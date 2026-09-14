@@ -4,7 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 from .dema import dema
 from .ema import ema
@@ -47,7 +47,7 @@ def zlma(
     """Indicator: Zero Lag Moving Average (ZLMA)"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    mamode = mamode.lower() if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 from .long_run import long_run
 from .short_run import short_run
@@ -25,7 +25,7 @@ def amat(
     fast = _pos_int(fast, 8, "fast")
     slow = _pos_int(slow, 21, "slow")
     lookback = _pos_int(lookback, 2, "lookback")
-    mamode = mamode.lower() if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
     if "length" in kwargs:

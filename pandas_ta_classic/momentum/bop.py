@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param, _number
 
 
 def bop(
@@ -29,9 +30,9 @@ def bop(
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
-    scalar = float(scalar) if scalar else 1
+    scalar = _number(scalar, 1, "scalar")
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if open_ is None or high is None or low is None or close is None:
         return None

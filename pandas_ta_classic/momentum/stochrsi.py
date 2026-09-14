@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param
 
 from .rsi import rsi
 
@@ -65,8 +65,8 @@ def stochrsi(
     d = _pos_int(d, 3, "d")
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
-    mamode = mamode if isinstance(mamode, str) else "sma"
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mamode = _str_param(mamode, "sma", "mamode")
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

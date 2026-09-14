@@ -32,7 +32,8 @@ def _validate_number(val: Any, default: Any, name: str, *, integer: bool, gt: fl
         indicator = sys._getframe(2).f_code.co_name  # the indicator that called _pos_int/_pos_float
         bounds = " and ".join(f"{op} {bound}" for op, bound in ((">", gt), (">=", ge), ("<", lt)) if bound is not None)
         kind = "an integer" if integer else "a number"
-        raise ValueError(f"{indicator}() {name} must be {kind} {bounds}, got {val!r}")
+        requirement = f"{kind} {bounds}" if bounds else kind
+        raise ValueError(f"{indicator}() {name} must be {requirement}, got {val!r}")
     return int(val) if integer else float(val)
 
 
@@ -46,6 +47,11 @@ def _pos_int(val: Any, default: Any, name: str = "value", *, gt: float | None = 
 
 def _pos_float(val: Any, default: Any, name: str = "value", *, gt: float | None = 0, ge: float | None = None, lt: float | None = None) -> Any:
     """Return ``float(val)``, *default* when *val* is None, or raise ValueError."""
+    return _validate_number(val, default, name, integer=False, gt=gt, ge=ge, lt=lt)
+
+
+def _number(val: Any, default: Any, name: str = "value", *, gt: float | None = None, ge: float | None = None, lt: float | None = None) -> Any:
+    """Like :func:`_pos_float` but unbounded by default: any finite number, including 0 and negatives."""
     return _validate_number(val, default, name, integer=False, gt=gt, ge=ge, lt=lt)
 
 
@@ -94,14 +100,45 @@ def apply_fill(
     return series
 
 
+def _bool_param(val: Any, default: bool, name: str) -> bool:
+    """Return *val* for a bool (numpy bools included), *default* for None; raise ValueError otherwise.
+
+    ``bool(x) if isinstance(x, bool) else default`` turned ``talib=1`` into
+    False and ``asint=0`` into True without a word.
+    """
+    if val is None:
+        return default
+    if isinstance(val, (bool, np.bool_)):
+        return bool(val)
+    indicator = sys._getframe(1).f_code.co_name
+    raise ValueError(f"{indicator}() {name} must be True or False, got {val!r}")
+
+
+def _str_param(val: Any, default: str, name: str, *, choices: Any = None, lower: bool = True) -> str:
+    """Return a (lower-cased) string, *default* for None; raise ValueError for other types or unknown choices."""
+    indicator = sys._getframe(1).f_code.co_name
+    if val is None:
+        return default
+    if not isinstance(val, str) or not val:
+        raise ValueError(f"{indicator}() {name} must be a non-empty string, got {val!r}")
+    out = val.lower() if lower else val
+    if choices is not None and out not in choices:
+        raise ValueError(f"{indicator}() {name} must be one of {sorted(choices)}, got {val!r}")
+    return out
+
+
 def get_drift(x: int | None) -> int:
-    """Returns an int if not zero, otherwise defaults to one."""
-    return int(x) if isinstance(x, int) and x != 0 else 1
+    """Return *x* as a positive int, 1 when None; raise ValueError otherwise.
+
+    A zero or negative drift used to become 1 silently; a negative drift would
+    difference against future bars.
+    """
+    return _validate_number(x, 1, "drift", integer=True, gt=0, ge=None, lt=None)
 
 
 def get_offset(x: int | None) -> int:
-    """Returns an int, otherwise defaults to zero."""
-    return int(x) if isinstance(x, int) else 0
+    """Return *x* as an int (negative allowed), 0 when None; raise ValueError otherwise."""
+    return _validate_number(x, 0, "offset", integer=True, gt=None, ge=None, lt=None)
 
 
 def is_datetime_ordered(df: DataFrame | Series) -> bool:
@@ -247,7 +284,7 @@ def unsigned_differences(series: Series, amount: int | None = None, **kwargs: An
     postive  = Series([0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     negative = Series([0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1])
     """
-    amount = int(amount) if amount is not None else 1
+    amount = _pos_int(amount, 1, "amount")
     negative = series.diff(amount)
     negative.fillna(0, inplace=True)
     positive = negative.copy()

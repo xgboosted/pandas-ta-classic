@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param
 
 
 def hl2(
@@ -19,7 +20,7 @@ def hl2(
     high = verify_series(high)
     low = verify_series(low)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None

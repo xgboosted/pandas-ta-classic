@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 from pandas_ta_classic.utils._njit import njit
 
 from .ma import ma
@@ -50,7 +50,7 @@ def hilo(
     # Validate Arguments
     high_length = _pos_int(high_length, 13, "high_length")
     low_length = _pos_int(low_length, 21, "low_length")
-    mamode = mamode.lower() if isinstance(mamode, str) else "sma"
+    mamode = _str_param(mamode, "sma", "mamode")
     _length = max(high_length, low_length)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _pos_int, _str_param
 
 
 def efi(
@@ -26,7 +26,7 @@ def efi(
     """Indicator: Elder's Force Index (EFI)"""
     # Validate arguments
     length = _pos_int(length, 13, "length")
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     drift = get_drift(drift)

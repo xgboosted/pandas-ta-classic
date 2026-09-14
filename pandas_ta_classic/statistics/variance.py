@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def _numpy_rolling_variance(values, length, ddof, min_periods):
@@ -52,11 +52,11 @@ def variance(
     """Indicator: Variance"""
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)
-    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 0
+    ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

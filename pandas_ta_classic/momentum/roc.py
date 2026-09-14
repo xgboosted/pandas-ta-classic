@@ -5,7 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int
 
 from .mom import mom
 
@@ -24,7 +24,7 @@ def roc(
     scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

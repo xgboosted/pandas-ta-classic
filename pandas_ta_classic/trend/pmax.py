@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.volatility.atr import atr
 
@@ -61,7 +61,7 @@ def pmax(
     # Validate arguments
     length = _pos_int(length, 10, "length")
     multiplier = _pos_float(multiplier, 3.0, "multiplier")
-    mamode = mamode.lower() if mamode and isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

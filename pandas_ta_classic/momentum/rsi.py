@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int
 
 
 def rsi(
@@ -28,11 +28,11 @@ def rsi(
     """Indicator: Relative Strength Index (RSI)"""
     # Validate arguments
     length = _pos_int(length, 14, "length")
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

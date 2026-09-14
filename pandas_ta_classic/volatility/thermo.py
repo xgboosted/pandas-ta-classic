@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 
 
 def thermo(
@@ -30,7 +30,7 @@ def thermo(
     length = _pos_int(length, 20, "length")
     long = _pos_float(long, 2, "long")
     short = _pos_float(short, 0.5, "short")
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     high = verify_series(high, length)
     low = verify_series(low, length)
     drift = get_drift(drift)

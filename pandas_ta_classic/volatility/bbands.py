@@ -14,7 +14,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param
 
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):
@@ -58,11 +58,11 @@ def bbands(
     # Validate arguments
     length = _pos_int(length, 5, "length", gt=1)
     std = _pos_float(std, 2.0, "std")
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    mamode = _str_param(mamode, "sma", "mamode")
     ddof = int(ddof) if ddof >= 0 and ddof < length else 1
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

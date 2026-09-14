@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, skip_leading_nan
 
 from .ad import ad
 
@@ -35,7 +35,7 @@ def adosc(
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
     kwargs.pop("length", None)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None or volume is None:
         return None

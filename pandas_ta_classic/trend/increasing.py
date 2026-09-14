@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     is_percent,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def increasing(
@@ -27,8 +27,8 @@ def increasing(
     """Indicator: Increasing"""
     # Validate Arguments
     length = _pos_int(length, 1, "length")
-    strict = strict if isinstance(strict, bool) else False
-    asint = asint if isinstance(asint, bool) else True
+    strict = _bool_param(strict, False, "strict")
+    asint = _bool_param(asint, True, "asint")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

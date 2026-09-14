@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 # TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
 _TALIB_DISPATCH = {
@@ -98,7 +98,7 @@ def linreg(
     r = kwargs.pop("r", False)
     slope = kwargs.pop("slope", False)
     tsf = kwargs.pop("tsf", False)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None

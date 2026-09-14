@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _number, _pos_int
 
 
 def cfo(
@@ -23,7 +23,7 @@ def cfo(
     """Indicator: Chande Forcast Oscillator (CFO)"""
     # Validate Arguments
     length = _pos_int(length, 9, "length")
-    scalar = float(scalar) if scalar else 100
+    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int
 from pandas_ta_classic.volatility.atr import atr
 
 
@@ -34,7 +34,7 @@ def cksp(
         return None
 
     offset = get_offset(offset)
-    tvmode = tvmode if isinstance(tvmode, bool) else True
+    tvmode = _bool_param(tvmode, True, "tvmode")
     mamode = "rma" if tvmode is True else "sma"
 
     # Calculate Result

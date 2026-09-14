@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param
 from pandas_ta_classic.utils._njit import njit
 
 # TD Sequential caps the consecutive run at the 13-bar setup/countdown window.
@@ -38,7 +39,7 @@ def td_seq(
     if close is None:
         return None
     offset = get_offset(offset)
-    asint = asint if isinstance(asint, bool) else False
+    asint = _bool_param(asint, False, "asint")
     show_all = kwargs.setdefault("show_all", True)
 
     def calc_td(series: Series, direction: str, show_all: bool):

@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 
 
 def accbands(
@@ -28,7 +28,7 @@ def accbands(
     # Validate arguments
     length = _pos_int(length, 20, "length")
     c = _pos_float(c, 4, "c")
-    mamode = mamode if isinstance(mamode, str) else "sma"
+    mamode = _str_param(mamode, "sma", "mamode")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

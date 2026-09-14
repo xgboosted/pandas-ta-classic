@@ -7,7 +7,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def _mavp_sma_values(close_arr, per_arr):
@@ -50,7 +50,7 @@ def mavp(
     maxperiod = _pos_int(maxperiod, 30, "maxperiod", gt=minperiod)
     # mamode: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3
     # For native fallback we only support SMA (0)
-    mamode = int(mamode) if mamode is not None else 0
+    mamode = _pos_int(mamode, 0, "mamode", gt=None, ge=0, lt=9)
     # `periods` is required, as it is in TA-Lib.  The former default --
     # linspace(minperiod, maxperiod, len(close)) -- made every bar's window
     # length a function of the total number of bars, so appending data changed
@@ -67,7 +67,7 @@ def mavp(
     close = verify_series(close, maxperiod)
     periods = verify_series(periods)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None or periods is None:
         return None

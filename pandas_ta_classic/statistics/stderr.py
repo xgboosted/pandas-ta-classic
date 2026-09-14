@@ -18,7 +18,7 @@ def stderr(
     """Indicator: Standard Error (STDERR)"""
     # Validate Arguments
     length = _pos_int(length, 14, "length")
-    ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 1
+    ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

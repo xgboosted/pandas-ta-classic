@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param
 from pandas_ta_classic.volatility.rvi import rvi
 
 
@@ -77,7 +77,7 @@ def inertia(
     scalar = _pos_float(scalar, 100, "scalar")
     refined = bool(refined)
     thirds = bool(thirds)
-    mamode = mamode if isinstance(mamode, str) else "ema"
+    mamode = _str_param(mamode, "ema", "mamode")
     _length = max(length, rvi_length)
     close = verify_series(close, _length)
     offset = get_offset(offset)

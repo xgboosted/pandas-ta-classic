@@ -36,7 +36,10 @@ def tos_stdevall(
 
     if close is None:
         return None
-    stds = stds if isinstance(stds, list) and len(stds) > 0 else [1, 2, 3]
+    if stds is None:
+        stds = [1, 2, 3]
+    elif not (isinstance(stds, list) and stds):
+        raise ValueError(f"tos_stdevall() stds must be a non-empty list of numbers, got {stds!r}")
     if min(stds) <= 0:
         return None
     if not all(i < j for i, j in pairwise(stds)):

@@ -24,6 +24,7 @@ Running
     python -m pytest tests/test_property_based.py -v --hypothesis-profile=ci
 """
 
+import math
 from unittest import TestCase
 
 import numpy as np
@@ -286,11 +287,11 @@ class TestApplyFill(TestCase):
 class TestMiscUtils(TestCase):
     """Property tests for small utility functions."""
 
-    @given(st.integers(min_value=-100, max_value=100))
-    def test_get_offset_non_int_returns_zero(self, x):
-        """Non-integer inputs must return 0."""
-        result = get_offset(float(x))
-        assert result == 0
+    @given(st.floats(allow_nan=True, allow_infinity=True).filter(lambda v: not (math.isfinite(v) and v.is_integer())))
+    def test_get_offset_non_integral_raises(self, x):
+        """Fractional, NaN and infinite offsets raise instead of becoming 0."""
+        with pytest.raises(ValueError, match="offset must be an integer"):
+            get_offset(x)
 
     @given(st.integers(min_value=-100, max_value=100))
     def test_get_offset_int_identity(self, x):
@@ -298,16 +299,16 @@ class TestMiscUtils(TestCase):
         assert isinstance(result, int)
         assert result == x
 
-    @given(st.integers(min_value=-100, max_value=100))
-    def test_get_drift_non_int_returns_one(self, x):
-        result = get_drift(float(x))
-        assert result == 1
+    @given(st.integers(min_value=1, max_value=100))
+    def test_get_drift_positive_identity(self, x):
+        assert get_drift(x) == x
+        assert get_drift(float(x)) == x
 
-    @given(st.integers(min_value=-100, max_value=100))
-    def test_get_drift_zero_returns_one(self, x):
-        """get_drift(0) defaults to 1."""
-        result = get_drift(0)
-        assert result == 1
+    @given(st.integers(min_value=-100, max_value=0))
+    def test_get_drift_non_positive_raises(self, x):
+        """Zero and negative drifts raise instead of becoming 1."""
+        with pytest.raises(ValueError, match="drift must be an integer > 0"):
+            get_drift(x)
 
     @given(
         st.integers(min_value=10, max_value=100),

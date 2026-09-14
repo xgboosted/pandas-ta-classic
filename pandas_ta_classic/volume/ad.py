@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _bool_param
 
 
 def ad(
@@ -30,7 +31,7 @@ def ad(
     close = verify_series(close)
     volume = verify_series(volume)
     offset = get_offset(offset)
-    mode_talib = bool(talib) if isinstance(talib, bool) else False
+    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None or volume is None:
         return None
