@@ -44,6 +44,9 @@ _DATA_PATH = _HERE.parent / "examples" / "data" / "SPY_D.csv"
 _ORACLE_PATH = _HERE / "fixtures" / "tulipy_oracle.json"
 
 ORACLE_AVAILABLE = _ORACLE_PATH.is_file()
+# talib=True silently falls back to the native formula when TA-Lib is absent,
+# and the native trima/stochrsi do not follow tulipy's formula.
+NEEDS_TALIB = unittest.skipUnless(ta.Imports["talib"], "needs TA-Lib: talib=True falls back to the native formula without it")
 
 
 @unittest.skipUnless(ORACLE_AVAILABLE, "tulipy_oracle.json fixture missing")
@@ -166,6 +169,7 @@ class TestTulipyOracle(unittest.TestCase):
             name="QSTICK",
         )
 
+    @NEEDS_TALIB
     def test_trima(self):
         # talib=True uses TA-Lib's symmetric SMA-of-SMA, which matches tulipy.
         self._compare(
@@ -283,6 +287,7 @@ class TestTulipyOracle(unittest.TestCase):
         pt = ta.trix(self.close, length=18)
         self._compare(pt.iloc[:, 0], self._oracle("trix"), tol=0.01, name="TRIX")
 
+    @NEEDS_TALIB
     def test_stochrsi(self):
         # talib=True uses TA-Lib STOCHRSI which matches tulipy's single-period formula
         pt = ta.stochrsi(self.close, length=14, talib=True)
