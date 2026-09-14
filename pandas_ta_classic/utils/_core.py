@@ -2,7 +2,6 @@ import functools
 import inspect
 import logging
 import sys
-import warnings
 from typing import Any, Callable, Optional, TypeGuard, Union
 
 from sys import float_info as sflt
@@ -247,10 +246,9 @@ def verify_series(series: Series, min_length: Optional[Union[int, float]] = None
     Returns None for a Series shorter than *min_length* (an ordinary data
     condition) and for ``None`` (an optional argument that was not given).
 
-    Anything else -- a list, a numpy array, a DataFrame -- is a caller error.
-    It still returns None for now but emits a FutureWarning; a future release
-    raises TypeError instead, so the mistake surfaces where it was made rather
-    than as a missing column or an unrelated error several frames later.
+    Anything else -- a list, a numpy array, a DataFrame -- is a caller error
+    and raises TypeError, so the mistake surfaces where it was made rather than
+    as a missing column or an unrelated error several frames later.
     """
     has_length = min_length is not None and isinstance(min_length, int)
     if series is not None and isinstance(series, Series):
@@ -259,26 +257,12 @@ def verify_series(series: Series, min_length: Optional[Union[int, float]] = None
             return None
         return series
     if series is not None:
-        _warn_non_series(series)
+        indicator = sys._getframe(1).f_code.co_name  # the indicator that called verify_series
+        raise TypeError(
+            f"{indicator}() expected a pandas Series but got {type(series).__name__}. "
+            "Pass a Series, e.g. df['close'] rather than df['close'].values."
+        )
     return None
-
-
-def _warn_non_series(series: Any) -> None:
-    """FutureWarning for non-Series input, attributed to the caller's own code."""
-    frame = sys._getframe(2)  # the indicator that called verify_series
-    indicator = frame.f_code.co_name
-    # Point the warning at the first frame outside this package, i.e. the line
-    # in user code that passed the bad argument.
-    stacklevel = 3
-    while frame is not None and str(frame.f_globals.get("__name__", "")).startswith("pandas_ta_classic"):
-        frame = frame.f_back
-        stacklevel += 1
-    warnings.warn(
-        f"{indicator}() expected a pandas Series but got {type(series).__name__}; it returns None for now, "
-        "and a future release will raise TypeError. Pass a Series, e.g. df['close'] rather than df['close'].values.",
-        FutureWarning,
-        stacklevel=stacklevel,
-    )
 
 
 def _sliding_weighted_ma(close: Series, length: int, weights: Any) -> Series:

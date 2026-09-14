@@ -612,21 +612,16 @@ class TestEdecayFormula(TestCase):
 class TestPslNoneGuard(TestCase):
     """psl(close, open_=too_short_series) must return None, not crash."""
 
-    def test_psl_open_none_guard_returns_none(self):
-        """When open_ is non-None but verify_series rejects it, psl must return None.
+    def test_psl_open_non_series_raises(self):
+        """A non-Series open_ is rejected by verify_series, not used or crashed on.
 
-        verify_series returns None for non-Series inputs. Before the fix the
-        function would proceed and crash; now it propagates None correctly.
+        Before the fix psl proceeded past a rejected open_ and crashed. Since
+        issue #145 verify_series raises TypeError for non-Series input.
         """
         close = pd.Series([float(i) for i in range(15)])
-        # Pass a plain list — not a pd.Series — so verify_series returns None
         open_bad = [99.0] * 15
-        with self.assertWarns(FutureWarning):
-            result = ta.psl(close, open_=open_bad)
-        self.assertIsNone(
-            result,
-            "psl must return None when open_ fails verify_series, not crash",
-        )
+        with self.assertRaisesRegex(TypeError, r"psl\(\) expected a pandas Series but got list"):
+            ta.psl(close, open_=open_bad)
 
     def test_psl_valid_open_returns_series(self):
         """psl with valid open_ must return a Series named PSL_{length}."""
@@ -785,11 +780,11 @@ class TestAdNoneGuard(TestCase):
         result = ta.ad(high=None, low=self.low, close=self.close, volume=self.volume)
         self.assertIsNone(result)
 
-    def test_invalid_open_list_returns_none(self):
-        """Passing a plain list as open_ triggers verify_series → None guard."""
+    def test_invalid_open_list_raises(self):
+        """A plain list as open_ is rejected by verify_series (issue #145)."""
         bad_open = list(self.close.values)
-        with self.assertWarns(FutureWarning):
-            result = ta.ad(
+        with self.assertRaisesRegex(TypeError, r"ad\(\) expected a pandas Series but got list"):
+            ta.ad(
                 high=self.high,
                 low=self.low,
                 close=self.close,
@@ -797,7 +792,6 @@ class TestAdNoneGuard(TestCase):
                 open_=bad_open,
                 talib=False,  # force else-branch where open_ is validated
             )
-        self.assertIsNone(result)
 
     def test_valid_call_no_open_returns_series(self):
         """Normal call without open_ returns a Series named 'AD'."""
@@ -834,18 +828,17 @@ class TestCmfNoneGuard(TestCase):
         cls.close = cls.df["close"]
         cls.volume = cls.df["volume"]
 
-    def test_invalid_open_list_returns_none(self):
-        """Passing a plain list as open_ triggers verify_series → None guard."""
+    def test_invalid_open_list_raises(self):
+        """A plain list as open_ is rejected by verify_series (issue #145)."""
         bad_open = list(self.close.values)
-        with self.assertWarns(FutureWarning):
-            result = ta.cmf(
+        with self.assertRaisesRegex(TypeError, r"cmf\(\) expected a pandas Series but got list"):
+            ta.cmf(
                 high=self.high,
                 low=self.low,
                 close=self.close,
                 volume=self.volume,
                 open_=bad_open,
             )
-        self.assertIsNone(result)
 
     def test_valid_call_no_open_returns_series(self):
         """Normal call without open_ returns a Series."""
@@ -867,12 +860,11 @@ class TestPsarCloseNoneGuard(TestCase):
         cls.high = cls.df["high"]
         cls.low = cls.df["low"]
 
-    def test_invalid_close_list_returns_none(self):
-        """Passing a plain list as close triggers verify_series → None guard."""
+    def test_invalid_close_list_raises(self):
+        """A plain list as close is rejected by verify_series (issue #145)."""
         bad_close = list(self.high.values)
-        with self.assertWarns(FutureWarning):
-            result = ta.psar(high=self.high, low=self.low, close=bad_close)
-        self.assertIsNone(result)
+        with self.assertRaisesRegex(TypeError, r"psar\(\) expected a pandas Series but got list"):
+            ta.psar(high=self.high, low=self.low, close=bad_close)
 
     def test_valid_call_without_close_returns_dataframe(self):
         """Normal call without close returns a DataFrame."""
