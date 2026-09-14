@@ -174,7 +174,7 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    Tuple[pd.DataFrame, pd.DataFrame] (as_dataframe is None or False):
+    tuple[pd.DataFrame, pd.DataFrame] (as_dataframe is None or False):
         For the visible period: spanA, spanB, tenkan_sen, kijun_sen,
             and chikou_span columns
         For the forward looking period: spanA and spanB columns
