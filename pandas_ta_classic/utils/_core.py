@@ -89,7 +89,7 @@ def is_datetime_ordered(df: DataFrame | Series) -> bool:
         return False
 
 
-def is_percent(x: float | None) -> TypeGuard[int | float]:
+def is_percent(x: float | None) -> TypeGuard[float]:
     if isinstance(x, (int, float)):
         return x is not None and x >= 0 and x <= 100
     return False

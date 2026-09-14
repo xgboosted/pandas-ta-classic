@@ -173,6 +173,10 @@ line-length = 150
 # rejects `from numpy import x`, so numpy is always reached through `np.`.
 extend-select = ["ICN"]
 
+[tool.ruff.lint.isort]
+# Keep `from x import a as b, c` on one line instead of one statement per alias.
+combine-as-imports = true
+
 [tool.ruff.lint.flake8-import-conventions]
 # pandas is deliberately not banned: `from pandas import Series` is the house
 # style in every indicator signature.

@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Callable
-from math import comb
-from math import floor as mfloor
+from math import comb, floor as mfloor
 from sys import float_info as sflt
 from typing import Any
 
@@ -182,7 +181,7 @@ def weights(w: Any) -> Callable[[Any], Any]:
     return _dot
 
 
-def zero(x: float) -> int | float:
+def zero(x: float) -> float:
     """If the value is close to zero, then return zero. Otherwise return itself."""
     return 0 if abs(x) < sflt.epsilon else x
 
