@@ -102,9 +102,6 @@ def _extra_kwargs(name: str, frame: dict[str, pd.Series]) -> dict:
     """Arguments with no sensible default for a blind sweep."""
     if name == "ma":
         return {"name": "sma"}
-    if name == "ichimoku":
-        # Opt out of the deprecated tuple return so the sweep stays warning-free.
-        return {"as_dataframe": True}
     if name in ("long_run", "short_run"):
         # These take two indicator outputs, not price series.
         return {"fast": frame["fast"], "slow": frame["slow"]}
