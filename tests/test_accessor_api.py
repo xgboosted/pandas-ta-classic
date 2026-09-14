@@ -296,15 +296,14 @@ class TestAccessorNonSeriesColumnArgument(TestCase):
     """Issue #145: df.ta.sma(close=df.close.values) was a silent no-op.
 
     _get_column returned None for anything that was not a Series or a column
-    name, and None is the "argument not given" value, so nothing warned.
+    name, and None is the "argument not given" value, so nothing warned. 0.8.32
+    warned; the array now reaches verify_series and raises TypeError.
     """
 
-    def test_ndarray_column_argument_warns(self):
+    def test_ndarray_column_argument_raises(self):
         df = get_sample_data().iloc[:100]
-        with self.assertWarns(FutureWarning) as ctx:
+        with self.assertRaisesRegex(TypeError, r"sma\(\) expected a pandas Series but got ndarray"):
             df.ta.sma(length=10, close=df["close"].to_numpy())
-        self.assertIn("sma() expected a pandas Series but got ndarray", str(ctx.warning))
-        self.assertEqual(ctx.filename, __file__)
 
     def test_series_column_argument_does_not_warn(self):
         import warnings

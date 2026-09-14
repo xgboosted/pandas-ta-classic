@@ -121,6 +121,10 @@ class TestUtilities(TestCase):
 
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=False), 210)
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=True), 715)
+        # multichoose is the upstream alias for repetition; it was silently ignored (210)
+        self.assertEqual(self.utils.combination(n=10, r=4, multichoose=True), 715)
+        with self.assertRaisesRegex(TypeError, r"unexpected keyword arguments: \['repetiton'\]"):
+            self.utils.combination(n=10, r=4, repetiton=True)
 
     def test_cross_above(self):
         result = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"])
@@ -488,28 +492,23 @@ class TestNoneGuards(TestCase):
         result = pandas_ta.utils.verify_series(self.c, 4)
         self.assertIsInstance(result, Series)
 
-    def test_verify_series_non_series_warns_and_returns_none(self):
+    def test_verify_series_non_series_raises_type_error(self):
         """Issue #145 case (A): non-Series input is a caller error.
 
-        It still returns None during the deprecation window, but warns with a
-        FutureWarning that names the indicator and points at the caller's line.
+        0.8.32 returned None with a FutureWarning; it now raises TypeError
+        naming the indicator and the type it received.
         """
-        import warnings
-
         for bad in (self.c.to_numpy(), list(self.c), self.c.to_frame(), 5, "close"):
             with self.subTest(kind=type(bad).__name__):
-                with warnings.catch_warnings(record=True) as caught:
-                    warnings.simplefilter("always")
-                    result = pandas_ta.sma(bad, 3)
-                self.assertIsNone(result)
-                future = [w for w in caught if issubclass(w.category, FutureWarning)]
-                self.assertEqual(len(future), 1)
-                self.assertIn("sma() expected a pandas Series", str(future[0].message))
-                self.assertIn(type(bad).__name__, str(future[0].message))
-                self.assertEqual(future[0].filename, __file__)
+                with self.assertRaises(TypeError) as ctx:
+                    pandas_ta.sma(bad, 3)
+                self.assertEqual(
+                    str(ctx.exception),
+                    f"sma() expected a pandas Series but got {type(bad).__name__}. Pass a Series, e.g. df['close'] rather than df['close'].values.",
+                )
 
-    def test_verify_series_none_and_short_series_do_not_warn(self):
-        """Case (B) and omitted optional arguments stay silent."""
+    def test_verify_series_none_and_short_series_do_not_raise(self):
+        """Case (B) and omitted optional arguments return None without warning."""
         import warnings
 
         with warnings.catch_warnings():

@@ -5,11 +5,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+* **BREAKING — non-Series input now raises `TypeError`** (issue #145): a list, numpy array, DataFrame or scalar passed where an indicator expects a Series used to make `verify_series()` return `None`, which silently dropped the column or surfaced as an unrelated error frames later. 0.8.32 kept returning `None` and emitted a `FutureWarning`. The warning is now a `TypeError` naming the indicator and the type it received, e.g. `sma() expected a pandas Series but got ndarray`. Pass the Series itself (`df['close']`, not `df['close'].values`). `None` for an omitted optional argument and `None` for a Series shorter than the indicator's window are unchanged.
+
 ### Removed
 * **BREAKING — built-in data fetching: `df.ta.ticker()`, `ta.yf()`, `ta.av()` and `pandas_ta_classic.utils.data`** (split from #142): deprecated with a `FutureWarning` in 0.8.32. Data fetching is out of scope for a technical-analysis library. Fetch OHLCV with yfinance or alpha-vantage directly and pass the DataFrame in; `examples/fetch_market_data.py` shows both. Also removed: the `data` optional extra (`integration` now aliases `backtest` only), the `yfinance` / `alpha-vantage` entries in `Imports`, their mypy overrides, and `tests/test_utils_data_alphavantage.py`. The VectorBT example notebook now downloads with `yfinance` directly.
+* **BREAKING — `drift` parameter removed from `tsignals`, `cfo`, `inertia`, `kst`, `rsx`, `chop`, `accbands` and `kvo`** (issue #138): deprecated in 0.8.32, where passing it emitted a `DeprecationWarning` and the value was ignored. The parameter is now gone from the function signatures and the `df.ta` stubs. Because every indicator takes `**kwargs`, an existing `drift=` call keeps running and the value still has no effect; it only stops warning. Remove the argument. `tsignals` always uses a 1-period difference.
+
+### Fixed
+* **`wma(asc=False)` and `fwma(asc=False)` returned the ascending result** (split from #142): `asc = asc if asc else True` turned `False` back into `True`, so descending weights were never applied. `asc=False` now weights older values more. `wma(asc=False, talib=True)` computes natively, because TA-Lib's `WMA` has no descending mode. `pwma` and `swma` also had the dead assignment, but their weights are symmetric, so their results do not change.
+* **`combination(multichoose=True)` was silently ignored** (split from #142): the `multichoose` alias for `repetition` was dropped in the 0.8.32 dead-code audit, so it returned nCr (e.g. 210) instead of nCr with repetition (715). The alias is restored, and an unknown keyword (e.g. a misspelled `repetiton=`) now raises `TypeError` instead of being ignored.
 
 ### Documentation
-* **Quickstart troubleshooting: indicator returns `None` with a `FutureWarning`** (`docs/quickstart.md`): documents the non-Series deprecation from issue #145 — pass `df['close']`, not `df['close'].values`.
+* **Quickstart troubleshooting: non-Series input** (`docs/quickstart.md`): documents the `TypeError` from issue #145 — pass `df['close']`, not `df['close'].values`.
 * **Release docs sync**: `deprecated::` directives in `docs/dataframe_api.rst` now name 0.8.32, the release that shipped the deprecations, instead of the placeholder 0.6.53; the `ichimoku` entry in `docs/indicators.rst` notes the tuple-return deprecation and `as_dataframe=True`; the gapped-data count in `docs/quickstart.md` no longer quotes a single-dataset figure; `AGENTS.md` no longer claims candle pattern tests are absent from CI.
 
 ## [0.8.32] - 2026-09-14

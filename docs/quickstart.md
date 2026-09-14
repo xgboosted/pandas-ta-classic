@@ -375,20 +375,22 @@ df.columns = ['open', 'high', 'low', 'close', 'volume']
 df.ta.sma(close=df['price'], length=20)
 ```
 
-### Issue: Indicator returns `None` with a `FutureWarning`
+### Issue: `TypeError: ... expected a pandas Series`
 
 **Cause:** The input is not a pandas Series, for example a numpy array from `.values`:
 
 ```
-FutureWarning: sma() expected a pandas Series but got ndarray; it returns None for now,
-and a future release will raise TypeError.
+TypeError: sma() expected a pandas Series but got ndarray. Pass a Series,
+e.g. df['close'] rather than df['close'].values.
 ```
+
+Version 0.8.32 returned `None` with a `FutureWarning` here; later versions raise.
 
 **Solution:** Pass the Series itself:
 
 ```python
 ta.sma(df['close'], length=20)         # works
-ta.sma(df['close'].values, length=20)  # None today, TypeError in a future release
+ta.sma(df['close'].values, length=20)  # TypeError
 ```
 
 ### Issue: "All NaN values"

@@ -21,7 +21,6 @@ def swma(
     """Indicator: Symmetric Weighted Moving Average (SWMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
-    asc = asc if asc else True
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -69,7 +68,8 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
-    asc (bool): Recent values weigh more. Default: True
+    asc (bool): Accepted for compatibility. The weights are symmetric, so
+        reversing them changes nothing. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

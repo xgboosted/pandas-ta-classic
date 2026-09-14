@@ -1,5 +1,4 @@
 # Relative Strength Xtra (RSX)
-import warnings
 from typing import Any, Optional, Union
 import numpy as np
 from pandas import concat, DataFrame, Series
@@ -71,7 +70,6 @@ def _rsx_loop(c_arr, length, m):
 def rsx(
     close: Series,
     length: Optional[int] = None,
-    drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Union[Series, DataFrame]]:
@@ -79,12 +77,6 @@ def rsx(
     # Validate arguments
     length = int(length) if length and length > 0 else 14
     close = verify_series(close, length)
-    if drift is not None:
-        warnings.warn(
-            "The 'drift' parameter of rsx() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     offset = get_offset(offset)
 
     if close is None:
@@ -145,8 +137,6 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 14
-    drift (int): Deprecated and ignored. Never affected the result. This
-        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
