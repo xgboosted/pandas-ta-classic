@@ -50,8 +50,6 @@ _SERIES_PARAMS = frozenset({"open_", "open", "high", "low", "close", "volume", "
 # them without first deciding what to feed in.
 _EXCLUDED = frozenset({"add", "div", "mult", "sub", "long_run", "short_run", "tsignals", "xsignals", "ma"})
 
-# Opt out of the deprecated tuple return so the sweep stays warning-free.
-_EXTRA_KWARGS = {"ichimoku": {"as_dataframe": False}}
 
 
 def _frame_kwargs(name: str, frame: dict[str, pd.Series]) -> dict:
@@ -315,11 +313,7 @@ def _call(name: str):
     func = getattr(ta, name)
     frame = _short_frame()
     kwargs = {param: frame[param] for param in inspect.signature(func).parameters if param in _SERIES_PARAMS}
-    result = func(**kwargs, **_EXTRA_KWARGS.get(name, {}), **_frame_kwargs(name, frame))
-    # A few indicators (ichimoku) return a tuple; an all-None tuple is a None result.
-    if isinstance(result, tuple) and all(part is None for part in result):
-        return None
-    return result
+    return func(**kwargs, **_frame_kwargs(name, frame))
 
 
 @pytest.mark.parametrize("name", sorted(RETURNS_NONE))

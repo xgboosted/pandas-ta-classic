@@ -59,7 +59,7 @@ def bbands(
     length = _pos_int(length, 5, "length", gt=1)
     std = _pos_float(std, 2.0, "std")
     mamode = _str_param(mamode, "sma", "mamode")
-    ddof = int(ddof) if ddof >= 0 and ddof < length else 1
+    ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")
@@ -68,7 +68,8 @@ def bbands(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default ddof; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and ddof == 0:
         from talib import BBANDS
 
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))

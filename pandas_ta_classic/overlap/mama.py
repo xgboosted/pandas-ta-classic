@@ -254,8 +254,9 @@ def mama(
 ) -> DataFrame | None:
     """Indicator: MESA Adaptive Moving Average (MAMA)"""
     # Validate Arguments
-    fastlimit = _pos_float(fastlimit, 0.5, "fastlimit")
-    slowlimit = _pos_float(slowlimit, 0.05, "slowlimit")
+    # Same range TA-Lib enforces (TA_BAD_PARAM otherwise), so both paths accept the same values
+    fastlimit = _pos_float(fastlimit, 0.5, "fastlimit", lt=1)
+    slowlimit = _pos_float(slowlimit, 0.05, "slowlimit", lt=1)
     close = verify_series(close)
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")

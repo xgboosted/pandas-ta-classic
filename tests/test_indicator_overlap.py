@@ -189,14 +189,14 @@ class TestOverlap(TestCase):
         )
 
     def test_ichimoku(self):
-        # Legacy tuple return (as_dataframe defaults to None) still works but
-        # emits a DeprecationWarning.
-        with self.assertWarns(DeprecationWarning):
-            ichimoku, span = pandas_ta.ichimoku(self.high, self.low, self.close)
-        self.assertIsInstance(ichimoku, DataFrame)
-        self.assertIsInstance(span, DataFrame)
-        self.assertEqual(ichimoku.name, "ICHIMOKU_9_26_52")
-        self.assertEqual(span.name, "ICHISPAN_9_26")
+        # Since 0.9.0 the default return is a single DataFrame, with no warning.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            result = pandas_ta.ichimoku(self.high, self.low, self.close)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "ICHIMOKU_9_26_52")
+        explicit = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=True)
+        self.assertTrue(result.equals(explicit))
 
     def test_ichimoku_as_dataframe(self):
         # Default append_span=False: visible period only, no future-dated rows.
@@ -226,12 +226,14 @@ class TestOverlap(TestCase):
         self.assertTrue(span_rows[["ITS_9", "IKS_26", "ICS_26"]].isna().all().all())
         self.assertTrue(span_rows["ISA_9"].notna().any())
 
-    def test_ichimoku_as_dataframe_false_no_warning(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            result = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=False)
-        self.assertIsInstance(result, tuple)
-        self.assertEqual(len(result), 2)
+    def test_ichimoku_as_dataframe_false_warns(self):
+        # The legacy tuple is still available on request, with a DeprecationWarning.
+        with self.assertWarnsRegex(DeprecationWarning, "as_dataframe=False"):
+            ichimoku, span = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=False)
+        self.assertIsInstance(ichimoku, DataFrame)
+        self.assertIsInstance(span, DataFrame)
+        self.assertEqual(ichimoku.name, "ICHIMOKU_9_26_52")
+        self.assertEqual(span.name, "ICHISPAN_9_26")
 
     def test_linreg(self):
         result = pandas_ta.linreg(self.close, talib=False)

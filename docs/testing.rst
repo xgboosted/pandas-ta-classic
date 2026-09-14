@@ -45,7 +45,7 @@ Accessor API Tests
 ------------------
 
 **Why:** Validate DataFrame accessor metadata and utilities: ``prefix``/``suffix``
-naming, ``indicators()`` discovery, time range filtering, and ``constants()``.
+naming, ``indicators()`` discovery, and time range filtering.
 
 **Files:** ``test_accessor_api.py``, ``test_ext_assertions.py``.
 

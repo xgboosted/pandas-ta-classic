@@ -3,9 +3,6 @@ from typing import Any
 
 # Metadata comes from _meta to avoid circular imports; it must be imported
 # before core/utils because submodules read Imports off this package.
-# EXCHANGE_TZ is intentionally NOT imported here: it is deprecated as a public
-# top-level name and served lazily (with a FutureWarning) via __getattr__.
-# Internal callers import it directly from pandas_ta_classic._meta.
 from pandas_ta_classic._meta import (
     _VALID_CATEGORIES,
     CANGLE_AGG,
@@ -206,45 +203,6 @@ def __getattr__(name: str) -> Any:
 
         setattr(sys.modules[__name__], name, ALL_PATTERNS)
         return ALL_PATTERNS
-
-    # CDL_PATTERN_NAMES: deprecated alias — use ALL_PATTERNS
-    # Not cached via setattr: caching would resolve future lookups directly off
-    # the module dict, bypassing __getattr__ (and the warning) after first use.
-    if name == "CDL_PATTERN_NAMES":
-        import warnings
-
-        warnings.warn(
-            "CDL_PATTERN_NAMES is deprecated; use ALL_PATTERNS instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
-
-        return ALL_PATTERNS
-
-    # get_time / EXCHANGE_TZ: deprecated as public top-level names. These are
-    # wall-clock / exchange-timezone helpers unrelated to computing indicators;
-    # they remain available (internally used by the Strategy run timer) but the
-    # public exports emit a FutureWarning. Internal code imports them from
-    # pandas_ta_classic._meta / pandas_ta_classic.utils directly (no warning).
-    # Not cached via setattr, same reason as CDL_PATTERN_NAMES above — the
-    # warning must fire on every access, not just the first.
-    if name in ("get_time", "EXCHANGE_TZ"):
-        import warnings
-
-        warnings.warn(
-            f"pandas_ta_classic.{name} is deprecated and will be removed in a "
-            "future release; time/exchange-clock helpers are out of scope for a "
-            "technical-analysis library.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        _obj: Any
-        if name == "get_time":
-            from pandas_ta_classic.utils import get_time as _obj
-        else:
-            from pandas_ta_classic._meta import EXCHANGE_TZ as _obj
-        return _obj
 
     # Individual candle-pattern submodules (cdl_*) not tracked in Category
     # → return the submodule (mimics old `from candles import *` behaviour)
