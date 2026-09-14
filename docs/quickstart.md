@@ -391,6 +391,22 @@ df.columns = ['open', 'high', 'low', 'close', 'volume']
 df.ta.sma(close=df['price'], length=20)
 ```
 
+### Issue: Indicator returns `None` with a `FutureWarning`
+
+**Cause:** The input is not a pandas Series, for example a numpy array from `.values`:
+
+```
+FutureWarning: sma() expected a pandas Series but got ndarray; it returns None for now,
+and a future release will raise TypeError.
+```
+
+**Solution:** Pass the Series itself:
+
+```python
+ta.sma(df['close'], length=20)         # works
+ta.sma(df['close'].values, length=20)  # None today, TypeError in a future release
+```
+
 ### Issue: "All NaN values"
 
 **Solution:** Check if you have enough data points:
@@ -408,7 +424,7 @@ if len(df) >= 20:
 
 **Cause:** A gap *inside* the series, rather than too little data. `df.resample('D')` on a
 feed that only trades on weekdays inserts a NaN row for every weekend, and many indicators
-cannot see past those rows. On a 300-row daily frame with weekend gaps, 81 of 224 indicators
+cannot see past those rows. On a 300-row daily frame with weekend gaps, more than 80 of 224 indicators
 return all-NaN — among them `sma`, `stoch`, `macd`, `linreg`, `willr` and `stdev` — while
 `ema`, `rma` and `atr` still produce values.
 

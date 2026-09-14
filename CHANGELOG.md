@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Documentation
+* **Quickstart troubleshooting: indicator returns `None` with a `FutureWarning`** (`docs/quickstart.md`): documents the non-Series deprecation from issue #145 — pass `df['close']`, not `df['close'].values`.
+* **Release docs sync**: `deprecated::` directives in `docs/dataframe_api.rst` now name 0.8.32, the release that shipped the deprecations, instead of the placeholder 0.6.53; the `ichimoku` entry in `docs/indicators.rst` notes the tuple-return deprecation and `as_dataframe=True`; the gapped-data count in `docs/quickstart.md` no longer quotes a single-dataset figure; `AGENTS.md` no longer claims candle pattern tests are absent from CI.
+
+## [0.8.32] - 2026-09-14
+
 ### Added
 * **manifoldbt integration** (`docs/tutorials/manifoldbt.md`, `examples/manifoldbt_strategy.py`): Precompute-then-register pattern that passes pandas-ta-classic output to the engine as an exogenous series (`register_exo()` / `exo()`); covers single-output, multi-output (MACD) and OHLCV-dependent (ATR) indicators. `manifoldbt` is not added to any optional-dependency extra: it is distributed under a proprietary license as binary wheels only, so install it separately with `pip install manifoldbt`.
 * **`.gitattributes` with `CHANGELOG.md merge=union`**: concurrent pull requests each append a bullet under `[Unreleased]`, so every pair of open PRs conflicted on this file by construction. The union merge driver keeps both sides. A PR that rewrites an existing bullet now produces a duplicate line rather than a conflict, so review `[Unreleased]` after merging one of those.
@@ -102,8 +108,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Documentation
 * **Quickstart troubleshooting: all-NaN results after resampling** (`docs/quickstart.md`): a NaN row *inside* the series — what `df.resample('D')` inserts for every weekend on a weekday-only feed — is a different failure from having too little data, and the existing entry pointed at the wrong diagnosis. 81 of 224 indicators return all-`NaN` on a 300-row daily frame with weekend gaps (`sma`, `stoch`, `macd`, `linreg`, `willr`, `stdev` among them) while `ema`, `rma` and `atr` still produce values, because a `rolling(length)` window needs `length` consecutive non-NaN bars and an `ewm` recursion does not. Documents the asymmetry and the fix (`dropna()` the resampled frame before computing, and assign the result back).
-
-### Documentation
 * **Causality section in `docs/indicators.rst`**: names the five calls that look forward on purpose (`dpo()`, `ichimoku()`, `cpr(virgin_cpr=True)`, `tos_stdevall()`, `vp()`), why each does, and the causal alternative where one exists. Previously a user planning a backtest had to read individual docstrings to find out. `tos_stdevall`, `vp` and `cpr`'s `virgin_cpr` gained explicit `Warning:` blocks in their docstrings; `dpo` and `ichimoku` already documented their `lookahead=False` opt-out. The docs list is kept in sync by `test_non_causal_indicator_is_documented`, which fails when an indicator marked non-causal in the test suite is missing from the page.
 
 ## [0.6.52] - 2026-06-25

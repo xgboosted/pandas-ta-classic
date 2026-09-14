@@ -156,7 +156,7 @@ After each coding session, execute the code/module in local venv and troubleshoo
 Triggers: `push` to main, `pull_request` to main, `release` published, `workflow_dispatch`.
 Additional workflow: `mirror.yml` syncs repository to Codeberg on every push + nightly.
 
-**Note:** CDL candlestick patterns have no CI tests — no CI job exercises candle pattern tests.
+**Note:** CDL candlestick pattern tests (`test_indicator_candle.py`, `test_ext_indicator_candle.py`) run in `testing-core`; they need no TA-Lib.
 
 ## Indicator Development
 
