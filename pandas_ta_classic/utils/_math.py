@@ -64,7 +64,11 @@ def combination(**kwargs: Any) -> int:
     """nCr combinatorics — wraps math.comb."""
     n = int(abs(kwargs.pop("n", 1)))
     r = int(abs(kwargs.pop("r", 0)))
-    if kwargs.pop("repetition", False):
+    repetition = kwargs.pop("repetition", False)
+    multichoose = kwargs.pop("multichoose", False)  # alias for repetition
+    if kwargs:
+        raise TypeError(f"combination() got unexpected keyword arguments: {sorted(kwargs)}")
+    if repetition or multichoose:
         n = n + r - 1
     return comb(n, r)
 

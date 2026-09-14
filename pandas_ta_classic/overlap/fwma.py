@@ -21,7 +21,7 @@ def fwma(
     """Indicator: Fibonacci's Weighted Moving Average (FWMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
-    asc = asc if asc else True
+    asc = bool(asc) if asc is not None else True
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -30,6 +30,8 @@ def fwma(
 
     # Calculate Result
     fibs = fibonacci(n=length, weighted=True)
+    if not asc:
+        fibs = fibs[::-1]
     fwma = _sliding_weighted_ma(close, length, fibs)
 
     # Offset
@@ -65,7 +67,8 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
-    asc (bool): Recent values weigh more. Default: True
+    asc (bool): True: recent values weigh more. False: older values weigh
+        more. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
