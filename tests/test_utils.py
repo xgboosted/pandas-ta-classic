@@ -123,8 +123,24 @@ class TestUtilities(TestCase):
         # multichoose is the upstream alias for repetition; it was silently ignored (210)
         self.assertEqual(self.utils.combination(n=10, r=4, multichoose=True), 715)
         self.assertEqual(self.utils.combination(n=10, r=4, multichoose=False), 210)
-        with self.assertRaisesRegex(TypeError, r"unexpected keyword arguments: \['repetiton'\]"):
+        with self.assertRaisesRegex(TypeError, r"unexpected keyword argument 'repetiton'"):
             self.utils.combination(n=10, r=4, repetiton=True)
+
+    def test_helpers_reject_misspelled_keywords(self):
+        """A misspelled option used to be ignored and the default result returned.
+
+        fibonacci(n=3, weigthed=True) came back unweighted, with no error.
+        """
+        calls = {
+            "fibonacci": lambda: self.utils.fibonacci(n=3, weigthed=True),
+            "pascals_triangle": lambda: self.utils.pascals_triangle(n=3, weigthed=True),
+            "symmetric_triangle": lambda: self.utils.symmetric_triangle(n=3, weigthed=True),
+            "unsigned_differences": lambda: self.utils.unsigned_differences(Series([1.0, 2.0, 1.0]), asnit=True),
+            "df_error_analysis": lambda: self.utils.df_error_analysis(Series([1.0, 2.0]), Series([1.0, 2.0]), corr_metod="spearman"),
+        }
+        for name, call in calls.items():
+            with self.subTest(name=name), self.assertRaisesRegex(TypeError, "unexpected keyword argument"):
+                call()
 
     def test_cross_above(self):
         result = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"])
