@@ -219,18 +219,17 @@ strict_optional = true
 # - union-attr, operator, index: pandas methods like .diff()/.shift() are typed
 #   as returning Optional[Any] in pandas' built-in stubs (no py.typed marker),
 #   causing chained-operation errors that are not real bugs in our code.
-# - attr-defined: under numpy 2.0 + Python 3.9, numpy stubs type some results
-#   as ndarray[...] instead of Optional[Any], causing false positives for pandas
-#   Series methods (.shift(), .name, etc.) on the same patterns.
+# - attr-defined: mypy reads core.pyi instead of core.py, and the stub does not
+#   declare Strategy / AllStrategy / CommonStrategy that __init__ imports from
+#   it; _indicator_loader also sets __signature__ on a functools.wraps wrapper.
 # - no-redef: each category __init__.py re-exports functions by name
 #   (e.g. `from .roc import roc`), which shadows the submodule of the same
 #   name. mypy sees this as a redefinition, but it works correctly at runtime.
 disable_error_code = ["union-attr", "operator", "no-redef", "index", "attr-defined"]
 
-# Third-party dependencies that ship no py.typed marker / stubs (verified via
-# `mypy --python-version 3.9` with ignore_missing_imports unset: these are the
-# only packages that raise import-untyped). Scoped instead of a blanket
-# ignore_missing_imports=true so new dependencies are still checked by default.
+# Third-party dependencies that ship no py.typed marker or are optional and absent
+# from the CI code-quality environment. Scoped instead of a blanket
+# ignore_missing_imports=true so a new, unhandled dependency is still reported.
 [[tool.mypy.overrides]]
 module = [
     "pandas.*",

@@ -1,4 +1,3 @@
-# from numpy import sqrt as npsqrt
 from typing import Any
 
 from pandas import DataFrame, Series

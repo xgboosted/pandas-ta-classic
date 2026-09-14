@@ -2,6 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+import pandas.testing as pdt
 from pandas import DataFrame, Series
 
 CORRELATION = "corr"
@@ -73,8 +74,6 @@ def assert_none_guard(test_case, func, args, none_arg_idx=0, **kwargs):
 
 
 def assert_talib(test_case, result, expected, correlation_threshold=None):
-    import pandas.testing as pdt
-
     try:
         if isinstance(result, DataFrame) and isinstance(expected, DataFrame):
             pdt.assert_frame_equal(result, expected, check_dtype=False)
