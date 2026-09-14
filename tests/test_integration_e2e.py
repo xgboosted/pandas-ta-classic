@@ -289,8 +289,6 @@ class TestImportDirPlugin(TestCase):
         os.makedirs(overlap_dir, exist_ok=True)
         module_path = os.path.join(overlap_dir, f"{self._IND_NAME}.py")
         src = textwrap.dedent(f"""\
-            from pandas import Series
-
             def {self._IND_NAME}(close, length=None, offset=None, **kwargs):
                 result = close.rolling(2).mean()
                 result.name = "IMPORT_DIR_IND"

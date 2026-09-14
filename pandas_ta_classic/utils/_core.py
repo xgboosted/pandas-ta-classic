@@ -210,7 +210,7 @@ def tal_ma(name: str) -> int:
     return _TAL_MA_TYPES[key]
 
 
-def unsigned_differences(series: Series, amount: int | None = None, **kwargs: Any) -> tuple[Series, Series]:
+def unsigned_differences(series: Series, amount: int | None = None, *, asint: bool = False) -> tuple[Series, Series]:
     """Unsigned Differences
     Returns two Series, an unsigned positive and unsigned negative series based
     on the differences of the original series. The positive series are only the
@@ -232,7 +232,7 @@ def unsigned_differences(series: Series, amount: int | None = None, **kwargs: An
     negative[negative >= 0] = 0
     negative[negative < 0] = 1
 
-    if kwargs.pop("asint", False):
+    if asint:
         positive = positive.astype(int)
         negative = negative.astype(int)
 
