@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
 from time import perf_counter
 from typing import Any
-from warnings import simplefilter, warn
+from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
@@ -554,51 +554,6 @@ class AnalysisIndicators(PandasObject):
         return name, mode
 
     # Public DataFrame Methods
-    def constants(self, append: bool, values: list):
-        """Constants
-
-        Add or remove constants to the DataFrame easily with Numpy's arrays or
-        lists. Useful when you need easily accessible horizontal lines for
-        charting.
-
-        Add constant '1' to the DataFrame
-        >>> df.ta.constants(True, [1])
-        Remove constant '1' to the DataFrame
-        >>> df.ta.constants(False, [1])
-
-        Adding constants for charting
-        >>> import numpy as np
-        >>> chart_lines = np.append(np.arange(-4, 5, 1), np.arange(-100, 110, 10))
-        >>> df.ta.constants(True, chart_lines)
-        Removing some constants from the DataFrame
-        >>> df.ta.constants(False, np.array([-60, -40, 40, 60]))
-
-        Args:
-            append (bool): If True, appends a Numpy range of constants to the
-                working DataFrame.  If False, it removes the constant range from
-                the working DataFrame. Default: None.
-
-        Returns:
-            Returns the appended constants
-            Returns nothing to the user.  Either adds or removes constant ranges
-            from the working DataFrame.
-        """
-        warn(
-            "df.ta.constants() is deprecated and will be removed in a future "
-            "release; adding horizontal charting lines is out of scope for a "
-            "technical-analysis library. Assign the columns directly, e.g. "
-            "df['0'] = 0.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        if isinstance(values, (np.ndarray, list)):
-            if append:
-                for x in values:
-                    self._df[f"{x}"] = x
-                return self._df[self._df.columns[-len(values) :]]
-            for x in values:
-                del self._df[f"{x}"]
-
     def indicators(self, **kwargs):
         """List of Indicators
 
@@ -615,7 +570,6 @@ class AnalysisIndicators(PandasObject):
         # Public non-indicator methods
         helper_methods = [
             "chain",
-            "constants",
             "indicators",
             "strategy",
             "unchain",
@@ -908,9 +862,9 @@ class AnalysisIndicators(PandasObject):
         return wrapper.__get__(self, type(self))
 
     # ichimoku is the only explicit wrapper left: the underlying function still
-    # supports a legacy (visible, span) tuple return. This wrapper opts in to
-    # the single-DataFrame return (as_dataframe=True) and forwards append_span,
-    # so _post_process can handle it like any other indicator.
+    # supports a deprecated (visible, span) tuple return. This wrapper pins the
+    # single-DataFrame return (as_dataframe=True) and forwards append_span, so
+    # _post_process can handle it like any other indicator.
     def ichimoku(
         self,
         tenkan=None,

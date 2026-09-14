@@ -62,7 +62,8 @@ def variance(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default ddof; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and ddof == 0:
         from talib import VAR
 
         variance = VAR(close, length)

@@ -31,7 +31,8 @@ def aroon(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default scalar; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100:
         from talib import AROON, AROONOSC
 
         aroon_down, aroon_up = AROON(high, low, length)

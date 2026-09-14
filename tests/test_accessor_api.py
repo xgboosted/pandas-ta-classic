@@ -7,7 +7,6 @@ Covers:
   * ``prefix``/``suffix`` work as per-call kwargs, not as properties.
   * ``time_range`` accepts valid unit strings and rejects invalid ones.
   * ``to_utc`` is a property (not callable).
-  * ``constants(append, values)`` signature works correctly.
   * ``indicators(as_list=True)`` and ``indicators(exclude=[...])`` behave as
     documented.
 """
@@ -60,11 +59,10 @@ class TestAccessorHelperClassification(TestCase):
     # ------------------------------------------------------------------
 
     def test_helper_methods_excluded(self):
-        """chain, constants, indicators, strategy, unchain must not be in the list."""
+        """chain, indicators, strategy, unchain must not be in the list."""
         ind = self._indicator_list()
         for name in (
             "chain",
-            "constants",
             "indicators",
             "strategy",
             "unchain",
@@ -393,45 +391,6 @@ class TestAccessorToUtcProperty(TestCase):
         df = get_sample_data()
         with self.assertRaises(TypeError):
             df.ta.to_utc()  # type: ignore[operator]
-
-
-class TestAccessorConstants(TestCase):
-    """constants(append: bool, values: list) correct signature and behaviour."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls._base = get_sample_data()
-
-    @classmethod
-    def tearDownClass(cls):
-        del cls._base
-
-    def fresh(self):
-        return self._base.copy()
-
-    def test_add_constants(self):
-        df = self.fresh()
-        original_cols = len(df.columns)
-        df.ta.constants(True, [0, 100])
-        self.assertEqual(len(df.columns), original_cols + 2)
-        self.assertIn("0", df.columns)
-        self.assertIn("100", df.columns)
-        self.assertTrue((df["0"] == 0).all())
-        self.assertTrue((df["100"] == 100).all())
-
-    def test_remove_constants(self):
-        df = self.fresh()
-        original_cols = len(df.columns)
-        df.ta.constants(True, [0, 100])
-        df.ta.constants(False, [0, 100])
-        self.assertEqual(len(df.columns), original_cols)
-
-    def test_add_numpy_array(self):
-        df = self.fresh()
-        original_cols = len(df.columns)
-        values = np.array([10, 20, 30])
-        df.ta.constants(True, values)
-        self.assertEqual(len(df.columns), original_cols + 3)
 
 
 class TestIsDatetimeOrdered(TestCase):

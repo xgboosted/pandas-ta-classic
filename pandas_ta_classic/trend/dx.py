@@ -44,7 +44,8 @@ def dx(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default drift, mamode, scalar; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100 and mamode == "rma" and drift == 1:
         from talib import DX as TADX
 
         dx_ = TADX(high, low, close, length)
