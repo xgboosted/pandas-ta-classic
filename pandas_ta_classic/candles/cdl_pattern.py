@@ -222,7 +222,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    name: (Union[str, Sequence[str]]): name of the patterns
+    name (str | Sequence[str]): name of the patterns
     scalar (float): How much to magnify. Default: 100
     offset (int): How many periods to offset the result. Default: 0
 
