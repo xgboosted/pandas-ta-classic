@@ -165,14 +165,14 @@ Repo-wide. Each rule is marked *enforced* (ruff fails the build) or *convention*
 The enforced rules are covered by the **Gate condition** above. The conventions have no CI backstop, so run these greps before considering a task complete. **Each must print nothing**; a hit is a violation to fix or to justify in review.
 
 ```bash
-# 1. numpy/pandas imported inside function bodies (must be module scope)
-grep -rnE "^ +(import (numpy|pandas)\b|from (numpy|pandas) import)" pandas_ta_classic/
+# 1. numpy/pandas imported inside a function or block (must be module scope)
+grep -rnE "^ +(import (numpy|pandas)\b|from (numpy|pandas) import)" pandas_ta_classic/ tests/ tools/ examples/ docs/ --include=*.py
 
 # 2. sys.path writes outside custom.py
 grep -rnE "sys\.path\.(insert|append)" pandas_ta_classic/ tests/ tools/ docs/ | grep -v "custom.py"
 
 # 3. Import cruft: pkg_resources fallbacks and commented-out numpy/pandas imports
-grep -rnE "pkg_resources|^\s*#\s*(from|import) (numpy|pandas)" pandas_ta_classic/
+grep -rnE "pkg_resources|^\s*#\s*(from|import) (numpy|pandas)" pandas_ta_classic/ tests/ tools/ examples/ docs/ --include=*.py
 
 # 4. Hand-rolled math that stdlib covers (nCr loop, Abramowitz-Stegun erf constant)
 grep -rnE "reduce\(mul|numerator // denominator|0\.3275911" pandas_ta_classic/
