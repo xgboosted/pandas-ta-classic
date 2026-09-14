@@ -908,9 +908,9 @@ class AnalysisIndicators(PandasObject):
         return wrapper.__get__(self, type(self))
 
     # ichimoku is the only explicit wrapper left: the underlying function still
-    # supports a legacy (visible, span) tuple return. This wrapper opts in to
-    # the single-DataFrame return (as_dataframe=True) and forwards append_span,
-    # so _post_process can handle it like any other indicator.
+    # supports a deprecated (visible, span) tuple return. This wrapper pins the
+    # single-DataFrame return (as_dataframe=True) and forwards append_span, so
+    # _post_process can handle it like any other indicator.
     def ichimoku(
         self,
         tenkan=None,
