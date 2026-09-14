@@ -16,6 +16,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`AVG_PERIOD`** (`candles/_cdl_math.py`): dead constant; its only consumer was removed in the 0.8.32 dead-code audit (leftover from #142).
 
 ### Fixed
+* **Tulipy oracle `test_trima` and `test_stochrsi` failed without TA-Lib** (raised in the #142 review as golden-file drift): both call `talib=True`, which falls back to the native formula when TA-Lib is absent, and native `trima`/`stochrsi` do not follow tulipy's formula (max abs diff 2.598 and 65.709, the exact figures reported). With TA-Lib they match the frozen oracle to 3e-10 and 5e-13, so the golden file is fine; the tests now skip when TA-Lib is not installed.
 * **`wma(asc=False)` and `fwma(asc=False)` returned the ascending result** (split from #142): `asc = asc if asc else True` turned `False` back into `True`, so descending weights were never applied. `asc=False` now weights older values more. `wma(asc=False, talib=True)` computes natively, because TA-Lib's `WMA` has no descending mode. `pwma` and `swma` also had the dead assignment, but their weights are symmetric, so their results do not change.
 * **`combination(multichoose=True)` was silently ignored** (split from #142): the `multichoose` alias for `repetition` was dropped in the 0.8.32 dead-code audit, so it returned nCr (e.g. 210) instead of nCr with repetition (715). The alias is restored, and an unknown keyword (e.g. a misspelled `repetiton=`) now raises `TypeError` instead of being ignored.
 
