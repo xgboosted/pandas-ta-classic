@@ -222,6 +222,16 @@ from pandas_ta_classic.utils import verify_series
 - Constants: `UPPER_CASE`
 - Private methods: `_leading_underscore`
 
+### Correctness rules
+
+The full list, with what enforces each rule, is in the "Correctness Rules" section of [AGENTS.md](AGENTS.md). The ones contributors hit most:
+
+- **No silent fallbacks.** Validate arguments with `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `get_drift` and `get_offset`; `None` means the default and anything invalid raises `ValueError`.
+- **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
+- **Docstring `Default:` values match the code** (`tests/test_docstring_defaults.py` checks this).
+- **Deprecate in a released version before removing**, and mark any entry that changes results or starts raising as **BREAKING** in `CHANGELOG.md`.
+- **Prove refactors change nothing**: compare hashed indicator output before and after.
+
 ### 5. Git Workflow
 
 #### Branch Naming

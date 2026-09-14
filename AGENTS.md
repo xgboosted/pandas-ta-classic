@@ -225,6 +225,44 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 - Numba acceleration: use `@njit` decorator from `pandas_ta_classic.utils._njit` on hot-loop functions
 - Oracle tests compare native output against TA-Lib when available
 
+## Correctness Rules
+
+General rules taken from #142 (lint modernization, import conventions, silent-failure fixes, data-fetching removal), its review, and the repo-wide sweeps that followed. Each rule names what enforces it; a rule marked *review* has no automated check.
+
+### Arguments
+
+1. **No silent fallbacks for arguments.** `None` selects the default; any other value the function cannot use raises `ValueError` naming the function, the parameter and the value. Never write `x = int(x) if x and x > 0 else default`, `x if x else default`, `bool(x) if isinstance(x, bool) else default` or an `if x not in choices: x = default` block. Use `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `get_drift` and `get_offset` from `utils/_core.py`. *Enforced:* `tests/test_parameter_validation.py`, checklist grep 5.
+2. **Give a parameter the bound its callees need.** When an indicator passes a value to another indicator with a stricter bound (`stdev` → `variance` needs `length > 1`), declare the same bound so the error names the function the user called.
+3. **Helpers reject unknown keywords.** Utility functions take explicit keyword-only options (`def fibonacci(n=2, *, zero=False, weighted=False)`), never `**kwargs` read with `kwargs.pop`, so a typo raises `TypeError` instead of returning the default result. Indicators keep `**kwargs` for `fillna`/`fill_method` and for strategy-wide arguments they deliberately absorb (for example `length` in `adosc`); document such absorption in a comment. *Enforced:* `test_helpers_reject_misspelled_keywords`.
+4. **Every accepted parameter is read.** A parameter the body never uses (the old `ticker(ds=...)`, `slope(vertical=...)`) is removed, or implemented. *Review.*
+5. **Choices are validated where they are chosen.** `ma()` raises on an unknown name instead of returning an EMA; `mamode` and similar options inherit that. *Enforced:* `test_behaviour_fixes_from_the_same_sweep`.
+
+### TA-Lib paths
+
+6. **`talib=True` honours every parameter or does not run.** The TA-Lib branch requires every parameter TA-Lib cannot express to be at its default (`if Imports["talib"] and mode_talib and scalar == 100 and drift == 1:`); any other value computes natively. Both paths accept the same value ranges (`mama` limits `< 1`). *Enforced:* `tests/test_talib_parameters.py`.
+7. **Tests that need TA-Lib skip without it.** `talib=True` silently falls back to the native formula when TA-Lib is absent, so an oracle comparison that calls it must be guarded with `skipUnless(ta.Imports["talib"])`. *Review.*
+
+### Documentation
+
+8. **Docstring defaults match the code.** Every `Default:` in an indicator docstring equals the value the validation call resolves `None` to. *Enforced:* `tests/test_docstring_defaults.py`.
+9. **Duplicated facts have one owner or a parity check.** Tool versions (`pyproject.toml` floor, pre-commit `rev`, installed release series), the `core.pyi` pipeline (CI, pre-commit, manual), and indicator/pattern counts (224 / 62) must agree. *Enforced:* `tools/check_lint_versions.py`, the CI stub sync; counts by *review*.
+10. **Docs, examples and notebooks move with the API.** A removal or rename also updates `docs/`, `README.md`, `examples/` (scripts and notebooks), tests, `pyproject.toml` extras, `Imports` keys and mypy overrides, and leaves a removal note where the old API was documented. *Review;* the checklist greps catch leftover imports.
+
+### Deprecation, removal and change records
+
+11. **Deprecate in a released version before removing.** A warning that has not shipped in a tagged release is not a deprecation. Documentation names the version that shipped it (`.. deprecated:: 0.8.32`), never a guessed next version. Announce removals with a plain `.. note::`: `.. versionremoved::` needs Sphinx ≥ 7.3 and the docs floor is lower.
+12. **Follow the removal plan the warning promised.** If a warning says "the default changes in the next breaking release", that release makes the change (`ichimoku` → DataFrame in 0.9.0) and the old form warns until its announced removal.
+13. **Mark every breaking entry.** A `CHANGELOG.md` entry that changes results or starts raising for existing calls starts with **BREAKING**, even under Fixed.
+14. **Releases use annotated tags** (`git tag -a X.Y.Z -m "X.Y.Z"`). `0.6.52` and `0.8.32` are lightweight tags; do not repeat that.
+
+### Refactors and verification
+
+15. **Prove a behaviour-preserving change.** Hash the raw output of every registered indicator and all candle patterns before and after, with numba and with `NUMBA_DISABLE_JIT=1`; the hashes must be identical. An automated rewrite that can touch numerics (for example ruff's `min`/`max` clamp fix inside `@njit` code) also needs its edge cases checked (NaN, ±0.0, inf).
+16. **Re-run mechanical rewrites, don't rebase them.** An autofix over hundreds of files is a command, not a diff: land the decisions first, then run the tool on current `main` in its own PR.
+17. **One logical change per PR.** Keep mechanical churn out of PRs that carry decisions, so the decisions stay reviewable.
+18. **Type-check what ships.** A stub must not hide its implementation from mypy (`make typecheck` runs a second pass on `core.py` because `core.pyi` shadows it). Annotations use PEP 604 everywhere, including generated stubs and docstrings, and a parameter's type and the return type stay consistent (`float`, not `int | float`). *Enforced:* `make typecheck`, ruff `UP`/`PYI041`.
+19. **Never mutate shared or caller-owned state.** Work on copies of shared registries (`Category`) and of the caller's objects (`Strategy.ta`). *Enforced:* `TestStrategyDoesNotMutateInputs`.
+
 ## Validation
 
 ```bash
