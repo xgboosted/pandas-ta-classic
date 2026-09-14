@@ -618,6 +618,36 @@ class TestOverlap(TestCase):
             ),
         )
 
+    def test_weighted_ma_asc(self):
+        """asc=False was forced back to True, so it returned the ascending result."""
+        import numpy as np
+
+        from pandas_ta_classic.utils import fibonacci
+        from pandas.testing import assert_series_equal
+
+        close = self.close.iloc[:200]
+        arr = close.to_numpy(dtype=float)
+        windows = np.lib.stride_tricks.sliding_window_view(arr, 10)
+
+        def expected(w):
+            out = np.full(arr.size, np.nan)
+            out[9:] = windows @ w
+            return out
+
+        desc = np.arange(10, 0, -1) / 55.0
+        np.testing.assert_allclose(pandas_ta.wma(close, 10, asc=False).to_numpy(), expected(desc), rtol=1e-12)
+        np.testing.assert_allclose(pandas_ta.wma(close, 10, asc=False, talib=True).to_numpy(), expected(desc), rtol=1e-12)
+        fibs = fibonacci(n=10, weighted=True)[::-1]
+        np.testing.assert_allclose(pandas_ta.fwma(close, 10, asc=False).to_numpy(), expected(fibs), rtol=1e-12)
+        for name in ("wma", "fwma"):
+            with self.subTest(name=name):
+                fn = getattr(pandas_ta, name)
+                self.assertFalse(fn(close, 10, asc=False).equals(fn(close, 10)))
+        for name in ("pwma", "swma"):  # symmetric weights: asc cannot change the result
+            with self.subTest(name=name):
+                fn = getattr(pandas_ta, name)
+                assert_series_equal(fn(close, 10, asc=False), fn(close, 10))
+
     def test_wma(self):
         result = pandas_ta.wma(self.close, talib=False)
         if HAS_TALIB:

@@ -121,6 +121,10 @@ class TestUtilities(TestCase):
 
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=False), 210)
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=True), 715)
+        # multichoose is the upstream alias for repetition; it was silently ignored (210)
+        self.assertEqual(self.utils.combination(n=10, r=4, multichoose=True), 715)
+        with self.assertRaisesRegex(TypeError, r"unexpected keyword arguments: \['repetiton'\]"):
+            self.utils.combination(n=10, r=4, repetiton=True)
 
     def test_cross_above(self):
         result = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"])

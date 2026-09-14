@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+* **`wma(asc=False)` and `fwma(asc=False)` returned the ascending result** (split from #142): `asc = asc if asc else True` turned `False` back into `True`, so descending weights were never applied. `asc=False` now weights older values more. `wma(asc=False, talib=True)` computes natively, because TA-Lib's `WMA` has no descending mode. `pwma` and `swma` also had the dead assignment, but their weights are symmetric, so their results do not change.
+* **`combination(multichoose=True)` was silently ignored** (split from #142): the `multichoose` alias for `repetition` was dropped in the 0.8.32 dead-code audit, so it returned nCr (e.g. 210) instead of nCr with repetition (715). The alias is restored, and an unknown keyword (e.g. a misspelled `repetiton=`) now raises `TypeError` instead of being ignored.
+
 ### Documentation
 * **Quickstart troubleshooting: indicator returns `None` with a `FutureWarning`** (`docs/quickstart.md`): documents the non-Series deprecation from issue #145 — pass `df['close']`, not `df['close'].values`.
 * **Release docs sync**: `deprecated::` directives in `docs/dataframe_api.rst` now name 0.8.32, the release that shipped the deprecations, instead of the placeholder 0.6.53; the `ichimoku` entry in `docs/indicators.rst` notes the tuple-return deprecation and `as_dataframe=True`; the gapped-data count in `docs/quickstart.md` no longer quotes a single-dataset figure; `AGENTS.md` no longer claims candle pattern tests are absent from CI.
