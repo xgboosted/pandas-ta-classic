@@ -1,19 +1,19 @@
 # Entropy (ENTROPY)
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def entropy(
     close: Series,
-    length: Optional[int] = None,
-    base: Optional[float] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    base: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Entropy (ENTP)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10
@@ -31,7 +31,7 @@ def entropy(
     n = len(values)
     result_arr = np.full(n, np.nan, dtype=np.float64)
     if n >= length:
-        windows = sliding_window_view(values, length)  # (n-length+1, length)
+        windows = np.lib.stride_tricks.sliding_window_view(values, length)  # (n-length+1, length)
         window_sums = windows.sum(axis=1)  # (n-length+1,)
         valid = window_sums != 0
         with np.errstate(divide="ignore", invalid="ignore"):

@@ -1,5 +1,6 @@
 # Arnaud Legoux Moving Average (ALMA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
 
@@ -9,12 +10,12 @@ from pandas_ta_classic.utils._core import _sliding_weighted_ma
 
 def alma(
     close: Series,
-    length: Optional[int] = None,
-    sigma: Optional[float] = None,
-    distribution_offset: Optional[float] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    sigma: float | None = None,
+    distribution_offset: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Arnaud Legoux Moving Average (ALMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

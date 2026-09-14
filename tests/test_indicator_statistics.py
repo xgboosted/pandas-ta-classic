@@ -1,14 +1,15 @@
+from unittest import TestCase
+
+from pandas import DataFrame
+
+import pandas_ta_classic as pandas_ta
 from tests.assertions import (
+    CORRELATION_THRESHOLD,
+    IndicatorSpec,
     assert_indicator_standard,
     assert_talib,
-    IndicatorSpec,
-    CORRELATION_THRESHOLD,
 )
 from tests.config import get_sample_data
-import pandas_ta_classic as pandas_ta
-
-from unittest import TestCase
-from pandas import DataFrame
 
 try:
     import talib

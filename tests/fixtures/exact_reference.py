@@ -33,8 +33,8 @@ manual ``make fixtures`` step, and are optimised for being obviously correct.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Sequence
 from fractions import Fraction
-from typing import Callable, Optional, Sequence
 
 import pandas as pd
 
@@ -68,7 +68,7 @@ def _rolling(
 ) -> pd.Series:
     """Apply *window_fn* to every full window of *length*, NaN during warmup."""
     exact = _exact(series)
-    out: list[Optional[float]] = [None] * len(exact)
+    out: list[float | None] = [None] * len(exact)
     for end in range(length, len(exact) + 1):
         out[end - 1] = window_fn(exact[end - length : end])
     return pd.Series(out, index=series.index, dtype="float64")
@@ -209,7 +209,7 @@ def rolling_beta(close: pd.Series, open_: pd.Series, length: int) -> pd.Series:
     c_ret = [c_exact[i] / c_exact[i - 1] - 1 for i in range(1, n_bars)]
     o_ret = [o_exact[i] / o_exact[i - 1] - 1 for i in range(1, n_bars)]
 
-    out: list[Optional[float]] = [None] * n_bars
+    out: list[float | None] = [None] * n_bars
     # A window of `length` returns ending at bar `bar` spans ret indices
     # bar - length .. bar - 1, so the first defined output is at bar `length`.
     for bar in range(length, n_bars):
@@ -240,7 +240,7 @@ def rolling_ui(close: pd.Series, length: int) -> pd.Series:
         rmax = max(exact[bar - dd_offset : bar + 1])
         dd.append((exact[bar] - rmax) / rmax * 100)
 
-    out: list[Optional[float]] = [None] * n_bars
+    out: list[float | None] = [None] * n_bars
     # Averaging `length` drawdowns ending at bar `bar` needs dd indices
     # bar - dd_offset - length + 1 .. bar - dd_offset, so the first defined
     # output is at bar 2 * length - 2.

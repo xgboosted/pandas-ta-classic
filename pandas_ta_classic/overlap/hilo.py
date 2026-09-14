@@ -1,12 +1,13 @@
 # Gann High-Low Activator (HILO)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
 
-
-from .ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
+
+from .ma import ma
 
 
 @njit(cache=True)
@@ -38,12 +39,12 @@ def hilo(
     high: Series,
     low: Series,
     close: Series,
-    high_length: Optional[int] = None,
-    low_length: Optional[int] = None,
-    mamode: Optional[str] = None,
-    offset: Optional[int] = None,
+    high_length: int | None = None,
+    low_length: int | None = None,
+    mamode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Gann HiLo (HiLo)"""
     # Validate Arguments
     high_length = int(high_length) if high_length and high_length > 0 else 13

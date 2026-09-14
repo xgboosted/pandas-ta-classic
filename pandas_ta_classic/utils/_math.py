@@ -1,8 +1,9 @@
 import logging
+from collections.abc import Callable
 from math import comb
 from math import floor as mfloor
 from sys import float_info as sflt
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -12,7 +13,7 @@ from ._core import verify_series
 logger = logging.getLogger(__name__)
 
 
-def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: Optional[int] = None) -> tuple[np.ndarray, ...]:
+def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: int | None = None) -> tuple[np.ndarray, ...]:
     """Rolling raw central-moment sums using pure numpy.
 
     Returns one float64 array per *order*, each of ``len(values)`` elements.
@@ -30,7 +31,6 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     determinism (pandas 2.x vs 3.x can round higher-order moments
     differently).
     """
-    from numpy.lib.stride_tricks import sliding_window_view
 
     if min_periods is None:
         min_periods = length
@@ -43,7 +43,7 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
 
     # Vectorised computation over all full-length windows.
     if n >= length:
-        windows = sliding_window_view(arr, length)
+        windows = np.lib.stride_tricks.sliding_window_view(arr, length)
         mean = windows.mean(axis=1, keepdims=True)
         dev = windows - mean
         for i, k in enumerate(orders):
@@ -85,7 +85,7 @@ def fibonacci(n: int = 2, **kwargs: Any) -> np.ndarray:
         a, b = 1, 1
 
     result = np.array([a])
-    for _ in range(0, n):
+    for _ in range(n):
         a, b = b, a + b
         result = np.append(result, a)
 
@@ -110,7 +110,7 @@ def linear_regression(x: Series, y: Series) -> dict:
     return _linear_regression_np(x, y)
 
 
-def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[np.ndarray]:
+def pascals_triangle(n: int | None = None, **kwargs: Any) -> np.ndarray | None:
     """Pascal's Triangle
 
     Returns a numpy array of the nth row of Pascal's Triangle.
@@ -121,7 +121,7 @@ def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[np.ndar
     n = int(abs(n)) if n is not None else 0
 
     # Calculation
-    triangle = np.array([combination(n=n, r=i) for i in range(0, n + 1)])
+    triangle = np.array([combination(n=n, r=i) for i in range(n + 1)])
     triangle_sum: float = np.sum(triangle)
     triangle_weights = triangle / triangle_sum
     inverse_weights = 1 - triangle_weights
@@ -138,7 +138,7 @@ def pascals_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[np.ndar
     return triangle
 
 
-def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union[list[int], np.ndarray]]:
+def symmetric_triangle(n: int | None = None, **kwargs: Any) -> list[int] | np.ndarray | None:
     """Symmetric Triangle with n >= 2
 
     Returns a numpy array of the nth row of Symmetric Triangle.
@@ -156,10 +156,10 @@ def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union
 
     if n > 2:
         if n % 2 == 0:
-            front = [i + 1 for i in range(0, mfloor(n / 2))]
+            front = [i + 1 for i in range(mfloor(n / 2))]
             triangle = front + front[::-1]
         else:
-            front = [i + 1 for i in range(0, mfloor(0.5 * (n + 1)))]
+            front = [i + 1 for i in range(mfloor(0.5 * (n + 1)))]
             triangle = front.copy()
             front.pop()
             triangle += front[::-1]
@@ -182,7 +182,7 @@ def weights(w: Any) -> Callable[[Any], Any]:
     return _dot
 
 
-def zero(x: Union[int, float]) -> Union[int, float]:
+def zero(x: float) -> int | float:
     """If the value is close to zero, then return zero. Otherwise return itself."""
     return 0 if abs(x) < sflt.epsilon else x
 

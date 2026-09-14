@@ -1,8 +1,9 @@
+from unittest import TestCase
+
+from pandas import DataFrame
+
 import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
 from tests.config import get_sample_data
-
-from unittest import TestCase
-from pandas import DataFrame
 
 
 class TestVolumeExtension(TestCase):

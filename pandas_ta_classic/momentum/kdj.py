@@ -1,6 +1,8 @@
 # KDJ (KDJ)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.overlap.rma import rma
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -12,14 +14,14 @@ from pandas_ta_classic.utils import (
 
 
 def kdj(
-    high: Optional[Series] = None,
-    low: Optional[Series] = None,
-    close: Optional[Series] = None,
-    length: Optional[int] = None,
-    signal: Optional[int] = None,
-    offset: Optional[int] = None,
+    high: Series | None = None,
+    low: Series | None = None,
+    close: Series | None = None,
+    length: int | None = None,
+    signal: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: KDJ (KDJ)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 9

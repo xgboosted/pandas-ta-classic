@@ -1,5 +1,5 @@
 # Volume Oscillator (VOSC)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -9,11 +9,11 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def vosc(
     volume: Series,
-    fast: Optional[int] = None,
-    slow: Optional[int] = None,
-    offset: Optional[int] = None,
+    fast: int | None = None,
+    slow: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Volume Oscillator (VOSC)"""
     # Validate Arguments
     fast = int(fast) if fast and fast > 0 else 14

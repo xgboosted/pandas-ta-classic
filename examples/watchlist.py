@@ -1,6 +1,6 @@
 from pathlib import Path
-from typing import Tuple
 
+import numpy as np
 import pandas as pd  # pip install pandas
 
 # Optional imports for data sources - will gracefully handle missing dependencies
@@ -14,9 +14,6 @@ except ImportError:
     YFINANCE_AVAILABLE = False
     print("[!] yfinance not available. Install with: pip install yfinance")
 
-from numpy import arange as npArange
-from numpy import append as npAppend
-from numpy import array as npArray
 
 try:
     import alphaVantageAPI as AV  # pip install alphaVantage-api
@@ -29,7 +26,7 @@ except ImportError:
 import pandas_ta_classic as ta  # pip install pandas-ta-classic
 
 
-def colors(colors: str = None, default: str = "GrRd"):
+def colors(colors: str | None = None, default: str = "GrRd"):
     aliases = {
         # Pairs
         "BkGy": ["black", "gray"],
@@ -59,12 +56,12 @@ def colors(colors: str = None, default: str = "GrRd"):
         "kc": ["purple", "fuchsia", "purple"],
     }
     aliases["default"] = aliases[default]
-    if colors in aliases.keys():
+    if colors in aliases:
         return aliases[colors]
     return aliases["default"]
 
 
-class Watchlist(object):
+class Watchlist:
     """
     # Watchlist Class (** This is subject to change! **)
     A simple Class to load/download financial market data and automatically
@@ -88,9 +85,9 @@ class Watchlist(object):
     def __init__(
         self,
         tickers: list,
-        tf: str = None,
-        name: str = None,
-        strategy: ta.Strategy = None,
+        tf: str | None = None,
+        name: str | None = None,
+        strategy: ta.Strategy | None = None,
         ds_name: str = "av",
         **kwargs,
     ):
@@ -132,7 +129,7 @@ class Watchlist(object):
             self.file_path = Path(__file__).resolve().parent / "data"
             self.file_path.mkdir(parents=True, exist_ok=True)
 
-    def _drop_columns(self, df: pd.DataFrame, cols: list = None) -> pd.DataFrame:
+    def _drop_columns(self, df: pd.DataFrame, cols: list | None = None) -> pd.DataFrame:
         if cols is None or not isinstance(cols, list):
             cols = [
                 "Unnamed: 0",
@@ -142,8 +139,6 @@ class Watchlist(object):
                 "dividend",
                 "dividends",
             ]
-        else:
-            cols
         """Helper methods to drop columns silently."""
         df_columns = list(df.columns)
         if any(_ in df_columns for _ in cols):
@@ -162,9 +157,9 @@ class Watchlist(object):
     def _plot(self, df, mas: bool = True, constants: bool = False, **kwargs) -> None:
 
         if constants:
-            chart_lines = npAppend(npArange(-5, 6, 1), npArange(-100, 110, 10))
+            chart_lines = np.append(np.arange(-5, 6, 1), np.arange(-100, 110, 10))
             df.ta.constants(True, chart_lines)  # Adding the constants for the charts
-            df.ta.constants(False, npArray([-60, -40, 40, 60]))  # Removing some constants from the DataFrame
+            df.ta.constants(False, np.array([-60, -40, 40, 60]))  # Removing some constants from the DataFrame
             if self.verbose:
                 print(f"[i] {df.ticker} constants added.")
 
@@ -201,10 +196,10 @@ class Watchlist(object):
 
     def load(
         self,
-        ticker: str = None,
-        tf: str = None,
+        ticker: str | None = None,
+        tf: str | None = None,
         index: str = "date",
-        drop: list = [],
+        drop: list | None = None,
         plot: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
@@ -259,7 +254,7 @@ class Watchlist(object):
                 df.to_csv(to_save)
 
         # Remove select columns
-        df = self._drop_columns(df, drop)
+        df = self._drop_columns(df, drop if drop is not None else [])
 
         if kwargs.pop("analyze", True):
             if self.debug:
@@ -336,7 +331,7 @@ class Watchlist(object):
         return self._tickers
 
     @tickers.setter
-    def tickers(self, value: Tuple[list, str]) -> None:
+    def tickers(self, value: tuple[list, str]) -> None:
         if value is None:
             print(f"[X] {value} is not a value in Watchlist ticker.")
             return
@@ -403,7 +398,7 @@ if __name__ == "__main__":
             df["SMA_20"] = ta.sma(df["close"], length=20)
             print("Added SMA_20 indicator to sample data")
             print(f"Updated data shape: {df.shape}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - demo keeps running without the optional indicators
             print(f"Note: Could not add TA indicators: {e}")
 
     else:

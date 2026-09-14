@@ -26,6 +26,8 @@ import inspect
 import sys
 import time
 import warnings
+from contextlib import suppress
+from functools import partial
 from statistics import median
 
 import numpy as np
@@ -96,17 +98,15 @@ def bench(names: list[str], rows: int, repeats: int) -> list[dict]:
             acc()  # warmup (also triggers numba JIT compilation)
             acc()
             native = _time(acc, repeats)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - benchmark every indicator; record the failure and move on
             results.append({"name": name, "status": f"err:{type(exc).__name__}"})
             continue
         talib_ms = None
         if talib_available and _has_talib_param(name):
-            try:
-                f = lambda: acc(talib=True)  # noqa: E731
+            f = partial(acc, talib=True)
+            with suppress(Exception):  # TA-Lib path unavailable for this indicator: leave talib_ms None
                 f()
                 talib_ms = _time(f, repeats)
-            except Exception:  # noqa: BLE001
-                talib_ms = None
         results.append({"name": name, "native_ms": native, "talib_ms": talib_ms, "status": "ok"})
     return results
 
@@ -125,18 +125,14 @@ def profile(names: list[str], rows: int, top: int) -> None:
     accs = [getattr(df.ta, n, None) for n in names]
     accs = [a for a in accs if a is not None]
     for a in accs:  # warm up (numba JIT + import side effects out of the profile)
-        try:
+        with suppress(Exception):
             a()
-        except Exception:  # noqa: BLE001
-            pass
 
     pr = cProfile.Profile()
     pr.enable()
     for a in accs:
-        try:
+        with suppress(Exception):
             a()
-        except Exception:  # noqa: BLE001
-            pass
     pr.disable()
 
     stats = pstats.Stats(pr)

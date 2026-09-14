@@ -1,5 +1,4 @@
 # CPR Utility Functions
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -27,7 +26,7 @@ def _resample_ohlcv(df: DataFrame, rule: str) -> DataFrame:
     return df.resample(rule).agg(agg)
 
 
-def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval: Optional[str] = None) -> DataFrame:
+def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval: str | None = None) -> DataFrame:
     """Get previous period OHLCV data using resample + shift
 
     For intraday: Resamples to daily, shifts by 1 day, forward fills

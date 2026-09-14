@@ -1,17 +1,19 @@
 # Volume Profile (VP)
 import warnings
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
-from pandas import cut, concat, DataFrame, Series
+from pandas import DataFrame, Series, concat, cut
+
 from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
 
 
 def vp(
     close: Series,
     volume: Series,
-    width: Optional[int] = None,
+    width: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Volume Profile (VP)"""
     # Validate arguments
     # `lookahead=False` asks for output a bar could have produced in real time.

@@ -1,8 +1,9 @@
 # Candle Inside (CDL_INSIDE)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
-from pandas_ta_classic.utils import apply_fill, apply_offset, candle_color, get_offset
-from pandas_ta_classic.utils import verify_series
+
+from pandas_ta_classic.utils import apply_fill, apply_offset, candle_color, get_offset, verify_series
 
 
 def cdl_inside(
@@ -11,9 +12,9 @@ def cdl_inside(
     low: Series,
     close: Series,
     asbool: bool = False,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Candle Type - Inside Bar"""
     # Validate arguments
     open_ = verify_series(open_)

@@ -1,7 +1,8 @@
 # Keltner Channels (KC)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
-from .true_range import true_range
+
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -11,17 +12,19 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 
+from .true_range import true_range
+
 
 def kc(
     high: Series,
     low: Series,
     close: Series,
-    length: Optional[int] = None,
-    scalar: Optional[float] = None,
-    mamode: Optional[str] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    scalar: float | None = None,
+    mamode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Keltner Channels (KC)"""
     # Validate arguments
     length = int(length) if length and length > 0 else 20

@@ -1,5 +1,5 @@
 # Candle Tristar Pattern (CDL_TRISTAR)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -71,10 +71,10 @@ def cdl_tristar(
     high: Series,
     low: Series,
     close: Series,
-    scalar: Optional[float] = None,
-    offset: Optional[int] = None,
+    scalar: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Candle Pattern: Tristar"""
     return run_pattern(
         open_,

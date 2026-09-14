@@ -1,18 +1,20 @@
 # Linear Decay (DECAY)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
 def decay(
     close: Series,
-    kind: Optional[str] = None,
-    length: Optional[int] = None,
-    mode: Optional[str] = None,
-    offset: Optional[int] = None,
+    kind: str | None = None,
+    length: int | None = None,
+    mode: str | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Decay"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 5

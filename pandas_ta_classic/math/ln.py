@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from pandas import Series
@@ -6,7 +6,7 @@ from pandas import Series
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 
 
-def ln(close: Series, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]:
+def ln(close: Series, offset: int | None = None, **kwargs: Any) -> Series | None:
     """Vector Log Natural (TA-Lib: LN)."""
     close = verify_series(close)
     if close is None:

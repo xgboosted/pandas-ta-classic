@@ -1,6 +1,8 @@
 # Trend Signals (TSIGNALS)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -11,12 +13,12 @@ from pandas_ta_classic.utils import (
 
 def tsignals(
     trend: Series,
-    asbool: Optional[bool] = None,
+    asbool: bool | None = None,
     trend_reset: int = 0,
-    trade_offset: Optional[int] = None,
-    offset: Optional[int] = None,
+    trade_offset: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Trend Signals"""
     # Validate Arguments
     trend = verify_series(trend)

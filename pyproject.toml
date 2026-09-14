@@ -59,8 +59,9 @@ oracle = [
 
 # CI code quality tools
 lint = [
-    "ruff>=0.15.20",
+    "ruff>=0.16.0",
     "black>=26.5.1",
+    "mypy>=1.0.0",
 ]
 
 # PyPI publishing tools
@@ -166,6 +167,17 @@ exclude = [
 ]
 line-length = 150
 
+[tool.ruff.lint]
+# ruff's default rule set (floating with the `>=` pin) plus ICN. ICN001 enforces
+# the conventional aliases (numpy as np, pandas as pd); ICN003 with banned-from
+# rejects `from numpy import x`, so numpy is always reached through `np.`.
+extend-select = ["ICN"]
+
+[tool.ruff.lint.flake8-import-conventions]
+# pandas is deliberately not banned: `from pandas import Series` is the house
+# style in every indicator signature.
+banned-from = ["numpy", "numpy.lib.stride_tricks"]
+
 [tool.setuptools]
 packages = [
     "pandas_ta_classic",
@@ -193,9 +205,10 @@ fallback_version = "0.0.0"  # Fallback if not in a git repository
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]
-# python_version intentionally omitted here to avoid duplicating the floor in
-# `project.requires-python` above. `make typecheck` derives it from that field
-# and passes it via `--python-version` (which always overrides this file).
+# python_version is passed by `make typecheck` (--python-version 3.12). It is not
+# the 3.10 requires-python floor: numpy >= 2.5 stubs use PEP 695 `type`
+# statements that mypy cannot parse below 3.12. The testing-core matrix covers
+# runtime support for 3.10 and 3.11.
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -236,3 +249,6 @@ ignore_missing_imports = true
 module = ["talib", "talib.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
+# talib is optional and absent from the CI code-quality environment; resolve it
+# to Any there instead of reporting import-not-found at every deferred import.
+ignore_missing_imports = true

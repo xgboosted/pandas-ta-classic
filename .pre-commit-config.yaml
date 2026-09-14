@@ -6,17 +6,16 @@ repos:
         files: ^pandas_ta_classic/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.16.0
     hooks:
-      - id: ruff
-        args: [--select, "E9,F63,F7,F82"]
-        files: ^pandas_ta_classic/
+      # Same gate as CI: `ruff check` with [tool.ruff.lint], on every changed file.
+      - id: ruff-check
 
   - repo: local
     hooks:
       - id: gen-core-stub
         name: Regenerate core.pyi
-        entry: bash -c 'python tools/gen_core_stub.py && black --quiet pandas_ta_classic/core.pyi'
+        entry: bash -c 'python tools/gen_core_stub.py && ruff check --fix --quiet pandas_ta_classic/core.pyi && black --quiet pandas_ta_classic/core.pyi'
         language: system
         pass_filenames: false
         files: ^pandas_ta_classic/.+\.py$

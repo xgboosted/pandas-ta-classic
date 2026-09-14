@@ -137,7 +137,7 @@ def main():
             "source": "tulipy",
             "tulipy_version": getattr(tp, "__version__", "0.4.0"),
             "data_file": _DATA_PATH.name,
-            "rows": int(len(c)),
+            "rows": len(c),
             "tail": _TAIL,
             "note": "Frozen tulipy output (tail only); regenerate with generate_tulipy_oracle.py on CPython <3.12.",
         },

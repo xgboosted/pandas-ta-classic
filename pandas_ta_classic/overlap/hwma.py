@@ -1,10 +1,12 @@
 # Holt-Winter Moving Average (HWMA)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
@@ -27,12 +29,12 @@ def _hwma_loop(c_arr, m, na, nb, nc):
 @skip_leading_nan("close")
 def hwma(
     close: Series,
-    na: Optional[float] = None,
-    nb: Optional[float] = None,
-    nc: Optional[float] = None,
-    offset: Optional[int] = None,
+    na: float | None = None,
+    nb: float | None = None,
+    nc: float | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Holt-Winter Moving Average"""
     # Validate Arguments
     na = float(na) if na and na > 0 and na < 1 else 0.2

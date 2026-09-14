@@ -1,18 +1,21 @@
 # Double Exponential Moving Average (DEMA)
-from typing import Any, Optional
+from typing import Any
+
 from pandas import Series
-from .ema import _ema_chain
+
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+
+from .ema import _ema_chain
 
 
 def dema(
     close: Series,
-    length: Optional[int] = None,
-    talib: Optional[bool] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    talib: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Double Exponential Moving Average (DEMA)"""
     # Validate Arguments
     length = int(length) if length and length > 0 else 10

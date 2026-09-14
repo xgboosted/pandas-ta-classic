@@ -5,9 +5,10 @@ from pathlib import Path
 import manifoldbt as mbt
 import numpy as np
 import pandas as pd
-import pandas_ta_classic as ta
 from manifoldbt.expr import col, exo, lit, when
 from manifoldbt.helpers import Interval, Slippage, time_range
+
+import pandas_ta_classic as ta
 
 _ = ta.__name__  # registers df.ta accessor
 

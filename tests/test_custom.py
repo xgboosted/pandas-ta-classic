@@ -1,9 +1,9 @@
 import importlib
 import os
-import sys
-import types
-import tempfile
 import shutil
+import sys
+import tempfile
+import types
 from unittest import TestCase
 
 import pandas_ta_classic

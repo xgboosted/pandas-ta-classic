@@ -1,13 +1,14 @@
 # Central Pivot Range (CPR)
-from typing import Any, Optional
+from typing import Any
 
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._cpr import (
-    get_previous_period_ohlcv,
     calculate_cpr_width,
     calculate_price_position,
     detect_virgin_cpr,
+    get_previous_period_ohlcv,
 )
 
 
@@ -75,17 +76,17 @@ def cpr(
     high: Series,
     low: Series,
     close: Series,
-    volume: Optional[Series] = None,
+    volume: Series | None = None,
     method: str = "classic",
     timeframe: str = "daily",
-    interval: Optional[str] = None,
+    interval: str | None = None,
     levels: str = "standard",
     width_analysis: bool = True,
     price_position: bool = True,
     virgin_cpr: bool = False,
-    offset: Optional[int] = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: CPR (Central Pivot Range)"""
     # Validate arguments
     method = method.lower() if isinstance(method, str) else "classic"

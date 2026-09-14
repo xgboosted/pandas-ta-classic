@@ -1,10 +1,12 @@
 # Holt-Winter Channel (HWC)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import DataFrame, Series
+
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
@@ -71,15 +73,15 @@ def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval):
 @skip_leading_nan("close")
 def hwc(
     close: Series,
-    na: Optional[float] = None,
-    nb: Optional[float] = None,
-    nc: Optional[float] = None,
-    nd: Optional[float] = None,
-    scalar: Optional[float] = None,
-    channel_eval: Optional[bool] = None,
-    offset: Optional[int] = None,
+    na: float | None = None,
+    nb: float | None = None,
+    nc: float | None = None,
+    nd: float | None = None,
+    scalar: float | None = None,
+    channel_eval: bool | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Indicator: Holt-Winter Channel"""
     # Validate Arguments
     na = float(na) if na and na > 0 else 0.2

@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pandas import DataFrame, Series
 
@@ -7,10 +7,10 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 
 def minmax(
     close: Series,
-    length: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[DataFrame]:
+) -> DataFrame | None:
     """Rolling Min and Max over *length* periods (TA-Lib: MINMAX).
 
     Returns a DataFrame with columns ``MIN_<n>`` and ``MAX_<n>``.

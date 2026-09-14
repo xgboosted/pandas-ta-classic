@@ -1,8 +1,8 @@
 # Even Better Sine Wave (EBSW)
-from typing import Any, Optional
+from typing import Any
+
 import numpy as np
 from pandas import Series
-
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._njit import njit
@@ -51,11 +51,11 @@ def _ebsw_nb(close, length, bars):
 
 def ebsw(
     close: Series,
-    length: Optional[int] = None,
-    bars: Optional[int] = None,
-    offset: Optional[int] = None,
+    length: int | None = None,
+    bars: int | None = None,
+    offset: int | None = None,
     **kwargs: Any,
-) -> Optional[Series]:
+) -> Series | None:
     """Indicator: Even Better SineWave (EBSW)"""
     # Validate arguments
     length = int(length) if length and length > 38 else 40
