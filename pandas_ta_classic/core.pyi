@@ -695,12 +695,7 @@ class AnalysisIndicators:
         self, length: Optional[int] = None, atr_length: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[DataFrame]: ...
     def accbands(
-        self,
-        length: Optional[int] = None,
-        c: Optional[float] = None,
-        mamode: Optional[str] = None,
-        offset: Optional[int] = None,
-        **kwargs: Any,
+        self, length: Optional[int] = None, c: Optional[float] = None, mamode: Optional[str] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[DataFrame]: ...
     def atr(
         self,
