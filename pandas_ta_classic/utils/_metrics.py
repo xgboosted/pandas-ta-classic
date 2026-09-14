@@ -181,7 +181,7 @@ def optimal_leverage(
     return capital * opt_leverage
 
 
-def pure_profit_score(close: Series) -> float | int:
+def pure_profit_score(close: Series) -> float:
     """Pure Profit Score of a series.
 
     Args:

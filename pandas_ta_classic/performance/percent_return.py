@@ -58,7 +58,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 20
+    length (int): It's period. Default: 1
     cumulative (bool): If True, returns the cumulative returns. Default: False
     offset (int): How many periods to offset the result. Default: 0
 

@@ -6,14 +6,13 @@ Covers:
   * ``_indicator_loader`` — ``_find_indicator_func`` resolution,
     ``_make_ta_wrapper`` class-level caching.
   * Module-level ``__getattr__`` — top-level indicator access,
-    ``cdl_*`` submodule access, ``CDL_PATTERN_NAMES`` deprecation.
+    ``cdl_*`` submodule access, removed deprecated names.
   * Regression: cross-package import returns function (not module),
     ``indicators()`` list matches ``Category`` union.
 """
 
 import types
 import unittest
-import warnings
 
 import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
@@ -184,26 +183,14 @@ class TestModuleGetattr(unittest.TestCase):
         self.assertIs(pandas_ta_classic.cdl, pandas_ta_classic.candles.cdl)
         self.assertIn("cdl", dir(pandas_ta_classic))
 
-    def test_cdl_pattern_names_deprecation(self):
-        """Accessing CDL_PATTERN_NAMES emits DeprecationWarning, returns ALL_PATTERNS."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = pandas_ta_classic.CDL_PATTERN_NAMES
-            self.assertEqual(result, pandas_ta_classic.ALL_PATTERNS)
-            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
-            self.assertEqual(
-                len(deprecation_warnings),
-                1,
-                "CDL_PATTERN_NAMES must emit exactly one DeprecationWarning",
-            )
-            self.assertIn("deprecated", str(deprecation_warnings[0].message).lower())
-            self.assertIn("ALL_PATTERNS", str(deprecation_warnings[0].message))
-
-
-# ---------------------------------------------------------------------------
-# __dir__ completeness
-# ---------------------------------------------------------------------------
-
+    def test_deprecated_names_removed(self):
+        """Names deprecated in 0.8.32 are gone rather than served with a warning."""
+        for name in ("CDL_PATTERN_NAMES", "get_time", "EXCHANGE_TZ"):
+            with self.subTest(name=name), self.assertRaises(AttributeError):
+                getattr(pandas_ta_classic, name)
+        with self.assertRaises(AttributeError):
+            _ = pandas_ta_classic.candles.CDL_PATTERN_NAMES
+        self.assertTrue(callable(pandas_ta_classic.utils.get_time))  # internal helper stays
 
 class TestDirCompleteness(unittest.TestCase):
     def test_dir_includes_all_category_indicators(self):

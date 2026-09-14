@@ -30,7 +30,8 @@ def roc(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default scalar; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100:
         from talib import ROC
 
         roc = ROC(close, length)
@@ -66,7 +67,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 1
+    length (int): It's period. Default: 10
     scalar (float): How much to magnify. Default: 100
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: False

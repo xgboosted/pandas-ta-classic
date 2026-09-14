@@ -5,8 +5,8 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.trend.adx import adx
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param
 
 
 def adxr(
@@ -26,6 +26,9 @@ def adxr(
     # Validate Arguments
     length = _pos_int(length, 14, "length")
     lensig = _pos_int(lensig, length, "lensig")
+    scalar = _number(scalar, 100, "scalar")
+    mamode = _str_param(mamode, "rma", "mamode")
+    drift = get_drift(drift)
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
@@ -36,7 +39,8 @@ def adxr(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default drift, mamode, scalar; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100 and mamode == "rma" and drift == 1:
         from talib import ADXR, MINUS_DI, PLUS_DI
 
         adxr_series = Series(ADXR(high, low, close, length), index=close.index)

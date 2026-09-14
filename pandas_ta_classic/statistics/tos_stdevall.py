@@ -50,7 +50,7 @@ def tos_stdevall(
     if length is None:
         length = close.size
     else:
-        length = _pos_int(length, 30, "length", gt=2)
+        length = _pos_int(length, None, "length", gt=2)  # None (whole series) is handled above
         close = close.iloc[-length:]
         _props = f"{_props}_{length}"
 

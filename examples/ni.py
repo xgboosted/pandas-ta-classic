@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 from pandas_ta_classic.overlap import sma
 from pandas_ta_classic.utils import get_offset, verify_series
 
@@ -83,9 +86,6 @@ def ni_method(self, length=None, offset=None, **kwargs):
 
 # Demonstration of the custom indicator
 if __name__ == "__main__":
-    import numpy as np
-    import pandas as pd
-
     print("Testing custom NI (Example Indicator) function...")
 
     # Create sample data

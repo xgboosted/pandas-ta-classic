@@ -104,7 +104,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 10
+    length (int): It's period. Default: 20
     c (int): Multiplier. Default: 4
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0

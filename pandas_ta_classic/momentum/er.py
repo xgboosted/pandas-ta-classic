@@ -91,7 +91,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 1
+    length (int): It's period. Default: 10
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
