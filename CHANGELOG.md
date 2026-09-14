@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+* **BREAKING — built-in data fetching: `df.ta.ticker()`, `ta.yf()`, `ta.av()` and `pandas_ta_classic.utils.data`** (split from #142): deprecated with a `FutureWarning` in 0.8.32. Data fetching is out of scope for a technical-analysis library. Fetch OHLCV with yfinance or alpha-vantage directly and pass the DataFrame in; `examples/fetch_market_data.py` shows both. Also removed: the `data` optional extra (`integration` now aliases `backtest` only), the `yfinance` / `alpha-vantage` entries in `Imports`, their mypy overrides, and `tests/test_utils_data_alphavantage.py`. The VectorBT example notebook now downloads with `yfinance` directly.
+
 ### Documentation
 * **Quickstart troubleshooting: indicator returns `None` with a `FutureWarning`** (`docs/quickstart.md`): documents the non-Series deprecation from issue #145 — pass `df['close']`, not `df['close'].values`.
 * **Release docs sync**: `deprecated::` directives in `docs/dataframe_api.rst` now name 0.8.32, the release that shipped the deprecations, instead of the placeholder 0.6.53; the `ichimoku` entry in `docs/indicators.rst` notes the tuple-return deprecation and `as_dataframe=True`; the gapped-data count in `docs/quickstart.md` no longer quotes a single-dataset figure; `AGENTS.md` no longer claims candle pattern tests are absent from CI.

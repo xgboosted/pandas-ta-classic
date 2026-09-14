@@ -151,22 +151,6 @@ df.ta.macd(append=True)
 print(df.tail())
 ```
 
-### Using Built-in Ticker Method
-
-```python
-import pandas as pd
-import pandas_ta_classic as ta
-
-# Fetch data with yfinance directly (df.ta.ticker() is deprecated —
-# see examples/fetch_market_data.py)
-import yfinance as yf
-df = yf.download("AAPL", period="1y")
-
-# Add indicators
-df.ta.sma(length=20, append=True)
-df.ta.ema(length=20, append=True)
-```
-
 ### From CSV Files
 
 ```python
@@ -487,7 +471,7 @@ Now that you've got the basics, explore more:
 | Custom strategy | `ta.Strategy(name="My", ta=[...])` |
 | List categories | `print(ta.Category)` |
 | Get help | `help(ta.sma)` |
-| Fetch data | `yf.download("AAPL")` (via yfinance; `df.ta.ticker()` deprecated) |
+| Fetch data | `yf.download("AAPL")` (via yfinance; pandas-ta-classic does not fetch data) |
 
 ## Need Help?
 

@@ -3,8 +3,7 @@ Tests for DataFrame accessor (df.ta) API consistency — Issue #48.
 
 Covers:
   * The ``indicators()`` method correctly classifies helper methods vs properties.
-  * ``ticker`` is not present in the indicator list (it is a method, not a
-    property and should not be returned as an indicator).
+  * The removed data-fetching API (``df.ta.ticker``, ``ta.yf``, ``ta.av``) is gone.
   * ``prefix``/``suffix`` work as per-call kwargs, not as properties.
   * ``time_range`` accepts valid unit strings and rejects invalid ones.
   * ``to_utc`` is a property (not callable).
@@ -43,31 +42,31 @@ class TestAccessorHelperClassification(TestCase):
         return self.df.ta.indicators(as_list=True, **kwargs)
 
     # ------------------------------------------------------------------
-    # ticker must NOT appear in the indicator list
+    # Built-in data fetching was removed (deprecated in 0.8.32)
     # ------------------------------------------------------------------
 
-    def test_ticker_not_in_indicator_list(self):
-        """ticker is a method — must not be listed as an indicator."""
-        ind = self._indicator_list()
-        self.assertNotIn(
-            "ticker",
-            ind,
-            "'ticker' must not appear in df.ta.indicators() — it is a helper method",
-        )
+    def test_data_fetching_api_removed(self):
+        """df.ta.ticker, ta.yf and ta.av raise AttributeError, not a lookup of an indicator."""
+        with self.assertRaises(AttributeError):
+            self.df.ta.ticker
+        for name in ("yf", "av"):
+            with self.subTest(name=name):
+                self.assertFalse(hasattr(pandas_ta_classic, name))
+                self.assertFalse(hasattr(pandas_ta_classic.utils, name))
+        self.assertNotIn("ticker", self._indicator_list())
 
     # ------------------------------------------------------------------
     # Known helper methods must not appear in the indicator list
     # ------------------------------------------------------------------
 
     def test_helper_methods_excluded(self):
-        """chain, constants, indicators, strategy, ticker, unchain must not be in the list."""
+        """chain, constants, indicators, strategy, unchain must not be in the list."""
         ind = self._indicator_list()
         for name in (
             "chain",
             "constants",
             "indicators",
             "strategy",
-            "ticker",
             "unchain",
         ):
             self.assertNotIn(

@@ -53,14 +53,12 @@ from ._signals import (
     signals,
 )
 from ._time import df_year_to_date, final_time, get_time, to_utc, total_time
-from .data import av, yf
 
 __all__ = [
     "above",
     "above_value",
     "apply_fill",
     "apply_offset",
-    "av",
     "below",
     "below_value",
     "cagr",
@@ -103,6 +101,5 @@ __all__ = [
     "unsigned_differences",
     "verify_series",
     "weights",
-    "yf",
     "zero",
 ]
