@@ -59,24 +59,19 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     return tuple(results)
 
 
-def combination(**kwargs: Any) -> int:
-    """nCr combinatorics — wraps math.comb."""
-    n = int(abs(kwargs.pop("n", 1)))
-    r = int(abs(kwargs.pop("r", 0)))
-    repetition = kwargs.pop("repetition", False)
-    multichoose = kwargs.pop("multichoose", False)  # alias for repetition
-    if kwargs:
-        raise TypeError(f"combination() got unexpected keyword arguments: {sorted(kwargs)}")
+def combination(*, n: int = 1, r: int = 0, repetition: bool = False, multichoose: bool = False) -> int:
+    """nCr combinatorics — wraps math.comb. ``multichoose`` is an alias for ``repetition``."""
+    n = int(abs(n))
+    r = int(abs(r))
     if repetition or multichoose:
         n = n + r - 1
     return comb(n, r)
 
 
-def fibonacci(n: int = 2, **kwargs: Any) -> np.ndarray:
+def fibonacci(n: int = 2, *, zero: bool = False, weighted: bool = False) -> np.ndarray:
     """Fibonacci Sequence as a numpy array"""
     n = int(n) if n >= 0 else 2
 
-    zero = kwargs.pop("zero", False)
     if zero:
         a, b = 0, 1
     else:
@@ -88,7 +83,6 @@ def fibonacci(n: int = 2, **kwargs: Any) -> np.ndarray:
         a, b = b, a + b
         result = np.append(result, a)
 
-    weighted = kwargs.pop("weighted", False)
     if weighted:
         fib_sum: float = np.sum(result)
         if fib_sum > 0:
@@ -109,7 +103,7 @@ def linear_regression(x: Series, y: Series) -> dict:
     return _linear_regression_np(x, y)
 
 
-def pascals_triangle(n: int | None = None, **kwargs: Any) -> np.ndarray | None:
+def pascals_triangle(n: int | None = None, *, weighted: bool = False, inverse: bool = False) -> np.ndarray | None:
     """Pascal's Triangle
 
     Returns a numpy array of the nth row of Pascal's Triangle.
@@ -125,8 +119,6 @@ def pascals_triangle(n: int | None = None, **kwargs: Any) -> np.ndarray | None:
     triangle_weights = triangle / triangle_sum
     inverse_weights = 1 - triangle_weights
 
-    weighted = kwargs.pop("weighted", False)
-    inverse = kwargs.pop("inverse", False)
     if weighted and inverse:
         return inverse_weights
     if weighted:
@@ -137,7 +129,7 @@ def pascals_triangle(n: int | None = None, **kwargs: Any) -> np.ndarray | None:
     return triangle
 
 
-def symmetric_triangle(n: int | None = None, **kwargs: Any) -> list[int] | np.ndarray | None:
+def symmetric_triangle(n: int | None = None, *, weighted: bool = False) -> list[int] | np.ndarray | None:
     """Symmetric Triangle with n >= 2
 
     Returns a numpy array of the nth row of Symmetric Triangle.
@@ -163,7 +155,7 @@ def symmetric_triangle(n: int | None = None, **kwargs: Any) -> list[int] | np.nd
             front.pop()
             triangle += front[::-1]
 
-    if kwargs.pop("weighted", False) and isinstance(triangle, list):
+    if weighted and isinstance(triangle, list):
         triangle_arr: np.ndarray = np.array(triangle)
         triangle_sum: float = float(np.sum(triangle_arr))
         triangle_weights: np.ndarray = triangle_arr / triangle_sum
@@ -186,21 +178,20 @@ def zero(x: float) -> float:
     return 0 if abs(x) < sflt.epsilon else x
 
 
-def df_error_analysis(dfA: DataFrame, dfB: DataFrame, **kwargs: Any) -> DataFrame:
+def df_error_analysis(dfA: DataFrame, dfB: DataFrame, *, corr_method: str = "pearson", plot: bool = False, triangular: bool = False) -> DataFrame:
     """Correlation between two DataFrames, used by the test suite for oracle parity checks."""
-    corr_method = kwargs.pop("corr_method", "pearson")
 
     # Find their differences and correlation
     diff = dfA - dfB
     corr = dfA.corr(dfB, method=corr_method)
 
     # For plotting
-    if kwargs.pop("plot", False):
+    if plot:
         diff.hist()
         if diff[diff > 0].any():
             diff.plot(kind="kde")
 
-    if kwargs.pop("triangular", False):
+    if triangular:
         return corr.where(np.triu(np.ones(corr.shape)).astype(bool))
 
     return corr
