@@ -1,5 +1,4 @@
 # Inertia (INERTIA)
-import warnings
 from typing import Any, Optional
 from pandas import Series
 from pandas_ta_classic.overlap.linreg import linreg
@@ -66,7 +65,6 @@ def inertia(
     refined: Optional[bool] = None,
     thirds: Optional[bool] = None,
     mamode: Optional[str] = None,
-    drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -80,13 +78,6 @@ def inertia(
     mamode = mamode if isinstance(mamode, str) else "ema"
     _length = max(length, rvi_length)
     close = verify_series(close, _length)
-    if drift is not None:
-        warnings.warn(
-            "The 'drift' parameter of inertia() is deprecated and ignored; "
-            "it has never affected the result. It will be removed in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     offset = get_offset(offset)
 
     if close is None:
@@ -147,8 +138,6 @@ Args:
     refined (bool): Use 'refined' calculation. Default: False
     thirds (bool): Use 'thirds' calculation. Default: False
     mamode (str): See ```help(ta.ma)```. Default: 'ema'
-    drift (int): Deprecated and ignored. Never affected the result. This
-        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

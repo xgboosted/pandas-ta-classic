@@ -90,9 +90,7 @@ class AnalysisIndicators:
     def cci(
         self, length: Optional[int] = None, c: Optional[float] = None, talib: Optional[bool] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[Series]: ...
-    def cfo(
-        self, length: Optional[int] = None, scalar: Optional[float] = None, drift: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any
-    ) -> Optional[Series]: ...
+    def cfo(self, length: Optional[int] = None, scalar: Optional[float] = None, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]: ...
     def cg(self, length: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any) -> Optional[Series]: ...
     def cmo(
         self,
@@ -132,7 +130,6 @@ class AnalysisIndicators:
         refined: Optional[bool] = None,
         thirds: Optional[bool] = None,
         mamode: Optional[str] = None,
-        drift: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Optional[Series]: ...
@@ -148,7 +145,6 @@ class AnalysisIndicators:
         sma3: Optional[int] = None,
         sma4: Optional[int] = None,
         signal: Optional[int] = None,
-        drift: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Optional[DataFrame]: ...
@@ -230,9 +226,7 @@ class AnalysisIndicators:
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Optional[Union[Series, DataFrame]]: ...
-    def rsx(
-        self, length: Optional[int] = None, drift: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any
-    ) -> Optional[Union[Series, DataFrame]]: ...
+    def rsx(self, length: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any) -> Optional[Union[Series, DataFrame]]: ...
     def rvgi(
         self, length: Optional[int] = None, swma_length: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[DataFrame]: ...
@@ -567,7 +561,6 @@ class AnalysisIndicators:
         atr_length: Optional[int] = None,
         ln: Optional[bool] = None,
         scalar: Optional[float] = None,
-        drift: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Optional[Series]: ...
@@ -675,7 +668,6 @@ class AnalysisIndicators:
         asbool: Optional[bool] = None,
         trend_reset: int = 0,
         trade_offset: Optional[int] = None,
-        drift: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Optional[DataFrame]: ...
@@ -703,13 +695,7 @@ class AnalysisIndicators:
         self, length: Optional[int] = None, atr_length: Optional[int] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[DataFrame]: ...
     def accbands(
-        self,
-        length: Optional[int] = None,
-        c: Optional[float] = None,
-        drift: Optional[int] = None,
-        mamode: Optional[str] = None,
-        offset: Optional[int] = None,
-        **kwargs: Any,
+        self, length: Optional[int] = None, c: Optional[float] = None, mamode: Optional[str] = None, offset: Optional[int] = None, **kwargs: Any
     ) -> Optional[DataFrame]: ...
     def atr(
         self,
@@ -827,7 +813,6 @@ class AnalysisIndicators:
         slow: Optional[int] = None,
         signal: Optional[int] = None,
         mamode: Optional[str] = None,
-        drift: Optional[int] = None,
         offset: Optional[int] = None,
         **kwargs: Any,
     ) -> Optional[DataFrame]: ...

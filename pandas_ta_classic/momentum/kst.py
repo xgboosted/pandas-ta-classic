@@ -1,5 +1,4 @@
 # Know Sure Thing (KST)
-import warnings
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from .roc import roc
@@ -23,7 +22,6 @@ def kst(
     sma3: Optional[int] = None,
     sma4: Optional[int] = None,
     signal: Optional[int] = None,
-    drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[DataFrame]:
@@ -42,12 +40,6 @@ def kst(
     signal = _pos_int(signal, 9)
     _length = max(roc1, roc2, roc3, roc4, sma1, sma2, sma3, sma4, signal)
     close = verify_series(close, _length)
-    if drift is not None:
-        warnings.warn(
-            "The 'drift' parameter of kst() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     offset = get_offset(offset)
 
     if close is None:
@@ -114,8 +106,6 @@ Args:
     sma3 (int): SMA 3 period. Default: 10
     sma4 (int): SMA 4 period. Default: 15
     signal (int): It's period. Default: 9
-    drift (int): Deprecated and ignored. Never affected the result. This
-        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

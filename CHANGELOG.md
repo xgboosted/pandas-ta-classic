@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+* **BREAKING — `drift` parameter removed from `tsignals`, `cfo`, `inertia`, `kst`, `rsx`, `chop`, `accbands` and `kvo`** (issue #138): deprecated in 0.8.32, where passing it emitted a `DeprecationWarning` and the value was ignored. The parameter is now gone from the function signatures and the `df.ta` stubs. Because every indicator takes `**kwargs`, an existing `drift=` call keeps running and the value still has no effect; it only stops warning. Remove the argument. `tsignals` always uses a 1-period difference.
+
 ### Documentation
 * **Quickstart troubleshooting: indicator returns `None` with a `FutureWarning`** (`docs/quickstart.md`): documents the non-Series deprecation from issue #145 — pass `df['close']`, not `df['close'].values`.
 * **Release docs sync**: `deprecated::` directives in `docs/dataframe_api.rst` now name 0.8.32, the release that shipped the deprecations, instead of the placeholder 0.6.53; the `ichimoku` entry in `docs/indicators.rst` notes the tuple-return deprecation and `as_dataframe=True`; the gapped-data count in `docs/quickstart.md` no longer quotes a single-dataset figure; `AGENTS.md` no longer claims candle pattern tests are absent from CI.

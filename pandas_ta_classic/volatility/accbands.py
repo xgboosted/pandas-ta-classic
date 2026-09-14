@@ -1,5 +1,4 @@
 # Acceleration Bands (ACCBANDS)
-import warnings
 from typing import Any, Optional
 from pandas import DataFrame, Series
 from pandas_ta_classic.overlap.ma import ma
@@ -18,7 +17,6 @@ def accbands(
     close: Series,
     length: Optional[int] = None,
     c: Optional[float] = None,
-    drift: Optional[int] = None,
     mamode: Optional[str] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
@@ -31,13 +29,6 @@ def accbands(
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
-    if drift is not None:
-        warnings.warn(
-            "The 'drift' parameter of accbands() is deprecated and ignored; "
-            "it has never affected the result. It will be removed in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     offset = get_offset(offset)
 
     if high is None or low is None or close is None:
@@ -113,8 +104,6 @@ Args:
     length (int): It's period. Default: 10
     c (int): Multiplier. Default: 4
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
-    drift (int): Deprecated and ignored. Never affected the result. This
-        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

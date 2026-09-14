@@ -54,6 +54,10 @@ Covered fixes:
                           leading NaN run); they now compute on the rows after it
  28. None propagation  — pvt, rvi, swma and tos_stdevall crashed with TypeError or
      (issue #145)         LinAlgError on short input instead of returning None
+ 29. drift removal     — tsignals computed signals against the trend `drift` bars
+     (issue #138)         back; the parameter is gone from tsignals and the seven
+                          indicators that never used it, so a stray drift= lands in
+                          **kwargs and cannot change the result
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1662,3 +1666,52 @@ class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
     def test_tos_stdevall_needs_two_points(self):
         self.assertIsNone(ta.tos_stdevall(self.df.close.iloc[:1]))
         self.assertIsNotNone(ta.tos_stdevall(self.df.close.iloc[:2]))
+
+
+class TestDriftParameterRemoved(TestCase):
+    """Fix 29 (issue #138): drift is removed, not just ignored.
+
+    tsignals used trends.diff(drift), so drift != 1 compared each bar with the
+    trend state drift bars back and produced wrong entries and exits. #129 made
+    it a deprecated no-op on tsignals and on cfo, inertia, kst, rsx, chop,
+    accbands and kvo, which accepted it but never used it. Removing it must not
+    reintroduce any effect: a drift= keyword now falls into **kwargs.
+    """
+
+    NAMES = ("tsignals", "cfo", "inertia", "kst", "rsx", "chop", "accbands", "kvo")
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data().iloc[:300]
+        cls.columns = {c: df[c] for c in ("open", "high", "low", "close", "volume")}
+        cls.columns["trend"] = (df.close > df.close.rolling(20).mean()).astype(int)
+
+    def _call(self, name, **kwargs):
+        func = getattr(ta, name)
+        series = {p: self.columns[p] for p in inspect.signature(func).parameters if p in self.columns}
+        return func(**series, **kwargs)
+
+    def test_signatures_have_no_drift(self):
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                self.assertNotIn("drift", inspect.signature(getattr(ta, name)).parameters)
+
+    def test_accessor_stubs_have_no_drift(self):
+        import ast
+        from pathlib import Path
+
+        stub = ast.parse(Path(ta.__file__).with_name("core.pyi").read_text())
+        methods = {n.name: n for n in ast.walk(stub) if isinstance(n, ast.FunctionDef)}
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                self.assertNotIn("drift", [a.arg for a in methods[name].args.args])
+
+    def test_drift_keyword_has_no_effect_and_no_warning(self):
+        import warnings
+
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", DeprecationWarning)
+                    with_drift = self._call(name, drift=3)
+                pd.testing.assert_frame_equal(pd.DataFrame(with_drift), pd.DataFrame(self._call(name)))
