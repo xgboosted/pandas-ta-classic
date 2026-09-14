@@ -45,8 +45,7 @@ Accessor API Tests
 ------------------
 
 **Why:** Validate DataFrame accessor metadata and utilities: ``prefix``/``suffix``
-naming, ``indicators()`` discovery, ``ticker()`` data fetching, time range
-filtering, and ``constants()``.
+naming, ``indicators()`` discovery, time range filtering, and ``constants()``.
 
 **Files:** ``test_accessor_api.py``, ``test_ext_assertions.py``.
 
@@ -210,8 +209,7 @@ Utility Tests
 
 **Files:** ``test_utils.py`` (``verify_series``, ``apply_offset``,
 ``apply_fill``, cross detection), ``test_utils_metrics.py`` (Sharpe ratio,
-drawdown, CAGR, Jensen's alpha), ``test_utils_data_alphavantage.py``
-(AlphaVantage data fetching).
+drawdown, CAGR, Jensen's alpha).
 
 **Run:** ``python -m pytest tests/test_utils.py -v``
 

@@ -94,14 +94,13 @@ git clone https://github.com/xgboosted/pandas-ta-classic.git
 cd pandas-ta-classic
 
 # Install with all core dependencies (excludes the platform-fragile
-# data/backtest extras — install those explicitly if needed)
+# backtest extra — install it explicitly if needed)
 uv pip install -e ".[all]"
 
 # Or install specific dependency groups:
 uv pip install -e ".[dev]" # Development tools
 uv pip install -e ".[optional]" # Optional runtime features
 uv pip install -e ".[oracle]" # Oracle parity lib: TA-Lib
-uv pip install -e ".[data]" # Data sources: yfinance, alpha-vantage
 uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 ```
 
@@ -112,14 +111,13 @@ git clone https://github.com/xgboosted/pandas-ta-classic.git
 cd pandas-ta-classic
 
 # Install with all core dependencies (excludes the platform-fragile
-# data/backtest extras — install those explicitly if needed)
+# backtest extra — install it explicitly if needed)
 pip install -e ".[all]"
 
 # Or install specific dependency groups:
 pip install -e ".[dev]" # Development tools
 pip install -e ".[optional]" # Optional runtime features
 pip install -e ".[oracle]" # Oracle parity lib: TA-Lib
-pip install -e ".[data]" # Data sources: yfinance, alpha-vantage
 pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 ```
 
@@ -131,7 +129,7 @@ import pandas_ta_classic as ta
 
 # Load your data
 df = pd.read_csv("path/to/symbol.csv")
-# OR fetch OHLCV with yfinance directly (df.ta.ticker() is deprecated —
+# OR fetch OHLCV with yfinance directly (pandas-ta-classic does not fetch data;
 # see examples/fetch_market_data.py):
 # import yfinance as yf
 # df = yf.download("AAPL", period="1y")

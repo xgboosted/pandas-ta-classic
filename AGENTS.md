@@ -116,8 +116,8 @@ After each coding session, execute the code/module in local venv and troubleshoo
 
 ### Security
 
-- Never commit secrets, credentials, or API keys (e.g., Alpha Vantage API keys in `utils/data/`)
-- Validate external data at trust boundaries: Yahoo Finance and Alpha Vantage responses in `utils/data/`
+- Never commit secrets, credentials, or API keys (e.g., a data-provider API key in an example)
+- Validate external data at trust boundaries: OHLCV DataFrames from user code or examples
 - No arbitrary code execution from user-supplied strings
 
 ---
@@ -281,7 +281,6 @@ python -m build
 │   ├── volume/                       # Volume indicators
 │   ├── math/                         # Math operators & transforms
 │   └── utils/                        # Shared utilities
-│       └── data/                     # Data integrations (Alpha Vantage, Yahoo Finance)
 ├── tests/                            # Test suite
 │   ├── config.py
 │   ├── assertions.py
