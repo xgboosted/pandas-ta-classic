@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Verify black/ruff versions match between pyproject.toml and .pre-commit-config.yaml.
+"""Verify black/ruff versions agree across pyproject.toml, pre-commit and the environment.
 
 pyproject.toml's [project.optional-dependencies].lint pins and
 .pre-commit-config.yaml's hook `rev:` fields are two independent copies of
@@ -7,10 +7,18 @@ the same version (see AGENTS.md's "Dual config pattern"). Nothing else
 checks these agree, so a bump to one without the other would otherwise go
 unnoticed until a contributor's local pre-commit run used a different
 version than CI.
+
+The lint pins are `>=` floors, so the environment (CI included) installs the
+newest release. The installed version is therefore also compared with the
+pre-commit rev, by release series: ruff adds default rules in 0.MINOR
+releases and black changes its stable style once a year (the major
+component), so a newer series means CI enforces rules pre-commit does not.
+Patch releases within a series pass.
 """
 
 import re
 import sys
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import tomllib
@@ -24,6 +32,14 @@ REPO_TO_TOOL = {
     "https://github.com/psf/black": "black",
     "https://github.com/astral-sh/ruff-pre-commit": "ruff",
 }
+
+# Leading version components that identify a release series whose rules or
+# style can differ: ruff 0.16.x -> "0.16", black 26.5.1 -> "26".
+SERIES_PARTS = {"black": 1, "ruff": 2}
+
+
+def _series(tool: str, ver: str) -> str:
+    return ".".join(ver.split(".")[: SERIES_PARTS[tool]])
 
 
 def main() -> int:
@@ -57,7 +73,24 @@ def main() -> int:
         for m in mismatches:
             print(f"  {m}")
         return 1
-    print("black/ruff versions match across pyproject.toml and .pre-commit-config.yaml")
+
+    drifted = []
+    for tool in sorted(REPO_TO_TOOL.values()):
+        try:
+            installed = version(tool)
+        except PackageNotFoundError:
+            print(f"{tool}: not installed here, skipping the installed-version check")
+            continue
+        rev = precommit_versions[tool]
+        if _series(tool, installed) != _series(tool, rev):
+            drifted.append(f"{tool}: installed {installed} vs .pre-commit-config.yaml rev {rev}")
+    if drifted:
+        print("Installed lint tools are a newer release series than pre-commit, so CI and pre-commit enforce different rules.")
+        print("Bump the `rev:` in .pre-commit-config.yaml and the `>=` floor in pyproject.toml to the installed version:")
+        for d in drifted:
+            print(f"  {d}")
+        return 1
+    print("black/ruff versions match across pyproject.toml, .pre-commit-config.yaml and the installed tools")
     return 0
 
 

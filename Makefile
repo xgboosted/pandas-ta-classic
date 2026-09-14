@@ -138,3 +138,6 @@ format:
 typecheck:
 	@echo "Type checking against Python 3.12..."
 	$(PYTHON) -m mypy --python-version 3.12
+	@# core.pyi (the accessor stub for IDEs) shadows core.py during package
+	@# discovery, so the accessor and strategy engine need their own pass.
+	$(PYTHON) -m mypy --python-version 3.12 --no-warn-unused-configs pandas_ta_classic/core.py
