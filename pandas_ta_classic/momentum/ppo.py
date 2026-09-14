@@ -22,7 +22,8 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
         tuple[Series, Series, Series] | None: ``(ppo_s, histogram, signalma)``
         or *None* if any intermediate result is unavailable.
     """
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default scalar; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100:
         from talib import PPO
 
         ppo_s = PPO(close, fast, slow, tal_ma(mamode))

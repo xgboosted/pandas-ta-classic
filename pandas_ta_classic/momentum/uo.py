@@ -84,7 +84,8 @@ def uo(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default drift, fast_w, medium_w, slow_w; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and fast_w == 4.0 and medium_w == 2.0 and slow_w == 1.0 and drift == 1:
         from talib import ULTOSC
 
         uo = ULTOSC(high, low, close, fast, medium, slow)

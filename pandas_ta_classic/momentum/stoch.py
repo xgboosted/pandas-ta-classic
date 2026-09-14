@@ -44,7 +44,8 @@ def stoch(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and mamode == "sma":
         from talib import STOCH
 
         _k, _d = STOCH(
