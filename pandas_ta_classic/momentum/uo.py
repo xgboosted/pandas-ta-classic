@@ -66,12 +66,12 @@ def uo(
 ) -> Series | None:
     """Indicator: Ultimate Oscillator (UO)"""
     # Validate arguments
-    fast = _pos_int(fast, 7)
-    fast_w = _pos_float(fast_w, 4.0)
-    medium = _pos_int(medium, 14)
-    medium_w = _pos_float(medium_w, 2.0)
-    slow = _pos_int(slow, 28)
-    slow_w = _pos_float(slow_w, 1.0)
+    fast = _pos_int(fast, 7, "fast")
+    fast_w = _pos_float(fast_w, 4.0, "fast_w")
+    medium = _pos_int(medium, 14, "medium")
+    medium_w = _pos_float(medium_w, 2.0, "medium_w")
+    slow = _pos_int(slow, 28, "slow")
+    slow_w = _pos_float(slow_w, 1.0, "slow_w")
     _length = max(fast, medium, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def vosc(
@@ -16,8 +17,8 @@ def vosc(
 ) -> Series | None:
     """Indicator: Volume Oscillator (VOSC)"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 14
-    slow = int(slow) if slow and slow > 0 else 28
+    fast = _pos_int(fast, 14, "fast")
+    slow = _pos_int(slow, 28, "slow")
     if fast > slow:
         fast, slow = slow, fast
     volume = verify_series(volume, slow)

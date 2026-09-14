@@ -7,7 +7,7 @@ import numpy as np
 from pandas import DataFrame, DatetimeIndex, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
 
 
 @skip_leading_nan("close")
@@ -47,11 +47,11 @@ def tos_stdevall(
     if length is None:
         length = close.size
     else:
-        length = int(length) if isinstance(length, int) and length > 2 else 30
+        length = _pos_int(length, 30, "length", gt=2)
         close = close.iloc[-length:]
         _props = f"{_props}_{length}"
 
-    ddof = int(ddof) if ddof and ddof >= 0 and ddof < length else 1
+    ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
 
     # A linear fit needs at least two points.
     close = verify_series(close, max(length, 2))

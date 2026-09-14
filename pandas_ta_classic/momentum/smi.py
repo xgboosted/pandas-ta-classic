@@ -4,6 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .tsi import tsi
 
@@ -19,9 +20,9 @@ def smi(
 ) -> DataFrame | None:
     """Indicator: SMI Ergodic Indicator (SMIIO)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 5
-    slow = int(slow) if slow and slow > 0 else 20
-    signal = int(signal) if signal and signal > 0 else 5
+    fast = _pos_int(fast, 5, "fast")
+    slow = _pos_int(slow, 20, "slow")
+    signal = _pos_int(signal, 5, "signal")
     if slow < fast:
         fast, slow = slow, fast
     scalar = float(scalar) if scalar else 1

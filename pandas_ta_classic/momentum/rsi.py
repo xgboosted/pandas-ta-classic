@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def rsi(
@@ -26,7 +27,7 @@ def rsi(
 ) -> Series | DataFrame | None:
     """Indicator: Relative Strength Index (RSI)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     scalar = float(scalar) if scalar else 100
     close = verify_series(close, length)
     drift = get_drift(drift)

@@ -1641,9 +1641,12 @@ class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
     def test_pvt_drift_longer_than_input(self):
         self.assertIsNone(ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
 
-    def test_rvi_length_one_on_short_input(self):
+    def test_rvi_length_one_is_rejected(self):
+        # variance used to widen length=1 to its default window; since 0.9.0
+        # invalid window lengths raise instead of being replaced.
         d = self.df.iloc[:12]
-        self.assertIsNone(ta.rvi(d.close, d.high, d.low, length=1))
+        with self.assertRaisesRegex(ValueError, r"rvi\(\) length must be an integer > 1, got 1"):
+            ta.rvi(d.close, d.high, d.low, length=1)
 
     def test_swma_length_one_is_the_input(self):
         np.testing.assert_allclose(ta.swma(self.df.close, length=1).to_numpy(), self.df.close.to_numpy())

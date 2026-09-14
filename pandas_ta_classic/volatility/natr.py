@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 from .atr import atr
 
@@ -29,7 +30,7 @@ def natr(
 ) -> Series | None:
     """Indicator: Normalized Average True Range (NATR)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     mamode = mamode if isinstance(mamode, str) else "rma"
     scalar = float(scalar) if scalar else 100
     high = verify_series(high, length)

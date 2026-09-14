@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 from .true_range import true_range
 
@@ -29,7 +30,7 @@ def atr(
 ) -> Series | None:
     """Indicator: Average True Range (ATR)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     mamode = mamode.lower() if mamode and isinstance(mamode, str) else "rma"
     high = verify_series(high, length)
     low = verify_series(low, length)

@@ -5,6 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.trix import trix
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def trixh(
@@ -18,8 +19,8 @@ def trixh(
 ) -> DataFrame | None:
     """Indicator: TRIX Histogram (TRIXH)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 18
-    signal = int(signal) if signal and signal > 0 else 9
+    length = _pos_int(length, 18, "length")
+    signal = _pos_int(signal, 9, "signal")
     scalar = float(scalar) if scalar else 100
     close = verify_series(close, length)
     offset = get_offset(offset)

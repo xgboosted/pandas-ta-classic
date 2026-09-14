@@ -7,6 +7,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def _mavp_sma_values(close_arr, per_arr):
@@ -45,8 +46,8 @@ def mavp(
 ) -> Series | None:
     """Indicator: Moving Average with Variable Period (MAVP)"""
     # Validate Arguments
-    minperiod = int(minperiod) if minperiod and minperiod >= 2 else 2
-    maxperiod = int(maxperiod) if maxperiod and maxperiod > minperiod else 30
+    minperiod = _pos_int(minperiod, 2, "minperiod", gt=None, ge=2)
+    maxperiod = _pos_int(maxperiod, 30, "maxperiod", gt=minperiod)
     # mamode: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3
     # For native fallback we only support SMA (0)
     mamode = int(mamode) if mamode is not None else 0

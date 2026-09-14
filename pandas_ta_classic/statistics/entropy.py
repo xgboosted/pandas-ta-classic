@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def entropy(
@@ -16,8 +17,8 @@ def entropy(
 ) -> Series | None:
     """Indicator: Entropy (ENTP)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
-    base = float(base) if base and base > 0 else 2.0
+    length = _pos_int(length, 10, "length")
+    base = _pos_float(base, 2.0, "base")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

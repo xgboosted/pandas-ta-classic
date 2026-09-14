@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_float, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -84,11 +84,11 @@ def hwc(
 ) -> DataFrame | None:
     """Indicator: Holt-Winter Channel"""
     # Validate Arguments
-    na = float(na) if na and na > 0 else 0.2
-    nb = float(nb) if nb and nb > 0 else 0.1
-    nc = float(nc) if nc and nc > 0 else 0.1
-    nd = float(nd) if nd and nd > 0 else 0.1
-    scalar = float(scalar) if scalar and scalar > 0 else 1
+    na = _pos_float(na, 0.2, "na")
+    nb = _pos_float(nb, 0.1, "nb")
+    nc = _pos_float(nc, 0.1, "nc")
+    nd = _pos_float(nd, 0.1, "nd")
+    scalar = _pos_float(scalar, 1, "scalar")
     channel_eval = bool(channel_eval) if channel_eval and channel_eval else False
     close = verify_series(close)
     if close is None:

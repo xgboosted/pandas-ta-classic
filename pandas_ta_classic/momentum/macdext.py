@@ -66,9 +66,9 @@ def macdext(
     0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3.
     """
     # Validate Arguments
-    fast = _pos_int(fast, 12)
-    slow = _pos_int(slow, 26)
-    signal = _pos_int(signal, 9)
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    signal = _pos_int(signal, 9, "signal")
     fastmatype = int(fastmatype) if fastmatype is not None and fastmatype >= 0 else 1
     slowmatype = int(slowmatype) if slowmatype is not None and slowmatype >= 0 else 1
     signalmatype = int(signalmatype) if signalmatype is not None and signalmatype >= 0 else 1

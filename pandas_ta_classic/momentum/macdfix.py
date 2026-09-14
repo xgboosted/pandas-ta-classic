@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.momentum.macd import macd
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def macdfix(
@@ -20,7 +21,7 @@ def macdfix(
     MACD with fixed fast=12, slow=26, variable signal period.
     TA-Lib name: MACDFIX.
     """
-    signal = int(signal) if signal and signal > 0 else 9
+    signal = _pos_int(signal, 9, "signal")
     close = verify_series(close, 26 + signal)
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False

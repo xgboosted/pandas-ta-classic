@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 from .ema import _ema_chain
 
@@ -19,8 +20,8 @@ def t3(
 ) -> Series | None:
     """Indicator: T3"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
-    a = float(a) if a and a > 0 and a < 1 else 0.7
+    length = _pos_int(length, 10, "length")
+    a = _pos_float(a, 0.7, "a", lt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False

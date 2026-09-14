@@ -4,6 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def beta(
@@ -15,7 +16,7 @@ def beta(
 ) -> Series | None:
     """Indicator: Beta"""
     # Validate Arguments
-    length = int(length) if length and length > 1 else 30
+    length = _pos_int(length, 30, "length", gt=1)
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     close = verify_series(close, max(length, min_periods))
     benchmark = verify_series(benchmark, max(length, min_periods))

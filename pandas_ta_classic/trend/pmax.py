@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.volatility.atr import atr
 
@@ -58,8 +59,8 @@ def pmax(
 ) -> Series | None:
     """Indicator: PMAX (Price Max)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 10
-    multiplier = float(multiplier) if multiplier and multiplier > 0 else 3.0
+    length = _pos_int(length, 10, "length")
+    multiplier = _pos_float(multiplier, 3.0, "multiplier")
     mamode = mamode.lower() if mamode and isinstance(mamode, str) else "ema"
     high = verify_series(high, length)
     low = verify_series(low, length)

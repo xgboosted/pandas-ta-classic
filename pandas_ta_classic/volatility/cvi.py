@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def cvi(
@@ -16,7 +17,7 @@ def cvi(
 ) -> Series | None:
     """Indicator: Chaikins Volatility (CVI)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     high = verify_series(high, length)
     low = verify_series(low, length)
     offset = get_offset(offset)

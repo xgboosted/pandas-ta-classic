@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
@@ -55,9 +56,9 @@ def ppo(
 ) -> DataFrame | None:
     """Indicator: Percentage Price Oscillator (PPO)"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 12
-    slow = int(slow) if slow and slow > 0 else 26
-    signal = int(signal) if signal and signal > 0 else 9
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    signal = _pos_int(signal, 9, "signal")
     scalar = float(scalar) if scalar else 100
     mamode = mamode if isinstance(mamode, str) else "sma"
     if slow < fast:

@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _sliding_weighted_ma
+from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma
 
 
 def fwma(
@@ -22,7 +22,7 @@ def fwma(
 ) -> Series | None:
     """Indicator: Fibonacci's Weighted Moving Average (FWMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     asc = bool(asc) if asc is not None else True
     close = verify_series(close, length)
     offset = get_offset(offset)

@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def er(
@@ -22,7 +23,7 @@ def er(
 ) -> Series | DataFrame | None:
     """Indicator: Efficiency Ratio (ER)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     drift = get_drift(drift)

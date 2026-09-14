@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
 
 
 @skip_leading_nan("close")
@@ -24,7 +24,7 @@ def vidya(
 ) -> Series | None:
     """Indicator: Variable Index Dynamic Average (VIDYA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

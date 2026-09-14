@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def quantile(
@@ -16,9 +17,9 @@ def quantile(
 ) -> Series | None:
     """Indicator: Quantile"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 30
+    length = _pos_int(length, 30, "length")
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
-    q = float(q) if q and q > 0 and q < 1 else 0.5
+    q = _pos_float(q, 0.5, "q", lt=1)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 

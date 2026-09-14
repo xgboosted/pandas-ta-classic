@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 from .mom import mom
 
@@ -19,8 +20,8 @@ def roc(
 ) -> Series | None:
     """Indicator: Rate of Change (ROC)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
-    scalar = float(scalar) if scalar and scalar > 0 else 100
+    length = _pos_int(length, 10, "length")
+    scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False

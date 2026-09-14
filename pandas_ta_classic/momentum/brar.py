@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def brar(
@@ -26,7 +27,7 @@ def brar(
 ) -> DataFrame | None:
     """Indicator: BRAR (BRAR)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 26
+    length = _pos_int(length, 26, "length")
     scalar = float(scalar) if scalar else 100
     open_ = verify_series(open_, length)
     high = verify_series(high, length)

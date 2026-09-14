@@ -55,9 +55,9 @@ def macd(
 ) -> DataFrame | None:
     """Indicator: Moving Average, Convergence/Divergence (MACD)"""
     # Validate arguments
-    fast = _pos_int(fast, 12)
-    slow = _pos_int(slow, 26)
-    signal = _pos_int(signal, 9)
+    fast = _pos_int(fast, 12, "fast")
+    slow = _pos_int(slow, 26, "slow")
+    signal = _pos_int(signal, 9, "signal")
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))

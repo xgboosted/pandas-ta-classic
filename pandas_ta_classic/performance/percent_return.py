@@ -4,6 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def percent_return(
@@ -15,7 +16,7 @@ def percent_return(
 ) -> Series | None:
     """Indicator: Percent Return"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 1
+    length = _pos_int(length, 1, "length")
     cumulative = bool(cumulative) if cumulative is not None and cumulative else False
     close = verify_series(close, length)
     offset = get_offset(offset)

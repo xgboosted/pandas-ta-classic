@@ -83,9 +83,9 @@ def psar(
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
-    af = _pos_float(af, 0.02)
-    af0 = _pos_float(af0, af)
-    max_af = _pos_float(max_af, 0.2)
+    af = _pos_float(af, 0.02, "af")
+    af0 = _pos_float(af0, af, "af0")
+    max_af = _pos_float(max_af, 0.2, "max_af")
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False
 

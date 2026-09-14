@@ -1,8 +1,10 @@
 import functools
 import inspect
 import logging
+import math
 import sys
 from collections.abc import Callable
+from numbers import Real
 from sys import float_info as sflt
 from typing import Any, TypeGuard
 
@@ -13,14 +15,38 @@ from pandas.api.types import is_datetime64_any_dtype
 logger = logging.getLogger(__name__)
 
 
-def _pos_int(val, default):
-    """Return ``int(val)`` when *val* is a positive integer, else *default*."""
-    return int(val) if val and val > 0 else default
+def _validate_number(val: Any, default: Any, name: str, *, integer: bool, gt: float | None, ge: float | None, lt: float | None) -> Any:
+    """Shared body of :func:`_pos_int` and :func:`_pos_float`.
+
+    ``None`` means "not given" and returns *default*. Anything else must be a
+    finite real number (not a bool) inside the bounds, and a whole number when
+    *integer* is set; otherwise ``ValueError`` names the indicator, the
+    parameter and the value instead of silently substituting the default.
+    """
+    if val is None:
+        return default
+    valid = isinstance(val, Real) and not isinstance(val, bool) and math.isfinite(val)
+    valid = valid and (not integer or float(val).is_integer())
+    valid = valid and (gt is None or val > gt) and (ge is None or val >= ge) and (lt is None or val < lt)
+    if not valid:
+        indicator = sys._getframe(2).f_code.co_name  # the indicator that called _pos_int/_pos_float
+        bounds = " and ".join(f"{op} {bound}" for op, bound in ((">", gt), (">=", ge), ("<", lt)) if bound is not None)
+        kind = "an integer" if integer else "a number"
+        raise ValueError(f"{indicator}() {name} must be {kind} {bounds}, got {val!r}")
+    return int(val) if integer else float(val)
 
 
-def _pos_float(val, default):
-    """Return ``float(val)`` when *val* is a positive float, else *default*."""
-    return float(val) if val and val > 0 else default
+def _pos_int(val: Any, default: Any, name: str = "value", *, gt: float | None = 0, ge: float | None = None, lt: float | None = None) -> Any:
+    """Return ``int(val)``, *default* when *val* is None, or raise ValueError.
+
+    The bound defaults to ``> 0``; pass ``ge`` (with ``gt=None``) or ``lt`` for others.
+    """
+    return _validate_number(val, default, name, integer=True, gt=gt, ge=ge, lt=lt)
+
+
+def _pos_float(val: Any, default: Any, name: str = "value", *, gt: float | None = 0, ge: float | None = None, lt: float | None = None) -> Any:
+    """Return ``float(val)``, *default* when *val* is None, or raise ValueError."""
+    return _validate_number(val, default, name, integer=False, gt=gt, ge=ge, lt=lt)
 
 
 def apply_offset(

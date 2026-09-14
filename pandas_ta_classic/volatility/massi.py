@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def massi(
@@ -23,8 +24,8 @@ def massi(
 ) -> Series | None:
     """Indicator: Mass Index (MASSI)"""
     # Validate arguments
-    fast = int(fast) if fast and fast > 0 else 9
-    slow = int(slow) if slow and slow > 0 else 25
+    fast = _pos_int(fast, 9, "fast")
+    slow = _pos_int(slow, 25, "slow")
     if slow < fast:
         fast, slow = slow, fast
     _length = max(fast, slow)

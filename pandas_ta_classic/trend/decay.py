@@ -5,6 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def decay(
@@ -17,7 +18,7 @@ def decay(
 ) -> Series | None:
     """Indicator: Decay"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 5
+    length = _pos_int(length, 5, "length")
     mode = mode.lower() if isinstance(mode, str) else "linear"
     close = verify_series(close, length)
     offset = get_offset(offset)

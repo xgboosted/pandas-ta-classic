@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def mom(
@@ -16,7 +17,7 @@ def mom(
 ) -> Series | None:
     """Indicator: Momentum (MOM)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = bool(talib) if isinstance(talib, bool) else False

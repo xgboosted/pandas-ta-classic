@@ -13,9 +13,8 @@ def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: i
     """Core RVI computation for a single source series."""
     std = stdev(source, length)
     if std is None:
-        # stdev needs more rows than rvi's own guard checks (variance widens
-        # length=1 to its default window), so propagate None instead of
-        # multiplying by it.
+        # stdev returned None (input shorter than its window): propagate None
+        # instead of multiplying by it.
         return None
     pos, neg = unsigned_differences(source, amount=drift)
     pos_std = pos * std
@@ -71,8 +70,8 @@ def rvi(
 ) -> Series | None:
     """Indicator: Relative Volatility Index (RVI)"""
     # Validate arguments
-    length = _pos_int(length, 14)
-    scalar = _pos_float(scalar, 100)
+    length = _pos_int(length, 14, "length", gt=1)  # stdev needs at least two rows
+    scalar = _pos_float(scalar, 100, "scalar")
     refined = bool(refined)
     thirds = bool(thirds)
     mamode = mamode if isinstance(mamode, str) else "ema"

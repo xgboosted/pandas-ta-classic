@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def nvi(
@@ -23,8 +24,8 @@ def nvi(
 ) -> Series | None:
     """Indicator: Negative Volume Index (NVI)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 1
-    initial = int(initial) if initial and initial > 0 else 1000
+    length = _pos_int(length, 1, "length")
+    initial = _pos_int(initial, 1000, "initial")
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     offset = get_offset(offset)

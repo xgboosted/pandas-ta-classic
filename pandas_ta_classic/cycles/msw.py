@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def msw(
@@ -20,7 +21,7 @@ def msw(
     Returns two oscillator series: sine and lead (sine + 45°).
     """
     # Validate Arguments
-    period = int(period) if period and period > 1 else 5
+    period = _pos_int(period, 5, "period", gt=1)
     close = verify_series(close, period + 1)
     offset = get_offset(offset)
 

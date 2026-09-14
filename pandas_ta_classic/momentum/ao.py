@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def ao(
@@ -17,8 +18,8 @@ def ao(
 ) -> Series | None:
     """Indicator: Awesome Oscillator (AO)"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 5
-    slow = int(slow) if slow and slow > 0 else 34
+    fast = _pos_int(fast, 5, "fast")
+    slow = _pos_int(slow, 34, "slow")
     if slow < fast:
         fast, slow = slow, fast
     _length = max(fast, slow)

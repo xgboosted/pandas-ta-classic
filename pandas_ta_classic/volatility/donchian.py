@@ -4,6 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def donchian(
@@ -16,8 +17,8 @@ def donchian(
 ) -> DataFrame | None:
     """Indicator: Donchian Channels (DC)"""
     # Validate arguments
-    lower_length = int(lower_length) if lower_length and lower_length > 0 else 20
-    upper_length = int(upper_length) if upper_length and upper_length > 0 else 20
+    lower_length = _pos_int(lower_length, 20, "lower_length")
+    upper_length = _pos_int(upper_length, 20, "upper_length")
     lower_min_periods = (
         int(kwargs["lower_min_periods"]) if "lower_min_periods" in kwargs and kwargs["lower_min_periods"] is not None else lower_length
     )

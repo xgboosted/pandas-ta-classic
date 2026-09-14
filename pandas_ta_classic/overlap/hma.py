@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .wma import wma
 
@@ -17,7 +18,7 @@ def hma(
 ) -> Series | None:
     """Indicator: Hull Moving Average (HMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length", gt=1)  # the half-length WMA needs length >= 2
     close = verify_series(close, length)
     offset = get_offset(offset)
 

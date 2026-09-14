@@ -107,12 +107,12 @@ def squeeze(
 ) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ)"""
     # Validate arguments
-    bb_length = _pos_int(bb_length, 20)
-    bb_std = _pos_float(bb_std, 2.0)
-    kc_length = _pos_int(kc_length, 20)
-    kc_scalar = _pos_float(kc_scalar, 1.5)
-    mom_length = _pos_int(mom_length, 12)
-    mom_smooth = _pos_int(mom_smooth, 6)
+    bb_length = _pos_int(bb_length, 20, "bb_length")
+    bb_std = _pos_float(bb_std, 2.0, "bb_std")
+    kc_length = _pos_int(kc_length, 20, "kc_length")
+    kc_scalar = _pos_float(kc_scalar, 1.5, "kc_scalar")
+    mom_length = _pos_int(mom_length, 12, "mom_length")
+    mom_smooth = _pos_int(mom_smooth, 6, "mom_smooth")
     _length = max(bb_length, kc_length, mom_length, mom_smooth)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

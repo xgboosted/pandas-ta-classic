@@ -72,9 +72,9 @@ def inertia(
 ) -> Series | None:
     """Indicator: Inertia (INERTIA)"""
     # Validate Arguments
-    length = _pos_int(length, 20)
-    rvi_length = _pos_int(rvi_length, 14)
-    scalar = _pos_float(scalar, 100)
+    length = _pos_int(length, 20, "length")
+    rvi_length = _pos_int(rvi_length, 14, "rvi_length")
+    scalar = _pos_float(scalar, 100, "scalar")
     refined = bool(refined)
     thirds = bool(thirds)
     mamode = mamode if isinstance(mamode, str) else "ema"

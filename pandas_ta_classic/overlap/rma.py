@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def rma(
@@ -15,7 +16,7 @@ def rma(
 ) -> Series | None:
     """Indicator: wildeR's Moving Average (RMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     alpha = (1.0 / length) if length > 0 else 0.5
     close = verify_series(close, length)
     offset = get_offset(offset)

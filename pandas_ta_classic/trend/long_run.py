@@ -4,6 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .decreasing import decreasing
 from .increasing import increasing
@@ -18,7 +19,7 @@ def long_run(
 ) -> Series | None:
     """Indicator: Long Run"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 2
+    length = _pos_int(length, 2, "length")
     fast = verify_series(fast, length)
     slow = verify_series(slow, length)
     offset = get_offset(offset)

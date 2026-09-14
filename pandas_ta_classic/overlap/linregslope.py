@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def linregslope(
@@ -19,7 +20,7 @@ def linregslope(
     The slope of the linear regression line.
     TA-Lib name: LINEARREG_SLOPE.
     """
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

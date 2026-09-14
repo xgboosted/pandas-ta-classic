@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_int, skip_leading_nan
 
 from .ad import ad
 
@@ -26,8 +26,8 @@ def adosc(
 ) -> Series | None:
     """Indicator: Accumulation/Distribution Oscillator"""
     # Validate Arguments
-    fast = int(fast) if fast and fast > 0 else 3
-    slow = int(slow) if slow and slow > 0 else 10
+    fast = _pos_int(fast, 3, "fast")
+    slow = _pos_int(slow, 10, "slow")
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

@@ -3,6 +3,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def minmax(
@@ -15,7 +16,7 @@ def minmax(
 
     Returns a DataFrame with columns ``MIN_<n>`` and ``MAX_<n>``.
     """
-    length = int(length) if length and length > 0 else 30
+    length = _pos_int(length, 30, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     if close is None:

@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def dx(
@@ -29,8 +30,8 @@ def dx(
 ) -> Series | None:
     """Indicator: Directional Index (DX)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
-    scalar = float(scalar) if scalar and scalar > 0 else 100
+    length = _pos_int(length, 14, "length")
+    scalar = _pos_float(scalar, 100, "scalar")
     mamode = mamode.lower() if isinstance(mamode, str) else "rma"
     high = verify_series(high, length)
     low = verify_series(low, length)

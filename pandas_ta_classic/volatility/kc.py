@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 from .true_range import true_range
 
@@ -27,8 +28,8 @@ def kc(
 ) -> DataFrame | None:
     """Indicator: Keltner Channels (KC)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 20
-    scalar = float(scalar) if scalar and scalar > 0 else 2
+    length = _pos_int(length, 20, "length")
+    scalar = _pos_float(scalar, 2, "scalar")
     mamode = mamode if isinstance(mamode, str) else "ema"
     high = verify_series(high, length)
     low = verify_series(low, length)

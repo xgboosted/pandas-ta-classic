@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def vhf(
@@ -23,7 +24,7 @@ def vhf(
 ) -> Series | None:
     """Indicator: Vertical Horizontal Filter (VHF)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 28
+    length = _pos_int(length, 28, "length")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

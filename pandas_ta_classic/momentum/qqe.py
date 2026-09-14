@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 from pandas_ta_classic.utils._njit import njit
 
 from .rsi import rsi
@@ -76,8 +77,8 @@ def qqe(
 ) -> DataFrame | None:
     """Indicator: Quantitative Qualitative Estimation (QQE)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
-    smooth = int(smooth) if smooth and smooth > 0 else 5
+    length = _pos_int(length, 14, "length")
+    smooth = _pos_int(smooth, 5, "smooth")
     factor = float(factor) if factor else 4.236
     wilders_length = 2 * length - 1
     mamode = mamode if isinstance(mamode, str) else "ema"

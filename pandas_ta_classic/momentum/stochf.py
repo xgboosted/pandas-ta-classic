@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def _stochf_native(high, low, close, fastk, fastd, mamode):
@@ -55,8 +56,8 @@ def stochf(
 ) -> DataFrame | None:
     """Indicator: Stochastic Fast (STOCHF)"""
     # Validate Arguments
-    fastk = fastk if fastk and fastk > 0 else 5
-    fastd = fastd if fastd and fastd > 0 else 3
+    fastk = _pos_int(fastk, 5, "fastk")
+    fastd = _pos_int(fastd, 3, "fastd")
     _length = max(fastk, fastd)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

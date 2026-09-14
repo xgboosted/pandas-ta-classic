@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def dm(
@@ -27,7 +28,7 @@ def dm(
 ) -> DataFrame | None:
     """Indicator: DM"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     mamode = mamode.lower() if mamode and isinstance(mamode, str) else "rma"
     high = verify_series(high, length)
     low = verify_series(low, length)

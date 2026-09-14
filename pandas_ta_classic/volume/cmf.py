@@ -10,6 +10,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def cmf(
@@ -24,7 +25,7 @@ def cmf(
 ) -> Series | None:
     """Indicator: Chaikin Money Flow (CMF)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 20
+    length = _pos_int(length, 20, "length")
     min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
     _length = max(length, min_periods)
     high = verify_series(high, _length)

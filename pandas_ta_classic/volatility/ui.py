@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def ui(
@@ -17,8 +18,8 @@ def ui(
 ) -> Series | None:
     """Indicator: Ulcer Index (UI)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 14
-    scalar = float(scalar) if scalar and scalar > 0 else 100
+    length = _pos_int(length, 14, "length")
+    scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

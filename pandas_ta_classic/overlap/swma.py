@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     weights,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def swma(
@@ -22,7 +23,7 @@ def swma(
 ) -> Series | None:
     """Indicator: Symmetric Weighted Moving Average (SWMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

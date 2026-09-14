@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_float, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -37,9 +37,9 @@ def hwma(
 ) -> Series | None:
     """Indicator: Holt-Winter Moving Average"""
     # Validate Arguments
-    na = float(na) if na and na > 0 and na < 1 else 0.2
-    nb = float(nb) if nb and nb > 0 and nb < 1 else 0.1
-    nc = float(nc) if nc and nc > 0 and nc < 1 else 0.1
+    na = _pos_float(na, 0.2, "na", lt=1)
+    nb = _pos_float(nb, 0.1, "nb", lt=1)
+    nc = _pos_float(nc, 0.1, "nc", lt=1)
     close = verify_series(close)
     if close is None:
         return None

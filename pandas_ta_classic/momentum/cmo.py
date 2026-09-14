@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def cmo(
@@ -25,7 +26,7 @@ def cmo(
 ) -> Series | None:
     """Indicator: Chande Momentum Oscillator (CMO)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 14
+    length = _pos_int(length, 14, "length")
     scalar = float(scalar) if scalar else 100
     close = verify_series(close, length)
     drift = get_drift(drift)

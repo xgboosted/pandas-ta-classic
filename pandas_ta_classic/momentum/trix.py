@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def trix(
@@ -25,8 +26,8 @@ def trix(
 ) -> DataFrame | None:
     """Indicator: Trix (TRIX)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 30
-    signal = int(signal) if signal and signal > 0 else 9
+    length = _pos_int(length, 30, "length")
+    signal = _pos_int(signal, 9, "signal")
     scalar = float(scalar) if scalar else 100
     close = verify_series(close, max(length, signal))
     drift = get_drift(drift)

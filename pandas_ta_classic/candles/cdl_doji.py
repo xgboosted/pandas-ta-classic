@@ -12,6 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def cdl_doji(
@@ -28,7 +29,7 @@ def cdl_doji(
 ) -> Series | None:
     """Indicator: Candle Type - Doji"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     factor = float(factor) if is_percent(factor) else 10
     scalar = float(scalar) if scalar else 100
     open_ = verify_series(open_, length)

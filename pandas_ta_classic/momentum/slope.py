@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def slope(
@@ -18,7 +19,7 @@ def slope(
 ) -> Series | None:
     """Indicator: Slope"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 1
+    length = _pos_int(length, 1, "length")
     as_angle = bool(isinstance(as_angle, bool))
     to_degrees = bool(isinstance(to_degrees, bool))
     close = verify_series(close, length)

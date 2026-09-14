@@ -5,6 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 from pandas_ta_classic.utils._njit import njit
 
 from .ma import ma
@@ -47,8 +48,8 @@ def hilo(
 ) -> DataFrame | None:
     """Indicator: Gann HiLo (HiLo)"""
     # Validate Arguments
-    high_length = int(high_length) if high_length and high_length > 0 else 13
-    low_length = int(low_length) if low_length and low_length > 0 else 21
+    high_length = _pos_int(high_length, 13, "high_length")
+    low_length = _pos_int(low_length, 21, "low_length")
     mamode = mamode.lower() if isinstance(mamode, str) else "sma"
     _length = max(high_length, low_length)
     high = verify_series(high, _length)

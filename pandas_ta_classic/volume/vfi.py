@@ -5,6 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def vfi(
@@ -19,7 +20,7 @@ def vfi(
 ) -> Series | None:
     """Indicator: Volume Flow Indicator (VFI)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 130
+    length = _pos_int(length, 130, "length")
     coef = float(coef) if coef else 0.2
     vcoef = float(vcoef) if vcoef else 2.5
     mamode = mamode.lower() if mamode and isinstance(mamode, str) else "ema"

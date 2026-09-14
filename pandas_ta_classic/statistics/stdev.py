@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 from .variance import variance
 
@@ -20,7 +21,7 @@ def stdev(
 ) -> Series | None:
     """Indicator: Standard Deviation"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 30
+    length = _pos_int(length, 30, "length", gt=1)  # variance needs at least two rows
     ddof = int(ddof) if isinstance(ddof, int) and ddof >= 0 and ddof < length else 0
     close = verify_series(close, length)
     offset = get_offset(offset)

@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def thermo(
@@ -26,9 +27,9 @@ def thermo(
 ) -> DataFrame | None:
     """Indicator: Elders Thermometer (THERMO)"""
     # Validate arguments
-    length = int(length) if length and length > 0 else 20
-    long = float(long) if long and long > 0 else 2
-    short = float(short) if short and short > 0 else 0.5
+    length = _pos_int(length, 20, "length")
+    long = _pos_float(long, 2, "long")
+    short = _pos_float(short, 0.5, "short")
     mamode = mamode if isinstance(mamode, str) else "ema"
     high = verify_series(high, length)
     low = verify_series(low, length)

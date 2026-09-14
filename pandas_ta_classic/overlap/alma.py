@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _sliding_weighted_ma
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _sliding_weighted_ma
 
 
 def alma(
@@ -18,9 +18,9 @@ def alma(
 ) -> Series | None:
     """Indicator: Arnaud Legoux Moving Average (ALMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
-    sigma = float(sigma) if sigma and sigma > 0 else 6.0
-    distribution_offset = float(distribution_offset) if distribution_offset and distribution_offset > 0 else 0.85
+    length = _pos_int(length, 10, "length")
+    sigma = _pos_float(sigma, 6.0, "sigma")
+    distribution_offset = _pos_float(distribution_offset, 0.85, "distribution_offset")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

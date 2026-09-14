@@ -3,6 +3,8 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
+from pandas_ta_classic.utils._core import _pos_int
+
 from ._core import apply_offset, get_offset, verify_series
 from ._math import zero
 
@@ -268,7 +270,7 @@ def lag(
     Returns close shifted back by *period* bars.  Equivalent to
     close.shift(period).
     """
-    period = int(period) if period and period > 0 else 1
+    period = _pos_int(period, 1, "period")
     close = verify_series(close)
     offset = get_offset(offset)
     if close is None:

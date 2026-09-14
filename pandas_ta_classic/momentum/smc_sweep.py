@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series, concat
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def smc_sweep(
@@ -19,8 +20,8 @@ def smc_sweep(
 ) -> Series | None:
     """Indicator: Smart Money Concept Liquidity Sweep"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 15
-    wick_mult = float(wick_mult) if wick_mult and wick_mult > 0 else 1.5
+    length = _pos_int(length, 15, "length")
+    wick_mult = _pos_float(wick_mult, 1.5, "wick_mult")
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)

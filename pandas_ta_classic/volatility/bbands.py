@@ -14,6 +14,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_float, _pos_int
 
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):
@@ -55,8 +56,8 @@ def bbands(
 ) -> DataFrame | None:
     """Indicator: Bollinger Bands (BBANDS)"""
     # Validate arguments
-    length = int(length) if length and length > 1 else 5
-    std = float(std) if std and std > 0 else 2.0
+    length = _pos_int(length, 5, "length", gt=1)
+    std = _pos_float(std, 2.0, "std")
     mamode = mamode if isinstance(mamode, str) else "sma"
     ddof = int(ddof) if ddof >= 0 and ddof < length else 1
     close = verify_series(close, length)

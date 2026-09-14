@@ -6,6 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def ema(
@@ -17,7 +18,7 @@ def ema(
 ) -> Series | None:
     """Indicator: Exponential Moving Average (EMA)"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 10
+    length = _pos_int(length, 10, "length")
     adjust = kwargs.pop("adjust", False)
     sma = kwargs.pop("sma", True)
     close = verify_series(close, length)

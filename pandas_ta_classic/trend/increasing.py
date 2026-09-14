@@ -11,6 +11,7 @@ from pandas_ta_classic.utils import (
     is_percent,
     verify_series,
 )
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def increasing(
@@ -25,7 +26,7 @@ def increasing(
 ) -> Series | None:
     """Indicator: Increasing"""
     # Validate Arguments
-    length = int(length) if length and length > 0 else 1
+    length = _pos_int(length, 1, "length")
     strict = strict if isinstance(strict, bool) else False
     asint = asint if isinstance(asint, bool) else True
     close = verify_series(close, length)

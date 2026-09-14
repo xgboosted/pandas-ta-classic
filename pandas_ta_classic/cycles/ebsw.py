@@ -5,6 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -58,8 +59,8 @@ def ebsw(
 ) -> Series | None:
     """Indicator: Even Better SineWave (EBSW)"""
     # Validate arguments
-    length = int(length) if length and length > 38 else 40
-    bars = int(bars) if bars and bars > 0 else 10
+    length = _pos_int(length, 40, "length", gt=38)
+    bars = _pos_int(bars, 10, "bars")
     close = verify_series(close, length)
     offset = get_offset(offset)
 
