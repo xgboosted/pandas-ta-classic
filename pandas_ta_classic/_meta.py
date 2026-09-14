@@ -15,8 +15,6 @@ except ImportError:
     try:
         from importlib.metadata import (
             PackageNotFoundError,
-        )
-        from importlib.metadata import (
             version as _dist_version,
         )
 

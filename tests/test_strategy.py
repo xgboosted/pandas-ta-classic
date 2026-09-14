@@ -365,3 +365,31 @@ class TestStrategyWorkerPayload(TestCase):
         spy.assert_called()
         shipped = spy.side_effect(data.ta, [{}])
         self.assertNotIn("unrelated", shipped)
+
+
+class TestStrategyDoesNotMutateInputs(TestCase):
+    """strategy() must not edit shared or caller-owned lists.
+
+    Category mode removed its exclusions from the global ``Category`` list in
+    place, so ``strategy("trend")`` permanently dropped long_run, short_run,
+    tsignals and xsignals from ``ta.Category["trend"]``. Custom mode wrote
+    ``append: True`` into the caller's dicts and removed too-long entries from
+    the caller's ``Strategy.ta``.
+    """
+
+    def setUp(self):
+        self.data = get_sample_data().iloc[:300].copy()
+        self.data.ta.cores = 0
+
+    def test_category_strategy_leaves_category_intact(self):
+        before = list(pandas_ta.Category["trend"])
+        self.data.ta.strategy("trend")
+        self.assertEqual(pandas_ta.Category["trend"], before)
+
+    def test_custom_strategy_leaves_strategy_ta_intact(self):
+        ta = [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}]
+        strategy = pandas_ta.Strategy(name="c", ta=ta)
+        self.data.ta.strategy(strategy)
+        self.assertEqual(strategy.ta, [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}])
+        self.assertIn("SMA_10", self.data.columns)
+        self.assertNotIn("SMA_5000", self.data.columns)
