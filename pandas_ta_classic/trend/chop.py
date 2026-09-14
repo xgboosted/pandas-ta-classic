@@ -1,5 +1,4 @@
 # Choppiness Index (CHOP)
-import warnings
 from typing import Any, Optional
 import numpy as np
 from pandas import Series
@@ -20,7 +19,6 @@ def chop(
     atr_length: Optional[int] = None,
     ln: Optional[bool] = None,
     scalar: Optional[float] = None,
-    drift: Optional[int] = None,
     offset: Optional[int] = None,
     **kwargs: Any,
 ) -> Optional[Series]:
@@ -33,12 +31,6 @@ def chop(
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
-    if drift is not None:
-        warnings.warn(
-            "The 'drift' parameter of chop() is deprecated and ignored; " "it has never affected the result. It will be removed in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
     offset = get_offset(offset)
 
     if high is None or low is None or close is None:
@@ -99,8 +91,6 @@ Args:
     atr_length (int): Length for ATR. Default: 1
     ln (bool): If True, uses ln otherwise log10. Default: False
     scalar (float): How much to magnify. Default: 100
-    drift (int): Deprecated and ignored. Never affected the result. This
-        parameter will be removed in a future release.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
