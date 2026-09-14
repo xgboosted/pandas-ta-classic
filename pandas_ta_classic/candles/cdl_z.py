@@ -116,7 +116,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): The period. Default: 10
+    length (int): The period. Default: 30
     full (bool): Use an anchored (expanding) window instead of a rolling one
         of `length` bars. Default: False
 

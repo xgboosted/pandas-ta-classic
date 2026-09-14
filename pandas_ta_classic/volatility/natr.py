@@ -92,7 +92,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): The short period. Default: 20
+    length (int): The short period. Default: 14
     scalar (float): How much to magnify. Default: 100
     mamode (str): See ```help(ta.ma)```. Default: 'rma'
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
