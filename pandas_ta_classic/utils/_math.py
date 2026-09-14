@@ -144,6 +144,9 @@ def symmetric_triangle(n: Optional[int] = None, **kwargs: Any) -> Optional[Union
     n = int(abs(n)) if n is not None else 2
 
     triangle = None
+    if n == 1:
+        triangle = [1]
+
     if n == 2:
         triangle = [1, 1]
 

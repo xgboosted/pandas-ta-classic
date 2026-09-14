@@ -50,7 +50,8 @@ def tos_stdevall(
 
     ddof = int(ddof) if ddof and ddof >= 0 and ddof < length else 1
 
-    close = verify_series(close, length)
+    # A linear fit needs at least two points.
+    close = verify_series(close, max(length, 2))
 
     if close is None:
         return None

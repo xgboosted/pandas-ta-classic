@@ -52,6 +52,8 @@ Covered fixes:
                           reports NaN, not 0, for bars made undefined by a NaN
  27. skip_leading_nan  — 14 indicators returned all-NaN on chained input (a
                           leading NaN run); they now compute on the rows after it
+ 28. None propagation  — pvt, rvi, swma and tos_stdevall crashed with TypeError or
+     (issue #145)         LinAlgError on short input instead of returning None
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -619,7 +621,8 @@ class TestPslNoneGuard(TestCase):
         close = pd.Series([float(i) for i in range(15)])
         # Pass a plain list — not a pd.Series — so verify_series returns None
         open_bad = [99.0] * 15
-        result = ta.psl(close, open_=open_bad)
+        with self.assertWarns(FutureWarning):
+            result = ta.psl(close, open_=open_bad)
         self.assertIsNone(
             result,
             "psl must return None when open_ fails verify_series, not crash",
@@ -785,14 +788,15 @@ class TestAdNoneGuard(TestCase):
     def test_invalid_open_list_returns_none(self):
         """Passing a plain list as open_ triggers verify_series → None guard."""
         bad_open = list(self.close.values)
-        result = ta.ad(
-            high=self.high,
-            low=self.low,
-            close=self.close,
-            volume=self.volume,
-            open_=bad_open,
-            talib=False,  # force else-branch where open_ is validated
-        )
+        with self.assertWarns(FutureWarning):
+            result = ta.ad(
+                high=self.high,
+                low=self.low,
+                close=self.close,
+                volume=self.volume,
+                open_=bad_open,
+                talib=False,  # force else-branch where open_ is validated
+            )
         self.assertIsNone(result)
 
     def test_valid_call_no_open_returns_series(self):
@@ -833,13 +837,14 @@ class TestCmfNoneGuard(TestCase):
     def test_invalid_open_list_returns_none(self):
         """Passing a plain list as open_ triggers verify_series → None guard."""
         bad_open = list(self.close.values)
-        result = ta.cmf(
-            high=self.high,
-            low=self.low,
-            close=self.close,
-            volume=self.volume,
-            open_=bad_open,
-        )
+        with self.assertWarns(FutureWarning):
+            result = ta.cmf(
+                high=self.high,
+                low=self.low,
+                close=self.close,
+                volume=self.volume,
+                open_=bad_open,
+            )
         self.assertIsNone(result)
 
     def test_valid_call_no_open_returns_series(self):
@@ -865,7 +870,8 @@ class TestPsarCloseNoneGuard(TestCase):
     def test_invalid_close_list_returns_none(self):
         """Passing a plain list as close triggers verify_series → None guard."""
         bad_close = list(self.high.values)
-        result = ta.psar(high=self.high, low=self.low, close=bad_close)
+        with self.assertWarns(FutureWarning):
+            result = ta.psar(high=self.high, low=self.low, close=bad_close)
         self.assertIsNone(result)
 
     def test_valid_call_without_close_returns_dataframe(self):
@@ -1616,3 +1622,43 @@ class TestLeadingNanRun(TestCase):
         """The decorator must keep inspect.signature, which the df.ta wrapper builds on."""
         self.assertEqual(list(inspect.signature(ta.macd).parameters)[:4], ["close", "fast", "slow", "signal"])
         self.assertEqual(self.prefixed.ta.macd().shape, (600, 3))
+
+
+# ---------------------------------------------------------------------------
+# Fix 28: short-input crashes where None reached arithmetic (issue #145)
+# ---------------------------------------------------------------------------
+
+
+class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
+    """A helper returned None for short input and the caller multiplied it.
+
+    Found by sweeping every indicator over 1-400 rows with length, drift, fast,
+    slow and signal at 1-5: pvt (drift > rows), rvi (length=1 on < 30 rows,
+    because variance widens length=1 to its default window) and swma
+    (length=1, symmetric_triangle(1) was None) raised TypeError; tos_stdevall
+    on one row raised LinAlgError from a one-point linear fit.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data().iloc[:200]
+
+    def test_pvt_drift_longer_than_input(self):
+        self.assertIsNone(ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
+
+    def test_rvi_length_one_on_short_input(self):
+        d = self.df.iloc[:12]
+        self.assertIsNone(ta.rvi(d.close, d.high, d.low, length=1))
+
+    def test_swma_length_one_is_the_input(self):
+        np.testing.assert_allclose(ta.swma(self.df.close, length=1).to_numpy(), self.df.close.to_numpy())
+
+    def test_symmetric_triangle_of_one(self):
+        from pandas_ta_classic.utils import symmetric_triangle
+
+        self.assertEqual(symmetric_triangle(1), [1])
+        np.testing.assert_array_equal(symmetric_triangle(1, weighted=True), np.array([1.0]))
+
+    def test_tos_stdevall_needs_two_points(self):
+        self.assertIsNone(ta.tos_stdevall(self.df.close.iloc[:1]))
+        self.assertIsNotNone(ta.tos_stdevall(self.df.close.iloc[:2]))

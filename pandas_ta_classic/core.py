@@ -435,6 +435,10 @@ class AnalysisIndicators(PandasObject):
             cols = ", ".join(list(df.columns))
             logger.warning(f"[X] Column '{series}' not found. Available columns: {cols}")
             return None
+        # Anything else (a numpy array, a list, a DataFrame) is passed through
+        # unchanged so verify_series() can warn about it; returning None here
+        # made df.ta.sma(close=df.close.values) a silent no-op.
+        return series
 
     def _matching_column(self, name: str) -> Optional[Hashable]:
         """The column '_get_column' would resolve *name* to, or None.
