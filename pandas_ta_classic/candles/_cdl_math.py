@@ -189,15 +189,19 @@ def run_pattern(
     n = len(close)
     out = np.zeros(n, dtype=np.double)
 
-    # A leading NaN run -- what every chained input produces -- would poison
-    # the running body/shadow averages for the whole series, so every later
-    # comparison is False and the pattern silently reports 0. Start at the
-    # first bar with all four prices finite, as TA-Lib does.
-    finite = np.flatnonzero(np.isfinite(np.vstack(arrays)).all(axis=0))
-    first_valid = int(finite[0]) if finite.size else n
-    if first_valid < n:
-        ca = CandleArrays(*(a[first_valid:] for a in arrays))
-        detect_fn(ca, out[first_valid:], **kwargs)
+    # A NaN bar -- a leading run from chained input, or a row resample() inserts
+    # for a missing session -- would poison the running body/shadow averages for
+    # the rest of the series, so every later comparison is False and the pattern
+    # silently reports 0. Detect on the finite bars only, as if the NaN rows had
+    # been dropped, and report 0 on the NaN rows. For a leading run this is what
+    # TA-Lib does; after a mid-series NaN TA-Lib stays silent instead.
+    finite = np.isfinite(np.vstack(arrays)).all(axis=0)
+    if finite.all():
+        detect_fn(CandleArrays(*arrays), out, **kwargs)
+    elif finite.any():
+        detected = np.zeros(int(finite.sum()), dtype=np.double)
+        detect_fn(CandleArrays(*(a[finite] for a in arrays)), detected, **kwargs)
+        out[finite] = detected
 
     # Scale output (TA-Lib outputs ±100; scalar lets callers adjust)
     if scalar != 100:

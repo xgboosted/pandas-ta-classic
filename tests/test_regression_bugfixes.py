@@ -58,6 +58,13 @@ Covered fixes:
      (issue #138)         back; the parameter is gone from tsignals and the seven
                           indicators that never used it, so a stray drift= lands in
                           **kwargs and cannot change the result
+ 30. mfi warmup        — mfi counted the first bar (no previous price) as a zero
+                          flow, so it reported a value one bar before TA-Lib and
+                          tulipy, and read a leading NaN run as zero flows (0.0 on
+                          the first bar after the run)
+ 31. candle gaps       — one NaN row inside the series (resample() inserts one per
+                          missing session) poisoned the running candle averages,
+                          so most patterns reported 0 for every later bar
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1581,11 +1588,12 @@ class TestLeadingNanRun(TestCase):
 
     A 30-bar NaN prefix -- what any indicator's output starts with -- made
     adosc, fisher, hwc, hwma, jma, kama, lrsi, macd, macdfix, mama, mcgd,
-    ssf, tos_stdevall and vidya return NaN for every bar.
+    ssf, tos_stdevall and vidya return NaN for every bar. mfi instead read the
+    run as zero money flow and reported values from incomplete windows.
     """
 
     PREFIX = 30
-    NAMES = ("adosc", "fisher", "hwc", "hwma", "jma", "kama", "lrsi", "macd", "macdfix", "mama", "mcgd", "ssf", "tos_stdevall", "vidya")
+    NAMES = ("adosc", "fisher", "hwc", "hwma", "jma", "kama", "lrsi", "macd", "macdfix", "mama", "mcgd", "mfi", "ssf", "tos_stdevall", "vidya")
 
     @classmethod
     def setUpClass(cls):
@@ -1710,3 +1718,71 @@ class TestDriftParameterRemoved(TestCase):
                     warnings.simplefilter("error", DeprecationWarning)
                     with_drift = self._call(name, drift=3)
                 pd.testing.assert_frame_equal(pd.DataFrame(with_drift), pd.DataFrame(self._call(name)))
+
+
+# ---------------------------------------------------------------------------
+# Fix 30: mfi warmup counted an undefined flow
+# ---------------------------------------------------------------------------
+
+
+class TestMfiWarmup(TestCase):
+    """The first bar has no previous typical price, so its money flow is undefined.
+
+    mfi counted it as zero, so MFI_14 reported a value at bar 13 from 13 real
+    flows; TA-Lib and tulipy start at bar 14.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data().iloc[:200]
+
+    def test_first_value_at_length_plus_drift_minus_one(self):
+        for length, drift in ((14, 1), (5, 1), (5, 3)):
+            with self.subTest(length=length, drift=drift):
+                result = ta.mfi(self.df.high, self.df.low, self.df.close, self.df.volume, length=length, drift=drift)
+                self.assertEqual(self.df.index.get_loc(result.first_valid_index()), length + drift - 1)
+
+    def test_values_after_warmup_unchanged(self):
+        d = self.df
+        tp = (d.high + d.low + d.close) / 3
+        flow = tp * d.volume
+        up = flow.where(tp.diff() > 0, 0.0).rolling(14).sum()
+        down = flow.where(tp.diff() < 0, 0.0).rolling(14).sum()
+        expected = 100 * up / (up + down)
+        result = ta.mfi(d.high, d.low, d.close, d.volume)
+        np.testing.assert_allclose(result.iloc[14:], expected.iloc[14:], rtol=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# Fix 31: candle patterns went silent after a NaN row inside the series
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternsSkipNanRows(TestCase):
+    """A NaN row inside the series poisoned the running body/shadow averages.
+
+    On a weekday feed resampled to calendar days, 41 of 62 patterns never fired
+    (1,260 signals fell to 119). Patterns are now detected on the finite bars,
+    as if the NaN rows had been dropped, and report 0 on the NaN rows.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        daily = get_sample_data().iloc[-400:]
+        cls.gapped = daily.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last"})
+        cls.dropped = cls.gapped.dropna()
+
+    def _all(self, df):
+        return ta.cdl_pattern(df.open, df.high, df.low, df.close, name="all")
+
+    def test_gapped_equals_dropna_on_finite_rows(self):
+        self.assertGreater(len(self.gapped), len(self.dropped))
+        gapped, dropped = self._all(self.gapped), self._all(self.dropped)
+        self.assertEqual(list(gapped.columns), list(dropped.columns))
+        for col in dropped.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(gapped.loc[self.dropped.index, col].to_numpy(float), dropped[col].to_numpy(float))
+
+    def test_nan_rows_report_no_pattern(self):
+        nan_rows = self._all(self.gapped).loc[self.gapped.close.isna()]
+        self.assertFalse((nan_rows.fillna(0) != 0).any().any())

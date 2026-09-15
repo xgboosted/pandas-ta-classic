@@ -29,7 +29,10 @@ def cdl_inside(
         return None
 
     # Calculate Result
-    inside = (high.diff() < 0) & (low.diff() > 0)
+    # Compare with the previous finite bar, as if NaN rows were dropped, so the
+    # bar after a resample() gap is still classified.
+    finite = open_.notna() & high.notna() & low.notna() & close.notna()
+    inside = ((high[finite].diff() < 0) & (low[finite].diff() > 0)).reindex(close.index, fill_value=False)
 
     if not asbool:
         inside *= candle_color(open_, close)

@@ -47,10 +47,14 @@ def cdl_doji(
     # (excluding the current bar), so shift the SMA by 1.
     body = non_zero_range(close, open_).abs()
     hl_range = non_zero_range(high, low).abs()
-    hl_range_avg = sma(hl_range, length)
+    # Average the previous ``length`` finite bars, as if NaN rows were dropped:
+    # a row resample() inserts for a missing session would otherwise leave the
+    # next ``length`` averages NaN, and weekend gaps keep every average NaN.
+    finite = open_.notna() & high.notna() & low.notna() & close.notna()
+    hl_range_avg = sma(hl_range[finite], length)
     if hl_range_avg is None:
         return None
-    hl_range_avg = hl_range_avg.shift(1)
+    hl_range_avg = hl_range_avg.shift(1).reindex(close.index)
     doji = body <= 0.01 * factor * hl_range_avg
 
     if naive:

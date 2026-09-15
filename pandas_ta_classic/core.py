@@ -708,16 +708,6 @@ class AnalysisIndicators(PandasObject):
             logger.error("Not an available strategy.")
             return None
 
-        # Remove Custom indicators with "length" keyword when larger than the DataFrame
-        # Possible to have other indicator main window lengths to be included
-        removal = []
-        for kwds in ta:
-            if isinstance(kwds, dict) and "length" in kwds and kwds["length"] > self._df.shape[0]:
-                removal.append(kwds)
-        if len(removal) > 0:
-            for kwds in removal:
-                ta.remove(kwds)
-
         verbose = kwargs.pop("verbose", False)
         if verbose:
             logger.info(f"Strategy: {name}\nIndicator arguments: {kwargs}")
