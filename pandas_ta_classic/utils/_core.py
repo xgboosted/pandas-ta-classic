@@ -215,6 +215,7 @@ def skip_leading_nan(*names: str) -> Callable:
 _INDICATOR_DEPTH: contextvars.ContextVar[int] = contextvars.ContextVar("pandas_ta_classic_indicator_depth", default=0)
 _PROBE_ROWS = 1000
 _PROBE_MAX_ROWS = 50_000
+_PROBE_HARD_MAX_ROWS = 2_000_000
 
 
 def _probe_inputs(arguments: dict, rows: int) -> dict:
@@ -226,7 +227,8 @@ def _probe_inputs(arguments: dict, rows: int) -> dict:
     first = next(v for v in arguments.values() if isinstance(v, Series))
     if isinstance(first.index, DatetimeIndex):
         end = first.index[-1] if len(first.index) else "2024-01-01"
-        index = date_range(end=end, periods=rows, freq="D", tz=first.index.tz)
+        # minute steps: 2M rows span under 4 years, well inside the datetime64[ns] range
+        index = date_range(end=end, periods=rows, freq="min", tz=first.index.tz)
     else:
         index = RangeIndex(rows)
     rng = np.random.default_rng(0)
@@ -302,13 +304,20 @@ def nan_on_short_input(fn: Callable) -> Callable:
                 for v in list(bound.arguments.values()) + list(bound.arguments.get("kwargs", {}).values())
                 if isinstance(v, Real) and not isinstance(v, bool)
             ]
-            # long enough for any window the caller asked for; capped so a large non-window
-            # number (e.g. eom's divisor) cannot request millions of rows
-            rows = min(_PROBE_MAX_ROWS, max([_PROBE_ROWS] + [int(3 * abs(v)) + 10 for v in numbers if math.isfinite(v)]))
-            bound.arguments.update(_probe_inputs(bound.arguments, rows))
-            with warnings.catch_warnings():  # the caller's call already warned; the probe must not repeat it
-                warnings.simplefilter("ignore")
-                template = fn(*bound.args, **bound.kwargs)
+            # Long enough for any window the caller asked for. The first try is capped so a large
+            # non-window number (eom's divisor) cannot request millions of rows; only when that is
+            # still too short for the window (sma(length=60000)) is it retried at the full length.
+            needed = max([_PROBE_ROWS] + [int(3 * abs(v)) + 10 for v in numbers if math.isfinite(v)])
+            original = dict(bound.arguments)
+            template = None
+            # ponytail: windows past _PROBE_HARD_MAX_ROWS / 3 still come back None; raise the limit if one matters
+            for rows in dict.fromkeys((min(_PROBE_MAX_ROWS, needed), min(needed, _PROBE_HARD_MAX_ROWS))):
+                bound.arguments.update(_probe_inputs(original, rows))
+                with warnings.catch_warnings():  # the caller's call already warned; the probe must not repeat it
+                    warnings.simplefilter("ignore")
+                    template = fn(*bound.args, **bound.kwargs)
+                if template is not None:
+                    break
             if template is None or isinstance(template, tuple):
                 return fn(*args, **kwargs) if empty else None
             return _nan_like(template, first.index, rows)
