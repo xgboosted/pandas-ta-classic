@@ -19,7 +19,7 @@ def sma(
     """Indicator: Simple Moving Average (SMA)"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")

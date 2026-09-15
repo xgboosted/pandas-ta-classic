@@ -35,7 +35,9 @@ def ssf(
     """Indicator: Ehler's Super Smoother Filter (SSF)"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    poles = int(poles) if poles in [2, 3] else 2
+    poles = _pos_int(poles, 2, "poles")
+    if poles not in (2, 3):
+        raise ValueError(f"ssf() poles must be 2 or 3, got {poles!r}")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

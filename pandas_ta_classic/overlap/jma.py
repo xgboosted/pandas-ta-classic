@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _number, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -105,7 +105,9 @@ def jma(
     """Indicator: Jurik Moving Average (JMA)"""
     # Validate Arguments
     _length = int(_pos_float(length, 7, "length"))  # float lengths are truncated, as before
-    phase = float(phase) if phase and phase != 0 else 0
+    phase = _number(phase, 0, "phase")
+    if phase == 0:
+        phase = 0  # keep the JMA_7_0 column name for an explicit 0.0
     close = verify_series(close, _length)
     offset = get_offset(offset)
     if close is None:

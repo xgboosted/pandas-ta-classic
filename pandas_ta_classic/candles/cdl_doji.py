@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    is_percent,
     non_zero_range,
     verify_series,
 )
@@ -31,7 +30,7 @@ def cdl_doji(
     """Indicator: Candle Type - Doji"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    factor = float(factor) if is_percent(factor) else 10
+    factor = _number(factor, 10, "factor", ge=0)
     scalar = _number(scalar, 100, "scalar")
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
@@ -100,7 +99,7 @@ Args:
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
     length (int): The period. Default: 10
-    factor (float): Doji value. Default: 100
+    factor (float): Doji value, as a percent of the high-low range. Default: 10
     scalar (float): How much to magnify. Default: 100
     asint (bool): Keep results numerical instead of boolean. Default: True
 

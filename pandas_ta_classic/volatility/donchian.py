@@ -20,12 +20,8 @@ def donchian(
     # Validate arguments
     lower_length = _pos_int(lower_length, 20, "lower_length")
     upper_length = _pos_int(upper_length, 20, "upper_length")
-    lower_min_periods = (
-        int(kwargs["lower_min_periods"]) if "lower_min_periods" in kwargs and kwargs["lower_min_periods"] is not None else lower_length
-    )
-    upper_min_periods = (
-        int(kwargs["upper_min_periods"]) if "upper_min_periods" in kwargs and kwargs["upper_min_periods"] is not None else upper_length
-    )
+    lower_min_periods = _pos_int(kwargs.get("lower_min_periods"), lower_length, "lower_min_periods", gt=None, ge=0)
+    upper_min_periods = _pos_int(kwargs.get("upper_min_periods"), upper_length, "upper_min_periods", gt=None, ge=0)
     _length = max(lower_length, lower_min_periods, upper_length, upper_min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

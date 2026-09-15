@@ -9,7 +9,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -28,9 +28,9 @@ def tsignals(
         return None
 
     asbool = _bool_param(asbool, False, "asbool")
-    trend_reset = int(trend_reset) if trend_reset and isinstance(trend_reset, int) else 0
-    if trade_offset != 0:
-        trade_offset = int(trade_offset) if trade_offset and isinstance(trade_offset, int) else 0
+    trend_reset = _number(trend_reset, 0, "trend_reset")
+    # a negative shift would move entries/exits onto earlier bars (look-ahead)
+    trade_offset = _pos_int(trade_offset, 0, "trade_offset", gt=None, ge=0)
     offset = get_offset(offset)
 
     # Calculate Result

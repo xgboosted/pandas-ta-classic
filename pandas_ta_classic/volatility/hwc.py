@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -90,7 +90,7 @@ def hwc(
     nc = _pos_float(nc, 0.1, "nc")
     nd = _pos_float(nd, 0.1, "nd")
     scalar = _pos_float(scalar, 1, "scalar")
-    channel_eval = bool(channel_eval) if channel_eval and channel_eval else False
+    channel_eval = _bool_param(channel_eval, False, "channel_eval")
     close = verify_series(close)
     if close is None:
         return None
