@@ -3,6 +3,7 @@ from collections.abc import Hashable
 from copy import copy
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, get_context
+from numbers import Integral
 from time import perf_counter
 from typing import Any
 from warnings import simplefilter
@@ -14,6 +15,7 @@ from pandas.core.base import PandasObject
 from pandas_ta_classic._indicator_loader import _COLUMN_KWARG_KEYS, _DEFAULT_COLUMN_NAMES, _find_indicator_func, _make_ta_wrapper
 from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
 from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
+from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
 logger = logging.getLogger(__name__)
 
@@ -270,10 +272,9 @@ class AnalysisIndicators(PandasObject):
     @adjusted.setter
     def adjusted(self, value: str) -> None:
         """property: df.ta.adjusted = 'adj_close'"""
-        if value is not None and isinstance(value, str):
-            self._df.attrs["_ta_adjusted"] = value
-        else:
-            self._df.attrs["_ta_adjusted"] = None
+        if value is not None and not isinstance(value, str):
+            raise ValueError(f"df.ta.adjusted must be a column name or None, got {value!r}")
+        self._df.attrs["_ta_adjusted"] = value
 
     @property
     def cores(self) -> int:
@@ -282,12 +283,15 @@ class AnalysisIndicators(PandasObject):
 
     @cores.setter
     def cores(self, value: int) -> None:
-        """property: df.ta.cores = integer"""
+        """property: df.ta.cores = integer (0 disables multiprocessing; capped at cpu_count(); None resets)"""
         cpus = cpu_count()
-        if value is not None and isinstance(value, int):
-            self._df.attrs["_ta_cores"] = int(value) if 0 <= value <= cpus else cpus
-        else:
+        if value is None:
             self._df.attrs["_ta_cores"] = cpus
+            return
+        if not isinstance(value, Integral) or isinstance(value, bool) or value < 0:
+            # -1, 1.0 and "2" used to become cpu_count() and switch multiprocessing on
+            raise ValueError(f"df.ta.cores must be an integer >= 0 or None, got {value!r}")
+        self._df.attrs["_ta_cores"] = min(int(value), cpus)
 
     @property
     def exchange(self) -> str:
@@ -296,9 +300,14 @@ class AnalysisIndicators(PandasObject):
 
     @exchange.setter
     def exchange(self, value: str) -> None:
-        """property: df.ta.exchange = "LSE" """
-        if value is not None and isinstance(value, str) and value in EXCHANGE_TZ:
-            self._df.attrs["_ta_exchange"] = value
+        """property: df.ta.exchange = "LSE" (None resets to NYSE)"""
+        if value is None:
+            self._df.attrs.pop("_ta_exchange", None)
+            return
+        if not isinstance(value, str) or value not in EXCHANGE_TZ:
+            # an unknown exchange used to be ignored, leaving the previous one in place
+            raise ValueError(f"df.ta.exchange must be one of {sorted(EXCHANGE_TZ)} or None, got {value!r}")
+        self._df.attrs["_ta_exchange"] = value
 
     @property
     def last_run(self) -> str | None:
@@ -331,11 +340,11 @@ class AnalysisIndicators(PandasObject):
 
     @time_range.setter
     def time_range(self, value: str) -> None:
-        """property: df.ta.time_range = "years" (Default)"""
-        if value is not None and isinstance(value, str):
-            self._df.attrs["_ta_time_range"] = value
-        else:
-            self._df.attrs["_ta_time_range"] = "years"
+        """property: df.ta.time_range = "years" (Default; None resets)"""
+        if value is not None and value not in TIME_RANGE_UNITS:
+            # an unknown unit used to be stored and then computed as years
+            raise ValueError(f"df.ta.time_range must be one of {list(TIME_RANGE_UNITS)} or None, got {value!r}")
+        self._df.attrs["_ta_time_range"] = "years" if value is None else value
 
     @property
     def to_utc(self) -> None:
