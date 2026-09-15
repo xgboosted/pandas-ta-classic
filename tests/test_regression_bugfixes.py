@@ -65,10 +65,10 @@ Covered fixes:
  31. candle gaps       — one NaN row inside the series (resample() inserts one per
                           missing session) poisoned the running candle averages,
                           so most patterns reported 0 for every later bar
- 32. macd signals    — xa, xb, xserie and cross_series passed with
+ 32. macd signals      — xa, xb, xserie and cross_series passed with
                           signal_indicators=True reached only the histogram
                           signals; the MACD-line signals always used the defaults
- 33. msw backend     — msw used tulipy whenever it was installed; tulipy
+ 33. msw backend       — msw used tulipy whenever it was installed; tulipy
                           truncates pi to 3.1415926, so values depended on the
                           environment (up to 3e-4 apart)
 
