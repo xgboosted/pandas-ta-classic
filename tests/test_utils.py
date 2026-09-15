@@ -90,8 +90,10 @@ class TestUtilities(TestCase):
         self.assertEqual(result.name, "a_A_0")
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
-        result = self.utils.above_value(self.crosseddf["a"], self.crosseddf["zero"])
-        self.assertIsNone(result)
+        # a non-number value used to log an error and return None
+        with self.assertRaisesRegex(ValueError, r"above_value\(\) value must be a number"):
+            self.utils.above_value(self.crosseddf["a"], self.crosseddf["zero"])
+        self.assertEqual(self.utils.above_value(self.crosseddf["a"], np.int64(0)).name, "a_A_0")
 
     def test_below(self):
         result = self.utils.below(self.crosseddf["zero"], self.crosseddf["a"])
@@ -110,8 +112,9 @@ class TestUtilities(TestCase):
         self.assertEqual(result.name, "a_B_0")
         np.testing.assert_array_equal(result, self.crosseddf["b"])
 
-        result = self.utils.below_value(self.crosseddf["a"], self.crosseddf["zero"])
-        self.assertIsNone(result)
+        # a non-number value used to log an error and return None
+        with self.assertRaisesRegex(ValueError, r"below_value\(\) value must be a number"):
+            self.utils.below_value(self.crosseddf["a"], self.crosseddf["zero"])
 
     def test_combination(self):
         self.assertIsNotNone(self.utils.combination())

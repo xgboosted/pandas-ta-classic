@@ -26,8 +26,8 @@ def mmar(
 
     # Calculate Result
     # Create ribbon of EMAs with incremental periods
-    step = kwargs.pop("step", 5)
-    num_ribbons = kwargs.pop("num_ribbons", 6)
+    step = _pos_int(kwargs.pop("step", None), 5, "step")
+    num_ribbons = _pos_int(kwargs.pop("num_ribbons", None), 6, "num_ribbons")
 
     ribbons = {}
     for i in range(num_ribbons):

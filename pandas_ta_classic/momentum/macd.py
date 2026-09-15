@@ -137,8 +137,9 @@ def macd(
                 ),
                 signals(
                     indicator=macd,
-                    xa=kwargs.pop("xa", 0),
-                    xb=kwargs.pop("xb", None),
+                    # the caller's xa/xb were consumed by the histogram signals above
+                    xa=0,
+                    xb=None,
                     xserie=kwargs.pop("xserie", None),
                     xserie_a=kwargs.pop("xserie_a", None),
                     xserie_b=kwargs.pop("xserie_b", None),

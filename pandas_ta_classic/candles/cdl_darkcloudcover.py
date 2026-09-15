@@ -11,6 +11,7 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._core import _number
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -45,7 +46,7 @@ def _detect_nb(
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    penetration = kwargs.get("penetration", 0.5)
+    penetration = kwargs["penetration"]
     # Lookback: TA_CANDLEAVGPERIOD(BodyLong) + 1
     body_long_period = candle_avg_period(CandleSetting.BodyLong)
     lookback = body_long_period + 1
@@ -90,8 +91,8 @@ def cdl_darkcloudcover(
     **kwargs: Any,
 ) -> Series | None:
     """Candle Pattern: Dark Cloud Cover"""
-    if penetration is None:
-        penetration = 0.5
+    # TA-Lib rejects a negative penetration (TA_BAD_PARAM)
+    penetration = _number(penetration, 0.5, "penetration", ge=0)
     return run_pattern(
         open_,
         high,

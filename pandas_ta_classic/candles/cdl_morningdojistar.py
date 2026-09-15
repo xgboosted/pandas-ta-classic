@@ -11,6 +11,7 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._core import _number
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -62,7 +63,7 @@ def _detect_nb(
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    penetration = kwargs.get("penetration", 0.3)
+    penetration = kwargs["penetration"]
 
     # Lookback: max(BodyDoji, BodyLong, BodyShort) + 2
     body_long_period = candle_avg_period(CandleSetting.BodyLong)
@@ -141,8 +142,8 @@ def cdl_morningdojistar(
     Returns:
         A pandas Series with +100 (bullish) or 0.
     """
-    if penetration is None:
-        penetration = 0.3
+    # TA-Lib rejects a negative penetration (TA_BAD_PARAM)
+    penetration = _number(penetration, 0.3, "penetration", ge=0)
     return run_pattern(
         open_,
         high,

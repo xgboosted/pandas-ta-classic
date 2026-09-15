@@ -11,6 +11,7 @@ from pandas_ta_classic.candles._cdl_math import (
     candle_avg_period,
     run_pattern,
 )
+from pandas_ta_classic.utils._core import _number
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -72,7 +73,7 @@ def _detect_nb(
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    penetration = kwargs.get("penetration", 0.5)
+    penetration = kwargs["penetration"]
 
     # Lookback: max(TA_CANDLEAVGPERIOD(BodyShort), TA_CANDLEAVGPERIOD(BodyLong)) + 4
     body_short_period = candle_avg_period(CandleSetting.BodyShort)
@@ -162,8 +163,8 @@ def cdl_mathold(
     Example:
         >>> result = cdl_mathold(df.open, df.high, df.low, df.close, penetration=0.5)
     """
-    if penetration is None:
-        penetration = 0.5
+    # TA-Lib rejects a negative penetration (TA_BAD_PARAM)
+    penetration = _number(penetration, 0.5, "penetration", ge=0)
     return run_pattern(
         open_,
         high,
