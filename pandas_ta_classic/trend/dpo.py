@@ -19,6 +19,7 @@ def dpo(
     """Indicator: Detrend Price Oscillator (DPO)"""
     # Validate Arguments
     length = _pos_int(length, 20, "length")
+    centered = _bool_param(centered, True, "centered")
     close = verify_series(close, length)
     offset = get_offset(offset)
     if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
