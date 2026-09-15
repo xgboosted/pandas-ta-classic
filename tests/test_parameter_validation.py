@@ -302,3 +302,19 @@ def test_strategy_and_metric_flags_reject_non_bool(frame):
             df.ta.strategy("candles", **{key: 1})
     with pytest.raises(ValueError, match=r"volatility\(\) nearest_day must be True or False"):
         ta.utils.volatility(frame.close, nearest_day="yes")
+
+
+def test_vwap_without_datetime_index_raises_type_error(frame):
+    """vwap anchors by calendar period; a RangeIndex used to fail with an unrelated AttributeError."""
+    flat = frame.reset_index(drop=True)
+    with pytest.raises(TypeError, match=r"vwap\(\) needs a DatetimeIndex to anchor by 'D', got RangeIndex"):
+        ta.vwap(flat.high, flat.low, flat.close, flat.volume)
+
+
+def test_strategy_skips_vwap_without_datetime_index(frame):
+    """strategy("all") on a RangeIndex frame crashed on vwap; all/category modes now leave it out."""
+    flat = frame.reset_index(drop=True).copy()
+    flat.ta.cores = 0
+    flat.ta.strategy("overlap")
+    assert "SMA_10" in flat.columns
+    assert not any(c.startswith("VWAP") for c in flat.columns)

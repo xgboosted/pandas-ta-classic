@@ -699,6 +699,8 @@ class AnalysisIndicators(PandasObject):
         name, mode = self._strategy_mode(*args)
 
         # If All or a Category, exclude user list if any
+        if not isinstance(self._df.index, pd.DatetimeIndex):
+            excluded.append("vwap")  # anchors by calendar period; raises without a DatetimeIndex
         user_excluded = kwargs.pop("exclude", [])
         if mode["all"] or mode["category"]:
             excluded += user_excluded
