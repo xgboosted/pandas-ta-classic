@@ -240,7 +240,11 @@ def _probe_inputs(arguments: dict, rows: int) -> dict:
         "periods": np.full(rows, 10.0),
         "trend": (np.arange(rows) // 20 % 2).astype(int),
     }
-    return {key: (Series(columns.get(key, close), index=index) if isinstance(value, Series) else value) for key, value in arguments.items()}
+    # keep each name: some outputs are named after their inputs (vp: low_close, pos_volume)
+    return {
+        key: (Series(columns.get(key, close), index=index, name=value.name) if isinstance(value, Series) else value)
+        for key, value in arguments.items()
+    }
 
 
 def _nan_like(template: Any, index: Any, rows: int) -> Any:
@@ -265,8 +269,9 @@ def nan_on_short_input(fn: Callable) -> Callable:
     downstream. When the outermost call returns None although Series were
     passed, the call is repeated on long synthetic data of the same shape to
     learn the output's name, columns and category, and an all-NaN result with
-    the caller's index is returned. A None that the synthetic call reproduces
-    (a required input missing) stays None.
+    the caller's index is returned. An empty Series skips the first call and
+    gets the same all-NaN (zero-row) result. A None that the synthetic call
+    reproduces (a required input missing) stays None.
     """
     sig = inspect.signature(fn)
 
@@ -276,9 +281,16 @@ def nan_on_short_input(fn: Callable) -> Callable:
             return fn(*args, **kwargs)
         token = _INDICATOR_DEPTH.set(1)
         try:
-            result = fn(*args, **kwargs)
-            if result is not None:
-                return result
+            # An empty Series is shorter than any window, but indicators that read
+            # bar 0 (obv, psar, hwma, ...) raised IndexError on it instead of
+            # returning None, so go straight to the all-NaN result.
+            empty = any(isinstance(v, Series) and v.empty for v in (*args, *kwargs.values()))
+            if empty:
+                logger.warning(f"[X] Series has 0 rows; {fn.__name__}() result is all NaN.")
+            else:
+                result = fn(*args, **kwargs)
+                if result is not None:
+                    return result
             bound = sig.bind(*args, **kwargs)
             series = {k: v for k, v in bound.arguments.items() if isinstance(v, Series)}
             if not series:
@@ -298,7 +310,7 @@ def nan_on_short_input(fn: Callable) -> Callable:
                 warnings.simplefilter("ignore")
                 template = fn(*bound.args, **bound.kwargs)
             if template is None or isinstance(template, tuple):
-                return result
+                return fn(*args, **kwargs) if empty else None
             return _nan_like(template, first.index, rows)
         finally:
             _INDICATOR_DEPTH.reset(token)
