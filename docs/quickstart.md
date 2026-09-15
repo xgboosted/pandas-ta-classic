@@ -418,6 +418,9 @@ Which side an indicator falls on depends on its internals: a `rolling(length)` w
 `length` consecutive non-NaN bars, an `ewm` recursion does not. So two indicators called with
 the same `length` can legitimately start at different bars on gapped data.
 
+Candle patterns (`cdl_pattern`, `cdl_doji`, `cdl_inside`) are the exception: they skip NaN rows and
+report `0` on them, so on gapped data they give the same signals as on the `dropna()` frame.
+
 **Solution:** Drop the empty periods before computing, not after:
 
 ```python
