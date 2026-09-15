@@ -6,7 +6,7 @@ import numpy as np
 from pandas import DataFrame, Series, concat, cut
 
 from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -22,7 +22,7 @@ def vp(
     # There is no such mode here -- the whole series is aggregated into bins --
     # so decline instead of handing back forward-looking values under a keyword
     # that promises the opposite.
-    if not kwargs.get("lookahead", True):
+    if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         warnings.warn(
             "vp() has no causal mode: the whole series is aggregated into price bins, so the result is a profile rather than a time series. "
             "Returning None because lookahead=False was requested.",
@@ -34,7 +34,7 @@ def vp(
     width = _pos_int(width, 10, "width")
     close = verify_series(close, width)
     volume = verify_series(volume, width)
-    sort_close = kwargs.pop("sort_close", False)
+    sort_close = _bool_param(kwargs.pop("sort_close", None), False, "sort_close")
 
     if close is None or volume is None:
         return None
