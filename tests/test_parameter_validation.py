@@ -221,3 +221,37 @@ def test_strategy_params_must_be_a_tuple():
         frame.ta.strategy(ta.Strategy(name="p", ta=[{"kind": "ema", "params": [5]}]))
     frame.ta.strategy(ta.Strategy(name="p", ta=[{"kind": "ema", "params": (5,)}]))
     assert "EMA_5" in frame.columns
+
+
+# Numeric options read from **kwargs, and candle penetration, were used unvalidated:
+# emv(divisor=0) returned all -0.0, mmar(num_ribbons=-1) an empty frame, rsi(xa="x")
+# silently dropped its RSI_14_A column, and a negative penetration produced signals
+# where TA-Lib reports TA_BAD_PARAM.
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        *[
+            (lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1), rf"cdl_{n}\(\) penetration must be a number >= 0, got -1")
+            for n in ("eveningstar", "morningstar", "darkcloudcover", "mathold", "abandonedbaby", "eveningdojistar", "morningdojistar")
+        ],
+        (lambda: ta.emv(_F.high, _F.low, _F.volume, divisor=0), r"emv\(\) divisor must be a number > 0, got 0"),
+        (lambda: ta.mmar(_F.close, step=0), r"mmar\(\) step must be an integer > 0, got 0"),
+        (lambda: ta.mmar(_F.close, num_ribbons=-1), r"mmar\(\) num_ribbons must be an integer > 0, got -1"),
+        (lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_narrow=-1), r"cpr\(\) width_narrow must be a number >= 0, got -1"),
+        (lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_cpr=True, virgin_lookforward=0), r"cpr\(\) virgin_lookforward must be an integer > 0, got 0"),
+        (lambda: ta.aobv(_F.close, _F.volume, run_length=0), r"aobv\(\) run_length must be an integer > 0, got 0"),
+        (lambda: ta.rsi(_F.close, signal_indicators=True, xa="x"), r"rsi\(\) xa must be a number, got 'x'"),
+        (lambda: ta.rsx(_F.close, signal_indicators=True, xb=True), r"rsx\(\) xb must be a number, got True"),
+        (lambda: ta.er(_F.close, signal_indicators=True, xa=np.nan), r"er\(\) xa must be a number, got nan"),
+        (lambda: ta.macd(_F.close, signal_indicators=True, xa="0"), r"macd\(\) xa must be a number, got '0'"),
+    ],
+)
+def test_unvalidated_kwargs_raise(call, message):
+    with pytest.raises(ValueError, match=message):
+        call()
+
+
+def test_signal_thresholds_keep_their_column_names():
+    """Validation must not turn the caller's 70 into 70.0 (RSI_14_A_70_0); numpy integers are accepted."""
+    assert list(ta.rsi(_F.close, signal_indicators=True, xa=70).columns) == ["RSI_14", "RSI_14_A_70", "RSI_14_B_20"]
+    assert list(ta.rsi(_F.close, signal_indicators=True, xa=np.int64(70)).columns) == ["RSI_14", "RSI_14_A_70", "RSI_14_B_20"]

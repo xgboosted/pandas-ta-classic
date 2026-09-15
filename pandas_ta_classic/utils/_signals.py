@@ -1,4 +1,6 @@
-import logging
+import math
+import sys
+from numbers import Real
 from typing import Any
 
 from pandas import DataFrame, Series
@@ -8,7 +10,12 @@ from pandas_ta_classic.utils._core import _pos_int
 from ._core import apply_offset, get_offset, verify_series
 from ._math import zero
 
-logger = logging.getLogger(__name__)
+
+def _require_number(value: Any, label: str) -> None:
+    """Raise ValueError naming the caller unless *value* is a finite real number (numpy numbers included, bools not)."""
+    if not (isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)):
+        caller = sys._getframe(1).f_code.co_name
+        raise ValueError(f"{caller}() {label} must be a number, got {value!r}")
 
 
 def _above_below(
@@ -63,9 +70,7 @@ def above_value(
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
-    if not isinstance(value, (int, float, complex)):
-        logger.error("value is not a number")
-        return None
+    _require_number(value, "value")
     series_a = verify_series(series_a)
     if series_a is None:
         return None
@@ -91,9 +96,7 @@ def below_value(
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
-    if not isinstance(value, (int, float, complex)):
-        logger.error("value is not a number")
-        return None
+    _require_number(value, "value")
     series_a = verify_series(series_a)
     if series_a is None:
         return None
@@ -219,12 +222,20 @@ def signals(
     cross_series: bool,
     offset: int | None,
 ) -> DataFrame:
+    # A non-number threshold used to be skipped, silently dropping its column
+    # (and numpy integers were skipped with it). Keep the caller's value: it
+    # names the column (RSI_14_A_70).
+    indicator_name = sys._getframe(1).f_code.co_name  # the indicator that asked for signals
+    for label, value in (("xa", xa), ("xb", xb)):
+        if value is not None and not (isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)):
+            raise ValueError(f"{indicator_name}() {label} must be a number, got {value!r}")
+
     df = DataFrame()
 
-    if xa is not None and isinstance(xa, (int, float)):
+    if xa is not None:
         _add_scalar_threshold_signals(df, indicator, xa, cross_values, True, offset)
 
-    if xb is not None and isinstance(xb, (int, float)):
+    if xb is not None:
         _add_scalar_threshold_signals(df, indicator, xb, cross_values, False, offset)
 
     # xserie is the default value for both xserie_a and xserie_b

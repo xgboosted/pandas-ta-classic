@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._cpr import (
     calculate_cpr_width,
     calculate_price_position,
@@ -141,13 +141,15 @@ def cpr(
             tc,
             bc,
             pivot,
-            narrow_threshold=kwargs.pop("width_narrow", 0.5),
-            wide_threshold=kwargs.pop("width_wide", 1.5),
+            narrow_threshold=_number(kwargs.pop("width_narrow", None), 0.5, "width_narrow", ge=0),
+            wide_threshold=_number(kwargs.pop("width_wide", None), 1.5, "width_wide", ge=0),
         )
     if price_position:
         pivot_result["position"] = calculate_price_position(close, tc, bc)
     if virgin_cpr:
-        pivot_result["virgin"] = detect_virgin_cpr(high, low, tc, bc, lookforward=kwargs.pop("virgin_lookforward", 5))
+        pivot_result["virgin"] = detect_virgin_cpr(
+            high, low, tc, bc, lookforward=_pos_int(kwargs.pop("virgin_lookforward", None), 5, "virgin_lookforward")
+        )
 
     _cpr_offset_and_fill(pivot_result, offset, **kwargs)
     return _cpr_build_dataframe(pivot_result, levels, width_analysis, price_position, virgin_cpr)

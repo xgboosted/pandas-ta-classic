@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input
 
 
 @nan_on_short_input
@@ -40,7 +40,7 @@ def emv(
         return None
 
     # divisor=10000 matches tulipy's EMV scaling convention
-    divisor = kwargs.pop("divisor", 10000)
+    divisor = _pos_float(kwargs.pop("divisor", None), 10000, "divisor")
     hl_range = non_zero_range(high, low)
     midpoint = 0.5 * (high + low)
     distance = midpoint - midpoint.shift(drift)

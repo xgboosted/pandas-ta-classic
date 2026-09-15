@@ -40,7 +40,7 @@ def aobv(
     # A strategy-wide length (df.ta.strategy(..., length=N)) has no meaning here and the
     # inner calls set length themselves; drop it so it cannot collide with their keyword.
     kwargs.pop("length", None)
-    run_length = kwargs.pop("run_length", 2)
+    run_length = _pos_int(kwargs.pop("run_length", None), 2, "run_length")
 
     if close is None or volume is None:
         return None
