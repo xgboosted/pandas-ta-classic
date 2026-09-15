@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._cpr import (
     calculate_cpr_width,
     calculate_price_position,
@@ -101,7 +101,7 @@ def cpr(
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    if not kwargs.get("lookahead", True):
+    if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         virgin_cpr = False
 
     if _any_none(open_, high, low, close):
