@@ -255,3 +255,17 @@ def test_signal_thresholds_keep_their_column_names():
     """Validation must not turn the caller's 70 into 70.0 (RSI_14_A_70_0); numpy integers are accepted."""
     assert list(ta.rsi(_F.close, signal_indicators=True, xa=70).columns) == ["RSI_14", "RSI_14_A_70", "RSI_14_B_20"]
     assert list(ta.rsi(_F.close, signal_indicators=True, xa=np.int64(70)).columns) == ["RSI_14", "RSI_14_A_70", "RSI_14_B_20"]
+
+
+def test_trend_reset_is_deprecated_and_has_no_effect(frame):
+    """trend_reset was documented as ending a trend but never read (AGENTS rule 4)."""
+    import warnings
+
+    trend = (frame.close > frame.open).astype(int)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        base_t, base_x = ta.tsignals(trend), ta.xsignals(frame.close, 50, 40)
+    for call, name in ((lambda: ta.tsignals(trend, trend_reset=1), "tsignals"), (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals")):
+        with pytest.warns(DeprecationWarning, match=rf"{name}\(\) trend_reset is not used"):
+            result = call()
+        assert result.equals(base_t if name == "tsignals" else base_x)

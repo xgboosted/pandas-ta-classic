@@ -18,6 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 * **`make typecheck` now also checks `core.py`**: `core.pyi` shadowed it, so mypy never read the accessor and strategy engine (raised in the #142 review). A second pass checks the file directly. `Strategy.ta` is annotated `list | None` to match `AllStrategy`.
 * **#142 pattern gaps closed**: `tools/gen_core_stub.py` writes PEP 604 annotations (`X | None`) and sorted imports itself, so its output matches the committed `core.pyi` before `ruff --fix` runs (identical on Python 3.12 and 3.14); the `cdl_pattern` and `ichimoku` docstrings drop `Union[...]`/`Tuple[...]`; `examples/ni.py` imports numpy/pandas at module scope; the `AGENTS.md` convention greps for function-body and commented-out imports now also scan `tests/`, `tools/`, `examples/` and `docs/`.
 
+### Deprecated
+* **`tsignals(trend_reset=...)` and `xsignals(trend_reset=...)`**: documented as "value used to identify if a trend has ended" but never read, so it has never changed a result. Passing it now emits a `DeprecationWarning`; the parameter is removed in the next breaking release. Its default is now `None` (was `0`).
+
 ### Removed
 * **`slope(vertical=...)`**: accepted since the upstream code, never documented or read. Removed from the signature and the `df.ta` stub; like other unknown keywords it now lands in `**kwargs`.
 * **BREAKING — `df.ta.constants()`, `ta.get_time`, `ta.EXCHANGE_TZ` and `ta.CDL_PATTERN_NAMES`**: deprecated in 0.8.32 (`FutureWarning` for the first three, `DeprecationWarning` for the last). Horizontal chart lines and wall-clock/exchange-timezone helpers are out of scope for a technical-analysis library. Add constant columns directly (`df["0"] = 0`) and use `ta.ALL_PATTERNS`. `pandas_ta_classic.utils.get_time` stays as the internal Strategy run timer. The example notebooks no longer call the removed names.
