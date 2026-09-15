@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 from .true_range import true_range
 
@@ -41,7 +41,7 @@ def kc(
         return None
 
     # Calculate Result
-    use_tr = kwargs.pop("tr", True)
+    use_tr = _bool_param(kwargs.pop("tr", None), True, "tr")
     range_ = true_range(high, low, close) if use_tr else non_zero_range(high, low)
 
     basis = ma(mamode, close, length=length)

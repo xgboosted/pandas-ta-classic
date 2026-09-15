@@ -14,6 +14,7 @@ from pandas.core.base import PandasObject
 from pandas_ta_classic._indicator_loader import _COLUMN_KWARG_KEYS, _DEFAULT_COLUMN_NAMES, _find_indicator_func, _make_ta_wrapper
 from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
 from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
+from pandas_ta_classic.utils._core import _bool_param
 
 logger = logging.getLogger(__name__)
 
@@ -514,7 +515,7 @@ class AnalysisIndicators(PandasObject):
         * Appends the result to main DataFrame
         * In chain mode, auto-appends and returns the DataFrame for fluent chaining.
         """
-        verbose = kwargs.pop("verbose", False)
+        verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
         chain_mode = self._df.attrs.get("_ta_chain", False)
 
         if not isinstance(result, (pd.Series, pd.DataFrame)):
@@ -660,10 +661,10 @@ class AnalysisIndicators(PandasObject):
                 the strategy() execution. Default: False
         """
         # If True, it returns the resultant DataFrame. Default: False
-        returns = kwargs.pop("returns", False)
+        returns = _bool_param(kwargs.pop("returns", None), False, "returns")
         # Ensure indicators are appended to the DataFrame
         kwargs["append"] = True
-        all_ordered = kwargs.pop("ordered", True)
+        all_ordered = _bool_param(kwargs.pop("ordered", None), True, "ordered")
         mp_chunksize = kwargs.pop("chunksize", self.cores)
 
         # Initialize
@@ -710,14 +711,14 @@ class AnalysisIndicators(PandasObject):
             logger.error("Not an available strategy.")
             return None
 
-        verbose = kwargs.pop("verbose", False)
+        verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
         if verbose:
             logger.info(f"Strategy: {name}\nIndicator arguments: {kwargs}")
             if mode["all"] or mode["category"]:
                 excluded_str = ", ".join(excluded)
                 logger.info(f"Excluded[{len(excluded)}]: {excluded_str}")
 
-        timed = kwargs.pop("timed", False)
+        timed = _bool_param(kwargs.pop("timed", None), False, "timed")
         results: Any = []
         use_multiprocessing = self.cores > 0
         has_col_names = False

@@ -119,34 +119,26 @@ def macd(
     df.name = f"MACD{_asmode}{_props}"
     df.category = macd.category
 
-    signal_indicators = kwargs.pop("signal_indicators", False)
+    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
     if signal_indicators:
+        # Read each option once and give it to both signal sets. Popping it inside
+        # the first signals() call left the MACD-line signals with the defaults.
+        signal_kwargs = {
+            "xa": kwargs.pop("xa", 0),
+            "xb": kwargs.pop("xb", None),
+            "xserie": kwargs.pop("xserie", None),
+            "xserie_a": kwargs.pop("xserie_a", None),
+            "xserie_b": kwargs.pop("xserie_b", None),
+            "cross_series": _bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
+            "offset": offset,
+        }
+        cross_values = kwargs.pop("cross_values", None)
         return concat(
             [
                 df,
-                signals(
-                    indicator=histogram,
-                    xa=kwargs.pop("xa", 0),
-                    xb=kwargs.pop("xb", None),
-                    xserie=kwargs.pop("xserie", None),
-                    xserie_a=kwargs.pop("xserie_a", None),
-                    xserie_b=kwargs.pop("xserie_b", None),
-                    cross_values=kwargs.pop("cross_values", True),
-                    cross_series=kwargs.pop("cross_series", True),
-                    offset=offset,
-                ),
-                signals(
-                    indicator=macd,
-                    # the caller's xa/xb were consumed by the histogram signals above
-                    xa=0,
-                    xb=None,
-                    xserie=kwargs.pop("xserie", None),
-                    xserie_a=kwargs.pop("xserie_a", None),
-                    xserie_b=kwargs.pop("xserie_b", None),
-                    cross_values=kwargs.pop("cross_values", False),
-                    cross_series=kwargs.pop("cross_series", True),
-                    offset=offset,
-                ),
+                # cross_values defaults differ: crossings for the histogram, levels for the MACD line
+                signals(indicator=histogram, cross_values=_bool_param(cross_values, True, "cross_values"), **signal_kwargs),
+                signals(indicator=macd, cross_values=_bool_param(cross_values, False, "cross_values"), **signal_kwargs),
             ],
             axis=1,
         )
