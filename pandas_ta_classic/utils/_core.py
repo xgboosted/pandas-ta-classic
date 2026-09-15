@@ -262,6 +262,34 @@ def _nan_like(template: Any, index: Any, rows: int) -> Any:
     return out
 
 
+def _require_shared_index(indicator: str, sig: inspect.Signature, args: tuple, kwargs: dict) -> None:
+    """Raise ValueError when two non-empty Series inputs have no index label in common.
+
+    Inputs of different lengths are fine: pandas aligns them on the labels they
+    share (a benchmark with a longer history, a volume series that starts later).
+    Inputs with no label in common -- a RangeIndex next to a DatetimeIndex, a
+    tz-aware next to a naive index, two date ranges that never overlap -- can
+    only produce an all-NaN result on the union of both indexes, twice as long
+    as either input, so they are a caller error.
+    """
+    series = [v for v in (*args, *kwargs.values()) if isinstance(v, Series) and not v.empty]
+    for other in series[1:]:
+        first = series[0]
+        if other.index is first.index or other.index.equals(first.index):
+            continue
+        if first.index.intersection(other.index).empty:
+            names = {id(v): k for k, v in sig.bind(*args, **kwargs).arguments.items()}
+            raise ValueError(
+                f"{indicator}() inputs share no index labels: {names.get(id(first), '?')} has {_describe_index(first.index)}, "
+                f"{names.get(id(other), '?')} has {_describe_index(other.index)}. Align them first, e.g. by taking both from one DataFrame."
+            )
+
+
+def _describe_index(index: Any) -> str:
+    tz = getattr(index, "tz", None)
+    return f"{type(index).__name__}{f' ({tz})' if tz is not None else ''} {index[0]!r} .. {index[-1]!r}"
+
+
 def nan_on_short_input(fn: Callable) -> Callable:
     """Return an all-NaN result instead of None when the input is shorter than the window (issue #145, case B).
 
@@ -290,6 +318,7 @@ def nan_on_short_input(fn: Callable) -> Callable:
             if empty:
                 logger.warning(f"[X] Series has 0 rows; {fn.__name__}() result is all NaN.")
             else:
+                _require_shared_index(fn.__name__, sig, args, kwargs)
                 result = fn(*args, **kwargs)
                 if result is not None:
                     return result

@@ -216,7 +216,27 @@ class TestInfInInput(TestCase):
 
 
 class TestMismatchedLengths(TestCase):
-    """Shorter OHLCV component below the minimum threshold → None (no crash)."""
+    """Inputs of different lengths align on their shared labels; a component shorter than
+    the window gives all-NaN. Inputs with no label in common raise ValueError."""
+
+    def test_inputs_without_shared_labels_raise(self):
+        dates = pd.date_range("2020-01-01", periods=len(_C), freq="D", name="date")
+        close, high, low, volume = (x.set_axis(dates) for x in (_C, _H, _L, _V))
+        with self.assertRaisesRegex(ValueError, r"beta\(\) inputs share no index labels: close has DatetimeIndex .* benchmark has RangeIndex"):
+            ta.beta(close, _C)
+        with self.assertRaisesRegex(ValueError, r"obv\(\) inputs share no index labels: close has DatetimeIndex .* volume has DatetimeIndex \(UTC\)"):
+            ta.obv(close, volume.tz_localize("UTC"))
+        later = high.set_axis(dates + pd.Timedelta(days=len(dates)))
+        with self.assertRaisesRegex(ValueError, r"adx\(\) inputs share no index labels"):
+            ta.adx(later, low, close)
+
+    def test_partially_overlapping_inputs_still_align(self):
+        dates = pd.date_range("2020-01-01", periods=len(_C), freq="D")
+        close = _C.set_axis(dates)
+        benchmark = _L.set_axis(dates).iloc[len(dates) // 4 :]
+        result = ta.beta(close, benchmark)
+        self.assertEqual(len(result), len(close))
+        self.assertTrue(result.notna().any())
 
     def test_atr_h_too_short_returns_none(self):
         """atr with h shorter than the minimum requirement must return None."""

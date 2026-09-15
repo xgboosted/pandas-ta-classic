@@ -28,6 +28,13 @@ input's index and the usual name and columns, so
 ``None``; test for short data with ``result.isna().all()``. Empty input
 is the zero-row case of the same rule.
 
+Inputs of different lengths are aligned on the index labels they share, so a
+benchmark with a longer history or a volume series that starts later works as
+expected. Inputs with no label in common (a ``RangeIndex`` next to a
+``DatetimeIndex``, a tz-aware next to a naive index, two date ranges that never
+overlap) raise ``ValueError``: they could only produce an all-NaN result on the
+union of both indexes.
+
 Lookahead Bias and Causality
 -----------------------------
 

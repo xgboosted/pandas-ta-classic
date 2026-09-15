@@ -539,7 +539,7 @@ class TestNoneGuards(TestCase):
             warnings.simplefilter("error", FutureWarning)
             self.assertIsNone(pandas_ta.utils.verify_series(None))
             self.assertIsNone(pandas_ta.utils.verify_series(self.c, 10))
-            self.assertIsNotNone(pandas_ta.ad(self.h, self.l, self.c, Series([1.0] * len(self.c)), open_=None))
+            self.assertIsNotNone(pandas_ta.ad(self.h, self.l, self.c, Series([1.0] * len(self.c), index=self.c.index), open_=None))
 
     # ---- candles ----
 
