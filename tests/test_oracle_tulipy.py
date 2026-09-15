@@ -30,6 +30,7 @@ Run ``python tests/fixtures/generate_tulipy_oracle.py`` on CPython <3.12 with
 tulipy installed, then commit the updated ``tulipy_oracle.json``.
 """
 
+import importlib
 import json
 import unittest
 from pathlib import Path
@@ -461,15 +462,21 @@ class TestTulipyOracle(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_msw_sine(self):
-        # MSW is a recursive trig (Mesa Sine Wave) computation; native output
-        # drifts by ~1e-4 across numpy versions, so a 1e-3 tolerance is used to
-        # stay robust to float noise while still cross-checking the oracle.
-        pt = ta.msw(self.close, length=5)
+        # tulipy truncates pi to 3.1415926, so the exact native formula differs from the
+        # oracle by up to ~3e-4 (not numpy drift, as this comment used to say).
+        pt = ta.msw(self.close, period=5)
         self._compare(pt.iloc[:, 0], self._oracle("msw_sine"), tol=1e-3, name="MSW_sine")
 
     def test_msw_lead(self):
-        pt = ta.msw(self.close, length=5)
+        pt = ta.msw(self.close, period=5)
         self._compare(pt.iloc[:, 1], self._oracle("msw_lead"), tol=1e-3, name="MSW_lead")
+
+    def test_msw_divergence_is_tulipys_pi(self):
+        """With tulipy's pi constant the native loop reproduces the oracle exactly."""
+        msw_module = importlib.import_module("pandas_ta_classic.cycles.msw")
+        sine, lead = msw_module._msw_native(self.close.to_numpy(dtype=float), 5, pi=3.1415926)
+        self._compare(pd.Series(sine, index=self.close.index), self._oracle("msw_sine"), tol=1e-12, name="MSW_sine_tulipy_pi")
+        self._compare(pd.Series(lead, index=self.close.index), self._oracle("msw_lead"), tol=1e-12, name="MSW_lead_tulipy_pi")
 
     # ------------------------------------------------------------------
     # New indicators (added with tulipy wrapper layer)
