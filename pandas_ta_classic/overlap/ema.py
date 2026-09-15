@@ -20,8 +20,8 @@ def ema(
     """Indicator: Exponential Moving Average (EMA)"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    adjust = kwargs.pop("adjust", False)
-    sma = kwargs.pop("sma", True)
+    adjust = _bool_param(kwargs.pop("adjust", None), False, "adjust")
+    sma = _bool_param(kwargs.pop("sma", None), True, "sma")
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")

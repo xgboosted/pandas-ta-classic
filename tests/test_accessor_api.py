@@ -13,6 +13,7 @@ Covers:
 
 from contextlib import redirect_stdout
 from io import StringIO
+from multiprocessing import cpu_count
 from unittest import TestCase, skipIf
 
 import numpy as np
@@ -208,13 +209,12 @@ class TestAccessorTimeRange(TestCase):
             self.assertIsInstance(val, (int, float), f"time_range='{unit}' must return a numeric value")
             self.assertGreater(val, 0, f"time_range='{unit}' must be positive")
 
-    def test_invalid_unit_falls_back_to_years(self):
-        """An invalid unit string falls back to 'years' internally."""
-        self.df.ta.time_range = "1y"  # invalid unit (not a supported string)
-        # After invalid assignment, the getter should still return a positive float
-        val = self.df.ta.time_range
-        self.assertIsInstance(val, float)
-        self.assertGreater(val, 0)
+    def test_invalid_unit_raises(self):
+        """An invalid unit used to be stored and then silently computed as years."""
+        with self.assertRaisesRegex(ValueError, r"df.ta.time_range must be one of .* got '1y'"):
+            self.df.ta.time_range = "1y"
+        with self.assertRaisesRegex(ValueError, r"total_time\(\) tf must be one of .* got 'decades'"):
+            pandas_ta_classic.utils.total_time(self.df, "decades")
 
     def test_none_resets_to_years(self):
         self.df.ta.time_range = None
@@ -269,6 +269,23 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         years = self.df.ta.time_range
         self.df.ta.time_range = "months"
         self.assertGreater(self.df.ta.time_range, years)
+
+    def test_invalid_settings_raise(self):
+        """-1, 1.0 and True became cpu_count(); an unknown exchange was ignored; a non-str adjusted became None."""
+        for bad in (-1, 1.0, True, "2"):
+            with self.assertRaisesRegex(ValueError, r"df.ta.cores must be an integer >= 0 or None"):
+                self.df.ta.cores = bad
+        self.df.ta.cores = 10_000
+        self.assertEqual(self.df.ta.cores, cpu_count())  # capped, as documented
+        self.df.ta.cores = None
+        self.assertEqual(self.df.ta.cores, cpu_count())
+        with self.assertRaisesRegex(ValueError, r"df.ta.exchange must be one of .* got 'nope'"):
+            self.df.ta.exchange = "nope"
+        self.df.ta.exchange = "LSE"
+        self.df.ta.exchange = None
+        self.assertEqual(self.df.ta.exchange, "NYSE")
+        with self.assertRaisesRegex(ValueError, r"df.ta.adjusted must be a column name or None, got 5"):
+            self.df.ta.adjusted = 5
 
     def test_settings_do_not_leak_to_other_frames(self):
         self.df.ta.cores = 0
@@ -365,9 +382,9 @@ class TestAccessorPropertyErrorsAreNotMasked(TestCase):
         self.assertIn("tz_localize", str(ctx.exception))
 
     def test_time_range_reports_the_real_failure(self):
-        with self.assertRaises(AttributeError) as ctx:
+        # Used to surface as AttributeError: 'int' object has no attribute 'days'
+        with self.assertRaisesRegex(TypeError, r"total_time\(\) needs a DatetimeIndex, got RangeIndex"):
             _ = self.df.ta.time_range
-        self.assertNotIn("has no attribute 'time_range'", str(ctx.exception))
 
     def test_unknown_attribute_still_reports_missing(self):
         with self.assertRaises(AttributeError) as ctx:

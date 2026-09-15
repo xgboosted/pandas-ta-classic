@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -48,7 +48,7 @@ def er(
     er.name = f"ER_{length}"
     er.category = "momentum"
 
-    signal_indicators = kwargs.pop("signal_indicators", False)
+    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
     if signal_indicators:
         return concat(
             [
@@ -60,8 +60,8 @@ def er(
                     xserie=kwargs.pop("xserie", None),
                     xserie_a=kwargs.pop("xserie_a", None),
                     xserie_b=kwargs.pop("xserie_b", None),
-                    cross_values=kwargs.pop("cross_values", False),
-                    cross_series=kwargs.pop("cross_series", True),
+                    cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values"),
+                    cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
                     offset=offset,
                 ),
             ],

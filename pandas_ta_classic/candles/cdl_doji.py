@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -37,7 +37,7 @@ def cdl_doji(
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    naive = kwargs.pop("naive", False)
+    naive = _bool_param(kwargs.pop("naive", None), False, "naive")
 
     if open_ is None or high is None or low is None or close is None:
         return None
