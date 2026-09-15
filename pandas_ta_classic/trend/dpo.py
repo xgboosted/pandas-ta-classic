@@ -5,7 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -21,7 +21,7 @@ def dpo(
     length = _pos_int(length, 20, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    if not kwargs.get("lookahead", True):
+    if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         centered = False
 
     if close is None:

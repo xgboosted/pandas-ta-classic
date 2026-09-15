@@ -93,12 +93,12 @@ def linreg(
     length = _pos_int(length, 14, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    angle = kwargs.pop("angle", False)
-    intercept = kwargs.pop("intercept", False)
-    degrees = kwargs.pop("degrees", True)
-    r = kwargs.pop("r", False)
-    slope = kwargs.pop("slope", False)
-    tsf = kwargs.pop("tsf", False)
+    angle = _bool_param(kwargs.pop("angle", None), False, "angle")
+    intercept = _bool_param(kwargs.pop("intercept", None), False, "intercept")
+    degrees = _bool_param(kwargs.pop("degrees", None), True, "degrees")
+    r = _bool_param(kwargs.pop("r", None), False, "r")
+    slope = _bool_param(kwargs.pop("slope", None), False, "slope")
+    tsf = _bool_param(kwargs.pop("tsf", None), False, "tsf")
     mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:

@@ -8,7 +8,7 @@ from pandas_ta_classic.performance.drawdown import drawdown
 from pandas_ta_classic.performance.log_return import log_return
 from pandas_ta_classic.performance.percent_return import percent_return
 
-from ._core import verify_series
+from ._core import _bool_param, verify_series
 from ._math import linear_regression
 from ._time import total_time
 
@@ -286,6 +286,6 @@ def volatility(
         _returns = close
 
     factor = _returns.shape[0] / total_time(_returns, tf)
-    if kwargs.pop("nearest_day", False) and tf.lower() == "years":
+    if _bool_param(kwargs.pop("nearest_day", None), False, "nearest_day") and tf.lower() == "years":
         factor = int(factor + 1)
     return float(np.sqrt(factor) * _returns.std())

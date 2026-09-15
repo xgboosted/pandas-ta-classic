@@ -7,7 +7,7 @@ import numpy as np
 from pandas import DataFrame, DatetimeIndex, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -26,7 +26,7 @@ def tos_stdevall(
     # There is no such mode here -- the regression is fitted over the whole
     # window -- so decline instead of handing back forward-looking values under
     # a keyword that promises the opposite.
-    if not kwargs.get("lookahead", True):
+    if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         warnings.warn(
             "tos_stdevall() has no causal mode: one linear regression is fitted over the whole window, so every point depends on later bars. "
             "Returning None because lookahead=False was requested.",
