@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -36,7 +36,7 @@ def thermo(
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    asint = kwargs.pop("asint", True)
+    asint = _bool_param(kwargs.pop("asint", None), True, "asint")
 
     if high is None or low is None:
         return None

@@ -1,7 +1,7 @@
 import logging
 from time import localtime, perf_counter
 
-from pandas import DataFrame, Timestamp
+from pandas import DataFrame, DatetimeIndex, Timestamp
 
 from pandas_ta_classic._meta import EXCHANGE_TZ, RATE
 
@@ -53,11 +53,22 @@ def get_time(exchange: str = "NYSE", full: bool = True, to_string: bool = False)
     return s
 
 
+TIME_RANGE_UNITS = ("years", "months", "weeks", "days", "hours", "minutes", "seconds")
+
+
 def total_time(df: DataFrame, tf: str = "years") -> float:
     """Calculates the total time of a DataFrame. Difference of the Last and
     First index. Options: 'months', 'weeks', 'days', 'hours', 'minutes'
     and 'seconds'. Default: 'years'.
-    Useful for annualization."""
+    Useful for annualization.
+
+    Raises ValueError for any other unit (it used to return years) and
+    TypeError when the index is not datetime-like.
+    """
+    if tf not in TIME_RANGE_UNITS:
+        raise ValueError(f"total_time() tf must be one of {list(TIME_RANGE_UNITS)}, got {tf!r}")
+    if not isinstance(df.index, DatetimeIndex):
+        raise TypeError(f"total_time() needs a DatetimeIndex, got {type(df.index).__name__}")
     time_diff = df.index[-1] - df.index[0]
     TimeFrame = {
         "years": time_diff.days / RATE["TRADING_DAYS_PER_YEAR"],
@@ -68,10 +79,7 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
         "minutes": time_diff.total_seconds() / 60,
         "seconds": time_diff.total_seconds(),
     }
-
-    if isinstance(tf, str) and tf in TimeFrame:
-        return TimeFrame[tf]
-    return TimeFrame["years"]
+    return TimeFrame[tf]
 
 
 def to_utc(df: DataFrame) -> DataFrame:

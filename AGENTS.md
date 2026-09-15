@@ -158,7 +158,7 @@ Repo-wide. Each rule is marked *enforced* (ruff fails the build) or *convention*
 - **`logger = logging.getLogger(__name__)` goes after the import block.** *Enforced:* `E402`.
 - **Prefer stdlib over hand-rolled math**, e.g. `combination()` wraps `math.comb`. Do not reintroduce hand-rolled nCr, erf, factorial or gcd loops. *Convention.*
 - **Dead code goes.** A helper with no callers is deleted, together with the constants and imports only it used. Search the whole repo, including the defining file, before deciding. *Convention.*
-- **Validate numeric parameters with `_pos_int` / `_pos_float` / `_number`** (`utils/_core.py`), e.g. `length = _pos_int(length, 10, "length")`, `_pos_float(na, 0.2, "na", lt=1)` or `scalar = _number(scalar, 100, "scalar")` (any finite number); `drift` and `offset` go through `get_drift` / `get_offset`; flags use `_bool_param(talib, False, "talib")` and string options `_str_param(method, "classic", "method", choices={...})`. `None` selects the default; any other invalid value (0, negative, NaN, bool, a fractional int) raises `ValueError` naming the indicator and parameter. Never write `x = int(x) if x and x > 0 else default`, which silently replaces bad input. If an indicator passes its value to another indicator with a stricter bound, give it the same bound so the error names the function the user called. *Convention:* greps 5–7 below.
+- **Validate numeric parameters with `_pos_int` / `_pos_float` / `_number`** (`utils/_core.py`), e.g. `length = _pos_int(length, 10, "length")`, `_pos_float(na, 0.2, "na", lt=1)` or `scalar = _number(scalar, 100, "scalar")` (any finite number); `drift` and `offset` go through `get_drift` / `get_offset`; flags use `_bool_param(talib, False, "talib")` and string options `_str_param(method, "classic", "method", choices={...})`. `None` selects the default; any other invalid value (0, negative, NaN, bool, a fractional int) raises `ValueError` naming the indicator and parameter. Never write `x = int(x) if x and x > 0 else default`, which silently replaces bad input. If an indicator passes its value to another indicator with a stricter bound, give it the same bound so the error names the function the user called. *Convention:* greps 5–8 below.
 - **No import cruft.** No `pkg_resources` fallbacks (setuptools-scm owns the version) and no commented-out import lines; ruff reads code, not comments. *Convention.*
 
 #### Convention checklist (run before finishing)
@@ -188,6 +188,10 @@ grep -rnE "^\s+(\w+) = .*\b\1\b.* if .*\b\1\b.* else |int\(kwargs\[|= int\(abs\(
 # 7. Numeric options read from **kwargs without validation (wrap them: _pos_int(kwargs.pop("x", None), 5, "x")).
 #    Signal thresholds xa/xb are checked once, in utils/_signals.py signals().
 grep -rnE 'kwargs\.(pop|get)\("\w+", -?[0-9.]+\)' pandas_ta_classic/ --include=*.py | grep -vE '\bx[ab]=kwargs'
+
+# 8. True/False options read from **kwargs by truthiness (wrap them: _bool_param(kwargs.pop("x", None), False, "x")).
+#    stc's ma1/ma2/osc default to False but take Series; msw's tulipy flag is handled in its own module.
+grep -rnE 'kwargs\.(pop|get)\("\w+", (True|False)\)' pandas_ta_classic/ --include=*.py | grep -vE '"(ma1|ma2|osc|tulipy)"'
 ```
 
 Not greppable, so check in review: **dead code** your change orphaned, and the **stdlib over hand-rolled** preference.
@@ -239,7 +243,7 @@ General rules taken from #142 (lint modernization, import conventions, silent-fa
 
 ### Arguments
 
-1. **No silent fallbacks for arguments.** `None` selects the default; any other value the function cannot use raises `ValueError` naming the function, the parameter and the value. Never write `x = int(x) if x and x > 0 else default`, `x if x else default`, `bool(x) if isinstance(x, bool) else default` or an `if x not in choices: x = default` block. Use `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `get_drift` and `get_offset` from `utils/_core.py`. *Enforced:* `tests/test_parameter_validation.py`, checklist greps 5–7.
+1. **No silent fallbacks for arguments.** `None` selects the default; any other value the function cannot use raises `ValueError` naming the function, the parameter and the value. Never write `x = int(x) if x and x > 0 else default`, `x if x else default`, `bool(x) if isinstance(x, bool) else default` or an `if x not in choices: x = default` block. Use `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `get_drift` and `get_offset` from `utils/_core.py`. *Enforced:* `tests/test_parameter_validation.py`, checklist greps 5–8.
 2. **Give a parameter the bound its callees need.** When an indicator passes a value to another indicator with a stricter bound (`stdev` → `variance` needs `length > 1`), declare the same bound so the error names the function the user called.
 3. **Helpers reject unknown keywords.** Utility functions take explicit keyword-only options (`def fibonacci(n=2, *, zero=False, weighted=False)`), never `**kwargs` read with `kwargs.pop`, so a typo raises `TypeError` instead of returning the default result. Indicators keep `**kwargs` for `fillna`/`fill_method` and for strategy-wide arguments they deliberately absorb (for example `length` in `adosc`); document such absorption in a comment. *Enforced:* `test_helpers_reject_misspelled_keywords`.
 4. **Every accepted parameter is read.** A parameter the body never uses (the old `ticker(ds=...)`, `slope(vertical=...)`) is removed, or implemented. *Review.*

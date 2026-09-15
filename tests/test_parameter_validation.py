@@ -255,3 +255,50 @@ def test_signal_thresholds_keep_their_column_names():
     """Validation must not turn the caller's 70 into 70.0 (RSI_14_A_70_0); numpy integers are accepted."""
     assert list(ta.rsi(_F.close, signal_indicators=True, xa=70).columns) == ["RSI_14", "RSI_14_A_70", "RSI_14_B_20"]
     assert list(ta.rsi(_F.close, signal_indicators=True, xa=np.int64(70)).columns) == ["RSI_14", "RSI_14_A_70", "RSI_14_B_20"]
+
+
+# True/False options read from **kwargs were used by truthiness, so detailed="no"
+# meant True and lookahead=0 meant False. Each must be True or False now.
+# Match converted flags and raw True/False defaults alike, so a site that loses its
+# _bool_param wrapper stays in the sweep and fails instead of dropping out of it.
+_BOOL_KWARG = re.compile(r'_bool_param\(kwargs\.(?:pop|get)\("(\w+)"|kwargs\.(?:pop|get)\("(\w+)", (?:True|False)\)')
+_NOT_FLAGS = {"ma1", "ma2", "osc", "tulipy"}  # stc's optional Series; msw's backend switch
+_SIGNAL_GATED = {"cross_values", "cross_series"}
+
+
+def _bool_kwarg_cases():
+    cases = []
+    for name in sorted(i for v in ta.Category.values() for i in v):
+        func = _find_indicator_func(name)
+        if func is None:
+            continue
+        found = _BOOL_KWARG.findall(inspect.getsource(inspect.getmodule(inspect.unwrap(func))))
+        keys = sorted({a or b for a, b in found} - _NOT_FLAGS)
+        cases += [(name, key) for key in keys if name != "macd"]
+    return cases
+
+
+BOOL_KWARG_CASES = _bool_kwarg_cases()
+
+
+def test_bool_kwarg_sweep_found_the_flags():
+    assert len(BOOL_KWARG_CASES) >= 30
+
+
+@pytest.mark.parametrize(("name", "key"), BOOL_KWARG_CASES)
+def test_bool_kwarg_rejects_non_bool(name, key, frame):
+    func = _find_indicator_func(name)
+    kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
+    extra = {"signal_indicators": True} if key in _SIGNAL_GATED else {}
+    with pytest.raises(ValueError, match=rf"{name}\(\) {key} must be True or False, got 'no'"):
+        func(**kwargs, **_required_extras(name, frame), **extra, **{key: "no"})
+
+
+def test_strategy_and_metric_flags_reject_non_bool(frame):
+    df = frame.copy()
+    df.ta.cores = 0
+    for key in ("verbose", "timed", "ordered", "returns"):
+        with pytest.raises(ValueError, match=rf"strategy\(\) {key} must be True or False"):
+            df.ta.strategy("candles", **{key: 1})
+    with pytest.raises(ValueError, match=r"volatility\(\) nearest_day must be True or False"):
+        ta.utils.volatility(frame.close, nearest_day="yes")
