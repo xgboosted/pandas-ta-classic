@@ -10,7 +10,7 @@ from pandas import DataFrame, Series
 from ._core import verify_series
 
 logger = logging.getLogger(__name__)
-from pandas_ta_classic.utils._core import _pos_int
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: int | None = None) -> tuple[np.ndarray, ...]:
@@ -64,6 +64,8 @@ def combination(*, n: int = 1, r: int = 0, repetition: bool = False, multichoose
     """nCr combinatorics — wraps math.comb. ``multichoose`` is an alias for ``repetition``."""
     n = _pos_int(n, 1, "n", gt=None, ge=0)
     r = _pos_int(r, 0, "r", gt=None, ge=0)
+    repetition = _bool_param(repetition, False, "repetition")
+    multichoose = _bool_param(multichoose, False, "multichoose")
     if repetition or multichoose:
         return comb(n + r - 1, r) if n + r > 0 else 1  # choosing 0 of 0 kinds: one way
     return comb(n, r)
@@ -72,6 +74,8 @@ def combination(*, n: int = 1, r: int = 0, repetition: bool = False, multichoose
 def fibonacci(n: int = 2, *, zero: bool = False, weighted: bool = False) -> np.ndarray:
     """Fibonacci Sequence as a numpy array"""
     n = _pos_int(n, 2, "n", gt=None, ge=0)
+    zero = _bool_param(zero, False, "zero")
+    weighted = _bool_param(weighted, False, "weighted")
 
     if zero:
         a, b = 0, 1
@@ -113,6 +117,8 @@ def pascals_triangle(n: int | None = None, *, weighted: bool = False, inverse: b
          => inverse weighted: [0.9375, 0.75, 0.625, 0.75, 0.9375]
     """
     n = _pos_int(n, 0, "n", gt=None, ge=0)
+    weighted = _bool_param(weighted, False, "weighted")
+    inverse = _bool_param(inverse, False, "inverse")
 
     # Calculation
     triangle = np.array([combination(n=n, r=i) for i in range(n + 1)])
@@ -138,6 +144,7 @@ def symmetric_triangle(n: int | None = None, *, weighted: bool = False) -> list[
          => weighted: [0.16666667 0.33333333 0.33333333 0.16666667]
     """
     n = _pos_int(n, 2, "n", gt=None, ge=0)
+    weighted = _bool_param(weighted, False, "weighted")
 
     triangle = None
     if n == 1:
@@ -181,6 +188,8 @@ def zero(x: float) -> float:
 
 def df_error_analysis(dfA: DataFrame, dfB: DataFrame, *, corr_method: str = "pearson", plot: bool = False, triangular: bool = False) -> DataFrame:
     """Correlation between two DataFrames, used by the test suite for oracle parity checks."""
+    plot = _bool_param(plot, False, "plot")
+    triangular = _bool_param(triangular, False, "triangular")
 
     # Find their differences and correlation
     diff = dfA - dfB

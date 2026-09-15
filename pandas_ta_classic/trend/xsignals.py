@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 from pandas_ta_classic.utils._signals import cross_value
 
 from .tsignals import _warn_trend_reset, tsignals
@@ -30,6 +30,8 @@ def xsignals(
     if signal is None:
         return None
     offset = get_offset(offset)
+    above = _bool_param(above, True, "above")
+    long = _bool_param(long, True, "long")
     _warn_trend_reset("xsignals", trend_reset)
 
     # Calculate Result

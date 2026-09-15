@@ -94,6 +94,9 @@ def cpr(
     method = _str_param(method, "classic", "method", choices={"classic", "camarilla", "fibonacci", "woodie"})
     timeframe = _str_param(timeframe, "daily", "timeframe", choices={"intraday", "daily", "weekly", "monthly"})
     levels = _str_param(levels, "standard", "levels", choices={"basic", "standard", "extended", "all"})
+    width_analysis = _bool_param(width_analysis, True, "width_analysis")
+    price_position = _bool_param(price_position, True, "price_position")
+    virgin_cpr = _bool_param(virgin_cpr, False, "virgin_cpr")
 
     length = 1  # For verify_series
     open_ = verify_series(open_, length)

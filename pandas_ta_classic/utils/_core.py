@@ -404,6 +404,7 @@ def unsigned_differences(series: Series, amount: int | None = None, *, asint: bo
     postive  = Series([0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     negative = Series([0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1])
     """
+    asint = _bool_param(asint, False, "asint")
     amount = _pos_int(amount, 1, "amount")
     negative = series.diff(amount)
     negative.fillna(0, inplace=True)
