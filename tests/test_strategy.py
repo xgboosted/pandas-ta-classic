@@ -384,9 +384,13 @@ class TestStrategyDoesNotMutateInputs(TestCase):
         self.data.ta.cores = 0
 
     def test_category_strategy_leaves_category_intact(self):
-        before = list(pandas_ta.Category["trend"])
+        # Compare with a fresh discovery, not a snapshot of the live list: an
+        # earlier test in the run may already have mutated it, and a snapshot
+        # taken after that would pass against the bug.
+        from pandas_ta_classic._meta import _build_category_dict
+
         self.data.ta.strategy("trend")
-        self.assertEqual(pandas_ta.Category["trend"], before)
+        self.assertEqual(pandas_ta.Category, _build_category_dict())
 
     def test_custom_strategy_leaves_strategy_ta_intact(self):
         ta = [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}]
