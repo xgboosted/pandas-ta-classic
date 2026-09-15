@@ -58,6 +58,9 @@ Covered fixes:
      (issue #138)         back; the parameter is gone from tsignals and the seven
                           indicators that never used it, so a stray drift= lands in
                           **kwargs and cannot change the result
+ 31. candle gaps       — one NaN row inside the series (resample() inserts one per
+                          missing session) poisoned the running candle averages,
+                          so most patterns reported 0 for every later bar
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1710,3 +1713,38 @@ class TestDriftParameterRemoved(TestCase):
                     warnings.simplefilter("error", DeprecationWarning)
                     with_drift = self._call(name, drift=3)
                 pd.testing.assert_frame_equal(pd.DataFrame(with_drift), pd.DataFrame(self._call(name)))
+
+
+# ---------------------------------------------------------------------------
+# Fix 31: candle patterns went silent after a NaN row inside the series
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternsSkipNanRows(TestCase):
+    """A NaN row inside the series poisoned the running body/shadow averages.
+
+    On a weekday feed resampled to calendar days, 41 of 62 patterns never fired
+    (1,260 signals fell to 119). Patterns are now detected on the finite bars,
+    as if the NaN rows had been dropped, and report 0 on the NaN rows.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        daily = get_sample_data().iloc[-400:]
+        cls.gapped = daily.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last"})
+        cls.dropped = cls.gapped.dropna()
+
+    def _all(self, df):
+        return ta.cdl_pattern(df.open, df.high, df.low, df.close, name="all")
+
+    def test_gapped_equals_dropna_on_finite_rows(self):
+        self.assertGreater(len(self.gapped), len(self.dropped))
+        gapped, dropped = self._all(self.gapped), self._all(self.dropped)
+        self.assertEqual(list(gapped.columns), list(dropped.columns))
+        for col in dropped.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(gapped.loc[self.dropped.index, col].to_numpy(float), dropped[col].to_numpy(float))
+
+    def test_nan_rows_report_no_pattern(self):
+        nan_rows = self._all(self.gapped).loc[self.gapped.close.isna()]
+        self.assertFalse((nan_rows.fillna(0) != 0).any().any())
