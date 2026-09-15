@@ -65,6 +65,9 @@ Covered fixes:
  31. candle gaps       — one NaN row inside the series (resample() inserts one per
                           missing session) poisoned the running candle averages,
                           so most patterns reported 0 for every later bar
+ 32. macd signals    — xa, xb, xserie and cross_series passed with
+                          signal_indicators=True reached only the histogram
+                          signals; the MACD-line signals always used the defaults
 
 Run:
     python -m unittest tests/test_regression_bugfixes.py
@@ -1786,3 +1789,41 @@ class TestCandlePatternsSkipNanRows(TestCase):
     def test_nan_rows_report_no_pattern(self):
         nan_rows = self._all(self.gapped).loc[self.gapped.close.isna()]
         self.assertFalse((nan_rows.fillna(0) != 0).any().any())
+
+
+# ---------------------------------------------------------------------------
+# Fix 32: macd signal options reached only the histogram signals
+# ---------------------------------------------------------------------------
+
+
+class TestMacdSignalOptionsApplyToBothLines(TestCase):
+    """The first signals() call popped xa/xb/xserie/cross_series from kwargs.
+
+    The second call, for the MACD line, then read the defaults, so
+    macd(signal_indicators=True, xa=1) produced MACD_12_26_9_A_0.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.close = get_sample_data().close.iloc[:400]
+
+    def _signal_columns(self, **kwargs):
+        return list(ta.macd(self.close, signal_indicators=True, **kwargs).columns[3:])
+
+    def test_defaults_unchanged(self):
+        self.assertEqual(self._signal_columns(), ["MACDh_12_26_9_XA_0", "MACDh_12_26_9_XB_0", "MACD_12_26_9_A_0"])
+
+    def test_thresholds_reach_the_macd_line(self):
+        columns = self._signal_columns(xa=1, xb=-1)
+        self.assertIn("MACD_12_26_9_A_1", columns)
+        self.assertIn("MACD_12_26_9_B_-1", columns)
+        self.assertNotIn("MACD_12_26_9_A_0", columns)
+
+    def test_series_reaches_the_macd_line(self):
+        xserie = self.close.rolling(5).mean() - self.close.rolling(20).mean()
+        self.assertIn("MACD_12_26_9_XA_close", self._signal_columns(xserie=xserie))
+        self.assertIn("MACD_12_26_9_A_close", self._signal_columns(xserie=xserie, cross_series=False))
+
+    def test_flags_are_validated(self):
+        with self.assertRaisesRegex(ValueError, r"macd\(\) cross_values must be True or False"):
+            ta.macd(self.close, signal_indicators=True, cross_values="no")
