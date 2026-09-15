@@ -5,7 +5,7 @@ from typing import Any
 from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 from .midprice import midprice
 
@@ -40,7 +40,7 @@ def ichimoku(
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    if not kwargs.get("lookahead", True):
+    if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         include_chikou = False
 
     return_tuple = as_dataframe is False

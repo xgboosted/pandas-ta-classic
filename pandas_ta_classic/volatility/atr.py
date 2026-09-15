@@ -55,7 +55,7 @@ def atr(
         if atr is None:
             return None
 
-    percentage = kwargs.pop("percent", False)
+    percentage = _bool_param(kwargs.pop("percent", None), False, "percent")
     if percentage:
         atr *= 100 / close
 
