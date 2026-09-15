@@ -290,15 +290,18 @@ def _short_frame(n: int = _N_SHORT) -> dict[str, pd.Series]:
     rng = np.random.default_rng(0)
     base = 100 + np.cumsum(rng.normal(0, 1, n))
     index = pd.date_range("2020-01-01", periods=n, freq="D")
-    return {
-        "open_": pd.Series(base - 0.5, index=index),
-        "open": pd.Series(base - 0.5, index=index),
-        "high": pd.Series(base + 1.0, index=index),
-        "low": pd.Series(base - 1.0, index=index),
-        "close": pd.Series(base, index=index),
-        "volume": pd.Series(rng.integers(1_000, 5_000, n).astype(float), index=index),
-        "benchmark": pd.Series(base * 0.99, index=index),
+    # Named like DataFrame columns, so outputs named after their inputs (vp's
+    # low_close, pos_volume) are compared too.
+    values = {
+        "open_": base - 0.5,
+        "open": base - 0.5,
+        "high": base + 1.0,
+        "low": base - 1.0,
+        "close": base,
+        "volume": rng.integers(1_000, 5_000, n).astype(float),
+        "benchmark": base * 0.99,
     }
+    return {key: pd.Series(v, index=index, name=key.rstrip("_")) for key, v in values.items()}
 
 
 def _call(name: str, n: int = _N_SHORT):
@@ -356,3 +359,17 @@ def test_tables_cover_every_indicator() -> None:
     classified = RETURNS_ALL_NAN | RETURNS_SERIES | _EXCLUDED
     unclassified = discovered - classified
     assert not unclassified, "unclassified indicator(s): " f"{sorted(unclassified)} -- add each to RETURNS_ALL_NAN or RETURNS_SERIES"
+
+
+@pytest.mark.parametrize("name", sorted(RETURNS_ALL_NAN | RETURNS_SERIES))
+def test_empty_input_returns_empty_result(name: str) -> None:
+    """Zero rows is shorter than any window: an empty result shaped like a normal one, never a crash."""
+    empty = _call(name, 0)
+    full = _call(name, _N_LONG)
+    assert isinstance(empty, (pd.Series, pd.DataFrame)), f"{name} returned {type(empty).__name__} on 0 rows"
+    assert np.isnan(empty.to_numpy(dtype=float)).all()
+    assert empty.name == full.name
+    if isinstance(full, pd.DataFrame):
+        assert list(empty.columns) == list(full.columns)
+    if len(full) == _N_LONG:
+        assert len(empty) == 0

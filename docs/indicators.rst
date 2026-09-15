@@ -25,7 +25,8 @@ same way ``close.rolling(50).mean()`` does on 10 rows. The result keeps the
 input's index and the usual name and columns, so
 ``df.ta.sma(length=50, append=True)`` on a short frame adds an all-NaN
 ``SMA_50`` column instead of nothing. Before 0.9.0 these calls returned
-``None``; test for short data with ``result.isna().all()``.
+``None``; test for short data with ``result.isna().all()``. Empty input
+is the zero-row case of the same rule.
 
 Lookahead Bias and Causality
 -----------------------------
