@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -33,7 +33,7 @@ def ui(
     downside /= highest_close
     d2 = downside * downside
 
-    everget = kwargs.pop("everget", False)
+    everget = _bool_param(kwargs.pop("everget", None), False, "everget")
     if everget:
         # Everget uses SMA instead of SUM for calculation
         ui = (sma(d2, length) / length).apply(np.sqrt)
