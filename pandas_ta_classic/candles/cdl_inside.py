@@ -4,7 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, candle_color, get_offset, verify_series
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -19,6 +19,7 @@ def cdl_inside(
 ) -> Series | None:
     """Indicator: Candle Type - Inside Bar"""
     # Validate arguments
+    asbool = _bool_param(asbool, False, "asbool")
     open_ = verify_series(open_)
     high = verify_series(high)
     low = verify_series(low)

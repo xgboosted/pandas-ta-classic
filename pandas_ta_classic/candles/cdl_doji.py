@@ -30,6 +30,7 @@ def cdl_doji(
     """Indicator: Candle Type - Doji"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
+    asint = _bool_param(asint, True, "asint")
     factor = _number(factor, 10, "factor", ge=0)
     scalar = _number(scalar, 100, "scalar")
     open_ = verify_series(open_, length)

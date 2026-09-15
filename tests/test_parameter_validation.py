@@ -332,3 +332,54 @@ def test_trend_reset_is_deprecated_and_has_no_effect(frame):
         with pytest.warns(DeprecationWarning, match=rf"{name}\(\) trend_reset is not used"):
             result = call()
         assert result.equals(base_t if name == "tsignals" else base_x)
+
+
+# Boolean parameters declared with a True/False default in the signature were read by
+# truthiness too (xsignals(above=0) meant below, ichimoku(as_dataframe=0) returned a
+# DataFrame). Cases come from the signatures, not from the validation calls, so a
+# parameter that loses its _bool_param call still fails here.
+def _signature_bool_cases():
+    cases = []
+    for name in sorted(i for v in ta.Category.values() for i in v):
+        func = _find_indicator_func(name)
+        if func is None:
+            continue
+        for param in inspect.signature(func).parameters.values():
+            if isinstance(param.default, bool):
+                cases.append((name, param.name))
+    return cases
+
+
+SIGNATURE_BOOL_CASES = _signature_bool_cases()
+
+
+def test_signature_bool_sweep_found_the_parameters():
+    assert len(SIGNATURE_BOOL_CASES) >= 11
+
+
+@pytest.mark.parametrize(("name", "param"), SIGNATURE_BOOL_CASES)
+def test_signature_bool_rejects_non_bool(name, param, frame):
+    func = _find_indicator_func(name)
+    kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
+    extra = {"xa": 50, "xb": 40} if name == "xsignals" else {}
+    if name == "xsignals":
+        kwargs = {"signal": frame.close}
+    with pytest.raises(ValueError, match=rf"{name}\(\) {param} must be True or False, got 0"):
+        func(**kwargs, **_required_extras(name, frame), **extra, **{param: 0})
+
+
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        (lambda: ta.utils.combination(n=5, r=2, repetition=1), r"combination\(\) repetition must be True or False"),
+        (lambda: ta.utils.combination(n=5, r=2, multichoose="yes"), r"combination\(\) multichoose must be True or False"),
+        (lambda: ta.utils.fibonacci(n=5, zero=1), r"fibonacci\(\) zero must be True or False"),
+        (lambda: ta.utils.fibonacci(n=5, weighted="no"), r"fibonacci\(\) weighted must be True or False"),
+        (lambda: ta.utils.pascals_triangle(n=4, inverse=1), r"pascals_triangle\(\) inverse must be True or False"),
+        (lambda: ta.utils.symmetric_triangle(n=4, weighted=0), r"symmetric_triangle\(\) weighted must be True or False"),
+        (lambda: ta.utils.unsigned_differences(_F.close, asint="x"), r"unsigned_differences\(\) asint must be True or False"),
+    ],
+)
+def test_helper_bool_options_reject_non_bool(call, message):
+    with pytest.raises(ValueError, match=message):
+        call()

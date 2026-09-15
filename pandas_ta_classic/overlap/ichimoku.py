@@ -35,6 +35,9 @@ def ichimoku(
     tenkan = _pos_int(tenkan, 9, "tenkan")
     kijun = _pos_int(kijun, 26, "kijun")
     senkou = _pos_int(senkou, 52, "senkou")
+    include_chikou = _bool_param(include_chikou, True, "include_chikou")
+    as_dataframe = _bool_param(as_dataframe, True, "as_dataframe")
+    append_span = _bool_param(append_span, False, "append_span")
     _length = max(tenkan, kijun, senkou)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -43,7 +46,7 @@ def ichimoku(
     if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         include_chikou = False
 
-    return_tuple = as_dataframe is False
+    return_tuple = not as_dataframe
     if return_tuple:
         warnings.warn(_ICHIMOKU_TUPLE_DEPRECATION, DeprecationWarning, stacklevel=2)
 
