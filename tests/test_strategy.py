@@ -394,4 +394,33 @@ class TestStrategyDoesNotMutateInputs(TestCase):
         self.data.ta.strategy(strategy)
         self.assertEqual(strategy.ta, [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}])
         self.assertIn("SMA_10", self.data.columns)
-        self.assertNotIn("SMA_5000", self.data.columns)
+        # A window longer than the frame gives an all-NaN column, as a direct call does.
+        self.assertTrue(self.data["SMA_5000"].isna().all())
+
+
+class TestCustomStrategyLength(TestCase):
+    """Custom mode compared ``kwds["length"] > len(df)`` before running anything.
+
+    ``length=None`` (the library-wide way to ask for the default) raised
+    ``TypeError: '>' not supported between instances of 'NoneType' and 'int'``,
+    and a window longer than the frame silently dropped the column while
+    category mode and direct calls return an all-NaN column.
+    """
+
+    def setUp(self):
+        self.data = get_sample_data().iloc[:50].copy()
+        self.data.ta.cores = 0
+
+    def test_length_none_uses_the_default(self):
+        self.data.ta.strategy(pandas_ta.Strategy(name="n", ta=[{"kind": "sma", "length": None}]))
+        self.assertIn("SMA_10", self.data.columns)
+
+    def test_invalid_length_raises_from_the_indicator(self):
+        with self.assertRaisesRegex(ValueError, r"sma\(\) length must be an integer > 0, got '500'"):
+            self.data.ta.strategy(pandas_ta.Strategy(name="s", ta=[{"kind": "sma", "length": "500"}]))
+
+    def test_long_window_matches_category_mode_and_direct_call(self):
+        self.data.ta.strategy(pandas_ta.Strategy(name="l", ta=[{"kind": "sma", "length": 500}]))
+        direct = self.data.ta.sma(length=500)
+        self.assertTrue(self.data["SMA_500"].equals(direct))
+        self.assertTrue(self.data["SMA_500"].isna().all())
