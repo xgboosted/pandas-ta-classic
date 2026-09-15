@@ -1,6 +1,7 @@
 # Money Flow Index (MFI)
 from typing import Any
 
+import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
@@ -12,10 +13,11 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
+@skip_leading_nan("high", "low", "close", "volume")
 def mfi(
     high: Series,
     low: Series,
@@ -58,6 +60,10 @@ def mfi(
 
         tdf.loc[(typical_price.diff(drift) < 0), "diff"] = -1
         tdf.loc[tdf["diff"] == -1, "-mf"] = raw_money_flow
+        # The first `drift` bars have no previous price, so their flow is undefined,
+        # not zero; a window that includes them is incomplete (TA-Lib and tulipy
+        # start at bar `length`).
+        tdf.iloc[:drift, tdf.columns.get_indexer(["+mf", "-mf"])] = np.nan
 
         psum = tdf["+mf"].rolling(length).sum()
         nsum = tdf["-mf"].rolling(length).sum()
