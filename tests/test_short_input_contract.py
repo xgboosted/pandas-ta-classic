@@ -373,3 +373,14 @@ def test_empty_input_returns_empty_result(name: str) -> None:
         assert list(empty.columns) == list(full.columns)
     if len(full) == _N_LONG:
         assert len(empty) == 0
+
+
+@pytest.mark.parametrize("length", [60_000, 600_000])
+def test_window_longer_than_first_probe_still_returns_all_nan(length: int) -> None:
+    """The shape-learning call was capped at 50,000 rows, so sma(length=60000) on 3 rows returned None."""
+    close = _short_frame()["close"]
+    result = ta.sma(close, length=length)
+    assert isinstance(result, pd.Series)
+    assert result.name == f"SMA_{length}"
+    assert result.index.equals(close.index)
+    assert result.isna().all()

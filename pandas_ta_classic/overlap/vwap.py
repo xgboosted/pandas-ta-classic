@@ -2,7 +2,7 @@
 import logging
 from typing import Any
 
-from pandas import Series
+from pandas import DatetimeIndex, Series
 
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -39,6 +39,10 @@ def vwap(
 
     if high is None or low is None or close is None or volume is None:
         return None
+    if not isinstance(close.index, DatetimeIndex):
+        # anchoring groups rows by calendar period; without timestamps this used to raise
+        # AttributeError: 'RangeIndex' object has no attribute 'to_period'
+        raise TypeError(f"vwap() needs a DatetimeIndex to anchor by {anchor!r}, got {type(close.index).__name__}")
 
     typical_price = hlc3(high=high, low=low, close=close)
     if not is_datetime_ordered(volume):

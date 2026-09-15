@@ -302,3 +302,33 @@ def test_strategy_and_metric_flags_reject_non_bool(frame):
             df.ta.strategy("candles", **{key: 1})
     with pytest.raises(ValueError, match=r"volatility\(\) nearest_day must be True or False"):
         ta.utils.volatility(frame.close, nearest_day="yes")
+
+
+def test_vwap_without_datetime_index_raises_type_error(frame):
+    """vwap anchors by calendar period; a RangeIndex used to fail with an unrelated AttributeError."""
+    flat = frame.reset_index(drop=True)
+    with pytest.raises(TypeError, match=r"vwap\(\) needs a DatetimeIndex to anchor by 'D', got RangeIndex"):
+        ta.vwap(flat.high, flat.low, flat.close, flat.volume)
+
+
+def test_strategy_skips_vwap_without_datetime_index(frame):
+    """strategy("all") on a RangeIndex frame crashed on vwap; all/category modes now leave it out."""
+    flat = frame.reset_index(drop=True).copy()
+    flat.ta.cores = 0
+    flat.ta.strategy("overlap")
+    assert "SMA_10" in flat.columns
+    assert not any(c.startswith("VWAP") for c in flat.columns)
+
+
+def test_trend_reset_is_deprecated_and_has_no_effect(frame):
+    """trend_reset was documented as ending a trend but never read (AGENTS rule 4)."""
+    import warnings
+
+    trend = (frame.close > frame.open).astype(int)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        base_t, base_x = ta.tsignals(trend), ta.xsignals(frame.close, 50, 40)
+    for call, name in ((lambda: ta.tsignals(trend, trend_reset=1), "tsignals"), (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals")):
+        with pytest.warns(DeprecationWarning, match=rf"{name}\(\) trend_reset is not used"):
+            result = call()
+        assert result.equals(base_t if name == "tsignals" else base_x)
