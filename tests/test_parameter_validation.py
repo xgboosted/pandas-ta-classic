@@ -318,3 +318,17 @@ def test_strategy_skips_vwap_without_datetime_index(frame):
     flat.ta.strategy("overlap")
     assert "SMA_10" in flat.columns
     assert not any(c.startswith("VWAP") for c in flat.columns)
+
+
+def test_trend_reset_is_deprecated_and_has_no_effect(frame):
+    """trend_reset was documented as ending a trend but never read (AGENTS rule 4)."""
+    import warnings
+
+    trend = (frame.close > frame.open).astype(int)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        base_t, base_x = ta.tsignals(trend), ta.xsignals(frame.close, 50, 40)
+    for call, name in ((lambda: ta.tsignals(trend, trend_reset=1), "tsignals"), (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals")):
+        with pytest.warns(DeprecationWarning, match=rf"{name}\(\) trend_reset is not used"):
+            result = call()
+        assert result.equals(base_t if name == "tsignals" else base_x)

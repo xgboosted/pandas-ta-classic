@@ -1,4 +1,5 @@
 # Trend Signals (TSIGNALS)
+import warnings
 from typing import Any
 
 from pandas import DataFrame, Series
@@ -9,14 +10,25 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+
+
+def _warn_trend_reset(indicator: str, trend_reset: Any) -> None:
+    """trend_reset was documented but never read; passing it warns until its removal."""
+    if trend_reset is not None:
+        warnings.warn(
+            f"{indicator}() trend_reset is not used and has no effect; it is deprecated and will be "
+            "removed in the next breaking release. Remove the argument.",
+            DeprecationWarning,
+            stacklevel=4,  # warnings.warn <- this helper <- indicator <- nan_on_short_input <- caller
+        )
 
 
 @nan_on_short_input
 def tsignals(
     trend: Series,
     asbool: bool | None = None,
-    trend_reset: int = 0,
+    trend_reset: int | None = None,
     trade_offset: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -28,7 +40,7 @@ def tsignals(
         return None
 
     asbool = _bool_param(asbool, False, "asbool")
-    trend_reset = _number(trend_reset, 0, "trend_reset")
+    _warn_trend_reset("tsignals", trend_reset)
     # a negative shift would move entries/exits onto earlier bars (look-ahead)
     trade_offset = _pos_int(trade_offset, 0, "trade_offset", gt=None, ge=0)
     offset = get_offset(offset)
@@ -82,7 +94,7 @@ Source: Kevin Johnson
 
 Calculation:
     Default Inputs:
-        asbool=False, trend_reset=0, trade_offset=0
+        asbool=False, trade_offset=0
 
     trades = trends.diff().shift(trade_offset).fillna(0).astype(int)
     entries = (trades > 0).astype(int)
@@ -94,7 +106,8 @@ Args:
     asbool (bool): If True, it converts the Trends, Entries and Exits columns to
         booleans. When boolean, it is also useful for backtesting with
         vectorbt's Portfolio.from_signal(close, entries, exits) Default: False
-    trend_reset (value): Value used to identify if a trend has ended. Default: 0
+    trend_reset (value): Deprecated since 0.9.0 and unused: it never affected the
+        result. Passing it emits a DeprecationWarning. Default: None
     trade_offset (value): Value used shift the trade entries/exits Use 1 for
         backtesting and 0 for live. Default: 0
     offset (int): How many periods to offset the result. Default: 0
