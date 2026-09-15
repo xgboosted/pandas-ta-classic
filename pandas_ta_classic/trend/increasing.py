@@ -8,10 +8,9 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    is_percent,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -33,7 +32,7 @@ def increasing(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    percent = float(percent) if is_percent(percent) else False
+    percent = _number(percent, None, "percent", ge=0)
 
     if close is None:
         return None

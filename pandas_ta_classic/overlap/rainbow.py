@@ -18,7 +18,7 @@ def rainbow(
     """Indicator: Rainbow Charts"""
     # Validate arguments
     length = _pos_int(length, 2, "length")
-    num_ribbons = int(kwargs.pop("num_ribbons", 10)) if "num_ribbons" in kwargs else 10
+    num_ribbons = _pos_int(kwargs.pop("num_ribbons", None), 10, "num_ribbons")
     close = verify_series(close, length * num_ribbons)
     offset = get_offset(offset)
 

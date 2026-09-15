@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -35,7 +35,9 @@ def mcgd(
     """Indicator: McGinley Dynamic Indicator"""
     # Validate arguments
     length = _pos_int(length, 10, "length")
-    c = float(c) if c and 0 < c <= 1 else 1
+    c = _pos_float(c, 1, "c")
+    if c > 1:
+        raise ValueError(f"mcgd() c must be a number > 0 and <= 1, got {c!r}")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

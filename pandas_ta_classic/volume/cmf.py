@@ -27,7 +27,7 @@ def cmf(
     """Indicator: Chaikin Money Flow (CMF)"""
     # Validate Arguments
     length = _pos_int(length, 20, "length")
-    min_periods = int(kwargs["min_periods"]) if "min_periods" in kwargs and kwargs["min_periods"] is not None else length
+    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

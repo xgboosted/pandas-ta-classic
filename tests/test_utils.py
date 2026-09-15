@@ -117,7 +117,10 @@ class TestUtilities(TestCase):
         self.assertIsNotNone(self.utils.combination())
 
         self.assertEqual(self.utils.combination(), 1)
-        self.assertEqual(self.utils.combination(r=-1), 1)
+        with self.assertRaisesRegex(ValueError, r"combination\(\) r must be an integer >= 0, got -1"):
+            self.utils.combination(r=-1)
+        # choosing 0 of 0 kinds with repetition: one way (math.comb(-1, 0) raised)
+        self.assertEqual(self.utils.combination(n=0, r=0, repetition=True), 1)
 
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=False), 210)
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=True), 715)
@@ -229,9 +232,8 @@ class TestUtilities(TestCase):
         array_5 = self.utils.pascals_triangle(n=5)  # or np.array([1, 5, 10, 10, 5, 1])
         array_5w = array_5 / np.sum(array_5)
         array_5iw = 1 - array_5w
-        np.testing.assert_array_equal(self.utils.pascals_triangle(n=-5), array_5)
-        np.testing.assert_array_equal(self.utils.pascals_triangle(n=-5, weighted=True), array_5w)
-        np.testing.assert_array_equal(self.utils.pascals_triangle(n=-5, weighted=True, inverse=True), array_5iw)
+        with self.assertRaisesRegex(ValueError, r"pascals_triangle\(\) n must be an integer >= 0, got -5"):
+            self.utils.pascals_triangle(n=-5)
 
         np.testing.assert_array_equal(self.utils.pascals_triangle(n=5), array_5)
         np.testing.assert_array_equal(self.utils.pascals_triangle(n=5, weighted=True), array_5w)

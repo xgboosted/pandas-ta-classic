@@ -29,6 +29,8 @@ def _required_extras(name, frame):
         return {"fast": frame.close.rolling(5).mean(), "slow": frame.close.rolling(20).mean()}
     if name == "mavp":
         return {"periods": frame.close * 0 + 10}
+    if name == "tsignals":
+        return {"trend": (frame.close > frame.close.shift()).astype(int)}
     return {}
 
 
@@ -164,3 +166,58 @@ def test_squeeze_pro_rejects_unordered_scalars():
     with pytest.raises(ValueError, match=r"kc_scalar_wide > kc_scalar_normal > kc_scalar_narrow"):
         ta.squeeze_pro(frame.high, frame.low, frame.close, kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2)
 
+
+
+# Guards the numeric sweep's grep missed: is_percent(), membership tests,
+# "0 < x < 1" ranges, bool(x) coercion, int(kwargs[...]) and abs(n).
+_F = get_sample_data().iloc[:300]
+
+
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        (lambda: ta.cdl_doji(_F.open, _F.high, _F.low, _F.close, factor=-1), r"cdl_doji\(\) factor must be a number >= 0, got -1"),
+        (lambda: ta.increasing(_F.close, percent=-5), r"increasing\(\) percent must be a number >= 0"),
+        (lambda: ta.decreasing(_F.close, percent="5"), r"decreasing\(\) percent must be a number"),
+        (lambda: ta.ssf(_F.close, poles=4), r"ssf\(\) poles must be 2 or 3, got 4"),
+        (lambda: ta.mcgd(_F.close, c=1.5), r"mcgd\(\) c must be a number > 0 and <= 1, got 1.5"),
+        (lambda: ta.mcgd(_F.close, c=0), r"mcgd\(\) c must be a number > 0"),
+        (lambda: ta.lrsi(_F.close, gamma=1), r"lrsi\(\) gamma must be a number > 0 and < 1, got 1"),
+        (lambda: ta.tsignals(_F.close > _F.open, trade_offset=1.5), r"tsignals\(\) trade_offset must be an integer >= 0"),
+        (lambda: ta.jma(_F.close, phase=np.nan), r"jma\(\) phase must be a number"),
+        (lambda: ta.rainbow(_F.close, num_ribbons=2.5), r"rainbow\(\) num_ribbons must be an integer > 0"),
+        (lambda: ta.cdl_z(_F.open, _F.high, _F.low, _F.close, full="no"), r"cdl_z\(\) full must be True or False"),
+        (lambda: ta.hwc(_F.close, channel_eval=1), r"hwc\(\) channel_eval must be True or False"),
+        (lambda: ta.log_return(_F.close, cumulative="False"), r"log_return\(\) cumulative must be True or False"),
+        (lambda: ta.percent_return(_F.close, cumulative=0), r"percent_return\(\) cumulative must be True or False"),
+        (lambda: ta.wma(_F.close, asc="False"), r"wma\(\) asc must be True or False"),
+        (lambda: ta.fwma(_F.close, asc=0), r"fwma\(\) asc must be True or False"),
+        (lambda: ta.sma(_F.close, min_periods=2.7), r"sma\(\) min_periods must be an integer >= 0, got 2.7"),
+        (lambda: ta.donchian(_F.high, _F.low, upper_min_periods=1.5), r"donchian\(\) upper_min_periods must be an integer >= 0"),
+        (lambda: ta.utils.fibonacci(n=-1), r"fibonacci\(\) n must be an integer >= 0, got -1"),
+        (lambda: ta.utils.symmetric_triangle(n=-4), r"symmetric_triangle\(\) n must be an integer >= 0, got -4"),
+        (lambda: ta.utils.combination(n=-5, r=2), r"combination\(\) n must be an integer >= 0, got -5"),
+    ],
+)
+def test_remaining_silent_defaults_raise(call, message):
+    with pytest.raises(ValueError, match=message):
+        call()
+
+
+def test_values_the_old_guards_replaced_are_now_honoured():
+    doji = ta.cdl_doji(_F.open, _F.high, _F.low, _F.close, factor=50)
+    assert doji.name == "CDL_DOJI_10_0.5"  # 50 was accepted before too; 150 became 10
+    assert ta.cdl_doji(_F.open, _F.high, _F.low, _F.close, factor=150).name == "CDL_DOJI_10_1.5"
+    assert ta.increasing(_F.close, percent=150).name == "INCp_1_1.5"  # 150 used to switch percent mode off
+    assert ta.sma(_F.close, min_periods=0).notna().all()
+    assert ta.jma(_F.close, phase=0.0).name == "JMA_7_0"
+
+
+def test_strategy_params_must_be_a_tuple():
+    """A list or scalar params was replaced by () and the indicator ran with its defaults."""
+    frame = _F.copy()
+    frame.ta.cores = 0
+    with pytest.raises(TypeError, match=r"Strategy entry 'ema': params must be a tuple, got list \[5\]"):
+        frame.ta.strategy(ta.Strategy(name="p", ta=[{"kind": "ema", "params": [5]}]))
+    frame.ta.strategy(ta.Strategy(name="p", ta=[{"kind": "ema", "params": (5,)}]))
+    assert "EMA_5" in frame.columns

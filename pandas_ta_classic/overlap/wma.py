@@ -21,7 +21,7 @@ def wma(
     """Indicator: Weighted Moving Average (WMA)"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    asc = bool(asc) if asc is not None else True
+    asc = _bool_param(asc, True, "asc")
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")

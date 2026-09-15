@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -36,7 +36,7 @@ def lrsi(
     """Indicator: Laguerre RSI (LRSI)"""
     # Validate arguments
     length = _pos_int(length, 14, "length")
-    gamma = float(gamma) if gamma and 0 < gamma < 1 else 0.5
+    gamma = _pos_float(gamma, 0.5, "gamma", lt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

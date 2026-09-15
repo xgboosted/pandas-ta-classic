@@ -104,6 +104,18 @@ def _append_dataframe(df, result, kwargs):
             df[column] = result.iloc[:, i]
 
 
+def _strategy_params(ind: dict) -> tuple:
+    """Positional arguments of a custom Strategy entry.
+
+    A ``params`` value that is not a tuple (``[10]``, ``10``) was silently
+    replaced by ``()``, so the indicator ran with its defaults.
+    """
+    params = ind.get("params", ())
+    if not isinstance(params, tuple):
+        raise TypeError(f"Strategy entry {ind.get('kind')!r}: params must be a tuple, got {type(params).__name__} {params!r}")
+    return params
+
+
 # Pandas TA - DataFrame Analysis Indicators
 @pd.api.extensions.register_dataframe_accessor("ta")
 class AnalysisIndicators(PandasObject):
@@ -751,7 +763,7 @@ class AnalysisIndicators(PandasObject):
                     custom_ta = [
                         (
                             ind["kind"],
-                            (ind["params"] if "params" in ind and isinstance(ind["params"], tuple) else ()),
+                            _strategy_params(ind),
                             {**ind, **kwargs},
                         )
                         for ind in ta
@@ -800,11 +812,11 @@ class AnalysisIndicators(PandasObject):
                 if Imports["tqdm"] and verbose:
                     pbar = tqdm(ta, "[i] Progress")
                     for ind in pbar:
-                        params = ind["params"] if "params" in ind and isinstance(ind["params"], tuple) else ()
+                        params = _strategy_params(ind)
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
                 else:
                     for ind in ta:
-                        params = ind["params"] if "params" in ind and isinstance(ind["params"], tuple) else ()
+                        params = _strategy_params(ind)
                         getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
             else:
                 if Imports["tqdm"] and verbose:

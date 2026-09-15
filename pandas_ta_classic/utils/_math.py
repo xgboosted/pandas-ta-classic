@@ -10,6 +10,7 @@ from pandas import DataFrame, Series
 from ._core import verify_series
 
 logger = logging.getLogger(__name__)
+from pandas_ta_classic.utils._core import _pos_int
 
 
 def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: int | None = None) -> tuple[np.ndarray, ...]:
@@ -61,16 +62,16 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
 
 def combination(*, n: int = 1, r: int = 0, repetition: bool = False, multichoose: bool = False) -> int:
     """nCr combinatorics — wraps math.comb. ``multichoose`` is an alias for ``repetition``."""
-    n = int(abs(n))
-    r = int(abs(r))
+    n = _pos_int(n, 1, "n", gt=None, ge=0)
+    r = _pos_int(r, 0, "r", gt=None, ge=0)
     if repetition or multichoose:
-        n = n + r - 1
+        return comb(n + r - 1, r) if n + r > 0 else 1  # choosing 0 of 0 kinds: one way
     return comb(n, r)
 
 
 def fibonacci(n: int = 2, *, zero: bool = False, weighted: bool = False) -> np.ndarray:
     """Fibonacci Sequence as a numpy array"""
-    n = int(n) if n >= 0 else 2
+    n = _pos_int(n, 2, "n", gt=None, ge=0)
 
     if zero:
         a, b = 0, 1
@@ -111,7 +112,7 @@ def pascals_triangle(n: int | None = None, *, weighted: bool = False, inverse: b
          => weighted: [0.0625, 0.25, 0.375, 0.25, 0.0625]
          => inverse weighted: [0.9375, 0.75, 0.625, 0.75, 0.9375]
     """
-    n = int(abs(n)) if n is not None else 0
+    n = _pos_int(n, 0, "n", gt=None, ge=0)
 
     # Calculation
     triangle = np.array([combination(n=n, r=i) for i in range(n + 1)])
@@ -136,7 +137,7 @@ def symmetric_triangle(n: int | None = None, *, weighted: bool = False) -> list[
     n=4  => triangle: [1, 2, 2, 1]
          => weighted: [0.16666667 0.33333333 0.33333333 0.16666667]
     """
-    n = int(abs(n)) if n is not None else 2
+    n = _pos_int(n, 2, "n", gt=None, ge=0)
 
     triangle = None
     if n == 1:
