@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -29,8 +29,10 @@ def msw(
     if close is None:
         return None
 
-    # Tulipy passthrough
-    mode_tu = kwargs.get("tulipy", True)
+    # Tulipy passthrough, opt-in: tulipy truncates pi to 3.1415926, so its values differ from
+    # the exact formula by up to 3e-4. It used to be the default whenever tulipy was installed,
+    # which made the result depend on the environment.
+    mode_tu = _bool_param(kwargs.get("tulipy"), False, "tulipy")
     if Imports["tulipy"] and mode_tu:
         import tulipy as tu
 
@@ -63,9 +65,11 @@ def msw(
     return df
 
 
-def _msw_native(arr: np.ndarray, period: int):
-    """Pure numpy Mesa Sine Wave — matches Tulip Indicators algorithm."""
-    pi = np.pi
+def _msw_native(arr: np.ndarray, period: int, pi: float = np.pi):
+    """Pure numpy Mesa Sine Wave — Tulip Indicators' algorithm with an exact pi.
+
+    Passing ``pi=3.1415926`` (tulipy's constant) reproduces tulipy bit for bit.
+    """
     tpi = 2.0 * pi
     size = len(arr)
     sine = np.full(size, np.nan)
@@ -116,6 +120,8 @@ Args:
     offset (int): Number of periods to offset. Default: 0.
 
 Kwargs:
+    tulipy (bool): Use tulipy's msw when it is installed. tulipy truncates pi to
+        3.1415926, so values differ from the default by up to 3e-4. Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
