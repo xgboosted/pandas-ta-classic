@@ -141,8 +141,10 @@ def detect_virgin_cpr(high: Series, low: Series, tc: Series, bc: Series, lookfor
         touched |= (high.shift(-k) >= bc) & (low.shift(-k) <= tc)
     virgin = (bc.notna() & tc.notna()) & ~touched
     if lookforward:
-        # The last `lookforward` bars have no future to look into; the loop
-        # above never assigned them, so they stay False.
+        # The last `lookforward` bars have no future to look into: the shifted
+        # comparisons leave `touched` False there, so `~touched` would mark
+        # them virgin. Force them False instead, matching the original loop,
+        # which never reached those bars.
         virgin.iloc[-lookforward:] = False
 
     return virgin
