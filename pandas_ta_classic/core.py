@@ -234,6 +234,7 @@ class AnalysisIndicators(PandasObject):
         show_version: bool = False,
         **kwargs,
     ):
+        show_version = _bool_param(show_version, False, "show_version")
         version = kwargs.pop("version", None)
         if version is not None:
             warn(
@@ -241,7 +242,8 @@ class AnalysisIndicators(PandasObject):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            show_version = show_version or _bool_param(version, False, "version")
+            version_val = _bool_param(version, False, "version")
+            show_version = show_version or version_val
         if show_version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
         if isinstance(kind, str):

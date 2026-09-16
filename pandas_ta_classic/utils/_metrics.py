@@ -36,11 +36,12 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
     Args:
         close (pd.Series): Series of 'close's
         method (str): Max DD calculation options: 'dollar', 'percent', 'log'.
-            Default: 'dollar'
+            Default: 'percent'
         years (int): The positive number of years to use. Default: 3
 
     >>> result = ta.calmar_ratio(close, method="percent", years=3)
     """
+    method = _str_param(method, "percent", "method", choices={"dollar", "percent", "log"})
     years = _pos_int(years, 3, "years")
     close = verify_series(close)
     if close is None:

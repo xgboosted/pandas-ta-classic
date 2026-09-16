@@ -42,6 +42,9 @@ class TestUtilityMetrics(TestCase):
             with self.subTest(years=bad_years), self.assertRaisesRegex(ValueError, "years must be an integer"):
                 pandas_ta.calmar_ratio(self.close, years=bad_years)
 
+        with self.assertRaisesRegex(ValueError, r"calmar_ratio\(\) method must be one of"):
+            pandas_ta.calmar_ratio(self.close, method="bogus")
+
     def test_downside_deviation(self):
         result = pandas_ta.downside_deviation(self.pctret)
         self.assertIsInstance(result, float)
