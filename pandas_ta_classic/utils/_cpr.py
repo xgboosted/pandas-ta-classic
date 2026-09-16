@@ -133,11 +133,9 @@ def detect_virgin_cpr(high: Series, low: Series, tc: Series, bc: Series, lookfor
     Returns:
         Boolean Series: True if CPR remains untested (virgin) in the lookforward period
     """
-    virgin = Series(False, index=high.index)
-
-    # Vectorised: for each forward offset k, mark bars whose price range at
-    # i + k falls inside the CPR range at i. A bar is touched when any offset
-    # does; a virgin level is one the next `lookforward` bars never touch.
+    # For each forward offset k, mark bars whose price range at i + k falls
+    # inside the CPR range at i. A bar is touched when any offset does; a
+    # virgin level is one the next `lookforward` bars never touch.
     touched = Series(False, index=high.index)
     for k in range(1, lookforward + 1):
         touched |= (high.shift(-k) >= bc) & (low.shift(-k) <= tc)
