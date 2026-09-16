@@ -1,7 +1,7 @@
 import math
+import warnings
 from unittest import TestCase
 
-import numpy as np
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
@@ -38,11 +38,12 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
-        result = pandas_ta.calmar_ratio(self.close, years=0)
-        self.assertTrue(np.isnan(result))
+        for bad_years in (0, -2):
+            with self.subTest(years=bad_years), self.assertRaisesRegex(ValueError, "years must be an integer"):
+                pandas_ta.calmar_ratio(self.close, years=bad_years)
 
-        result = pandas_ta.calmar_ratio(self.close, years=-2)
-        self.assertTrue(np.isnan(result))
+        with self.assertRaisesRegex(ValueError, r"calmar_ratio\(\) method must be one of"):
+            pandas_ta.calmar_ratio(self.close, method="bogus")
 
     def test_downside_deviation(self):
         result = pandas_ta.downside_deviation(self.pctret)
@@ -86,11 +87,20 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
-        result = pandas_ta.max_drawdown(self.close, all=True)
+        result = pandas_ta.max_drawdown(self.close, all_methods=True)
         self.assertIsInstance(result, dict)
         self.assertIsInstance(result["dollar"], float)
         self.assertIsInstance(result["percent"], float)
         self.assertIsInstance(result["log"], float)
+
+        with self.assertRaisesRegex(ValueError, r"method must be one of"):
+            pandas_ta.max_drawdown(self.close, method="bogus")
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = pandas_ta.max_drawdown(self.close, all=True)
+            self.assertIsInstance(result, dict)
+        self.assertTrue(any("deprecated" in str(x.message) for x in w))
 
     def test_optimal_leverage(self):
         result = pandas_ta.optimal_leverage(self.close)

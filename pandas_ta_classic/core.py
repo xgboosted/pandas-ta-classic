@@ -6,7 +6,7 @@ from multiprocessing import cpu_count, get_context
 from numbers import Integral
 from time import perf_counter
 from typing import Any
-from warnings import simplefilter
+from warnings import simplefilter, warn
 
 import numpy as np
 import pandas as pd
@@ -231,10 +231,20 @@ class AnalysisIndicators(PandasObject):
         self,
         kind: str | None = None,
         timed: bool = False,
-        version: bool = False,
+        show_version: bool = False,
         **kwargs,
     ):
-        if version:
+        show_version = _bool_param(show_version, False, "show_version")
+        version = kwargs.pop("version", None)
+        if version is not None:
+            warn(
+                "df.ta(version=...) is deprecated and will be removed in the next breaking release; use show_version=... instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            version_val = _bool_param(version, False, "version")
+            show_version = show_version or version_val
+        if show_version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
         if isinstance(kind, str):
             kind = kind.lower()

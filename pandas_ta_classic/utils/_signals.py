@@ -5,9 +5,7 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.utils._core import _pos_int
-
-from ._core import apply_offset, get_offset, verify_series
+from ._core import _pos_int, apply_offset, get_offset, verify_series
 from ._math import zero
 
 

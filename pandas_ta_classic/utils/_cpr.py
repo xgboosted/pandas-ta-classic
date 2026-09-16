@@ -1,7 +1,6 @@
 # CPR Utility Functions
 
 import numpy as np
-import pandas as pd
 from pandas import DataFrame, Series
 
 
@@ -134,28 +133,18 @@ def detect_virgin_cpr(high: Series, low: Series, tc: Series, bc: Series, lookfor
     Returns:
         Boolean Series: True if CPR remains untested (virgin) in the lookforward period
     """
-    virgin = Series(False, index=high.index)
-
-    # For each bar, check if price touches CPR in next 'lookforward' periods
-    for i in range(len(high) - lookforward):
-        # Get CPR levels for current period
-        cpr_tc = tc.iloc[i]
-        cpr_bc = bc.iloc[i]
-
-        # Skip if CPR values are NaN
-        if pd.isna(cpr_tc) or pd.isna(cpr_bc):
-            continue
-
-        # Check if price touched CPR in next 'lookforward' periods
-        # CPR is touched if high > bc AND low < tc (price entered the range)
-        future_highs = high.iloc[i + 1 : i + 1 + lookforward]
-        future_lows = low.iloc[i + 1 : i + 1 + lookforward]
-
-        # CPR is virgin if price never entered the CPR range
-        # Price enters CPR if: (high >= bc) AND (low <= tc)
-        cpr_touched = ((future_highs >= cpr_bc) & (future_lows <= cpr_tc)).any()
-
-        # Virgin CPR = NOT touched
-        virgin.iloc[i] = not cpr_touched
+    # For each forward offset k, mark bars whose price range at i + k falls
+    # inside the CPR range at i. A bar is touched when any offset does; a
+    # virgin level is one the next `lookforward` bars never touch.
+    touched = Series(False, index=high.index)
+    for k in range(1, lookforward + 1):
+        touched |= (high.shift(-k) >= bc) & (low.shift(-k) <= tc)
+    virgin = (bc.notna() & tc.notna()) & ~touched
+    if lookforward:
+        # The last `lookforward` bars have no future to look into: the shifted
+        # comparisons leave `touched` False there, so `~touched` would mark
+        # them virgin. Force them False instead, matching the original loop,
+        # which never reached those bars.
+        virgin.iloc[-lookforward:] = False
 
     return virgin

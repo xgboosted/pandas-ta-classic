@@ -224,6 +224,9 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result["t"], float)
         self.assertIsInstance(result["line"], Series)
 
+        with self.assertRaisesRegex(ValueError, r"must have equal length"):
+            self.utils.linear_regression(x, y.iloc[:-1])
+
     def test_pascals_triangle(self):
         self.assertIsNone(self.utils.pascals_triangle(inverse=True), None)
 
