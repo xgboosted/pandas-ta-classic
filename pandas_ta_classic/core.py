@@ -231,10 +231,10 @@ class AnalysisIndicators(PandasObject):
         self,
         kind: str | None = None,
         timed: bool = False,
-        version: bool = False,
+        show_version: bool = False,
         **kwargs,
     ):
-        if version:
+        if show_version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
         if isinstance(kind, str):
             kind = kind.lower()

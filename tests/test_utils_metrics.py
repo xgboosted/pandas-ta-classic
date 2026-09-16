@@ -1,7 +1,6 @@
 import math
 from unittest import TestCase
 
-import numpy as np
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
@@ -38,11 +37,9 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
-        result = pandas_ta.calmar_ratio(self.close, years=0)
-        self.assertTrue(np.isnan(result))
-
-        result = pandas_ta.calmar_ratio(self.close, years=-2)
-        self.assertTrue(np.isnan(result))
+        for bad_years in (0, -2):
+            with self.subTest(years=bad_years), self.assertRaisesRegex(ValueError, "years must be an integer"):
+                pandas_ta.calmar_ratio(self.close, years=bad_years)
 
     def test_downside_deviation(self):
         result = pandas_ta.downside_deviation(self.pctret)
@@ -86,7 +83,7 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
-        result = pandas_ta.max_drawdown(self.close, all=True)
+        result = pandas_ta.max_drawdown(self.close, all_methods=True)
         self.assertIsInstance(result, dict)
         self.assertIsInstance(result["dollar"], float)
         self.assertIsInstance(result["percent"], float)

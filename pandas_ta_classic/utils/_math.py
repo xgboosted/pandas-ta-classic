@@ -7,10 +7,9 @@ from typing import Any
 import numpy as np
 from pandas import DataFrame, Series
 
-from ._core import verify_series
+from ._core import _bool_param, _pos_int, verify_series
 
 logger = logging.getLogger(__name__)
-from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 
 def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_periods: int | None = None) -> tuple[np.ndarray, ...]:
@@ -102,8 +101,7 @@ def linear_regression(x: Series, y: Series) -> dict:
     m, n = x.size, y.size
 
     if m != n:
-        logger.error("Linear Regression X and y have unequal total observations: %d != %d", m, n)
-        return {}
+        raise ValueError(f"linear_regression() x and y must have equal length, got {m} and {n}")
 
     return _linear_regression_np(x, y)
 

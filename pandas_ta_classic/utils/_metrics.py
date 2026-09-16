@@ -8,7 +8,7 @@ from pandas_ta_classic.performance.drawdown import drawdown
 from pandas_ta_classic.performance.log_return import log_return
 from pandas_ta_classic.performance.percent_return import percent_return
 
-from ._core import _bool_param, verify_series
+from ._core import _bool_param, _pos_int, _str_param, verify_series
 from ._math import linear_regression
 from ._time import total_time
 
@@ -40,9 +40,7 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
 
     >>> result = ta.calmar_ratio(close, method="percent", years=3)
     """
-    if years <= 0:
-        # Guard: years must be positive and nonzero
-        return np.nan
+    years = _pos_int(years, 3, "years")
     close = verify_series(close)
     if close is None:
         return np.nan
@@ -113,18 +111,20 @@ def log_max_drawdown(close: Series) -> float:
     return log_return - max_drawdown(close, method="log")
 
 
-def max_drawdown(close: Series, method: str | None = None, all: bool = False) -> float | dict[str, float]:
+def max_drawdown(close: Series, method: str | None = None, all_methods: bool = False) -> float | dict[str, float]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
     Args:
         close (pd.Series): Series of 'close's
         method (str): Max DD calculation options: 'dollar', 'percent', 'log'.
             Default: 'dollar'
-        all (bool): If True, it returns all three methods as a dict.
+        all_methods (bool): If True, it returns all three methods as a dict.
             Default: False
 
-    >>> result = ta.max_drawdown(close, method="dollar", all=False)
+    >>> result = ta.max_drawdown(close, method="dollar", all_methods=False)
     """
+    method = _str_param(method, "dollar", "method", choices={"dollar", "percent", "log"})
+    all_methods = _bool_param(all_methods, False, "all_methods")
     close = verify_series(close)
     if close is None:
         return np.nan
@@ -135,12 +135,10 @@ def max_drawdown(close: Series, method: str | None = None, all: bool = False) ->
         "percent": max_dd.iloc[1],
         "log": max_dd.iloc[2],
     }
-    if all:
+    if all_methods:
         return max_dd_
 
-    if isinstance(method, str) and method in max_dd_:
-        return max_dd_[method]
-    return max_dd_["dollar"]
+    return max_dd_[method]
 
 
 def optimal_leverage(

@@ -85,7 +85,10 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
 def to_utc(df: DataFrame) -> DataFrame:
     """Either localizes the DataFrame Index to UTC or it applies
     tz_convert to set the Index to UTC.
+
+    Returns a copy; the caller's DataFrame is left unchanged.
     """
+    df = df.copy()
     if not df.empty:
         try:
             df.index = df.index.tz_localize("UTC")
