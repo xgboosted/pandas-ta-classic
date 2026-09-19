@@ -71,7 +71,7 @@ print(df.tail())
 
 ### Method 3: Strategy System (Powerful)
 
-Run multiple indicators at once with multiprocessing:
+Run multiple indicators at once:
 
 ```python
 import pandas as pd
@@ -79,8 +79,8 @@ import pandas_ta_classic as ta
 
 df = pd.read_csv('your_data.csv')
 
-# Use a built-in strategy
-df.ta.strategy("CommonStrategy")
+# Use a built-in strategy (the Strategy object, not its name)
+df.ta.strategy(ta.CommonStrategy)
 
 # Or create your own custom strategy
 my_strategy = ta.Strategy(
@@ -328,13 +328,12 @@ df = pd.concat([df, indicators], axis=1)
 df.ta.sma(length=20, append=True)
 
 # Best: Use strategies for multiple indicators
-df.ta.strategy("CommonStrategy")
+df.ta.strategy(ta.CommonStrategy)
 ```
 
-### 2. Strategies Use Multiprocessing
+### 2. Group Indicators Into a Strategy
 
 ```python
-# Automatically parallelized
 my_strategy = ta.Strategy(
  name="FastStrategy",
  ta=[
@@ -344,7 +343,11 @@ my_strategy = ta.Strategy(
  {"kind": "macd"},
  ]
 )
-df.ta.strategy(my_strategy) # Runs in parallel
+df.ta.strategy(my_strategy)
+
+# Runs serially by default. On large frames (from roughly 100,000 rows)
+# hand it worker processes; see the Strategies guide.
+df.ta.strategy(my_strategy, cores=8)
 ```
 
 ### 3. Preprocess Data
@@ -472,7 +475,7 @@ Now that you've got the basics, explore more:
 | Install | `pip install pandas-ta-classic` |
 | Import | `import pandas_ta_classic as ta` |
 | Simple indicator | `df.ta.sma(length=20, append=True)` |
-| Multiple indicators | `df.ta.strategy("CommonStrategy")` |
+| Multiple indicators | `df.ta.strategy(ta.CommonStrategy)` |
 | Custom strategy | `ta.Strategy(name="My", ta=[...])` |
 | List categories | `print(ta.Category)` |
 | Get help | `help(ta.sma)` |

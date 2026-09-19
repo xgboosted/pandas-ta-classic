@@ -84,10 +84,8 @@ class TestStrategyMethods(TestCase):
         self.category = "All"
         self.data.ta.strategy(verbose=verbose, timed=strategy_timed)
 
-    def test_all_ordered(self):
-        self.category = "All"
-        self.data.ta.strategy(ordered=True, verbose=verbose, timed=strategy_timed)
-        self.category = "All Ordered"  # Rename for Speed Table
+    # test_all_ordered was here: it ran the same strategy with ordered=True,
+    # which is now the only behaviour, leaving it identical to test_all.
 
     def test_all_strategy(self):
         self.data.ta.strategy(pandas_ta.AllStrategy, verbose=verbose, timed=strategy_timed)
@@ -168,6 +166,11 @@ class TestStrategyMethods(TestCase):
             "SMA_50",
             "SMA_200",
             "CUMLOGRET_1",
+            # The chained EMA: it reads CUMLOGRET_1, which an earlier entry
+            # produces.  Under the old chunked Pool it silently went missing
+            # whenever producer and consumer landed in different chunks, and
+            # this check did not cover it.
+            "EMA_5_CLR",
         ):
             self.assertIn(col, self.data.columns)
 
@@ -227,7 +230,7 @@ class TestStrategyMethods(TestCase):
             amat_logret_ta,  # ta
             "AMAT Log Returns",  # description
         )
-        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed, ordered=True)
+        self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         self.data.ta.tsignals(trend=self.data["AMATe_LR_20_50_2"], append=True)
         self.assertEqual(len(self.data.columns), 13)
 

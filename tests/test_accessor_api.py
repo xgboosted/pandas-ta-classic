@@ -278,7 +278,7 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.df.ta.cores = 10_000
         self.assertEqual(self.df.ta.cores, cpu_count())  # capped, as documented
         self.df.ta.cores = None
-        self.assertEqual(self.df.ta.cores, cpu_count())
+        self.assertEqual(self.df.ta.cores, 0)  # None resets to the serial default
         with self.assertRaisesRegex(ValueError, r"df.ta.exchange must be one of .* got 'nope'"):
             self.df.ta.exchange = "nope"
         self.df.ta.exchange = "LSE"
@@ -288,10 +288,10 @@ class TestAccessorSettablePropertiesPersist(TestCase):
             self.df.ta.adjusted = 5
 
     def test_settings_do_not_leak_to_other_frames(self):
-        self.df.ta.cores = 0
+        self.df.ta.cores = 2
         self.df.ta.exchange = "LSE"
         other = get_sample_data()
-        self.assertNotEqual(other.ta.cores, 0)
+        self.assertEqual(other.ta.cores, 0)  # the serial default, not this frame's 2
         self.assertEqual(other.ta.exchange, "NYSE")
 
     def test_accessing_df_ta_does_not_mutate_attrs(self):

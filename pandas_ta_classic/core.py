@@ -1,24 +1,36 @@
 import logging
+import os
 from collections.abc import Hashable
-from copy import copy
+from concurrent.futures import Executor, ProcessPoolExecutor
 from dataclasses import dataclass, field
-from multiprocessing import cpu_count, get_context
+from multiprocessing import cpu_count, current_process, get_context
 from numbers import Integral
 from time import perf_counter
 from typing import Any
 from warnings import simplefilter, warn
 
-import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
 
 from pandas_ta_classic._indicator_loader import _COLUMN_KWARG_KEYS, _DEFAULT_COLUMN_NAMES, _find_indicator_func, _make_ta_wrapper
 from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
 from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
-from pandas_ta_classic.utils._core import _bool_param
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
 logger = logging.getLogger(__name__)
+
+# Set while strategy() owns a process pool it created itself.  A spawned child
+# re-imports the caller's __main__, so an unguarded script that calls strategy()
+# at module level would recurse until the machine stalls.  The variable is
+# inherited by the children, so seeing it means we are that recursion.
+_STRATEGY_GUARD_ENV = "_PANDAS_TA_CLASSIC_STRATEGY_PID"
+
+_MAIN_GUARD_HINT = (
+    "df.ta.strategy() started worker processes from a script that does not guard "
+    "its top level. Wrap the calling code in `if __name__ == \"__main__\":`, or run "
+    "serially with df.ta.cores = 0."
+)
 
 
 # Strategy DataClass
@@ -119,6 +131,37 @@ def _strategy_params(ind: dict) -> tuple:
     return params
 
 
+def _executor_workers(executor: Executor) -> int:
+    """How many tasks *executor* can run at once.
+
+    Executor exposes no public width, but every stdlib implementation carries
+    '_max_workers'. A third-party one that does not gets one group per worker
+    at cpu_count(), which is only a batching hint: correctness does not depend
+    on the number being right.
+    """
+    workers = getattr(executor, "_max_workers", None)
+    return workers if isinstance(workers, int) and workers > 0 else cpu_count()
+
+
+def _run_task_group(df: pd.DataFrame, group: list[tuple]) -> list[tuple]:
+    """Run a group of strategy tasks and return (order, result, error) triples.
+
+    Runs in a worker process.  The tasks of a group are independent by
+    construction (see AnalysisIndicators._next_stage), so nothing here appends
+    to *df*; the parent appends in task order.
+    """
+    # Chain mode would make every indicator return the whole frame.
+    df.attrs.pop("_ta_chain", None)
+    accessor = df.ta
+    out: list[tuple[int, Any, Exception | None]] = []
+    for order, kind, params, kwargs in group:
+        try:
+            out.append((order, getattr(accessor, kind)(*params, **{**kwargs, "append": False}), None))
+        except Exception as exc:  # noqa: BLE001 - re-raised in the parent with the indicator name
+            out.append((order, None, exc))
+    return out
+
+
 # Pandas TA - DataFrame Analysis Indicators
 @pd.api.extensions.register_dataframe_accessor("ta")
 class AnalysisIndicators(PandasObject):
@@ -206,7 +249,7 @@ class AnalysisIndicators(PandasObject):
     """
 
     _adjusted = None
-    _cores = cpu_count()
+    _cores = 0
     _df = pd.DataFrame()
     _exchange = "NYSE"
     _time_range = "years"
@@ -294,10 +337,10 @@ class AnalysisIndicators(PandasObject):
 
     @cores.setter
     def cores(self, value: int) -> None:
-        """property: df.ta.cores = integer (0 disables multiprocessing; capped at cpu_count(); None resets)"""
+        """property: df.ta.cores = integer (0, the default, runs serially; capped at cpu_count(); None resets)"""
         cpus = cpu_count()
         if value is None:
-            self._df.attrs["_ta_cores"] = cpus
+            self._df.attrs["_ta_cores"] = self._cores
             return
         if not isinstance(value, Integral) or isinstance(value, bool) or value < 0:
             # -1, 1.0 and "2" used to become cpu_count() and switch multiprocessing on
@@ -523,12 +566,113 @@ class AnalysisIndicators(PandasObject):
         """Returns indicators by Categorical name."""
         return Category[name] if name in self.categories else None
 
-    def _mp_worker(self, arguments: tuple):
-        """Multiprocessing Worker to handle different Methods."""
-        method, args, kwargs = arguments
-        return getattr(self, method)(*args, **kwargs)
+    def _missing_column(self, task_kwargs: dict) -> str | None:
+        """The column *task_kwargs* points an indicator at that does not exist yet.
 
-    def _post_process(self, result, **kwargs) -> tuple[pd.Series, pd.DataFrame]:
+        A strategy entry such as ``{"kind": "ema", "close": "SMA_10"}`` can only
+        run once ``SMA_10`` is on the frame.
+
+        A name that resolves only through _get_column()'s case-insensitive prefix
+        match counts as missing too.  The match is a fallback for a misspelled
+        column, and an unrelated column can satisfy it: ``close="MA"`` resolves
+        to ``MACD_12_26_9``.  Treating that as present would put the entry in the
+        same stage as the entry producing the exact name, and the worker -- whose
+        frame does not carry that name yet -- would silently read the other
+        column.  Holding it back costs a stage; the exact name wins once it is
+        appended.
+        """
+        for key in _COLUMN_KWARG_KEYS:
+            value = task_kwargs.get(key)
+            if isinstance(value, str) and self._matching_column(value) != value:
+                return value
+        return None
+
+    def _next_stage(self, remaining: list[tuple]) -> list[tuple]:
+        """Take the next run of mutually independent tasks off *remaining*.
+
+        A task that reads a column the frame does not have yet starts a new
+        stage, so everything it depends on has been appended by the time it
+        runs.  Within a stage the order does not matter, which is what makes
+        parallel execution safe: the previous chunked Pool ran a producer and
+        its consumer in different workers unless they happened to land in the
+        same chunk, and the consumer then silently produced no column at all.
+
+        Called once per stage rather than up front, because where the next
+        boundary falls depends on the columns the finished stages added.
+
+        A chain of entries that each read the previous one's output is one task
+        per stage, which is what it is -- they cannot run at the same time.  An
+        entry naming a column nothing ever produces costs a stage of its own
+        too; it also warns (see _warn_no_result), so the cause is visible.
+        """
+        stage = [remaining.pop(0)]
+        while remaining and self._missing_column(remaining[0][3]) is None:
+            stage.append(remaining.pop(0))
+        return stage
+
+    def _warn_no_result(self, kind: str, task_kwargs: dict) -> None:
+        """Report an indicator that ran but added no column.
+
+        Both halves of this used to be invisible: _get_column() logged its
+        "Column not found" warning through the package NullHandler -- in a Pool
+        worker, where even a configured handler could not show it -- and
+        _post_process() then dropped the result.  A chained custom strategy
+        quietly produced fewer columns than it was given entries.
+        """
+        missing = self._missing_column(task_kwargs)
+        detail = f" It reads {missing!r}, which the DataFrame does not have." if missing else ""
+        warn(f"strategy(): {kind}() returned no result, so no column was added.{detail}", UserWarning, stacklevel=4)
+
+    def _run_serially(self, tasks: list[tuple], verbose: bool) -> None:
+        """Run every task in order, appending each result before the next runs."""
+        iterator: Any = tasks
+        if Imports["tqdm"] and verbose:
+            from tqdm import tqdm  # type: ignore[import-untyped]  # optional; ships no stubs
+
+            iterator = tqdm(tasks, "[i] Progress")
+        for _order, kind, params, task_kwargs in iterator:
+            if getattr(self, kind)(*params, **task_kwargs) is None:
+                self._warn_no_result(kind, task_kwargs)
+
+    def _run_stages(self, tasks: list[tuple], executor: Executor, workers: int, verbose: bool) -> None:
+        """Run *tasks* stage by stage on *executor*, appending between stages."""
+        remaining = list(tasks)
+        stage_number = 0
+        while remaining:
+            stage = self._next_stage(remaining)
+            stage_number += 1
+            if verbose:
+                logger.info(f"Stage {stage_number}: {len(stage)} indicators over {workers} workers.")
+            self._run_stage(stage, executor, workers)
+
+    def _run_stage(self, stage: list[tuple], executor: Executor, workers: int) -> None:
+        """Run one stage of independent tasks and append the results in order."""
+        groups = min(len(stage), workers)
+        # Send only the columns an indicator in this stage can reach.  The frame
+        # grows with every appended result: after one strategy("momentum") run
+        # on 100,000 rows it pickles to 79.4 MB against 4.6 MB for the five
+        # columns the next stage can actually read.  df.ta settings travel with
+        # it, because pandas carries DataFrame.attrs through the selection.
+        slim = self._df[self._worker_columns([task_kwargs for _, _, _, task_kwargs in stage])].copy()
+
+        # Round robin, so one group per worker holds a spread of cheap and
+        # expensive indicators, and the frame is pickled once per group.
+        futures = [executor.submit(_run_task_group, slim, stage[start::groups]) for start in range(groups)]
+        finished: dict[int, tuple] = {}
+        for future in futures:
+            finished.update({order: (result, error) for order, result, error in future.result()})
+
+        # Append by task order, not by the order the workers finished.
+        for order, kind, _params, task_kwargs in stage:
+            result, error = finished[order]
+            if error is not None:
+                raise RuntimeError(f"strategy(): {kind}() raised in a worker process") from error
+            if result is None:
+                self._warn_no_result(kind, task_kwargs)
+                continue
+            self._append(result, **task_kwargs)
+
+    def _post_process(self, result, **kwargs):
         """Applies any additional modifications to the DataFrame
         * Applies prefixes and/or suffixes
         * Appends the result to main DataFrame
@@ -538,9 +682,13 @@ class AnalysisIndicators(PandasObject):
         chain_mode = self._df.attrs.get("_ta_chain", False)
 
         if not isinstance(result, (pd.Series, pd.DataFrame)):
+            # Returning the whole DataFrame here made "no result" indistinguishable
+            # from a real one without an identity check, and df.ta.sma(close="typo")
+            # handed back the frame it was called on. Chain mode still returns the
+            # frame, because there the frame *is* the result.
             if verbose:
                 logger.error("The result was not a Series or DataFrame.")
-            return self._df
+            return self._df if chain_mode else None
         # Append only specific columns to the dataframe (via
         # 'col_numbers':(0,1,3) for example)
         result = (
@@ -573,8 +721,15 @@ class AnalysisIndicators(PandasObject):
         if isinstance(arg, str):
             if arg.lower() == "all":
                 mode["all"] = True
-            if arg.lower() in self.categories:
+            elif arg.lower() in self.categories:
                 name, mode["category"] = arg, True
+            else:
+                # A Strategy's *name* never selected anything here, so
+                # df.ta.strategy("CommonStrategy") logged an invisible error and
+                # added no columns.  Pass the Strategy object itself.
+                categories = ", ".join(sorted(self.categories))
+                raise ValueError(f"strategy() got {arg!r}, which is neither 'all' nor a category ({categories}). Pass a Strategy to run a named one.")
+            return name, mode
         if isinstance(arg, Strategy):
             strategy_ = arg
             if strategy_.ta is None or strategy_.name.lower() == "all":
@@ -583,7 +738,8 @@ class AnalysisIndicators(PandasObject):
                 name, mode["category"] = strategy_.name, True
             else:
                 name, mode["custom"] = strategy_.name, True
-        return name, mode
+            return name, mode
+        raise TypeError(f"strategy() expected a category name or a Strategy, got {type(arg).__name__}")
 
     # Public DataFrame Methods
     def indicators(self, **kwargs):
@@ -663,9 +819,19 @@ class AnalysisIndicators(PandasObject):
         with possibly as json, yaml config file or an sqlite3 table.
 
 
+        Runs serially by default. Parallel execution is opt-in and worth it from
+        roughly 100,000 rows per frame upwards; below that, starting worker
+        processes costs more than the indicators do. See docs/strategies.rst.
+
         Kwargs:
-            chunksize (bool): Adjust the chunksize for the Multiprocessing Pool.
-                Default: Number of cores of the OS
+            chunksize (int): Deprecated and unused: it sized the batches of the
+                Multiprocessing Pool that stages replace. Passing it emits a
+                DeprecationWarning. Default: None
+            cores (int): Run this call on that many worker processes, 0 for
+                serially. Default: df.ta.cores, itself 0 unless set.
+            executor (concurrent.futures.Executor): Run this call on a pool the
+                caller owns and reuses, which avoids paying for process start-up
+                per call. Takes precedence over 'cores'. Default: None
             exclude (list): List of indicator names to exclude. Some are
                 excluded by default for various reasons; they require additional
                 sources, performance (td_seq), not a ohlcv chart (vp) etc.
@@ -673,7 +839,9 @@ class AnalysisIndicators(PandasObject):
                 Category such as: "candles", "cycles", "momentum", "overlap",
                 "performance", "statistics", "trend", "volatility", "volume", or
                 "all". Default: "all"
-            ordered (bool): Whether to run "all" in order. Default: True
+            ordered (bool): Deprecated and unused: results are always appended
+                in the order the entries are listed. Passing it emits a
+                DeprecationWarning. Default: None
             timed (bool): Show the process time of the strategy().
                 Default: False
             verbose (bool): Provide some additional insight on the progress of
@@ -683,8 +851,22 @@ class AnalysisIndicators(PandasObject):
         returns = _bool_param(kwargs.pop("returns", None), False, "returns")
         # Ensure indicators are appended to the DataFrame
         kwargs["append"] = True
-        all_ordered = _bool_param(kwargs.pop("ordered", None), True, "ordered")
-        mp_chunksize = kwargs.pop("chunksize", self.cores)
+        executor = kwargs.pop("executor", None)
+        if executor is not None and not isinstance(executor, Executor):
+            raise TypeError(f"strategy() executor must be a concurrent.futures.Executor or None, got {type(executor).__name__}")
+        # 'cores' used to be read off the accessor only; the kwarg was accepted
+        # and dropped, so strategy(cores=0) still started a pool.
+        cores = _pos_int(kwargs.pop("cores", None), self.cores, "cores", gt=None, ge=0)
+        # strategy() broadcasts unknown keywords to the indicators, so a
+        # keyword that lost its meaning would otherwise pass through in silence.
+        for retired in ("chunksize", "ordered"):
+            if kwargs.pop(retired, None) is not None:
+                warn(
+                    f"strategy() {retired} is not used and has no effect; it is deprecated and will be "
+                    "removed in the next breaking release. Remove the argument.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
         # Initialize
         initial_column_count = len(self._df.columns)
@@ -704,6 +886,14 @@ class AnalysisIndicators(PandasObject):
             "vp",
             "xsignals",
         ]
+        # These need an argument the frame cannot supply, and now raise without
+        # it rather than returning nothing.  Leave them in when the caller
+        # broadcasts one, so df.ta.strategy("all", benchmark=other) keeps
+        # computing beta and correl as it did.
+        if "benchmark" not in kwargs:
+            excluded += ["beta", "correl"]
+        if "name" not in kwargs:
+            excluded.append("ma")  # a dispatcher: ma() with no name lists the available MAs
 
         # Get the Strategy Name and mode
         name, mode = self._strategy_mode(*args)
@@ -724,11 +914,8 @@ class AnalysisIndicators(PandasObject):
         elif mode["custom"]:
             # custom mode implies a list: _resolve_strategy_args routes ta=None to "all"
             ta = [{**kwds, "append": True} for kwds in args[0].ta]
-        elif mode["all"]:
+        else:  # mode["all"]; _resolve_strategy_args() raises on anything else
             ta = self.indicators(as_list=True, exclude=excluded)
-        else:
-            logger.error("Not an available strategy.")
-            return None
 
         verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
         if verbose:
@@ -738,117 +925,47 @@ class AnalysisIndicators(PandasObject):
                 logger.info(f"Excluded[{len(excluded)}]: {excluded_str}")
 
         timed = _bool_param(kwargs.pop("timed", None), False, "timed")
-        results: Any = []
-        use_multiprocessing = self.cores > 0
-        has_col_names = False
+
+        # The plan: one (order, kind, params, kwargs) task per indicator, in the
+        # order the caller asked for. Pure data -- nothing has run yet.
+        if mode["custom"]:
+            tasks = [(i, ind["kind"], _strategy_params(ind), {**ind, **kwargs}) for i, ind in enumerate(ta)]
+        else:
+            tasks = [(i, ind, (), dict(kwargs)) for i, ind in enumerate(ta)]
+
+        # A daemonic worker cannot start children of its own ('daemonic
+        # processes are not allowed to have children'), so a strategy() inside
+        # someone else's pool runs serially instead of failing.
+        if (executor is not None or cores > 0) and current_process().daemon:
+            if verbose:
+                logger.info("Running serially: strategy() was called inside a worker process.")
+            executor, cores = None, 0
 
         if timed:
             stime = perf_counter()
 
-        if use_multiprocessing and mode["custom"]:
-            # Determine if the Custom Model has 'col_names' parameter
-            has_col_names = bool(len([True for x in ta if "col_names" in x and isinstance(x["col_names"], tuple)]))
-
-            if has_col_names:
-                use_multiprocessing = False
-
-        if Imports["tqdm"]:
-            from tqdm import tqdm  # type: ignore[import-untyped]  # optional; ships no stubs
-
-        if use_multiprocessing:
-            _total_ta = len(ta)
-
-            # Create a lightweight copy of self holding only the columns an
-            # indicator can reach (see _worker_columns).  Without this, each
-            # imap() call pickles the whole of self._df -- which grows as
-            # indicators are appended -- causing pandas BlockManager integrity
-            # errors in workers and pool deadlocks.  On Windows the oversized
-            # pickle also fails the overlapped WriteFile on the task pipe
-            # outright with 'OSError: [WinError 1450] Insufficient system
-            # resources'.
-            kwarg_sources = [kwargs, *ta] if mode["custom"] else [kwargs]
-            slim = copy(self)
-            slim._df = self._df[self._worker_columns(kwarg_sources)].copy()
-
-            # Python 3.12 warns when forking from a multi-threaded process.
-            # Use spawn context explicitly to avoid unsafe fork behavior.
-            pool = get_context("spawn").Pool(self.cores)
+        if executor is not None:
+            self._run_stages(tasks, executor, _executor_workers(executor), verbose)
+        elif cores > 0:
+            # Compare the pid, do not just test for the variable: os.environ is
+            # process-global, so a second thread calling strategy(cores=...)
+            # would otherwise be told to guard its __main__.  A spawned child
+            # inherits the *parent's* pid here, which never matches its own.
+            guard_owner = os.environ.get(_STRATEGY_GUARD_ENV)
+            if guard_owner and guard_owner != str(os.getpid()):
+                raise RuntimeError(_MAIN_GUARD_HINT)
+            os.environ[_STRATEGY_GUARD_ENV] = str(os.getpid())
             try:
-                # Some magic to optimize chunksize for speed based on total ta indicators
-                _chunksize = mp_chunksize - 1 if mp_chunksize > _total_ta else int(np.log10(_total_ta)) + 1
-                if verbose:
-                    logger.info(f"Multiprocessing {_total_ta} indicators with {_chunksize} chunks and {self.cores}/{cpu_count()} cpus.")
-
-                results = None
-                if mode["custom"]:
-                    # Create a list of all the custom indicators into a list
-                    custom_ta = [
-                        (
-                            ind["kind"],
-                            _strategy_params(ind),
-                            {**ind, **kwargs},
-                        )
-                        for ind in ta
-                    ]
-                    # Custom multiprocessing pool. Must be ordered for Chained Strategies
-                    results = pool.imap(slim._mp_worker, custom_ta, _chunksize)
-                else:
-                    default_ta: list = [(ind, (), kwargs) for ind in ta]
-                    # All and Categorical multiprocessing pool.
-                    if all_ordered:
-                        if Imports["tqdm"] and verbose:
-                            results = tqdm(pool.imap(slim._mp_worker, default_ta, _chunksize))  # Order over Speed
-                        else:
-                            results = pool.imap(slim._mp_worker, default_ta, _chunksize)  # Order over Speed
-                    else:
-                        if Imports["tqdm"] and verbose:
-                            results = tqdm(pool.imap_unordered(slim._mp_worker, default_ta, _chunksize))  # Speed over Order
-                        else:
-                            results = pool.imap_unordered(slim._mp_worker, default_ta, _chunksize)  # Speed over Order
-                if results is None:
-                    logger.warning(f"ta.strategy('{name}') has no results.")
-                    pool.terminate()
-                    return
-
-                # Consume the lazy iterator while the pool is still alive.
-                [self._post_process(r, **kwargs) for r in results]
-                pool.close()
-            except Exception:
-                pool.terminate()
-                raise
+                # Python 3.12 warns when forking from a multi-threaded process,
+                # so spawn explicitly rather than inheriting the platform default.
+                with ProcessPoolExecutor(cores, mp_context=get_context("spawn")) as own_executor:
+                    self._run_stages(tasks, own_executor, cores, verbose)
             finally:
-                pool.join()
-
-            del slim
-            self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)
-
+                os.environ.pop(_STRATEGY_GUARD_ENV, None)
         else:
-            # Without multiprocessing:
-            if verbose:
-                _col_msg = "[i] No mulitproccessing (cores = 0)."
-                if has_col_names:
-                    _col_msg = "[i] No mulitproccessing support for 'col_names' option."
-                logger.info(_col_msg)
+            self._run_serially(tasks, verbose)
 
-            if mode["custom"]:
-                if Imports["tqdm"] and verbose:
-                    pbar = tqdm(ta, "[i] Progress")
-                    for ind in pbar:
-                        params = _strategy_params(ind)
-                        getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
-                else:
-                    for ind in ta:
-                        params = _strategy_params(ind)
-                        getattr(self, ind["kind"])(*params, **{**ind, **kwargs})
-            else:
-                if Imports["tqdm"] and verbose:
-                    pbar = tqdm(ta, "[i] Progress")
-                    for ind in pbar:
-                        getattr(self, ind)(*(), **kwargs)
-                else:
-                    for ind in ta:
-                        getattr(self, ind)(*(), **kwargs)
-                self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)
+        self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)
 
         if verbose:
             logger.info(f"Total indicators: {len(ta)}")
