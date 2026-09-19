@@ -36,7 +36,10 @@ def pvi(
 
     # Calculate Result
     signed_volume = signed_series(volume, 1)
-    pvi = roc(close=close, length=length) * signed_volume[signed_volume > 0].abs()
+    # where(), not signed_volume[signed_volume > 0]: see the note in nvi.py --
+    # realigning the subset rebuilds the index and clears DatetimeIndex.freq on
+    # the caller's own index object.
+    pvi = roc(close=close, length=length) * signed_volume.where(signed_volume > 0).abs()
     pvi.fillna(0, inplace=True)
     pvi.iloc[0] = initial
     pvi = pvi.cumsum()
@@ -69,7 +72,7 @@ Calculation:
 
     roc = ROC(close, length)
     signed_volume = signed_series(volume, initial=1)
-    pvi = signed_volume[signed_volume > 0].abs() * roc_
+    pvi = signed_volume.where(signed_volume > 0).abs() * roc_
     pvi.fillna(0, inplace=True)
     pvi.iloc[0]= initial
     pvi = pvi.cumsum()
