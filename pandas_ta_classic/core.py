@@ -80,6 +80,24 @@ class Strategy:
         if len(required_args) > 1:
             raise ValueError("\n".join(required_args))
 
+        # Entries used to be checked only when the Strategy ran, and then by
+        # whatever happened to fail first: a missing "kind" surfaced as
+        # KeyError: 'kind' and a plain string entry as "'str' object is not a
+        # mapping", neither naming the entry.  Check the shape here, where the
+        # entry was written.  Whether the indicator exists is checked at run
+        # time, because custom indicators may be loaded after this point.
+        for position, entry in enumerate(self.ta or []):
+            if not isinstance(entry, dict):
+                raise TypeError(
+                    f"Strategy {self.name!r} entry {position}: expected a dict like {{'kind': 'sma', 'length': 10}}, got {type(entry).__name__} {entry!r}"
+                )
+            if "kind" not in entry:
+                raise ValueError(f"Strategy {self.name!r} entry {position} has no 'kind': {entry!r}")
+            if not isinstance(entry["kind"], str):
+                raise TypeError(
+                    f"Strategy {self.name!r} entry {position}: 'kind' must be an indicator name, got {type(entry['kind']).__name__} {entry['kind']!r}"
+                )
+
     def total_ta(self):
         return len(self.ta) if self.ta is not None else 0
 
@@ -108,12 +126,15 @@ CommonStrategy = Strategy(
 def _append_dataframe(df, result, kwargs):
     """Append a DataFrame *result* to *df*, honouring optional col_names in *kwargs*."""
     if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
-        if len(kwargs["col_names"]) >= len(result.columns):
-            for col, ind_name in zip(result.columns, kwargs["col_names"]):
-                df[ind_name] = result.loc[:, col]
-        else:
-            logger.error(f"Not enough col_names were specified: got {len(kwargs['col_names'])}, expected {len(result.columns)}.")
-            return
+        names = kwargs["col_names"]
+        if len(names) < len(result.columns):
+            # This logged through the package NullHandler and returned, so
+            # bbands with one col_name added no column at all rather than three.
+            raise ValueError(
+                f"col_names has {len(names)} name(s) for {len(result.columns)} columns ({', '.join(str(c) for c in result.columns)}): {names!r}"
+            )
+        for col, ind_name in zip(result.columns, names):
+            df[ind_name] = result.loc[:, col]
     else:
         for i, column in enumerate(result.columns):
             df[column] = result.iloc[:, i]
@@ -832,9 +853,11 @@ class AnalysisIndicators(PandasObject):
             executor (concurrent.futures.Executor): Run this call on a pool the
                 caller owns and reuses, which avoids paying for process start-up
                 per call. Takes precedence over 'cores'. Default: None
-            exclude (list): List of indicator names to exclude. Some are
-                excluded by default for various reasons; they require additional
-                sources, performance (td_seq), not a ohlcv chart (vp) etc.
+            exclude (list): List of indicator names to leave out of an "all" or
+                category run. Some are excluded by default for various reasons;
+                they require additional sources, performance (td_seq), not a
+                ohlcv chart (vp) etc. A custom Strategy lists its own entries,
+                so passing 'exclude' with one raises.
             name (str): Select all indicators or indicators by
                 Category such as: "candles", "cycles", "momentum", "overlap",
                 "performance", "statistics", "trend", "volatility", "volume", or
@@ -901,9 +924,17 @@ class AnalysisIndicators(PandasObject):
         # If All or a Category, exclude user list if any
         if not isinstance(self._df.index, pd.DatetimeIndex):
             excluded.append("vwap")  # anchors by calendar period; raises without a DatetimeIndex
-        user_excluded = kwargs.pop("exclude", [])
-        if mode["all"] or mode["category"]:
-            excluded += user_excluded
+        user_excluded = kwargs.pop("exclude", None)
+        if user_excluded is not None:
+            # A string extended the list character by character, so
+            # exclude="rsi" removed 'r', 's' and 'i' -- that is, nothing.
+            if not isinstance(user_excluded, (list, tuple)) or not all(isinstance(item, str) for item in user_excluded):
+                raise TypeError(f"strategy() exclude must be a list of indicator names, got {type(user_excluded).__name__} {user_excluded!r}")
+            if mode["custom"]:
+                # It was popped and dropped here, so it silently did nothing.
+                # A custom Strategy lists its entries, so leave them out there.
+                raise ValueError(f"strategy() exclude does not apply to the custom Strategy {name!r}; leave the entries out of its 'ta' list instead")
+            excluded += list(user_excluded)
 
         # Collect the indicators, remove excluded or include kwarg["append"].
         # Work on copies: `Category` lists and the caller's Strategy.ta are shared
@@ -929,6 +960,14 @@ class AnalysisIndicators(PandasObject):
         # The plan: one (order, kind, params, kwargs) task per indicator, in the
         # order the caller asked for. Pure data -- nothing has run yet.
         if mode["custom"]:
+            # Otherwise the first entry to run fails with a bare
+            # "'AnalysisIndicators' object has no attribute 'rsi_'", which names
+            # neither the Strategy nor the entry. Checked here rather than in
+            # Strategy(), because custom indicators may be loaded later.
+            known = set(self.indicators(as_list=True))
+            for position, ind in enumerate(ta):
+                if ind["kind"] not in known:
+                    raise ValueError(f"Strategy {name!r} entry {position}: {ind['kind']!r} is not an indicator")
             tasks = [(i, ind["kind"], _strategy_params(ind), {**ind, **kwargs}) for i, ind in enumerate(ta)]
         else:
             tasks = [(i, ind, (), dict(kwargs)) for i, ind in enumerate(ta)]

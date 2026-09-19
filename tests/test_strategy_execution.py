@@ -228,6 +228,48 @@ def test_unknown_strategy_name_raises():
         df.ta.strategy("CommonStrategy")
 
 
+def test_strategy_entry_shape_is_checked_where_it_is_written():
+    """These used to surface only on the run, as KeyError or 'not a mapping'."""
+    with pytest.raises(ValueError, match=r"Strategy 'S' entry 1 has no 'kind'"):
+        ta.Strategy("S", [{"kind": "rsi"}, {"length": 10}])
+    with pytest.raises(TypeError, match=r"Strategy 'S' entry 0: expected a dict"):
+        ta.Strategy("S", ["sma"])
+    with pytest.raises(TypeError, match=r"Strategy 'S' entry 0: 'kind' must be an indicator name"):
+        ta.Strategy("S", [{"kind": 42}])
+
+
+def test_unknown_indicator_in_a_custom_strategy_names_the_entry():
+    df = sample_frame(200)
+    strategy = ta.Strategy("S", [{"kind": "rsi"}, {"kind": "not_an_indicator"}])
+    with pytest.raises(ValueError, match=r"Strategy 'S' entry 1: 'not_an_indicator' is not an indicator"):
+        df.ta.strategy(strategy, cores=0)
+
+
+def test_too_few_col_names_raises():
+    """bbands with one col_name added no column at all, and said nothing."""
+    df = sample_frame(200)
+    strategy = ta.Strategy("S", [{"kind": "bbands", "length": 20, "col_names": ("BBL",)}])
+    with pytest.raises(ValueError, match=r"col_names has 1 name\(s\) for \d+ columns"):
+        df.ta.strategy(strategy, cores=0)
+
+
+def test_exclude_must_be_a_list_of_names():
+    """exclude='rsi' extended the exclusion list by 'r', 's', 'i' -- that is, nothing."""
+    df = sample_frame(200)
+    with pytest.raises(TypeError, match=r"strategy\(\) exclude must be a list of indicator names, got str"):
+        df.ta.strategy("momentum", exclude="rsi", cores=0)
+    with pytest.raises(TypeError, match=r"strategy\(\) exclude must be a list of indicator names, got list"):
+        df.ta.strategy("momentum", exclude=["rsi", 7], cores=0)
+
+
+def test_exclude_on_a_custom_strategy_raises():
+    """It was popped and dropped, so it silently had no effect."""
+    df = sample_frame(200)
+    strategy = ta.Strategy("S", [{"kind": "rsi"}, {"kind": "sma", "length": 10}])
+    with pytest.raises(ValueError, match=r"exclude does not apply to the custom Strategy 'S'"):
+        df.ta.strategy(strategy, exclude=["rsi"], cores=0)
+
+
 @pytest.mark.parametrize("retired", ["chunksize", "ordered"])
 def test_retired_pool_keywords_warn_rather_than_pass_through(retired):
     """strategy() broadcasts unknown keywords, so these need an explicit check.
