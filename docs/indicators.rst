@@ -47,18 +47,19 @@ indicator.
 **A missing bar inside the series** (a NaN in any input) is handled in one of
 three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
 
-* **Recovers** (most indicators): the result is NaN near the gap and, once the
-  gap has left every window and recursion, equals the result on the complete
-  series. Window indicators such as ``sma(length=20)`` are NaN for 20 bars;
-  ``rsx``, ``ebsw`` and ``ha`` skip the missing bar and continue.
+* **Recovers** (every indicator not listed below): the result is NaN near the
+  gap and, once the gap has left every window and recursion, equals the result
+  on the complete series. Window indicators such as ``sma(length=20)`` are NaN
+  for 20 bars. Recursive indicators (``macd``, ``kama``, ``jma``, ``mama``,
+  ``rsx``, the ``ht_*`` family, ``ha``, ...) skip the missing bar: it reads NaN
+  and the recursion continues as if the bar did not exist. TA-Lib instead
+  reports NaN from the gap to the end of the series.
 * **Cumulative** (``ad``, ``aobv``, ``nvi``, ``obv``, ``pvi``, ``pvt``,
   ``wad``): a running total cannot know the missing bar's contribution, so
   later values differ from the complete series by a persistent amount. Their
   bar-to-bar changes are unaffected.
-* **Propagates NaN** (``adosc``, ``hwc``, ``hwma``, ``jma``, ``kama``,
-  ``lrsi``, ``macd``, ``macdfix``, ``mama``, ``mcgd``, ``ssf``,
-  ``tos_stdevall``, ``vidya`` and the six ``ht_*`` indicators): the recursion
-  reports NaN from the gap to the end of the series, as TA-Lib does.
+* **Whole series** (``tos_stdevall``): one fit over the entire series changes
+  everywhere, slightly, when a bar is missing.
 
 No indicator publishes a value it could not compute: a result is either
 computed from the available bars or NaN.

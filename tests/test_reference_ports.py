@@ -7,8 +7,8 @@ recent low was at or below 0, ``cksp()`` mixed the TradingView and book modes
 by default, and ``ttm_trend`` included the current bar in its average (and
 published -1 on warm-up bars).
 
-``ichimoku``, ``squeeze``, ``supertrend`` (direction), daily ``cpr`` and
-``vwap`` were verified during the same review; their checks live here too.
+``vidya`` (CMO over ``length``), ``ichimoku``, ``squeeze``, ``supertrend``
+(direction), daily ``cpr`` and ``vwap`` were verified during the same review; their checks live here too.
 
 Warm-up bars are skipped, where seed conventions differ between sources.
 """
@@ -126,3 +126,10 @@ def test_vwap_anchors(anchor, key):
     expected = ref.vwap(high, low, close, volume, [key(t) for t in index])
     np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
     np.testing.assert_allclose(got, expected, rtol=1e-12, equal_nan=True)
+
+
+def test_vidya(spy):
+    got = ta.vidya(spy.close).to_numpy(float)
+    expected = ref.vidya(spy.close.to_numpy(float))
+    np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
+    _close(got, expected, 1e-9)

@@ -214,3 +214,18 @@ def vwap(high, low, close, volume, keys):
         den += volume[i]
         out[i] = num / den if den else np.nan
     return out
+
+
+def vidya(c, length=14):
+    """VIDYA (Chande) with CMO over `length` bars, seeded with the SMA of the first `length` closes."""
+    d = np.r_[np.nan, np.diff(c)]
+    up, dn = np.where(d > 0, d, 0.0), np.where(d < 0, -d, 0.0)
+    up[0] = dn[0] = np.nan
+    su, sd = rolling(up, length, np.sum), rolling(dn, length, np.sum)
+    k = np.abs((su - sd) / (su + sd))
+    a = 2 / (length + 1)
+    out = np.full(len(c), np.nan)
+    out[length - 1] = np.mean(c[:length])
+    for i in range(length, len(c)):
+        out[i] = a * k[i] * c[i] + (1 - a * k[i]) * out[i - 1]
+    return out

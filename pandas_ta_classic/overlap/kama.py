@@ -29,7 +29,7 @@ def _kama_nb(sc, close, length):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def kama(
     close: Series,
     length: int | None = None,

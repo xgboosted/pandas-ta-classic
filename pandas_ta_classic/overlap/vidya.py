@@ -15,7 +15,7 @@ from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_lea
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def vidya(
     close: Series,
     length: int | None = None,
@@ -80,17 +80,21 @@ Momentum Oscillator (CMO). When volatility is high, VIDYA reacts faster to
 price changes. It is often used as moving average or trend identifier.
 
 Sources:
+    Tushar Chande, "The New Technical Trader" (1994).
     https://www.tradingview.com/script/hdrf0fXV-Variable-Index-Dynamic-Average-VIDYA/
+    (that script, like Chande's original, measures CMO over a fixed 9 bars;
+    this implementation uses `length` for both, as most implementations do)
     https://www.perfecttrendsystem.com/blog_mt4_2/en/vidya-indicator-for-mt4
 
 Calculation:
     Default Inputs:
-        length=10, adjust=False, sma=True
-    if sma:
-        sma_nth = close[0:length].sum() / length
-        close[:length - 1] = np.NaN
-        close.iloc[length - 1] = sma_nth
-    EMA = close.ewm(span=length, adjust=adjust).mean()
+        length=14, drift=1
+    alpha = 2 / (length + 1)
+    mom = close.diff(drift)
+    CMO = (sum(up moves, length) - sum(down moves, length)) / (sum of both)
+    k = abs(CMO)
+    VIDYA[length - 1] = SMA(close, length)          # seed
+    VIDYA = alpha * k * close + (1 - alpha * k) * VIDYA[-1]
 
 Args:
     close (pd.Series): Series of 'close's

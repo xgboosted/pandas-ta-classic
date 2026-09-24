@@ -8,13 +8,16 @@ docs/indicators.rst):
   left every window and recursion, equals the clean-series result again.
 * CUMULATIVE: a running total loses the missing bar's contribution for good,
   so later values differ from the clean series by a persistent amount.
-* PROPAGATES: a recursion that cannot skip the bar reports NaN from the gap to
-  the end of the series, as TA-Lib does. Allowed by the contract, which lets an
-  indicator propagate NaN but never publish a value it could not compute.
+* WHOLE_SERIES: a fit over the entire series (``tos_stdevall``) changes
+  everywhere when one bar is missing, by a small persistent amount.
+
+No indicator may publish a value it could not compute, or go NaN for good.
 
 Before this contract ``rsx`` published a fabricated 50.0 on every bar after one
-missing close, ``ebsw`` was off by about 1.0 on a -1..1 scale for good, and
-``ha`` kept publishing HA_high/HA_low/HA_close computed without HA_open.
+missing close, ``ebsw`` was off by about 1.0 on a -1..1 scale for good, ``ha``
+kept publishing HA_high/HA_low/HA_close computed without HA_open, and 19
+recursive indicators (``macd``, ``kama``, ``jma``, ``mama``, the six ``ht_*``,
+...) reported NaN from the gap to the end of the series.
 """
 
 import inspect
@@ -33,8 +36,7 @@ COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "vol
 NOT_OHLCV = {"add", "sub", "mult", "div", "above", "above_value", "below", "below_value", "cross", "cross_value"}
 NOT_OHLCV |= {"long_run", "short_run", "tsignals", "xsignals", "beta", "correl", "mavp", "ma", "vp"}
 CUMULATIVE = {"ad", "aobv", "nvi", "obv", "pvi", "pvt", "wad"}
-PROPAGATES = {"adosc", "hwc", "hwma", "jma", "kama", "lrsi", "macd", "macdfix", "mama", "mcgd", "ssf", "tos_stdevall", "vidya"}
-PROPAGATES |= {"ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode"}
+WHOLE_SERIES = {"tos_stdevall"}
 # Non-causal by design (see test_lookahead.py): bars before the gap depend on later bars.
 LOOKAHEAD = {"dpo", "ichimoku", "tos_stdevall"}
 INDICATORS = sorted({name for names in ta.Category.values() for name in names} - NOT_OHLCV)
@@ -65,11 +67,8 @@ def test_one_missing_bar(name, frames):
     clean, gapped = (_call(name, df) for df in frames)
     if name not in LOOKAHEAD:
         np.testing.assert_array_equal(np.isnan(gapped[:GAP]), np.isnan(clean[:GAP]), err_msg=f"{name}: bars before the gap changed")
-    if name in PROPAGATES:
-        assert np.isnan(gapped[GAP:]).all(), f"{name}: expected NaN from the gap to the end"
-        return
     tail_clean, tail_gapped = clean[-TAIL:], gapped[-TAIL:]
     np.testing.assert_array_equal(np.isnan(tail_gapped), np.isnan(tail_clean), err_msg=f"{name}: NaN after the gap has passed")
-    if name in CUMULATIVE:
+    if name in CUMULATIVE | WHOLE_SERIES:
         return
     np.testing.assert_allclose(tail_gapped, tail_clean, rtol=1e-6, atol=1e-9, equal_nan=True, err_msg=f"{name}: did not recover")

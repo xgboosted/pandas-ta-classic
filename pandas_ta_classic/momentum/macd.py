@@ -44,7 +44,7 @@ def _ema_aligned(arr, m, period, seed_end):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def macd(
     close: Series,
     fast: int | None = None,
