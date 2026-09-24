@@ -212,8 +212,8 @@ Fetching data
 
 .. note::
    pandas-ta-classic does not download market data. ``df.ta.ticker()``,
-   ``ta.yf()`` and ``ta.av()`` were deprecated in 0.8.32 and removed in the
-   release after it. Fetch OHLCV with yfinance or alpha-vantage and pass the
+   ``ta.yf()`` and ``ta.av()`` were deprecated in 0.8.32 and removed in
+   0.9.0. Fetch OHLCV with yfinance or alpha-vantage and pass the
    DataFrame in; ``examples/fetch_market_data.py`` shows both.
 
 .. code-block:: python
@@ -228,8 +228,8 @@ Removed helpers
 
 .. note::
    ``df.ta.constants()``, ``ta.get_time``, ``ta.EXCHANGE_TZ`` and
-   ``ta.CDL_PATTERN_NAMES`` were deprecated in 0.8.32 and removed in the
-   release after it. Add a constant column directly (``df["0"] = 0``) and use
+   ``ta.CDL_PATTERN_NAMES`` were deprecated in 0.8.32 and removed in
+   0.9.0. Add a constant column directly (``df["0"] = 0``) and use
    ``ta.ALL_PATTERNS`` for the candle pattern names.
 
 chain
