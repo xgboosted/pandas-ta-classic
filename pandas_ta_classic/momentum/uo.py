@@ -33,8 +33,11 @@ def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, d
         Series: UO values scaled to 0–100.
     """
     tdf = DataFrame({"high": high, "low": low, f"close_{drift}": close.shift(drift)})
-    max_h_or_pc = tdf.loc[:, ["high", f"close_{drift}"]].max(axis=1)
-    min_l_or_pc = tdf.loc[:, ["low", f"close_{drift}"]].min(axis=1)
+    # skipna=False so a missing previous close (the first `drift` bars) yields a
+    # NaN true range instead of silently using high/low.  Otherwise bar 0 gets
+    # TR = high - low and publishes a value one bar before TA-Lib.
+    max_h_or_pc = tdf.loc[:, ["high", f"close_{drift}"]].max(axis=1, skipna=False)
+    min_l_or_pc = tdf.loc[:, ["low", f"close_{drift}"]].min(axis=1, skipna=False)
     del tdf
 
     bp = close - min_l_or_pc

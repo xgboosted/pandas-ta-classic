@@ -364,6 +364,11 @@ def non_zero_range(high: Series, low: Series) -> Series:
     ``t`` never depends on bars at ``t + 1`` or later.
     """
     diff = high - low
+    # Cast to float before substituting epsilon: on an int64 series,
+    # ``diff.where(diff != 0, epsilon)`` downcasts the float epsilon to 0,
+    # leaving flat bars as 0 instead of epsilon (and then 0/0 = NaN downstream).
+    if diff.dtype.kind in "iu":
+        diff = diff.astype(float)
     return diff.where(diff != 0, sflt.epsilon)
 
 

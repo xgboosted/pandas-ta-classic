@@ -34,8 +34,12 @@ def trima(
 
         trima = TRIMA(close, length)
     else:
-        len1 = length // 2 + 1  # ceil((length+1)/2) — matches TA-Lib window
-        len2 = length // 2 + 1  # floor(length/2) + 1  — matches TA-Lib asymmetric windows
+        # TA-Lib TRIMA: SMA(SMA(close, n/2 + 1), n/2) for even n, and
+        # SMA(SMA(close, (n+1)/2), (n+1)/2) for odd n.  The second window is
+        # (length + 1) // 2; using length // 2 + 1 for it built a triangle one
+        # bar too wide for even lengths (e.g. 6x6 instead of 6x5 for n=10).
+        len1 = length // 2 + 1
+        len2 = (length + 1) // 2
         sma1 = sma(close, length=len1, talib=False)
         if sma1 is None:
             return None

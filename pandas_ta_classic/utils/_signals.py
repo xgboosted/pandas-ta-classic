@@ -138,10 +138,17 @@ def cross(
     series_b = series_b.apply(zero)
 
     # Calculate Result
-    current = series_a > series_b  # current is above
-    previous = series_a.shift(1) < series_b.shift(1)  # previous is below
-    # above if both are true, below if both are false
-    cross = current & previous if above else ~current & ~previous
+    # A cross is a strict transition through the other series: above-cross is
+    # "was at-or-below, now strictly above"; below-cross is its mirror "was
+    # at-or-above, now strictly below".  NaN comparisons are False, so neither
+    # cross fires on a NaN bar or on a bar where the two series are equal.  The
+    # previous below-cross used ~current & ~previous, which is not the mirror
+    # and fired on every NaN and tie bar.
+    current_above = series_a > series_b
+    current_below = series_a < series_b
+    was_at_or_below = series_a.shift(1) <= series_b.shift(1)
+    was_at_or_above = series_a.shift(1) >= series_b.shift(1)
+    cross = current_above & was_at_or_below if above else current_below & was_at_or_above
 
     if asint:
         cross = cross.astype(int)

@@ -211,7 +211,11 @@ def _linear_regression_np(x: Series, y: Series) -> dict:
     x_sum = x.sum()
     y_sum = y.sum()
 
-    if int(x_sum) != 0:
+    # A constant x (no variance) makes correlation and slope undefined; skip it.
+    # The previous guard ``int(x_sum) != 0`` also skipped x whose values summed
+    # to less than 1 in absolute value (daily benchmark returns), so the
+    # regression never ran for Jensen's alpha.
+    if x.std() != 0:
         # 1st row, 2nd col value corr(x, y)
         r = np.corrcoef(x, y)[0, 1]
 

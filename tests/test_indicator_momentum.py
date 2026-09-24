@@ -232,8 +232,8 @@ class TestMomentum(TestCase):
         if HAS_TALIB:
             expecteddf = DataFrame(
                 {
-                    "DMP_14": talib.PLUS_DM(self.high, self.low),
-                    "DMN_14": talib.MINUS_DM(self.high, self.low),
+                    "PLUS_DM_14": talib.PLUS_DM(self.high, self.low),
+                    "MINUS_DM_14": talib.MINUS_DM(self.high, self.low),
                 }
             )
             assert_talib(self, result, expecteddf, correlation_threshold=0.99)
@@ -244,7 +244,7 @@ class TestMomentum(TestCase):
                 args=[self.high, self.low],
                 expected_name="DM_14",
                 expected_type=DataFrame,
-                expected_columns=["DMP_14", "DMN_14"],
+                expected_columns=["PLUS_DM_14", "MINUS_DM_14"],
                 none_arg_idx=0,
             ),
         )
