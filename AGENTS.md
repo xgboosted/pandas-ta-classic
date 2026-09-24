@@ -196,13 +196,14 @@ grep -rnE 'kwargs\.(pop|get)\("\w+", (True|False)\)' pandas_ta_classic/ --includ
 
 Not greppable, so check in review: **dead code** your change orphaned, and the **stdlib over hand-rolled** preference.
 
-## CI Pipeline (6 jobs)
+## CI Pipeline (7 jobs)
 
 | Job | Description |
 |---|---|
 | `code-quality` | Black formatting check, `ruff check .` (blocking) + advisory ruff, mypy, core.pyi sync, lint-version parity |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
+| `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
 | `documentation` | Builds Sphinx docs + deploys to GitHub Pages (on push only) |
 | `pypi-publish` | Builds wheel, twine check, publishes to PyPI (on release published only) |
@@ -346,7 +347,7 @@ python -m build
 │   ├── FUNDING.yml
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/
-│       ├── ci.yml                    # Main CI pipeline (6 jobs)
+│       ├── ci.yml                    # Main CI pipeline (7 jobs)
 │       └── mirror.yml                # Codeberg mirror sync
 ├── docs/                             # Sphinx documentation
 │   ├── index.rst

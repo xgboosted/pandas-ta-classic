@@ -342,7 +342,27 @@ which makes the checkpoint a length-regression check; their values are
 covered by ``test_indicator_values.py`` instead.
 
 Note what a snapshot can and cannot do.  It is taken from this package's own
-output, so it detects *change*, never *correctness*.  The 57 oracle-less
-indicators still have no independent verification of their mathematics — the
-long-term fix is a deliberately naive reference implementation per indicator,
-written from the published formula, added incrementally.
+output, so it detects *change*, never *correctness*.  The fix is a
+deliberately naive reference implementation per indicator, written from the
+definition the indicator cites, added incrementally.
+
+Reference ports
+~~~~~~~~~~~~~~~
+
+``tests/fixtures/reference_ports.py`` holds plain-loop ports of cited
+definitions (TradingView built-ins and scripts, ProRealCode, the original
+papers), written without any package code.  ``tests/test_reference_ports.py``
+compares the package with them over the full SPY series, after the warm-up.
+They cover ``kst``, ``smi``, ``stc``, ``qqe``, ``squeeze_pro``,
+``ttm_trend``, ``cksp``, ``ichimoku``, ``squeeze``, ``supertrend``
+(direction), daily ``cpr`` and ``vwap``.  Four of these were wrong against
+their sources when first ported (``kst``, ``stc``, ``cksp``, ``ttm_trend``).
+
+Still regression-only, with no independent check of their values:
+``aberration``, ``amat``, ``aobv``, ``brar``, ``cdl_inside``, ``cdl_z``,
+``ce``, ``cti``, ``decay``, ``dsp``, ``ebsw``, ``hilo``, ``hwc``, ``hwma``,
+``inertia``, ``jma``, ``kdj``, ``long_run``, ``lrsi``, ``mcgd``, ``mmar``,
+``pmax``, ``psl``, ``rainbow``, ``rsx``, ``rvgi``, ``rvi_vol``,
+``short_run``, ``ssf``, ``td_seq``, ``thermo``, ``tos_stdevall``, ``trixh``,
+``tsignals``, ``vfi``, ``vidya``, ``vp``, ``vwmacd``, ``xsignals``, ``zlma``.
+Add a port to ``reference_ports.py`` to move one off this list.

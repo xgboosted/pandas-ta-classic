@@ -55,7 +55,7 @@ def kst(
     rocma3 = roc(close, roc3).rolling(sma3).mean()
     rocma4 = roc(close, roc4).rolling(sma4).mean()
 
-    kst = 100 * (rocma1 + 2 * rocma2 + 3 * rocma3 + 4 * rocma4)
+    kst = rocma1 + 2 * rocma2 + 3 * rocma3 + 4 * rocma4
     kst_signal = kst.rolling(signal).mean()
 
     # Offset
@@ -96,7 +96,7 @@ Calculation:
     rocsma3 = SMA(ROC(close, roc3), sma3)
     rocsma4 = SMA(ROC(close, roc4), sma4)
 
-    KST = 100 * (rocsma1 + 2 * rocsma2 + 3 * rocsma3 + 4 * rocsma4)
+    KST = rocsma1 + 2 * rocsma2 + 3 * rocsma3 + 4 * rocsma4
     KST_Signal = SMA(KST, signal)
 
 Args:

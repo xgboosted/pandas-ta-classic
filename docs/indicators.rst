@@ -35,6 +35,34 @@ expected. Inputs with no label in common (a ``RangeIndex`` next to a
 overlap) raise ``ValueError``: they could only produce an all-NaN result on the
 union of both indexes.
 
+Missing Values
+--------------
+
+**A leading NaN run is not data.** Chained input (one indicator's output fed
+into another) starts with a NaN warm-up run. Every indicator returns the same
+values on the real bars as it would on the series without that run, and NaN on
+the run itself. ``tests/test_leading_nan_contract.py`` checks every registered
+indicator.
+
+**A missing bar inside the series** (a NaN in any input) is handled in one of
+three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
+
+* **Recovers** (most indicators): the result is NaN near the gap and, once the
+  gap has left every window and recursion, equals the result on the complete
+  series. Window indicators such as ``sma(length=20)`` are NaN for 20 bars;
+  ``rsx``, ``ebsw`` and ``ha`` skip the missing bar and continue.
+* **Cumulative** (``ad``, ``aobv``, ``nvi``, ``obv``, ``pvi``, ``pvt``,
+  ``wad``): a running total cannot know the missing bar's contribution, so
+  later values differ from the complete series by a persistent amount. Their
+  bar-to-bar changes are unaffected.
+* **Propagates NaN** (``adosc``, ``hwc``, ``hwma``, ``jma``, ``kama``,
+  ``lrsi``, ``macd``, ``macdfix``, ``mama``, ``mcgd``, ``ssf``,
+  ``tos_stdevall``, ``vidya`` and the six ``ht_*`` indicators): the recursion
+  reports NaN from the gap to the end of the series, as TA-Lib does.
+
+No indicator publishes a value it could not compute: a result is either
+computed from the available bars or NaN.
+
 Lookahead Bias and Causality
 -----------------------------
 
@@ -286,7 +314,7 @@ Moving averages and trend-following indicators:
 * *Triangular Moving Average*: **trima**
 * *Typical Price (H+L+C)/3*: **typprice** (arithmetic mean of high, low, close; equivalent to TA-Lib ``TYPPRICE`` and tulipy ``typprice``)
 * *Variable Index Dynamic Average*: **vidya**
-* *Volume Weighted Average Price*: **vwap** (**Requires** the DataFrame index to be a DatetimeIndex)
+* *Volume Weighted Average Price*: **vwap** (**Requires** the DataFrame index to be a DatetimeIndex). The anchor follows the calendar of the index's time zone: convert a UTC index to the exchange's time zone for a session that crosses midnight in UTC, and shift a session that opens before local midnight (CME's 18:00 New York open) so it starts at 00:00; ``help(ta.vwap)`` shows both.
 * *Volume Weighted Moving Average*: **vwma**
 * *Weighted Closing Price*: **wcp**
 * *Weighted Moving Average*: **wma**
