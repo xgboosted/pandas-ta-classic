@@ -83,5 +83,6 @@ Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 Returns:
-    pd.DataFrame: ttm_trend.
+    pd.DataFrame: TTM_TRND_<length>: +1 when the close is above the average HL2
+        of the previous `length` bars, -1 otherwise, NaN until that average exists.
 """

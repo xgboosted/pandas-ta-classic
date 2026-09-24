@@ -67,6 +67,8 @@ def test_qqe(spy):
 
 def test_squeeze_pro_flags(spy):
     got = ta.squeeze_pro(spy.high, spy.low, spy.close)
+    # No flag before the bands exist (bar 20): it used to publish 0 there, like squeeze did.
+    assert got.iloc[:20, 1:].isna().all().all()
     flags = ref.squeeze_pro_flags(*(spy[c].to_numpy(float) for c in ("high", "low", "close")))
     for col, key in (("SQZPRO_ON_WIDE", "wide"), ("SQZPRO_ON_NORMAL", "normal"), ("SQZPRO_ON_NARROW", "narrow"), ("SQZPRO_OFF", "off")):
         _close(got[col], flags[key].astype(float), 0)
@@ -96,6 +98,7 @@ def test_ichimoku_lines(spy):
 
 def test_squeeze_flags(spy):
     got = ta.squeeze(spy.high, spy.low, spy.close)
+    assert got.iloc[:20, 1:].isna().all().all()  # no flag before the bands exist
     on, off = ref.squeeze_flags(*(spy[c].to_numpy(float) for c in ("high", "low", "close")))
     _close(got["SQZ_ON"], on.astype(float), 0)
     _close(got["SQZ_OFF"], off.astype(float), 0)

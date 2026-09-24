@@ -220,7 +220,7 @@ Or install both oracle libraries at once:
     # pip
     pip install pandas-ta-classic[oracle]
 
-Both oracle test suites (``test_oracle_talib.py``, ``test_oracle_tulipy.py``) are guarded with ``@unittest.skipUnless`` and skip automatically when the respective library is not installed.
+``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
 
 Installing Optional Dependencies
 --------------------------------

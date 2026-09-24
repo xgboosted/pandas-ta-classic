@@ -22,6 +22,17 @@ Available Metrics
 * *Sortino Ratio*: **sortino_ratio**
 * *Volatility*: **volatility**
 
+Annualisation
+~~~~~~~~~~~~~
+
+``cagr``, ``calmar_ratio``, ``sortino_ratio``, ``downside_deviation``,
+``volatility`` and ``sharpe_ratio(use_cagr=True)`` measure the series' span
+in calendar time from its index (``total_time``): a year is 365.25 days, and
+``volatility`` annualises by the number of bars per calendar year actually in
+the data. ``sharpe_ratio`` and ``optimal_leverage`` instead annualise by a
+fixed ``period`` of bars per year, ``252`` by default (trading days); pass
+another ``period`` for other bar sizes.
+
 Backtesting
 -----------
 

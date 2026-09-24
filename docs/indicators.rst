@@ -223,10 +223,10 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Commodity Channel Index*: **cci**
 * *Chande Forecast Oscillator*: **cfo**
 * *Center of Gravity*: **cg**
-* *Chande Momentum Oscillator*: **cmo**
+* *Chande Momentum Oscillator*: **cmo** (Chande's sums of up and down moves; TA-Lib's ``CMO``, used with ``talib=True``, smooths them with Wilder's method instead)
 * *Coppock Curve*: **coppock**
 * *Correlation Trend Indicator*: **cti** (wrapper for ``ta.linreg(series, r=True)``)
-* *Directional Movement*: **dm**
+* *Directional Movement*: **dm** (Wilder-smoothed +DM/−DM as ``PLUS_DM_<length>``/``MINUS_DM_<length>``; equals TA-Lib ``PLUS_DM``/``MINUS_DM``)
 * *Efficiency Ratio*: **er**
 * *Elder Ray Index*: **eri**
 * *Fisher Transform*: **fisher**
@@ -355,13 +355,13 @@ Trend (26)
 
 Trend identification and direction indicators:
 
-* *Average Directional Movement Index*: **adx** (Also includes **dmp** and **dmn**)
+* *Average Directional Movement Index*: **adx** (also returns +DI and −DI as ``DMP_<length>`` and ``DMN_<length>``)
 * *Average Directional Movement Index Rating*: **adxr**
 * *Archer Moving Averages Trends*: **amat**
 * *Aroon & Aroon Oscillator*: **aroon**
 * *Choppiness Index*: **chop**
-* *Chande Kroll Stop*: **cksp**
-* *Central Pivot Range*: **cpr** / **cpr_option** (4 pivot methods: standard, camarilla, fibonacci, woodie)
+* *Chande Kroll Stop*: **cksp** (default is TradingView's ``p=10, x=1, q=9`` with a Wilder ATR; ``tvmode=False`` gives the book's ``10, 3, 20`` with an SMA ATR)
+* *Central Pivot Range*: **cpr** (pivot methods ``classic``, ``camarilla``, ``fibonacci``, ``woodie``; ``timeframe`` ``daily`` uses the previous bar, ``intraday``/``weekly``/``monthly`` the last completed calendar day, week or month)
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
@@ -369,15 +369,15 @@ Trend identification and direction indicators:
 * *Exponential Decay*: **edecay** (multiplicative exponential decay; equivalent to tulipy ``edecay``)
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
-* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; pass ``talib=True`` for TA-Lib ``MINUS_DM``)
-* *Parabolic Stop and Reverse*: **psar** (pass ``talib=True`` for exact TA-Lib ``SAR`` output)
-* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; pass ``talib=True`` for TA-Lib ``PLUS_DM``)
+* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; equals TA-Lib ``MINUS_DM``, which ``talib=True`` calls directly)
+* *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR``, which ``talib=True`` calls directly)
+* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; equals TA-Lib ``PLUS_DM``, which ``talib=True`` calls directly)
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick**
-* *Parabolic SAR Extended*: **sarext**
+* *Parabolic SAR Extended*: **sarext** (positive while long, negative while short, as TA-Lib ``SAREXT``, which it equals for every parameter)
 * *Short Run*: **short_run**
 * *Trend Signals*: **tsignals**
-* *TTM Trend*: **ttm_trend**
+* *TTM Trend*: **ttm_trend** (+1 when the close is above the average HL2 of the previous ``length`` bars, −1 below; NaN until that average exists)
 * *Vertical Horizontal Filter*: **vhf**
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**

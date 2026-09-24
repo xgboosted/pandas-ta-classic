@@ -231,6 +231,8 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 4. Add entry to `docs/indicators.rst`
 5. Add a bullet under `### Added` in the `[Unreleased]` section of `CHANGELOG.md` describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed
+7. The registry-driven contracts cover it automatically and must pass: `test_lookahead.py` (causality), `test_short_input_contract.py`, `test_leading_nan_contract.py` (a leading NaN run changes nothing on the real bars) and `test_interior_nan_contract.py` (one missing bar recovers). A recursive indicator needs `@skip_leading_nan(<series params>, interior=True)` to satisfy the last two.
+8. If neither TA-Lib nor tulipy covers it, add a plain-loop port of the definition it cites to `tests/fixtures/reference_ports.py` and a comparison to `tests/test_reference_ports.py`; a snapshot of the package's own output proves nothing about correctness.
 
 ### TA-Lib / Numba Integration
 
@@ -380,7 +382,7 @@ python -m build
 ├── tests/                            # Test suite
 │   ├── config.py
 │   ├── assertions.py
-│   ├── fixtures/                     # expected_values.json, regression_snapshots.json
+│   ├── fixtures/                     # expected_values.json, regression_snapshots.json, tulipy_oracle.json, exact_reference.py, reference_ports.py
 │   └── test_*.py                     # Indicator, accessor, strategy, utils tests
 └── examples/                         # Jupyter notebooks & sample data
 ```

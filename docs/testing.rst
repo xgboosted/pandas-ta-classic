@@ -57,9 +57,18 @@ Oracle / Comparison Tests
 
 **Why:** Compare native (``talib=False``) implementations against
 TA-Lib (C library) and tulipy outputs to catch numerical divergence.
-Requires ``ta-lib`` and ``tulipy`` installed.
+``test_oracle_talib.py`` needs ``ta-lib`` installed and skips without it;
+``test_oracle_tulipy.py`` compares against tulipy values frozen in
+``tests/fixtures/tulipy_oracle.json``, so tulipy itself is not needed.
+No oracle test passes ``talib=True``: that would compare TA-Lib with itself.
 
-**Files:** ``test_oracle_talib.py``, ``test_oracle_tulipy.py``.
+For indicators neither library covers, ``test_reference_ports.py`` compares
+against independent ports of the cited definitions (see *Reference ports*
+below). ``test_adversarial_review_fixes.py`` pins the defects found by the
+2026-09 review, each against a loop reference, TA-Lib or a decision table.
+
+**Files:** ``test_oracle_talib.py``, ``test_oracle_tulipy.py``,
+``test_reference_ports.py``, ``test_adversarial_review_fixes.py``.
 
 **Run:** ``python -m pytest tests/test_oracle_talib.py -v``
 
@@ -100,6 +109,13 @@ Edge-Case Tests
   ±Inf injection at mid-series positions, and mismatched OHLCV lengths.
 - ``test_nan_behaviour.py`` — NaN prefix warmup periods, minimum length
   requirements, boundary conditions.
+- ``test_leading_nan_contract.py`` — for every registered indicator, a
+  leading NaN run (chained input) leaves the result on the real bars
+  unchanged.
+- ``test_interior_nan_contract.py`` — for every registered indicator, one
+  missing bar inside the series recovers, or differs persistently only for
+  cumulative indicators and whole-series fits (see "Missing Values" in the
+  indicator reference).
 
 **Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
 
@@ -204,6 +220,18 @@ boundary violations.
        assert str(length) in result.name
 
 
+JIT Parity Tests
+----------------
+
+**Why:** ``@njit`` kernels run compiled when numba is installed and as plain
+Python otherwise, so users with the ``performance`` extra run different code.
+``test_numba_parity.py`` compares every indicator and candle pattern between
+the two paths (1e-12 relative). It skips without numba; the CI job
+``testing-numba`` installs it.
+
+**Run:** ``python -m pytest tests/test_numba_parity.py -v``
+
+
 Utility Tests
 -------------
 
@@ -220,7 +248,7 @@ Running All Tests
 .. code-block:: bash
 
    # Full test suite (primary — matches CI)
-   python -m unittest discover tests/ -v
+   python -m pytest tests/ -v
 
    # Same, via make
    make test-all
@@ -229,8 +257,8 @@ Running All Tests
    # algorithm change — review the diff before committing)
    make fixtures
 
-   # pytest equivalent
-   python -m pytest tests/ -v
+   # Do not use `python -m unittest discover`: it skips the pytest-style
+   # tests (lookahead, NaN contracts, numba parity, reference ports).
 
    # With coverage
    python -m pytest --cov=pandas_ta_classic --cov-report=html tests/
