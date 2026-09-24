@@ -19,6 +19,8 @@ Covered:
   6. stdev forwards min_periods to variance.
   7. stochrsi(talib=True) only uses TA-Lib when it can express k and
      rsi_length, so it equals the native result.
+  8. cpr(interval=...) was accepted and never read; it is removed, and
+     passing it raises TypeError instead of being swallowed by **kwargs.
 """
 
 import warnings
@@ -227,3 +229,16 @@ def test_stochrsi_talib_path_matches_native(kwargs):
         both = np.isfinite(a) & np.isfinite(b)
         assert both.sum() > 5000
         np.testing.assert_allclose(a[both], b[both], rtol=0, atol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# 8. cpr interval removal
+# ---------------------------------------------------------------------------
+
+
+def test_cpr_interval_is_rejected():
+    d = _spy().iloc[-200:]
+    with pytest.raises(TypeError, match="interval"):
+        ta.cpr(d.open, d.high, d.low, d.close, timeframe="weekly", interval="1d")
+    with pytest.raises(TypeError, match="interval"):
+        d.copy().ta.cpr(timeframe="weekly", interval="1d")

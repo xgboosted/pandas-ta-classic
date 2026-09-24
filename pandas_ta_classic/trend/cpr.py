@@ -81,7 +81,6 @@ def cpr(
     volume: Series | None = None,
     method: str = "classic",
     timeframe: str = "daily",
-    interval: str | None = None,
     levels: str = "standard",
     width_analysis: bool = True,
     price_position: bool = True,
@@ -97,6 +96,10 @@ def cpr(
     width_analysis = _bool_param(width_analysis, True, "width_analysis")
     price_position = _bool_param(price_position, True, "price_position")
     virgin_cpr = _bool_param(virgin_cpr, False, "virgin_cpr")
+    if "interval" in kwargs:
+        # Removed without a deprecation step because it never had an effect
+        # (AGENTS.md rule 11). **kwargs would otherwise swallow it silently.
+        raise TypeError("cpr() no longer accepts 'interval': it never had an effect; remove the argument")
 
     length = 1  # For verify_series
     open_ = verify_series(open_, length)
@@ -116,7 +119,7 @@ def cpr(
         ohlcv_df["volume"] = volume
 
     # Get previous period OHLCV
-    prev_df = get_previous_period_ohlcv(ohlcv_df, timeframe, interval)
+    prev_df = get_previous_period_ohlcv(ohlcv_df, timeframe)
     prev_open = prev_df["prev_open"]
     prev_high = prev_df["prev_high"]
     prev_low = prev_df["prev_low"]
@@ -335,7 +338,7 @@ Examples:
     df.ta.cpr(method='camarilla', levels='all', virgin_cpr=True, append=True)
 
     # Intraday CPR
-    df.ta.cpr(method='classic', timeframe='intraday', interval='5min', append=True)
+    df.ta.cpr(method='classic', timeframe='intraday', append=True)
 
     # Direct function call
     result = ta.cpr(df['open'], df['high'], df['low'], df['close'],
@@ -403,8 +406,6 @@ Args:
         Options: 'classic', 'camarilla', 'fibonacci', 'woodie'. Default: 'classic'
     timeframe (str): Time context for CPR calculation.
         Options: 'intraday', 'daily', 'weekly', 'monthly'. Default: 'daily'
-    interval (str, optional): For intraday only - data interval.
-        Examples: '1min', '5min', '15min', '30min', '1H'. Default: None
     levels (str): Which pivot levels to calculate.
         Options: 'basic' (TC/P/BC), 'standard' (+R1/R2/S1/S2),
                  'extended' (+R3/R4/S3/S4), 'all'. Default: 'standard'
@@ -413,6 +414,9 @@ Args:
     virgin_cpr (bool): Detect virgin (untested) CPR levels. Default: False.
         Not causal -- see the warning below. Forced to False by lookahead=False.
     offset (int): How many periods to offset the result. Default: 0
+
+    Note: ``interval`` was removed; it never had an effect, and passing it
+    raises TypeError.
 
 Kwargs:
     width_narrow (float): Threshold for narrow CPR classification (%). Default: 0.5

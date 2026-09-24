@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -68,6 +68,7 @@ def _rsx_loop(c_arr, length, m):
 
 
 @nan_on_short_input
+@skip_leading_nan("close")
 def rsx(
     close: Series,
     length: int | None = None,

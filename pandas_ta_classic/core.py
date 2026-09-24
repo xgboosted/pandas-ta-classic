@@ -384,7 +384,10 @@ class AnalysisIndicators(PandasObject):
         Returns:
             AnalysisIndicators: self (the accessor) with chain mode active.
         """
-        self._df.attrs["_ta_chain"] = True
+        # pandas copies attrs into df.copy() and slices; storing this frame's
+        # id keeps chain mode on the frame that asked for it.
+        # ponytail: id() can be reused after the chained frame is freed; key by a weakref if that ever matters (attrs must stay picklable for strategy()).
+        self._df.attrs["_ta_chain"] = id(self._df)
         self._df.attrs["_ta_chain_append"] = append
         return self
 
@@ -537,7 +540,7 @@ class AnalysisIndicators(PandasObject):
         * In chain mode, auto-appends and returns the DataFrame for fluent chaining.
         """
         verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
-        chain_mode = self._df.attrs.get("_ta_chain", False)
+        chain_mode = self._df.attrs.get("_ta_chain") == id(self._df)
 
         if not isinstance(result, (pd.Series, pd.DataFrame)):
             if verbose:

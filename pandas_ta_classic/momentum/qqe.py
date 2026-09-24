@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 from .rsi import rsi
@@ -66,6 +66,7 @@ def _qqe_loop(rsi_arr, ub_arr, lb_arr, m):
 
 
 @nan_on_short_input
+@skip_leading_nan("close")
 def qqe(
     close: Series,
     length: int | None = None,

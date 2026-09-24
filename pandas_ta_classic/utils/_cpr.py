@@ -23,7 +23,7 @@ def _prev_period_ohlcv(result: DataFrame, df: DataFrame, freq: str) -> None:
         result[f"prev_{col}"] = prev[col].reindex(key).to_numpy()
 
 
-def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval: str | None = None) -> DataFrame:
+def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily") -> DataFrame:
     """Get previous period OHLCV data
 
     For daily: the previous bar.
@@ -33,7 +33,6 @@ def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval:
     Args:
         df: DataFrame with OHLCV data and datetime index
         timeframe: 'intraday', 'daily', 'weekly', 'monthly'
-        interval: For intraday - the data interval ('1min', '5min', etc.)
 
     Returns:
         DataFrame with columns: prev_open, prev_high, prev_low, prev_close, prev_volume

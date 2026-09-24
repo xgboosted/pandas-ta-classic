@@ -519,7 +519,6 @@ class AnalysisIndicators:
         self,
         method: str = 'classic',
         timeframe: str = 'daily',
-        interval: str | None = None,
         levels: str = 'standard',
         width_analysis: bool = True,
         price_position: bool = True,

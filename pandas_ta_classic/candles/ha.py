@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -21,6 +21,7 @@ def _ha_open(first: float, ha_close: np.ndarray) -> np.ndarray:
 
 
 @nan_on_short_input
+@skip_leading_nan("open_", "high", "low", "close")
 def ha(
     open_: Series,
     high: Series,
