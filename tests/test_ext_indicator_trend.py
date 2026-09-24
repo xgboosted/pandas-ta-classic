@@ -96,7 +96,9 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "SINC_3")
 
     def test_long_run_ext(self):
-        self.assertIsInstance(self.data.ta.long_run(append=True), DataFrame)
+        # Without fast/slow Series the indicator cannot compute: returns None,
+        # not the caller's whole DataFrame.
+        self.assertIsNone(self.data.ta.long_run(append=True))
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)
@@ -118,7 +120,8 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "QS_10")
 
     def test_short_run_ext(self):
-        self.assertIsInstance(self.data.ta.short_run(append=True), DataFrame)
+        # Without fast/slow Series the indicator cannot compute: returns None.
+        self.assertIsNone(self.data.ta.short_run(append=True))
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)

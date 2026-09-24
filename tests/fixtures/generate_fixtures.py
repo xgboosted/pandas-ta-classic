@@ -351,9 +351,10 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         return _out
 
     # ---- Overlap --------------------------------------------------------
-    # TRIMA_10: SMA(SMA(close, half), half)  half = round(0.5*(10+1)) = 6
-    _trima10_half = round(0.5 * (10 + 1))  # 6
-    _trima10_ref = talib.SMA(talib.SMA(cv, _trima10_half), _trima10_half)
+    # TRIMA_10: independent reference from TA-Lib's own TRIMA.  The previous
+    # SMA(SMA(close, half), half) copied the native window structure, so it
+    # circularly verified the buggy formula against itself.
+    _trima10_ref = talib.TRIMA(cv, 10)
 
     # SWMA_10: symmetric-triangle weights
     from pandas_ta_classic.utils import symmetric_triangle as _sym_tri

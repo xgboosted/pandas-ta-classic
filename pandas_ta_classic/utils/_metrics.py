@@ -207,7 +207,10 @@ def pure_profit_score(close: Series) -> float:
     close = verify_series(close)
     if close is None:
         return np.nan
-    close_index = Series(0, index=close.reset_index().index)
+    # A linear time index 0, 1, 2, ... — the x-axis of the trend line.  The
+    # previous ``Series(0, ...)`` was a constant series of zeros, so the
+    # correlation was always NaN and the function always returned 0.
+    close_index = Series(np.arange(close.size), index=close.index)
 
     r = linear_regression(close_index, close)["r"]
     if not np.isnan(r):

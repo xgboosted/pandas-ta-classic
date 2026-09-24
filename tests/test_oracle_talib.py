@@ -123,7 +123,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_trima(self):
         self._compare(
-            ta.trima(self.close, length=20, talib=True),
+            ta.trima(self.close, length=20, talib=False),
             _tl.TRIMA(self.close, timeperiod=20),
             name="TRIMA",
         )
@@ -189,23 +189,26 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         )
 
     def test_cmo(self):
-        self._compare(
-            ta.cmo(self.close, length=14, talib=True),
-            _tl.CMO(self.close, timeperiod=14),
-            name="CMO",
-        )
+        # Native CMO follows Chande's sum formula; TA-Lib CMO uses Wilder
+        # smoothing, so the two intentionally differ (see CHANGELOG).  Verify the
+        # native path against the Chande definition directly instead of TA-Lib.
+        mom = self.close.diff(1)
+        pos = mom.clip(lower=0).rolling(14).sum()
+        neg = mom.clip(upper=0).abs().rolling(14).sum()
+        expected = 100 * (pos - neg) / (pos + neg)
+        self._compare(ta.cmo(self.close, length=14, talib=False), expected, name="CMO_native")
 
     def test_apo(self):
-        # talib=True calls TA-Lib APO directly with mamode='ema' (matype=1)
+        # native APO with mamode='ema' matches TA-Lib APO with matype=1 (EMA)
         self._compare(
-            ta.apo(self.close, fast=12, slow=26, mamode="ema", talib=True),
+            ta.apo(self.close, fast=12, slow=26, mamode="ema", talib=False),
             _tl.APO(self.close, fastperiod=12, slowperiod=26, matype=1),
             name="APO",
         )
 
     def test_ppo(self):
-        # talib=True calls TA-Lib PPO directly with mamode='ema' (matype=1)
-        pt_df = ta.ppo(self.close, fast=12, slow=26, mamode="ema", talib=True)
+        # native PPO with mamode='ema' matches TA-Lib PPO with matype=1 (EMA)
+        pt_df = ta.ppo(self.close, fast=12, slow=26, mamode="ema", talib=False)
         pt = pt_df[next(c for c in pt_df.columns if c.startswith("PPO_"))]
         self._compare(
             pt,
@@ -315,12 +318,14 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         self._compare(pt.iloc[:, 1], oracle_d, name="STOCHF_d")
 
     def test_stochrsi_k(self):
-        pt = ta.stochrsi(self.close, length=14, talib=True)
+        # Native STOCHRSI matches TA-Lib only when k=1 (no %K smoothing), since
+        # TA-Lib folds the range and %K smoothing into a single fastk_period.
+        pt = ta.stochrsi(self.close, length=14, rsi_length=14, k=1, d=3, talib=False)
         oracle_k, _ = _tl.STOCHRSI(self.close, timeperiod=14, fastk_period=14, fastd_period=3)
         self._compare(pt.iloc[:, 0], oracle_k, name="STOCHRSI_k")
 
     def test_stochrsi_d(self):
-        pt = ta.stochrsi(self.close, length=14, talib=True)
+        pt = ta.stochrsi(self.close, length=14, rsi_length=14, k=1, d=3, talib=False)
         _, oracle_d = _tl.STOCHRSI(self.close, timeperiod=14, fastk_period=14, fastd_period=3)
         self._compare(pt.iloc[:, 1], oracle_d, name="STOCHRSI_d")
 
@@ -355,9 +360,9 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         )
 
     def test_dm_plus(self):
-        # ta.dm with talib=True calls PLUS_DM; compare against TA-Lib PLUS_DM
-        pt_df = ta.dm(self.high, self.low, length=14, talib=True)
-        dmp_col = next(c for c in pt_df.columns if c.startswith("DMP_"))
+        # ta.dm native (talib=False) uses Wilder smoothing; compare +DM vs TA-Lib PLUS_DM
+        pt_df = ta.dm(self.high, self.low, length=14, talib=False)
+        dmp_col = next(c for c in pt_df.columns if c.startswith("PLUS_DM_"))
         self._compare(
             pt_df[dmp_col],
             _tl.PLUS_DM(self.high, self.low, timeperiod=14),
@@ -365,9 +370,9 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         )
 
     def test_dm_minus(self):
-        # ta.dm with talib=True calls MINUS_DM; compare against TA-Lib MINUS_DM
-        pt_df = ta.dm(self.high, self.low, length=14, talib=True)
-        dmn_col = next(c for c in pt_df.columns if c.startswith("DMN_"))
+        # ta.dm native (talib=False) uses Wilder smoothing; compare -DM vs TA-Lib MINUS_DM
+        pt_df = ta.dm(self.high, self.low, length=14, talib=False)
+        dmn_col = next(c for c in pt_df.columns if c.startswith("MINUS_DM_"))
         self._compare(
             pt_df[dmn_col],
             _tl.MINUS_DM(self.high, self.low, timeperiod=14),
@@ -499,7 +504,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_psar(self):
         """PSARl (long stop) combined with PSARs (short stop) matches TA-Lib SAR."""
-        pt_df = ta.psar(self.high, self.low, self.close, talib=True)
+        pt_df = ta.psar(self.high, self.low, self.close, talib=False)
         pt_long = pt_df.filter(regex=r"^PSARl").iloc[:, 0]
         pt_short = pt_df.filter(regex=r"^PSARs").iloc[:, 0]
         pt = pt_long.combine_first(pt_short)
@@ -507,16 +512,12 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
         self._compare(pt, oracle, name="PSAR")
 
     def test_sarext(self):
-        """
-        SAREXT: The pandas-ta-classic native implementation uses a simplified
-        state machine that diverges from TA-Lib's C implementation.
-        This test documents that the talib=True path calls TA-Lib directly
-        (exact match) while the native path does not.
-        """
-        oracle = _tl.SAREXT(self.high, self.low)
-        # Verify oracle produces a valid array; actual divergence is documented above.
-        self.assertIsNotNone(oracle)
-        self.assertGreater(np.count_nonzero(~np.isnan(oracle)), 0)
+        """Native SAREXT (talib=False) must match TA-Lib SAREXT exactly."""
+        self._compare(
+            ta.sarext(self.high, self.low, talib=False),
+            _tl.SAREXT(self.high, self.low),
+            name="SAREXT",
+        )
 
     # ------------------------------------------------------------------
     # New indicators (added with TA-Lib / tulipy wrapper layer)
@@ -562,14 +563,14 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_plus_dm(self):
         self._compare(
-            ta.plus_dm(self.high, self.low, length=14, talib=True),
+            ta.plus_dm(self.high, self.low, length=14, talib=False),
             _tl.PLUS_DM(self.high, self.low, timeperiod=14),
             name="PLUS_DM",
         )
 
     def test_minus_dm(self):
         self._compare(
-            ta.minus_dm(self.high, self.low, length=14, talib=True),
+            ta.minus_dm(self.high, self.low, length=14, talib=False),
             _tl.MINUS_DM(self.high, self.low, timeperiod=14),
             name="MINUS_DM",
         )

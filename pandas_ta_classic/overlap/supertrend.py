@@ -16,23 +16,42 @@ def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
     trend = np.zeros(m)
     long = np.full(m, np.nan)
     short = np.full(m, np.nan)
+    # Ratchet BOTH bands independently on every bar with the "or" rule from the
+    # cited source and TradingView.  The previous loop ratcheted only the active
+    # band, so the stop level (SUPERT) sat on the wrong side of price near flips.
+    final_ub = np.full(m, np.nan)
+    final_lb = np.full(m, np.nan)
     for i in range(1, m):
-        if c_arr[i] > ub_arr[i - 1]:
+        if np.isnan(final_ub[i - 1]) or np.isnan(final_lb[i - 1]):
+            # Warm-up: the previous final band is not established yet (the ATR
+            # is still NaN).  Seed from the raw band so NaN does not propagate
+            # through the whole series.
+            final_ub[i] = ub_arr[i]
+            final_lb[i] = lb_arr[i]
             dir_[i] = 1.0
-        elif c_arr[i] < lb_arr[i - 1]:
-            dir_[i] = -1.0
         else:
-            dir_[i] = dir_[i - 1]
-            if dir_[i] > 0 and lb_arr[i] < lb_arr[i - 1]:
-                lb_arr[i] = lb_arr[i - 1]
-            if dir_[i] < 0 and ub_arr[i] > ub_arr[i - 1]:
-                ub_arr[i] = ub_arr[i - 1]
+            if ub_arr[i] < final_ub[i - 1] or c_arr[i - 1] > final_ub[i - 1]:
+                final_ub[i] = ub_arr[i]
+            else:
+                final_ub[i] = final_ub[i - 1]
+            if lb_arr[i] > final_lb[i - 1] or c_arr[i - 1] < final_lb[i - 1]:
+                final_lb[i] = lb_arr[i]
+            else:
+                final_lb[i] = final_lb[i - 1]
+
+            if c_arr[i] > final_ub[i - 1]:
+                dir_[i] = 1.0
+            elif c_arr[i] < final_lb[i - 1]:
+                dir_[i] = -1.0
+            else:
+                dir_[i] = dir_[i - 1]
+
         if dir_[i] > 0:
-            trend[i] = lb_arr[i]
-            long[i] = lb_arr[i]
+            trend[i] = final_lb[i]
+            long[i] = final_lb[i]
         else:
-            trend[i] = ub_arr[i]
-            short[i] = ub_arr[i]
+            trend[i] = final_ub[i]
+            short[i] = final_ub[i]
     return dir_, trend, long, short
 
 
@@ -117,15 +136,15 @@ Calculation:
     LOWERBAND = HL2 - MID
     UPPERBAND = HL2 + MID
 
-    if UPPERBAND[i] < FINAL_UPPERBAND[i-1] and close[i-1] > FINAL_UPPERBAND[i-1]:
+    if UPPERBAND[i] < FINAL_UPPERBAND[i-1] or close[i-1] > FINAL_UPPERBAND[i-1]:
         FINAL_UPPERBAND[i] = UPPERBAND[i]
     else:
-        FINAL_UPPERBAND[i] = FINAL_UPPERBAND[i-1])
+        FINAL_UPPERBAND[i] = FINAL_UPPERBAND[i-1]
 
-    if LOWERBAND[i] > FINAL_LOWERBAND[i-1] and close[i-1] < FINAL_LOWERBAND[i-1]:
+    if LOWERBAND[i] > FINAL_LOWERBAND[i-1] or close[i-1] < FINAL_LOWERBAND[i-1]:
         FINAL_LOWERBAND[i] = LOWERBAND[i]
     else:
-        FINAL_LOWERBAND[i] = FINAL_LOWERBAND[i-1])
+        FINAL_LOWERBAND[i] = FINAL_LOWERBAND[i-1]
 
     if close[i] <= FINAL_UPPERBAND[i]:
         SUPERTREND[i] = FINAL_UPPERBAND[i]

@@ -4,32 +4,31 @@ import numpy as np
 from pandas import DataFrame, Series
 
 
-def _assign_prev_ohlcv(result: DataFrame, df: DataFrame, prev: DataFrame) -> None:
-    """Reindex *prev* onto *result* index (ffill) and assign prev_* columns in-place."""
-    for col in ("open", "high", "low", "close"):
-        result[f"prev_{col}"] = prev[col].reindex(result.index, method="ffill")
-    if "volume" in df.columns:
-        result["prev_volume"] = prev["volume"].reindex(result.index, method="ffill")
+def _prev_period_ohlcv(result: DataFrame, df: DataFrame, freq: str) -> None:
+    """Assign prev_* columns from the last completed calendar period before each bar's own.
 
-
-def _resample_ohlcv(df: DataFrame, rule: str) -> DataFrame:
-    """Resample OHLCV *df* to *rule* frequency."""
-    agg = {
-        "open": "first",
-        "high": "max",
-        "low": "min",
-        "close": "last",
-    }
+    Bars are grouped by the calendar period they fall in (``to_period``), each
+    observed period is aggregated, and every bar reads the aggregate of the
+    observed period before its own. A bar never sees its own period, so the
+    levels are causal whatever the bar frequency, and a period with no bars
+    (a weekend, a holiday week) is skipped rather than read as NaN.
+    """
+    wall_clock = df.index.tz_localize(None) if df.index.tz is not None else df.index  # periods follow local dates
+    key = wall_clock.to_period(freq)
+    agg = {"open": "first", "high": "max", "low": "min", "close": "last"}
     if "volume" in df.columns:
         agg["volume"] = "sum"
-    return df.resample(rule).agg(agg)
+    prev = df.groupby(key).agg(agg).shift(1)
+    for col in agg:
+        result[f"prev_{col}"] = prev[col].reindex(key).to_numpy()
 
 
 def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval: str | None = None) -> DataFrame:
-    """Get previous period OHLCV data using resample + shift
+    """Get previous period OHLCV data
 
-    For intraday: Resamples to daily, shifts by 1 day, forward fills
-    For daily/weekly/monthly: Simple shift or resample as appropriate
+    For daily: the previous bar.
+    For intraday/weekly/monthly: the last completed calendar day, week
+    (Monday to Sunday) or month before the bar's own.
 
     Args:
         df: DataFrame with OHLCV data and datetime index
@@ -41,25 +40,18 @@ def get_previous_period_ohlcv(df: DataFrame, timeframe: str = "daily", interval:
     """
     result = df.copy()
 
-    if timeframe == "intraday":
-        prev_daily = _resample_ohlcv(df, "D").shift(1)
-        _assign_prev_ohlcv(result, df, prev_daily)
-
-    elif timeframe == "daily":
+    if timeframe == "daily":
         result["prev_open"] = df["open"].shift(1)
         result["prev_high"] = df["high"].shift(1)
         result["prev_low"] = df["low"].shift(1)
         result["prev_close"] = df["close"].shift(1)
         if "volume" in df.columns:
             result["prev_volume"] = df["volume"].shift(1)
-
-    elif timeframe == "weekly":
-        prev_weekly = _resample_ohlcv(df, "W").shift(1)
-        _assign_prev_ohlcv(result, df, prev_weekly)
-
-    elif timeframe == "monthly":
-        prev_monthly = _resample_ohlcv(df, "M").shift(1)
-        _assign_prev_ohlcv(result, df, prev_monthly)
+    else:
+        # resample() labels weekly and monthly bins at the period end, so a bar
+        # on that label date read its own period (look-ahead), and shifting the
+        # bins to avoid that lagged every other bar by two periods.
+        _prev_period_ohlcv(result, df, {"intraday": "D", "weekly": "W", "monthly": "M"}[timeframe])
 
     return result
 
