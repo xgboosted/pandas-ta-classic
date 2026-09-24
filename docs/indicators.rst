@@ -236,7 +236,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *KST Oscillator*: **kst**
 * *Linear Regression RSI*: **lrsi**
 * *Moving Average Convergence Divergence*: **macd**
-* *MACD Extended*: **macdext** (MACD with controllable MA type per line; MA types: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+* *MACD Extended*: **macdext** (MACD with controllable MA type per line; MA types: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3; 6 and 7 need TA-Lib, ``talib=True``)
 * *MACD Fixed*: **macdfix** (MACD with fixed 12/26 periods; only signal period is configurable; uses TA-Lib ``MACDFIX`` when available)
 * *Momentum*: **mom**
 * *Pretty Good Oscillator*: **pgo**
@@ -294,7 +294,7 @@ Moving averages and trend-following indicators:
 * *Linear Regression Slope*: **linregslope** (slope of the linear regression line)
 * *Moving Average*: **ma** (Generic moving average selector)
 * *MESA Adaptive Moving Average*: **mama** (returns MAMA + FAMA)
-* *Moving Average with Variable Period*: **mavp** (``periods``, a per-bar window schedule, is a required input)
+* *Moving Average with Variable Period*: **mavp** (``periods``, a per-bar window schedule, is a required input; ``mamode`` other than 0 (SMA) needs TA-Lib, ``talib=True``)
 * *Madrid Moving Average Ribbon*: **mmar**
 * *Median Price (H+L)/2*: **medprice** (arithmetic mean of high and low; equivalent to TA-Lib ``MEDPRICE`` and tulipy ``medprice``)
 * *McGinley Dynamic*: **mcgd**
@@ -315,7 +315,7 @@ Moving averages and trend-following indicators:
 * *Triangular Moving Average*: **trima**
 * *Typical Price (H+L+C)/3*: **typprice** (arithmetic mean of high, low, close; equivalent to TA-Lib ``TYPPRICE`` and tulipy ``typprice``)
 * *Variable Index Dynamic Average*: **vidya**
-* *Volume Weighted Average Price*: **vwap** (**Requires** the DataFrame index to be a DatetimeIndex). The anchor follows the calendar of the index's time zone: convert a UTC index to the exchange's time zone for a session that crosses midnight in UTC, and shift a session that opens before local midnight (CME's 18:00 New York open) so it starts at 00:00; ``help(ta.vwap)`` shows both.
+* *Volume Weighted Average Price*: **vwap** (**Requires** a DatetimeIndex in ascending order; an unsorted index raises ``ValueError``). The anchor follows the calendar of the index's time zone: convert a UTC index to the exchange's time zone for a session that crosses midnight in UTC, and shift a session that opens before local midnight (CME's 18:00 New York open) so it starts at 00:00; ``help(ta.vwap)`` shows both.
 * *Volume Weighted Moving Average*: **vwma**
 * *Weighted Closing Price*: **wcp**
 * *Weighted Moving Average*: **wma**

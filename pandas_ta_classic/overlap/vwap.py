@@ -1,5 +1,4 @@
 # Volume Weighted Average Price (VWAP)
-import logging
 from typing import Any
 
 from pandas import DatetimeIndex, Series
@@ -8,14 +7,11 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    is_datetime_ordered,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _str_param, nan_on_short_input
 
 from .hlc3 import hlc3
-
-logger = logging.getLogger(__name__)
 
 
 @nan_on_short_input
@@ -45,10 +41,11 @@ def vwap(
         raise TypeError(f"vwap() needs a DatetimeIndex to anchor by {anchor!r}, got {type(close.index).__name__}")
 
     typical_price = hlc3(high=high, low=low, close=close)
-    if not is_datetime_ordered(volume):
-        logger.warning("VWAP volume series is not datetime ordered. Results may not be as expected.")
-    if not is_datetime_ordered(typical_price):
-        logger.warning("VWAP price series is not datetime ordered. Results may not be as expected.")
+    # Cumulative sums per anchor period assume time order; an unordered index
+    # used to produce wrong values with only a warning.
+    for label, series in (("high/low/close", typical_price), ("volume", volume)):
+        if not series.index.is_monotonic_increasing:
+            raise ValueError(f"vwap() {label} index must be in ascending time order; sort it first (df.sort_index())")
 
     # Calculate Result
     wp = typical_price * volume

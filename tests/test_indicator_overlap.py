@@ -377,12 +377,10 @@ class TestOverlap(TestCase):
         with self.assertRaises(ValueError):
             self.data.ta.mavp()
 
-    def test_mavp_unsupported_mamode_warns(self):
-        import pytest
-
-        with pytest.warns(UserWarning, match="Results will use SMA"):
-            result = pandas_ta.mavp(self.close, periods=self._mavp_periods(), mamode=1, talib=False)
-        self.assertIsInstance(result, Series)
+    def test_mavp_unsupported_mamode_raises(self):
+        # the native path computes only an SMA; it used to do so for any mamode
+        with self.assertRaisesRegex(ValueError, r"mavp\(\) mamode=1 needs TA-Lib"):
+            pandas_ta.mavp(self.close, periods=self._mavp_periods(), mamode=1, talib=False)
 
     def test_mcgd(self):
         assert_indicator_standard(

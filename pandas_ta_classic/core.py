@@ -1,3 +1,4 @@
+import inspect
 import logging
 from collections.abc import Hashable
 from copy import copy
@@ -12,10 +13,16 @@ import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
 
-from pandas_ta_classic._indicator_loader import _COLUMN_KWARG_KEYS, _DEFAULT_COLUMN_NAMES, _find_indicator_func, _make_ta_wrapper
+from pandas_ta_classic._indicator_loader import (
+    _COLUMN_KWARG_KEYS,
+    _COLUMN_PARAM_TO_COL_KEY,
+    _DEFAULT_COLUMN_NAMES,
+    _find_indicator_func,
+    _make_ta_wrapper,
+)
 from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
 from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
-from pandas_ta_classic.utils._core import _bool_param
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
 logger = logging.getLogger(__name__)
@@ -96,12 +103,11 @@ CommonStrategy = Strategy(
 def _append_dataframe(df, result, kwargs):
     """Append a DataFrame *result* to *df*, honouring optional col_names in *kwargs*."""
     if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
-        if len(kwargs["col_names"]) >= len(result.columns):
-            for col, ind_name in zip(result.columns, kwargs["col_names"]):
-                df[ind_name] = result.loc[:, col]
-        else:
-            logger.error(f"Not enough col_names were specified: got {len(kwargs['col_names'])}, expected {len(result.columns)}.")
-            return
+        if len(kwargs["col_names"]) != len(result.columns):
+            # too few used to be logged and nothing appended; extras were ignored
+            raise ValueError(f"col_names has {len(kwargs['col_names'])} name(s) for {len(result.columns)} column(s): {list(result.columns)}")
+        for col, ind_name in zip(result.columns, kwargs["col_names"]):
+            df[ind_name] = result.loc[:, col]
     else:
         for i, column in enumerate(result.columns):
             df[column] = result.iloc[:, i]
@@ -235,6 +241,7 @@ class AnalysisIndicators(PandasObject):
         **kwargs,
     ):
         show_version = _bool_param(show_version, False, "show_version")
+        timed = _bool_param(timed, False, "timed")
         version = kwargs.pop("version", None)
         if version is not None:
             warn(
@@ -246,33 +253,32 @@ class AnalysisIndicators(PandasObject):
             show_version = show_version or version_val
         if show_version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
-        if isinstance(kind, str):
-            kind = kind.lower()
-            fn = getattr(self, kind, None)
-            if fn is None:
-                logger.error("Indicator '%s' not found.", kind)
-                self.help()
-                return None
-            if not callable(fn):
-                logger.error("'%s' is not a callable indicator.", kind)
-                return None
+        if kind is None:
+            # "General Help": list the indicators (this called a missing help() method)
+            return self.indicators()
+        if not isinstance(kind, str):
+            raise TypeError(f"df.ta() kind must be an indicator name, got {kind!r}")
+        kind = kind.lower()
+        fn = getattr(self, kind, None)
+        if fn is None or not callable(fn):
+            # an unknown name used to log an error and return None
+            raise ValueError(f"df.ta() kind={kind!r} is not an indicator; see df.ta.indicators()")
 
-            if timed:
-                stime = perf_counter()
+        if timed:
+            stime = perf_counter()
 
-            # Run the indicator
-            result = fn(**kwargs)
-            self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)  # Save when it completed it's run
+        # Run the indicator
+        result = fn(**kwargs)
+        self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)  # Save when it completed it's run
 
-            if timed:
-                if result is not None:
-                    result.timed = final_time(stime)
-                    logger.info("%s: %s", kind, result.timed)
-                else:
-                    logger.warning("%s: returned None, timed run produced no result", kind)
+        if timed:
+            if result is not None:
+                result.timed = final_time(stime)
+                logger.info("%s: %s", kind, result.timed)
+            else:
+                logger.warning("%s: returned None, timed run produced no result", kind)
 
-            return result
-        self.help()
+        return result
 
     # Public Get/Set DataFrame Properties
     @property
@@ -359,8 +365,13 @@ class AnalysisIndicators(PandasObject):
 
     @property
     def to_utc(self) -> None:
-        """Sets the DataFrame index to UTC format"""
-        self._df = to_utc(self._df)
+        """Sets the DataFrame's index to UTC (localises a naive index, converts an aware one).
+
+        This changes ``df`` itself, as documented. It had stopped doing so when
+        ``ta.to_utc()`` began returning a copy: it rebound the accessor's own
+        reference instead, which pandas 3 discards immediately.
+        """
+        self._df.index = to_utc(self._df).index
 
     @property
     def version(self) -> str:
@@ -422,7 +433,7 @@ class AnalysisIndicators(PandasObject):
 
     def _append(self, result=None, **kwargs) -> None:
         """Appends a Pandas Series or DataFrame columns to self._df."""
-        if not kwargs.get("append"):
+        if not _bool_param(kwargs.get("append"), False, "append"):
             return
         df = self._df
         if df is None or result is None:
@@ -433,7 +444,9 @@ class AnalysisIndicators(PandasObject):
         if isinstance(result, pd.DataFrame):
             _append_dataframe(df, result, kwargs)
         else:
-            ind_name = kwargs["col_names"][0] if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple) else result.name
+            if "col_names" in kwargs and len(kwargs["col_names"]) != 1:
+                raise ValueError(f"col_names has {len(kwargs['col_names'])} names for one column ({result.name})")
+            ind_name = kwargs["col_names"][0] if "col_names" in kwargs else result.name
             df[ind_name] = result
 
     def _default_column(self, name: str) -> str:
@@ -460,9 +473,10 @@ class AnalysisIndicators(PandasObject):
         # Explicitly passing a pd.Series to override default.
         if isinstance(series, pd.Series):
             return series
-        # Apply default if no series nor a default.
+        # None means "not provided" (an optional input). It used to return the
+        # adjusted column, so open=None could read adjusted close as open.
         if series is None:
-            return df[self.adjusted] if self.adjusted is not None else None
+            return None
         # Ok.  So it's a str.
         if isinstance(series, str):
             # Return the df column since it's in there.
@@ -476,8 +490,7 @@ class AnalysisIndicators(PandasObject):
             if matches:
                 return df[matches[0]]
             cols = ", ".join(str(c) for c in df.columns)
-            logger.warning(f"[X] Column '{series}' not found. Available columns: {cols}")
-            return None
+            raise KeyError(f"Column {series!r} not found. Available columns: {cols}")
         # Anything else (a numpy array, a list, a DataFrame) is passed through
         # unchanged so verify_series() can warn about it; returning None here
         # made df.ta.sma(close=df.close.values) a silent no-op.
@@ -590,7 +603,34 @@ class AnalysisIndicators(PandasObject):
                 name, mode["category"] = strategy_.name, True
             else:
                 name, mode["custom"] = strategy_.name, True
+        if not any(mode.values()):
+            # an unknown name used to log an error and return None
+            raise ValueError(f"strategy() needs 'all', a category ({', '.join(self.categories)}) or a Strategy, got {arg!r}")
         return name, mode
+
+    def _validate_exclude(self, exclude, caller: str) -> list:
+        """Return *exclude* as a list of known indicator names; raise for anything else."""
+        if not isinstance(exclude, (list, tuple, set)) or not all(isinstance(x, str) for x in exclude):
+            raise TypeError(f"{caller}() exclude must be a list of indicator names, got {exclude!r}")
+        unknown = sorted(set(exclude) - {i for names in Category.values() for i in names})
+        if unknown:
+            raise ValueError(f"{caller}() exclude has unknown indicator name(s): {unknown}")
+        return list(exclude)
+
+    def _missing_required_column(self, name: str, kwargs: dict) -> bool:
+        """True when indicator *name* needs a column (no default) that the DataFrame does not have."""
+        func = _find_indicator_func(name)
+        if func is None:
+            raise ValueError(f"unknown indicator {name!r}")
+        sig = inspect.signature(func)
+        for param, spec in sig.parameters.items():
+            col_key = _COLUMN_PARAM_TO_COL_KEY.get(param)
+            if col_key is None or spec.default is not inspect.Parameter.empty:
+                continue
+            column = kwargs.get(col_key, self._default_column(col_key))
+            if isinstance(column, str) and self._matching_column(column) is None:
+                return True
+        return False
 
     # Public DataFrame Methods
     def indicators(self, **kwargs):
@@ -605,7 +645,7 @@ class AnalysisIndicators(PandasObject):
         Returns:
             Prints the list of indicators. If as_list=True, then a list.
         """
-        as_list = kwargs.setdefault("as_list", False)
+        as_list = _bool_param(kwargs.get("as_list"), False, "as_list")
         # Public non-indicator methods
         helper_methods = [
             "chain",
@@ -639,9 +679,8 @@ class AnalysisIndicators(PandasObject):
         removed = helper_methods + ta_properties
 
         # Add user excluded methods to be removed
-        user_excluded = kwargs.setdefault("exclude", [])
-        if isinstance(user_excluded, list) and len(user_excluded) > 0:
-            removed += user_excluded
+        # a tuple or a misspelled name used to be ignored silently
+        removed += self._validate_exclude(kwargs.get("exclude", []), "indicators")
 
         # Remove the unwanted indicators (only if present)
         for x in removed:
@@ -691,18 +730,11 @@ class AnalysisIndicators(PandasObject):
         # Ensure indicators are appended to the DataFrame
         kwargs["append"] = True
         all_ordered = _bool_param(kwargs.pop("ordered", None), True, "ordered")
-        mp_chunksize = kwargs.pop("chunksize", self.cores)
+        mp_chunksize = _pos_int(kwargs.pop("chunksize", None), max(self.cores, 1), "chunksize")
 
         # Initialize
         initial_column_count = len(self._df.columns)
         excluded = [
-            "above",
-            "above_value",
-            "below",
-            "below_value",
-            "cross",
-            "cross_value",
-            # "data", # reserved
             "long_run",
             "mavp",  # Requires a per-bar 'periods' Series
             "short_run",
@@ -718,7 +750,7 @@ class AnalysisIndicators(PandasObject):
         # If All or a Category, exclude user list if any
         if not isinstance(self._df.index, pd.DatetimeIndex):
             excluded.append("vwap")  # anchors by calendar period; raises without a DatetimeIndex
-        user_excluded = kwargs.pop("exclude", [])
+        user_excluded = self._validate_exclude(kwargs.pop("exclude", []), "strategy")
         if mode["all"] or mode["category"]:
             excluded += user_excluded
 
@@ -731,11 +763,15 @@ class AnalysisIndicators(PandasObject):
         elif mode["custom"]:
             # custom mode implies a list: _resolve_strategy_args routes ta=None to "all"
             ta = [{**kwds, "append": True} for kwds in args[0].ta]
-        elif mode["all"]:
-            ta = self.indicators(as_list=True, exclude=excluded)
         else:
-            logger.error("Not an available strategy.")
-            return None
+            ta = self.indicators(as_list=True, exclude=excluded)
+
+        if mode["all"] or mode["category"]:
+            # Skip, and report, indicators needing a column this DataFrame does
+            # not have (volume on OHLC-only data): each would raise KeyError.
+            unavailable = [x for x in ta if self._missing_required_column(x, kwargs)]
+            ta = [x for x in ta if x not in unavailable]
+            excluded += unavailable
 
         verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
         if verbose:

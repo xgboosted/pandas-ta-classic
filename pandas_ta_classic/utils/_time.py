@@ -9,11 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 def df_year_to_date(df: DataFrame) -> DataFrame:
-    """Yields the Year-to-Date (YTD) DataFrame"""
+    """Yields the Year-to-Date (YTD) DataFrame; empty when no row is in the current year.
+
+    It used to return the whole DataFrame in that case.
+    """
     in_ytd = df.index >= Timestamp.now().strftime("%Y-01-01")
-    if any(in_ytd):
-        return df[in_ytd]
-    return df
+    return df[in_ytd]
 
 
 def final_time(stime: float) -> str:

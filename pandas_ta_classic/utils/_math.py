@@ -124,12 +124,13 @@ def pascals_triangle(n: int | None = None, *, weighted: bool = False, inverse: b
     triangle_weights = triangle / triangle_sum
     inverse_weights = 1 - triangle_weights
 
+    if inverse and not weighted:
+        # it used to return None
+        raise ValueError("pascals_triangle() inverse=True needs weighted=True")
     if weighted and inverse:
         return inverse_weights
     if weighted:
         return triangle_weights
-    if inverse:
-        return None
 
     return triangle
 
@@ -141,7 +142,7 @@ def symmetric_triangle(n: int | None = None, *, weighted: bool = False) -> list[
     n=4  => triangle: [1, 2, 2, 1]
          => weighted: [0.16666667 0.33333333 0.33333333 0.16666667]
     """
-    n = _pos_int(n, 2, "n", gt=None, ge=0)
+    n = _pos_int(n, 2, "n")  # n=0 used to return None
     weighted = _bool_param(weighted, False, "weighted")
 
     triangle = None

@@ -33,6 +33,9 @@ DataFrame Extension
 ~~~~~~~~~~~~~~~~~~~
 
 By default, ``df.ta`` reads the columns *open, high, low, close* and *volume*. A column is found by its exact name first, then by the same name in any case (``Close``, ``CLOSE``); a column that only starts with the name (``Open time`` for ``open``) is not used. Pass ``close="my_col"`` (or ``high=``, ``low=``, ...) to read another column.
+A column the indicator requires that the DataFrame does not have raises
+``KeyError`` listing the available columns; an optional one (``cpr``'s
+``volume``) is simply left out.
 
 An indicator that cannot compute from what it was given (``df.ta.beta()`` without ``benchmark``) returns ``None``.
 
@@ -178,15 +181,15 @@ days. Setting any other value raises ``ValueError``.
 to_utc
 ~~~~~~
 
-To convert a DataFrame's index to UTC, use the ``ta.to_utc`` function. It
-returns a converted copy and leaves the original unchanged.
+``df.ta.to_utc`` is a **property** (no parentheses) that converts ``df``'s
+index to UTC in place: a naive index is localised, an aware one converted.
+The ``ta.to_utc`` function does the same on a copy and leaves its argument
+unchanged.
 
 .. code-block:: python
 
-    df = ta.to_utc(df)
-
-The ``df.ta.to_utc`` property does not change ``df``: it only converts the
-accessor's own copy, which pandas 3 discards immediately.
+    df.ta.to_utc          # changes df
+    utc = ta.to_utc(df)   # returns a converted copy
 
 Methods
 -------

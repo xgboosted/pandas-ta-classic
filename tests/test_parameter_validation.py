@@ -195,7 +195,8 @@ _F = get_sample_data().iloc[:300]
         (lambda: ta.sma(_F.close, min_periods=2.7), r"sma\(\) min_periods must be an integer >= 0, got 2.7"),
         (lambda: ta.donchian(_F.high, _F.low, upper_min_periods=1.5), r"donchian\(\) upper_min_periods must be an integer >= 0"),
         (lambda: ta.utils.fibonacci(n=-1), r"fibonacci\(\) n must be an integer >= 0, got -1"),
-        (lambda: ta.utils.symmetric_triangle(n=-4), r"symmetric_triangle\(\) n must be an integer >= 0, got -4"),
+        (lambda: ta.utils.symmetric_triangle(n=-4), r"symmetric_triangle\(\) n must be an integer > 0, got -4"),
+        (lambda: ta.utils.symmetric_triangle(n=0), r"symmetric_triangle\(\) n must be an integer > 0, got 0"),
         (lambda: ta.utils.combination(n=-5, r=2), r"combination\(\) n must be an integer >= 0, got -5"),
     ],
 )
@@ -320,18 +321,15 @@ def test_strategy_skips_vwap_without_datetime_index(frame):
     assert not any(c.startswith("VWAP") for c in flat.columns)
 
 
-def test_trend_reset_is_deprecated_and_has_no_effect(frame):
-    """trend_reset was documented as ending a trend but never read (AGENTS rule 4)."""
-    import warnings
-
+def test_trend_reset_is_removed(frame):
+    """trend_reset was documented as ending a trend but never read (AGENTS rule 4, rule 11 exception)."""
     trend = (frame.close > frame.open).astype(int)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        base_t, base_x = ta.tsignals(trend), ta.xsignals(frame.close, 50, 40)
     for call, name in ((lambda: ta.tsignals(trend, trend_reset=1), "tsignals"), (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals")):
-        with pytest.warns(DeprecationWarning, match=rf"{name}\(\) trend_reset is not used"):
-            result = call()
-        assert result.equals(base_t if name == "tsignals" else base_x)
+        with pytest.raises(TypeError, match=rf"{name}\(\) no longer accepts 'trend_reset'"):
+            call()
+    # trade_offset is keyword-only, so an old positional trend_reset cannot slide into it
+    with pytest.raises(TypeError):
+        ta.tsignals(trend, False, 1)
 
 
 # Boolean parameters declared with a True/False default in the signature were read by

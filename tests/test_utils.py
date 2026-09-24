@@ -228,7 +228,8 @@ class TestUtilities(TestCase):
             self.utils.linear_regression(x, y.iloc[:-1])
 
     def test_pascals_triangle(self):
-        self.assertIsNone(self.utils.pascals_triangle(inverse=True), None)
+        with self.assertRaisesRegex(ValueError, "inverse=True needs weighted=True"):  # used to return None
+            self.utils.pascals_triangle(inverse=True)
 
         array_1 = np.array([1])
         np.testing.assert_array_equal(self.utils.pascals_triangle(), array_1)
@@ -442,10 +443,10 @@ class TestApplyFill(TestCase):
 
     # -- unknown fill_method is ignored --
 
-    def test_unknown_fill_method_ignored(self):
-        original_nans = self.s.isna().sum()
-        result = pandas_ta.utils.apply_fill(self.s, fill_method="bogus")
-        self.assertEqual(result.isna().sum(), original_nans)
+    def test_unknown_fill_method_raises(self):
+        # an unknown method used to be ignored, leaving the NaNs in place
+        with self.assertRaisesRegex(ValueError, r"fill_method must be one of \['bfill', 'ffill'\], got 'bogus'"):
+            pandas_ta.utils.apply_fill(self.s, fill_method="bogus")
 
     # -- fillna + fill_method combined --
 

@@ -597,13 +597,7 @@ class AnalysisIndicators:
     ) -> Series | None: ...
     def short_run(self, fast: Series, slow: Series, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def tsignals(
-        self,
-        trend: Series,
-        asbool: bool | None = None,
-        trend_reset: int | None = None,
-        trade_offset: int | None = None,
-        offset: int | None = None,
-        **kwargs: Any,
+        self, trend: Series, asbool: bool | None = None, trade_offset: int | None = None, offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def ttm_trend(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> DataFrame | None: ...
     def vhf(self, length: int | None = None, drift: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
@@ -616,7 +610,6 @@ class AnalysisIndicators:
         above: bool = True,
         long: bool = True,
         asbool: bool | None = None,
-        trend_reset: int | None = None,
         trade_offset: int | None = None,
         offset: int | None = None,
         **kwargs: Any,

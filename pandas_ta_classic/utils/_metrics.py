@@ -2,7 +2,7 @@ import warnings
 from typing import Any, cast
 
 import numpy as np
-from pandas import Series, Timedelta
+from pandas import Series, Timedelta, concat
 
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance.drawdown import drawdown
@@ -94,8 +94,17 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
     if returns is None or benchmark_returns is None:
         return np.nan
 
-    benchmark_returns = benchmark_returns.interpolate()
-    return linear_regression(benchmark_returns, returns)["a"]
+    # A leading NaN run (the first bar of pct_change) is not data; a NaN inside
+    # either series is missing data, which used to be filled by interpolation.
+    pair = concat([benchmark_returns, returns], axis=1).dropna(how="any")
+    if len(pair) < 3:
+        raise ValueError(f"jensens_alpha() needs at least 3 bars where both series have a value, got {len(pair)}")
+    start, end = pair.index[0], pair.index[-1]
+    for label, series in (("benchmark_returns", benchmark_returns), ("returns", returns)):
+        gaps = int(series.loc[start:end].isna().sum())
+        if gaps:
+            raise ValueError(f"jensens_alpha() {label} has {gaps} missing value(s) inside the series; fill or drop them first")
+    return linear_regression(pair.iloc[:, 0], pair.iloc[:, 1])["a"]
 
 
 def log_max_drawdown(close: Series) -> float:
