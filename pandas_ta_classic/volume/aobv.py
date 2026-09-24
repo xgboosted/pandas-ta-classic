@@ -7,12 +7,13 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input, skip_leading_nan
 
 from .obv import obv
 
 
 @nan_on_short_input
+@skip_leading_nan("close", "volume")
 def aobv(
     close: Series,
     volume: Series,

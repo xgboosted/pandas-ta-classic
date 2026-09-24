@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -56,6 +56,7 @@ def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
 
 
 @nan_on_short_input
+@skip_leading_nan("high", "low", "close")
 def supertrend(
     high: Series,
     low: Series,
