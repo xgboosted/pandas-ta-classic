@@ -923,6 +923,4 @@ class AnalysisIndicators(PandasObject):
             append_span=append_span,
             **kwargs,
         )
-        self._add_prefix_suffix(result, **kwargs)
-        self._append(result, **kwargs)
         return self._post_process(result, **kwargs)
