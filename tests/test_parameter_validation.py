@@ -333,8 +333,8 @@ def test_trend_reset_is_removed(frame):
 
 
 # Boolean parameters declared with a True/False default in the signature were read by
-# truthiness too (xsignals(above=0) meant below, ichimoku(as_dataframe=0) returned a
-# DataFrame). Cases come from the signatures, not from the validation calls, so a
+# truthiness too (xsignals(above=0) meant below, ichimoku(include_chikou=0) dropped the
+# Chikou column). Cases come from the signatures, not from the validation calls, so a
 # parameter that loses its _bool_param call still fails here.
 def _signature_bool_cases():
     cases = []
@@ -352,7 +352,7 @@ SIGNATURE_BOOL_CASES = _signature_bool_cases()
 
 
 def test_signature_bool_sweep_found_the_parameters():
-    assert len(SIGNATURE_BOOL_CASES) >= 11
+    assert len(SIGNATURE_BOOL_CASES) >= 10  # 11 before ichimoku's as_dataframe was removed
 
 
 @pytest.mark.parametrize(("name", "param"), SIGNATURE_BOOL_CASES)

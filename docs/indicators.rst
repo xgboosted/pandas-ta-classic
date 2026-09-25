@@ -285,7 +285,7 @@ Moving averages and trend-following indicators:
 * *Hull Exponential Moving Average*: **hma**
 * *Hilbert Transform Instantaneous Trendline*: **ht_trendline**
 * *Holt-Winter Moving Average*: **hwma**
-* *Ichimoku Kinkō Hyō*: **ichimoku** (``ta.ichimoku()`` returns a single DataFrame of the known-period columns; ``append_span=True`` appends the forward-looking Span rows. ``as_dataframe=False`` still returns the legacy ``(visible, span)`` tuple with a ``DeprecationWarning`` and is removed in the next breaking release. The DataFrame Extension Method ``df.ta.ichimoku()`` returns the same single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
+* *Ichimoku Kinkō Hyō*: **ichimoku** (``ta.ichimoku()`` returns a single DataFrame of the known-period columns; ``append_span=True`` appends the forward-looking Span rows. The legacy ``(visible, span)`` tuple and the ``as_dataframe`` parameter were removed in 0.9.0; passing ``as_dataframe`` raises ``TypeError``. The DataFrame Extension Method ``df.ta.ichimoku()`` returns the same single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
 * *Jurik Moving Average*: **jma**
 * *Kaufman's Adaptive Moving Average*: **kama**
 * *Linear Regression*: **linreg**

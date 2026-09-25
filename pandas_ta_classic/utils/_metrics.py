@@ -1,4 +1,3 @@
-import warnings
 from typing import Any, cast
 
 import numpy as np
@@ -126,8 +125,6 @@ def max_drawdown(
     close: Series,
     method: str | None = None,
     all_methods: bool = False,
-    *,
-    all: bool | None = None,
 ) -> float | dict[str, float]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
@@ -137,18 +134,12 @@ def max_drawdown(
             Default: 'dollar'
         all_methods (bool): If True, it returns all three methods as a dict.
             Default: False
-        all (bool): Deprecated alias of ``all_methods``; removed in the next
-            breaking release.
+
+    Note: the ``all`` alias of ``all_methods`` was removed in 0.9.0; passing it
+    raises TypeError.
 
     >>> result = ta.max_drawdown(close, method="dollar", all_methods=False)
     """
-    if all is not None:
-        warnings.warn(
-            "max_drawdown() 'all' is deprecated and will be removed in the next breaking release; use 'all_methods' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        all_methods = _bool_param(all, False, "all")
     method = _str_param(method, "dollar", "method", choices={"dollar", "percent", "log"})
     all_methods = _bool_param(all_methods, False, "all_methods")
     close = verify_series(close)

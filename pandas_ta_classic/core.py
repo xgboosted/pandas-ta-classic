@@ -7,7 +7,7 @@ from multiprocessing import cpu_count, get_context
 from numbers import Integral
 from time import perf_counter
 from typing import Any
-from warnings import simplefilter, warn
+from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
@@ -157,7 +157,7 @@ class AnalysisIndicators(PandasObject):
     If you do not want to use a DataFrame Extension, just call it normally.
     >>> sma10 = ta.sma(df["Close"]) # Default length=10
     >>> sma50 = ta.sma(df["Close"], length=50)
-    >>> ichimoku = ta.ichimoku(df["High"], df["Low"], df["Close"], as_dataframe=True)
+    >>> ichimoku = ta.ichimoku(df["High"], df["Low"], df["Close"])
 
     Args:
         kind (str, optional): Default: None. Kind is the 'name' of the indicator.
@@ -242,15 +242,9 @@ class AnalysisIndicators(PandasObject):
     ):
         show_version = _bool_param(show_version, False, "show_version")
         timed = _bool_param(timed, False, "timed")
-        version = kwargs.pop("version", None)
-        if version is not None:
-            warn(
-                "df.ta(version=...) is deprecated and will be removed in the next breaking release; use show_version=... instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            version_val = _bool_param(version, False, "version")
-            show_version = show_version or version_val
+        if "version" in kwargs:
+            # the alias was removed in 0.9.0; the indicator's **kwargs would swallow it
+            raise TypeError("df.ta() no longer accepts 'version': use show_version=True")
         if show_version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
         if kind is None:
@@ -927,44 +921,3 @@ class AnalysisIndicators(PandasObject):
         if name not in _MATH_ALIASES:
             setattr(type(self), name, wrapper)
         return wrapper.__get__(self, type(self))
-
-    # ichimoku is the only explicit wrapper left: the underlying function still
-    # supports a deprecated (visible, span) tuple return. This wrapper pins the
-    # single-DataFrame return (as_dataframe=True) and forwards append_span, so
-    # _post_process can handle it like any other indicator.
-    def ichimoku(
-        self,
-        tenkan=None,
-        kijun=None,
-        senkou=None,
-        include_chikou=True,
-        append_span: bool = False,
-        offset=None,
-        **kwargs,
-    ):
-        """Ichimoku Kinkō Hyō.
-
-        Returns a single DataFrame of the visible period columns. Pass
-        append_span=True to also append the future-dated span rows (projected
-        Senkou A/B for the next kijun periods).
-        """
-        from pandas_ta_classic.overlap.ichimoku import ichimoku as _ichimoku
-
-        high = self._get_column(kwargs.pop("high", "high"))
-        low = self._get_column(kwargs.pop("low", "low"))
-        close_col = kwargs.pop("close") if "close" in kwargs else self._default_column("close")
-        close = self._get_column(close_col)
-        result = _ichimoku(
-            high=high,
-            low=low,
-            close=close,
-            tenkan=tenkan,
-            kijun=kijun,
-            senkou=senkou,
-            include_chikou=include_chikou,
-            offset=offset,
-            as_dataframe=True,
-            append_span=append_span,
-            **kwargs,
-        )
-        return self._post_process(result, **kwargs)

@@ -306,23 +306,15 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.df.ta(kind="sma", length=10)
         self.assertIsInstance(self.df.ta.last_run, str)
 
-    def test_version_kwarg_deprecated_and_validated(self):
-        import warnings
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = self.df.ta(kind="sma", length=10, version=True)
-        self.assertIsNotNone(result)
-        self.assertTrue(any("deprecated" in str(x.message) for x in w))
-
-        with self.assertRaisesRegex(ValueError, r"version must be True or False"):
-            self.df.ta(kind="sma", length=10, version="yes")
+    def test_version_kwarg_removed_and_show_version_validated(self):
+        # the 'version' alias of show_version was removed in 0.9.0; the
+        # indicator's **kwargs would otherwise swallow it silently
+        with self.assertRaisesRegex(TypeError, "no longer accepts 'version'"):
+            self.df.ta(kind="sma", length=10, version=True)
 
         with self.assertRaisesRegex(ValueError, r"show_version must be True or False"):
             self.df.ta(kind="sma", length=10, show_version="yes")
 
-        with self.assertRaisesRegex(ValueError, r"version must be True or False"):
-            self.df.ta(kind="sma", length=10, show_version=True, version="yes")
 
 
 class TestAccessorNonSeriesColumnArgument(TestCase):

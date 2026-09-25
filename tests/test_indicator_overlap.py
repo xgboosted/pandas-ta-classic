@@ -189,18 +189,10 @@ class TestOverlap(TestCase):
         )
 
     def test_ichimoku(self):
-        # Since 0.9.0 the default return is a single DataFrame, with no warning.
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            result = pandas_ta.ichimoku(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ICHIMOKU_9_26_52")
-        explicit = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=True)
-        self.assertTrue(result.equals(explicit))
-
-    def test_ichimoku_as_dataframe(self):
         # Default append_span=False: visible period only, no future-dated rows.
-        result = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = pandas_ta.ichimoku(self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ICHIMOKU_9_26_52")
         self.assertEqual(result.category, "overlap")
@@ -210,9 +202,9 @@ class TestOverlap(TestCase):
         )
         self.assertEqual(len(result), len(self.close))
 
-    def test_ichimoku_as_dataframe_append_span(self):
+    def test_ichimoku_append_span(self):
         kijun = 26
-        result = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=True, append_span=True)
+        result = pandas_ta.ichimoku(self.high, self.low, self.close, append_span=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "ICHIMOKU_9_26_52")
         self.assertEqual(
@@ -226,14 +218,12 @@ class TestOverlap(TestCase):
         self.assertTrue(span_rows[["ITS_9", "IKS_26", "ICS_26"]].isna().all().all())
         self.assertTrue(span_rows["ISA_9"].notna().any())
 
-    def test_ichimoku_as_dataframe_false_warns(self):
-        # The legacy tuple is still available on request, with a DeprecationWarning.
-        with self.assertWarnsRegex(DeprecationWarning, "as_dataframe=False"):
-            ichimoku, span = pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=False)
-        self.assertIsInstance(ichimoku, DataFrame)
-        self.assertIsInstance(span, DataFrame)
-        self.assertEqual(ichimoku.name, "ICHIMOKU_9_26_52")
-        self.assertEqual(span.name, "ICHISPAN_9_26")
+    def test_ichimoku_as_dataframe_removed(self):
+        # The (visible, span) tuple and its selector were removed in 0.9.0;
+        # **kwargs would otherwise swallow the old keyword silently.
+        for value in (True, False):
+            with self.assertRaisesRegex(TypeError, "no longer accepts 'as_dataframe'"):
+                pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=value)
 
     def test_linreg(self):
         result = pandas_ta.linreg(self.close, talib=False)
