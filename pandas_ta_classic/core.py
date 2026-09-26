@@ -702,9 +702,13 @@ class AnalysisIndicators(PandasObject):
         Future implementations will allow more specific indicator generation
         with possibly as json, yaml config file or an sqlite3 table.
 
+        Indicators run in a Multiprocessing Pool when ``df.ta.cores > 0``. A
+        Custom Strategy runs serially instead when an entry uses ``col_names``
+        or reads a column an earlier entry appends (a chain), because each
+        worker holds its own copy of the DataFrame.
 
         Kwargs:
-            chunksize (bool): Adjust the chunksize for the Multiprocessing Pool.
+            chunksize (int): Adjust the chunksize for the Multiprocessing Pool.
                 Default: Number of cores of the OS
             exclude (list): List of indicator names to exclude. Some are
                 excluded by default for various reasons; they require additional

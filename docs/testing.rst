@@ -147,9 +147,10 @@ Strategy Tests
 --------------
 
 **Why:** Confirm the ``Strategy`` class executes correctly, including
-multi-core processing.
+multi-core processing and chained Custom Strategies, which must run serially
+because each worker holds its own copy of the DataFrame.
 
-**Files:** ``test_strategy.py`` (runs separately from the main suite).
+**Files:** ``test_strategy.py`` (part of the main suite).
 
 **Run:** ``python -m pytest tests/test_strategy.py -v``
 
@@ -262,6 +263,13 @@ Running All Tests
 
    # With coverage
    python -m pytest --cov=pandas_ta_classic --cov-report=html tests/
+
+**Warnings are errors.** ``[tool.pytest.ini_options] filterwarnings`` in
+``pyproject.toml`` turns any ``UserWarning``, ``DeprecationWarning`` or
+``FutureWarning`` raised from ``pandas_ta_classic`` into a test failure. 0.9.0
+ships no deprecation, and a deprecated pandas or numpy call made from the
+package (such as pandas 3's ``Pandas4Warning``) fails CI instead of reaching
+users. A test that expects a warning asserts it with ``pytest.warns``.
 
 
 Fixture Files
