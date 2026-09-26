@@ -26,6 +26,14 @@ class TestAccessorConformance(TestCase):
     def tearDown(self):
         pass
 
+    # Called with no arguments these cannot produce a column: they need an input
+    # the DataFrame does not hold (a benchmark, a pair of Series, a trend), so
+    # df.ta.<name>() returns None.  They used to return the source DataFrame,
+    # which made "nothing was produced" indistinguishable from a result without
+    # comparing object identity.  'ma' is not among them: its 'source' maps to
+    # the close column, so df.ta.ma() dispatches to the default EMA.
+    NEEDS_AN_EXTRA_ARGUMENT = frozenset({"beta", "correl", "long_run", "short_run", "tsignals", "xsignals"})
+
     def test_all_indicators_return_series_or_dataframe(self):
         indicator_names = self.data.ta.indicators(as_list=True)
         failures = []
@@ -38,7 +46,15 @@ class TestAccessorConformance(TestCase):
             except Exception:  # noqa: BLE001, S112 - indicators that need extra inputs are out of scope here
                 continue
 
+            if result is None and name in self.NEEDS_AN_EXTRA_ARGUMENT:
+                continue
             if not isinstance(result, (Series, DataFrame)):
                 failures.append(f"{name}: got {type(result).__name__}")
 
         self.assertEqual(failures, [], f"Indicators returning wrong type: {failures}")
+
+    def test_indicators_without_their_required_input_return_none(self):
+        """Not the source DataFrame, which silently looked like a successful run."""
+        for name in sorted(self.NEEDS_AN_EXTRA_ARGUMENT):
+            with self.subTest(indicator=name):
+                self.assertIsNone(getattr(self.data.ta, name)())

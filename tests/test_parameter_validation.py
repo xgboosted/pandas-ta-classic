@@ -298,7 +298,7 @@ def test_bool_kwarg_rejects_non_bool(name, key, frame):
 def test_strategy_and_metric_flags_reject_non_bool(frame):
     df = frame.copy()
     df.ta.cores = 0
-    for key in ("verbose", "timed", "ordered", "returns"):
+    for key in ("verbose", "timed", "returns"):
         with pytest.raises(ValueError, match=rf"strategy\(\) {key} must be True or False"):
             df.ta.strategy("candles", **{key: 1})
     with pytest.raises(ValueError, match=r"volatility\(\) nearest_day must be True or False"):

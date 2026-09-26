@@ -162,7 +162,7 @@ print(f"Number of indicators: {len(my_strategy.ta)}")
 ### Step 2: Run the Strategy
 
 ```python
-# Execute the strategy (uses multiprocessing)
+# Execute the strategy (serial; pass cores= or executor= to parallelize)
 df.ta.strategy(my_strategy)
 
 # Check new columns
@@ -218,7 +218,7 @@ print(f"Strong bullish signals: {len(strong_bullish)}")
 
 ### Key Takeaways
 - Combine multiple indicators for confirmation
-- Use multiprocessing with Strategy class
+- Group indicators into a Strategy, and parallelize it on large frames
 - Filter signals by strength for better quality
 
 ---

@@ -86,13 +86,15 @@ Custom Strategies
     # To run your "Custom Strategy"
     df.ta.strategy(CustomStrategy)
 
-Multiprocessing
----------------
+Running a Strategy
+------------------
 
-The **Pandas TA Classic** *strategy* method utilizes **multiprocessing** for bulk indicator processing of all Strategy types, with **two exceptions**. A Custom Strategy runs its ``ta`` list serially, in order, when:
+``strategy()`` resolves the indicators you asked for into a plan, then runs it.
+Entries that read a column an earlier entry produces are held back until it
+exists, so a chained Strategy gives the same columns however it is executed.
 
-* an entry uses ``col_names`` to rename its column(s), or
-* an entry is **chained**: it reads a column that an earlier entry appends, such as ``{"kind": "ema", "close": "CUMLOGRET_1"}`` after ``{"kind": "log_return", "cumulative": True}``. Each multiprocessing worker holds its own copy of the DataFrame, so the chained column only exists when the entries run one after another.
+By default everything runs in the calling process. Parallel execution is opt-in;
+see `Parallel execution`_ for when it is worth it.
 
 A column that neither exists nor is produced by an earlier entry raises ``KeyError`` naming the column.
 
@@ -113,10 +115,12 @@ Basic Usage
     # Use timed if you want to see how long it takes to run
     df.ta.strategy(timed=True)
 
-    # Choose the number of cores to use. Default is all available cores.
+    # strategy() runs serially by default. Ask for worker processes either
+    # per frame or per call; see "Parallel execution" below for when that pays.
     df.ta.cores = 4
+    df.ta.strategy(cores=4)
 
-    # For no multiprocessing, set this value to 0.
+    # Back to serial execution.
     df.ta.cores = 0
 
 Excluding Indicators
@@ -131,16 +135,75 @@ Excluding Indicators
     # Perhaps you want to use different values for indicators
     df.ta.strategy(fast=10, slow=50, verbose=True)
 
-Custom Strategy without Multiprocessing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Parallel execution:
 
-**Remember**: These will not be utilizing **multiprocessing**
+Parallel execution
+------------------
+
+``strategy()`` runs serially unless you ask for workers. Starting a process pool
+costs 0.5 to 1.7 seconds, so on a single DataFrame it only pays from roughly
+100,000 rows upwards. Below that, serial is faster.
 
 .. code-block:: python
 
-    NonMPStrategy = ta.Strategy(
+    # Per call, or per frame. strategy() opens the pool and closes it again.
+    df.ta.strategy(cores=8)
+    df.ta.cores = 8
+
+Reusing your own pool
+~~~~~~~~~~~~~~~~~~~~~
+
+Most of the cost of ``cores=`` is paid on every call: each fresh worker imports
+pandas and loads the numba cache, about 0.66 s per process. Pass an
+:class:`~concurrent.futures.Executor` you keep open instead and that is paid
+once.
+
+Because worker processes are started with *spawn*, they re-import the calling
+script. Without the ``if __name__ == "__main__":`` guard, a script that calls
+``strategy()`` at module level starts fresh workers from every worker.
+
+.. code-block:: python
+
+    import os
+
+    # Before numpy is imported, so the workers inherit it. Each interpreter
+    # otherwise reserves roughly 750 MB for OpenBLAS thread buffers that the
+    # indicators never use: measured per worker, 786 MB against 47 MB.
+    os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+
+    from concurrent.futures import ProcessPoolExecutor
+
+    import pandas_ta_classic as ta
+
+    if __name__ == "__main__":
+        with ProcessPoolExecutor(8) as pool:
+            for df in frames:
+                df.ta.strategy("all", executor=pool)
+
+.. note::
+
+    An ``initializer=`` that sets ``OPENBLAS_NUM_THREADS`` does **not** work.
+    *spawn* re-imports the calling script -- and with it numpy -- before the
+    executor runs the initializer, so the buffers are already reserved.
+
+Parallelising over symbols usually wins by more than parallelising one frame:
+16 frames of 10,000 rows take 22.9 s one after another, and 6.45 s when the
+caller spreads the frames over its own pool and each ``strategy()`` runs serially.
+
+``strategy()`` inside a *daemonic* worker -- a ``multiprocessing.Pool`` one --
+ignores ``cores`` and ``executor`` and runs serially, because such a worker
+cannot start children of its own. A ``ProcessPoolExecutor`` worker is not
+daemonic, so there ``strategy(cores=N)`` does open a nested pool and the process
+count multiplies; pass ``cores=0`` in code that may run inside one.
+
+Renaming columns with col_names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    RenamedStrategy = ta.Strategy(
         name="EMAs, BBs, and MACD",
-        description="Non Multiprocessing Strategy by rename Columns",
+        description="Strategy that renames its result columns",
         ta=[
             {"kind": "ema", "length": 8},
             {"kind": "ema", "length": 21},
@@ -148,13 +211,14 @@ Custom Strategy without Multiprocessing
             {"kind": "macd", "fast": 8, "slow": 21, "col_names": ("MACD", "MACD_H", "MACD_S")}
         ]
     )
-    # Run it
-    df.ta.strategy(NonMPStrategy)
+    # Run it. col_names works with workers too: results are named and appended
+    # in the calling process, in the order the entries are listed.
+    df.ta.strategy(RenamedStrategy)
 
 Chained Custom Strategy
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-An entry can use an earlier entry's output as its input. The strategy then runs serially (see above).
+An entry can use an earlier entry's output as its input. It waits for its own stage, after the entry that produces the column, so the result is the same serially and on workers (see above).
 
 .. code-block:: python
 

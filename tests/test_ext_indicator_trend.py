@@ -97,7 +97,7 @@ class TestTrendExtension(TestCase):
 
     def test_long_run_ext(self):
         # Without fast/slow Series the indicator cannot compute: returns None,
-        # not the caller's whole DataFrame.
+        # not the caller's whole DataFrame, which looked like a successful run.
         self.assertIsNone(self.data.ta.long_run(append=True))
 
         fast = self.data.ta.ema(8)
@@ -121,6 +121,7 @@ class TestTrendExtension(TestCase):
 
     def test_short_run_ext(self):
         # Without fast/slow Series the indicator cannot compute: returns None.
+        # See test_long_run_ext.
         self.assertIsNone(self.data.ta.short_run(append=True))
 
         fast = self.data.ta.ema(8)

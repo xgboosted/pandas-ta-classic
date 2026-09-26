@@ -94,7 +94,8 @@ def test_chained_custom_strategy_runs_in_order_with_several_workers(spy):
 
     Pool workers each hold a copy of the input frame, so with chunks of one task
     (few cores) the chained ema never saw CUMLOGRET_1: it used to be dropped
-    silently, and after the missing-column fix it raised KeyError.
+    silently, and after the missing-column fix it raised KeyError. Ordered
+    stages now run it after the entry that produces its input.
     """
     frame = spy.copy()
     frame.ta.cores = 2
@@ -102,14 +103,14 @@ def test_chained_custom_strategy_runs_in_order_with_several_workers(spy):
         "chain",
         [{"kind": "sma", "length": 10}, {"kind": "log_return", "cumulative": True}, {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"}],
     )
-    frame.ta.strategy(chain, chunksize=1)
+    frame.ta.strategy(chain)
     assert {"SMA_10", "CUMLOGRET_1", "EMA_5_CLR"} <= set(frame.columns)
 
 
 def test_strategy_rejects_unknown_names_and_skips_unavailable_indicators(spy):
     frame = spy[["open", "high", "low", "close"]].copy()
     frame.ta.cores = 0
-    with pytest.raises(ValueError, match=r"strategy\(\) needs 'all', a category"):
+    with pytest.raises(ValueError, match=r"strategy\(\) got 'momentm', which is neither 'all' nor a category"):
         frame.ta.strategy("momentm")  # used to log and return None
     with pytest.raises(ValueError, match=r"exclude has unknown indicator name\(s\): \['smaa'\]"):
         frame.ta.strategy("overlap", exclude=["smaa"])
@@ -137,7 +138,6 @@ def test_col_names_count_must_match(spy):
     [
         (lambda d: d.ta.sma(append="no"), r"append must be True or False"),  # "no" used to append
         (lambda d: d.ta(kind="sma", timed="yes"), r"timed must be True or False"),
-        (lambda d: d.ta.strategy("overlap", chunksize=0), r"chunksize must be an integer > 0"),
     ],
 )
 def test_flags_are_validated(spy, call, message):

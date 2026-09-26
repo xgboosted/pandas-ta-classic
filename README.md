@@ -144,7 +144,7 @@ df.ta.bbands(append=True) # Bollinger Bands
 df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)
 
 # Or run a strategy with multiple indicators
-df.ta.strategy("CommonStrategy") # Runs commonly used indicators
+df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 ```
 
 ## Features
@@ -154,7 +154,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 - **284 Unique Indicators & Patterns** - 224 category indicators plus 62 CDL patterns via `cdl_pattern()`
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
-- **Strategy System** with multiprocessing support for bulk indicator processing
+- **Strategy System** for bulk indicator processing, with opt-in multiprocessing
 - **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.<indicator>()`, e.g. `df.ta.rsi()`)
 - **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
@@ -178,7 +178,7 @@ df.ta.strategy("CommonStrategy") # Runs commonly used indicators
 
 **Reference Documentation:**
 - [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
-- [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Multiprocessing and bulk indicator processing 
+- [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Bulk indicator processing, with opt-in multiprocessing 
 - [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of 224 indicators plus 62 CDL patterns (284 unique total)
 - [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis

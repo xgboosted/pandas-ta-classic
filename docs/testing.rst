@@ -147,8 +147,8 @@ Strategy Tests
 --------------
 
 **Why:** Confirm the ``Strategy`` class executes correctly, including
-multi-core processing and chained Custom Strategies, which must run serially
-because each worker holds its own copy of the DataFrame.
+serial and parallel execution, and chained Custom Strategies, which run in
+ordered stages so the result does not depend on the core count.
 
 **Files:** ``test_strategy.py`` (part of the main suite).
 

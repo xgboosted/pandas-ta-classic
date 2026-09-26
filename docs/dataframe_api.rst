@@ -86,15 +86,19 @@ cores
 
 .. code-block:: python
 
-    # Set the number of cores to use for strategy multiprocessing
-    # Defaults to the number of cpus you have.
+    # Number of worker processes df.ta.strategy() may start.
+    # Defaults to 0: strategy() runs serially unless you ask for workers.
     df.ta.cores = 4
 
-    # Set the number of cores to 0 for no multiprocessing.
+    # Back to serial execution.
     df.ta.cores = 0
 
-    # Returns the number of cores you set or your default number of cpus.
+    # Returns the number of cores you set, or 0.
     df.ta.cores
+
+Parallelism pays off from roughly 100,000 rows per DataFrame upwards; below that,
+starting the workers costs more than the indicators do. See
+:doc:`strategies` for when to use it and how to reuse a pool of your own.
 
 datetime_ordered
 ~~~~~~~~~~~~~~~~
