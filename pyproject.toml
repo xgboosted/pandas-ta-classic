@@ -203,7 +203,6 @@ packages = [
 write_to = "pandas_ta_classic/_version.py"
 # Default scheme: gives clean version on tags, next minor .devN after tags
 local_scheme = "no-local-version"  # Omit local version for clean releases
-fallback_version = "0.0.0"  # Fallback if not in a git repository
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]
