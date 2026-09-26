@@ -51,12 +51,13 @@ def _doc_defaults(source: str) -> dict:
 
 @pytest.mark.parametrize("module", _MODULES, ids=lambda p: f"{p.parent.name}/{p.stem}")
 def test_docstring_defaults_match_code(module):
-    source = module.read_text()
+    source = module.read_text(encoding="utf-8")
     code, doc = _code_defaults(source), _doc_defaults(source)
     wrong = {name: (doc[name], code[name]) for name in doc.keys() & code.keys() if doc[name] != code[name]}
     assert not wrong, f"docstring Default vs code default: {wrong}"
 
 
 def test_sweep_compares_a_meaningful_number_of_defaults():
-    compared = sum(len(_doc_defaults(m.read_text()).keys() & _code_defaults(m.read_text()).keys()) for m in _MODULES)
+    sources = (m.read_text(encoding="utf-8") for m in _MODULES)
+    compared = sum(len(_doc_defaults(source).keys() & _code_defaults(source).keys()) for source in sources)
     assert compared > 300
