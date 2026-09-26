@@ -95,7 +95,7 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
 
     # A leading NaN run (the first bar of pct_change) is not data; a NaN inside
     # either series is missing data, which used to be filled by interpolation.
-    pair = concat([benchmark_returns, returns], axis=1).dropna(how="any")
+    pair = concat([benchmark_returns, returns], axis=1, sort=True).dropna(how="any")
     if len(pair) < 3:
         raise ValueError(f"jensens_alpha() needs at least 3 bars where both series have a value, got {len(pair)}")
     start, end = pair.index[0], pair.index[-1]

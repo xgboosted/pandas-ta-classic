@@ -785,8 +785,11 @@ class AnalysisIndicators(PandasObject):
         if use_multiprocessing and mode["custom"]:
             # Determine if the Custom Model has 'col_names' parameter
             has_col_names = bool(len([True for x in ta if "col_names" in x and isinstance(x["col_names"], tuple)]))
+            # A chained entry reads a column an earlier entry appends (close="CUMLOGRET_1").
+            # Each Pool worker holds its own copy of the input, so the chain only works serially.
+            chained = any(isinstance(ind.get(key), str) and self._matching_column(ind[key]) is None for ind in ta for key in _COLUMN_KWARG_KEYS)
 
-            if has_col_names:
+            if has_col_names or chained:
                 use_multiprocessing = False
 
         if Imports["tqdm"]:

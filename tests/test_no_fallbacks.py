@@ -89,6 +89,23 @@ def test_missing_required_column_raises_and_missing_optional_one_is_skipped(spy)
     assert "CPR_PIVOT" in ohlc.ta.cpr().columns  # cpr's volume is optional
 
 
+def test_chained_custom_strategy_runs_in_order_with_several_workers(spy):
+    """A chained entry reads a column an earlier entry appends.
+
+    Pool workers each hold a copy of the input frame, so with chunks of one task
+    (few cores) the chained ema never saw CUMLOGRET_1: it used to be dropped
+    silently, and after the missing-column fix it raised KeyError.
+    """
+    frame = spy.copy()
+    frame.ta.cores = 2
+    chain = ta.Strategy(
+        "chain",
+        [{"kind": "sma", "length": 10}, {"kind": "log_return", "cumulative": True}, {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"}],
+    )
+    frame.ta.strategy(chain, chunksize=1)
+    assert {"SMA_10", "CUMLOGRET_1", "EMA_5_CLR"} <= set(frame.columns)
+
+
 def test_strategy_rejects_unknown_names_and_skips_unavailable_indicators(spy):
     frame = spy[["open", "high", "low", "close"]].copy()
     frame.ta.cores = 0
