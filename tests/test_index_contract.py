@@ -365,9 +365,12 @@ def _run_strategy(df: pd.DataFrame, case: str) -> None:
     """Run one flavour of `df.ta.strategy()` on *df*."""
     custom = ta.Strategy(name="index-contract", ta=[{"kind": "nvi"}, {"kind": "pvi"}, {"kind": "sma", "length": 10}])
     if case == "custom-multiprocessing":
-        # The worker computes on a copy, so damage to the caller's index can only
-        # come from the parent process. Run it anyway: that is the difference the
-        # sweep is here to keep, not to assume.
+        # A worker is handed `self._df[cols].copy()`, so it cannot reach the
+        # caller's frame at all: this case cannot fail on input mutation, and
+        # reverting the nvi/pvi fixes leaves it green while the serial cases
+        # fail. What it does pin is that the parent still assembles the results
+        # onto the original index -- freq, labels and attrs surviving the trip
+        # across the process boundary is checked nowhere else.
         df.ta.cores = 2
         df.ta.strategy(custom)
         return
@@ -390,9 +393,10 @@ def test_strategy_appends_without_touching_the_index_or_the_inputs(case: str) ->
     also the path that made the ``nvi`` bug matter in practice, because the
     frame handed to the next call is the one strategy just wrote to.
 
-    Serial and multiprocessing execution are both covered, since they reach the
-    indicators through different code (a worker mutates a copy that is thrown
-    away, the parent mutates the caller's frame).
+    Serial and worker execution reach the indicators through different code and
+    fail differently: serially an indicator writes to the caller's frame, while
+    a worker only ever sees a copy. The two cases therefore prove different
+    things -- see the note in `_run_strategy`.
     """
     df = _build_df()
     df.ta.cores = 0  # set before the snapshot: `cores` lives in df.attrs
