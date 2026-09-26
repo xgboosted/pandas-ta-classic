@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -39,48 +39,64 @@ def _sarext_loop(
     max_af_short,
     offset_on_reverse,
 ):
+    # Same state machine as TA-Lib's SAREXT: each bar first publishes the SAR
+    # carried into it (reversing when price crosses it, restarting from the
+    # prior extreme point and applying offset_on_reverse away from price),
+    # then projects the SAR for the next bar, clamped by this and the
+    # previous bar's range.
     long_arr = np.full(m, np.nan)
     short_arr = np.full(m, np.nan)
     af_arr = np.full(m, np.nan)
-    af = af0_short if falling else af0_long
-    af_arr[0] = af
+    af0_long = min(af0_long, max_af_long)
+    af_long = min(af_long, max_af_long)
+    af0_short = min(af0_short, max_af_short)
+    af_short = min(af_short, max_af_short)
+    afl = af0_long
+    afs = af0_short
+    # TA-Lib seeds the "previous bar" with bar 1 itself, so the first
+    # projection is clamped by bar 1's range only.
+    new_high = h_arr[1]
+    new_low = l_arr[1]
 
     for row in range(1, m):
-        h_ = h_arr[row]
-        l_ = l_arr[row]
+        prev_high = new_high
+        prev_low = new_low
+        new_high = h_arr[row]
+        new_low = l_arr[row]
 
-        if falling:
-            _sar = sar + af * (ep - sar)
-            reverse = h_ > _sar
-            if l_ < ep:
-                ep = l_
-                af = min(af + af_short, max_af_short)
-            _sar = max(h_arr[row - 1], h_arr[max(0, row - 2)], _sar)
-        else:
-            _sar = sar + af * (ep - sar)
-            reverse = l_ < _sar
-            if h_ > ep:
-                ep = h_
-                af = min(af + af_long, max_af_long)
-            _sar = min(l_arr[row - 1], l_arr[max(0, row - 2)], _sar)
-
-        if reverse:
-            if offset_on_reverse != 0.0:
-                _sar = _sar + offset_on_reverse * _sar if falling else _sar - offset_on_reverse * _sar
-            falling = not falling
-            if falling:
-                ep = l_
-                af = af0_short
+        if not falling:
+            if new_low <= sar:
+                falling = True
+                sar = max(ep, prev_high, new_high)
+                if offset_on_reverse != 0.0:
+                    sar += sar * offset_on_reverse
+                short_arr[row] = sar
+                afs = af0_short
+                ep = new_low
+                sar = max(sar + afs * (ep - sar), prev_high, new_high)
             else:
-                ep = h_
-                af = af0_long
-
-        sar = _sar
-        if falling:
-            short_arr[row] = sar
+                long_arr[row] = sar
+                if new_high > ep:
+                    ep = new_high
+                    afl = min(afl + af_long, max_af_long)
+                sar = min(sar + afl * (ep - sar), prev_low, new_low)
         else:
-            long_arr[row] = sar
-        af_arr[row] = af
+            if new_high >= sar:
+                falling = False
+                sar = min(ep, prev_low, new_low)
+                if offset_on_reverse != 0.0:
+                    sar -= sar * offset_on_reverse
+                long_arr[row] = sar
+                afl = af0_long
+                ep = new_high
+                sar = min(sar + afl * (ep - sar), prev_low, new_low)
+            else:
+                short_arr[row] = sar
+                if new_low < ep:
+                    ep = new_low
+                    afs = min(afs + af_short, max_af_short)
+                sar = max(sar + afs * (ep - sar), prev_high, new_high)
+        af_arr[row] = afs if falling else afl
 
     return long_arr, short_arr, af_arr
 
@@ -98,14 +114,17 @@ def _sarext_native_result(
     offsetonreverse,
 ):
     """Run the native SAREXT computation and return a signed Series."""
-    falling = _sarext_falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
-    if startvalue != 0.0:
-        sar = startvalue
-    elif falling:
-        sar = high.iloc[0]
+    # TA-Lib: a non-zero startvalue fixes the first direction by its sign and
+    # |startvalue| is the first SAR; otherwise the direction comes from the
+    # first bar's directional movement and the SAR from the previous bar.
+    if startvalue > 0:
+        falling, sar, ep = False, startvalue, high.iloc[1]
+    elif startvalue < 0:
+        falling, sar, ep = True, abs(startvalue), low.iloc[1]
     else:
-        sar = low.iloc[0]
-    ep = low.iloc[1] if falling and len(low) > 1 else (high.iloc[1] if len(high) > 1 else high.iloc[0])
+        falling = bool(_sarext_falling(high.iloc[:2], low.iloc[:2]))
+        sar = high.iloc[0] if falling else low.iloc[0]
+        ep = low.iloc[1] if falling else high.iloc[1]
     m = high.shape[0]
     h_arr = high.to_numpy(dtype=float)
     l_arr = low.to_numpy(dtype=float)
@@ -133,6 +152,7 @@ def _sarext_native_result(
 
 
 @nan_on_short_input
+@skip_leading_nan("high", "low")
 def sarext(
     high: Series,
     low: Series,
@@ -150,8 +170,8 @@ def sarext(
 ) -> Series | None:
     """Indicator: Parabolic SAR Extended (SAREXT)"""
     # Validate Arguments
-    high = verify_series(high)
-    low = verify_series(low)
+    high = verify_series(high, 2)
+    low = verify_series(low, 2)
     startvalue = _number(startvalue, 0.0, "startvalue")
     offsetonreverse = _number(offsetonreverse, 0.0, "offsetonreverse", ge=0)
     af0_long = _pos_float(accelerationinitlong, 0.02, "accelerationinitlong")

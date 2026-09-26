@@ -325,7 +325,7 @@ class TestMomentumExtension(TestCase):
     def test_dm_ext(self):
         self.data.ta.dm(append=True)
         self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["DMP_14", "DMN_14"])
+        self.assertEqual(list(self.data.columns[-2:]), ["PLUS_DM_14", "MINUS_DM_14"])
 
     def test_fosc_ext(self):
         self.data.ta.fosc(append=True)

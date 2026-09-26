@@ -953,7 +953,7 @@ class TestTalibFalsePropagation(TestCase):
 
         length = 10
         len1 = length // 2 + 1  # ceil((length+1)/2) — matches TA-Lib
-        len2 = length // 2 + 1  # floor(length/2) + 1
+        len2 = (length + 1) // 2  # n/2 for even n, (n+1)/2 for odd n
         sma1 = sma(self.close, length=len1, talib=False)
         expected = sma(sma1, length=len2, talib=False)
         result = ta.trima(self.close, length=length, talib=False)

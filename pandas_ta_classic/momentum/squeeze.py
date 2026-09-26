@@ -149,11 +149,19 @@ def squeeze(
     squeeze_off = (bbd.l < kch.l) & (bbd.u > kch.u)
     no_squeeze = ~squeeze_on & ~squeeze_off
 
-    # Convert bool to int before offset to avoid NaN-to-int errors
+    # On warm-up bars the bands are NaN, every comparison is False, and
+    # no_squeeze would wrongly read 1.  Mask all three flags to NaN there.
+    defined = bbd.l.notna() & bbd.u.notna() & kch.l.notna() & kch.u.notna()
+    squeeze_on = squeeze_on.where(defined)
+    squeeze_off = squeeze_off.where(defined)
+    no_squeeze = no_squeeze.where(defined)
+
+    # Convert bool to float (not int): NaN must survive, so the warm-up bars
+    # stay NaN instead of being coerced to 0/1.
     if asint:
-        squeeze_on = squeeze_on.astype(int)
-        squeeze_off = squeeze_off.astype(int)
-        no_squeeze = no_squeeze.astype(int)
+        squeeze_on = squeeze_on.astype(float)
+        squeeze_off = squeeze_off.astype(float)
+        no_squeeze = no_squeeze.astype(float)
 
     # Offset
     squeeze, squeeze_on, squeeze_off, no_squeeze = apply_offset([squeeze, squeeze_on, squeeze_off, no_squeeze], offset)

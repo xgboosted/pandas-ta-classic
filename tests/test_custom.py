@@ -170,6 +170,26 @@ class TestCustom(TestCase):
             if func_name in sys.modules:
                 del sys.modules[func_name]
 
+    def test_import_dir_broken_module_raises_import_error(self):
+        base = os.path.join(self.tmpdir, "broken_module_dir")
+        cat_dir = os.path.join(base, "momentum")
+        os.makedirs(cat_dir, exist_ok=True)
+
+        func_name = "_test_cust_broken_"
+        with open(os.path.join(cat_dir, f"{func_name}.py"), "w") as f:
+            f.write("raise RuntimeError('boom')\n")
+
+        try:
+            # used to call sys.exit(1), killing the caller's interpreter
+            with self.assertRaisesRegex(ImportError, func_name) as ctx:
+                import_dir(base, verbose=False)
+            self.assertIsInstance(ctx.exception.__cause__, RuntimeError)
+        finally:
+            if cat_dir in sys.path:
+                sys.path.remove(cat_dir)
+            if func_name in sys.modules:
+                del sys.modules[func_name]
+
     def test_import_dir_missing_method_logs_error(self):
         base = os.path.join(self.tmpdir, "missing_method_dir")
         cat_dir = os.path.join(base, "momentum")
