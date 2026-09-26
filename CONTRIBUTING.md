@@ -301,6 +301,8 @@ Versions are managed automatically via [setuptools-scm](https://github.com/pypa/
   git clone https://github.com/xgboosted/pandas-ta-classic.git
   ```
 
+- GitHub source archives (`archive/<ref>.zip`, *Download ZIP*) have no `.git`; they carry the version in `.git_archival.txt`, which `git archive` fills in (`export-subst` in `.gitattributes`). There is no `0.0.0` fallback: a source copy with neither `.git` nor that file fails to build with `LookupError`; include `.git` or set `SETUPTOOLS_SCM_PRETEND_VERSION`.
+
 **Troubleshooting:** If `import pandas_ta_classic` shows a version such as `0.1.devN`, the clone has no tags; fetch them:
 ```bash
 git fetch --tags

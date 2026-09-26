@@ -89,7 +89,12 @@ Custom Strategies
 Multiprocessing
 ---------------
 
-The **Pandas TA Classic** *strategy* method utilizes **multiprocessing** for bulk indicator processing of all Strategy types with **ONE EXCEPTION!** When using the ``col_names`` parameter to rename resultant column(s), the indicators in ``ta`` array will be ran in order.
+The **Pandas TA Classic** *strategy* method utilizes **multiprocessing** for bulk indicator processing of all Strategy types, with **two exceptions**. A Custom Strategy runs its ``ta`` list serially, in order, when:
+
+* an entry uses ``col_names`` to rename its column(s), or
+* an entry is **chained**: it reads a column that an earlier entry appends, such as ``{"kind": "ema", "close": "CUMLOGRET_1"}`` after ``{"kind": "log_return", "cumulative": True}``. Each multiprocessing worker holds its own copy of the DataFrame, so the chained column only exists when the entries run one after another.
+
+A column that neither exists nor is produced by an earlier entry raises ``KeyError`` naming the column.
 
 Basic Usage
 ~~~~~~~~~~~
@@ -145,3 +150,19 @@ Custom Strategy without Multiprocessing
     )
     # Run it
     df.ta.strategy(NonMPStrategy)
+
+Chained Custom Strategy
+~~~~~~~~~~~~~~~~~~~~~~~
+
+An entry can use an earlier entry's output as its input. The strategy then runs serially (see above).
+
+.. code-block:: python
+
+    ChainedStrategy = ta.Strategy(
+        name="Cumulative Log Return EMA",
+        ta=[
+            {"kind": "log_return", "cumulative": True},                             # appends CUMLOGRET_1
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},  # reads it: EMA_5_CLR
+        ]
+    )
+    df.ta.strategy(ChainedStrategy)
