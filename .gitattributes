@@ -7,3 +7,7 @@
 # instead of a conflict. Read the [Unreleased] section after merging anything
 # that rewrote existing entries.
 CHANGELOG.md merge=union
+
+# GitHub source archives (Download ZIP, /archive/<ref>.zip) have no .git, so
+# setuptools-scm reads the version from this file, which git archive fills in.
+.git_archival.txt export-subst
