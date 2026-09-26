@@ -1724,7 +1724,7 @@ class TestDriftParameterRemoved(TestCase):
         import ast
         from pathlib import Path
 
-        stub = ast.parse(Path(ta.__file__).with_name("core.pyi").read_text())
+        stub = ast.parse(Path(ta.__file__).with_name("core.pyi").read_text(encoding="utf-8"))
         methods = {n.name: n for n in ast.walk(stub) if isinstance(n, ast.FunctionDef)}
         for name in self.NAMES:
             with self.subTest(name=name):
