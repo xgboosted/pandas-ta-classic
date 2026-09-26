@@ -2,7 +2,8 @@ import math
 import warnings
 from unittest import TestCase
 
-from pandas import DataFrame, Series
+import numpy as np
+from pandas import DataFrame, Series, bdate_range
 
 import pandas_ta_classic as pandas_ta
 from tests.config import get_sample_data
@@ -32,6 +33,13 @@ class TestUtilityMetrics(TestCase):
         result = pandas_ta.utils.cagr(self.data.close)
         self.assertIsInstance(result, float)
         self.assertGreater(result, 0)
+
+        # Round trip: a price series that doubles over exactly one calendar
+        # year must give a CAGR of ~100%.  The old calendar-days/252 bug made
+        # this ~61%.
+        idx = bdate_range("2021-01-04", "2022-01-04")
+        close = Series(100 * 2.0 ** ((idx - idx[0]).days / 365.0), index=idx)
+        self.assertAlmostEqual(pandas_ta.utils.cagr(close), 1.0, places=2)
 
     def test_calmar_ratio(self):
         result = pandas_ta.calmar_ratio(self.close)
@@ -68,6 +76,13 @@ class TestUtilityMetrics(TestCase):
         result = pandas_ta.jensens_alpha(self.close, bench_return)
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
+
+        # Constructed fixture: returns = 0.0005 + 1.2 * bench.  The benchmark
+        # sums to less than 1 in absolute value, which the old ``int(x.sum())
+        # != 0`` guard skipped, returning NaN instead of the intercept 0.0005.
+        bench = Series(np.linspace(-0.002, 0.002, 200))
+        returns = 0.0005 + 1.2 * bench
+        self.assertAlmostEqual(pandas_ta.jensens_alpha(returns, bench), 0.0005, places=6)
 
     def test_log_max_drawdown(self):
         result = pandas_ta.log_max_drawdown(self.close)
@@ -117,6 +132,17 @@ class TestUtilityMetrics(TestCase):
         result = pandas_ta.pure_profit_score(self.close)
         self.assertGreaterEqual(result, 0)
 
+        # A strictly linear series correlates r = 1.0 with its time index, so
+        # the score equals the CAGR.  The old constant-zeros time index made the
+        # correlation NaN and the function always returned 0.
+        idx = bdate_range("2021-01-04", periods=250)
+        linear = Series(100.0 + np.arange(250), index=idx)
+        self.assertAlmostEqual(
+            pandas_ta.pure_profit_score(linear),
+            pandas_ta.cagr(linear),
+            places=8,
+        )
+
     def test_sharpe_ratio(self):
         result = pandas_ta.sharpe_ratio(self.close)
         self.assertIsInstance(result, float)
@@ -142,6 +168,11 @@ class TestUtilityMetrics(TestCase):
         result = pandas_ta.utils.volatility(returns_, returns=True)
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
+
+        # Annualised daily volatility must land near σ·√252.  The old
+        # calendar-days/252 bug understated it by ~17% (√173.6 vs √252).
+        expected = float(returns_.std() * np.sqrt(252))
+        self.assertAlmostEqual(result, expected, delta=expected * 0.02)
 
         for tf in ["years", "months", "weeks", "days", "hours", "minutes", "seconds"]:
             result = pandas_ta.utils.volatility(self.close, tf)

@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
 from tests.assertions import (
@@ -91,6 +91,15 @@ class TestStatistics(TestCase):
                 length_override=20,
             ),
         )
+
+    def test_mad_min_periods(self):
+        # The min_periods branch uses the mean (not the median): for the partial
+        # window [1, 1, 1, 10] the mean is 3.25 and MAD = 3.375, while a median
+        # (1.0) would give 2.25.  This pins the mean so that branch cannot be
+        # silently swapped for a median.
+        close = Series([1.0, 1.0, 1.0, 10.0, 10.0])
+        result = pandas_ta.mad(close, length=5, min_periods=2)
+        self.assertAlmostEqual(result.iloc[3], 3.375)
 
     def test_md(self):
         assert_indicator_standard(

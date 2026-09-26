@@ -48,6 +48,9 @@ def bop(
         high_low_range = non_zero_range(high, low)
         close_open_range = non_zero_range(close, open_)
         bop = scalar * close_open_range / high_low_range
+        # A fully flat bar (high == low, hence open == close) has no direction:
+        # TA-Lib returns 0 there, but epsilon/epsilon would yield a bogus +1.0.
+        bop = bop.where(high != low, 0.0)
 
     # Offset
     bop = apply_offset(bop, offset)

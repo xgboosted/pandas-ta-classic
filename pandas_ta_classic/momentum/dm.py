@@ -77,8 +77,8 @@ def dm(
 
     _params = f"_{length}"
     data = {
-        f"DMP{_params}": pos,
-        f"DMN{_params}": neg,
+        f"PLUS_DM{_params}": pos,
+        f"MINUS_DM{_params}": neg,
     }
 
     dmdf = DataFrame(data)
@@ -133,5 +133,5 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: DMP (+DM) and DMN (-DM) columns.
+    pd.DataFrame: PLUS_DM (+DM) and MINUS_DM (-DM) columns.
 """

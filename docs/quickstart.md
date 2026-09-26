@@ -128,6 +128,7 @@ df.ta.chain().sma(20).ta.unchain().ta.rsi(14)  # RSI returned as Series
 - Each indicator returns the DataFrame (which has ``.ta``), so you can keep chaining.
 - ``unchain()`` exits chain mode, returning the DataFrame for normal use.
 - All kwargs like ``prefix``, ``suffix``, and ``col_names`` work as usual.
+- Chain mode applies only to the DataFrame you called ``chain()`` on: ``df.copy()`` and slices such as ``df.iloc[-100:]`` are not chained.
 
 (working-with-real-data)=
 ## Working with Real Data

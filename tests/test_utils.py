@@ -305,7 +305,7 @@ class TestUtilities(TestCase):
 
     def test_total_time(self):
         result = self.utils.total_time(self.data)
-        self.assertEqual(30.182539682539684, result)
+        self.assertEqual(20.824093086926762, result)
 
         result = self.utils.total_time(self.data, "months")
         self.assertEqual(250.05753361606995, result)

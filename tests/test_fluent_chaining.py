@@ -8,7 +8,7 @@ Covers:
   * Chain mode auto-appends results to the DataFrame.
   * Chain mode with ``append=False`` (results appended anyway).
   * Nested / re-entrant chain calls are idempotent.
-  * Chain mode does not leak between DataFrames.
+  * Chain mode does not leak between DataFrames, nor into copies or slices.
 """
 
 from unittest import TestCase
@@ -117,6 +117,16 @@ class TestFluentChaining(TestCase):
         self.df.ta.chain()
         self.assertTrue(self.df.attrs.get("_ta_chain"))
         self.assertNotIn("_ta_chain", df2.attrs)
+
+    def test_chain_does_not_follow_copies_or_slices(self):
+        """pandas copies attrs into df.copy() and slices; neither is chained."""
+        self.df.ta.chain()
+        copied, sliced = self.df.copy(), self.df.iloc[-100:]
+        for other in (copied, sliced):
+            n_columns = other.shape[1]
+            self.assertIsInstance(other.ta.rsi(), pd.Series)
+            self.assertEqual(other.shape[1], n_columns)
+        self.assertIsInstance(self.df.ta.rsi(), pd.DataFrame)  # the chained frame still is
 
     # ------------------------------------------------------------------
     # Idempotency

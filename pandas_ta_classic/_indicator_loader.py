@@ -21,6 +21,7 @@ _COLUMN_PARAM_TO_COL_KEY: dict[str, str] = {
 _SERIES_COLUMN_PARAMS: dict[str, tuple] = {
     "series_a": (("a", "series_a"), "close"),
     "series_b": (("b", "series_b"), "close"),
+    "source": (("source",), "close"),
 }
 
 _ALWAYS_FETCH: frozenset[str] = frozenset({"close", "high", "low", "volume"})
@@ -100,7 +101,7 @@ def _make_ta_wrapper(func: Callable) -> Callable:
         # Always extract required column values from DataFrame
         for param_name in col_params_required:
             col_key = _COLUMN_PARAM_TO_COL_KEY[param_name]
-            col_val = kwargs.pop(col_key, self._default_column(col_key))
+            col_val = kwargs.pop(col_key) if col_key in kwargs else self._default_column(col_key)
             if col_val is None:
                 raise ValueError(f"'{col_key}' cannot be None; pass a Series or column name string")
             call_kwargs[param_name] = self._get_column(col_val)
@@ -113,18 +114,15 @@ def _make_ta_wrapper(func: Callable) -> Callable:
         # Handle series_a / series_b: pop aliases in order, fallback to default column
         for param_name in series_col_params:
             aliases, default_col = _SERIES_COLUMN_PARAMS[param_name]
-            col_val = self._default_column(default_col)
-            for alias in aliases:
-                if alias in kwargs:
-                    col_val = kwargs.pop(alias)
-                    break
+            given = next((alias for alias in aliases if alias in kwargs), None)
+            col_val = kwargs.pop(given) if given is not None else self._default_column(default_col)
             # Clean up any remaining aliases that weren't used
             for alias in aliases:
                 kwargs.pop(alias, None)
             call_kwargs[param_name] = self._get_column(col_val)
         # Fill in None for any required non-column positional args not yet provided
         # (allows functions like long_run/short_run to return None when called with
-        # no fast/slow args, which _post_process then converts to self._df)
+        # no fast/slow args; _post_process passes that None through)
         for pname, param in sig.parameters.items():
             if (
                 pname not in _COLUMN_PARAM_TO_COL_KEY

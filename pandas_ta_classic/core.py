@@ -384,7 +384,10 @@ class AnalysisIndicators(PandasObject):
         Returns:
             AnalysisIndicators: self (the accessor) with chain mode active.
         """
-        self._df.attrs["_ta_chain"] = True
+        # pandas copies attrs into df.copy() and slices; storing this frame's
+        # id keeps chain mode on the frame that asked for it.
+        # ponytail: id() can be reused after the chained frame is freed; key by a weakref if that ever matters (attrs must stay picklable for strategy()).
+        self._df.attrs["_ta_chain"] = id(self._df)
         self._df.attrs["_ta_chain_append"] = append
         return self
 
@@ -440,6 +443,11 @@ class AnalysisIndicators(PandasObject):
         column name is returned unchanged.
         """
         if name == "close" and self.adjusted is not None:
+            # A copy or slice inherits _ta_adjusted from df.attrs but may lack
+            # the adjusted column. Computing on 'close' instead would silently
+            # swap adjusted prices for unadjusted ones.
+            if self.adjusted not in self._df.columns:
+                raise KeyError(f"df.ta.adjusted is {self.adjusted!r}, but the DataFrame has no such column; set df.ta.adjusted = None to use 'close'")
             return self.adjusted
         return name
 
@@ -460,13 +468,14 @@ class AnalysisIndicators(PandasObject):
             # Return the df column since it's in there.
             if series in df.columns:
                 return df[series]
-            # Attempt to match the 'series' because it was likely
-            # misspelled.
-            matches = df.columns.str.match(series, case=False)
-            match = [i for i, x in enumerate(matches) if x]
-            if len(match):
-                return df.iloc[:, match[0]]
-            cols = ", ".join(list(df.columns))
+            # Attempt to match the 'series' because it was likely misspelled:
+            # case-insensitive exact match only.  A prefix match (str.match)
+            # resolved 'open' to a leading 'Open time' column on Binance-style
+            # frames, silently returning the epoch-milliseconds column.
+            matches = [col for col in df.columns if isinstance(col, str) and col.lower() == series.lower()]
+            if matches:
+                return df[matches[0]]
+            cols = ", ".join(str(c) for c in df.columns)
             logger.warning(f"[X] Column '{series}' not found. Available columns: {cols}")
             return None
         # Anything else (a numpy array, a list, a DataFrame) is passed through
@@ -483,13 +492,9 @@ class AnalysisIndicators(PandasObject):
         columns = self._df.columns
         if name in columns:
             return name
-        # Index.str is unavailable on a non-string column Index; _get_column
-        # cannot resolve a prefix match there either, so there is nothing
-        # further to look up.
-        if columns.inferred_type != "string":
-            return None
-        matches = [i for i, hit in enumerate(columns.str.match(name, case=False)) if hit]
-        return columns[matches[0]] if matches else None
+        # Case-insensitive exact match, mirroring _get_column()'s fallback.
+        matches = [col for col in columns if isinstance(col, str) and col.lower() == name.lower()]
+        return matches[0] if matches else None
 
     def _worker_columns(self, kwarg_sources: list[dict]) -> list:
         """The columns a Multiprocessing worker can actually reach for.
@@ -528,19 +533,21 @@ class AnalysisIndicators(PandasObject):
         method, args, kwargs = arguments
         return getattr(self, method)(*args, **kwargs)
 
-    def _post_process(self, result, **kwargs) -> tuple[pd.Series, pd.DataFrame]:
+    def _post_process(self, result, **kwargs) -> pd.Series | pd.DataFrame | None:
         """Applies any additional modifications to the DataFrame
         * Applies prefixes and/or suffixes
         * Appends the result to main DataFrame
         * In chain mode, auto-appends and returns the DataFrame for fluent chaining.
         """
         verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
-        chain_mode = self._df.attrs.get("_ta_chain", False)
+        chain_mode = self._df.attrs.get("_ta_chain") == id(self._df)
 
         if not isinstance(result, (pd.Series, pd.DataFrame)):
             if verbose:
                 logger.error("The result was not a Series or DataFrame.")
-            return self._df
+            # An indicator that returns None (missing input, short series) must
+            # not be silently replaced by the caller's whole DataFrame.
+            return None
         # Append only specific columns to the dataframe (via
         # 'col_numbers':(0,1,3) for example)
         result = (
@@ -909,7 +916,8 @@ class AnalysisIndicators(PandasObject):
 
         high = self._get_column(kwargs.pop("high", "high"))
         low = self._get_column(kwargs.pop("low", "low"))
-        close = self._get_column(kwargs.pop("close", self._default_column("close")))
+        close_col = kwargs.pop("close") if "close" in kwargs else self._default_column("close")
+        close = self._get_column(close_col)
         result = _ichimoku(
             high=high,
             low=low,
@@ -923,6 +931,4 @@ class AnalysisIndicators(PandasObject):
             append_span=append_span,
             **kwargs,
         )
-        self._add_prefix_suffix(result, **kwargs)
-        self._append(result, **kwargs)
         return self._post_process(result, **kwargs)
