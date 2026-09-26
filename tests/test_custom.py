@@ -111,8 +111,9 @@ class TestCustom(TestCase):
     # ------------------------------------------------------------------
 
     def test_import_dir_nonexistent_path(self):
-        # Must return without raising
-        import_dir("/nonexistent/path/xyz_123", verbose=False)
+        # used to log an error and import nothing
+        with self.assertRaisesRegex(FileNotFoundError, "xyz_123"):
+            import_dir("/nonexistent/path/xyz_123", verbose=False)
 
     def test_import_dir_skips_invalid_categories(self):
         base = os.path.join(self.tmpdir, "invalid_cat_dir")
@@ -151,7 +152,7 @@ class TestCustom(TestCase):
             if func_name in sys.modules:
                 del sys.modules[func_name]
 
-    def test_import_dir_missing_function_logs_error(self):
+    def test_import_dir_missing_function_raises(self):
         base = os.path.join(self.tmpdir, "missing_func_dir")
         cat_dir = os.path.join(base, "momentum")
         os.makedirs(cat_dir, exist_ok=True)
@@ -162,7 +163,8 @@ class TestCustom(TestCase):
             f.write("def some_other_function(): pass\n")
 
         try:
-            import_dir(base, verbose=False)
+            with self.assertRaisesRegex(ImportError, func_name):  # used to be logged and skipped
+                import_dir(base, verbose=False)
             self.assertFalse(hasattr(pandas_ta_classic, func_name))
         finally:
             if cat_dir in sys.path:
@@ -190,7 +192,7 @@ class TestCustom(TestCase):
             if func_name in sys.modules:
                 del sys.modules[func_name]
 
-    def test_import_dir_missing_method_logs_error(self):
+    def test_import_dir_missing_method_raises(self):
         base = os.path.join(self.tmpdir, "missing_method_dir")
         cat_dir = os.path.join(base, "momentum")
         os.makedirs(cat_dir, exist_ok=True)
@@ -201,7 +203,8 @@ class TestCustom(TestCase):
             f.write(f"def {func_name}(close, **kwargs):\n" f"    return close\n")
 
         try:
-            import_dir(base, verbose=False)
+            with self.assertRaisesRegex(ImportError, f"{func_name}_method"):  # used to be logged and skipped
+                import_dir(base, verbose=False)
             self.assertFalse(hasattr(pandas_ta_classic, func_name))
         finally:
             if cat_dir in sys.path:

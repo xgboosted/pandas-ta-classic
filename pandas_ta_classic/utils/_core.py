@@ -95,6 +95,9 @@ def apply_fill(
     if "fillna" in kwargs:
         series.fillna(kwargs["fillna"], inplace=True)
     fill_method = kwargs.get("fill_method")
+    if fill_method is not None:
+        # any other value used to be ignored silently
+        fill_method = _str_param(fill_method, "ffill", "fill_method", choices={"ffill", "bfill"})
     if fill_method == "ffill":
         series.ffill(inplace=True)
     elif fill_method == "bfill":
@@ -144,14 +147,15 @@ def get_offset(x: int | None) -> int:
 
 
 def is_datetime_ordered(df: DataFrame | Series) -> bool:
-    """Returns True if the index is a datetime and ordered."""
+    """Returns True if the index is a datetime index in ascending order.
+
+    It used to compare only the first and last labels, so an index sorted
+    everywhere but the middle counted as ordered.
+    """
     index_is_datetime = is_datetime64_any_dtype(df.index)
     if not index_is_datetime or len(df.index) < 2:
         return False
-    try:
-        return bool(df.index[0] < df.index[-1])
-    except (IndexError, TypeError):
-        return False
+    return bool(df.index.is_monotonic_increasing and df.index[0] < df.index[-1])
 
 
 def is_percent(x: float | None) -> TypeGuard[float]:

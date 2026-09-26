@@ -9,7 +9,7 @@ PIP := $(shell if command -v uv >/dev/null 2>&1; then echo "uv pip"; else echo "
 # Python: use the local venv if it exists, otherwise fall back to system python
 PYTHON := $(shell if [ -f .venv/bin/python ]; then echo ".venv/bin/python"; else echo "python3"; fi)
 
-.PHONY: all help clean caches install install-dev install-all init test test-ext test-metrics test-strats test-ta test-utils test-all fixtures docs docs-serve lint format typecheck
+.PHONY: all help clean caches install install-dev install-all test test-ext test-metrics test-strats test-ta test-utils test-all fixtures docs docs-serve lint format typecheck
 
 # Default target
 all: test
@@ -57,10 +57,6 @@ install-dev:
 
 install-all:
 	$(PIP) install -e ".[all]"
-
-# Legacy target for backwards compatibility
-init: install-dev
-	@echo "Note: 'make init' is deprecated. Use 'make install-dev' instead."
 
 # Testing targets
 test: test-utils test-metrics test-ta test-ext test-strats

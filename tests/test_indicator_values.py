@@ -225,7 +225,7 @@ def _compute_all(df: pd.DataFrame) -> dict[str, object]:
         "cdl_inside": ta.cdl_inside(o, h, low, c),
         "cdl_z": ta.cdl_z(o, h, low, c),
         # ---- Overlap (additional) ----
-        "ichimoku": ta.ichimoku(h, low, c, as_dataframe=True),
+        "ichimoku": ta.ichimoku(h, low, c),
         "ma_ema_20": ta.ma("ema", c, length=20),
         # ---- Trend (additional) ----
         "tsignals": ta.tsignals(_trend_bool),

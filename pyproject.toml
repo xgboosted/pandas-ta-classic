@@ -117,11 +117,6 @@ backtest = [
     "backtrader"
 ]
 
-# Back-compat alias for the previous combined extra
-integration = [
-    "pandas-ta-classic[backtest]"
-]
-
 # Complete environment with all features.
 # Excludes `backtest`: it pulls unmaintained, platform-fragile packages
 # (backtrader, vectorbt) that break `[all]` installs on newer Python/OS
@@ -142,6 +137,9 @@ markers = [
 ]
 filterwarnings = [
     "error::UserWarning:pandas_ta_classic",
+    # 0.9.0 ships no deprecation: a deprecated pandas/numpy call made from our code fails the suite
+    "error::DeprecationWarning:pandas_ta_classic",
+    "error::FutureWarning:pandas_ta_classic",
 ]
 
 [tool.black]

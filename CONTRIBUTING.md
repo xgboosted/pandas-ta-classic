@@ -49,7 +49,7 @@ We welcome contributions from the community! This document provides guidelines a
  uv pip install -e ".[docs]"         # Documentation dependencies
  uv pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  uv pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
- uv pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt
+ uv pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  uv pip install -e ".[performance]"  # Numba acceleration
  ```
  
@@ -64,7 +64,7 @@ We welcome contributions from the community! This document provides guidelines a
  pip install -e ".[docs]"         # Documentation dependencies
  pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
- pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt
+ pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  pip install -e ".[performance]"  # Numba acceleration
  ```
 
@@ -232,7 +232,7 @@ The full list, with what enforces each rule, is in the "Correctness Rules" secti
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
 - **Docstring `Default:` values match the code** (`tests/test_docstring_defaults.py` checks this).
-- **Deprecate in a released version before removing**, and mark any entry that changes results or starts raising as **BREAKING** in `CHANGELOG.md`.
+- **Deprecate in a released version before removing** (0.9.0 is the exception: it ships no deprecation, so its renames and removals raise at once), and mark any entry that changes results or starts raising as **BREAKING** in `CHANGELOG.md`.
 - **Prove refactors change nothing**: compare hashed indicator output before and after.
 
 ### 5. Git Workflow
@@ -301,7 +301,7 @@ Versions are managed automatically via [setuptools-scm](https://github.com/pypa/
   git clone https://github.com/xgboosted/pandas-ta-classic.git
   ```
 
-**Troubleshooting:** If `import pandas_ta_classic` shows version `0.0.0`, fetch missing tags:
+**Troubleshooting:** If `import pandas_ta_classic` shows a version such as `0.1.devN`, the clone has no tags; fetch them:
 ```bash
 git fetch --tags
 pip install -e ".[dev]"  # reinstall to regenerate _version.py

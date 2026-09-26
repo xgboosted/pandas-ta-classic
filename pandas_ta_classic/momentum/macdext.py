@@ -1,5 +1,4 @@
 # MACD Extended (MACDEXT)
-import warnings
 from typing import Any
 
 import numpy as np
@@ -9,7 +8,8 @@ from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
-# TA-Lib MA type integer → string kind for native fallback
+# TA-Lib MA type integer → string kind for the native path. KAMA (6) and
+# MAMA (7) have no native equivalent here; they need TA-Lib.
 _MATYPE_TO_KIND = {
     0: "sma",
     1: "ema",
@@ -17,34 +17,8 @@ _MATYPE_TO_KIND = {
     3: "dema",
     4: "tema",
     5: "trima",
-    6: "ema",  # KAMA not supported natively; EMA used as fallback
-    7: "ema",  # MAMA not supported natively; EMA used as fallback
     8: "t3",
 }
-
-_UNSUPPORTED_NATIVE_MATYPES = {6: "kama", 7: "mama"}
-
-
-def _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype):
-    """Emit a :class:`UserWarning` for each TA-Lib MA type unsupported natively.
-
-    Only ``kama`` (6) and ``mama`` (7) cannot be reproduced natively; EMA is
-    used as a fallback for those types.
-
-    Args:
-        fastmatype (int): Fast MA type index.
-        slowmatype (int): Slow MA type index.
-        signalmatype (int): Signal MA type index.
-    """
-    for _mt, _name in _UNSUPPORTED_NATIVE_MATYPES.items():
-        if _mt in (fastmatype, slowmatype, signalmatype):
-            warnings.warn(
-                f"MACDEXT native fallback does not support matype={_mt} ({_name}); "
-                f"EMA will be used instead. Pass talib=True (with TA-Lib installed) "
-                f"to get the correct {_name.upper()} behaviour.",
-                UserWarning,
-                stacklevel=3,
-            )
 
 
 @nan_on_short_input
@@ -98,11 +72,13 @@ def macdext(
     else:
         from pandas_ta_classic.overlap.ma import ma
 
-        _warn_unsupported_matypes(fastmatype, slowmatype, signalmatype)
-
-        fast_kind = _MATYPE_TO_KIND.get(fastmatype, "ema")
-        slow_kind = _MATYPE_TO_KIND.get(slowmatype, "ema")
-        signal_kind = _MATYPE_TO_KIND.get(signalmatype, "ema")
+        for label, matype in (("fastmatype", fastmatype), ("slowmatype", slowmatype), ("signalmatype", signalmatype)):
+            if matype not in _MATYPE_TO_KIND:
+                # It used to compute an EMA instead, with only a warning.
+                raise ValueError(f"macdext() {label}={matype} (KAMA/MAMA) needs TA-Lib: pass talib=True with TA-Lib installed")
+        fast_kind = _MATYPE_TO_KIND[fastmatype]
+        slow_kind = _MATYPE_TO_KIND[slowmatype]
+        signal_kind = _MATYPE_TO_KIND[signalmatype]
 
         fast_ma = ma(fast_kind, close, length=fast)
         slow_ma = ma(slow_kind, close, length=slow)

@@ -8,7 +8,7 @@ from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
 from pandas_ta_classic.utils._signals import cross_value
 
-from .tsignals import _warn_trend_reset, tsignals
+from .tsignals import _reject_trend_reset, tsignals
 
 
 @nan_on_short_input
@@ -19,7 +19,7 @@ def xsignals(
     above: bool = True,
     long: bool = True,
     asbool: bool | None = None,
-    trend_reset: int | None = None,
+    *,
     trade_offset: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -32,7 +32,7 @@ def xsignals(
     offset = get_offset(offset)
     above = _bool_param(above, True, "above")
     long = _bool_param(long, True, "long")
-    _warn_trend_reset("xsignals", trend_reset)
+    _reject_trend_reset("xsignals", kwargs)
 
     # Calculate Result
     if above:
@@ -125,10 +125,10 @@ Args:
     asbool (bool): If True, it converts the Trends, Entries and Exits columns to
         booleans. When boolean, it is also useful for backtesting with
         vectorbt's Portfolio.from_signal(close, entries, exits) Default: False
-    trend_reset (value): Deprecated since 0.9.0 and unused: it never affected the
-        result. Passing it emits a DeprecationWarning. Default: None
     trade_offset (value): Value used shift the trade entries/exits Use 1 for
         backtesting and 0 for live. Default: 0
+    Note: ``trend_reset`` was removed; it never had an effect, and passing it
+    raises TypeError. ``trade_offset`` and ``offset`` are keyword-only.
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
