@@ -41,9 +41,12 @@ def vp(
 
     # Setup
     signed_price = signed_series(close, 1)
-    pos_volume = volume * signed_price[signed_price > 0]
+    # where(), not signed_price[signed_price > 0]: see the note in nvi.py --
+    # realigning the subset rebuilds the index and clears DatetimeIndex.freq on
+    # the caller's own index object.
+    pos_volume = volume * signed_price.where(signed_price > 0)
     pos_volume.name = volume.name
-    neg_volume = -volume * signed_price[signed_price < 0]
+    neg_volume = -volume * signed_price.where(signed_price < 0)
     neg_volume.name = volume.name
     vp = concat([close, pos_volume, neg_volume], axis=1)
 

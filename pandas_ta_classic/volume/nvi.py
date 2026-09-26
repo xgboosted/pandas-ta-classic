@@ -37,7 +37,11 @@ def nvi(
     # Calculate Result
     roc_ = roc(close=close, length=length)
     signed_volume = signed_series(volume, 1)
-    nvi = signed_volume[signed_volume < 0].abs() * roc_
+    # where(), not signed_volume[signed_volume < 0]: the subset drops the other
+    # labels, and realigning it against roc_ rebuilds the index -- which in
+    # pandas clears DatetimeIndex.freq on the caller's own index object, so
+    # df.ta.nvi() silently unset df.index.freq even with append=False.
+    nvi = signed_volume.where(signed_volume < 0).abs() * roc_
     nvi.fillna(0, inplace=True)
     nvi.iloc[0] = initial
     nvi = nvi.cumsum()
@@ -70,7 +74,7 @@ Calculation:
 
     roc = ROC(close, length)
     signed_volume = signed_series(volume, initial=1)
-    nvi = signed_volume[signed_volume < 0].abs() * roc_
+    nvi = signed_volume.where(signed_volume < 0).abs() * roc_
     nvi.fillna(0, inplace=True)
     nvi.iloc[0]= initial
     nvi = nvi.cumsum()
