@@ -62,7 +62,10 @@ def _worker_recursion_guard() -> Iterator[None]:
     the recursion is caught, while a second *thread* in the parent sees its own
     pid and is left alone -- its ``__main__`` is not the problem.
     """
-    # One process-wide counter, only ever touched under the lock.
+    # One process-wide counter, only ever touched under the lock.  Every increment
+    # has exactly one matching decrement in the finally below, so the depth cannot
+    # go negative however the calls interleave -- the marker is cleared by the last
+    # call out, not the first.
     global _STRATEGY_GUARD_DEPTH
     with _STRATEGY_GUARD_LOCK:
         owner = os.environ.get(_STRATEGY_GUARD_ENV)

@@ -319,12 +319,11 @@ def test_worker_error_keeps_the_type_it_had_serially(mode, executor):
     strategy = ta.Strategy("Bad", [{"kind": "sma", "length": 0}])
     kwargs = {"executor": executor} if mode == "executor" else {"cores": 2}
 
-    serial = pytest.raises(ValueError, match=r"sma\(\) length must be an integer > 0, got 0")
-    with serial as parallel_error:
+    with pytest.raises(ValueError, match=r"sma\(\) length must be an integer > 0, got 0") as raised:
         df.ta.strategy(strategy, **kwargs)
 
-    if hasattr(parallel_error.value, "__notes__"):  # PEP 678, Python 3.11+
-        assert any("raised by sma() in a worker process" in note for note in parallel_error.value.__notes__)
+    if hasattr(raised.value, "__notes__"):  # PEP 678, Python 3.11+
+        assert any("raised by sma() in a worker process" in note for note in raised.value.__notes__)
 
 
 def test_serial_and_worker_paths_raise_the_same_type():
@@ -379,12 +378,18 @@ def test_broken_pool_points_at_the_main_guard(monkeypatch):
     assert isinstance(raised.value.__cause__, BrokenProcessPool)
 
 
-@pytest.mark.parametrize("cores", [0, 2])
-def test_no_result_warning_blames_the_callers_line(cores):
-    """stacklevel was fixed at 4, but the parallel path is one frame deeper."""
+@pytest.mark.parametrize("mode", ["serial", "cores", "executor"])
+def test_no_result_warning_blames_the_callers_line(mode, executor):
+    """stacklevel was fixed at 4, but the parallel path is one frame deeper.
+
+    Both parallel modes are checked, not just one: they reach the warning through
+    the same _run_stages -> _run_stage frames, so a depth tuned to one of them
+    should hold for the other, and this is what says so.
+    """
     strategy = ta.Strategy("Typo", [{"kind": "ema", "close": "NOT_A_COLUMN", "length": 5}])
+    kwargs = {"executor": executor} if mode == "executor" else {"cores": 2 if mode == "cores" else 0}
     with pytest.warns(UserWarning, match=r"returned no result") as caught:
-        sample_frame(200).ta.strategy(strategy, cores=cores)
+        sample_frame(200).ta.strategy(strategy, **kwargs)
     assert [os.path.basename(w.filename) for w in caught] == [os.path.basename(__file__)]
 
 
@@ -415,7 +420,7 @@ def test_a_finished_call_does_not_clear_another_threads_guard(executor, monkeypa
     """
     import threading
 
-    both_inside = threading.Barrier(2, timeout=60)
+    both_inside = threading.Barrier(2, timeout=30)
     first_has_left = threading.Event()
     marker_after = []
     original = ta.core.AnalysisIndicators._run_stages
@@ -425,7 +430,7 @@ def test_a_finished_call_does_not_clear_another_threads_guard(executor, monkeypa
         both_inside.wait()
         if self._df.attrs.get("_role") == "second":
             # The other call has returned and run its finally by now.
-            first_has_left.wait(timeout=60)
+            first_has_left.wait(timeout=30)
             marker_after.append(os.environ.get(ta.core._STRATEGY_GUARD_ENV))
         return result
 
@@ -442,7 +447,7 @@ def test_a_finished_call_does_not_clear_another_threads_guard(executor, monkeypa
     for thread in threads:
         thread.start()
     for thread in threads:
-        thread.join(timeout=90)
+        thread.join(timeout=45)
 
     assert marker_after == [str(os.getpid())], "the second call lost its guard when the first finished"
     assert os.environ.get(ta.core._STRATEGY_GUARD_ENV) is None
