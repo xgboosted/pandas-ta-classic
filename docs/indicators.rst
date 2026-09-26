@@ -138,7 +138,7 @@ Candlestick patterns for identifying market sentiment and potential reversals.
 The **category count is 5** because dynamic discovery tracks callable indicator entries,
 while the **62 native CDL patterns** are selectable names handled by ``cdl_pattern()``.
 
-All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib fallback → warning**. Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
+All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib → ``ImportError``** (an unknown name raises ``ValueError``). Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
 
 .. code-block:: python
 

@@ -1,3 +1,4 @@
+import inspect
 import warnings
 from unittest import TestCase
 
@@ -633,9 +634,10 @@ class TestOverlap(TestCase):
             with self.subTest(name=name):
                 fn = getattr(pandas_ta, name)
                 self.assertFalse(fn(close, 10, asc=False).equals(fn(close, 10)))
-        for name in ("pwma", "swma"):  # symmetric weights: asc cannot change the result
+        for name in ("pwma", "swma"):  # symmetric weights: asc was removed, a strategy-wide one is ignored
             with self.subTest(name=name):
                 fn = getattr(pandas_ta, name)
+                self.assertNotIn("asc", inspect.signature(fn).parameters)
                 assert_series_equal(fn(close, 10, asc=False), fn(close, 10))
 
     def test_wma(self):

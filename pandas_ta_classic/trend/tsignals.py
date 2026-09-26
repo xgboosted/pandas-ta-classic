@@ -41,6 +41,9 @@ def tsignals(
     # a negative shift would move entries/exits onto earlier bars (look-ahead)
     trade_offset = _pos_int(trade_offset, 0, "trade_offset", gt=None, ge=0)
     offset = get_offset(offset)
+    # A strategy-wide drift (df.ta.strategy(..., drift=N)) has no meaning here: the
+    # parameter was removed in 0.9.0. Drop it rather than forward it to apply_fill.
+    kwargs.pop("drift", None)
 
     # Calculate Result
     trends = trend.fillna(0).astype(int)

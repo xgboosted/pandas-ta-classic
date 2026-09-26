@@ -49,7 +49,7 @@ We welcome contributions from the community! This document provides guidelines a
  uv pip install -e ".[docs]"         # Documentation dependencies
  uv pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  uv pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
- uv pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt
+ uv pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  uv pip install -e ".[performance]"  # Numba acceleration
  ```
  
@@ -64,7 +64,7 @@ We welcome contributions from the community! This document provides guidelines a
  pip install -e ".[docs]"         # Documentation dependencies
  pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
- pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt
+ pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  pip install -e ".[performance]"  # Numba acceleration
  ```
 
@@ -301,7 +301,7 @@ Versions are managed automatically via [setuptools-scm](https://github.com/pypa/
   git clone https://github.com/xgboosted/pandas-ta-classic.git
   ```
 
-**Troubleshooting:** If `import pandas_ta_classic` shows version `0.0.0`, fetch missing tags:
+**Troubleshooting:** If `import pandas_ta_classic` shows a version such as `0.1.devN`, the clone has no tags; fetch them:
 ```bash
 git fetch --tags
 pip install -e ".[dev]"  # reinstall to regenerate _version.py

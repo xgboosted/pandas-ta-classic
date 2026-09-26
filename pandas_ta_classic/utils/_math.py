@@ -59,13 +59,16 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     return tuple(results)
 
 
-def combination(*, n: int = 1, r: int = 0, repetition: bool = False, multichoose: bool = False) -> int:
-    """nCr combinatorics — wraps math.comb. ``multichoose`` is an alias for ``repetition``."""
+def combination(*, n: int = 1, r: int = 0, repetition: bool = False) -> int:
+    """nCr combinatorics — wraps math.comb.
+
+    Note: the ``multichoose`` alias of ``repetition`` was removed in 0.9.0;
+    passing it raises TypeError.
+    """
     n = _pos_int(n, 1, "n", gt=None, ge=0)
     r = _pos_int(r, 0, "r", gt=None, ge=0)
     repetition = _bool_param(repetition, False, "repetition")
-    multichoose = _bool_param(multichoose, False, "multichoose")
-    if repetition or multichoose:
+    if repetition:
         return comb(n + r - 1, r) if n + r > 0 else 1  # choosing 0 of 0 kinds: one way
     return comb(n, r)
 

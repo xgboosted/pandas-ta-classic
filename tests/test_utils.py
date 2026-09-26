@@ -127,9 +127,9 @@ class TestUtilities(TestCase):
 
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=False), 210)
         self.assertEqual(self.utils.combination(n=10, r=4, repetition=True), 715)
-        # multichoose is the upstream alias for repetition; it was silently ignored (210)
-        self.assertEqual(self.utils.combination(n=10, r=4, multichoose=True), 715)
-        self.assertEqual(self.utils.combination(n=10, r=4, multichoose=False), 210)
+        # the multichoose alias of repetition was removed in 0.9.0
+        with self.assertRaisesRegex(TypeError, "multichoose"):
+            self.utils.combination(n=10, r=4, multichoose=True)
         with self.assertRaisesRegex(TypeError, r"unexpected keyword argument 'repetiton'"):
             self.utils.combination(n=10, r=4, repetiton=True)
 

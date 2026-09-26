@@ -162,6 +162,13 @@ def test_missing_dependency_is_not_reported_as_a_missing_indicator(monkeypatch):
     with pytest.raises(AttributeError):
         ta.__getattr__("zlma")
 
+    def missing_internal_module(name):
+        raise ModuleNotFoundError("No module named 'pandas_ta_classic.utils._gone'", name="pandas_ta_classic.utils._gone")
+
+    monkeypatch.setattr(loader, "_find_indicator_func", missing_internal_module)
+    with pytest.raises(ModuleNotFoundError, match="_gone"):
+        ta.__getattr__("zlma")  # a broken import inside the module is not a missing indicator
+
 
 def test_lazy_subpackage_does_not_hide_a_missing_dependency(monkeypatch):
     overlap = sys.modules["pandas_ta_classic.overlap"]

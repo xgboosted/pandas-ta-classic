@@ -370,7 +370,6 @@ def test_signature_bool_rejects_non_bool(name, param, frame):
     ("call", "message"),
     [
         (lambda: ta.utils.combination(n=5, r=2, repetition=1), r"combination\(\) repetition must be True or False"),
-        (lambda: ta.utils.combination(n=5, r=2, multichoose="yes"), r"combination\(\) multichoose must be True or False"),
         (lambda: ta.utils.fibonacci(n=5, zero=1), r"fibonacci\(\) zero must be True or False"),
         (lambda: ta.utils.fibonacci(n=5, weighted="no"), r"fibonacci\(\) weighted must be True or False"),
         (lambda: ta.utils.pascals_triangle(n=4, inverse=1), r"pascals_triangle\(\) inverse must be True or False"),

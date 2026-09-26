@@ -45,6 +45,9 @@ def kst(
     _length = max(roc1, roc2, roc3, roc4, sma1, sma2, sma3, sma4, signal)
     close = verify_series(close, _length)
     offset = get_offset(offset)
+    # A strategy-wide drift (df.ta.strategy(..., drift=N)) has no meaning here: the
+    # parameter was removed in 0.9.0. Drop it rather than forward it to apply_fill.
+    kwargs.pop("drift", None)
 
     if close is None:
         return None
