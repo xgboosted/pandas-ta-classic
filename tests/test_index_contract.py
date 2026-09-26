@@ -67,8 +67,7 @@ _EXEMPT = {
 }
 
 
-@pytest.fixture(scope="module")
-def frame() -> dict[str, pd.Series]:
+def _build_frame() -> dict[str, pd.Series]:
     """A deterministic OHLCV frame long enough for every default window."""
     rng = np.random.default_rng(0)
     base = 100 + np.cumsum(rng.normal(0, 1, _N_ROWS))
@@ -90,6 +89,12 @@ def frame() -> dict[str, pd.Series]:
         "signal": close,
         "source": close,
     }
+
+
+@pytest.fixture(scope="module")
+def frame() -> dict[str, pd.Series]:
+    """The shared frame for the read-only sweeps."""
+    return _build_frame()
 
 
 def _indicator_names() -> list[str]:
@@ -137,6 +142,55 @@ def test_result_keeps_the_input_index(name: str, frame: dict[str, pd.Series]) ->
         assert isinstance(part, (pd.Series, pd.DataFrame)), f"{name} returned {type(part).__name__}"
         assert len(part) == _N_ROWS, f"{name} returned {len(part)} rows for {_N_ROWS} of input -- warmup bars must be NaN, not dropped"
         assert part.index.equals(expected), f"{name} replaced the input index (got {type(part.index).__name__})"
+
+
+def _input_state(series: pd.Series) -> dict:
+    """Everything about a caller's Series an indicator must leave alone."""
+    index = series.index
+    return {
+        "index_id": id(index),
+        "freq": getattr(index, "freq", None),
+        "index_values": index.to_numpy(copy=True),
+        "index_name": index.name,
+        "name": series.name,
+        "dtype": series.dtype,
+        "values": series.to_numpy(copy=True),
+    }
+
+
+@pytest.mark.parametrize("name", _indicator_names())
+def test_call_leaves_its_inputs_untouched(name: str) -> None:
+    """An indicator reads its inputs; it never writes to them.
+
+    ``nvi``, ``pvi`` and ``vp`` used to select a subset with a boolean mask
+    (``signed_volume[signed_volume < 0]``) and multiply it back against a
+    full-length Series. Realigning the subset rebuilds the index, and pandas
+    clears the frequency on the *shared* index object, so ``df.ta.nvi()``
+    unset ``df.index.freq`` on the caller's own frame -- with ``append=False``,
+    from a call that returns its result.
+
+    ``index.equals()`` ignores ``freq``, so the output sweep above cannot see
+    this. Each case gets a frame of its own: one offender must not decide
+    whether the next indicator in the sweep looks clean.
+    """
+    frame = _build_frame()
+    func = getattr(ta, name)
+    passed = {param: frame[param] for param in inspect.signature(func).parameters if param in _SERIES_PARAMS}
+    passed.update({key: value for key, value in _extra_kwargs(name, frame).items() if isinstance(value, pd.Series)})
+    before = {param: _input_state(series) for param, series in passed.items()}
+
+    _results(name, frame)
+
+    for param, series in passed.items():
+        after = _input_state(series)
+        expected = before[param]
+        assert after["freq"] == expected["freq"], f"{name}() cleared {param}.index.freq on the caller's index ({expected['freq']} -> {after['freq']})"
+        assert after["index_id"] == expected["index_id"], f"{name}() replaced the index object of its {param} input"
+        np.testing.assert_array_equal(after["index_values"], expected["index_values"], err_msg=f"{name}() rewrote {param}'s index labels")
+        assert after["index_name"] == expected["index_name"], f"{name}() renamed {param}'s index"
+        assert after["name"] == expected["name"], f"{name}() renamed its {param} input"
+        assert after["dtype"] == expected["dtype"], f"{name}() changed the dtype of its {param} input"
+        np.testing.assert_array_equal(after["values"], expected["values"], err_msg=f"{name}() rewrote the values of its {param} input")
 
 
 def test_exempt_indicators_still_exist() -> None:
