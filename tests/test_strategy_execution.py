@@ -248,19 +248,22 @@ def test_unknown_indicator_in_a_custom_strategy_names_the_entry():
 
 
 def test_too_few_col_names_raises():
-    """bbands with one col_name added no column at all, and said nothing."""
+    """bbands with one col_name added no column at all, and said nothing.
+
+    Any count that does not match raises (too many used to truncate silently).
+    """
     df = sample_frame(200)
     strategy = ta.Strategy("S", [{"kind": "bbands", "length": 20, "col_names": ("BBL",)}])
-    with pytest.raises(ValueError, match=r"col_names has 1 name\(s\) for \d+ columns"):
+    with pytest.raises(ValueError, match=r"col_names has 1 name\(s\) for \d+ column\(s\)"):
         df.ta.strategy(strategy, cores=0)
 
 
 def test_exclude_must_be_a_list_of_names():
     """exclude='rsi' extended the exclusion list by 'r', 's', 'i' -- that is, nothing."""
     df = sample_frame(200)
-    with pytest.raises(TypeError, match=r"strategy\(\) exclude must be a list of indicator names, got str"):
+    with pytest.raises(TypeError, match=r"strategy\(\) exclude must be a list of indicator names, got 'rsi'"):
         df.ta.strategy("momentum", exclude="rsi", cores=0)
-    with pytest.raises(TypeError, match=r"strategy\(\) exclude must be a list of indicator names, got list"):
+    with pytest.raises(TypeError, match=r"strategy\(\) exclude must be a list of indicator names, got \['rsi', 7\]"):
         df.ta.strategy("momentum", exclude=["rsi", 7], cores=0)
 
 
@@ -272,17 +275,18 @@ def test_exclude_on_a_custom_strategy_raises():
         df.ta.strategy(strategy, exclude=["rsi"], cores=0)
 
 
-@pytest.mark.parametrize("retired", ["chunksize", "ordered"])
-def test_retired_pool_keywords_warn_rather_than_pass_through(retired):
+@pytest.mark.parametrize("removed", ["chunksize", "ordered"])
+def test_removed_pool_keywords_raise_rather_than_pass_through(removed):
     """strategy() broadcasts unknown keywords, so these need an explicit check.
 
-    Both were documented, so they get a deprecation cycle rather than simply
-    disappearing into **kwargs and reaching the indicators unnoticed.
+    0.9.0 ships no deprecation step: both were removed with the Pool they
+    steered, and would otherwise disappear into **kwargs and reach the
+    indicators unnoticed.
     """
     df = sample_frame(200)
-    with pytest.warns(DeprecationWarning, match=rf"strategy\(\) {retired} is not used and has no effect"):
-        df.ta.strategy("momentum", cores=0, **{retired: 4})
-    assert "RSI_14" in df.columns  # ... and the run still happened
+    with pytest.raises(TypeError, match=rf"strategy\(\) no longer accepts '{removed}'"):
+        df.ta.strategy("momentum", cores=0, **{removed: 4})
+    assert "RSI_14" not in df.columns  # raised before anything ran
 
 
 def test_non_strategy_argument_raises():
@@ -292,11 +296,14 @@ def test_non_strategy_argument_raises():
 
 
 @pytest.mark.parametrize("cores", [0, 2])
-def test_indicator_reading_an_unknown_column_warns(cores):
-    """A missing input column dropped the indicator silently, serially and in a worker."""
+def test_indicator_reading_an_unknown_column_raises(cores):
+    """A missing input column dropped the indicator silently, serially and in a worker.
+
+    It raises KeyError naming the column, with the same type on both paths.
+    """
     df = sample_frame(200)
     strategy = ta.Strategy("Typo", [{"kind": "ema", "close": "NOT_A_COLUMN", "length": 5}])
-    with pytest.warns(UserWarning, match=r"ema\(\) returned no result.*'NOT_A_COLUMN'"):
+    with pytest.raises(KeyError, match=r"'NOT_A_COLUMN' not found"):
         df.ta.strategy(strategy, cores=cores)
 
 
@@ -378,6 +385,7 @@ def test_broken_pool_points_at_the_main_guard(monkeypatch):
     assert isinstance(raised.value.__cause__, BrokenProcessPool)
 
 
+@pytest.mark.filterwarnings(r"ignore:tos_stdevall\(\) has no causal mode:UserWarning")
 @pytest.mark.parametrize("mode", ["serial", "cores", "executor"])
 def test_no_result_warning_blames_the_callers_line(mode, executor):
     """stacklevel was fixed at 4, but the parallel path is one frame deeper.
@@ -386,11 +394,13 @@ def test_no_result_warning_blames_the_callers_line(mode, executor):
     the same _run_stages -> _run_stage frames, so a depth tuned to one of them
     should hold for the other, and this is what says so.
     """
-    strategy = ta.Strategy("Typo", [{"kind": "ema", "close": "NOT_A_COLUMN", "length": 5}])
+    # tos_stdevall(lookahead=False) declines and returns None; a missing column raises instead.
+    strategy = ta.Strategy("Declines", [{"kind": "tos_stdevall", "lookahead": False}])
     kwargs = {"executor": executor} if mode == "executor" else {"cores": 2 if mode == "cores" else 0}
     with pytest.warns(UserWarning, match=r"returned no result") as caught:
         sample_frame(200).ta.strategy(strategy, **kwargs)
-    assert [os.path.basename(w.filename) for w in caught] == [os.path.basename(__file__)]
+    no_result = [w for w in caught if "returned no result" in str(w.message)]
+    assert [os.path.basename(w.filename) for w in no_result] == [os.path.basename(__file__)]
 
 
 def test_executor_path_also_sets_the_recursion_guard(executor, monkeypatch):

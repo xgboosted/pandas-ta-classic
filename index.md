@@ -15,7 +15,7 @@ title: Pandas TA Classic - Technical Analysis Library
 * **62 native candlestick patterns** — all natively implemented, no TA-Lib required
 * **284 total unique indicators and patterns**
 * Dynamic category discovery - automatically detects available indicators
-* **Optional TA-Lib Acceleration**: Core indicators auto-use TA-Lib when installed; pass `talib=False` to force native
+* **Optional TA-Lib Acceleration**: Core indicators use native implementations by default; pass `talib=True` to use TA-Lib when it is installed
 * **Optional Oracle Libraries**: TA-Lib (acceleration backend + oracle) and tulipy (oracle only) are optional and skip gracefully when not installed
 * Supports both standalone and DataFrame extension usage
 * **Fluent API chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd()``

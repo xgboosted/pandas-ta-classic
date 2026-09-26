@@ -24,7 +24,7 @@ def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def ssf(
     close: Series,
     length: int | None = None,

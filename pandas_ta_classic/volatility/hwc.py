@@ -71,7 +71,7 @@ def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def hwc(
     close: Series,
     na: float | None = None,

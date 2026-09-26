@@ -27,7 +27,7 @@ def _hwma_loop(c_arr, m, na, nb, nc):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def hwma(
     close: Series,
     na: float | None = None,

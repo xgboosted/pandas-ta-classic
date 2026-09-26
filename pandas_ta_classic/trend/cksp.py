@@ -22,7 +22,8 @@ def cksp(
 ) -> DataFrame | None:
     """Indicator: Chande Kroll Stop (CKSP)"""
     # Validate Arguments
-    # TV defaults=(10,1,9), book defaults = (10,3,20)
+    # TV defaults=(10,1,9), book defaults = (10,3,20); tvmode decides which, so validate it first
+    tvmode = _bool_param(tvmode, True, "tvmode")
     p = _pos_int(p, 10, "p")
     x = _pos_float(x, 1 if tvmode is True else 3, "x")
     q = _pos_int(q, 9 if tvmode is True else 20, "q")
@@ -35,7 +36,6 @@ def cksp(
         return None
 
     offset = get_offset(offset)
-    tvmode = _bool_param(tvmode, True, "tvmode")
     mamode = "rma" if tvmode is True else "sma"
 
     # Calculate Result
@@ -91,7 +91,7 @@ Calculation:
     LS0 = high.rolling(p).max() - x * ATR(length=p)
     LS = LS0.rolling(q).max()
 
-    SS0 = high.rolling(p).min() + x * ATR(length=p)
+    SS0 = low.rolling(p).min() + x * ATR(length=p)
     SS = SS0.rolling(q).min()
 
 Args:

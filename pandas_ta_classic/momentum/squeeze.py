@@ -251,7 +251,8 @@ Args:
 
 Kwargs:
     tr (value, optional): Use True Range for Keltner Channels. Default: True
-    asint (value, optional): Use integers instead of bool. Default: True
+    asint (value, optional): Flags as numbers (1.0/0.0) instead of bool; NaN on
+        warm-up bars, where the bands do not exist yet. Default: True
     mamode (value, optional): Which MA to use. Default: "sma"
     lazybear (value, optional): Use LazyBear's TradingView implementation.
         Default: False
@@ -261,6 +262,6 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: SQZ, SQZ_ON, SQZ_OFF, NO_SQZ columns by default. More
+    pd.DataFrame: SQZ, SQZ_ON, SQZ_OFF, SQZ_NO columns by default. More
         detailed columns if 'detailed' kwarg is True.
 """

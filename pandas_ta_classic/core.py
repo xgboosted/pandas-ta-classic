@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 from collections.abc import Hashable, Iterator
@@ -15,7 +16,13 @@ from warnings import simplefilter, warn
 import pandas as pd
 from pandas.core.base import PandasObject
 
-from pandas_ta_classic._indicator_loader import _COLUMN_KWARG_KEYS, _DEFAULT_COLUMN_NAMES, _find_indicator_func, _make_ta_wrapper
+from pandas_ta_classic._indicator_loader import (
+    _COLUMN_KWARG_KEYS,
+    _COLUMN_PARAM_TO_COL_KEY,
+    _DEFAULT_COLUMN_NAMES,
+    _find_indicator_func,
+    _make_ta_wrapper,
+)
 from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
 from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
 from pandas_ta_classic.utils._core import _bool_param, _pos_int
@@ -175,14 +182,10 @@ CommonStrategy = Strategy(
 def _append_dataframe(df, result, kwargs):
     """Append a DataFrame *result* to *df*, honouring optional col_names in *kwargs*."""
     if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple):
-        names = kwargs["col_names"]
-        if len(names) < len(result.columns):
-            # This logged through the package NullHandler and returned, so
-            # bbands with one col_name added no column at all rather than three.
-            raise ValueError(
-                f"col_names has {len(names)} name(s) for {len(result.columns)} columns ({', '.join(str(c) for c in result.columns)}): {names!r}"
-            )
-        for col, ind_name in zip(result.columns, names):
+        if len(kwargs["col_names"]) != len(result.columns):
+            # too few used to be logged and nothing appended; extras were ignored
+            raise ValueError(f"col_names has {len(kwargs['col_names'])} name(s) for {len(result.columns)} column(s): {list(result.columns)}")
+        for col, ind_name in zip(result.columns, kwargs["col_names"]):
             df[ind_name] = result.loc[:, col]
     else:
         for i, column in enumerate(result.columns):
@@ -264,7 +267,7 @@ class AnalysisIndicators(PandasObject):
     If you do not want to use a DataFrame Extension, just call it normally.
     >>> sma10 = ta.sma(df["Close"]) # Default length=10
     >>> sma50 = ta.sma(df["Close"], length=50)
-    >>> ichimoku = ta.ichimoku(df["High"], df["Low"], df["Close"], as_dataframe=True)
+    >>> ichimoku = ta.ichimoku(df["High"], df["Low"], df["Close"])
 
     Args:
         kind (str, optional): Default: None. Kind is the 'name' of the indicator.
@@ -348,44 +351,38 @@ class AnalysisIndicators(PandasObject):
         **kwargs,
     ):
         show_version = _bool_param(show_version, False, "show_version")
-        version = kwargs.pop("version", None)
-        if version is not None:
-            warn(
-                "df.ta(version=...) is deprecated and will be removed in the next breaking release; use show_version=... instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            version_val = _bool_param(version, False, "version")
-            show_version = show_version or version_val
+        timed = _bool_param(timed, False, "timed")
+        if "version" in kwargs:
+            # the alias was removed in 0.9.0; the indicator's **kwargs would swallow it
+            raise TypeError("df.ta() no longer accepts 'version': use show_version=True")
         if show_version:
             logger.info(f"Pandas TA - Technical Analysis Indicators - v{self.version}")
-        if isinstance(kind, str):
-            kind = kind.lower()
-            fn = getattr(self, kind, None)
-            if fn is None:
-                logger.error("Indicator '%s' not found.", kind)
-                self.help()
-                return None
-            if not callable(fn):
-                logger.error("'%s' is not a callable indicator.", kind)
-                return None
+        if kind is None:
+            # "General Help": list the indicators (this called a missing help() method)
+            return self.indicators()
+        if not isinstance(kind, str):
+            raise TypeError(f"df.ta() kind must be an indicator name, got {kind!r}")
+        kind = kind.lower()
+        fn = getattr(self, kind, None)
+        if fn is None or not callable(fn):
+            # an unknown name used to log an error and return None
+            raise ValueError(f"df.ta() kind={kind!r} is not an indicator; see df.ta.indicators()")
 
-            if timed:
-                stime = perf_counter()
+        if timed:
+            stime = perf_counter()
 
-            # Run the indicator
-            result = fn(**kwargs)
-            self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)  # Save when it completed it's run
+        # Run the indicator
+        result = fn(**kwargs)
+        self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)  # Save when it completed it's run
 
-            if timed:
-                if result is not None:
-                    result.timed = final_time(stime)
-                    logger.info("%s: %s", kind, result.timed)
-                else:
-                    logger.warning("%s: returned None, timed run produced no result", kind)
+        if timed:
+            if result is not None:
+                result.timed = final_time(stime)
+                logger.info("%s: %s", kind, result.timed)
+            else:
+                logger.warning("%s: returned None, timed run produced no result", kind)
 
-            return result
-        self.help()
+        return result
 
     # Public Get/Set DataFrame Properties
     @property
@@ -472,8 +469,13 @@ class AnalysisIndicators(PandasObject):
 
     @property
     def to_utc(self) -> None:
-        """Sets the DataFrame index to UTC format"""
-        self._df = to_utc(self._df)
+        """Sets the DataFrame's index to UTC (localises a naive index, converts an aware one).
+
+        This changes ``df`` itself, as documented. It had stopped doing so when
+        ``ta.to_utc()`` began returning a copy: it rebound the accessor's own
+        reference instead, which pandas 3 discards immediately.
+        """
+        self._df.index = to_utc(self._df).index
 
     @property
     def version(self) -> str:
@@ -535,7 +537,7 @@ class AnalysisIndicators(PandasObject):
 
     def _append(self, result=None, **kwargs) -> None:
         """Appends a Pandas Series or DataFrame columns to self._df."""
-        if not kwargs.get("append"):
+        if not _bool_param(kwargs.get("append"), False, "append"):
             return
         df = self._df
         if df is None or result is None:
@@ -546,7 +548,9 @@ class AnalysisIndicators(PandasObject):
         if isinstance(result, pd.DataFrame):
             _append_dataframe(df, result, kwargs)
         else:
-            ind_name = kwargs["col_names"][0] if "col_names" in kwargs and isinstance(kwargs["col_names"], tuple) else result.name
+            if "col_names" in kwargs and len(kwargs["col_names"]) != 1:
+                raise ValueError(f"col_names has {len(kwargs['col_names'])} names for one column ({result.name})")
+            ind_name = kwargs["col_names"][0] if "col_names" in kwargs else result.name
             df[ind_name] = result
 
     def _default_column(self, name: str) -> str:
@@ -573,9 +577,10 @@ class AnalysisIndicators(PandasObject):
         # Explicitly passing a pd.Series to override default.
         if isinstance(series, pd.Series):
             return series
-        # Apply default if no series nor a default.
+        # None means "not provided" (an optional input). It used to return the
+        # adjusted column, so open=None could read adjusted close as open.
         if series is None:
-            return df[self.adjusted] if self.adjusted is not None else None
+            return None
         # Ok.  So it's a str.
         if isinstance(series, str):
             # Return the df column since it's in there.
@@ -589,8 +594,7 @@ class AnalysisIndicators(PandasObject):
             if matches:
                 return df[matches[0]]
             cols = ", ".join(str(c) for c in df.columns)
-            logger.warning(f"[X] Column '{series}' not found. Available columns: {cols}")
-            return None
+            raise KeyError(f"Column {series!r} not found. Available columns: {cols}")
         # Anything else (a numpy array, a list, a DataFrame) is passed through
         # unchanged so verify_series() can warn about it; returning None here
         # made df.ta.sma(close=df.close.values) a silent no-op.
@@ -828,6 +832,30 @@ class AnalysisIndicators(PandasObject):
             return name, mode
         raise TypeError(f"strategy() expected a category name or a Strategy, got {type(arg).__name__}")
 
+    def _validate_exclude(self, exclude, caller: str) -> list:
+        """Return *exclude* as a list of known indicator names; raise for anything else."""
+        if not isinstance(exclude, (list, tuple, set)) or not all(isinstance(x, str) for x in exclude):
+            raise TypeError(f"{caller}() exclude must be a list of indicator names, got {exclude!r}")
+        unknown = sorted(set(exclude) - {i for names in Category.values() for i in names})
+        if unknown:
+            raise ValueError(f"{caller}() exclude has unknown indicator name(s): {unknown}")
+        return list(exclude)
+
+    def _missing_required_column(self, name: str, kwargs: dict) -> bool:
+        """True when indicator *name* needs a column (no default) that the DataFrame does not have."""
+        func = _find_indicator_func(name)
+        if func is None:
+            raise ValueError(f"unknown indicator {name!r}")
+        sig = inspect.signature(func)
+        for param, spec in sig.parameters.items():
+            col_key = _COLUMN_PARAM_TO_COL_KEY.get(param)
+            if col_key is None or spec.default is not inspect.Parameter.empty:
+                continue
+            column = kwargs.get(col_key, self._default_column(col_key))
+            if isinstance(column, str) and self._matching_column(column) is None:
+                return True
+        return False
+
     # Public DataFrame Methods
     def indicators(self, **kwargs):
         """List of Indicators
@@ -841,7 +869,7 @@ class AnalysisIndicators(PandasObject):
         Returns:
             Prints the list of indicators. If as_list=True, then a list.
         """
-        as_list = kwargs.setdefault("as_list", False)
+        as_list = _bool_param(kwargs.get("as_list"), False, "as_list")
         # Public non-indicator methods
         helper_methods = [
             "chain",
@@ -875,9 +903,8 @@ class AnalysisIndicators(PandasObject):
         removed = helper_methods + ta_properties
 
         # Add user excluded methods to be removed
-        user_excluded = kwargs.setdefault("exclude", [])
-        if isinstance(user_excluded, list) and len(user_excluded) > 0:
-            removed += user_excluded
+        # a tuple or a misspelled name used to be ignored silently
+        removed += self._validate_exclude(kwargs.get("exclude", []), "indicators")
 
         # Remove the unwanted indicators (only if present)
         for x in removed:
@@ -905,15 +932,11 @@ class AnalysisIndicators(PandasObject):
         Future implementations will allow more specific indicator generation
         with possibly as json, yaml config file or an sqlite3 table.
 
-
         Runs serially by default. Parallel execution is opt-in and worth it from
         roughly 100,000 rows per frame upwards; below that, starting worker
         processes costs more than the indicators do. See docs/strategies.rst.
 
         Kwargs:
-            chunksize (int): Deprecated and unused: it sized the batches of the
-                Multiprocessing Pool that stages replace. Passing it emits a
-                DeprecationWarning. Default: None
             cores (int): Run this call on that many worker processes, 0 for
                 serially. Capped at cpu_count(), like the df.ta.cores setter.
                 Default: df.ta.cores, itself 0 unless set.
@@ -921,21 +944,23 @@ class AnalysisIndicators(PandasObject):
                 caller owns and reuses, which avoids paying for process start-up
                 per call. Takes precedence over 'cores'. Default: None
             exclude (list): List of indicator names to leave out of an "all" or
-                category run. Some are excluded by default for various reasons;
-                they require additional sources, performance (td_seq), not a
-                ohlcv chart (vp) etc. A custom Strategy lists its own entries,
-                so passing 'exclude' with one raises.
+                category run; an unknown name raises. Some are excluded by
+                default for various reasons; they require additional sources,
+                performance (td_seq), not a ohlcv chart (vp) etc. A custom
+                Strategy lists its own entries, so passing 'exclude' with one
+                raises.
             name (str): Select all indicators or indicators by
                 Category such as: "candles", "cycles", "momentum", "overlap",
                 "performance", "statistics", "trend", "volatility", "volume", or
                 "all". Default: "all"
-            ordered (bool): Deprecated and unused: results are always appended
-                in the order the entries are listed. Passing it emits a
-                DeprecationWarning. Default: None
             timed (bool): Show the process time of the strategy().
                 Default: False
             verbose (bool): Provide some additional insight on the progress of
                 the strategy() execution. Default: False
+
+        Note: ``chunksize`` and ``ordered`` steered the Multiprocessing Pool that
+        ordered stages replaced; they were removed in 0.9.0 and passing either
+        raises TypeError.
         """
         # If True, it returns the resultant DataFrame. Default: False
         returns = _bool_param(kwargs.pop("returns", None), False, "returns")
@@ -950,27 +975,18 @@ class AnalysisIndicators(PandasObject):
         # not have two limits, or strategy(cores=10000) opens 10000 processes
         # where df.ta.cores = 10000 gives cpu_count().
         cores = min(_pos_int(kwargs.pop("cores", None), self.cores, "cores", gt=None, ge=0), cpu_count())
-        # strategy() broadcasts unknown keywords to the indicators, so a
-        # keyword that lost its meaning would otherwise pass through in silence.
-        for retired in ("chunksize", "ordered"):
-            if kwargs.pop(retired, None) is not None:
-                warn(
-                    f"strategy() {retired} is not used and has no effect; it is deprecated and will be "
-                    "removed in the next breaking release. Remove the argument.",
-                    DeprecationWarning,
-                    stacklevel=2,
+        # Removed in 0.9.0 with the Pool they steered. strategy() broadcasts
+        # unknown keywords to the indicators, whose **kwargs would swallow them.
+        for removed in ("chunksize", "ordered"):
+            if removed in kwargs:
+                raise TypeError(
+                    f"strategy() no longer accepts {removed!r}: entries run in ordered stages, serially unless cores= or executor= "
+                    "is given; remove the argument"
                 )
 
         # Initialize
         initial_column_count = len(self._df.columns)
         excluded = [
-            "above",
-            "above_value",
-            "below",
-            "below_value",
-            "cross",
-            "cross_value",
-            # "data", # reserved
             "long_run",
             "mavp",  # Requires a per-bar 'periods' Series
             "short_run",
@@ -998,15 +1014,14 @@ class AnalysisIndicators(PandasObject):
             excluded.append("vwap")  # anchors by calendar period; raises without a DatetimeIndex
         user_excluded = kwargs.pop("exclude", None)
         if user_excluded is not None:
-            # A string extended the list character by character, so
-            # exclude="rsi" removed 'r', 's' and 'i' -- that is, nothing.
-            if not isinstance(user_excluded, (list, tuple)) or not all(isinstance(item, str) for item in user_excluded):
-                raise TypeError(f"strategy() exclude must be a list of indicator names, got {type(user_excluded).__name__} {user_excluded!r}")
+            # A string extended the list character by character, so exclude="rsi"
+            # removed 'r', 's' and 'i' -- that is, nothing; an unknown name was ignored.
+            user_excluded = self._validate_exclude(user_excluded, "strategy")
             if mode["custom"]:
                 # It was popped and dropped here, so it silently did nothing.
                 # A custom Strategy lists its entries, so leave them out there.
                 raise ValueError(f"strategy() exclude does not apply to the custom Strategy {name!r}; leave the entries out of its 'ta' list instead")
-            excluded += list(user_excluded)
+            excluded += user_excluded
 
         # Collect the indicators, remove excluded or include kwarg["append"].
         # Work on copies: `Category` lists and the caller's Strategy.ta are shared
@@ -1019,6 +1034,13 @@ class AnalysisIndicators(PandasObject):
             ta = [{**kwds, "append": True} for kwds in args[0].ta]
         else:  # mode["all"]; _resolve_strategy_args() raises on anything else
             ta = self.indicators(as_list=True, exclude=excluded)
+
+        if mode["all"] or mode["category"]:
+            # Skip, and report, indicators needing a column this DataFrame does
+            # not have (volume on OHLC-only data): each would raise KeyError.
+            unavailable = [x for x in ta if self._missing_required_column(x, kwargs)]
+            ta = [x for x in ta if x not in unavailable]
+            excluded += unavailable
 
         verbose = _bool_param(kwargs.pop("verbose", None), False, "verbose")
         if verbose:
@@ -1107,44 +1129,3 @@ class AnalysisIndicators(PandasObject):
         if name not in _MATH_ALIASES:
             setattr(type(self), name, wrapper)
         return wrapper.__get__(self, type(self))
-
-    # ichimoku is the only explicit wrapper left: the underlying function still
-    # supports a deprecated (visible, span) tuple return. This wrapper pins the
-    # single-DataFrame return (as_dataframe=True) and forwards append_span, so
-    # _post_process can handle it like any other indicator.
-    def ichimoku(
-        self,
-        tenkan=None,
-        kijun=None,
-        senkou=None,
-        include_chikou=True,
-        append_span: bool = False,
-        offset=None,
-        **kwargs,
-    ):
-        """Ichimoku Kinkō Hyō.
-
-        Returns a single DataFrame of the visible period columns. Pass
-        append_span=True to also append the future-dated span rows (projected
-        Senkou A/B for the next kijun periods).
-        """
-        from pandas_ta_classic.overlap.ichimoku import ichimoku as _ichimoku
-
-        high = self._get_column(kwargs.pop("high", "high"))
-        low = self._get_column(kwargs.pop("low", "low"))
-        close_col = kwargs.pop("close") if "close" in kwargs else self._default_column("close")
-        close = self._get_column(close_col)
-        result = _ichimoku(
-            high=high,
-            low=low,
-            close=close,
-            tenkan=tenkan,
-            kijun=kijun,
-            senkou=senkou,
-            include_chikou=include_chikou,
-            offset=offset,
-            as_dataframe=True,
-            append_span=append_span,
-            **kwargs,
-        )
-        return self._post_process(result, **kwargs)

@@ -101,9 +101,13 @@ def _make_ta_wrapper(func: Callable) -> Callable:
         # Always extract required column values from DataFrame
         for param_name in col_params_required:
             col_key = _COLUMN_PARAM_TO_COL_KEY[param_name]
-            col_val = kwargs.pop(col_key) if col_key in kwargs else self._default_column(col_key)
+            explicit = col_key in kwargs
+            col_val = kwargs.pop(col_key) if explicit else self._default_column(col_key)
             if col_val is None:
                 raise ValueError(f"'{col_key}' cannot be None; pass a Series or column name string")
+            optional = sig.parameters[param_name].default is not inspect.Parameter.empty
+            if optional and not explicit and isinstance(col_val, str) and self._matching_column(col_val) is None:
+                continue  # an optional input (cpr's volume) the frame does not have
             call_kwargs[param_name] = self._get_column(col_val)
         # Extract optional column values only when explicitly requested by user
         for param_name in col_params_optional:

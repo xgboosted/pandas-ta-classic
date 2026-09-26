@@ -11,7 +11,7 @@ from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_in
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def tos_stdevall(
     close: Series,
     length: int | None = None,

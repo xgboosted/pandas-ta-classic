@@ -87,15 +87,15 @@ def install_lazy_subpackage(
             canonical = aliases_map.get(name, name)
             try:
                 mod = importlib.import_module(f"{pkg}.{canonical}")
-                func = getattr(mod, canonical, None)
-                if func is not None and callable(func):
-                    object.__setattr__(self, name, func)
-                    return func
-            except ModuleNotFoundError:
-                pass
-            except ImportError:
-                raise
-            raise AttributeError(f"module {pkg!r} has no attribute {name!r}")
+            except ModuleNotFoundError as exc:
+                if exc.name != f"{pkg}.{canonical}":
+                    raise  # a dependency of the module is missing, not the module
+                raise AttributeError(f"module {pkg!r} has no attribute {name!r}") from exc
+            func = getattr(mod, canonical, None)
+            if func is None or not callable(func):
+                raise AttributeError(f"module {pkg!r} has no attribute {name!r}")
+            object.__setattr__(self, name, func)
+            return func
 
         def __dir__(self) -> list[str]:
             return sorted(_known_names)

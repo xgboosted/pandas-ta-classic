@@ -1,6 +1,5 @@
 # Candle Pattern (CDL_PATTERN)
 import importlib
-import logging
 import os
 from collections.abc import Sequence
 from typing import Any
@@ -12,8 +11,6 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 from pandas_ta_classic.utils._core import _number, nan_on_short_input
 
 from . import cdl_doji, cdl_inside
-
-logger = logging.getLogger(__name__)
 
 ALL_PATTERNS = [
     "2crows",
@@ -93,13 +90,10 @@ def _discover_native_patterns() -> dict:
         if mod_name in skip:
             continue
         pattern_name = mod_name[4:]  # strip cdl_
-        try:
-            mod = importlib.import_module(f".{mod_name}", package=__package__)
-            func = getattr(mod, mod_name, None)
-            if callable(func):
-                native[pattern_name] = func
-        except Exception as exc:  # noqa: BLE001 - one broken pattern module must not break importing the package
-            logger.warning("Failed to load CDL pattern '%s': %s", mod_name, exc)
+        # A broken pattern module is a bug: let it raise instead of silently
+        # dropping the pattern (it used to be logged and skipped).
+        mod = importlib.import_module(f".{mod_name}", package=__package__)
+        native[pattern_name] = getattr(mod, mod_name)
     return native
 
 
@@ -109,9 +103,6 @@ _NATIVE_PATTERNS = _discover_native_patterns()
 
 def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offset, result, tala, **kwargs):
     """Attempt to compute and store one candle pattern by name."""
-    if n not in ALL_PATTERNS:
-        logger.warning("There is no candle pattern named %s available!", n)
-        return
     col_name = f"CDL_{n.upper()}"
     if n in pta_patterns:
         pattern_result = pta_patterns[n](open_, high, low, close, offset=offset, scalar=scalar, **kwargs)
@@ -129,7 +120,7 @@ def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offse
         pattern_result = apply_fill(pattern_result, **kwargs)
         result[col_name] = pattern_result
     else:
-        logger.warning("Please install TA-Lib to use %s. (pip install TA-Lib)", n)
+        raise ImportError(f"cdl_pattern() {n!r} needs TA-Lib: pip install TA-Lib")
 
 
 @nan_on_short_input
@@ -166,6 +157,10 @@ def cdl_pattern(
         name = ALL_PATTERNS
     if type(name) is str:
         name = [name]
+    # a misspelled name used to be logged and skipped, returning nothing
+    unknown = [n for n in name if n not in ALL_PATTERNS]
+    if unknown:
+        raise ValueError(f"cdl_pattern() name has unknown pattern(s): {unknown}; see ta.ALL_PATTERNS")
 
     tala: Any = None
     if Imports["talib"]:

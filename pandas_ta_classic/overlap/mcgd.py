@@ -24,7 +24,7 @@ def _mcgd_loop(c_arr, n, c, length):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def mcgd(
     close: Series,
     length: int | None = None,

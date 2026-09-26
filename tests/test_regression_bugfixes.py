@@ -33,9 +33,9 @@ Covered fixes:
                          than `length` valid values follow the first valid one;
                          fixes IndexError in 14 chained indicators (trix, tsi,
                          qqe, ppo, pvo, ...) on clean data with default args
- 21. ht_* (_hilbert)   — a single NaN in the input propagates as NaN instead of
-                         raising ValueError in int(nan) at the DCPeriod rounding;
-                         a leading NaN run is skipped, as TA-Lib does
+ 21. ht_* (_hilbert)   — a single NaN in the input no longer raises ValueError in
+                         int(nan) at the DCPeriod rounding; the missing bar reads
+                         NaN and is skipped, so later bars keep their values
  22. candle_color      — a NaN open/close yields NaN instead of raising
                          IntCastingNaNError; affects cdl_inside and cdl_pattern
  23. rma / linreg /    — short-window hardening: these three sites crashed if the
@@ -1160,7 +1160,7 @@ class TestHilbertNanInput(TestCase):
     `dc_period_int = max(int(sp + 0.5), 1)` raised "ValueError: cannot convert
     float NaN to integer" once a NaN reached the smoothed period, which a single
     NaN anywhere in the input guarantees. This contradicted the documented
-    contract that an indicator may propagate NaN but must not crash.
+    contract that an indicator must not crash on a missing bar.
     """
 
     HT_NAMES = (
@@ -1186,10 +1186,19 @@ class TestHilbertNanInput(TestCase):
                 self.assertIsNotNone(result)
                 self.assertIsInstance(result, (pd.Series, pd.DataFrame))
 
-    def test_nan_propagates_after_the_gap(self):
-        """The recursion is poisoned from the NaN onward, so output goes NaN."""
-        result = ta.ht_trendline(self.with_nan)
-        self.assertTrue(result.iloc[54:].isna().all())
+    def test_missing_bar_is_skipped(self):
+        """The NaN bar reads NaN; every other bar equals the series without it.
+
+        It used to poison the recursion, so every later bar was NaN.
+        """
+        for name in self.HT_NAMES:
+            with self.subTest(indicator=name):
+                result = getattr(ta, name)(self.with_nan)
+                result = result.to_frame() if isinstance(result, pd.Series) else result
+                without = getattr(ta, name)(self.with_nan.drop(index=50))
+                without = without.to_frame() if isinstance(without, pd.Series) else without
+                self.assertTrue(result.iloc[50].isna().all())
+                pd.testing.assert_frame_equal(result.drop(index=50), without, check_dtype=False)
 
     def test_values_before_the_gap_are_unaffected(self):
         """Bars before the NaN keep the values computed from clean input."""
@@ -1565,6 +1574,10 @@ class TestHilbertLookbackAndUndefinedBars(TestCase):
                 with self.subTest(indicator=name, prefix=prefix):
                     native = np.asarray(getattr(ta, name)(series), dtype=float).reshape(len(series), -1)
                     oracle = np.asarray(refs[name](series.to_numpy()), dtype=float).reshape(len(series), -1)
+                    # A NaN input row reads NaN; TA-Lib zero-fills it for ht_trendmode's integer output.
+                    real = series.notna().to_numpy()
+                    self.assertTrue(np.isnan(native[~real]).all())
+                    native, oracle = native[real], oracle[real]
                     np.testing.assert_array_equal(np.isnan(native), np.isnan(oracle))
                     np.testing.assert_allclose(native[~np.isnan(oracle)], oracle[~np.isnan(oracle)], rtol=1e-9, atol=1e-9)
 
@@ -1573,11 +1586,13 @@ class TestHilbertLookbackAndUndefinedBars(TestCase):
         self.assertTrue(result.iloc[:32].isna().all())
         self.assertFalse((result == 0).any())
 
-    def test_trendmode_undefined_bars_are_nan(self):
+    def test_trendmode_skips_missing_bar(self):
+        """The missing bar reads NaN, not a "cycle mode" 0; later bars keep their values."""
         gapped = self.close.copy()
         gapped.iloc[300] = np.nan
         result = ta.ht_trendmode(gapped)
-        self.assertTrue(result.iloc[301:].isna().all())
+        self.assertTrue(np.isnan(result.iloc[300]))
+        np.testing.assert_array_equal(result.drop(index=300).to_numpy(float), ta.ht_trendmode(gapped.drop(index=300)).to_numpy(float))
         self.assertTrue(result.iloc[:300].notna().all())
 
     def test_trendmode_clean_input_keeps_int_dtype(self):

@@ -82,9 +82,9 @@ class TestOverlapExtension(TestCase):
 
         data = get_sample_data()
         # append_span is a functional flag forwarded to the underlying
-        # function; it emits no DeprecationWarning.
+        # function; it emits no warning.
         with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("error")
             data.ta.ichimoku(append=True, append_span=True)
         self.assertIsInstance(data, DataFrame)
         # Span columns (ISA_9, ISB_26) should be present
@@ -98,10 +98,9 @@ class TestOverlapExtension(TestCase):
         from tests.config import get_sample_data
 
         data = get_sample_data()
-        # The accessor opts in to as_dataframe=True internally, so no
-        # DeprecationWarning reaches accessor users.
+        # 0.9.0 ships no deprecation: the accessor call emits no warning at all.
         with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("error")
             data.ta.ichimoku(append=True)
         self.assertIsInstance(data, DataFrame)
 

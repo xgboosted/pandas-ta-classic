@@ -85,8 +85,8 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
     The function (re)loads the Python file at *module_path*, looks up the
     mandatory ``<name>`` and ``<name>_method`` callables, registers the
     indicator in the appropriate category, and binds it via :func:`bind`.
-    A module without those callables is logged and skipped; a module that
-    fails to import raises ImportError.
+    A module that fails to import, or lacks either callable, raises
+    ImportError (a missing callable used to be logged and skipped).
 
     Args:
         module_path (str): Absolute path to the ``.py`` file to load.
@@ -105,21 +105,9 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
     fcn_callable = module_functions.get(module_name)
     fcn_method_callable = module_functions.get(f"{module_name}_method")
 
-    if fcn_callable is None:
-        logger.error(
-            "Unable to find a function named '%s' in the module '%s.py'.",
-            module_name,
-            module_name,
-        )
-        return
-    if fcn_method_callable is None:
-        missing_method = f"{module_name}_method"
-        logger.error(
-            "Unable to find a method function named '%s' in the module '%s.py'.",
-            missing_method,
-            module_name,
-        )
-        return
+    for required, found in ((module_name, fcn_callable), (f"{module_name}_method", fcn_method_callable)):
+        if found is None:
+            raise ImportError(f"custom indicator module '{module_path}' has no function named '{required}'")
 
     if module_name not in pandas_ta_classic.Category[dirname]:
         pandas_ta_classic.Category[dirname].append(module_name)
@@ -136,8 +124,8 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
 def import_dir(path, verbose=True):
     # ensure that the passed directory exists / is readable
     if not exists(path):
-        logger.error("Unable to read the directory '%s'.", path)
-        return
+        # a wrong path used to be logged and import nothing
+        raise FileNotFoundError(f"import_dir() path {path!r} does not exist")
 
     # list the contents of the directory
     dirs = glob(abspath(join(path, "*")))

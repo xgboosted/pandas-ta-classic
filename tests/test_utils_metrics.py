@@ -1,5 +1,4 @@
 import math
-import warnings
 from unittest import TestCase
 
 import numpy as np
@@ -111,11 +110,9 @@ class TestUtilityMetrics(TestCase):
         with self.assertRaisesRegex(ValueError, r"method must be one of"):
             pandas_ta.max_drawdown(self.close, method="bogus")
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = pandas_ta.max_drawdown(self.close, all=True)
-            self.assertIsInstance(result, dict)
-        self.assertTrue(any("deprecated" in str(x.message) for x in w))
+        # the 'all' alias of all_methods was removed in 0.9.0
+        with self.assertRaisesRegex(TypeError, "unexpected keyword argument 'all'"):
+            pandas_ta.max_drawdown(self.close, all=True)
 
     def test_optimal_leverage(self):
         result = pandas_ta.optimal_leverage(self.close)

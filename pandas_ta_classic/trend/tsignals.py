@@ -1,5 +1,4 @@
 # Trend Signals (TSIGNALS)
-import warnings
 from typing import Any
 
 from pandas import DataFrame, Series
@@ -13,22 +12,20 @@ from pandas_ta_classic.utils import (
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 
-def _warn_trend_reset(indicator: str, trend_reset: Any) -> None:
-    """trend_reset was documented but never read; passing it warns until its removal."""
-    if trend_reset is not None:
-        warnings.warn(
-            f"{indicator}() trend_reset is not used and has no effect; it is deprecated and will be "
-            "removed in the next breaking release. Remove the argument.",
-            DeprecationWarning,
-            stacklevel=4,  # warnings.warn <- this helper <- indicator <- nan_on_short_input <- caller
-        )
+def _reject_trend_reset(indicator: str, kwargs: dict) -> None:
+    """trend_reset was documented but never read; it is removed (AGENTS.md rule 11 exception).
+
+    **kwargs would otherwise swallow it silently.
+    """
+    if "trend_reset" in kwargs:
+        raise TypeError(f"{indicator}() no longer accepts 'trend_reset': it never had an effect; remove the argument")
 
 
 @nan_on_short_input
 def tsignals(
     trend: Series,
     asbool: bool | None = None,
-    trend_reset: int | None = None,
+    *,
     trade_offset: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -40,10 +37,13 @@ def tsignals(
         return None
 
     asbool = _bool_param(asbool, False, "asbool")
-    _warn_trend_reset("tsignals", trend_reset)
+    _reject_trend_reset("tsignals", kwargs)
     # a negative shift would move entries/exits onto earlier bars (look-ahead)
     trade_offset = _pos_int(trade_offset, 0, "trade_offset", gt=None, ge=0)
     offset = get_offset(offset)
+    # A strategy-wide drift (df.ta.strategy(..., drift=N)) has no meaning here: the
+    # parameter was removed in 0.9.0. Drop it rather than forward it to apply_fill.
+    kwargs.pop("drift", None)
 
     # Calculate Result
     trends = trend.fillna(0).astype(int)
@@ -106,10 +106,10 @@ Args:
     asbool (bool): If True, it converts the Trends, Entries and Exits columns to
         booleans. When boolean, it is also useful for backtesting with
         vectorbt's Portfolio.from_signal(close, entries, exits) Default: False
-    trend_reset (value): Deprecated since 0.9.0 and unused: it never affected the
-        result. Passing it emits a DeprecationWarning. Default: None
     trade_offset (value): Value used shift the trade entries/exits Use 1 for
         backtesting and 0 for live. Default: 0
+    Note: ``trend_reset`` was removed; it never had an effect, and passing it
+    raises TypeError. ``trade_offset`` and ``offset`` are keyword-only.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

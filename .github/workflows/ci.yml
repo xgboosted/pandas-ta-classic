@@ -150,6 +150,36 @@ jobs:
       run: |
         python -c "import pandas_ta_classic as ta; print('Package imported successfully on Python ${{ matrix.python-version }}')"
 
+  # Job 4b: Numba Testing - Run the core suite with numba installed, so the @njit
+  # path most users of the `performance` extra run is tested (testing-core runs
+  # the pure-Python fallback). One Python version: numba support usually lags
+  # the newest release, so this uses the second-newest supported version.
+  testing-numba:
+    runs-on: ubuntu-latest
+    needs: [code-quality, generate-matrix]
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+      with:
+        fetch-depth: 0  # Full history needed for setuptools-scm
+
+    - name: Set up Python (second-newest supported)
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      with:
+        python-version: ${{ fromJson(needs.generate-matrix.outputs.python-versions)[3] }}
+
+    - name: Install Python dependencies with numba
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test,oracle,performance]"
+        python -c "import numba; print('numba', numba.__version__)"
+
+    - name: Run core tests with the JIT path (includes the JIT vs pure-Python parity test)
+      run: |
+        python -m pytest tests/ \
+          --ignore=tests/test_oracle_talib.py \
+          --ignore=tests/test_oracle_tulipy.py -v
+
   # Job 5: Oracle Testing - Run talib/tulipy parity tests on all supported Python versions
   testing-oracle:
     runs-on: ubuntu-latest
@@ -192,7 +222,7 @@ jobs:
   # Job 6: Documentation - Build and deploy documentation (independent deployment)
   documentation:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix, testing-core, testing-oracle]
+    needs: [code-quality, generate-matrix, testing-core, testing-numba, testing-oracle]
     if: github.event_name == 'push'
     concurrency:
       group: "pages"
@@ -241,7 +271,7 @@ jobs:
   #   4. Preserves Development Status :: 5 - Production/Stable and all other classifiers
   pypi-publish:
     runs-on: ubuntu-latest
-    needs: [code-quality, generate-matrix, testing-core, testing-oracle]
+    needs: [code-quality, generate-matrix, testing-core, testing-numba, testing-oracle]
     if: github.event_name == 'release' && github.event.action == 'published'
     permissions:
       contents: write        # only this job may push; needed to push the branch below

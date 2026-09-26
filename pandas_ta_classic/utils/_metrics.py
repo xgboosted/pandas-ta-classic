@@ -1,8 +1,7 @@
-import warnings
 from typing import Any, cast
 
 import numpy as np
-from pandas import Series, Timedelta
+from pandas import Series, Timedelta, concat
 
 from pandas_ta_classic import RATE
 from pandas_ta_classic.performance.drawdown import drawdown
@@ -94,8 +93,17 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
     if returns is None or benchmark_returns is None:
         return np.nan
 
-    benchmark_returns = benchmark_returns.interpolate()
-    return linear_regression(benchmark_returns, returns)["a"]
+    # A leading NaN run (the first bar of pct_change) is not data; a NaN inside
+    # either series is missing data, which used to be filled by interpolation.
+    pair = concat([benchmark_returns, returns], axis=1, sort=True).dropna(how="any")
+    if len(pair) < 3:
+        raise ValueError(f"jensens_alpha() needs at least 3 bars where both series have a value, got {len(pair)}")
+    start, end = pair.index[0], pair.index[-1]
+    for label, series in (("benchmark_returns", benchmark_returns), ("returns", returns)):
+        gaps = int(series.loc[start:end].isna().sum())
+        if gaps:
+            raise ValueError(f"jensens_alpha() {label} has {gaps} missing value(s) inside the series; fill or drop them first")
+    return linear_regression(pair.iloc[:, 0], pair.iloc[:, 1])["a"]
 
 
 def log_max_drawdown(close: Series) -> float:
@@ -117,8 +125,6 @@ def max_drawdown(
     close: Series,
     method: str | None = None,
     all_methods: bool = False,
-    *,
-    all: bool | None = None,
 ) -> float | dict[str, float]:
     """Maximum Drawdown from close. Default: 'dollar'.
 
@@ -128,18 +134,12 @@ def max_drawdown(
             Default: 'dollar'
         all_methods (bool): If True, it returns all three methods as a dict.
             Default: False
-        all (bool): Deprecated alias of ``all_methods``; removed in the next
-            breaking release.
+
+    Note: the ``all`` alias of ``all_methods`` was removed in 0.9.0; passing it
+    raises TypeError.
 
     >>> result = ta.max_drawdown(close, method="dollar", all_methods=False)
     """
-    if all is not None:
-        warnings.warn(
-            "max_drawdown() 'all' is deprecated and will be removed in the next breaking release; use 'all_methods' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        all_methods = _bool_param(all, False, "all")
     method = _str_param(method, "dollar", "method", choices={"dollar", "percent", "log"})
     all_methods = _bool_param(all_methods, False, "all_methods")
     close = verify_series(close)

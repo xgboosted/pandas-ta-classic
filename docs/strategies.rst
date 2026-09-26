@@ -58,6 +58,13 @@ Categorical Strategies
    (for example ``ebsw`` needs ``length > 38``) instead of silently using its
    default, so exclude such indicators: ``df.ta.strategy("All", length=10, exclude=["ebsw"])``.
 
+.. note::
+   ``strategy()`` accepts ``"all"``, a category name or a ``Strategy``; any
+   other name raises ``ValueError``. For ``"all"`` and a category, indicators
+   that need a column the DataFrame does not have (``obv`` and the other
+   volume indicators on OHLC-only data) are skipped and listed with
+   ``verbose=True``; call one directly and it raises ``KeyError``.
+
 Custom Strategies
 ~~~~~~~~~~~~~~~~~
 
@@ -89,6 +96,8 @@ exists, so a chained Strategy gives the same columns however it is executed.
 By default everything runs in the calling process. Parallel execution is opt-in;
 see `Parallel execution`_ for when it is worth it.
 
+A column that neither exists nor is produced by an earlier entry raises ``KeyError`` naming the column.
+
 Basic Usage
 ~~~~~~~~~~~
 
@@ -119,7 +128,8 @@ Excluding Indicators
 
 .. code-block:: python
 
-    # Maybe you do not want certain indicators
+    # Maybe you do not want certain indicators (a list, tuple or set of
+    # indicator names; an unknown name raises ValueError)
     df.ta.strategy(exclude=["bop", "mom", "percent_return", "wcp", "pvi"], verbose=True)
 
     # Perhaps you want to use different values for indicators
@@ -197,10 +207,26 @@ Renaming columns with col_names
         ta=[
             {"kind": "ema", "length": 8},
             {"kind": "ema", "length": 21},
-            {"kind": "bbands", "length": 20, "col_names": ("BBL", "BBM", "BBU")},
+            {"kind": "bbands", "length": 20, "col_names": ("BBL", "BBM", "BBU", "BBB", "BBP")},  # one name per column
             {"kind": "macd", "fast": 8, "slow": 21, "col_names": ("MACD", "MACD_H", "MACD_S")}
         ]
     )
     # Run it. col_names works with workers too: results are named and appended
     # in the calling process, in the order the entries are listed.
     df.ta.strategy(RenamedStrategy)
+
+Chained Custom Strategy
+~~~~~~~~~~~~~~~~~~~~~~~
+
+An entry can use an earlier entry's output as its input. It waits for its own stage, after the entry that produces the column, so the result is the same serially and on workers (see above).
+
+.. code-block:: python
+
+    ChainedStrategy = ta.Strategy(
+        name="Cumulative Log Return EMA",
+        ta=[
+            {"kind": "log_return", "cumulative": True},                             # appends CUMLOGRET_1
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},  # reads it: EMA_5_CLR
+        ]
+    )
+    df.ta.strategy(ChainedStrategy)

@@ -21,7 +21,7 @@ def _ha_open(first: float, ha_close: np.ndarray) -> np.ndarray:
 
 
 @nan_on_short_input
-@skip_leading_nan("open_", "high", "low", "close")
+@skip_leading_nan("open_", "high", "low", "close", interior=True)
 def ha(
     open_: Series,
     high: Series,

@@ -41,6 +41,9 @@ def kvo(
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
+    # A strategy-wide drift (df.ta.strategy(..., drift=N)) has no meaning here: the
+    # parameter was removed in 0.9.0. Drop it rather than forward it to apply_fill.
+    kwargs.pop("drift", None)
 
     if high is None or low is None or close is None or volume is None:
         return None

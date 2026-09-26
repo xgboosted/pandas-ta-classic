@@ -17,7 +17,6 @@ from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma, nan_on
 def pwma(
     close: Series,
     length: int | None = None,
-    asc: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -26,6 +25,9 @@ def pwma(
     length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
+    # A strategy-wide asc (df.ta.strategy(..., asc=False)) is meant for wma/fwma; these
+    # weights are symmetric, so it has no meaning here. Drop it rather than forward it to apply_fill.
+    kwargs.pop("asc", None)
 
     if close is None:
         return None
@@ -68,8 +70,6 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period.  Default: 10
-    asc (bool): Accepted for compatibility. The weights are symmetric, so
-        reversing them changes nothing. Default: True
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
@@ -78,4 +78,7 @@ Kwargs:
 
 Returns:
     pd.Series: New feature generated.
+
+Note: ``asc`` was removed in 0.9.0. The weights are symmetric, so it never
+changed the result; a strategy-wide ``asc`` is ignored.
 """
