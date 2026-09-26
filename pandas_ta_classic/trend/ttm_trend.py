@@ -20,23 +20,19 @@ def ttm_trend(
     """Indicator: TTM Trend (TTM_TRND)"""
     # Validate arguments
     length = _pos_int(length, 6, "length")
-    high = verify_series(high, length)
-    low = verify_series(low, length)
-    close = verify_series(close, length)
+    high = verify_series(high, length + 1)
+    low = verify_series(low, length + 1)
+    close = verify_series(close, length + 1)
     offset = get_offset(offset)
 
     if high is None or low is None or close is None:
         return None
 
-    # Calculate Result
-    trend_avg = hl2(high, low)
-    for i in range(1, length):
-        trend_avg = trend_avg + hl2(high.shift(i), low.shift(i))
-
-    trend_avg = trend_avg / length
-
-    tm_trend = (close > trend_avg).astype(int)
-    tm_trend.replace(0, -1, inplace=True)
+    # Calculate Result: close against the average HL2 of the previous `length`
+    # bars (the current bar is not part of the average, as in the source).
+    trend_avg = hl2(high, low).shift(1).rolling(length).mean()
+    # No trend until the average exists: NaN, not a -1 "downtrend".
+    tm_trend = ((close > trend_avg).astype(int) * 2 - 1).where(trend_avg.notna())
 
     # Offset
     tm_trend = apply_offset(tm_trend, offset)
@@ -87,5 +83,6 @@ Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 Returns:
-    pd.DataFrame: ttm_trend.
+    pd.DataFrame: TTM_TRND_<length>: +1 when the close is above the average HL2
+        of the previous `length` bars, -1 otherwise, NaN until that average exists.
 """

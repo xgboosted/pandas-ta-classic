@@ -94,7 +94,7 @@ fixtures:
 # Run the full test suite against the committed fixtures
 test-all:
 	@echo "Running full test suite..."
-	$(PYTHON) -m unittest discover tests/ -v
+	$(PYTHON) -m pytest tests/ -v
 
 # Documentation targets
 docs:

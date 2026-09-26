@@ -10,7 +10,7 @@ TestWarmupNanPrefix
 
 TestTooShortInput
     When the input series has fewer rows than the indicator's minimum requirement
-    the indicator must return None (not raise, not return all-NaN).
+    the indicator returns an all-NaN result and logs a warning (not raise, not None).
 
 TestBoundaryLength
     When the input series has exactly the minimum required rows there must be
@@ -163,7 +163,7 @@ class TestWarmupNanPrefix(TestCase):
 
 
 class TestTooShortInput(TestCase):
-    """Indicators must return None (not raise) when input is shorter than required."""
+    """Input shorter than required gives an all-NaN result and a warning, not an exception."""
 
     def _short(self, n: int):
         c = _C.iloc[:n]

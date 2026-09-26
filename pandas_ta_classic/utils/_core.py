@@ -167,7 +167,7 @@ def leading_nan_rows(*series: Series) -> int:
     return int(hits[0]) if hits.size else finite.size
 
 
-def skip_leading_nan(*names: str) -> Callable:
+def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
     """Compute an indicator on the rows after a leading NaN run, then pad back.
 
     Chained input (another indicator's output) always starts with NaN. A
@@ -177,6 +177,11 @@ def skip_leading_nan(*names: str) -> Callable:
     *names* are finite; its result is reindexed to the original index, with
     ``name`` and ``category`` preserved. Input without a leading NaN run, or
     that is entirely NaN, is passed through unchanged.
+
+    With ``interior=True`` every row where one of *names* is not finite is
+    skipped, not only the leading run, and reads NaN in the result. For a
+    recursion that would otherwise carry one missing bar forward forever
+    (``rsx`` published a fabricated 50.0 on every later bar).
     """
 
     def decorator(fn: Callable) -> Callable:
@@ -189,12 +194,20 @@ def skip_leading_nan(*names: str) -> Callable:
             if not all(isinstance(s, Series) for s in primary) or len({s.size for s in primary}) != 1:
                 return fn(*args, **kwargs)
             size = primary[0].size
-            start = leading_nan_rows(*primary)
-            if not 0 < start < size:
-                return fn(*args, **kwargs)
+            rows: Any
+            if interior:
+                finite = np.isfinite(np.vstack([s.to_numpy(dtype=float) for s in primary])).all(axis=0)
+                if finite.all() or not finite.any():
+                    return fn(*args, **kwargs)
+                rows = np.flatnonzero(finite)
+            else:
+                start = leading_nan_rows(*primary)
+                if not 0 < start < size:
+                    return fn(*args, **kwargs)
+                rows = slice(start, None)
             for key, value in bound.arguments.items():
                 if isinstance(value, Series) and value.size == size:
-                    bound.arguments[key] = value.iloc[start:]
+                    bound.arguments[key] = value.iloc[rows]
             result = fn(*bound.args, **bound.kwargs)
             if result is None:
                 return None

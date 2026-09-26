@@ -6,10 +6,11 @@ from pandas import DataFrame, Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
+@skip_leading_nan("close", interior=True)
 def ht_phasor(
     close: Series,
     talib: bool | None = None,

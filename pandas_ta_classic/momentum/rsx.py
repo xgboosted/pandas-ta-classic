@@ -68,7 +68,7 @@ def _rsx_loop(c_arr, length, m):
 
 
 @nan_on_short_input
-@skip_leading_nan("close")
+@skip_leading_nan("close", interior=True)
 def rsx(
     close: Series,
     length: int | None = None,

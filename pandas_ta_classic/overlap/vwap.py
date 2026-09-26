@@ -52,8 +52,12 @@ def vwap(
 
     # Calculate Result
     wp = typical_price * volume
-    vwap = wp.groupby(wp.index.to_period(anchor), observed=True).cumsum()
-    vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
+    # Periods follow the index's wall-clock calendar; dropping the time zone first
+    # does what to_period() does anyway, without its warning on every call.
+    wall_clock = wp.index.tz_localize(None) if wp.index.tz is not None else wp.index
+    periods = wall_clock.to_period(anchor)
+    vwap = wp.groupby(periods, observed=True).cumsum()
+    vwap /= volume.groupby(periods, observed=True).cumsum()
 
     # Offset
     vwap = apply_offset(vwap, offset)
@@ -92,6 +96,15 @@ Args:
         implement various Timeseries Offset Aliases as listed here:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
         Default: "D".
+        The anchor follows the calendar of the index's own time zone. A
+        session that crosses midnight in UTC but not locally (NZX on a UTC
+        index) needs the index converted to the exchange's time zone first:
+        local = df.tz_convert("Pacific/Auckland"). A session that opens
+        before local midnight (CME, 18:00 New York time) also needs the open
+        moved to 00:00 of the trade date, and the index restored afterwards:
+            ny = df.tz_convert("America/New_York")
+            ny = ny.set_axis(ny.index + pd.Timedelta(hours=6))
+            vwap = ta.vwap(ny.high, ny.low, ny.close, ny.volume).set_axis(df.index)
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

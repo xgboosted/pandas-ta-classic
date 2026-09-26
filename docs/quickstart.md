@@ -385,7 +385,7 @@ TypeError: sma() expected a pandas Series but got ndarray. Pass a Series,
 e.g. df['close'] rather than df['close'].values.
 ```
 
-Version 0.8.32 returned `None` with a `FutureWarning` here; later versions raise.
+Version 0.8.32 returned `None` with a `FutureWarning` here; since 0.9.0 it raises.
 
 **Solution:** Pass the Series itself:
 

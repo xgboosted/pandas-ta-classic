@@ -196,13 +196,14 @@ grep -rnE 'kwargs\.(pop|get)\("\w+", (True|False)\)' pandas_ta_classic/ --includ
 
 Not greppable, so check in review: **dead code** your change orphaned, and the **stdlib over hand-rolled** preference.
 
-## CI Pipeline (6 jobs)
+## CI Pipeline (7 jobs)
 
 | Job | Description |
 |---|---|
 | `code-quality` | Black formatting check, `ruff check .` (blocking) + advisory ruff, mypy, core.pyi sync, lint-version parity |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
+| `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
 | `documentation` | Builds Sphinx docs + deploys to GitHub Pages (on push only) |
 | `pypi-publish` | Builds wheel, twine check, publishes to PyPI (on release published only) |
@@ -230,6 +231,8 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 4. Add entry to `docs/indicators.rst`
 5. Add a bullet under `### Added` in the `[Unreleased]` section of `CHANGELOG.md` describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed
+7. The registry-driven contracts cover it automatically and must pass: `test_lookahead.py` (causality), `test_short_input_contract.py`, `test_leading_nan_contract.py` (a leading NaN run changes nothing on the real bars) and `test_interior_nan_contract.py` (one missing bar recovers). A recursive indicator needs `@skip_leading_nan(<series params>, interior=True)` to satisfy the last two.
+8. If neither TA-Lib nor tulipy covers it, add a plain-loop port of the definition it cites to `tests/fixtures/reference_ports.py` and a comparison to `tests/test_reference_ports.py`; a snapshot of the package's own output proves nothing about correctness.
 
 ### TA-Lib / Numba Integration
 
@@ -346,7 +349,7 @@ python -m build
 │   ├── FUNDING.yml
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/
-│       ├── ci.yml                    # Main CI pipeline (6 jobs)
+│       ├── ci.yml                    # Main CI pipeline (7 jobs)
 │       └── mirror.yml                # Codeberg mirror sync
 ├── docs/                             # Sphinx documentation
 │   ├── index.rst
@@ -379,7 +382,7 @@ python -m build
 ├── tests/                            # Test suite
 │   ├── config.py
 │   ├── assertions.py
-│   ├── fixtures/                     # expected_values.json, regression_snapshots.json
+│   ├── fixtures/                     # expected_values.json, regression_snapshots.json, tulipy_oracle.json, exact_reference.py, reference_ports.py
 │   └── test_*.py                     # Indicator, accessor, strategy, utils tests
 └── examples/                         # Jupyter notebooks & sample data
 ```
