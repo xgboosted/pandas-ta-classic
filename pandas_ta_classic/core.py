@@ -1,10 +1,13 @@
 import logging
 import os
-from collections.abc import Hashable
+from collections.abc import Hashable, Iterator
 from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from multiprocessing import cpu_count, current_process, get_context
 from numbers import Integral
+from threading import Lock
 from time import perf_counter
 from typing import Any
 from warnings import simplefilter, warn
@@ -20,17 +23,60 @@ from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
 logger = logging.getLogger(__name__)
 
-# Set while strategy() owns a process pool it created itself.  A spawned child
+# Set while strategy() is running tasks on worker processes.  A spawned child
 # re-imports the caller's __main__, so an unguarded script that calls strategy()
 # at module level would recurse until the machine stalls.  The variable is
 # inherited by the children, so seeing it means we are that recursion.
 _STRATEGY_GUARD_ENV = "_PANDAS_TA_CLASSIC_STRATEGY_PID"
 
+# os.environ is process-global but the guard is entered per call, so concurrent
+# calls in one process are counted: the first to finish must not clear the marker
+# while another is still starting children.
+_STRATEGY_GUARD_LOCK = Lock()
+_STRATEGY_GUARD_DEPTH = 0
+
 _MAIN_GUARD_HINT = (
-    "df.ta.strategy() started worker processes from a script that does not guard "
-    "its top level. Wrap the calling code in `if __name__ == \"__main__\":`, or run "
-    "serially with df.ta.cores = 0."
+    "df.ta.strategy() ran indicators on worker processes from a script that does "
+    "not guard its top level. Wrap the calling code in `if __name__ == \"__main__\":`, "
+    "or run serially with df.ta.cores = 0 and no executor=."
 )
+
+# BrokenProcessPool says a worker died, not why, and the child's own traceback
+# went to its stderr -- lost in a notebook or a GUI process.  The unguarded
+# __main__ is by far the most common cause, so name it first without claiming it.
+_BROKEN_POOL_HINT = (
+    "df.ta.strategy(): a worker process died. If this script calls strategy() at "
+    "module level, wrap it in `if __name__ == \"__main__\":` -- spawn re-imports the "
+    "caller, and the child's error goes to its own stderr. Otherwise the worker was "
+    "killed from outside (out of memory, segfault). Run serially with "
+    "df.ta.cores = 0 and no executor= to see the real error."
+)
+
+
+@contextmanager
+def _worker_recursion_guard() -> Iterator[None]:
+    """Refuse to start workers from inside workers this call already started.
+
+    Compares the pid it stores rather than only testing for the variable: a
+    spawned child inherits the parent's pid here, which never matches its own, so
+    the recursion is caught, while a second *thread* in the parent sees its own
+    pid and is left alone -- its ``__main__`` is not the problem.
+    """
+    # One process-wide counter, only ever touched under the lock.
+    global _STRATEGY_GUARD_DEPTH
+    with _STRATEGY_GUARD_LOCK:
+        owner = os.environ.get(_STRATEGY_GUARD_ENV)
+        if owner and owner != str(os.getpid()):
+            raise RuntimeError(_MAIN_GUARD_HINT)
+        os.environ[_STRATEGY_GUARD_ENV] = str(os.getpid())
+        _STRATEGY_GUARD_DEPTH += 1
+    try:
+        yield
+    finally:
+        with _STRATEGY_GUARD_LOCK:
+            _STRATEGY_GUARD_DEPTH -= 1
+            if _STRATEGY_GUARD_DEPTH == 0:
+                os.environ.pop(_STRATEGY_GUARD_ENV, None)
 
 
 # Strategy DataClass
@@ -633,7 +679,7 @@ class AnalysisIndicators(PandasObject):
             stage.append(remaining.pop(0))
         return stage
 
-    def _warn_no_result(self, kind: str, task_kwargs: dict) -> None:
+    def _warn_no_result(self, kind: str, task_kwargs: dict, stacklevel: int = 4) -> None:
         """Report an indicator that ran but added no column.
 
         Both halves of this used to be invisible: _get_column() logged its
@@ -641,10 +687,14 @@ class AnalysisIndicators(PandasObject):
         worker, where even a configured handler could not show it -- and
         _post_process() then dropped the result.  A chained custom strategy
         quietly produced fewer columns than it was given entries.
+
+        *stacklevel* counts from here to the caller's own strategy() line, which
+        the parallel path reaches one frame later than the serial one -- so the
+        two must pass different depths or the warning blames core.py.
         """
         missing = self._missing_column(task_kwargs)
         detail = f" It reads {missing!r}, which the DataFrame does not have." if missing else ""
-        warn(f"strategy(): {kind}() returned no result, so no column was added.{detail}", UserWarning, stacklevel=4)
+        warn(f"strategy(): {kind}() returned no result, so no column was added.{detail}", UserWarning, stacklevel=stacklevel)
 
     def _run_serially(self, tasks: list[tuple], verbose: bool) -> None:
         """Run every task in order, appending each result before the next runs."""
@@ -682,16 +732,26 @@ class AnalysisIndicators(PandasObject):
         # expensive indicators, and the frame is pickled once per group.
         futures = [executor.submit(_run_task_group, slim, stage[start::groups]) for start in range(groups)]
         finished: dict[int, tuple] = {}
-        for future in futures:
-            finished.update({order: (result, error) for order, result, error in future.result()})
+        try:
+            for future in futures:
+                finished.update({order: (result, error) for order, result, error in future.result()})
+        except BrokenProcessPool as exc:
+            raise RuntimeError(_BROKEN_POOL_HINT) from exc
 
         # Append by task order, not by the order the workers finished.
         for order, kind, _params, task_kwargs in stage:
             result, error = finished[order]
             if error is not None:
-                raise RuntimeError(f"strategy(): {kind}() raised in a worker process") from error
+                # Re-raise what the indicator raised: the exception type is part
+                # of the contract, so a caller catching ValueError must not start
+                # seeing RuntimeError when it opts into workers.  The traceback
+                # does not survive pickling, hence the note (PEP 678, 3.11+; on
+                # 3.10 the message already names the function).
+                if hasattr(error, "add_note"):
+                    error.add_note(f"strategy(): raised by {kind}() in a worker process")
+                raise error
             if result is None:
-                self._warn_no_result(kind, task_kwargs)
+                self._warn_no_result(kind, task_kwargs, stacklevel=5)
                 continue
             self._append(result, **task_kwargs)
 
@@ -852,7 +912,8 @@ class AnalysisIndicators(PandasObject):
                 Multiprocessing Pool that stages replace. Passing it emits a
                 DeprecationWarning. Default: None
             cores (int): Run this call on that many worker processes, 0 for
-                serially. Default: df.ta.cores, itself 0 unless set.
+                serially. Capped at cpu_count(), like the df.ta.cores setter.
+                Default: df.ta.cores, itself 0 unless set.
             executor (concurrent.futures.Executor): Run this call on a pool the
                 caller owns and reuses, which avoids paying for process start-up
                 per call. Takes precedence over 'cores'. Default: None
@@ -882,7 +943,10 @@ class AnalysisIndicators(PandasObject):
             raise TypeError(f"strategy() executor must be a concurrent.futures.Executor or None, got {type(executor).__name__}")
         # 'cores' used to be read off the accessor only; the kwarg was accepted
         # and dropped, so strategy(cores=0) still started a pool.
-        cores = _pos_int(kwargs.pop("cores", None), self.cores, "cores", gt=None, ge=0)
+        # Capped like the df.ta.cores setter: the same knob through two doors must
+        # not have two limits, or strategy(cores=10000) opens 10000 processes
+        # where df.ta.cores = 10000 gives cpu_count().
+        cores = min(_pos_int(kwargs.pop("cores", None), self.cores, "cores", gt=None, ge=0), cpu_count())
         # strategy() broadcasts unknown keywords to the indicators, so a
         # keyword that lost its meaning would otherwise pass through in silence.
         for retired in ("chunksize", "ordered"):
@@ -988,24 +1052,19 @@ class AnalysisIndicators(PandasObject):
         if timed:
             stime = perf_counter()
 
+        # A caller-supplied executor needs the guard as much as one we open: an
+        # unguarded script that builds its own pool recurses the same way, and
+        # ProcessPoolExecutor only spawns on the first submit, so the recursion
+        # starts inside strategy() either way.
         if executor is not None:
-            self._run_stages(tasks, executor, _executor_workers(executor), verbose)
+            with _worker_recursion_guard():
+                self._run_stages(tasks, executor, _executor_workers(executor), verbose)
         elif cores > 0:
-            # Compare the pid, do not just test for the variable: os.environ is
-            # process-global, so a second thread calling strategy(cores=...)
-            # would otherwise be told to guard its __main__.  A spawned child
-            # inherits the *parent's* pid here, which never matches its own.
-            guard_owner = os.environ.get(_STRATEGY_GUARD_ENV)
-            if guard_owner and guard_owner != str(os.getpid()):
-                raise RuntimeError(_MAIN_GUARD_HINT)
-            os.environ[_STRATEGY_GUARD_ENV] = str(os.getpid())
-            try:
-                # Python 3.12 warns when forking from a multi-threaded process,
-                # so spawn explicitly rather than inheriting the platform default.
-                with ProcessPoolExecutor(cores, mp_context=get_context("spawn")) as own_executor:
-                    self._run_stages(tasks, own_executor, cores, verbose)
-            finally:
-                os.environ.pop(_STRATEGY_GUARD_ENV, None)
+            # Python 3.12 warns when forking from a multi-threaded process, so
+            # spawn explicitly rather than inheriting the platform default.  The
+            # guard is entered first, so it is armed before any child exists.
+            with _worker_recursion_guard(), ProcessPoolExecutor(cores, mp_context=get_context("spawn")) as own_executor:
+                self._run_stages(tasks, own_executor, cores, verbose)
         else:
             self._run_serially(tasks, verbose)
 

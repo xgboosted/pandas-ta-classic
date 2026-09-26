@@ -8,8 +8,9 @@ on an Executor and demand identical frames.
 """
 
 import os
-from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import get_context
+from concurrent.futures import Future, ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
+from multiprocessing import cpu_count, get_context
 
 import numpy as np
 import pandas as pd
@@ -305,9 +306,143 @@ def test_strategy_runs_inside_a_pool_worker():
     assert columns > 5
 
 
-def test_worker_error_names_the_indicator(executor):
-    """An exception in a worker used to surface as a bare pickling traceback."""
+@pytest.mark.parametrize("mode", ["cores", "executor"])
+def test_worker_error_keeps_the_type_it_had_serially(mode, executor):
+    """The exception type is part of the contract, so opting into workers must not change it.
+
+    This wrapped the cause in `RuntimeError: strategy(): sma() raised in a worker
+    process`, so `except ValueError` stopped working the moment a caller set
+    cores. The traceback still does not survive pickling; the indicator's name is
+    in the message, plus a note where the interpreter has them.
+    """
     df = sample_frame(200)
     strategy = ta.Strategy("Bad", [{"kind": "sma", "length": 0}])
-    with pytest.raises(RuntimeError, match=r"strategy\(\): sma\(\) raised in a worker process"):
-        df.ta.strategy(strategy, executor=executor)
+    kwargs = {"executor": executor} if mode == "executor" else {"cores": 2}
+
+    serial = pytest.raises(ValueError, match=r"sma\(\) length must be an integer > 0, got 0")
+    with serial as parallel_error:
+        df.ta.strategy(strategy, **kwargs)
+
+    if hasattr(parallel_error.value, "__notes__"):  # PEP 678, Python 3.11+
+        assert any("raised by sma() in a worker process" in note for note in parallel_error.value.__notes__)
+
+
+def test_serial_and_worker_paths_raise_the_same_type():
+    """The parity the test above asserts, stated directly against the serial path."""
+    df = sample_frame(200)
+    strategy = ta.Strategy("Bad", [{"kind": "sma", "length": 0}])
+    with pytest.raises(ValueError) as serial:
+        df.ta.strategy(strategy, cores=0)
+    with pytest.raises(ValueError) as parallel:
+        df.ta.strategy(strategy, cores=2)
+    assert type(serial.value) is type(parallel.value)
+    assert str(serial.value) == str(parallel.value)
+
+
+def test_cores_kwarg_is_capped_at_cpu_count(monkeypatch):
+    """`df.ta.cores` capped and the kwarg did not, so one knob had two limits."""
+    seen: list[int] = []
+
+    class _SpyExecutor(ProcessPoolExecutor):
+        def __init__(self, max_workers=None, **kwargs):
+            seen.append(max_workers)
+            super().__init__(1, **kwargs)
+
+    monkeypatch.setattr(ta.core, "ProcessPoolExecutor", _SpyExecutor)
+    sample_frame(200).ta.strategy(ta.Strategy("Cap", [{"kind": "sma", "length": 10}]), cores=10_000)
+    assert seen == [cpu_count()]
+
+
+def test_broken_pool_points_at_the_main_guard(monkeypatch):
+    """A dead worker surfaced as BrokenProcessPool, which names no cause.
+
+    The guard that catches the unguarded `__main__` raises in the *child*, whose
+    stderr is gone in a notebook or a GUI process, so the parent was left with
+    'terminated abruptly' and nothing to act on.
+    """
+
+    class _DeadPool:
+        def submit(self, *_args, **_kwargs):
+            future: Future = Future()
+            future.set_exception(BrokenProcessPool("terminated abruptly"))
+            return future
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+    monkeypatch.setattr(ta.core, "ProcessPoolExecutor", lambda *_a, **_k: _DeadPool())
+    with pytest.raises(RuntimeError, match=r'wrap it in `if __name__ == "__main__":`') as raised:
+        sample_frame(200).ta.strategy(ta.Strategy("Dead", [{"kind": "sma", "length": 10}]), cores=2)
+    assert isinstance(raised.value.__cause__, BrokenProcessPool)
+
+
+@pytest.mark.parametrize("cores", [0, 2])
+def test_no_result_warning_blames_the_callers_line(cores):
+    """stacklevel was fixed at 4, but the parallel path is one frame deeper."""
+    strategy = ta.Strategy("Typo", [{"kind": "ema", "close": "NOT_A_COLUMN", "length": 5}])
+    with pytest.warns(UserWarning, match=r"returned no result") as caught:
+        sample_frame(200).ta.strategy(strategy, cores=cores)
+    assert [os.path.basename(w.filename) for w in caught] == [os.path.basename(__file__)]
+
+
+def test_executor_path_also_sets_the_recursion_guard(executor, monkeypatch):
+    """The guard lived in the cores>0 branch only.
+
+    An unguarded script that builds its own pool and passes `executor=` recurses
+    exactly like one that lets strategy() open the pool, because
+    ProcessPoolExecutor spawns on the first submit -- inside strategy() either way.
+    """
+    seen: list[str | None] = []
+    original = ta.core.AnalysisIndicators._run_stages
+
+    def spy(self, *args, **kwargs):
+        seen.append(os.environ.get(ta.core._STRATEGY_GUARD_ENV))
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(ta.core.AnalysisIndicators, "_run_stages", spy)
+    sample_frame(200).ta.strategy(ta.Strategy("Guard", [{"kind": "sma", "length": 10}]), executor=executor)
+    assert seen == [str(os.getpid())]
+    assert os.environ.get(ta.core._STRATEGY_GUARD_ENV) is None
+
+
+def test_a_finished_call_does_not_clear_another_threads_guard(executor, monkeypatch):
+    """The `finally` popped unconditionally, so the first thread to finish disarmed the second.
+
+    Children spawned after that point inherited no marker and would have recursed.
+    """
+    import threading
+
+    both_inside = threading.Barrier(2, timeout=60)
+    first_has_left = threading.Event()
+    marker_after = []
+    original = ta.core.AnalysisIndicators._run_stages
+
+    def spy(self, *args, **kwargs):
+        result = original(self, *args, **kwargs)
+        both_inside.wait()
+        if self._df.attrs.get("_role") == "second":
+            # The other call has returned and run its finally by now.
+            first_has_left.wait(timeout=60)
+            marker_after.append(os.environ.get(ta.core._STRATEGY_GUARD_ENV))
+        return result
+
+    monkeypatch.setattr(ta.core.AnalysisIndicators, "_run_stages", spy)
+
+    def run(role: str) -> None:
+        df = sample_frame(200)
+        df.attrs["_role"] = role
+        df.ta.strategy(ta.Strategy("T", [{"kind": "sma", "length": 10}]), executor=executor)
+        if role == "first":
+            first_has_left.set()
+
+    threads = [threading.Thread(target=run, args=(role,)) for role in ("first", "second")]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=90)
+
+    assert marker_after == [str(os.getpid())], "the second call lost its guard when the first finished"
+    assert os.environ.get(ta.core._STRATEGY_GUARD_ENV) is None
