@@ -20,8 +20,9 @@ from .rsi import rsi
 
 @njit(cache=True)
 def _qqe_loop(rsi_arr, ub_arr, lb_arr, m):
-    long_arr = np.zeros(m)
-    short_arr = np.zeros(m)
+    # The bands start undefined: bar 0 has no RSI, so it has no band either.
+    long_arr = np.full(m, np.nan)
+    short_arr = np.full(m, np.nan)
     trend_arr = np.ones(m)
     qqe_arr = np.empty(m)
     qqe_arr[0] = rsi_arr[0]
@@ -127,10 +128,13 @@ def qqe(
     idx = close.index
     long = Series(long_arr, index=idx)
     short = Series(short_arr, index=idx)
-    trend = Series(trend_arr, index=idx)
     qqe = Series(qqe_arr, index=idx)
     qqe_long = Series(qqe_long_arr, index=idx)
     qqe_short = Series(qqe_short_arr, index=idx)
+    # The trend carries forward from its initial value, so it read as an uptrend
+    # on the warm-up bars, where QQE itself has no value yet.  It is only defined
+    # where QQE is.
+    trend = Series(trend_arr, index=idx).where(qqe.notna())
 
     # Offset
     rsi_ma, qqe, long, short, trend = apply_offset([rsi_ma, qqe, long, short, trend], offset)
@@ -195,4 +199,6 @@ Returns:
     pd.DataFrame: QQE, RSI_MA (basis), QQEl (sparse long signal),
         QQEs (sparse short signal), QQEb_l (continuous long band),
         QQEb_s (continuous short band), and QQEd (trend direction) columns.
+        QQEd is NaN wherever QQE is: the bands have to exist before there is a
+        trend to report.
 """

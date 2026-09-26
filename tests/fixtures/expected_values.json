@@ -1262,11 +1262,11 @@
   "supertrend": {
     "SUPERT_7_3.0": {
       "last_value": 340.40094842,
-      "non_nan_count": 5235
+      "non_nan_count": 5234
     },
     "SUPERTd_7_3.0": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5234
     },
     "SUPERTl_7_3.0": {
       "last_value": 340.40094842,
@@ -1392,15 +1392,15 @@
     },
     "QQEb_l_14_5_4.236": {
       "last_value": 72.15838921,
-      "non_nan_count": 5171
+      "non_nan_count": 5170
     },
     "QQEb_s_14_5_4.236": {
       "last_value": 77.344922,
-      "non_nan_count": 5171
+      "non_nan_count": 5170
     },
     "QQEd_14_5_4.236": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5170
     }
   },
   "rsx": {
@@ -1592,11 +1592,11 @@
     },
     "THERMOl_20_2_0.5": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "THERMOs_20_2_0.5": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     }
   },
   "amat": {
