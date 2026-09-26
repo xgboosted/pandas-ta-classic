@@ -13,7 +13,10 @@ from typing import Any
 import numpy as np
 from pandas import Series
 
+from pandas_ta_classic.utils._njit import njit
 
+
+@njit(cache=True)
 def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -> tuple[
     np.ndarray,
     np.ndarray,
