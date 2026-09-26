@@ -353,3 +353,60 @@ def test_the_accessor_sweeps_actually_compute() -> None:
 
     assert not identity, f"the accessor handed the input frame back for {identity} -- the sweeps above did not run them"
     assert set(empty) == expected_empty, f"indicators with no numeric output changed: {sorted(empty)} != {sorted(expected_empty)}"
+
+
+# `strategy()` appends by design, so only the index and the input columns are
+# fixed points. It also stamps `_ta_last_run` into `df.attrs`, and `cores` is
+# stored there too -- hence `_ta_*` keys are allowed to appear.
+_STRATEGY_CASES = ("all", "category", "custom", "custom-multiprocessing")
+
+
+def _run_strategy(df: pd.DataFrame, case: str) -> None:
+    """Run one flavour of `df.ta.strategy()` on *df*."""
+    custom = ta.Strategy(name="index-contract", ta=[{"kind": "nvi"}, {"kind": "pvi"}, {"kind": "sma", "length": 10}])
+    if case == "custom-multiprocessing":
+        # The worker computes on a copy, so damage to the caller's index can only
+        # come from the parent process. Run it anyway: that is the difference the
+        # sweep is here to keep, not to assume.
+        df.ta.cores = 2
+        df.ta.strategy(custom)
+        return
+
+    df.ta.cores = 0
+    if case == "all":
+        df.ta.strategy()
+    elif case == "category":
+        df.ta.strategy("volume")
+    else:
+        df.ta.strategy(custom)
+
+
+@pytest.mark.parametrize("case", _STRATEGY_CASES)
+def test_strategy_appends_without_touching_the_index_or_the_inputs(case: str) -> None:
+    """``df.ta.strategy()`` adds columns to the caller's frame -- and nothing else.
+
+    It is the accessor sweep's contract minus the one thing strategy is for:
+    new columns are expected, the index and the input columns are not. This is
+    also the path that made the ``nvi`` bug matter in practice, because the
+    frame handed to the next call is the one strategy just wrote to.
+
+    Serial and multiprocessing execution are both covered, since they reach the
+    indicators through different code (a worker mutates a copy that is thrown
+    away, the parent mutates the caller's frame).
+    """
+    df = _build_df()
+    df.ta.cores = 0  # set before the snapshot: `cores` lives in df.attrs
+    before = _frame_state(df)
+
+    _run_strategy(df, case)
+
+    assert getattr(df.index, "freq", None) == before["freq"], f"strategy({case}) cleared df.index.freq ({before['freq']} -> {df.index.freq})"
+    assert id(df.index) == before["index_id"], f"strategy({case}) replaced the caller's index object"
+    np.testing.assert_array_equal(df.index.to_numpy(), before["index_values"], err_msg=f"strategy({case}) rewrote the frame's index labels")
+    assert len(df.columns) > len(before["columns"]), f"strategy({case}) appended nothing -- the sweep would pass without running anything"
+    assert df.columns.tolist()[: len(before["columns"])] == before["columns"], f"strategy({case}) reordered or dropped the input columns"
+    np.testing.assert_array_equal(df[before["columns"]].to_numpy(), before["values"], err_msg=f"strategy({case}) rewrote the input columns")
+    foreign = {key: value for key, value in df.attrs.items() if not key.startswith("_ta_")}
+    assert foreign == {
+        key: value for key, value in before["attrs"].items() if not key.startswith("_ta_")
+    }, f"strategy({case}) wrote a non-`_ta_` key to df.attrs: {sorted(foreign)}"
