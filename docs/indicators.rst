@@ -62,7 +62,12 @@ three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
   everywhere, slightly, when a bar is missing.
 
 No indicator publishes a value it could not compute: a result is either
-computed from the available bars or NaN.
+computed from the available bars or NaN. This also holds on the warm-up bars at
+the start of the series, and for the direction and flag columns that describe
+them — ``tests/test_warmup_contract.py`` checks both for every registered
+indicator and every column it returns. The two exceptions are ``CPR_POSITION``
+and ``CPR_WIDTH_CLASS``, which are ``int8`` and cannot hold NaN, so they read 0
+on the bar before the first completed period.
 
 Lookahead Bias and Causality
 -----------------------------

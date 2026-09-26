@@ -57,10 +57,18 @@ def thermo(
     thermo_long = thermo < (thermo_ma * long)
     thermo_short = thermo > (thermo_ma * short)
 
-    # Binary output, useful for signals
+    # Both comparisons are False against a NaN average, so the signals would read
+    # 0 on the warm-up bars.  Mask them where the thermometer or its average is
+    # not defined yet.
+    defined = thermo.notna() & thermo_ma.notna()
+    thermo_long = thermo_long.where(defined)
+    thermo_short = thermo_short.where(defined)
+
+    # Binary output, useful for signals.  float, not int: NaN must survive, so
+    # the warm-up bars stay NaN instead of being coerced to 0.
     if asint:
-        thermo_long = thermo_long.astype(int)
-        thermo_short = thermo_short.astype(int)
+        thermo_long = thermo_long.astype(float)
+        thermo_short = thermo_short.astype(float)
 
     # Offset
     thermo, thermo_ma, thermo_long, thermo_short = apply_offset([thermo, thermo_ma, thermo_long, thermo_short], offset)
@@ -130,4 +138,6 @@ Kwargs:
 
 Returns:
     pd.DataFrame: thermo, thermo_ma, thermo_long, thermo_short columns.
+        The two signals are NaN until thermo_ma exists, so they are float even
+        with asint=True.
 """
