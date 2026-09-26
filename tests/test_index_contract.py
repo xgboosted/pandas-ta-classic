@@ -239,3 +239,117 @@ def test_ema_chain_stages_share_the_close_index() -> None:
     assert len(stages) == 6
     for depth, stage in enumerate(stages, start=1):
         assert stage.index.equals(index), f"EMA stage {depth} lost the close index"
+
+
+# Columns the accessor reads off the frame itself; every other Series argument
+# has to be handed in.
+_ACCESSOR_COLUMNS = frozenset({"open_", "open", "high", "low", "close", "volume"})
+
+
+def _build_df() -> pd.DataFrame:
+    """The same data as `_build_frame`, shaped the way a user holds it."""
+    frame = _build_frame()
+    return pd.DataFrame({column: frame[column] for column in ("open", "high", "low", "close", "volume")})
+
+
+def _accessor_kwargs(name: str, method, frame: dict[str, pd.Series]) -> dict:
+    """Series arguments the accessor cannot find among the frame's columns.
+
+    Without them the accessor fills the missing argument with ``None`` and hands
+    the caller's own frame back (`beta`, `correl`, `tsignals`, ...), which would
+    make this sweep pass without running the indicator at all.
+    """
+    kwargs = {param: frame[param] for param in inspect.signature(method).parameters if param in _SERIES_PARAMS and param not in _ACCESSOR_COLUMNS}
+    kwargs.update(_extra_kwargs(name, frame))
+    return kwargs
+
+
+def _frame_state(df: pd.DataFrame) -> dict:
+    """Everything about a caller's DataFrame that a read must leave alone."""
+    return {
+        "index_id": id(df.index),
+        "freq": getattr(df.index, "freq", None),
+        "index_values": df.index.to_numpy(copy=True),
+        "index_name": df.index.name,
+        "columns": df.columns.tolist(),
+        "dtypes": [str(dtype) for dtype in df.dtypes],
+        "values": df.to_numpy(copy=True),
+        "attrs": dict(df.attrs),
+    }
+
+
+@pytest.mark.parametrize("name", _indicator_names())
+def test_accessor_call_leaves_the_frame_untouched(name: str) -> None:
+    """``df.ta.<name>()`` reads the frame; with ``append=False`` it writes nothing.
+
+    The sweeps above hand Series to the function directly. Users reach the same
+    code through the accessor, and that is where the damage shows: ``df.ta.nvi()``
+    unset ``df.index.freq`` on the caller's own frame, from a call that returns
+    its result and was explicitly told not to append.
+    """
+    df = _build_df()
+    frame = {**_build_frame(), "close": df["close"]}
+    method = getattr(df.ta, name)
+    before = _frame_state(df)
+
+    method(**_accessor_kwargs(name, method, frame))
+
+    after = _frame_state(df)
+    assert after["freq"] == before["freq"], f"df.ta.{name}() cleared df.index.freq ({before['freq']} -> {after['freq']})"
+    assert after["index_id"] == before["index_id"], f"df.ta.{name}() replaced the caller's index object"
+    np.testing.assert_array_equal(after["index_values"], before["index_values"], err_msg=f"df.ta.{name}() rewrote the frame's index labels")
+    assert after["index_name"] == before["index_name"], f"df.ta.{name}() renamed the frame's index"
+    assert after["columns"] == before["columns"], f"df.ta.{name}() changed the frame's columns with append=False"
+    assert after["dtypes"] == before["dtypes"], f"df.ta.{name}() changed a column dtype"
+    assert after["attrs"] == before["attrs"], f"df.ta.{name}() wrote to df.attrs"
+    np.testing.assert_array_equal(after["values"], before["values"], err_msg=f"df.ta.{name}() rewrote the frame's data")
+
+
+@pytest.mark.parametrize("name", _indicator_names())
+def test_accessor_append_only_adds_columns(name: str) -> None:
+    """``append=True`` may add columns -- it may not disturb the index or the data.
+
+    This is the path where a cleared ``freq`` survives the call and reaches the
+    user's next operation, so the index is checked here too, even though the
+    frame is expected to grow.
+    """
+    df = _build_df()
+    frame = {**_build_frame(), "close": df["close"]}
+    method = getattr(df.ta, name)
+    before = _frame_state(df)
+
+    method(**_accessor_kwargs(name, method, frame), append=True)
+
+    assert getattr(df.index, "freq", None) == before["freq"], f"df.ta.{name}(append=True) cleared df.index.freq"
+    np.testing.assert_array_equal(df.index.to_numpy(), before["index_values"], err_msg=f"df.ta.{name}(append=True) rewrote the frame's index labels")
+    assert df.columns.tolist()[: len(before["columns"])] == before["columns"], f"df.ta.{name}(append=True) reordered or dropped the input columns"
+    np.testing.assert_array_equal(
+        df[before["columns"]].to_numpy(), before["values"], err_msg=f"df.ta.{name}(append=True) rewrote the data of the input columns"
+    )
+
+
+def test_the_accessor_sweeps_actually_compute() -> None:
+    """A guard for the guard: an accessor call that quietly does nothing proves nothing.
+
+    `core.py` turns a non-Series/DataFrame result into ``return self._df``
+    without raising, so a sweep that forgets a required argument still passes
+    every assertion above while testing nothing. Pin the three names whose
+    result is legitimately all-NaN on this data (``acos``/``asin`` take values
+    outside [-1, 1]; ``vfi``'s warmup exceeds 250 rows) and require every other
+    indicator to return real numbers.
+    """
+    expected_empty = {"acos", "asin", "vfi"}
+    identity, empty = [], []
+
+    for name in _indicator_names():
+        df = _build_df()
+        frame = {**_build_frame(), "close": df["close"]}
+        method = getattr(df.ta, name)
+        result = method(**_accessor_kwargs(name, method, frame))
+        if result is df:
+            identity.append(name)
+        elif result is None or not np.asarray(result.notna()).any():
+            empty.append(name)
+
+    assert not identity, f"the accessor handed the input frame back for {identity} -- the sweeps above did not run them"
+    assert set(empty) == expected_empty, f"indicators with no numeric output changed: {sorted(empty)} != {sorted(expected_empty)}"
