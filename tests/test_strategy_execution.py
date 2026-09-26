@@ -113,27 +113,28 @@ def test_chained_columns_survive_parallel_execution(entries, executor):
     assert "EMA_5_CLR" in df.columns
 
 
-def test_chained_column_is_not_satisfied_by_a_prefix_match(executor):
-    """A stage boundary must not be decided by _get_column()'s fallback match.
+def test_chained_column_resolves_case_insensitively(executor):
+    """A stage boundary agrees with the lookup the indicator itself will do.
 
-    _get_column() falls back to a case-insensitive prefix match for a misspelled
-    column, so an unrelated column can satisfy the name a chained entry reads --
-    'MA' resolves to 'MACD_12_26_9'. Counting that as present would run the
-    consumer in its producer's stage, where the worker frame does not carry the
-    exact name yet, and it would silently read the other column instead.
+    _get_column() resolves a name the frame does not carry exactly through a
+    case-insensitive exact match, so 'sma_10' reads SMA_10. _missing_column()
+    goes through the same lookup: the entry still waits for its own stage,
+    because nothing answers to 'sma_10' before SMA_10 is appended, and
+    _worker_columns() then ships SMA_10 under the name the frame carries. A
+    boundary decided on the literal string instead would leave the worker
+    without the column.
     """
-    entries = [{"kind": "sma", "length": 10}, {"kind": "ema", "close": "SMA_10", "length": 5, "suffix": "CLR"}]
+    entries = [{"kind": "sma", "length": 10}, {"kind": "ema", "close": "sma_10", "length": 5, "suffix": "CLR"}]
 
     serial = sample_frame()
-    serial["SMA_10_OLD"] = -999.0  # prefix-matches SMA_10, and is not it
     serial.ta.strategy(ta.Strategy("Chain", entries), cores=0)
 
     parallel = sample_frame()
-    parallel["SMA_10_OLD"] = -999.0
     parallel.ta.strategy(ta.Strategy("Chain", entries), executor=executor)
 
     assert_same_frame(serial, parallel)
-    assert (parallel["EMA_5_CLR"].dropna() != -999.0).all()
+    assert "EMA_5_CLR" in parallel.columns
+    assert parallel["EMA_5_CLR"].notna().any()
 
 
 def test_concurrent_strategies_in_one_process_do_not_trip_the_guard():

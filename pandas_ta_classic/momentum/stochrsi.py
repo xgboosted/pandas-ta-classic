@@ -72,11 +72,15 @@ def stochrsi(
     if close is None:
         return None
 
-    # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and mamode == "sma":
+    # TA-Lib STOCHRSI folds the %K range and its smoothing into one period
+    # (fastk_period), so it can only express the native path when k == 1 (no
+    # %K smoothing).  Its timeperiod is the RSI period (rsi_length), its
+    # fastk_period the stochastic range (length), and fastd_period the %D
+    # smoothing (d).  Any other k or mamode runs natively.
+    if Imports["talib"] and mode_talib and mamode == "sma" and k == 1:
         from talib import STOCHRSI as _STOCHRSI
 
-        fastk, fastd = _STOCHRSI(close, timeperiod=length, fastk_period=length, fastd_period=d)
+        fastk, fastd = _STOCHRSI(close, timeperiod=rsi_length, fastk_period=length, fastd_period=d)
         stochrsi_k = Series(fastk, index=close.index)
         stochrsi_d = Series(fastd, index=close.index)
         stochrsi_k, stochrsi_d = apply_offset([stochrsi_k, stochrsi_d], offset)

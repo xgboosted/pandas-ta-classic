@@ -105,6 +105,16 @@ class TestOverlapExtension(TestCase):
             data.ta.ichimoku(append=True)
         self.assertIsInstance(data, DataFrame)
 
+    def test_ichimoku_prefix_applied_once(self):
+        from tests.config import get_sample_data
+
+        data = get_sample_data()
+        base = list(data.columns)
+        result = data.ta.ichimoku(prefix="P", suffix="S", append=True)
+        expected = ["P_ISA_9_S", "P_ISB_26_S", "P_ITS_9_S", "P_IKS_26_S", "P_ICS_26_S"]
+        self.assertEqual(list(result.columns), expected)
+        self.assertEqual(list(data.columns), base + expected)
+
     def test_ichimoku_ext(self):
         self.data.ta.ichimoku(append=True)
         self.assertIsInstance(self.data, DataFrame)

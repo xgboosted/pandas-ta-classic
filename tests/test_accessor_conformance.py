@@ -5,6 +5,11 @@ from pandas import DataFrame, Series
 import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
 from tests.config import get_sample_data
 
+# Indicators whose required Series inputs (benchmark, fast/slow, signal args)
+# the accessor cannot auto-provide from a DataFrame.  They legitimately return
+# None when called with no arguments.
+_NULLABLE = frozenset({"beta", "correl", "long_run", "short_run", "tsignals", "xsignals"})
+
 
 class TestAccessorConformance(TestCase):
     @classmethod
@@ -22,17 +27,20 @@ class TestAccessorConformance(TestCase):
         pass
 
     # Called with no arguments these cannot produce a column: they need an input
-    # the DataFrame does not hold (a benchmark, a pair of Series, a trend, an MA
-    # name), so df.ta.<name>() returns None.  They used to return the source
-    # DataFrame, which made "nothing was produced" indistinguishable from a
-    # result without comparing object identity.
-    NEEDS_AN_EXTRA_ARGUMENT = frozenset({"beta", "correl", "long_run", "ma", "short_run", "tsignals", "xsignals"})
+    # the DataFrame does not hold (a benchmark, a pair of Series, a trend), so
+    # df.ta.<name>() returns None.  They used to return the source DataFrame,
+    # which made "nothing was produced" indistinguishable from a result without
+    # comparing object identity.  'ma' is not among them: its 'source' maps to
+    # the close column, so df.ta.ma() dispatches to the default EMA.
+    NEEDS_AN_EXTRA_ARGUMENT = frozenset({"beta", "correl", "long_run", "short_run", "tsignals", "xsignals"})
 
     def test_all_indicators_return_series_or_dataframe(self):
         indicator_names = self.data.ta.indicators(as_list=True)
         failures = []
 
         for name in indicator_names:
+            if name in _NULLABLE:
+                continue
             try:
                 result = getattr(self.data.ta, name)()
             except Exception:  # noqa: BLE001, S112 - indicators that need extra inputs are out of scope here

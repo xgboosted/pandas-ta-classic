@@ -85,8 +85,8 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
     The function (re)loads the Python file at *module_path*, looks up the
     mandatory ``<name>`` and ``<name>_method`` callables, registers the
     indicator in the appropriate category, and binds it via :func:`bind`.
-    Errors are logged but do not raise exceptions so that a single broken
-    module does not abort the entire import pass.
+    A module without those callables is logged and skipped; a module that
+    fails to import raises ImportError.
 
     Args:
         module_path (str): Absolute path to the ``.py`` file to load.
@@ -245,9 +245,9 @@ def load_indicator_module(name):
     # load module
     try:
         module = importlib.import_module(name)
-    except Exception as ex:  # noqa: BLE001 - user module code can raise anything; reported, then exits
-        logger.error("An error occurred when attempting to load module %s: %s", name, ex)
-        sys.exit(1)
+    except Exception as ex:
+        # user module code can raise anything; this used to sys.exit(1) and kill the caller's interpreter
+        raise ImportError(f"Unable to load the custom indicator module '{name}': {ex}") from ex
 
     # reload to refresh previously loaded module
     module = importlib.reload(module)

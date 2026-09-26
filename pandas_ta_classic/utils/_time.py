@@ -3,7 +3,7 @@ from time import localtime, perf_counter
 
 from pandas import DataFrame, DatetimeIndex, Timestamp
 
-from pandas_ta_classic._meta import EXCHANGE_TZ, RATE
+from pandas_ta_classic._meta import EXCHANGE_TZ
 
 logger = logging.getLogger(__name__)
 
@@ -69,15 +69,20 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
         raise ValueError(f"total_time() tf must be one of {list(TIME_RANGE_UNITS)}, got {tf!r}")
     if not isinstance(df.index, DatetimeIndex):
         raise TypeError(f"total_time() needs a DatetimeIndex, got {type(df.index).__name__}")
-    time_diff = df.index[-1] - df.index[0]
+    # Every unit is derived from total_seconds() so sub-day spans are not
+    # truncated to zero (a 6.5-hour frame is 0.271 days, not 0).  "years" uses
+    # calendar days per year (365.25), not trading days (252): the numerator is
+    # calendar time, so mixing in a trading-day divisor overstated elapsed years
+    # by ~45%.
+    total_seconds = (df.index[-1] - df.index[0]).total_seconds()
     TimeFrame = {
-        "years": time_diff.days / RATE["TRADING_DAYS_PER_YEAR"],
-        "months": time_diff.days / 30.417,
-        "weeks": time_diff.days / 7,
-        "days": time_diff.days,
-        "hours": time_diff.days * 24,
-        "minutes": time_diff.total_seconds() / 60,
-        "seconds": time_diff.total_seconds(),
+        "years": total_seconds / (365.25 * 86400),
+        "months": total_seconds / (30.417 * 86400),
+        "weeks": total_seconds / (7 * 86400),
+        "days": total_seconds / 86400,
+        "hours": total_seconds / 3600,
+        "minutes": total_seconds / 60,
+        "seconds": total_seconds,
     }
     return TimeFrame[tf]
 

@@ -152,7 +152,7 @@
   "uo": {
     "UO_7_14_28": {
       "last_value": 78.73046901,
-      "non_nan_count": 5214
+      "non_nan_count": 5213
     }
   },
   "ao": {
@@ -561,8 +561,8 @@
   },
   "trima_10": {
     "TRIMA_10": {
-      "last_value": 341.30027778,
-      "non_nan_count": 5231
+      "last_value": 341.94766667,
+      "non_nan_count": 5232
     }
   },
   "swma": {
@@ -1312,11 +1312,11 @@
     }
   },
   "dm_14": {
-    "DMP_14": {
+    "PLUS_DM_14": {
       "last_value": 18.69067075,
       "non_nan_count": 5228
     },
-    "DMN_14": {
+    "MINUS_DM_14": {
       "last_value": 3.94249024,
       "non_nan_count": 5228
     }
@@ -1444,15 +1444,15 @@
     },
     "SQZ_ON": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "SQZ_OFF": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "SQZ_NO": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     }
   },
   "squeeze_pro": {

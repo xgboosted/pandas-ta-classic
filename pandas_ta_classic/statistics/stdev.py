@@ -24,7 +24,9 @@ def stdev(
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)  # variance needs at least two rows
     ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
-    close = verify_series(close, length)
+    # Same bound as variance(): the error must name stdev, the function called.
+    min_periods = _pos_int(kwargs.pop("min_periods", None), length, "min_periods", gt=None, ge=0)
+    close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")
 
@@ -38,7 +40,7 @@ def stdev(
 
         stdev = STDDEV(close, length)
     else:
-        _variance = variance(close=close, length=length, ddof=ddof, talib=False)
+        _variance = variance(close=close, length=length, ddof=ddof, min_periods=min_periods, talib=False)
         if _variance is None:
             return None
         stdev = _variance.apply(np.sqrt)
