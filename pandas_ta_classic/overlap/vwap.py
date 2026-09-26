@@ -1,5 +1,4 @@
 # Volume Weighted Average Price (VWAP)
-import logging
 from typing import Any
 
 from pandas import DatetimeIndex, Series
@@ -8,14 +7,11 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    is_datetime_ordered,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _str_param, nan_on_short_input
 
 from .hlc3 import hlc3
-
-logger = logging.getLogger(__name__)
 
 
 @nan_on_short_input
@@ -45,15 +41,20 @@ def vwap(
         raise TypeError(f"vwap() needs a DatetimeIndex to anchor by {anchor!r}, got {type(close.index).__name__}")
 
     typical_price = hlc3(high=high, low=low, close=close)
-    if not is_datetime_ordered(volume):
-        logger.warning("VWAP volume series is not datetime ordered. Results may not be as expected.")
-    if not is_datetime_ordered(typical_price):
-        logger.warning("VWAP price series is not datetime ordered. Results may not be as expected.")
+    # Cumulative sums per anchor period assume time order; an unordered index
+    # used to produce wrong values with only a warning.
+    for label, series in (("high/low/close", typical_price), ("volume", volume)):
+        if not series.index.is_monotonic_increasing:
+            raise ValueError(f"vwap() {label} index must be in ascending time order; sort it first (df.sort_index())")
 
     # Calculate Result
     wp = typical_price * volume
-    vwap = wp.groupby(wp.index.to_period(anchor), observed=True).cumsum()
-    vwap /= volume.groupby(volume.index.to_period(anchor), observed=True).cumsum()
+    # Periods follow the index's wall-clock calendar; dropping the time zone first
+    # does what to_period() does anyway, without its warning on every call.
+    wall_clock = wp.index.tz_localize(None) if wp.index.tz is not None else wp.index
+    periods = wall_clock.to_period(anchor)
+    vwap = wp.groupby(periods, observed=True).cumsum()
+    vwap /= volume.groupby(periods, observed=True).cumsum()
 
     # Offset
     vwap = apply_offset(vwap, offset)
@@ -92,6 +93,15 @@ Args:
         implement various Timeseries Offset Aliases as listed here:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
         Default: "D".
+        The anchor follows the calendar of the index's own time zone. A
+        session that crosses midnight in UTC but not locally (NZX on a UTC
+        index) needs the index converted to the exchange's time zone first:
+        local = df.tz_convert("Pacific/Auckland"). A session that opens
+        before local midnight (CME, 18:00 New York time) also needs the open
+        moved to 00:00 of the trade date, and the index restored afterwards:
+            ny = df.tz_convert("America/New_York")
+            ny = ny.set_axis(ny.index + pd.Timedelta(hours=6))
+            vwap = ta.vwap(ny.high, ny.low, ny.close, ny.volume).set_axis(df.index)
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

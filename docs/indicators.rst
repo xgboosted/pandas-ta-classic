@@ -35,6 +35,35 @@ expected. Inputs with no label in common (a ``RangeIndex`` next to a
 overlap) raise ``ValueError``: they could only produce an all-NaN result on the
 union of both indexes.
 
+Missing Values
+--------------
+
+**A leading NaN run is not data.** Chained input (one indicator's output fed
+into another) starts with a NaN warm-up run. Every indicator returns the same
+values on the real bars as it would on the series without that run, and NaN on
+the run itself. ``tests/test_leading_nan_contract.py`` checks every registered
+indicator.
+
+**A missing bar inside the series** (a NaN in any input) is handled in one of
+three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
+
+* **Recovers** (every indicator not listed below): the result is NaN near the
+  gap and, once the gap has left every window and recursion, equals the result
+  on the complete series. Window indicators such as ``sma(length=20)`` are NaN
+  for 20 bars. Recursive indicators (``macd``, ``kama``, ``jma``, ``mama``,
+  ``rsx``, the ``ht_*`` family, ``ha``, ...) skip the missing bar: it reads NaN
+  and the recursion continues as if the bar did not exist. TA-Lib instead
+  reports NaN from the gap to the end of the series.
+* **Cumulative** (``ad``, ``aobv``, ``nvi``, ``obv``, ``pvi``, ``pvt``,
+  ``wad``): a running total cannot know the missing bar's contribution, so
+  later values differ from the complete series by a persistent amount. Their
+  bar-to-bar changes are unaffected.
+* **Whole series** (``tos_stdevall``): one fit over the entire series changes
+  everywhere, slightly, when a bar is missing.
+
+No indicator publishes a value it could not compute: a result is either
+computed from the available bars or NaN.
+
 Lookahead Bias and Causality
 -----------------------------
 
@@ -109,7 +138,7 @@ Candlestick patterns for identifying market sentiment and potential reversals.
 The **category count is 5** because dynamic discovery tracks callable indicator entries,
 while the **62 native CDL patterns** are selectable names handled by ``cdl_pattern()``.
 
-All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib fallback → warning**. Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
+All 62 CDL patterns have native Python implementations. The dispatch order inside ``cdl_pattern()`` is: **native first → TA-Lib → ``ImportError``** (an unknown name raises ``ValueError``). Because every pattern in ``ALL_PATTERNS`` has a native implementation, the TA-Lib branch is never reached in practice. Patterns are accessible via ``df.ta.cdl_pattern(name=...)``, or for ``doji`` and ``inside`` specifically via their dedicated accessor methods.
 
 .. code-block:: python
 
@@ -194,10 +223,10 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Commodity Channel Index*: **cci**
 * *Chande Forecast Oscillator*: **cfo**
 * *Center of Gravity*: **cg**
-* *Chande Momentum Oscillator*: **cmo**
+* *Chande Momentum Oscillator*: **cmo** (Chande's sums of up and down moves; TA-Lib's ``CMO``, used with ``talib=True``, smooths them with Wilder's method instead)
 * *Coppock Curve*: **coppock**
 * *Correlation Trend Indicator*: **cti** (wrapper for ``ta.linreg(series, r=True)``)
-* *Directional Movement*: **dm**
+* *Directional Movement*: **dm** (Wilder-smoothed +DM/−DM as ``PLUS_DM_<length>``/``MINUS_DM_<length>``; equals TA-Lib ``PLUS_DM``/``MINUS_DM``)
 * *Efficiency Ratio*: **er**
 * *Elder Ray Index*: **eri**
 * *Fisher Transform*: **fisher**
@@ -207,7 +236,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *KST Oscillator*: **kst**
 * *Linear Regression RSI*: **lrsi**
 * *Moving Average Convergence Divergence*: **macd**
-* *MACD Extended*: **macdext** (MACD with controllable MA type per line; MA types: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3)
+* *MACD Extended*: **macdext** (MACD with controllable MA type per line; MA types: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3; 6 and 7 need TA-Lib, ``talib=True``)
 * *MACD Fixed*: **macdfix** (MACD with fixed 12/26 periods; only signal period is configurable; uses TA-Lib ``MACDFIX`` when available)
 * *Momentum*: **mom**
 * *Pretty Good Oscillator*: **pgo**
@@ -256,7 +285,7 @@ Moving averages and trend-following indicators:
 * *Hull Exponential Moving Average*: **hma**
 * *Hilbert Transform Instantaneous Trendline*: **ht_trendline**
 * *Holt-Winter Moving Average*: **hwma**
-* *Ichimoku Kinkō Hyō*: **ichimoku** (``ta.ichimoku()`` returns a single DataFrame of the known-period columns; ``append_span=True`` appends the forward-looking Span rows. ``as_dataframe=False`` still returns the legacy ``(visible, span)`` tuple with a ``DeprecationWarning`` and is removed in the next breaking release. The DataFrame Extension Method ``df.ta.ichimoku()`` returns the same single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
+* *Ichimoku Kinkō Hyō*: **ichimoku** (``ta.ichimoku()`` returns a single DataFrame of the known-period columns; ``append_span=True`` appends the forward-looking Span rows. The legacy ``(visible, span)`` tuple and the ``as_dataframe`` parameter were removed in 0.9.0; passing ``as_dataframe`` raises ``TypeError``. The DataFrame Extension Method ``df.ta.ichimoku()`` returns the same single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
 * *Jurik Moving Average*: **jma**
 * *Kaufman's Adaptive Moving Average*: **kama**
 * *Linear Regression*: **linreg**
@@ -265,7 +294,7 @@ Moving averages and trend-following indicators:
 * *Linear Regression Slope*: **linregslope** (slope of the linear regression line)
 * *Moving Average*: **ma** (Generic moving average selector)
 * *MESA Adaptive Moving Average*: **mama** (returns MAMA + FAMA)
-* *Moving Average with Variable Period*: **mavp** (``periods``, a per-bar window schedule, is a required input)
+* *Moving Average with Variable Period*: **mavp** (``periods``, a per-bar window schedule, is a required input; ``mamode`` other than 0 (SMA) needs TA-Lib, ``talib=True``)
 * *Madrid Moving Average Ribbon*: **mmar**
 * *Median Price (H+L)/2*: **medprice** (arithmetic mean of high and low; equivalent to TA-Lib ``MEDPRICE`` and tulipy ``medprice``)
 * *McGinley Dynamic*: **mcgd**
@@ -286,7 +315,7 @@ Moving averages and trend-following indicators:
 * *Triangular Moving Average*: **trima**
 * *Typical Price (H+L+C)/3*: **typprice** (arithmetic mean of high, low, close; equivalent to TA-Lib ``TYPPRICE`` and tulipy ``typprice``)
 * *Variable Index Dynamic Average*: **vidya**
-* *Volume Weighted Average Price*: **vwap** (**Requires** the DataFrame index to be a DatetimeIndex)
+* *Volume Weighted Average Price*: **vwap** (**Requires** a DatetimeIndex in ascending order; an unsorted index raises ``ValueError``). The anchor follows the calendar of the index's time zone: convert a UTC index to the exchange's time zone for a session that crosses midnight in UTC, and shift a session that opens before local midnight (CME's 18:00 New York open) so it starts at 00:00; ``help(ta.vwap)`` shows both.
 * *Volume Weighted Moving Average*: **vwma**
 * *Weighted Closing Price*: **wcp**
 * *Weighted Moving Average*: **wma**
@@ -326,13 +355,13 @@ Trend (26)
 
 Trend identification and direction indicators:
 
-* *Average Directional Movement Index*: **adx** (Also includes **dmp** and **dmn**)
+* *Average Directional Movement Index*: **adx** (also returns +DI and −DI as ``DMP_<length>`` and ``DMN_<length>``)
 * *Average Directional Movement Index Rating*: **adxr**
 * *Archer Moving Averages Trends*: **amat**
 * *Aroon & Aroon Oscillator*: **aroon**
 * *Choppiness Index*: **chop**
-* *Chande Kroll Stop*: **cksp**
-* *Central Pivot Range*: **cpr** / **cpr_option** (4 pivot methods: standard, camarilla, fibonacci, woodie)
+* *Chande Kroll Stop*: **cksp** (default is TradingView's ``p=10, x=1, q=9`` with a Wilder ATR; ``tvmode=False`` gives the book's ``10, 3, 20`` with an SMA ATR)
+* *Central Pivot Range*: **cpr** (pivot methods ``classic``, ``camarilla``, ``fibonacci``, ``woodie``; ``timeframe`` ``daily`` uses the previous bar, ``intraday``/``weekly``/``monthly`` the last completed calendar day, week or month)
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
@@ -340,15 +369,15 @@ Trend identification and direction indicators:
 * *Exponential Decay*: **edecay** (multiplicative exponential decay; equivalent to tulipy ``edecay``)
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
-* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; pass ``talib=True`` for TA-Lib ``MINUS_DM``)
-* *Parabolic Stop and Reverse*: **psar** (pass ``talib=True`` for exact TA-Lib ``SAR`` output)
-* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; pass ``talib=True`` for TA-Lib ``PLUS_DM``)
+* *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; equals TA-Lib ``MINUS_DM``, which ``talib=True`` calls directly)
+* *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR``, which ``talib=True`` calls directly)
+* *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; equals TA-Lib ``PLUS_DM``, which ``talib=True`` calls directly)
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick**
-* *Parabolic SAR Extended*: **sarext**
+* *Parabolic SAR Extended*: **sarext** (positive while long, negative while short, as TA-Lib ``SAREXT``, which it equals for every parameter)
 * *Short Run*: **short_run**
 * *Trend Signals*: **tsignals**
-* *TTM Trend*: **ttm_trend**
+* *TTM Trend*: **ttm_trend** (+1 when the close is above the average HL2 of the previous ``length`` bars, −1 below; NaN until that average exists)
 * *Vertical Horizontal Filter*: **vhf**
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**

@@ -403,16 +403,12 @@ class TestMomentum(TestCase):
             ),
         )
 
-    def test_macdext_unsupported_matype_warns(self):
-        import pytest
-
-        with pytest.warns(UserWarning, match="EMA will be used instead"):
-            result = pandas_ta.macdext(self.close, signalmatype=6, talib=False)
-        self.assertIsInstance(result, DataFrame)
-
-        with pytest.warns(UserWarning, match="EMA will be used instead"):
-            result = pandas_ta.macdext(self.close, fastmatype=7, talib=False)
-        self.assertIsInstance(result, DataFrame)
+    def test_macdext_unsupported_matype_raises(self):
+        # KAMA/MAMA have no native path; an EMA used to be computed instead
+        with self.assertRaisesRegex(ValueError, r"signalmatype=6 .*needs TA-Lib"):
+            pandas_ta.macdext(self.close, signalmatype=6, talib=False)
+        with self.assertRaisesRegex(ValueError, r"fastmatype=7 .*needs TA-Lib"):
+            pandas_ta.macdext(self.close, fastmatype=7, talib=False)
 
     def test_mom(self):
         result = pandas_ta.mom(self.close, talib=False)

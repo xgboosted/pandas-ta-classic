@@ -32,7 +32,12 @@ You explicitly define the input columns and take care of the output.
 DataFrame Extension
 ~~~~~~~~~~~~~~~~~~~
 
-Calling ``df.ta`` will automatically lowercase *OHLCVA* to *ohlcva*: *open, high, low, close, volume*, *adj_close*. By default, ``df.ta`` will use the *ohlcva* for the indicator arguments.
+By default, ``df.ta`` reads the columns *open, high, low, close* and *volume*. A column is found by its exact name first, then by the same name in any case (``Close``, ``CLOSE``); a column that only starts with the name (``Open time`` for ``open``) is not used. Pass ``close="my_col"`` (or ``high=``, ``low=``, ...) to read another column.
+A column the indicator requires that the DataFrame does not have raises
+``KeyError`` listing the available columns; an optional one (``cpr``'s
+``volume``) is simply left out.
+
+An indicator that cannot compute from what it was given (``df.ta.beta()`` without ``benchmark``) returns ``None``.
 
 .. code-block:: python
 
@@ -62,6 +67,11 @@ adjusted
 
     # To reset back to 'close', set adjusted back to None.
     df.ta.adjusted = None
+
+``adjusted`` is stored in ``df.attrs``, which pandas copies into ``df.copy()``
+and column subsets. Where the adjusted column is missing, reading the default
+close raises ``KeyError`` instead of silently using unadjusted prices; set
+``adjusted = None`` on that frame, or pass ``close=`` explicitly.
 
 categories
 ~~~~~~~~~~
@@ -151,11 +161,9 @@ time_range
 ``time_range`` controls the **time unit** used when ``df.ta.time_range`` is
 read back as a numeric value (e.g. for annualisation).  Valid values are
 ``"years"`` (default), ``"months"``, ``"weeks"``, ``"days"``, ``"hours"``,
-``"minutes"``, and ``"seconds"``.
-
-.. note::
-   Any unrecognised string silently falls back to ``"years"`` (matches the
-   behaviour of the underlying ``total_time()`` helper).
+``"minutes"``, and ``"seconds"``. Spans are measured in calendar time: a year
+is 365.25 days, so ``"years"`` is the calendar span, not a count of trading
+days. Setting any other value raises ``ValueError``.
 
 .. code-block:: python
 
@@ -173,13 +181,15 @@ read back as a numeric value (e.g. for annualisation).  Valid values are
 to_utc
 ~~~~~~
 
-``to_utc`` is a **read-only property** (not a method).  Accessing it
-converts the DataFrame index to UTC in place.
+``df.ta.to_utc`` is a **property** (no parentheses) that converts ``df``'s
+index to UTC in place: a naive index is localised, an aware one converted.
+The ``ta.to_utc`` function does the same on a copy and leaves its argument
+unchanged.
 
 .. code-block:: python
 
-    # Convert DataFrame index to UTC (accesses the property — no parentheses)
-    df.ta.to_utc
+    df.ta.to_utc          # changes df
+    utc = ta.to_utc(df)   # returns a converted copy
 
 Methods
 -------
@@ -205,8 +215,8 @@ Fetching data
 
 .. note::
    pandas-ta-classic does not download market data. ``df.ta.ticker()``,
-   ``ta.yf()`` and ``ta.av()`` were deprecated in 0.8.32 and removed in the
-   release after it. Fetch OHLCV with yfinance or alpha-vantage and pass the
+   ``ta.yf()`` and ``ta.av()`` were deprecated in 0.8.32 and removed in
+   0.9.0. Fetch OHLCV with yfinance or alpha-vantage and pass the
    DataFrame in; ``examples/fetch_market_data.py`` shows both.
 
 .. code-block:: python
@@ -221,8 +231,8 @@ Removed helpers
 
 .. note::
    ``df.ta.constants()``, ``ta.get_time``, ``ta.EXCHANGE_TZ`` and
-   ``ta.CDL_PATTERN_NAMES`` were deprecated in 0.8.32 and removed in the
-   release after it. Add a constant column directly (``df["0"] = 0``) and use
+   ``ta.CDL_PATTERN_NAMES`` were deprecated in 0.8.32 and removed in
+   0.9.0. Add a constant column directly (``df["0"] = 0``) and use
    ``ta.ALL_PATTERNS`` for the candle pattern names.
 
 chain
@@ -247,7 +257,9 @@ indicator call auto-appends to the DataFrame and returns the DataFrame (so
 
 .. note::
    Chain state is stored on ``df.attrs`` and persists across ``.ta`` accessor
-   re-entries.  Use :meth:`unchain` to exit chain mode.
+   re-entries.  It applies only to the DataFrame ``chain()`` was called on:
+   ``df.copy()`` and slices such as ``df.iloc[-100:]`` are not chained.  Use
+   :meth:`unchain` to exit chain mode.
 
 unchain
 ~~~~~~~

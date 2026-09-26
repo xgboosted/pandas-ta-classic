@@ -117,11 +117,6 @@ backtest = [
     "backtrader"
 ]
 
-# Back-compat alias for the previous combined extra
-integration = [
-    "pandas-ta-classic[backtest]"
-]
-
 # Complete environment with all features.
 # Excludes `backtest`: it pulls unmaintained, platform-fragile packages
 # (backtrader, vectorbt) that break `[all]` installs on newer Python/OS
@@ -142,6 +137,9 @@ markers = [
 ]
 filterwarnings = [
     "error::UserWarning:pandas_ta_classic",
+    # 0.9.0 ships no deprecation: a deprecated pandas/numpy call made from our code fails the suite
+    "error::DeprecationWarning:pandas_ta_classic",
+    "error::FutureWarning:pandas_ta_classic",
 ]
 
 [tool.black]
@@ -205,7 +203,6 @@ packages = [
 write_to = "pandas_ta_classic/_version.py"
 # Default scheme: gives clean version on tags, next minor .devN after tags
 local_scheme = "no-local-version"  # Omit local version for clean releases
-fallback_version = "0.0.0"  # Fallback if not in a git repository
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]

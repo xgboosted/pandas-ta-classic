@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 
 from pandas_ta_classic.overlap import sma
-from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils._core import _bool_param, _pos_int
 
 # - Standard definition of your custom indicator function (including docs)-
 
@@ -11,8 +12,9 @@ def ni(close, length=None, centered=False, offset=None, **kwargs):
     """
     Example indicator ni
     """
-    # Validate Arguments
-    length = int(length) if length and length > 0 else 20
+    # Validate Arguments: None selects the default, anything else invalid raises
+    length = _pos_int(length, 20, "length")
+    centered = _bool_param(centered, False, "centered")
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -28,14 +30,10 @@ def ni(close, length=None, centered=False, offset=None, **kwargs):
         ni = (close.shift(t) - ma).shift(-t)
 
     # Offset
-    if offset != 0:
-        ni = ni.shift(offset)
+    ni = apply_offset(ni, offset)
 
-    # Handle fills
-    if "fillna" in kwargs:
-        ni.fillna(kwargs["fillna"], inplace=True)
-    if "fill_method" in kwargs:
-        ni.fillna(method=kwargs["fill_method"], inplace=True)
+    # Handle fills: fillna=<value>, fill_method="ffill" or "bfill"
+    ni = apply_fill(ni, **kwargs)
 
     # Name and Categorize it
     ni.name = f"ni_{length}"
@@ -69,7 +67,7 @@ Args:
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
+    fill_method (value, optional): "ffill" or "bfill"
 
 Returns:
     pd.Series: New feature generated.

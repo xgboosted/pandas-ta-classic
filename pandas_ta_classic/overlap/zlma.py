@@ -20,7 +20,6 @@ from .vidya import vidya
 from .wma import wma
 
 # Dispatch table: mamode string → MA function.
-# "ema" is the catch-all default so it is looked up via dict.get(name, ema).
 _ZLMA_DISPATCH = {
     "dema": dema,
     "ema": ema,
@@ -48,7 +47,7 @@ def zlma(
     """Indicator: Zero Lag Moving Average (ZLMA)"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=_ZLMA_DISPATCH.keys())
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -58,7 +57,7 @@ def zlma(
     # Calculate Result
     lag = int(0.5 * (length - 1))
     close_ = 2 * close - close.shift(lag)
-    ma_fn = _ZLMA_DISPATCH.get(mamode, ema)
+    ma_fn = _ZLMA_DISPATCH[mamode]
     zlma = ma_fn(close_, length=length, **kwargs)
 
     if zlma is None:

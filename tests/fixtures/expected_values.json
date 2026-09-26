@@ -1353,11 +1353,11 @@
   },
   "kst": {
     "KST_10_15_20_30_10_10_10_15": {
-      "last_value": 6188.29754852,
+      "last_value": 61.88297549,
       "non_nan_count": 5197
     },
     "KSTs_9": {
-      "last_value": 5865.95012245,
+      "last_value": 58.65950122,
       "non_nan_count": 5189
     }
   },
@@ -1462,23 +1462,23 @@
     },
     "SQZPRO_ON_WIDE": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "SQZPRO_ON_NORMAL": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "SQZPRO_ON_NARROW": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "SQZPRO_OFF": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     },
     "SQZPRO_NO": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5221
     }
   },
   "stc": {
@@ -1491,7 +1491,7 @@
       "non_nan_count": 5216
     },
     "STCstoch_10_12_26_0.5": {
-      "last_value": 95.92991142,
+      "last_value": 95.92991143,
       "non_nan_count": 5241
     }
   },
@@ -1610,13 +1610,13 @@
     }
   },
   "cksp": {
-    "CKSPl_10_3_20": {
-      "last_value": 341.26857647,
-      "non_nan_count": 5212
+    "CKSPl_10_1_9": {
+      "last_value": 347.56952549,
+      "non_nan_count": 5223
     },
-    "CKSPs_10_3_20": {
-      "last_value": 330.81462706,
-      "non_nan_count": 5212
+    "CKSPs_10_1_9": {
+      "last_value": 334.46375994,
+      "non_nan_count": 5223
     }
   },
   "cpr": {
@@ -1692,7 +1692,7 @@
   "ttm_trend": {
     "TTM_TRND_6": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5235
     }
   },
   "aobv": {

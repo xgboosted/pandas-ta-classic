@@ -57,9 +57,6 @@ SKIP_BOOL_KWARGS = {
     # selects a different implementation altogether, and whether TA-Lib is
     # installed varies by environment
     "talib",
-    # df.ta.ichimoku() hardcodes as_dataframe=True and forwards **kwargs, so
-    # passing it through the accessor raises TypeError on the duplicate
-    "as_dataframe",
 }
 
 # Why a given call is expected to report values that depend on later bars.

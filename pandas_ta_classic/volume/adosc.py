@@ -12,7 +12,7 @@ from .ad import ad
 
 
 @nan_on_short_input
-@skip_leading_nan("high", "low", "close", "volume")
+@skip_leading_nan("high", "low", "close", "volume", interior=True)
 def adosc(
     high: Series,
     low: Series,

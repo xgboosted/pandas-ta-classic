@@ -1,5 +1,4 @@
 # Ichimoku Kinko Hyo (ICHIMOKU)
-import warnings
 from typing import Any
 
 from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
@@ -8,13 +7,6 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 from .midprice import midprice
-
-_ICHIMOKU_TUPLE_DEPRECATION = (
-    "ichimoku(as_dataframe=False) returns the legacy (visible, span) tuple, which "
-    "is deprecated and will be removed in the next breaking release. Omit "
-    "as_dataframe to get the single DataFrame (the default since 0.9.0); add "
-    "append_span=True to also get the projected span rows."
-)
 
 
 @nan_on_short_input
@@ -27,16 +19,17 @@ def ichimoku(
     senkou: int | None = None,
     include_chikou: bool = True,
     offset: int | None = None,
-    as_dataframe: bool = True,
     append_span: bool = False,
     **kwargs: Any,
-) -> tuple[DataFrame | None, DataFrame | None] | DataFrame | None:
+) -> DataFrame | None:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
     tenkan = _pos_int(tenkan, 9, "tenkan")
     kijun = _pos_int(kijun, 26, "kijun")
     senkou = _pos_int(senkou, 52, "senkou")
     include_chikou = _bool_param(include_chikou, True, "include_chikou")
-    as_dataframe = _bool_param(as_dataframe, True, "as_dataframe")
+    if "as_dataframe" in kwargs:
+        # the (visible, span) tuple was removed in 0.9.0; **kwargs would swallow the old keyword
+        raise TypeError("ichimoku() no longer accepts 'as_dataframe': it always returns one DataFrame; pass append_span=True for the span rows")
     append_span = _bool_param(append_span, False, "append_span")
     _length = max(tenkan, kijun, senkou)
     high = verify_series(high, _length)
@@ -46,12 +39,8 @@ def ichimoku(
     if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):
         include_chikou = False
 
-    return_tuple = not as_dataframe
-    if return_tuple:
-        warnings.warn(_ICHIMOKU_TUPLE_DEPRECATION, DeprecationWarning, stacklevel=2)
-
     if high is None or low is None or close is None:
-        return (None, None) if return_tuple else None
+        return None
 
     # Calculate Result
     tenkan_sen = midprice(high=high, low=low, length=tenkan)
@@ -114,11 +103,7 @@ def ichimoku(
     spandf.name = f"ICHISPAN_{tenkan}_{kijun}"
     spandf.category = "overlap"
 
-    if return_tuple:
-        return ichimokudf, spandf
-
-    # Single-DataFrame return (opt-in via as_dataframe=True). By default the
-    # future-dated span rows are omitted (visible period only). append_span=True
+    # By default the future-dated span rows are omitted (visible period only). append_span=True
     # appends them: concat drops the monkey-patched name/category attrs, so
     # reassign. Span rows carry only ISA/ISB; ITS/IKS/ICS are NaN there.
     if not append_span:
@@ -160,26 +145,21 @@ Args:
     senkou (int): Senkou period. Default: 52
     include_chikou (bool): Whether to include chikou component. Default: True
     offset (int): How many periods to offset the result. Default: 0
-    as_dataframe (bool): Return type selector. True (default) returns a single
-        DataFrame. False returns the legacy ``(visible, span)`` tuple and emits
-        a DeprecationWarning; the tuple is removed in the next breaking
-        release. Default: True
-    append_span (bool): Only used when as_dataframe is True. When False
-        (default) the returned DataFrame holds the visible period only.
+    append_span (bool): When False (default) only the visible period is
+        returned (no future-dated rows, safe to append to the input frame).
         When True the future-dated span rows (projected Senkou A/B) are
-        appended as extra rows. Ignored for the tuple return, which always
-        exposes the span separately. Default: False
+        appended as extra rows. Default: False
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
 Returns:
-    tuple[pd.DataFrame, pd.DataFrame] (as_dataframe is False, deprecated):
-        For the visible period: spanA, spanB, tenkan_sen, kijun_sen,
-            and chikou_span columns
-        For the forward looking period: spanA and spanB columns
-    pd.DataFrame (as_dataframe is True, default): the visible period columns. With
-        append_span=True the future-dated span rows are appended (only
-        spanA/spanB populated there; tenkan_sen/kijun_sen/chikou_span NaN)
+    pd.DataFrame: the visible period columns (spanA, spanB, tenkan_sen,
+        kijun_sen and chikou_span). With append_span=True the future-dated
+        span rows are appended (only spanA/spanB populated there;
+        tenkan_sen/kijun_sen/chikou_span NaN).
+
+    Note: ``as_dataframe`` and the legacy ``(visible, span)`` tuple were
+    removed in 0.9.0; passing ``as_dataframe`` raises TypeError.
 """

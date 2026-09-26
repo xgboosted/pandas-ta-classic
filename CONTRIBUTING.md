@@ -49,7 +49,7 @@ We welcome contributions from the community! This document provides guidelines a
  uv pip install -e ".[docs]"         # Documentation dependencies
  uv pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  uv pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
- uv pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt
+ uv pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  uv pip install -e ".[performance]"  # Numba acceleration
  ```
  
@@ -64,7 +64,7 @@ We welcome contributions from the community! This document provides guidelines a
  pip install -e ".[docs]"         # Documentation dependencies
  pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
- pip install -e ".[integration]"  # Backtesting integrations: backtesting, backtrader, vectorbt
+ pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  pip install -e ".[performance]"  # Numba acceleration
  ```
 
@@ -77,6 +77,8 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
+- The registry-driven contract tests (`test_lookahead.py`, `test_short_input_contract.py`, `test_leading_nan_contract.py`, `test_interior_nan_contract.py`) run on every new indicator automatically and must pass; recursive indicators need `@skip_leading_nan(<series params>, interior=True)`
+- If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
 > **Note:** The library uses **dynamic category discovery** via `_build_category_dict()` in `_meta.py`. When you add a new indicator file to any category folder (e.g., `pandas_ta_classic/momentum/new_indicator.py`), it will automatically be detected and included in the `Category` dictionary. Just ensure your file is in the correct category folder!
@@ -230,7 +232,7 @@ The full list, with what enforces each rule, is in the "Correctness Rules" secti
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
 - **Docstring `Default:` values match the code** (`tests/test_docstring_defaults.py` checks this).
-- **Deprecate in a released version before removing**, and mark any entry that changes results or starts raising as **BREAKING** in `CHANGELOG.md`.
+- **Deprecate in a released version before removing** (0.9.0 is the exception: it ships no deprecation, so its renames and removals raise at once), and mark any entry that changes results or starts raising as **BREAKING** in `CHANGELOG.md`.
 - **Prove refactors change nothing**: compare hashed indicator output before and after.
 
 ### 5. Git Workflow
@@ -299,7 +301,9 @@ Versions are managed automatically via [setuptools-scm](https://github.com/pypa/
   git clone https://github.com/xgboosted/pandas-ta-classic.git
   ```
 
-**Troubleshooting:** If `import pandas_ta_classic` shows version `0.0.0`, fetch missing tags:
+- GitHub source archives (`archive/<ref>.zip`, *Download ZIP*) have no `.git`; they carry the version in `.git_archival.txt`, which `git archive` fills in (`export-subst` in `.gitattributes`). There is no `0.0.0` fallback: a source copy with neither `.git` nor that file fails to build with `LookupError`; include `.git` or set `SETUPTOOLS_SCM_PRETEND_VERSION`.
+
+**Troubleshooting:** If `import pandas_ta_classic` shows a version such as `0.1.devN`, the clone has no tags; fetch them:
 ```bash
 git fetch --tags
 pip install -e ".[dev]"  # reinstall to regenerate _version.py

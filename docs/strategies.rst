@@ -58,6 +58,13 @@ Categorical Strategies
    (for example ``ebsw`` needs ``length > 38``) instead of silently using its
    default, so exclude such indicators: ``df.ta.strategy("All", length=10, exclude=["ebsw"])``.
 
+.. note::
+   ``strategy()`` accepts ``"all"``, a category name or a ``Strategy``; any
+   other name raises ``ValueError``. For ``"all"`` and a category, indicators
+   that need a column the DataFrame does not have (``obv`` and the other
+   volume indicators on OHLC-only data) are skipped and listed with
+   ``verbose=True``; call one directly and it raises ``KeyError``.
+
 Custom Strategies
 ~~~~~~~~~~~~~~~~~
 
@@ -82,7 +89,12 @@ Custom Strategies
 Multiprocessing
 ---------------
 
-The **Pandas TA Classic** *strategy* method utilizes **multiprocessing** for bulk indicator processing of all Strategy types with **ONE EXCEPTION!** When using the ``col_names`` parameter to rename resultant column(s), the indicators in ``ta`` array will be ran in order.
+The **Pandas TA Classic** *strategy* method utilizes **multiprocessing** for bulk indicator processing of all Strategy types, with **two exceptions**. A Custom Strategy runs its ``ta`` list serially, in order, when:
+
+* an entry uses ``col_names`` to rename its column(s), or
+* an entry is **chained**: it reads a column that an earlier entry appends, such as ``{"kind": "ema", "close": "CUMLOGRET_1"}`` after ``{"kind": "log_return", "cumulative": True}``. Each multiprocessing worker holds its own copy of the DataFrame, so the chained column only exists when the entries run one after another.
+
+A column that neither exists nor is produced by an earlier entry raises ``KeyError`` naming the column.
 
 Basic Usage
 ~~~~~~~~~~~
@@ -112,7 +124,8 @@ Excluding Indicators
 
 .. code-block:: python
 
-    # Maybe you do not want certain indicators
+    # Maybe you do not want certain indicators (a list, tuple or set of
+    # indicator names; an unknown name raises ValueError)
     df.ta.strategy(exclude=["bop", "mom", "percent_return", "wcp", "pvi"], verbose=True)
 
     # Perhaps you want to use different values for indicators
@@ -131,9 +144,25 @@ Custom Strategy without Multiprocessing
         ta=[
             {"kind": "ema", "length": 8},
             {"kind": "ema", "length": 21},
-            {"kind": "bbands", "length": 20, "col_names": ("BBL", "BBM", "BBU")},
+            {"kind": "bbands", "length": 20, "col_names": ("BBL", "BBM", "BBU", "BBB", "BBP")},  # one name per column
             {"kind": "macd", "fast": 8, "slow": 21, "col_names": ("MACD", "MACD_H", "MACD_S")}
         ]
     )
     # Run it
     df.ta.strategy(NonMPStrategy)
+
+Chained Custom Strategy
+~~~~~~~~~~~~~~~~~~~~~~~
+
+An entry can use an earlier entry's output as its input. The strategy then runs serially (see above).
+
+.. code-block:: python
+
+    ChainedStrategy = ta.Strategy(
+        name="Cumulative Log Return EMA",
+        ta=[
+            {"kind": "log_return", "cumulative": True},                             # appends CUMLOGRET_1
+            {"kind": "ema", "close": "CUMLOGRET_1", "length": 5, "suffix": "CLR"},  # reads it: EMA_5_CLR
+        ]
+    )
+    df.ta.strategy(ChainedStrategy)

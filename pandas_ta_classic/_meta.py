@@ -6,24 +6,15 @@ Contains Category definitions, version information, and import checks.
 from importlib.util import find_spec
 from pathlib import Path
 
-# Version information - dynamically determined from git tags via setuptools_scm
+# Version information - dynamically determined from git tags via setuptools_scm.
+# An installed package always has one of the two; a made-up "0.0.0" used to
+# hide a broken install.
 try:
-    # Try to import version from setuptools_scm generated file
     from pandas_ta_classic._version import version as __version__
 except ImportError:
-    # Fallback: try to get version from installed package metadata
-    try:
-        from importlib.metadata import (
-            PackageNotFoundError,
-            version as _dist_version,
-        )
+    from importlib.metadata import version as _dist_version
 
-        try:
-            __version__ = _dist_version("pandas-ta-classic")
-        except PackageNotFoundError:
-            __version__ = "0.0.0"  # Fallback if package not installed
-    except ImportError:
-        __version__ = "0.0.0"  # Final fallback
+    __version__ = _dist_version("pandas-ta-classic")  # raises PackageNotFoundError when not installed
 
 version = __version__
 

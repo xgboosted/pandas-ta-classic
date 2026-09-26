@@ -112,13 +112,22 @@ def squeeze_pro(
     squeeze_off_wide = (bbd.l < kch_wide.l) & (bbd.u > kch_wide.u)
     no_squeeze = ~squeeze_on_wide & ~squeeze_off_wide
 
-    # Convert bool to int before offset to avoid NaN-to-int errors
+    # On warm-up bars the bands are NaN, every comparison is False, and
+    # no_squeeze would wrongly read 1 (as in squeeze). Mask the flags to NaN there.
+    defined = bbd.l.notna() & bbd.u.notna()
+    for kc_ in (kch_wide, kch_normal, kch_narrow):
+        defined &= kc_.l.notna() & kc_.u.notna()
+    squeeze_on_wide, squeeze_on_normal, squeeze_on_narrow, squeeze_off_wide, no_squeeze = (
+        flag.where(defined) for flag in (squeeze_on_wide, squeeze_on_normal, squeeze_on_narrow, squeeze_off_wide, no_squeeze)
+    )
+
+    # Convert bool to float (not int): NaN must survive on the warm-up bars.
     if asint:
-        squeeze_on_wide = squeeze_on_wide.astype(int)
-        squeeze_on_normal = squeeze_on_normal.astype(int)
-        squeeze_on_narrow = squeeze_on_narrow.astype(int)
-        squeeze_off_wide = squeeze_off_wide.astype(int)
-        no_squeeze = no_squeeze.astype(int)
+        squeeze_on_wide = squeeze_on_wide.astype(float)
+        squeeze_on_normal = squeeze_on_normal.astype(float)
+        squeeze_on_narrow = squeeze_on_narrow.astype(float)
+        squeeze_off_wide = squeeze_off_wide.astype(float)
+        no_squeeze = no_squeeze.astype(float)
 
     # Offset
     (
@@ -244,7 +253,8 @@ Args:
 
 Kwargs:
     tr (value, optional): Use True Range for Keltner Channels. Default: True
-    asint (value, optional): Use integers instead of bool. Default: True
+    asint (value, optional): Flags as numbers (1.0/0.0) instead of bool; NaN on
+        warm-up bars, where the bands do not exist yet. Default: True
     mamode (value, optional): Which MA to use. Default: "sma"
     detailed (value, optional): Return additional variations of SQZ for
         visualization. Default: False
@@ -252,6 +262,6 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.DataFrame: SQZPRO, SQZPRO_ON_WIDE, SQZPRO_ON_NORMAL, SQZPRO_ON_NARROW, SQZPRO_OFF_WIDE, SQZPRO_NO columns by default. More
+    pd.DataFrame: SQZPRO, SQZPRO_ON_WIDE, SQZPRO_ON_NORMAL, SQZPRO_ON_NARROW, SQZPRO_OFF, SQZPRO_NO columns by default. More
         detailed columns if 'detailed' kwarg is True.
 """

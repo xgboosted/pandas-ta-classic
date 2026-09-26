@@ -112,6 +112,8 @@ Using ``pip``:
    - Full git repository with history and tags (not a shallow clone)
    - setuptools-scm is automatically installed as a build dependency
    - Git tags determine the package version (e.g., ``0.3.36.dev1`` for development, ``0.3.35`` for releases)
+   - A GitHub source archive (``pip install https://github.com/xgboosted/pandas-ta-classic/archive/main.zip`` or *Download ZIP*) carries its version in ``.git_archival.txt``, which ``git archive`` fills in
+   - A source copy with neither ``.git`` nor that file (for example a Docker ``COPY`` without ``.git``) fails to build with setuptools-scm's ``LookupError`` instead of installing as ``0.0.0``; include ``.git`` or set ``SETUPTOOLS_SCM_PRETEND_VERSION``
    - See the `Version Management section in CONTRIBUTING.md <https://github.com/xgboosted/pandas-ta-classic/blob/main/CONTRIBUTING.md#version-management>`_ for details
 
 Oracle Libraries (TA-Lib and tulipy)
@@ -220,7 +222,7 @@ Or install both oracle libraries at once:
     # pip
     pip install pandas-ta-classic[oracle]
 
-Both oracle test suites (``test_oracle_talib.py``, ``test_oracle_tulipy.py``) are guarded with ``@unittest.skipUnless`` and skip automatically when the respective library is not installed.
+``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
 
 Installing Optional Dependencies
 --------------------------------

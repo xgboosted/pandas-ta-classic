@@ -27,6 +27,9 @@ def cfo(
     scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
+    # A strategy-wide drift (df.ta.strategy(..., drift=N)) has no meaning here: the
+    # parameter was removed in 0.9.0. Drop it rather than forward it to apply_fill.
+    kwargs.pop("drift", None)
 
     if close is None:
         return None

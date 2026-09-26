@@ -95,6 +95,9 @@ def apply_fill(
     if "fillna" in kwargs:
         series.fillna(kwargs["fillna"], inplace=True)
     fill_method = kwargs.get("fill_method")
+    if fill_method is not None:
+        # any other value used to be ignored silently
+        fill_method = _str_param(fill_method, "ffill", "fill_method", choices={"ffill", "bfill"})
     if fill_method == "ffill":
         series.ffill(inplace=True)
     elif fill_method == "bfill":
@@ -144,14 +147,15 @@ def get_offset(x: int | None) -> int:
 
 
 def is_datetime_ordered(df: DataFrame | Series) -> bool:
-    """Returns True if the index is a datetime and ordered."""
+    """Returns True if the index is a datetime index in ascending order.
+
+    It used to compare only the first and last labels, so an index sorted
+    everywhere but the middle counted as ordered.
+    """
     index_is_datetime = is_datetime64_any_dtype(df.index)
     if not index_is_datetime or len(df.index) < 2:
         return False
-    try:
-        return bool(df.index[0] < df.index[-1])
-    except (IndexError, TypeError):
-        return False
+    return bool(df.index.is_monotonic_increasing and df.index[0] < df.index[-1])
 
 
 def is_percent(x: float | None) -> TypeGuard[float]:
@@ -167,7 +171,7 @@ def leading_nan_rows(*series: Series) -> int:
     return int(hits[0]) if hits.size else finite.size
 
 
-def skip_leading_nan(*names: str) -> Callable:
+def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
     """Compute an indicator on the rows after a leading NaN run, then pad back.
 
     Chained input (another indicator's output) always starts with NaN. A
@@ -177,6 +181,11 @@ def skip_leading_nan(*names: str) -> Callable:
     *names* are finite; its result is reindexed to the original index, with
     ``name`` and ``category`` preserved. Input without a leading NaN run, or
     that is entirely NaN, is passed through unchanged.
+
+    With ``interior=True`` every row where one of *names* is not finite is
+    skipped, not only the leading run, and reads NaN in the result. For a
+    recursion that would otherwise carry one missing bar forward forever
+    (``rsx`` published a fabricated 50.0 on every later bar).
     """
 
     def decorator(fn: Callable) -> Callable:
@@ -189,12 +198,20 @@ def skip_leading_nan(*names: str) -> Callable:
             if not all(isinstance(s, Series) for s in primary) or len({s.size for s in primary}) != 1:
                 return fn(*args, **kwargs)
             size = primary[0].size
-            start = leading_nan_rows(*primary)
-            if not 0 < start < size:
-                return fn(*args, **kwargs)
+            rows: Any
+            if interior:
+                finite = np.isfinite(np.vstack([s.to_numpy(dtype=float) for s in primary])).all(axis=0)
+                if finite.all() or not finite.any():
+                    return fn(*args, **kwargs)
+                rows = np.flatnonzero(finite)
+            else:
+                start = leading_nan_rows(*primary)
+                if not 0 < start < size:
+                    return fn(*args, **kwargs)
+                rows = slice(start, None)
             for key, value in bound.arguments.items():
                 if isinstance(value, Series) and value.size == size:
-                    bound.arguments[key] = value.iloc[start:]
+                    bound.arguments[key] = value.iloc[rows]
             result = fn(*bound.args, **bound.kwargs)
             if result is None:
                 return None

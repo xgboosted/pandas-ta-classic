@@ -164,6 +164,7 @@ def __getattr__(name: str) -> Any:
 
     from pandas_ta_classic._indicator_loader import (
         _INDICATOR_TO_CATEGORY,
+        _MATH_ALIASES,
         _find_indicator_func,
     )
 
@@ -172,8 +173,12 @@ def __getattr__(name: str) -> Any:
     if cat is not None:
         try:
             func = _find_indicator_func(name)
-        except ModuleNotFoundError:
-            raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")
+        except ModuleNotFoundError as exc:
+            # only a missing indicator module means "no such attribute"; a missing
+            # dependency inside it must surface as itself
+            if exc.name != f"pandas_ta_classic.{cat}.{_MATH_ALIASES.get(name, name)}":
+                raise
+            raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'") from exc
         setattr(sys.modules[__name__], name, func)  # cache in module dict
         return func
 
@@ -209,11 +214,11 @@ def __getattr__(name: str) -> Any:
     if name.startswith("cdl_"):
         try:
             mod = importlib.import_module(f"pandas_ta_classic.candles.{name}")
+        except ModuleNotFoundError as exc:
+            if exc.name != f"pandas_ta_classic.candles.{name}":
+                raise  # a dependency of the module is missing, not the module
+        else:
             setattr(sys.modules[__name__], name, mod)  # cache in module dict
             return mod
-        except ModuleNotFoundError:
-            pass
-        except ImportError:
-            raise
 
     raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")
