@@ -59,18 +59,28 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
         Series | None: xmacd line, or *None* when a required series fails
         validation.
     """
-    if isinstance(ma1, Series) and isinstance(ma2, Series) and not osc:
-        ma1 = verify_series(ma1, _length)
-        ma2 = verify_series(ma2, _length)
-        if ma1 is None or ma2 is None:
-            return None
-        return ma1 - ma2
-
+    # osc overrides ma1/ma2, so it is tested first: the previous
+    # ``... and not osc`` guard evaluated a Series in a boolean context and
+    # raised "The truth value of a Series is ambiguous" for that documented
+    # combination.
     if isinstance(osc, Series):
         osc = verify_series(osc, _length)
         if osc is None:
             return None
         return osc
+
+    # ma1 and ma2 are only meaningful together; one without the other used to
+    # be dropped silently and computed the internal EMA pair instead.
+    if isinstance(ma1, Series) != isinstance(ma2, Series):
+        given, missing = ("ma1", "ma2") if isinstance(ma1, Series) else ("ma2", "ma1")
+        raise ValueError(f"stc() got {given} without {missing}; pass both external moving averages or neither")
+
+    if isinstance(ma1, Series) and isinstance(ma2, Series):
+        ma1 = verify_series(ma1, _length)
+        ma2 = verify_series(ma2, _length)
+        if ma1 is None or ma2 is None:
+            return None
+        return ma1 - ma2
 
     # Traditional / full mode
     fastma = ema(close, length=fast)

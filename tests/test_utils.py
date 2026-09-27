@@ -163,6 +163,79 @@ class TestUtilities(TestCase):
         self.assertIsInstance(result, Series)
         np.testing.assert_array_equal(result, self.crosseddf["crossed"])
 
+    def test_crossover(self):
+        # crossover() is cross(above=True) under a tulipy-compatible name.
+        result = self.utils.crossover(self.crosseddf["a"], self.crosseddf["b"])
+        self.assertIsInstance(result, Series)
+        np.testing.assert_array_equal(result, self.crosseddf["crossed"])
+        self.assertEqual(result.name, "a_XA_b")
+        self.assertEqual(result.category, "utility")
+
+        expected = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"], above=True)
+        self.assertTrue(result.equals(expected))
+
+        raw = self.utils.crossover(self.crosseddf["a"], self.crosseddf["b"], asint=False)
+        self.assertEqual(raw.dtype, bool)
+
+        self.assertIsNone(self.utils.crossover(None, self.crosseddf["b"]))
+
+    def test_cross_value_rejects_a_non_number(self):
+        # It used to reach zero() and fail as "bad operand type for abs()",
+        # naming neither the function nor the argument.
+        with self.assertRaisesRegex(ValueError, r"cross_value\(\) value must be a number"):
+            self.utils.cross_value(self.crosseddf["a"], "x")
+
+    def test_recent_extreme_index(self):
+        # Both count backwards from the last bar, so 0 means "the last bar".
+        rising = Series([1.0, 2.0, 3.0])
+        self.assertEqual(self.utils.recent_maximum_index(rising), 0)
+        self.assertEqual(self.utils.recent_minimum_index(rising), 2)
+
+        falling = Series([3.0, 2.0, 1.0])
+        self.assertEqual(self.utils.recent_maximum_index(falling), 2)
+        self.assertEqual(self.utils.recent_minimum_index(falling), 0)
+
+        # Ties resolve to the most recent bar.
+        self.assertEqual(self.utils.recent_maximum_index(Series([5.0, 1.0, 5.0])), 0)
+
+    def test_signed_series(self):
+        series = Series([3.0, 2, 2, 1, 1, 5, 6, 6, 7, 5])
+        result = self.utils.signed_series(series)
+        self.assertIsInstance(result, Series)
+        self.assertTrue(np.isnan(result.iloc[0]))
+        np.testing.assert_array_equal(
+            result.iloc[1:].to_numpy(),
+            np.array([-1.0, 0.0, -1.0, 0.0, 1.0, 1.0, 0.0, 1.0, -1.0]),
+        )
+
+        # initial replaces the undefined first difference.
+        self.assertEqual(self.utils.signed_series(series, initial=1).iloc[0], 1)
+
+        # A non-number used to fail inside pandas as "Invalid value 'zz' for
+        # dtype 'float64'", naming neither the function nor the parameter.
+        for bad in ("zz", True, float("nan"), float("inf")):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, "signed_series\\(\\) initial must be a number"):
+                self.utils.signed_series(series, initial=bad)
+
+    def test_is_percent(self):
+        for value in (0, 50, 100, 99.5):
+            with self.subTest(value=value):
+                self.assertTrue(self.utils.is_percent(value))
+        for value in (-1, 100.1, 101):
+            with self.subTest(value=value):
+                self.assertFalse(self.utils.is_percent(value))
+        # A non-number is not a percent rather than a TypeError.
+        self.assertFalse(self.utils.is_percent("50"))
+        self.assertFalse(self.utils.is_percent(None))
+
+    def test_unsigned_differences_asint(self):
+        series = Series([1.0, 2.0, 2.0, 1.0])
+        positive, negative = self.utils.unsigned_differences(series, asint=True)
+        self.assertEqual(positive.dtype.kind, "i")
+        self.assertEqual(negative.dtype.kind, "i")
+        np.testing.assert_array_equal(positive.to_numpy(), np.array([0, 1, 0, 0]))
+        np.testing.assert_array_equal(negative.to_numpy(), np.array([0, 0, 0, 1]))
+
     def test_df_year_to_date(self):
         result = self.utils.df_year_to_date(self.data)
         self.assertIsInstance(result, DataFrame)
@@ -211,6 +284,13 @@ class TestUtilities(TestCase):
         result = self.utils.get_time("SSE", to_string=True)
         self.assertIsInstance(result, str)
         self.assertTrue("SSE" in result)
+
+        # An unknown exchange used to raise a bare KeyError and a non-str fell
+        # back to NYSE without a word.
+        with self.assertRaisesRegex(ValueError, "unknown exchange 'XXX'"):
+            self.utils.get_time("XXX", to_string=True)
+        with self.assertRaisesRegex(TypeError, "exchange must be a str, got int"):
+            self.utils.get_time(5, to_string=True)
 
     def test_linear_regression(self):
         x = Series([1, 2, 3, 4, 5])
@@ -271,6 +351,12 @@ class TestUtilities(TestCase):
         self.assertEqual(self.utils.tal_ma("kama"), 6)
         self.assertEqual(self.utils.tal_ma("mama"), 7)
         self.assertEqual(self.utils.tal_ma("t3"), 8)
+
+        # An unknown name or a non-str raises instead of silently returning SMA.
+        with self.assertRaisesRegex(ValueError, "Unknown TA-Lib MA type"):
+            self.utils.tal_ma("nope")
+        with self.assertRaisesRegex(TypeError, "expects a str MA name"):
+            self.utils.tal_ma(5)
 
     def test_zero(self):
         self.assertEqual(self.utils.zero(-0.0000000000000001), 0)

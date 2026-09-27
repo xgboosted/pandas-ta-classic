@@ -17,8 +17,6 @@ def rolling_min(
 ) -> Series | None:
     """Rolling Minimum over *length* periods (TA-Lib: MIN)."""
     length = _pos_int(length, 30, "length")
-    if length <= 0:
-        raise ValueError(f"length must be positive, got {length}")
     close = verify_series(close, length)
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")

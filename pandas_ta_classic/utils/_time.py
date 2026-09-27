@@ -28,10 +28,14 @@ def get_time(exchange: str = "NYSE", full: bool = True, to_string: bool = False)
     """Returns Current Time, Day of the Year and Percentage, and the current
     time of the selected Exchange. Always returns the formatted time string.
     When to_string=False (default), also prints to stdout."""
-    tz = EXCHANGE_TZ["NYSE"]  # Default is NYSE (Eastern Time Zone)
-    if isinstance(exchange, str):
-        exchange = exchange.upper()
-        tz = EXCHANGE_TZ[exchange]
+    # A non-str used to fall back to NYSE without a word, and an unknown name
+    # raised a bare KeyError naming neither the function nor the parameter.
+    if not isinstance(exchange, str):
+        raise TypeError(f"get_time() exchange must be a str, got {type(exchange).__name__}")
+    exchange = exchange.upper()
+    if exchange not in EXCHANGE_TZ:
+        raise ValueError(f"get_time() unknown exchange {exchange!r}; valid: {sorted(EXCHANGE_TZ)}")
+    tz = EXCHANGE_TZ[exchange]
 
     today = Timestamp.now()
     date = f"{today.day_name()} {today.month_name()} {today.day}, {today.year}"

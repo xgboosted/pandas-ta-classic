@@ -66,6 +66,28 @@ class TestCandle(TestCase):
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=["doji", "inside"])
         self.assertIsInstance(result, DataFrame)
 
+        # An empty selection has nothing to build a frame from.
+        self.assertIsNone(pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=[]))
+
+    def test_every_listed_pattern_has_an_implementation(self):
+        """ALL_PATTERNS is hand-maintained; the modules are discovered.
+
+        cdl_pattern() rejects a name in neither list, so a drift between the two
+        would leave a listed pattern with no branch to run. The TA-Lib fallback
+        that used to absorb that was dead code: every listed pattern is native.
+        """
+        from pandas_ta_classic.candles.cdl_pattern import (
+            _NATIVE_PATTERNS,
+            ALL_PATTERNS,
+            cdl_doji,
+            cdl_inside,
+        )
+
+        implemented = set(_NATIVE_PATTERNS) | {"doji", "inside"}
+        self.assertEqual(set(ALL_PATTERNS), implemented)
+        self.assertEqual(len(ALL_PATTERNS), len(set(ALL_PATTERNS)))
+        self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
+
     def test_cdl_doji(self):
         result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close, talib=False)
         if HAS_TALIB:

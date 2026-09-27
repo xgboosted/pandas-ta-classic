@@ -20,7 +20,15 @@ Available Metrics
 * *Pure Profit Score*: **pure_profit_score**
 * *Sharpe Ratio*: **sharpe_ratio**
 * *Sortino Ratio*: **sortino_ratio**
-* *Volatility*: **volatility**
+* *Volatility*: **volatility** (only as ``ta.utils.volatility``, see below)
+
+.. note::
+
+   Every metric above is reachable as ``ta.<name>`` except ``volatility``:
+   that name belongs to the ``volatility`` indicator category, whose
+   subpackage shadows the metric. ``ta.volatility(close)`` raises
+   ``TypeError: '_LazySubpackage' object is not callable``. Call
+   ``ta.utils.volatility(close)`` instead.
 
 Annualisation
 ~~~~~~~~~~~~~
