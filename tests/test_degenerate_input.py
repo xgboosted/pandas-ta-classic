@@ -179,16 +179,18 @@ def _talib_flat(name: str, frame: dict[str, pd.Series]):
     return {
         "adx": lambda: talib.ADX(high, low, close, 14),
         "adxr": lambda: talib.ADXR(high, low, close, 14),
+        "atr": lambda: talib.ATR(high, low, close, 14),
         "cci": lambda: talib.CCI(high, low, close, 14),
         "cmo": lambda: talib.CMO(close, 14),
         "mfi": lambda: talib.MFI(high, low, close, volume, 14),
+        "natr": lambda: talib.NATR(high, low, close, 14),
         "rsi": lambda: talib.RSI(close, 14),
         "uo": lambda: talib.ULTOSC(high, low, close, 7, 14, 28),
         "willr": lambda: talib.WILLR(high, low, close, 14),
     }[name]()
 
 
-_ORACLE_CASES = ("adx", "adxr", "cci", "cmo", "mfi", "rsi", "uo", "willr")
+_ORACLE_CASES = ("adx", "adxr", "atr", "cci", "cmo", "mfi", "natr", "rsi", "uo", "willr")
 
 
 @pytest.mark.skipif(not HAS_TALIB, reason="TA-Lib is not installed")
@@ -245,6 +247,9 @@ _CONVENTION_CASES = [
     # comparison lives in test_oracle_talib.py.
     "stochrsi",
     "tsi",
+    # TA-Lib's TRANGE agrees bar for bar, but the oracle sweep above looks the
+    # native column up by the function name and this one is TRUERANGE_1.
+    "true_range",
     "vfi",
     "vhf",
     "zscore",

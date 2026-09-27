@@ -80,8 +80,11 @@ def wilder_di(pos: Series, neg: Series, tr: Series, length: int, scalar: float) 
     ``length``, one bar after the smoothed seed.
     """
     tr_s = wilder_smooth(tr, length)
-    dmp = scalar * wilder_smooth(pos, length) / tr_s
-    dmn = scalar * wilder_smooth(neg, length) / tr_s
+    # A window with no true range divides 0/0: its bars are flat, so they carry
+    # no directional movement either. Both DI read 0.0, the convention TA-Lib
+    # applies for a degenerate window; see tests/test_degenerate_input.py.
+    dmp = (scalar * wilder_smooth(pos, length) / tr_s).mask(tr_s == 0, 0.0)
+    dmn = (scalar * wilder_smooth(neg, length) / tr_s).mask(tr_s == 0, 0.0)
     seed = tr_s.first_valid_index()
     if seed is not None:
         dmp[seed] = np.nan

@@ -10,7 +10,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
@@ -43,7 +42,12 @@ def true_range(
 
         true_range = TRANGE(high, low, close)
     else:
-        high_low_range = non_zero_range(high, low)
+        # A flat bar's true range is 0.0, which is what TA-Lib's TRANGE returns
+        # (measured: 0.0 for every bar of a flat series, and ATR/NATR follow).
+        # non_zero_range() substituted an epsilon here, so a flat bar read
+        # 2.2e-16 and every consumer inherited it -- see the entry in
+        # CHANGELOG.md for the indicators that did.
+        high_low_range = high - low
         prev_close = close.shift(drift)
         ranges = [high_low_range, high - prev_close, prev_close - low]
         true_range = concat(ranges, axis=1)

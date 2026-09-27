@@ -45,8 +45,11 @@ def vortex(
     vmp = (high - low.shift(drift)).abs()
     vmm = (low - high.shift(drift)).abs()
 
-    vip = vmp.rolling(length, min_periods=min_periods).sum() / tr_sum
-    vim = vmm.rolling(length, min_periods=min_periods).sum() / tr_sum
+    # A window with no true range divides 0/0: its bars are flat, so VM+ and
+    # VM- are zero across it too. Both read 0.0, the convention TA-Lib applies
+    # for a degenerate window; see tests/test_degenerate_input.py.
+    vip = (vmp.rolling(length, min_periods=min_periods).sum() / tr_sum).mask(tr_sum == 0, 0.0)
+    vim = (vmm.rolling(length, min_periods=min_periods).sum() / tr_sum).mask(tr_sum == 0, 0.0)
 
     # Offset
     vip, vim = apply_offset([vip, vim], offset)
