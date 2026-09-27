@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
@@ -42,7 +41,10 @@ def kc(
 
     # Calculate Result
     use_tr = _bool_param(kwargs.pop("tr", None), True, "tr")
-    range_ = true_range(high, low, close) if use_tr else non_zero_range(high, low)
+    # The band is a smoothed range, added to and subtracted from the basis and
+    # never a divisor, so a flat bar contributes 0.0 here exactly as it does
+    # through true_range(). non_zero_range() reported an epsilon-wide channel.
+    range_ = true_range(high, low, close) if use_tr else high - low
 
     basis = ma(mamode, close, length=length)
     if basis is None:

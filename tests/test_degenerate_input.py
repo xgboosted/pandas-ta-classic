@@ -314,6 +314,21 @@ def test_no_column_is_all_nan_on_a_flat_series(name: str, frames) -> None:
         assert not values.isna().all(), f"{column}: all NaN on a flat series"
 
 
+@pytest.mark.parametrize("tr", [True, False])
+def test_a_flat_series_gives_a_channel_no_width(tr: bool, frames) -> None:
+    """``kc``'s band is a reported range, so a flat bar widens it by exactly 0.
+
+    The channel sits at the price, not at 0.0, so the convention sweep does not
+    cover it. Both range sources have to agree: ``tr=True`` goes through
+    ``true_range`` and ``tr=False`` took ``non_zero_range``, which reported an
+    epsilon-wide channel where there was no range at all.
+    """
+    channel = _call("kc", frames["flat"], tr=tr).dropna()
+    width = (channel.iloc[:, 2] - channel.iloc[:, 0]).abs()
+    assert not width.empty, "kc produced nothing to check"
+    assert (width == 0).all(), f"kc(tr={tr}) widens a flat channel by {width.max():.3e}"
+
+
 def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
     """0.0 is the degenerate marker; it may not stand in for a real 1/0.
 
