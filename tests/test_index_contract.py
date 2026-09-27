@@ -187,8 +187,13 @@ def test_offset_shifts_every_output_column(name: str, frame: dict[str, pd.Series
     A wrapper that delegates must therefore either forward ``offset`` or apply
     it itself -- never both.
     """
-    plain = output_columns(_results(name, frame))
-    shifted = output_columns(_results(name, frame, offset=_OFFSET))
+    _assert_offset_is_a_shift(name, frame, {})
+
+
+def _assert_offset_is_a_shift(name: str, frame: dict[str, pd.Series], kwargs: dict) -> dict[str, pd.Series]:
+    """Every column of ``name(**kwargs, offset=N)`` is that column shifted by N."""
+    plain = output_columns(_results(name, frame, **kwargs))
+    shifted = output_columns(_results(name, frame, offset=_OFFSET, **kwargs))
 
     assert plain, f"{name} returned nothing on {_N_ROWS} rows"
     assert sorted(shifted) == sorted(plain), f"{name}(offset={_OFFSET}) changed the output columns: {sorted(shifted)} != {sorted(plain)}"
@@ -202,6 +207,68 @@ def test_offset_shifts_every_output_column(name: str, frame: dict[str, pd.Series
             wrong.append(f"{column} (shifted by {lag})" if lag is not None else column)
 
     assert not wrong, f"{name}(offset={_OFFSET}) is not {name}().shift({_OFFSET}) for: {wrong}"
+    return plain
+
+
+# The four indicators that append threshold and crossing columns on request. Those
+# columns are built by `utils/_signals.py`, which takes an `offset` of its own, so
+# they reach the shift through a second code path the sweep above never runs. The
+# thresholds are moved inside the range this frame actually covers: a signal column
+# that never changes value survives a double shift unnoticed, which is why `rsi` at
+# its default 80/20 looked correct while the other three did not.
+_SIGNAL_INDICATOR_CASES = {
+    "er": {"signal_indicators": True, "xa": 0.6, "xb": 0.2},
+    "macd": {"signal_indicators": True},  # crossings of zero, macd's own default
+    "rsi": {"signal_indicators": True, "xa": 55, "xb": 45},
+    "rsx": {"signal_indicators": True, "xa": 55, "xb": 45},
+}
+
+
+@pytest.mark.parametrize("name", sorted(_SIGNAL_INDICATOR_CASES))
+def test_offset_shifts_the_signal_columns_too(name: str, frame: dict[str, pd.Series]) -> None:
+    """``signal_indicators=True`` columns obey the same contract.
+
+    All four handed `signals()` the *already shifted* indicator together with
+    `offset=offset`, so every threshold and crossing column came back shifted
+    twice while the indicator column beside it was shifted once -- one frame,
+    two different time bases.
+    """
+    plain = _assert_offset_is_a_shift(name, frame, _SIGNAL_INDICATOR_CASES[name])
+
+    # A guard for the guard: the keyword must add columns, and at least one of them
+    # must actually change value -- a column of constant zeros looks identical
+    # whether it was shifted once or twice.
+    bare = output_columns(_results(name, frame))
+    added = {column: values for column, values in plain.items() if column not in bare}
+    assert added, f"{name}(signal_indicators=True) added no column"
+    assert any(
+        values.nunique() > 1 for values in added.values()
+    ), f"{name}: every signal column is constant, so a double shift would pass: {sorted(added)}"
+
+
+@pytest.mark.parametrize("name", [*sorted(_SIGNAL_INDICATOR_CASES), "macdfix"])
+def test_fill_reaches_the_signal_columns(name: str, frame: dict[str, pd.Series]) -> None:
+    """``fillna`` covers every column returned, not only the indicator's own.
+
+    ``er``, ``macd``, ``rsi`` and ``rsx`` filled the indicator and *then*
+    concatenated the signal frame, so an ``offset`` call left the NaN the shift
+    had introduced sitting in the signal columns beside filled ones. Without an
+    offset the signal columns are integer flags with no NaN, which is why the
+    sweep above, and the blanket ``fillna=0`` check, both passed.
+    """
+    kwargs = _SIGNAL_INDICATOR_CASES.get(name, {"signal_indicators": True})
+    (result,) = _results(name, frame, **kwargs, offset=_OFFSET, fillna=0)
+    leftover = {column: int(count) for column, count in result.isna().sum().items() if count}
+    assert not leftover, f"{name}(offset={_OFFSET}, fillna=0) left NaN in {leftover}"
+
+
+@pytest.mark.parametrize("name", [*sorted(_SIGNAL_INDICATOR_CASES), "macdfix"])
+def test_signal_columns_keep_the_frame_name(name: str, frame: dict[str, pd.Series]) -> None:
+    """``concat`` builds a new frame, which used to drop ``name``/``category``."""
+    (plain,) = _results(name, frame)
+    (with_signals,) = _results(name, frame, **_SIGNAL_INDICATOR_CASES.get(name, {"signal_indicators": True}))
+    assert with_signals.name == plain.name
+    assert with_signals.category == plain.category
 
 
 def _measured_lag(plain: pd.Series, shifted: pd.Series) -> int | None:

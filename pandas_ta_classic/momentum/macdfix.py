@@ -38,7 +38,13 @@ def macdfix(
     # macd() would otherwise apply them a second time on the native path.
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
 
-    if Imports["talib"] and mode_talib:
+    # Read without popping: the native branch forwards it to macd(), which owns
+    # the signal columns and the options that go with them.
+    signal_indicators = _bool_param(kwargs.get("signal_indicators", None), False, "signal_indicators")
+
+    # TA-Lib's MACDFIX returns the three lines only; run natively instead of
+    # dropping the signal columns it cannot produce
+    if Imports["talib"] and mode_talib and not signal_indicators:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)
@@ -89,31 +95,13 @@ Args:
     offset (int): Number of periods to offset the result. Default: 0.
 
 Kwargs:
+    signal_indicators (bool): When True, the signal columns macd() produces
+        are appended; the TA-Lib path cannot produce them, so talib=True is
+        ignored while it is set. The xa, xb, cross_values, xserie, xserie_a,
+        xserie_b and cross_series options are forwarded to macd(). Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: DataFrame with MACDFIX line, histogram, signal columns.
-"""
-
-
-macdfix.__doc__ = """MACD with Fixed Periods (MACDFIX)
-
-MACD using fixed fast=12 and slow=26 with a variable signal period.
-Equivalent to ta.macd(close, fast=12, slow=26, signal=signalperiod).
-
-TA-Lib name: MACDFIX.
-
-Args:
-    close (pd.Series): Series of 'close' prices
-    signal (int): Signal period. Default: 9
-    talib (bool): Use TA-Lib C library if installed. Default: False
-    offset (int): Periods to offset. Default: 0
-
-Kwargs:
-    fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
-
-Returns:
-    pd.DataFrame: macdfix, histogram, signal columns.
 """
