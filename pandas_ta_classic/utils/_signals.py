@@ -3,9 +3,9 @@ import sys
 from numbers import Real
 from typing import Any
 
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, concat
 
-from ._core import _pos_int, apply_offset, get_offset, verify_series
+from ._core import _bool_param, _pos_int, apply_fill, apply_offset, get_offset, verify_series
 from ._math import zero
 
 
@@ -226,11 +226,15 @@ def signals(
     xserie_b: Series | None,
     cross_series: bool,
     offset: int | None,
+    *,
+    caller: str | None = None,
 ) -> DataFrame:
     # A non-number threshold used to be skipped, silently dropping its column
     # (and numpy integers were skipped with it). Keep the caller's value: it
     # names the column (RSI_14_A_70).
-    indicator_name = sys._getframe(1).f_code.co_name  # the indicator that asked for signals
+    # The indicator that asked for signals: the frame above, unless a helper
+    # calls on its behalf and names it (attach_signals).
+    indicator_name = caller or sys._getframe(1).f_code.co_name
     for label, value in (("xa", xa), ("xb", xb)):
         if value is not None and not (isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)):
             raise ValueError(f"{indicator_name}() {label} must be a number, got {value!r}")
@@ -253,6 +257,66 @@ def signals(
     _add_series_signals(df, indicator, xserie_b, cross_series, False, offset)
 
     return df
+
+
+def attach_signals(
+    indicator: Series,
+    *,
+    category: str,
+    offset: int,
+    kwargs: dict[str, Any],
+) -> Series | DataFrame:
+    """Offset *indicator*, append its signal columns on request, then fill.
+
+    ``er``, ``rsi`` and ``rsx`` differ only in their name, so the order these
+    steps have to run in lives here once. Three things it gets right that the
+    three of them each got wrong:
+
+    * the signals read the unoffset, unfilled indicator and are offset once,
+      inside ``signals()`` -- reading the shifted series shifted them twice;
+    * ``concat`` builds a new frame, so ``name`` and ``category`` are set on it
+      rather than inherited;
+    * the fill runs last, over every column returned, so the signal columns are
+      filled too.
+
+    *indicator* arrives named, because the signal columns take their names from
+    it. The indicator function itself is read off the frame above, as
+    ``_bool_param`` and ``signals()`` do when they are called directly, and
+    passed down so their messages keep naming it (``rsi() xa must be ...``)
+    rather than this helper. ``indicator.name`` cannot serve: it is a column
+    name (``RSI_14``), not a function name.
+    """
+    caller = sys._getframe(1).f_code.co_name
+    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators", caller=caller)
+    signal_df = (
+        signals(
+            indicator=indicator,
+            xa=kwargs.pop("xa", 80),
+            xb=kwargs.pop("xb", 20),
+            xserie=kwargs.pop("xserie", None),
+            xserie_a=kwargs.pop("xserie_a", None),
+            xserie_b=kwargs.pop("xserie_b", None),
+            cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values", caller=caller),
+            cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series", caller=caller),
+            offset=offset,
+            caller=caller,
+        )
+        if signal_indicators
+        else None
+    )
+
+    name = indicator.name
+    indicator = apply_offset(indicator, offset)
+    indicator.category = category
+
+    result: Series | DataFrame = indicator
+    if signal_df is not None:
+        result = concat([DataFrame({name: indicator}), signal_df], axis=1)
+        result.name = name
+        result.category = category
+
+    apply_fill(result, **kwargs)
+    return result
 
 
 def crossover(

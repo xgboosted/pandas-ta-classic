@@ -105,17 +105,20 @@ def apply_fill(
     return series
 
 
-def _bool_param(val: Any, default: bool, name: str) -> bool:
+def _bool_param(val: Any, default: bool, name: str, *, caller: str | None = None) -> bool:
     """Return *val* for a bool (numpy bools included), *default* for None; raise ValueError otherwise.
 
     ``bool(x) if isinstance(x, bool) else default`` turned ``talib=1`` into
     False and ``asint=0`` into True without a word.
+
+    *caller* names the indicator in the message when a shared helper validates
+    on its behalf, since the frame above is then the helper.
     """
     if val is None:
         return default
     if isinstance(val, (bool, np.bool_)):
         return bool(val)
-    indicator = sys._getframe(1).f_code.co_name
+    indicator = caller or sys._getframe(1).f_code.co_name
     raise ValueError(f"{indicator}() {name} must be True or False, got {val!r}")
 
 

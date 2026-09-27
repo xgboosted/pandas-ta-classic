@@ -17,6 +17,7 @@ import pytest
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 
 _GUARD = re.compile(r"_pos_(?:int|float)\((\w+),")
@@ -167,7 +168,6 @@ def test_squeeze_pro_rejects_unordered_scalars():
         ta.squeeze_pro(frame.high, frame.low, frame.close, kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2)
 
 
-
 # Guards the numeric sweep's grep missed: is_percent(), membership tests,
 # "0 < x < 1" ranges, bool(x) coercion, int(kwargs[...]) and abs(n).
 _F = get_sample_data().iloc[:300]
@@ -232,14 +232,20 @@ def test_strategy_params_must_be_a_tuple():
     ("call", "message"),
     [
         *[
-            (lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1), rf"cdl_{n}\(\) penetration must be a number >= 0, got -1")
+            (
+                lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1),
+                rf"cdl_{n}\(\) penetration must be a number >= 0, got -1",
+            )
             for n in ("eveningstar", "morningstar", "darkcloudcover", "mathold", "abandonedbaby", "eveningdojistar", "morningdojistar")
         ],
         (lambda: ta.emv(_F.high, _F.low, _F.volume, divisor=0), r"emv\(\) divisor must be a number > 0, got 0"),
         (lambda: ta.mmar(_F.close, step=0), r"mmar\(\) step must be an integer > 0, got 0"),
         (lambda: ta.mmar(_F.close, num_ribbons=-1), r"mmar\(\) num_ribbons must be an integer > 0, got -1"),
         (lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_narrow=-1), r"cpr\(\) width_narrow must be a number >= 0, got -1"),
-        (lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_cpr=True, virgin_lookforward=0), r"cpr\(\) virgin_lookforward must be an integer > 0, got 0"),
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_cpr=True, virgin_lookforward=0),
+            r"cpr\(\) virgin_lookforward must be an integer > 0, got 0",
+        ),
         (lambda: ta.aobv(_F.close, _F.volume, run_length=0), r"aobv\(\) run_length must be an integer > 0, got 0"),
         (lambda: ta.rsi(_F.close, signal_indicators=True, xa="x"), r"rsi\(\) xa must be a number, got 'x'"),
         (lambda: ta.rsx(_F.close, signal_indicators=True, xb=True), r"rsx\(\) xb must be a number, got True"),
@@ -267,15 +273,24 @@ _NOT_FLAGS = {"ma1", "ma2", "osc", "tulipy"}  # stc's optional Series; msw's bac
 _SIGNAL_GATED = {"cross_values", "cross_series"}
 
 
+def _flags(source: str) -> set[str]:
+    return {a or b for a, b in _BOOL_KWARG.findall(source)}
+
+
+# er, rsi and rsx hand their flags to attach_signals, so a per-module scrape no
+# longer sees them. Read them off the helper, so a flag it gains joins the sweep.
+_HELPER_FLAGS = _flags(inspect.getsource(attach_signals))
+
+
 def _bool_kwarg_cases():
     cases = []
     for name in sorted(i for v in ta.Category.values() for i in v):
         func = _find_indicator_func(name)
         if func is None:
             continue
-        found = _BOOL_KWARG.findall(inspect.getsource(inspect.getmodule(inspect.unwrap(func))))
-        keys = sorted({a or b for a, b in found} - _NOT_FLAGS)
-        cases += [(name, key) for key in keys if name != "macd"]
+        source = inspect.getsource(inspect.getmodule(inspect.unwrap(func)))
+        keys = _flags(source) | (_HELPER_FLAGS if "attach_signals(" in source else set())
+        cases += [(name, key) for key in sorted(keys - _NOT_FLAGS) if name != "macd"]
     return cases
 
 
@@ -324,7 +339,10 @@ def test_strategy_skips_vwap_without_datetime_index(frame):
 def test_trend_reset_is_removed(frame):
     """trend_reset was documented as ending a trend but never read (AGENTS rule 4, rule 11 exception)."""
     trend = (frame.close > frame.open).astype(int)
-    for call, name in ((lambda: ta.tsignals(trend, trend_reset=1), "tsignals"), (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals")):
+    for call, name in (
+        (lambda: ta.tsignals(trend, trend_reset=1), "tsignals"),
+        (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals"),
+    ):
         with pytest.raises(TypeError, match=rf"{name}\(\) no longer accepts 'trend_reset'"):
             call()
     # trade_offset is keyword-only, so an old positional trend_reset cannot slide into it
