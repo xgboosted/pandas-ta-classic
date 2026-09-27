@@ -13,6 +13,7 @@ def zscore(
     close: Series,
     length: int | None = None,
     std: float | None = None,
+    ddof: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -20,6 +21,11 @@ def zscore(
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)
     std = _pos_float(std, 1, "std", gt=1)
+    # ddof sits after length, as in stdev/variance. cdl_z has always forwarded
+    # it; without this parameter it landed in **kwargs and was dropped, so
+    # cdl_z(ddof=0) and cdl_z(ddof=1) returned identical values under different
+    # column names.
+    ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -33,7 +39,7 @@ def zscore(
     if n >= length:
         windows = np.lib.stride_tricks.sliding_window_view(values, length)
         window_mean = windows.mean(axis=1)
-        window_std = windows.std(axis=1, ddof=1)
+        window_std = windows.std(axis=1, ddof=ddof)
         with np.errstate(divide="ignore", invalid="ignore"):
             result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (std * window_std)
     zscore = Series(result_arr, index=close.index, dtype=np.float64)
@@ -56,10 +62,10 @@ Sources:
 
 Calculation:
     Default Inputs:
-        length=30, std=1
+        length=30, std=1, ddof=1
     SMA = Simple Moving Average
     STDEV = Standard Deviation
-    std = std * STDEV(close, length)
+    std = std * STDEV(close, length, ddof)
     mean = SMA(close, length)
     ZSCORE = (close - mean) / std
 
@@ -67,6 +73,9 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 30
     std (float): It's period. Default: 1
+    ddof (int): Delta Degrees of Freedom. The divisor used in the standard
+        deviation is ``length - ddof``; 1 is the sample deviation, 0 the
+        population one. Must be < length. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

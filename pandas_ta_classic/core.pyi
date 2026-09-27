@@ -466,7 +466,9 @@ class AnalysisIndicators:
     def variance(
         self, length: int | None = None, ddof: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
-    def zscore(self, length: int | None = None, std: float | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def zscore(
+        self, length: int | None = None, std: float | None = None, ddof: int | None = None, offset: int | None = None, **kwargs: Any
+    ) -> Series | None: ...
 
     # trend
     def adx(

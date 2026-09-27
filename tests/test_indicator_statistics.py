@@ -232,3 +232,26 @@ class TestStatistics(TestCase):
                 length_override=20,
             ),
         )
+
+    def test_zscore_ddof(self):
+        """ddof used to be missing, so cdl_z's forwarded value was dropped.
+
+        The window deviation divides by length - ddof, so ddof=0 scales every
+        value by sqrt(length / (length - 1)) against the ddof=1 default.
+        """
+        import numpy as np
+
+        length = 30
+        default = pandas_ta.zscore(self.close, length=length)
+        sample = pandas_ta.zscore(self.close, length=length, ddof=1)
+        population = pandas_ta.zscore(self.close, length=length, ddof=0)
+
+        self.assertTrue(default.equals(sample), "the default must stay ddof=1")
+        ratio = (population / sample).dropna()
+        np.testing.assert_allclose(ratio.to_numpy(), np.sqrt(length / (length - 1)), rtol=1e-12)
+        # The name carries length only; cdl_z is what puts ddof in its columns.
+        self.assertEqual(population.name, f"ZS_{length}")
+
+        # ddof must leave a positive divisor, so it stays below length.
+        with self.assertRaisesRegex(ValueError, r"zscore\(\) ddof must be an integer >= 0 and < 30"):
+            pandas_ta.zscore(self.close, length=length, ddof=length)

@@ -200,6 +200,28 @@ class TestUtilities(TestCase):
             np.array([1 / 12, 1 / 12, 1 / 6, 1 / 4, 5 / 12]),
         )
 
+    def test_fibonacci_weights_do_not_overflow(self):
+        """The int64 seed array used to wrap at n=91.
+
+        fibonacci(91, weighted=True) summed to -6.2e18, so the weights came out
+        with the wrong sign and magnitude and fwma(length=91) returned nonsense
+        — between two lengths that both looked fine.
+        """
+        for n in (10, 88, 89, 90, 91, 92, 93, 200, 1500):
+            with self.subTest(n=n):
+                weights = self.utils.fibonacci(n=n, weighted=True)
+                self.assertEqual(weights.size, n)
+                self.assertAlmostEqual(float(weights.sum()), 1.0, places=12)
+                self.assertTrue((weights > 0).all())
+                # Fibonacci weights rise monotonically towards the last bar.
+                self.assertTrue((np.diff(weights) >= 0).all())
+
+        # Unweighted stays an exact integer sequence past 2**63 instead of
+        # wrapping; object dtype is what carries the big terms.
+        big = self.utils.fibonacci(n=95)
+        self.assertEqual(int(big[-1]), int(big[-2]) + int(big[-3]))
+        self.assertGreater(int(big[-1]), 2**63)
+
     def test_get_time(self):
         result = self.utils.get_time(to_string=True)
         self.assertIsInstance(result, str)
