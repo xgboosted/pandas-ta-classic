@@ -334,6 +334,22 @@ def test_a_flat_series_gives_a_channel_no_width(name: str, kwargs: dict, frames)
     assert (width == 0).all(), f"{name}{kwargs} widens a flat channel by {width.max():.3e}"
 
 
+def test_a_flat_series_gives_bollinger_no_width_and_no_position(frames) -> None:
+    """``BBB`` is a width, so 0.0 is its value; ``BBP``'s 0/0 takes the marker.
+
+    The three bands themselves sit at the price, so the convention sweep does
+    not reach this one. ``non_zero_range`` had left ``BBB`` at ``100 * eps / mid``
+    and made ``BBP`` ``eps / eps == 1.0``, "close at the upper band", which is no
+    truer on a constant window than 0.0 at the lower one.
+    """
+    for key, values in output_columns(_call("bbands", frames["flat"])).items():
+        if not _starts_with(key, ("BBB", "BBP")):
+            continue
+        finite = values.dropna()
+        assert not finite.empty, f"{key}: nothing to check"
+        assert (finite == 0.0).all(), f"{key}: reads {sorted(set(finite))[:5]} on a flat series, expected 0.0"
+
+
 # brar is deliberately left on non_zero_range. Its epsilon cancels between the
 # numerator and the divisor of each ratio, so a degenerate window reads `scalar`
 # -- 100, BRAR's neutral value -- rather than an epsilon-scale artifact, and
