@@ -314,6 +314,21 @@ def test_no_column_is_all_nan_on_a_flat_series(name: str, frames) -> None:
         assert not values.isna().all(), f"{column}: all NaN on a flat series"
 
 
+def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
+    """0.0 is the degenerate marker; it may not stand in for a real 1/0.
+
+    ``vhf`` divides a window's range by the rolling sum of ``|close.diff(drift)|``.
+    At the default ``drift=1`` no movement implies no range, so the two zeros
+    arrive together. At ``drift >= 2`` an exactly periodic close has every diff
+    zero while the range remains, and marking that 0.0 would report "not
+    trending" for a window that is, in the limit, infinitely trending.
+    """
+    close = pd.Series([1.0, 2.0] * 15, index=pd.date_range("2020-01-01", periods=30, freq="D"))
+    result = ta.vhf(close, length=10, drift=2).dropna()
+    assert result.any(), "vhf produced nothing to check"
+    assert (result != 0.0).all(), f"vhf marked a window that still has range: {sorted(set(result))[:5]}"
+
+
 @pytest.mark.parametrize("label", ["flat", *sorted(_DEGENERATE_FRAMES)])
 @pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
 def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, frames) -> None:
