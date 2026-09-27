@@ -325,6 +325,30 @@ def test_flat_window_reads_zero_without_an_oracle(name: str, frames) -> None:
 # Each moment needs a minimum window: the skew divides by (n - 2), the excess
 # kurtosis by (n - 2)(n - 3). Below that the formula is undefined, which is not
 # the same as a degenerate window, so those bars read NaN and the bound raises.
+_NARROW_WINDOW_CASES = [("kurtosis", 4), ("skew", 3)]
+
+
+@pytest.mark.parametrize(("name", "minimum"), _NARROW_WINDOW_CASES)
+def test_a_window_too_narrow_for_the_formula_is_not_degenerate(name: str, minimum: int) -> None:
+    """Undefined is not degenerate, so it reads NaN rather than 0.0.
+
+    ``kurtosis`` divides by ``(n - 2) * (n - 3) * m2**2``, which is zero for
+    every window at ``length`` 2 or 3 however much the data moves: keying the
+    guard on that divisor read 0.0 for all of them. Both are keyed on the
+    variance instead, and ``length`` carries the bound. The sweeps above call
+    each indicator at its default length, so neither would catch this.
+    """
+    close = _moving_close()
+    func = getattr(ta, name)
+    with pytest.raises(ValueError, match=rf"{name}\(\) length must be an integer > {minimum - 1}"):
+        func(close, length=minimum - 1)
+
+    # min_periods may still let a narrower window through; those bars have no
+    # moment to report and must not read 0.0 or +-inf either.
+    narrow = func(close, length=10, min_periods=2)
+    head, tail = narrow.iloc[: minimum - 1], narrow.iloc[minimum - 1 :]
+    assert head.isna().all(), f"{name}: a window under {minimum} bars reads {head.tolist()}, expected NaN"
+    assert np.isfinite(tail).all(), f"{name}: {tail[~np.isfinite(tail)].tolist()} where the formula is defined"
 
 
 # ---------------------------------------------------------------------------
