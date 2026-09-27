@@ -237,6 +237,7 @@ _CONVENTION_CASES = [
     "er",
     "inertia",
     "kurtosis",
+    "marketfi",
     "pdist",
     "qqe",
     "qstick",
@@ -336,6 +337,24 @@ def test_a_flat_series_gives_a_channel_no_width(name: str, kwargs: dict, frames)
     assert (width == 0).all(), f"{name}{kwargs} widens a flat channel by {width.max():.3e}"
 
 
+def test_a_bar_that_traded_at_one_price_on_no_volume_reads_zero() -> None:
+    """``marketfi`` divides a range by volume, and both can be zero at once.
+
+    The frames above all carry volume, so only this reaches the 0/0: a halted
+    session prints one price and no trades. It reads 0.0 like any degenerate
+    window, where the epsilon had made it ``eps / 0 == inf``. A real range on no
+    volume is a genuine division by zero and still reports one.
+    """
+    index = pd.date_range("2020-01-01", periods=40, freq="D")
+    price = pd.Series(_FLAT_VALUE, index=index)
+    halted = ta.marketfi(price, price, pd.Series(0.0, index=index)).dropna()
+    assert not halted.empty, "marketfi produced nothing to check"
+    assert (halted == 0.0).all(), f"marketfi reads {sorted(set(halted))[:5]} for a halted bar, expected 0.0"
+
+    ranged = ta.marketfi(price + 1.0, price, pd.Series(0.0, index=index)).dropna()
+    assert np.isinf(ranged).all(), "a real range on no volume is still a division by zero"
+
+
 def test_a_flat_series_gives_bollinger_no_width_and_no_position(frames) -> None:
     """``BBB`` is a width, so 0.0 is its value; ``BBP``'s 0/0 takes the marker.
 
@@ -350,6 +369,16 @@ def test_a_flat_series_gives_bollinger_no_width_and_no_position(frames) -> None:
         finite = values.dropna()
         assert not finite.empty, f"{key}: nothing to check"
         assert (finite == 0.0).all(), f"{key}: reads {sorted(set(finite))[:5]} on a flat series, expected 0.0"
+
+
+# ht_phasor is deliberately left alone. It carries no epsilon: its Hilbert FIR
+# evaluates `0.0962*x[i] + 0.5769*x[i-2] - 0.5769*x[i-4] - 0.0962*x[i-6]` left to
+# right, so a constant input leaves 6e-17 of rounding where TA-Lib reaches
+# exactly 0. Grouping the antisymmetric pairs would cancel it, but measured over
+# SPY_D that moves ht_phasor, ht_dcperiod, ht_dcphase and ht_sine on nearly every
+# bar by up to 7.6e-13, and it does not improve agreement with TA-Lib (the
+# deviation there is already 2e-11, four orders above the residue). Not worth the
+# churn in a file with known cross-OS ULP drift.
 
 
 # brar is deliberately left on non_zero_range. Its epsilon cancels between the
