@@ -27,7 +27,7 @@ def md(
     if close is None:
         return None
 
-    result = mad(close, length=length, offset=offset)
+    result = mad(close, length=length, offset=offset, **kwargs)
     if result is None:
         return None
 
@@ -45,6 +45,10 @@ Args:
     close (pd.Series): Series of 'close' prices
     length (int): Lookback period. Default: 30
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

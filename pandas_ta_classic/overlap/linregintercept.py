@@ -28,7 +28,7 @@ def linregintercept(
     if close is None:
         return None
 
-    return linreg(close, length=length, talib=talib, offset=offset, intercept=True)
+    return linreg(close, length=length, talib=talib, offset=offset, intercept=True, **kwargs)
 
 
 linregintercept.__doc__ = """Linear Regression Intercept (LINEARREG_INTERCEPT)
@@ -42,6 +42,10 @@ Args:
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: False
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

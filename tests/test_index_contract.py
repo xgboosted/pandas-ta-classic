@@ -27,6 +27,16 @@ Three indicators used to break it:
 The sweep below is generic on purpose: a new indicator is covered the moment it
 is registered in ``ta.Category``, and any new offender fails here rather than in
 a user's backtest.
+
+``offset`` is the same contract read the other way: the caller asks for the
+finished result to sit ``N`` bars later, so ``f(..., offset=N)`` must be exactly
+``f(...).shift(N)`` -- in every column. ``macdfix`` shifted twice and ``qqe``
+shifted five of its seven columns; the sweep covers the whole registry.
+
+``fillna`` is swept the same way, and for the same reason: a column that the
+fill never reaches hands the caller warmup ``NaN`` from a call that asked for
+none. Four thin wrappers dropped ``**kwargs`` when delegating, and three
+indicators built a column the fill had already passed.
 """
 
 from __future__ import annotations
@@ -38,6 +48,7 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from tests.assertions import output_columns
 
 _N_ROWS = 250
 
@@ -122,11 +133,11 @@ def _extra_kwargs(name: str, frame: dict[str, pd.Series]) -> dict:
     return {}
 
 
-def _results(name: str, frame: dict[str, pd.Series]):
+def _results(name: str, frame: dict[str, pd.Series], **kwargs):
     """Call *name* with every series argument it accepts; return each result frame."""
     func = getattr(ta, name)
-    kwargs = {param: frame[param] for param in inspect.signature(func).parameters if param in _SERIES_PARAMS}
-    result = func(**kwargs, **_extra_kwargs(name, frame))
+    series_kwargs = {param: frame[param] for param in inspect.signature(func).parameters if param in _SERIES_PARAMS}
+    result = func(**series_kwargs, **_extra_kwargs(name, frame), **kwargs)
     parts = result if isinstance(result, tuple) else (result,)
     return [part for part in parts if part is not None]
 
@@ -142,6 +153,89 @@ def test_result_keeps_the_input_index(name: str, frame: dict[str, pd.Series]) ->
         assert isinstance(part, (pd.Series, pd.DataFrame)), f"{name} returned {type(part).__name__}"
         assert len(part) == _N_ROWS, f"{name} returned {len(part)} rows for {_N_ROWS} of input -- warmup bars must be NaN, not dropped"
         assert part.index.equals(expected), f"{name} replaced the input index (got {type(part.index).__name__})"
+
+
+def _accepts(name: str, parameter: str) -> bool:
+    """Whether indicator *name* declares *parameter*."""
+    return parameter in inspect.signature(getattr(ta, name)).parameters
+
+
+def _takes_fill_kwargs(name: str) -> bool:
+    """Whether *name* absorbs ``fillna`` through ``**kwargs``."""
+    return any(parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in inspect.signature(getattr(ta, name)).parameters.values())
+
+
+_OFFSET = 2
+
+
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _EXEMPT and _accepts(n, "offset")])
+def test_offset_shifts_every_output_column(name: str, frame: dict[str, pd.Series]) -> None:
+    """``f(..., offset=N)`` equals ``f(...).shift(N)`` -- for *every* column.
+
+    ``offset`` is documented as "how many periods to offset the result", so the
+    only correct implementation is one ``.shift()`` of the finished output. Two
+    ways to get it wrong, both found by this sweep:
+
+    ``macdfix``
+        Forwarded ``offset=offset`` to ``macd()`` *and* called ``apply_offset``
+        on what came back, shifting the result by ``2 * offset``.
+    ``qqe``
+        Passed five of its seven columns through ``apply_offset`` and left
+        ``QQEl``/``QQEs`` at their original positions, so a single frame mixed
+        shifted and unshifted rows.
+
+    A wrapper that delegates must therefore either forward ``offset`` or apply
+    it itself -- never both.
+    """
+    plain = output_columns(_results(name, frame))
+    shifted = output_columns(_results(name, frame, offset=_OFFSET))
+
+    assert plain, f"{name} returned nothing on {_N_ROWS} rows"
+    assert sorted(shifted) == sorted(plain), f"{name}(offset={_OFFSET}) changed the output columns: {sorted(shifted)} != {sorted(plain)}"
+
+    wrong = []
+    for column, values in plain.items():
+        expected = values.shift(_OFFSET).to_numpy(dtype=float)
+        actual = shifted[column].to_numpy(dtype=float)
+        if not np.array_equal(actual, expected, equal_nan=True):
+            lag = _measured_lag(values, shifted[column])
+            wrong.append(f"{column} (shifted by {lag})" if lag is not None else column)
+
+    assert not wrong, f"{name}(offset={_OFFSET}) is not {name}().shift({_OFFSET}) for: {wrong}"
+
+
+def _measured_lag(plain: pd.Series, shifted: pd.Series) -> int | None:
+    """The shift that *would* map *plain* onto *shifted*, for the failure message."""
+    for candidate in range(3 * _OFFSET + 1):
+        if np.array_equal(shifted.to_numpy(dtype=float), plain.shift(candidate).to_numpy(dtype=float), equal_nan=True):
+            return candidate
+    return None
+
+
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _EXEMPT and _takes_fill_kwargs(n)])
+def test_fillna_reaches_every_output_column(name: str, frame: dict[str, pd.Series]) -> None:
+    """``fillna=0`` leaves no ``NaN`` behind, in any column of any part.
+
+    Every indicator documents ``fillna`` in its ``Kwargs``, and the accessor
+    forwards it to all of them, so a column that ignores it hands the caller
+    warmup ``NaN`` from a call that asked for none. Two ways to miss a column:
+
+    a wrapper that drops ``**kwargs``
+        ``md``, ``linregangle``, ``linregintercept`` and ``linregslope``
+        forwarded ``length``/``talib``/``offset`` to the indicator they delegate
+        to and dropped the rest, so ``fillna`` never reached any output.
+    a column the fill has already passed
+        ``stochf``'s ``STOCHFd`` and ``kvo``'s two lines are computed over their
+        input's valid rows only and came back short, so the DataFrame join put
+        the missing rows back as ``NaN`` after the fill; ``aobv``'s ``OBV_min``
+        and ``OBV_max`` were rolled off OBV after ``apply_fill``.
+    """
+    filled = output_columns(_results(name, frame, fillna=0))
+
+    assert filled, f"{name} returned nothing on {_N_ROWS} rows"
+
+    wrong = {column: int(values.isna().sum()) for column, values in filled.items() if values.isna().any()}
+    assert not wrong, f"{name}(fillna=0) left NaN in {wrong}"
 
 
 def _input_state(series: pd.Series) -> dict:
