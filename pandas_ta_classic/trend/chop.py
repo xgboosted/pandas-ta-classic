@@ -51,10 +51,19 @@ def chop(
         return None
     atr_sum = atr_.rolling(length).sum()
 
+    # A window with no range would take log(0) for HH - LL, which is -inf and
+    # warns. Feed the logarithm NaN there instead and read 0.0 below, the
+    # convention TA-Lib applies throughout for a degenerate window; see
+    # tests/test_degenerate_input.py. Masking the result alone would not do:
+    # atr() leaks a non_zero_range epsilon into ATR_SUM rather than reaching
+    # 0.0, so the left term stayed finite and the difference came out +inf.
+    ranged = diff.where(diff != 0)
+
     if ln:
-        chop = scalar * (np.log(atr_sum) - np.log(diff)) / np.log(length)
+        chop = scalar * (np.log(atr_sum) - np.log(ranged)) / np.log(length)
     else:
-        chop = scalar * (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
+        chop = scalar * (np.log10(atr_sum) - np.log10(ranged)) / np.log10(length)
+    chop = chop.mask(diff == 0, 0.0)
 
     # Offset
     chop = apply_offset(chop, offset)

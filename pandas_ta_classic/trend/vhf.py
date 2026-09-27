@@ -9,7 +9,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
@@ -37,7 +36,15 @@ def vhf(
     hcp = close.rolling(length).max()
     lcp = close.rolling(length).min()
     diff = np.fabs(close.diff(drift))
-    vhf = np.fabs(non_zero_range(hcp, lcp)) / diff.rolling(length).sum()
+    movement = diff.rolling(length).sum()
+    # A window with no movement divides 0/0: the close never changed, so
+    # HCP == LCP as well. It reads 0.0, the convention TA-Lib applies throughout
+    # for a degenerate window; see tests/test_degenerate_input.py.
+    # non_zero_range() cannot mark it here, because the zero is in the
+    # numerator: it substituted an epsilon for HCP - LCP and returned
+    # eps / 0 == inf. HCP - LCP needs no abs(): a rolling max is never below the
+    # rolling min of the same window, which is why the docstring formula has none.
+    vhf = ((hcp - lcp) / movement).mask(movement == 0, 0.0)
 
     # Offset
     vhf = apply_offset(vhf, offset)

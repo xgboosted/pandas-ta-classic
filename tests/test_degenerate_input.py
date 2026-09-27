@@ -228,6 +228,7 @@ def test_flat_window_matches_talib(name: str, frames) -> None:
 _CONVENTION_CASES = [
     "beta",
     "cdl_z",
+    "chop",
     "correl",
     "cti",
     "cvi",
@@ -245,6 +246,7 @@ _CONVENTION_CASES = [
     "stochrsi",
     "tsi",
     "vfi",
+    "vhf",
     "zscore",
 ]
 
@@ -305,6 +307,24 @@ def test_no_column_is_all_nan_on_a_flat_series(name: str, frames) -> None:
         if _starts_with(column, _SPARSE_COLUMN_PREFIXES):
             continue
         assert not values.isna().all(), f"{column}: all NaN on a flat series"
+
+
+@pytest.mark.parametrize("label", ["flat", *sorted(_DEGENERATE_FRAMES)])
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
+def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, frames) -> None:
+    """The marker for a degenerate window is 0.0, never an infinity.
+
+    "Not all NaN" does not cover this: a zero that reaches a logarithm, or the
+    numerator of a ratio whose denominator is also zero, yields +-inf, which
+    reads as a real and enormous value and passes every NaN check above. Both
+    `chop` (log of HH - LL) and `vhf` (non_zero_range in the numerator) did.
+    """
+    result = _call(name, frames[label])
+    if result is None:
+        pytest.skip(f"{name} returns None for this input")
+    for column, values in output_columns(result).items():
+        numeric = pd.to_numeric(values, errors="coerce").to_numpy(dtype=float)
+        assert not np.isinf(numeric).any(), f"{column}: {int(np.isinf(numeric).sum())} infinite values on the {label} frame"
 
 
 def _interior_nan(values: pd.Series) -> int | None:
