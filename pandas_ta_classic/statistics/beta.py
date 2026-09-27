@@ -34,7 +34,10 @@ def beta(
 
     cov = close_ret.rolling(length, min_periods=min_periods).cov(bench_ret)
     var = bench_ret.rolling(length, min_periods=min_periods).var()
-    result = cov / var
+    # A benchmark that does not move has zero variance, so this divides 0/0.
+    # It reads 0.0, the convention TA-Lib's BETA applies for the same input;
+    # see tests/test_degenerate_input.py.
+    result = (cov / var).mask(var == 0, 0.0)
 
     # Offset
     result = apply_offset(result, offset)

@@ -41,7 +41,19 @@ def willr(
         lowest_low = low.rolling(length, min_periods=min_periods).min()
         highest_high = high.rolling(length, min_periods=min_periods).max()
 
-        willr = 100 * ((close - lowest_low) / (highest_high - lowest_low) - 1)
+        # A window where every bar has the same high and low divides 0/0 to
+        # NaN, and the NaN then spreads over the next length-1 windows: a flat
+        # block of b bars costs max(0, b - (length - 1)) extra NaN, and a fully
+        # flat series is all NaN.
+        #
+        # The window reads 0.0, TA-Lib's marker for a degenerate window. An
+        # epsilon denominator would read -100 here instead, because of the
+        # affine term: 100 * (0/eps - 1). That is a real %R value -- bar 72 of
+        # a series with a flat block from bar 60 genuinely reads -100 -- so it
+        # cannot double as the marker. See tests/test_degenerate_input.py.
+        window_range = highest_high - lowest_low
+        willr = 100 * ((close - lowest_low) / window_range.where(window_range != 0) - 1)
+        willr = willr.mask(window_range == 0, 0.0)
 
     # Offset
     willr = apply_offset(willr, offset)

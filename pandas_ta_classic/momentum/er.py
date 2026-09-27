@@ -36,8 +36,11 @@ def er(
     abs_diff = close.diff(length).abs()
     abs_volatility = close.diff(drift).abs()
 
-    er = abs_diff
-    er /= abs_volatility.rolling(window=length).sum()
+    # A window with no movement has no volatility to divide by, so this is
+    # 0/0. It reads 0.0, the convention TA-Lib applies for a degenerate
+    # window; see tests/test_degenerate_input.py.
+    denominator = abs_volatility.rolling(window=length).sum()
+    er = (abs_diff / denominator).mask(denominator == 0, 0.0)
 
     # Offset
     er = apply_offset(er, offset)

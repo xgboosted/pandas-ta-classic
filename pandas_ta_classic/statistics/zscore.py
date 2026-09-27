@@ -34,8 +34,13 @@ def zscore(
         windows = np.lib.stride_tricks.sliding_window_view(values, length)
         window_mean = windows.mean(axis=1)
         window_std = windows.std(axis=1, ddof=1)
+        # A window with zero variance divides 0/0. TA-Lib reads 0.0 for the
+        # degenerate case throughout, and this follows it; see
+        # tests/test_degenerate_input.py.
+        denominator = std * window_std
         with np.errstate(divide="ignore", invalid="ignore"):
-            result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (std * window_std)
+            scores = (values[length - 1 :] - window_mean) / denominator
+        result_arr[length - 1 :] = np.where(denominator == 0, 0.0, scores)
     zscore = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset

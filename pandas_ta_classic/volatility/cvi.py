@@ -32,7 +32,11 @@ def cvi(
     if ema_hl is None:
         return None
 
-    cvi_ = 100 * (ema_hl - ema_hl.shift(length)) / ema_hl.shift(length)
+    # Bars that trade at a single price smooth to a zero high-low range, so
+    # this divides 0/0. It reads 0.0, the convention TA-Lib applies for a
+    # degenerate window; see tests/test_degenerate_input.py.
+    denominator = ema_hl.shift(length)
+    cvi_ = (100 * (ema_hl - denominator) / denominator).mask(denominator == 0, 0.0)
 
     # Offset
     cvi_ = apply_offset(cvi_, offset)

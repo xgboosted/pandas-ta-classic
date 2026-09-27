@@ -74,7 +74,12 @@ def _linreg_output(
         y2_sums = (windows * windows).sum(axis=1)
         rn = length * xy_sums - x_sum * y_sums
         rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
-        return rn / rd
+        # A window with zero variance has rd == 0, so this divides 0/0 and the
+        # NaN spreads over the following windows. It reads 0.0, the convention
+        # TA-Lib applies for a degenerate window; see
+        # tests/test_degenerate_input.py. cti() is a wrapper for this path.
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.where(rd == 0, 0.0, rn / rd)
     if tsf:
         return m_slopes * length + bs
     return m_slopes * (length - 1) + bs

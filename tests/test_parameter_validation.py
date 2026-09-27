@@ -134,6 +134,32 @@ def test_str_param_rejects_non_strings_and_unknown_choices():
             cpr(bad)
 
 
+MAMODE_CASES = sorted(
+    name
+    for name in (i for v in ta.Category.values() for i in v)
+    # mavp's mamode is TA-Lib's integer matype, not an ma() name; it has its own test
+    if name != "mavp" and _find_indicator_func(name) is not None and "mamode" in inspect.signature(_find_indicator_func(name)).parameters
+)
+
+
+def test_sweep_found_the_mamode_indicators():
+    assert len(MAMODE_CASES) > 25
+
+
+@pytest.mark.parametrize("name", MAMODE_CASES)
+def test_unknown_mamode_raises(name, frame):
+    """Most mamode call sites pass no ``choices=``; ``ma()`` rejects the name instead.
+
+    Only ``zlma`` validates it itself, so this pins that every other indicator
+    still reaches ``ma()`` and no branch computes a default moving average for
+    a name the caller misspelled.
+    """
+    func = _find_indicator_func(name)
+    kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
+    with pytest.raises(ValueError, match=r"(ma\(\) name|mamode) must be one of"):
+        func(**kwargs, **_required_extras(name, frame), mamode="bogus_ma")
+
+
 def test_behaviour_fixes_from_the_same_sweep():
     close = get_sample_data().close.iloc[:200]
     # slope: as_angle=bool(isinstance(as_angle, bool)) made as_angle=False return angles

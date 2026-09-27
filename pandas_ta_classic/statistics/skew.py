@@ -45,6 +45,10 @@ def skew(
         n_eff = np.float64(length)
     with np.errstate(divide="ignore", invalid="ignore"):
         result = n_eff * np.sqrt(n_eff - 1) / (n_eff - 2) * m3 / m2**1.5
+    # A window with zero variance has m2 == 0, so the division is 0/0. It reads
+    # 0.0, the convention TA-Lib applies throughout for a degenerate window;
+    # see tests/test_degenerate_input.py.
+    result = np.where(m2 == 0, 0.0, result)
     skew = Series(result, index=close.index, dtype=np.float64)
 
     # Offset

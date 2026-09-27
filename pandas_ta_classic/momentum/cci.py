@@ -47,8 +47,11 @@ def cci(
         if mean_typical_price is None or mad_typical_price is None:
             return None
 
-        cci = typical_price - mean_typical_price
-        cci /= c * mad_typical_price
+        # A window whose bars share a typical price has a mean absolute
+        # deviation of 0, so this divides 0/0. TA-Lib reads 0.0 there; see
+        # tests/test_degenerate_input.py.
+        denominator = c * mad_typical_price
+        cci = ((typical_price - mean_typical_price) / denominator).mask(denominator == 0, 0.0)
 
     # Offset
     cci = apply_offset(cci, offset)

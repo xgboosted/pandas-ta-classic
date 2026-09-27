@@ -198,6 +198,35 @@ Other candle indicators:
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
        # variance, wcp, willr, wma
 
+Degenerate windows
+------------------
+
+A window with no range, no movement and no variance -- every bar at the same
+price -- makes every range-normalised indicator divide ``0 / 0``. It happens on
+illiquid instruments, halted sessions, forward-filled gaps and synthetic test
+data.
+
+Such a window reads ``0.0``, the convention TA-Lib applies. It is a marker for
+"this window was degenerate", not a reading on the indicator's scale: on a flat
+series ``willr`` reads ``0.0``, the top of its ``-100..0`` range, while
+``stoch`` reads ``0.0``, the bottom of its ``0..100`` one.
+
+.. code-block:: python
+
+    flat = pd.Series([100.0] * 120)
+    ta.rsi(flat)                 # 14 NaN of warmup, then 0.0
+    ta.willr(flat, flat, flat)   # 13 NaN of warmup, then 0.0
+
+Two indicators are deliberately left out, because their ``NaN`` means nothing
+happened rather than that a division failed:
+
+* ``hilo`` -- the Gann activator has no state until the first breakout.
+* ``td_seq`` -- a TD setup needs four bars of movement before it counts.
+
+The same applies to the sparse signal columns of ``psar``, ``qqe`` and
+``supertrend``, which mark the bars where a signal fired and are ``NaN``
+everywhere else by design.
+
 Cycles (8)
 ----------
 

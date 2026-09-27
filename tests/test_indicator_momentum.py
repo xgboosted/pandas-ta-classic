@@ -884,6 +884,41 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_willr_guards_a_zero_range(self):
+        """willr was the only rolling-range divider without non_zero_range.
+
+        A window where every bar shares its high and low divided 0/0, and the
+        NaN then spread over the next length-1 windows: a flat block of b bars
+        cost max(0, b - (length - 1)) extra NaN and a fully flat series was all
+        NaN. The six siblings (stoch, stochf, stochrsi, kdj, fisher, stc) all
+        guard the same way.
+        """
+        length = 14
+        flat = Series([100.0] * 120)
+        result = pandas_ta.willr(flat, flat, flat, length=length)
+        # Only the warm-up is NaN now, and the window reads 0.0 -- TA-Lib's
+        # marker for a degenerate window, which this package follows
+        # throughout. -100 cannot double as the marker: it is a real %R value
+        # for a bar sitting at the low of a real range. See
+        # tests/test_degenerate_input.py.
+        self.assertEqual(int(result.isna().sum()), length - 1)
+        self.assertTrue((result.dropna() == 0.0).all())
+
+        # A flat block no longer bleeds NaN into the windows after it.
+        high, low, close = self.high.copy(), self.low.copy(), self.close.copy()
+        for block in (5, 14, 20, 30):
+            with self.subTest(block=block):
+                h, low_, c = high.copy(), low.copy(), close.copy()
+                h.iloc[80 : 80 + block] = low_.iloc[80 : 80 + block] = c.iloc[80 : 80 + block] = 100.0
+                out = pandas_ta.willr(h, low_, c, length=length)
+                self.assertEqual(int(out.loc[out.first_valid_index() :].isna().sum()), 0)
+
+        # Where the range is non-zero nothing changed: still TA-Lib's values.
+        if HAS_TALIB:
+            expected = talib.WILLR(self.high, self.low, self.close, length)
+            actual = pandas_ta.willr(self.high, self.low, self.close, length=length)
+            self.assertLess(float((actual - expected).abs().max()), 1e-10)
+
     def test_lrsi(self):
         assert_indicator_standard(
             self,
