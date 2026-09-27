@@ -238,6 +238,7 @@ _CONVENTION_CASES = [
     "inertia",
     "kurtosis",
     "qqe",
+    "qstick",
     "rvi",
     "skew",
     "smi",
@@ -314,19 +315,31 @@ def test_no_column_is_all_nan_on_a_flat_series(name: str, frames) -> None:
         assert not values.isna().all(), f"{column}: all NaN on a flat series"
 
 
-@pytest.mark.parametrize("tr", [True, False])
-def test_a_flat_series_gives_a_channel_no_width(tr: bool, frames) -> None:
-    """``kc``'s band is a reported range, so a flat bar widens it by exactly 0.
+_CHANNEL_CASES = [("kc", {"tr": True}), ("kc", {"tr": False}), ("accbands", {})]
 
-    The channel sits at the price, not at 0.0, so the convention sweep does not
-    cover it. Both range sources have to agree: ``tr=True`` goes through
-    ``true_range`` and ``tr=False`` took ``non_zero_range``, which reported an
-    epsilon-wide channel where there was no range at all.
+
+@pytest.mark.parametrize(("name", "kwargs"), _CHANNEL_CASES, ids=lambda v: str(v))
+def test_a_flat_series_gives_a_channel_no_width(name: str, kwargs: dict, frames) -> None:
+    """A band is a reported range, so a flat bar widens it by exactly 0.
+
+    These channels sit at the price, not at 0.0, so the convention sweep does
+    not cover them. ``kc`` has to agree with itself across both range sources:
+    ``tr=True`` goes through ``true_range``, ``tr=False`` took ``non_zero_range``
+    directly, and ``accbands`` scales the range by ``high + low``. All three
+    reported an epsilon-wide channel where there was no range at all.
     """
-    channel = _call("kc", frames["flat"], tr=tr).dropna()
+    channel = _call(name, frames["flat"], **kwargs).dropna()
     width = (channel.iloc[:, 2] - channel.iloc[:, 0]).abs()
-    assert not width.empty, "kc produced nothing to check"
-    assert (width == 0).all(), f"kc(tr={tr}) widens a flat channel by {width.max():.3e}"
+    assert not width.empty, f"{name} produced nothing to check"
+    assert (width == 0).all(), f"{name}{kwargs} widens a flat channel by {width.max():.3e}"
+
+
+# brar is deliberately left on non_zero_range. Its epsilon cancels between the
+# numerator and the divisor of each ratio, so a degenerate window reads `scalar`
+# -- 100, BRAR's neutral value -- rather than an epsilon-scale artifact, and
+# there is nothing here of the kind this module is about. Taking the exact
+# ranges instead would replace that 100 with the 0.0 marker and, where a flat
+# run ends, leave the numerator alive over a zero divisor: +-inf.
 
 
 def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
