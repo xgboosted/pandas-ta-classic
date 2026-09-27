@@ -79,17 +79,20 @@ def bbands(
             return None
         lower, mid, upper = result
 
-    # A window with no variance has upper == lower, so the band has no width.
-    # For bandwidth that is the answer, not a marker: non_zero_range() reported
-    # 100 * eps / mid instead of no width at all. percent divides by that width
-    # and loses its numerator with it -- upper == lower only where the window is
-    # constant, which puts close on all three bands at once -- so the 0/0 reads
-    # 0.0, the convention TA-Lib applies for a degenerate window; see
-    # tests/test_degenerate_input.py. eps / eps had made it 1.0, "close at the
-    # upper band", which is no truer there than 0.0 at the lower one.
+    # A window whose closes are all equal has a standard deviation of exactly
+    # zero, so the band has no width. This needs no malformed bar: a flat close
+    # run of `length` bars in otherwise moving, perfectly consistent OHLC does
+    # it. With an epsilon width, BBB read 2.2e-16 instead of 0.0, and BBP came
+    # out as eps/eps = 1.0 for the exact mamodes -- "price at the top of a band
+    # that has no top" -- or exploded to 1e14 for mamode="ema"/"rma", whose mid
+    # only converges on the constant and so leaves a non-zero numerator. That
+    # is why the mask keys on the width alone and not on both operands, as vhf
+    # and marketfi do: here a zero width does *not* imply a zero numerator. The
+    # degenerate window reads 0.0, TA-Lib's marker; an exact `ulr` also lets
+    # bandwidth reach it on its own.
     ulr = upper - lower
     bandwidth = 100 * ulr / mid
-    percent = ((close - lower) / ulr).mask(ulr == 0, 0.0)
+    percent = ((close - lower) / ulr.where(ulr != 0)).mask(ulr == 0, 0.0)
 
     # Offset
     lower, mid, upper, bandwidth, percent = apply_offset([lower, mid, upper, bandwidth, percent], offset)

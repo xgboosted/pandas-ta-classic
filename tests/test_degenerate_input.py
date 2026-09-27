@@ -457,3 +457,147 @@ def test_a_degenerate_window_does_not_bleed_nan(name: str, label: str, frames) -
         actual = _interior_nan(values)
         assert actual is not None, f"{column}: all NaN on the {label} frame, {expected} interior NaN on the control"
         assert actual <= expected, f"{column}: {actual} NaN after the first valid bar on the {label} frame, {expected} on the control"
+
+
+# ---------------------------------------------------------------------------
+# A zero denominator with a non-zero numerator: the epsilon explodes.
+# ---------------------------------------------------------------------------
+
+# The frames above make the numerator zero wherever the denominator is, which
+# is where an epsilon denominator and the 0.0 convention agree. Six indicators
+# reach a zero denominator with a *non-zero* numerator, and there the epsilon
+# does not degrade -- it multiplies by 4.5e15. Measured on the frames below,
+# before the guards: ADo 3.6e19, ADOSC 3.2e18, CMF 9.0e14, BR 8.2e16,
+# RVGI 9.0e14, BBP 1.5e14 (mamode="ema") and 6.7e14 ("rma").
+#
+# Only bbands is reachable with consistent OHLC. The other five need a bar that
+# violates low <= open, close <= high, which no real feed should produce -- but
+# accepting it and answering 1e19 is worse than accepting it and answering 0.0,
+# and the library validates nothing at that boundary today.
+_SPREAD_ROWS = 200
+_SPREAD_BLOCK = slice(100, 140)
+
+
+def _ramp_with_flat_close() -> pd.Series:
+    index = pd.date_range("2020-01-01", periods=_SPREAD_ROWS, freq="D")
+    close = pd.Series(np.linspace(90.0, 110.0, _SPREAD_ROWS), index=index)
+    close.iloc[_SPREAD_BLOCK] = 100.0
+    return close
+
+
+def _inconsistent_frame() -> dict[str, pd.Series]:
+    """high == low == close on the block, but open is 0.2 below it.
+
+    Malformed: high == low forces open == close in valid OHLC. The point is
+    that the answer stays bounded anyway.
+    """
+    close = _ramp_with_flat_close()
+    high, low = close + 0.5, close - 0.5
+    high.iloc[_SPREAD_BLOCK] = 100.0
+    low.iloc[_SPREAD_BLOCK] = 100.0
+    return {
+        "open_": close - 0.2,
+        "high": high,
+        "low": low,
+        "close": close,
+        "volume": pd.Series(1000.0, index=close.index),
+    }
+
+
+def _flat_block_frame() -> dict[str, pd.Series]:
+    """A fully flat block, OHLC-consistent on every bar including the edges.
+
+    ``open`` is the previous close, so the bar entering the block still spans
+    the jump into it and keeps its own spread.
+    """
+    close = _ramp_with_flat_close()
+    open_ = close.shift(1)
+    open_.iloc[0] = close.iloc[0]
+    spread = pd.Series(0.5, index=close.index)
+    spread.iloc[_SPREAD_BLOCK.start + 1 : _SPREAD_BLOCK.stop] = 0.0
+    return {
+        "open_": open_,
+        "high": np.maximum(open_, close) + spread,
+        "low": np.minimum(open_, close) - spread,
+        "close": close,
+        "volume": pd.Series(1000.0, index=close.index),
+    }
+
+
+def _assert_ohlc_consistent(frame: dict[str, pd.Series]) -> None:
+    both = pd.concat([frame["open_"], frame["close"]], axis=1)
+    bad = int((~((frame["low"] <= both.min(axis=1)) & (both.max(axis=1) <= frame["high"]))).sum())
+    assert not bad, f"{bad} bars violate low <= open, close <= high"
+
+
+def test_accumulation_stays_bounded_on_an_inconsistent_bar() -> None:
+    """ad(open_=) and its dependents read 0.0 rather than 4.5e15 per bar.
+
+    ``ad`` with ``open_`` normalises ``close - open_`` by the high-low range.
+    On a bar with no range the numerator is not zero too, so an epsilon
+    denominator gave ``0.2 / 2.2e-16`` -- and ``cumsum`` then froze it into
+    every later bar, so a single malformed bar cost the whole series.
+    """
+    frame = _inconsistent_frame()
+    ado = ta.ad(frame["high"], frame["low"], frame["close"], frame["volume"], open_=frame["open_"])
+
+    # Each ordinary bar contributes (close - open_) * volume / (high - low)
+    # = 0.2 * 1000 / 1.0 = 200; each degenerate bar contributes 0.0.
+    assert ado.iloc[99] == pytest.approx(100 * 200.0)
+    block = ado.iloc[_SPREAD_BLOCK]
+    assert block.to_numpy() == pytest.approx(ado.iloc[99]), "a bar with no range moved the accumulation"
+    assert ado.iloc[-1] == pytest.approx((_SPREAD_ROWS - 40) * 200.0)
+
+    # adosc is built on ad, so it inherits the guard rather than repeating it.
+    adosc = ta.adosc(frame["high"], frame["low"], frame["close"], frame["volume"], open_=frame["open_"])
+    assert np.isfinite(adosc.dropna()).all()
+    assert float(adosc.abs().max()) < 1e6, "ADOSC still carries the exploded accumulation"
+
+    cmf = ta.cmf(frame["high"], frame["low"], frame["close"], frame["volume"], open_=frame["open_"])
+    assert float(cmf.abs().max()) <= 1.0, "CMF is a fraction of volume and cannot exceed 1"
+
+
+@pytest.mark.parametrize("name", ["brar", "rvgi"])
+def test_a_rolling_sum_of_ranges_reads_zero_when_it_is_empty(name: str) -> None:
+    """An epsilon survives a rolling sum as dust, not as a zero.
+
+    ``brar`` and ``rvgi`` divide by a rolling sum of bar ranges. With an epsilon
+    in each term a window with no range at all sums to ~5e-15 rather than to
+    zero, so the guard never fires and the quotient reaches 1e16. Their
+    denominators are exact differences for that reason.
+
+    The frame has to be the inconsistent one. On a *consistent* flat block both
+    sides of each ratio are epsilon dust and the quotient comes out near 1, so
+    the fully flat frame passes this whether the guard is there or not.
+    """
+    frame = _inconsistent_frame()
+
+    for column, values in output_columns(_call(name, frame)).items():
+        finite = values.dropna()
+        assert np.isfinite(finite).all(), f"{column}: {finite[~np.isfinite(finite)].tolist()}"
+        assert float(finite.abs().max()) < 1e6, f"{column}: reaches {finite.abs().max():.3e} on a window with no range"
+
+
+@pytest.mark.parametrize("mamode", ["sma", "ema", "rma", "wma"])
+def test_bbands_reads_zero_for_a_band_with_no_width(mamode: str) -> None:
+    """A zero-width band reads 0.0 for both BBB and BBP, on every mamode.
+
+    This one needs no malformed bar: a flat close run of ``length`` bars in
+    otherwise moving, consistent OHLC gives a standard deviation of exactly
+    zero, so ``upper == lower``. The epsilon width read BBB 2.2e-16 and, for the
+    mamodes whose mid is exact, BBP = eps/eps = 1.0 -- a band with no top
+    reporting the price at its top. ``ema`` and ``rma`` only converge on the
+    constant, leaving a non-zero numerator, and BBP reached 1e14.
+    """
+    frame = _flat_block_frame()
+    _assert_ohlc_consistent(frame)
+    length = 5
+    result = ta.bbands(frame["close"], length=length, mamode=mamode)
+
+    # The window is degenerate once it sits entirely inside the flat block.
+    degenerate = slice(_SPREAD_BLOCK.start + length - 1, _SPREAD_BLOCK.stop)
+    for column in (f"BBB_{length}_2.0", f"BBP_{length}_2.0"):
+        values = result[column].iloc[degenerate]
+        assert (values == 0.0).all(), f"{column}: degenerate window reads {sorted(set(values))[:5]}, expected 0.0"
+
+    assert float(result[f"BBP_{length}_2.0"].dropna().abs().max()) < 1e3, "BBP still explodes somewhere on this frame"

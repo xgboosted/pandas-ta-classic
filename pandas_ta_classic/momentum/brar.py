@@ -41,20 +41,24 @@ def brar(
         return None
 
     high_open_range = non_zero_range(high, open_)
-    open_low_range = non_zero_range(open_, low)
+    # The two denominators stay exact differences: an epsilon in them survives
+    # the rolling sum as dust rather than a zero, so a window with no range at
+    # all divides by 5e-15 and BR reaches 1e16. Exact zeros let the window read
+    # 0.0 below, TA-Lib's marker for a degenerate window.
+    open_low_range = open_ - low
 
     # Calculate Result
     hcy = non_zero_range(high, close.shift(drift))
-    cyl = non_zero_range(close.shift(drift), low)
+    cyl = close.shift(drift) - low
 
     hcy[hcy < 0] = 0  # Zero negative values
     cyl[cyl < 0] = 0  # ""
 
-    ar = scalar * high_open_range.rolling(length).sum()
-    ar /= open_low_range.rolling(length).sum()
+    olr_sum = open_low_range.rolling(length).sum()
+    ar = (scalar * high_open_range.rolling(length).sum() / olr_sum.where(olr_sum != 0)).mask(olr_sum == 0, 0.0)
 
-    br = scalar * hcy.rolling(length).sum()
-    br /= cyl.rolling(length).sum()
+    cyl_sum = cyl.rolling(length).sum()
+    br = (scalar * hcy.rolling(length).sum() / cyl_sum.where(cyl_sum != 0)).mask(cyl_sum == 0, 0.0)
 
     # Offset
     ar, br = apply_offset([ar, br], offset)

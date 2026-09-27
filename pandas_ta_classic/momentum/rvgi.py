@@ -38,6 +38,11 @@ def rvgi(
     if open_ is None or high is None or low is None or close is None:
         return None
 
+    # Both stay exact differences. An epsilon in the denominator survives the
+    # swma and the rolling sum as dust rather than a zero, so a window with no
+    # range at all divided by ~1e-15 and RVGI reached 1e14; an exact zero lets
+    # the mask below mark it instead. In the numerator an epsilon only ever
+    # reported movement a bar did not make.
     high_low_range = high - low
     close_open_range = close - open_
 
@@ -45,13 +50,12 @@ def rvgi(
     numerator = swma(close_open_range, length=swma_length).rolling(length).sum()
     denominator = swma(high_low_range, length=swma_length).rolling(length).sum()
 
-    # A window whose bars each traded at a single price divides 0/0: high == low
-    # puts open and close there too, so the numerator vanishes with the divisor
-    # and masking on the divisor alone is enough, as in bbands. It reads 0.0, the
-    # convention TA-Lib applies for a degenerate window; see
-    # tests/test_degenerate_input.py. non_zero_range() made it eps / eps == 1.0
-    # -- RVGI's most bullish reading -- for a window that never moved.
-    rvgi = (numerator / denominator).mask(denominator == 0, 0.0)
+    # A window with no range at all reads 0.0, the convention TA-Lib applies for
+    # a degenerate window; see tests/test_degenerate_input.py. On consistent OHLC
+    # the numerator vanishes with the divisor, because high == low forces
+    # open == close; a malformed bar leaves it alive, and 0.0 is the marker there
+    # too rather than eps/eps == 1.0, RVGI's most bullish reading.
+    rvgi = (numerator / denominator.where(denominator != 0)).mask(denominator == 0, 0.0)
     signal = swma(rvgi, length=swma_length)
     histogram = rvgi - signal
 

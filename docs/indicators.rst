@@ -227,6 +227,31 @@ The same applies to the sparse signal columns of ``psar``, ``qqe`` and
 ``supertrend``, which mark the bars where a signal fired and are ``NaN``
 everywhere else by design.
 
+A band with no width is degenerate in the same way, and reads ``0.0`` too. A
+flat close run of ``length`` bars gives ``bbands`` a standard deviation of
+exactly zero, so ``BBU == BBM == BBL``; both derived columns mark it:
+
+.. code-block:: python
+
+    close = pd.Series([90.0] * 30 + [100.0] * 30)
+    bb = ta.bbands(close, length=5, mamode="ema")
+    bb["BBB_5_2.0"]   # 0.0 while the band has no width
+    bb["BBP_5_2.0"]   # 0.0 as well, not 1.0 and not 1e14
+
+Inconsistent OHLC
+-----------------
+
+Nothing validates that a bar satisfies ``low <= open, close <= high``. A bar
+that does not -- ``high == low`` with ``open != close``, for instance -- is
+impossible in real OHLC but is accepted, and it reaches the degenerate branch
+with a numerator that is *not* zero. Such a bar reads ``0.0`` rather than
+dividing by an epsilon: ``ad(open_=...)`` answered ``4.5e15`` per malformed bar
+and, because it accumulates, carried that to the end of the series.
+
+The library does not raise here. If your feed can emit such bars, check them
+before passing them in.
+
+
 Cycles (8)
 ----------
 
