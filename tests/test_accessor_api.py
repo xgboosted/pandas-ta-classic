@@ -315,6 +315,39 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         with self.assertRaisesRegex(ValueError, r"show_version must be True or False"):
             self.df.ta(kind="sma", length=10, show_version="yes")
 
+    def test_accessor_raises_for_an_argument_the_frame_cannot_supply(self):
+        """These four used to return None with nothing to say what was missing.
+
+        The wrapper filled every required non-column argument with None, so
+        df.ta.long_run() ran long_run(fast=None, slow=None) and got None back.
+        mavp already raised for its 'periods'; now they all do.
+        """
+        expected = {
+            "long_run": ["'fast'", "'slow'"],
+            "short_run": ["'fast'", "'slow'"],
+            "tsignals": ["'trend'"],
+            "xsignals": ["'signal'", "'xa'", "'xb'"],
+            "mavp": ["'periods'"],
+        }
+        for name, names in expected.items():
+            with self.subTest(name=name):
+                # ValueError, like every other argument error in the package.
+                with self.assertRaises(ValueError) as ctx:
+                    getattr(self.df.ta, name)()
+                message = str(ctx.exception)
+                self.assertIn(f"df.ta.{name}()", message)
+                for arg in names:
+                    self.assertIn(arg, message)
+
+    def test_accessor_still_serves_those_indicators_when_given_the_argument(self):
+        fast = pandas_ta_classic.ema(self.df["close"], length=10)
+        slow = pandas_ta_classic.ema(self.df["close"], length=50)
+        trend = pandas_ta_classic.above(fast, slow)
+
+        self.assertIsInstance(self.df.ta.long_run(fast=fast, slow=slow), pd.Series)
+        self.assertIsInstance(self.df.ta.short_run(fast=fast, slow=slow), pd.Series)
+        self.assertEqual(list(self.df.ta.tsignals(trend=trend).columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
+
 
 
 class TestAccessorNonSeriesColumnArgument(TestCase):

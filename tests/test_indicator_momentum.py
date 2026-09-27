@@ -751,6 +751,21 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_stc_short_series_through_kwargs_is_all_nan(self):
+        # nan_on_short_input replaced only the declared Series parameters when
+        # probing, so a short Series arriving through **kwargs kept the
+        # caller's rows in the probe: it failed for the same reason the real
+        # call did and None came back instead of an all-NaN frame.
+        columns = list(pandas_ta.stc(self.close).columns)
+        ma1, ma2 = pandas_ta.ema(self.close, length=12), pandas_ta.ema(self.close, length=26)
+        for kwargs in ({"osc": (ma1 - ma2).iloc[:5]}, {"ma1": ma1.iloc[:5], "ma2": ma2.iloc[:5]}):
+            with self.subTest(kwargs=sorted(kwargs)):
+                short = pandas_ta.stc(self.close, **kwargs)
+                self.assertIsInstance(short, DataFrame)
+                self.assertEqual(list(short.columns), columns)
+                self.assertEqual(len(short), len(self.close))
+                self.assertTrue(short.isna().all().all())
+
     def test_stoch(self):
         # TV Correlation
         result = pandas_ta.stoch(self.high, self.low, self.close)
