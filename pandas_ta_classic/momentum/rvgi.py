@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
@@ -39,14 +38,20 @@ def rvgi(
     if open_ is None or high is None or low is None or close is None:
         return None
 
-    high_low_range = non_zero_range(high, low)
-    close_open_range = non_zero_range(close, open_)
+    high_low_range = high - low
+    close_open_range = close - open_
 
     # Calculate Result
     numerator = swma(close_open_range, length=swma_length).rolling(length).sum()
     denominator = swma(high_low_range, length=swma_length).rolling(length).sum()
 
-    rvgi = numerator / denominator
+    # A window whose bars each traded at a single price divides 0/0: high == low
+    # puts open and close there too, so the numerator vanishes with the divisor
+    # and masking on the divisor alone is enough, as in bbands. It reads 0.0, the
+    # convention TA-Lib applies for a degenerate window; see
+    # tests/test_degenerate_input.py. non_zero_range() made it eps / eps == 1.0
+    # -- RVGI's most bullish reading -- for a window that never moved.
+    rvgi = (numerator / denominator).mask(denominator == 0, 0.0)
     signal = swma(rvgi, length=swma_length)
     histogram = rvgi - signal
 
