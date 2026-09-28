@@ -238,6 +238,7 @@ _CONVENTION_CASES = [
     "inertia",
     "kurtosis",
     "marketfi",
+    "massi",
     "pdist",
     "qqe",
     "qstick",
@@ -335,6 +336,23 @@ def test_a_flat_series_gives_a_channel_no_width(name: str, kwargs: dict, frames)
     width = (channel.iloc[:, 2] - channel.iloc[:, 0]).abs()
     assert not width.empty, f"{name} produced nothing to check"
     assert (width == 0).all(), f"{name}{kwargs} widens a flat channel by {width.max():.3e}"
+
+
+@pytest.mark.parametrize("name", ["emv", "eom", "massi"])
+def test_a_bar_with_no_range_reads_zero_while_the_close_still_moves(name: str, frames) -> None:
+    """The no_range frame is the one that reaches these three.
+
+    ``emv`` and ``eom`` carry the range as a numerator factor, so on the flat
+    frame their distance term is zero as well and they answer 0.0 whether the
+    range is exact or an epsilon. Only a moving close with ``high == low`` on
+    every bar separates the two, and there the epsilon surfaced: 6.9e-18 for
+    ``emv``, 1.8e-14 for ``eom``. ``massi`` divides two EMAs of the range, which
+    an epsilon made exactly 1, summing to ``slow`` -- 25, an ordinary reading.
+    """
+    for column, values in output_columns(_call(name, frames["no_range"])).items():
+        finite = values.dropna()
+        assert not finite.empty, f"{column}: nothing to check"
+        assert (finite == 0.0).all(), f"{column}: reads {sorted(set(finite))[:5]} with no range, expected 0.0"
 
 
 def test_a_bar_that_traded_at_one_price_on_no_volume_reads_zero() -> None:

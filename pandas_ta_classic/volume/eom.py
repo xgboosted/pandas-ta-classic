@@ -10,7 +10,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
@@ -43,12 +42,15 @@ def eom(
         return None
 
     # Calculate Result
-    high_low_range = non_zero_range(high, low)
+    # The range is a numerator factor, as in emv(): a bar that traded at one
+    # price moved nothing and reads 0.0 outright, which is the value rather
+    # than a marker. The mask only keeps the zero out of the reciprocal.
+    high_low_range = high - low
     distance = hl2(high=high, low=low)
     distance -= hl2(high=high.shift(drift), low=low.shift(drift))
     box_ratio = volume / divisor
-    box_ratio /= high_low_range
-    eom = distance / box_ratio
+    box_ratio /= high_low_range.where(high_low_range != 0)
+    eom = (distance / box_ratio).mask(high_low_range == 0, 0.0)
     eom = sma(eom, length=length)
 
     # Offset
