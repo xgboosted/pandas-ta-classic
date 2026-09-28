@@ -125,7 +125,43 @@ def _no_range_frame(*, flat: bool = True) -> dict[str, pd.Series]:
     return _ohlcv(_moving_close(), 0.0 if flat else 1.0)
 
 
-_DEGENERATE_FRAMES = {"block": _block_frame, "no_range": _no_range_frame}
+def _inconsistent_block_frame(*, flat: bool = True) -> dict[str, pd.Series]:
+    """A 40-bar block with ``high == low`` while ``open`` sits 0.2 below it.
+
+    Malformed on purpose: valid OHLC cannot produce it, because ``high == low``
+    forces ``open == close``. That is exactly why it is here -- on every other
+    frame a zero denominator arrives with a zero numerator, which is where an
+    epsilon and the 0.0 convention agree, so those frames cannot tell a guarded
+    divider from an unguarded one. Nothing in the library validates the
+    boundary, so such a bar is accepted and has to answer. ``flat=False``
+    builds the control: the same data keeping its spread throughout.
+    """
+    close = _ramp_with_flat_close()
+    high, low = close + 0.5, close - 0.5
+    if flat:
+        high.iloc[_SPREAD_BLOCK] = 100.0
+        low.iloc[_SPREAD_BLOCK] = 100.0
+    open_ = close - 0.2
+    index = close.index
+    return {
+        "open_": open_,
+        "open": open_,
+        "high": high,
+        "low": low,
+        "close": close,
+        "volume": pd.Series(1000.0, index=index),
+        "benchmark": close,
+        "series_a": close,
+        "series_b": close,
+        "source": close,
+    }
+
+
+_DEGENERATE_FRAMES = {
+    "block": _block_frame,
+    "no_range": _no_range_frame,
+    "inconsistent": _inconsistent_block_frame,
+}
 
 
 @pytest.fixture(scope="module")
@@ -438,6 +474,57 @@ def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, fra
     for column, values in output_columns(result).items():
         numeric = pd.to_numeric(values, errors="coerce").to_numpy(dtype=float)
         assert not np.isinf(numeric).any(), f"{column}: {int(np.isinf(numeric).sum())} infinite values on the {label} frame"
+
+
+# An unguarded divider multiplies by 1/epsilon = 4.5e15. A legitimate blow-up
+# stays far below that: the largest here is `cvi`, a rate of change whose EMA
+# base decays toward zero without reaching it as a flat block ends, and it
+# reaches 2.6e5 against a control of 0. Nine orders of magnitude separate the
+# two, so the bound needs no per-indicator exception and catching an epsilon
+# never depends on tuning it.
+_MAGNITUDE_HEADROOM = 1e9
+
+
+def _finite_max(values: pd.Series) -> float | None:
+    """Largest finite magnitude in a column; None when it has none."""
+    finite = np.asarray(values, dtype=float)
+    finite = finite[np.isfinite(finite)]
+    return None if not finite.size else float(np.abs(finite).max())
+
+
+@pytest.mark.parametrize("label", sorted(_DEGENERATE_FRAMES))
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
+def test_a_degenerate_window_does_not_inflate_the_output(name: str, label: str, frames) -> None:
+    """A degenerate window may not answer beyond the scale of the same data.
+
+    This is the property the sweeps above cannot see. Dividing by
+    ``non_zero_range``'s epsilon multiplies the quotient by 4.5e15, which is
+    finite, is not NaN, and bleeds no NaN -- ``ad`` reached 3.6e23 that way and
+    ``cumsum`` carried it to the end of the series, while every other check here
+    passed. An epsilon *residue* hides just as well at the other end: 2.2e-16 is
+    a perfectly ordinary-looking number too.
+
+    The ceiling is the control frame's own largest value, so no indicator needs
+    a constant of its own and a newly registered one is covered the moment it
+    appears in the registry.
+    """
+    result = _call(name, frames[label])
+    control = _call(name, frames[f"{label}:control"])
+    if result is None or control is None:
+        pytest.skip(f"{name} returns None for this input")
+
+    control_columns = output_columns(control)
+    for column, values in output_columns(result).items():
+        if column not in control_columns:
+            continue
+        scale = _finite_max(control_columns[column])
+        reached = _finite_max(values)
+        if scale is None or reached is None:
+            continue  # the NaN sweeps above own the "nothing came back" case
+        # max(..., _FLAT_VALUE) keeps a control that is legitimately ~0 from
+        # making the ceiling zero as well.
+        allowed = _MAGNITUDE_HEADROOM * max(scale, _FLAT_VALUE)
+        assert reached <= allowed, f"{column}: reaches {reached:.3e} on the {label} frame, {scale:.3e} on the control"
 
 
 def _interior_nan(values: pd.Series) -> int | None:
