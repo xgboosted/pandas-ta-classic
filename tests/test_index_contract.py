@@ -238,6 +238,36 @@ def test_fillna_reaches_every_output_column(name: str, frame: dict[str, pd.Serie
     assert not wrong, f"{name}(fillna=0) left NaN in {wrong}"
 
 
+@pytest.mark.parametrize("method", ["ffill", "bfill"])
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _EXEMPT and _takes_fill_kwargs(n)])
+def test_fill_method_reaches_every_output_column(name: str, method: str, frame: dict[str, pd.Series]) -> None:
+    """``fill_method`` reaches every column, as ``fillna`` does above.
+
+    A fill can only use values the column has, so the check is bounded by the
+    unfilled column: ``ffill`` leaves no ``NaN`` from its first value on, and
+    ``bfill`` none up to its last value. The bugs the ``fillna`` sweep describes
+    hid from ``bfill`` the same way -- on the old code ``bfill`` left the warmup
+    of ``md``, the three linreg wrappers, ``STOCHFd``, ``KVOs`` and the AOBV
+    bounds unfilled -- but a column could also forward one key and drop the
+    other, so both are swept.
+    """
+    plain = output_columns(_results(name, frame))
+    filled = output_columns(_results(name, frame, fill_method=method))
+
+    wrong = {}
+    for column, values in plain.items():
+        valid = values.notna().to_numpy()
+        if not valid.any():
+            continue
+        if method == "ffill":
+            reachable = filled[column].iloc[int(valid.argmax()) :]
+        else:
+            reachable = filled[column].iloc[: len(valid) - int(valid[::-1].argmax())]
+        if reachable.isna().any():
+            wrong[column] = int(reachable.isna().sum())
+    assert not wrong, f"{name}(fill_method={method!r}) left NaN in {wrong}"
+
+
 @pytest.mark.parametrize(("name", "option"), [("macd", {"asmode": True}), ("macdfix", {"asmode": True})])
 def test_fillna_reaches_every_output_column_of_an_option_path(name: str, option: dict, frame: dict[str, pd.Series]) -> None:
     """The sweep above calls each indicator with its defaults only.
