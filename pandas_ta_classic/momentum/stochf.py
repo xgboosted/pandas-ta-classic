@@ -40,6 +40,10 @@ def _stochf_native(high, low, close, fastk, fastd, mamode):
         fastd_ = ma(mamode, fastk_.loc[fastk_first_valid:,], length=fastd)
         if fastd_ is None:
             return None
+        # %D is smoothed over %K's valid rows only, so it comes back short. Put it
+        # back on %K's index here: filled later, the missing rows would be
+        # reintroduced as NaN by the DataFrame join and never see `fillna`.
+        fastd_ = fastd_.reindex(fastk_.index)
     return fastk_, fastd_
 
 

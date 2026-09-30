@@ -62,6 +62,12 @@ def kvo(
     if kvo_signal is None:
         return None
 
+    # Both lines are computed over valid rows only and come back short. Put them
+    # back on the input index here: filled later, the missing rows would be
+    # reintroduced as NaN by the DataFrame join and never see `fillna`.
+    kvo = kvo.reindex(close.index)
+    kvo_signal = kvo_signal.reindex(close.index)
+
     # Offset
     kvo, kvo_signal = apply_offset([kvo, kvo_signal], offset)
 

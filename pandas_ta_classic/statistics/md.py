@@ -27,7 +27,9 @@ def md(
     if close is None:
         return None
 
-    result = mad(close, length=length, offset=offset)
+    # Only the fill reaches mad(): its min_periods option is not part of md's API.
+    fill_kwargs = {key: kwargs[key] for key in ("fillna", "fill_method") if key in kwargs}
+    result = mad(close, length=length, offset=offset, **fill_kwargs)
     if result is None:
         return None
 
@@ -45,6 +47,10 @@ Args:
     close (pd.Series): Series of 'close' prices
     length (int): Lookback period. Default: 30
     offset (int): Periods to offset. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
 
 Returns:
     pd.Series

@@ -133,7 +133,7 @@ def qqe(
     qqe_short = Series(qqe_short_arr, index=idx)
 
     # Offset
-    rsi_ma, qqe, long, short, trend = apply_offset([rsi_ma, qqe, long, short, trend], offset)
+    rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_offset([rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], offset)
 
     rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_fill([rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], **kwargs)
 

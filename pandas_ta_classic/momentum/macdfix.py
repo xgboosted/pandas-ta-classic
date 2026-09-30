@@ -34,6 +34,10 @@ def macdfix(
     kwargs.pop("fast", None)
     kwargs.pop("slow", None)
 
+    # The offset and the fill are applied once, below, to whichever branch ran.
+    # macd() would otherwise apply them a second time on the native path.
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
+
     if Imports["talib"] and mode_talib:
         from talib import MACDFIX as _MACDFIX
 
@@ -45,7 +49,7 @@ def macdfix(
         }
         result = DataFrame(data, index=close.index)
     else:
-        result = macd(close, fast=12, slow=26, signal=signal, talib=False, offset=offset, **kwargs)
+        result = macd(close, fast=12, slow=26, signal=signal, talib=False, **kwargs)
         if result is None:
             return None
 
@@ -63,7 +67,7 @@ def macdfix(
 
     # Offset
     result = apply_offset(result, offset)
-    result = apply_fill(result, **kwargs)
+    result = apply_fill(result, **fill_kwargs)
 
     result.name = f"MACDFIX_{signal}"
     result.category = "momentum"
