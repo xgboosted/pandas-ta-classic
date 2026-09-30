@@ -98,6 +98,10 @@ def macd(
         signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
         if signalma is None:
             return None
+        # The signal is smoothed over the valid rows only and comes back short.
+        # Put it back on the input index here: filled later, the missing rows
+        # would be reintroduced as NaN by the DataFrame join and never see `fillna`.
+        signalma = signalma.reindex(close.index)
         histogram = macd - signalma
 
     # Offset
