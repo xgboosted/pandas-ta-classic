@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _str_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -68,17 +68,12 @@ def stoch(
         stoch = 100 * (close - lowest_low)
         stoch /= non_zero_range(highest_high, lowest_low)
 
-        stoch_k = ma(mamode, stoch.loc[stoch.first_valid_index() :,], length=smooth_k)
+        stoch_k = _on_valid_rows(stoch, lambda s: ma(mamode, s, length=smooth_k))
         if stoch_k is None:
             return None
-        stoch_d = ma(mamode, stoch_k.loc[stoch_k.first_valid_index() :,], length=d)
+        stoch_d = _on_valid_rows(stoch_k, lambda s: ma(mamode, s, length=d))
         if stoch_d is None:
             return None
-
-        # The warmup slices above shorten %K and %D; restore the caller's index
-        # so the result lines up bar for bar with close.
-        stoch_k = stoch_k.reindex(close.index)
-        stoch_d = stoch_d.reindex(close.index)
 
     # Offset
     stoch_k, stoch_d = apply_offset([stoch_k, stoch_d], offset)
