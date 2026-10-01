@@ -30,8 +30,10 @@ def get_time(exchange: str = "NYSE", full: bool = True, to_string: bool = False)
     When to_string=False (default), also prints to stdout."""
     # A non-str used to fall back to NYSE without a word, and an unknown name
     # raised a bare KeyError naming neither the function nor the parameter.
-    if not isinstance(exchange, str):
-        raise TypeError(f"get_time() exchange must be a str, got {type(exchange).__name__}")
+    if exchange is None:
+        exchange = "NYSE"
+    elif not isinstance(exchange, str):
+        raise ValueError(f"get_time() exchange must be a str, got {type(exchange).__name__} {exchange!r}")
     exchange = exchange.upper()
     if exchange not in EXCHANGE_TZ:
         raise ValueError(f"get_time() unknown exchange {exchange!r}; valid: {sorted(EXCHANGE_TZ)}")

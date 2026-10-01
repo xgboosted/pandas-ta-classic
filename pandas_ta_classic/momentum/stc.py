@@ -59,6 +59,13 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
         Series | None: xmacd line, or *None* when a required series fails
         validation.
     """
+    # Each external input is either False ("not given") or a Series.  A
+    # non-Series osc/ma1/ma2 used to fall through and be dropped silently, or
+    # name the wrong argument; reject it.
+    for name, value in (("ma1", ma1), ("ma2", ma2), ("osc", osc)):
+        if value is not False and not isinstance(value, Series):
+            raise ValueError(f"stc() {name} must be False or a Series, got {type(value).__name__}")
+
     # osc overrides ma1/ma2, so it is tested first: the previous
     # ``... and not osc`` guard evaluated a Series in a boolean context and
     # raised "The truth value of a Series is ambiguous" for that documented
