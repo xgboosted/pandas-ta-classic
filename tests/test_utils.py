@@ -1,3 +1,4 @@
+import inspect
 import warnings
 from unittest import TestCase
 
@@ -982,3 +983,133 @@ class TestNpRollingMoments(TestCase):
         (m2,) = self.fn(arr, 1, 2)
         # Window of size 1: deviation is 0, sum = 0
         np.testing.assert_allclose(m2[0], 0.0, atol=1e-12)
+
+
+class TestRequiredUtilityInputs(TestCase):
+    """A required input passed as None raises ValueError naming the function and the argument.
+
+    These helpers called a pandas method on it and failed with
+    ``'NoneType' object has no attribute 'diff'`` (or ``index``, ``copy``,
+    ``size``), naming neither. The metrics that answer None with NaN, and the
+    signal helpers that answer it with None, are a separate contract and are
+    not listed here.
+    """
+
+    def test_none_input_names_the_function_and_the_argument(self):
+        idx = pd.date_range("2020-01-01", periods=30, freq="D")
+        s = Series(np.linspace(10.0, 20.0, 30), index=idx)
+        df = DataFrame({"close": s})
+        u = pandas_ta.utils
+        cases = {
+            u.candle_color: {"open_": s, "close": s},
+            u.degenerate_div: {"numerator": s, "denominator": s},
+            # annotated DataFrame, but only Series work: DataFrame.corr() takes no other frame
+            u.df_error_analysis: {"dfA": s, "dfB": s},
+            u.df_year_to_date: {"df": df},
+            u.is_datetime_ordered: {"df": df},
+            u.linear_regression: {"x": s, "y": s},
+            u.non_zero_range: {"high": s, "low": s},
+            u.recent_maximum_index: {"x": s.to_numpy()},
+            u.recent_minimum_index: {"x": s.to_numpy()},
+            u.signed_series: {"series": s},
+            u.to_utc: {"df": df},
+            u.total_time: {"df": df},
+            u.unsigned_differences: {"series": s},
+        }
+        for func, inputs in cases.items():
+            func(**inputs)  # the valid call works
+            for name in inputs:
+                pattern = rf"^{func.__name__}\(\) requires '{name}', got None$"
+                with self.subTest(func=func.__name__, argument=name), self.assertRaisesRegex(ValueError, pattern):
+                    func(**{**inputs, name: None})
+        signals_args = {
+            "xa": 15,
+            "xb": None,
+            "cross_values": False,
+            "xserie": None,
+            "xserie_a": None,
+            "xserie_b": None,
+            "cross_series": True,
+            "offset": None,
+        }
+        u.signals(s, **signals_args)
+        with self.assertRaisesRegex(ValueError, r"^signals\(\) requires 'indicator', got None$"):
+            u.signals(None, **signals_args)
+
+    def test_every_utility_names_a_required_input_passed_as_none(self):
+        """Sweep utils.__all__, so a new helper cannot crash inside pandas on None.
+
+        The list above was kept by hand and missed final_time, np_rolling_moments,
+        weights, zero and degenerate_zero. Each exemption below is a contract of
+        its own, not an oversight.
+        """
+        exempt = {
+            # None selects the default.
+            "get_drift": "default",
+            "get_offset": "default",
+            # A predicate: None is not a percent.
+            "is_percent": "predicate",
+            # Raises TypeError naming the function for any non-str, None included.
+            "tal_ma": "type check",
+            # None in, None out: an indicator's missing optional input flows through.
+            "apply_fill": "passthrough",
+            "apply_offset": "passthrough",
+            "verify_series": "passthrough",
+            "above": "passthrough",
+            "above_value": "passthrough",
+            "below_value": "passthrough",
+            "cross_value": "passthrough",
+            "below": "passthrough",
+            "cross": "passthrough",
+            "crossover": "passthrough",
+            "lag": "passthrough",
+            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series.
+            "cagr": "nan metric",
+            "calmar_ratio": "nan metric",
+            "downside_deviation": "nan metric",
+            "jensens_alpha": "nan metric",
+            "log_max_drawdown": "nan metric",
+            "max_drawdown": "nan metric",
+            "optimal_leverage": "nan metric",
+            "pure_profit_score": "nan metric",
+            "sharpe_ratio": "nan metric",
+            "sortino_ratio": "nan metric",
+        }
+        s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
+
+        def filler(annotation: str):
+            # A value the parameter accepts, so None is the only thing wrong with the call.
+            if "None" in annotation:
+                return None
+            if annotation in ("<class 'bool'>",):
+                return False
+            if annotation in ("<class 'int'>",):
+                return 5
+            if annotation in ("<class 'float'>",):
+                return 1.0
+            return s
+
+        swept = set()
+        for name in pandas_ta.utils.__all__:
+            func = getattr(pandas_ta.utils, name)
+            if not inspect.isfunction(func) or name in exempt:
+                continue
+            required = [
+                (p.name, str(p.annotation))
+                for p in inspect.signature(func).parameters.values()
+                if p.default is p.empty and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+            ]
+            for i, (param, annotation) in enumerate(required):
+                # Optional by its type, or a flag (None selects its default, as _bool_param does).
+                if "None" in annotation or annotation == "<class 'bool'>":
+                    continue
+                args = [filler(a) for _, a in required]
+                args[i] = None
+                swept.add(name)
+                # _require_input's wording, or a scalar validator's (above_value() value must be a number, got None)
+                pattern = rf"^{name}\(\) (requires '{param}', got None|{param} must be .*, got None)$"
+                with self.subTest(func=name, argument=param), self.assertRaisesRegex(ValueError, pattern):
+                    func(*args)
+        # The exemptions must name real utilities, or a rename hides one from the sweep.
+        self.assertFalse(set(exempt) - set(pandas_ta.utils.__all__))
+        self.assertIn("final_time", swept)

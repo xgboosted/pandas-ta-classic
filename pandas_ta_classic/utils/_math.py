@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from pandas import DataFrame, Series
 
-from ._core import _bool_param, _pos_int, degenerate_zero, verify_series
+from ._core import _bool_param, _pos_int, _require_input, degenerate_zero, verify_series
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,8 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     determinism (pandas 2.x vs 3.x can round higher-order moments
     differently).
     """
+    _require_input(values, "np_rolling_moments", "values")
+    _require_input(length, "np_rolling_moments", "length")
 
     if min_periods is None:
         min_periods = length
@@ -124,6 +126,8 @@ def linear_regression(x: Series, y: Series) -> dict:
         ValueError: ``x`` and ``y`` differ in length or index, have fewer than
             3 points, or contain NaN or an infinite value.
     """
+    _require_input(x, "linear_regression", "x")
+    _require_input(y, "linear_regression", "y")
     x, y = verify_series(x), verify_series(y)
     m, n = x.size, y.size
 
@@ -216,6 +220,8 @@ def symmetric_triangle(n: int | None = None, *, weighted: bool = False) -> list[
 
 def weights(w: Any) -> Callable[[Any], Any]:
     """Calculates the dot product of weights with values x"""
+    # None only failed later, inside np.dot on the first window.
+    _require_input(w, "weights", "w")
 
     def _dot(x: Any) -> Any:
         return np.dot(w, x)
@@ -225,11 +231,14 @@ def weights(w: Any) -> Callable[[Any], Any]:
 
 def zero(x: float) -> float:
     """If the value is close to zero, then return zero. Otherwise return itself."""
+    _require_input(x, "zero", "x")
     return 0 if abs(x) < sflt.epsilon else x
 
 
 def df_error_analysis(dfA: DataFrame, dfB: DataFrame, *, corr_method: str = "pearson", plot: bool = False, triangular: bool = False) -> DataFrame:
     """Correlation between two DataFrames, used by the test suite for oracle parity checks."""
+    _require_input(dfA, "df_error_analysis", "dfA")
+    _require_input(dfB, "df_error_analysis", "dfB")
     plot = _bool_param(plot, False, "plot")
     triangular = _bool_param(triangular, False, "triangular")
 
