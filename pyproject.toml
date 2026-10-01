@@ -246,7 +246,10 @@ ignore_missing_imports = true
 # the actual Series result flows through apply_offset/apply_fill. Skip following
 # talib's stubs so its symbols resolve to Any (we do not type-check talib itself).
 [[tool.mypy.overrides]]
-module = ["talib", "talib.*"]
+# Only the top-level module: `import talib.abstract` in cdl_pattern.py was the
+# one submodule import and it went with the dead TA-Lib fallback, so a
+# "talib.*" entry here is an unused section mypy reports on every run.
+module = ["talib"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
 # talib is optional and absent from the CI code-quality environment; resolve it

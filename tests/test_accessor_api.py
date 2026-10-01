@@ -348,6 +348,29 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertIsInstance(self.df.ta.short_run(fast=fast, slow=slow), pd.Series)
         self.assertEqual(list(self.df.ta.tsignals(trend=trend).columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
 
+    def test_show_version_logs_the_version(self):
+        with self.assertLogs("pandas_ta_classic.core", level="INFO") as logs:
+            self.df.ta(kind="sma", length=10, show_version=True)
+        self.assertTrue(any(pandas_ta_classic.version in line for line in logs.output))
+
+    def test_timed_run_attaches_the_elapsed_time(self):
+        with self.assertLogs("pandas_ta_classic.core", level="INFO") as logs:
+            result = self.df.ta(kind="sma", length=10, timed=True)
+        self.assertIsInstance(result.timed, str)
+        self.assertIn("ms", result.timed)
+        self.assertTrue(any("sma" in line for line in logs.output))
+
+    def test_timed_run_warns_when_the_indicator_returns_none(self):
+        # Short input yields an all-NaN result, not None, so use an indicator
+        # that really declines: vp has no causal mode and returns None (with a
+        # UserWarning of its own) when lookahead=False.
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            with self.assertLogs("pandas_ta_classic.core", level="WARNING") as logs:
+                self.assertIsNone(self.df.ta(kind="vp", timed=True, lookahead=False))
+        self.assertTrue(any("produced no result" in line for line in logs.output))
 
 
 class TestAccessorNonSeriesColumnArgument(TestCase):

@@ -260,6 +260,25 @@ class TestVolatility(TestCase):
             ),
         )
 
+    def test_rvi_mode_arguments_fail_fast(self):
+        # refined/thirds used to be bool()-coerced, so rvi(refined="yes") ran
+        # the refined branch without a word.
+        for kwarg in ("refined", "thirds"):
+            with self.subTest(kwarg=kwarg), self.assertRaisesRegex(ValueError, rf"rvi\(\) {kwarg} must be True or False"):
+                pandas_ta.rvi(self.close, self.high, self.low, **{kwarg: "yes"})
+
+        # They are alternative modes; refined used to win silently.
+        with self.assertRaisesRegex(ValueError, "alternative modes"):
+            pandas_ta.rvi(self.close, self.high, self.low, refined=True, thirds=True)
+
+        # Both modes are defined over high/low. Omitting them used to return
+        # None, which reads as an ordinary short-input result.
+        for kwarg in ("refined", "thirds"):
+            with self.subTest(kwarg=kwarg), self.assertRaisesRegex(ValueError, rf"rvi\(\) {kwarg}=True needs both high and low"):
+                pandas_ta.rvi(self.close, **{kwarg: True})
+        with self.assertRaisesRegex(ValueError, "needs both high and low"):
+            pandas_ta.rvi(self.close, high=self.high, refined=True)
+
     def test_thermo(self):
         assert_indicator_standard(
             self,
