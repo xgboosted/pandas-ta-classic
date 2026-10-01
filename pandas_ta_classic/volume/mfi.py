@@ -68,7 +68,11 @@ def mfi(
         psum = tdf["+mf"].rolling(length).sum()
         nsum = tdf["-mf"].rolling(length).sum()
         tdf["mr"] = psum / nsum
-        mfi = 100 * psum / (psum + nsum)
+        # A window with no price movement has no money flow in either
+        # direction, so this divides 0/0. TA-Lib reads 0.0 there; see
+        # tests/test_degenerate_input.py.
+        denominator = psum + nsum
+        mfi = (100 * psum / denominator).mask(denominator == 0, 0.0)
         tdf["mfi"] = mfi
 
     # Offset

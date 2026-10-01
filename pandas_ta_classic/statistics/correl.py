@@ -31,6 +31,11 @@ def correl(
 
     # Calculate Result
     result = close.rolling(length, min_periods=min_periods).corr(benchmark)
+    # A correlation needs both sides to vary; pandas returns NaN when either
+    # window is constant. It reads 0.0, the convention TA-Lib's CORREL applies
+    # for the same input; see tests/test_degenerate_input.py.
+    degenerate = (close.rolling(length, min_periods=min_periods).std() == 0) | (benchmark.rolling(length, min_periods=min_periods).std() == 0)
+    result = result.mask(degenerate, 0.0)
 
     # Offset
     result = apply_offset(result, offset)

@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
+    degenerate_div,
     get_drift,
     get_offset,
     verify_series,
@@ -45,8 +46,11 @@ def vortex(
     vmp = (high - low.shift(drift)).abs()
     vmm = (low - high.shift(drift)).abs()
 
-    vip = vmp.rolling(length, min_periods=min_periods).sum() / tr_sum
-    vim = vmm.rolling(length, min_periods=min_periods).sum() / tr_sum
+    # A window with no true range divides 0/0: its bars are flat, so VM+ and
+    # VM- are zero across it too. degenerate_div masks only that to 0.0; a
+    # nonzero VM over a zero true range is a real x/0 and reads inf.
+    vip = degenerate_div(vmp.rolling(length, min_periods=min_periods).sum(), tr_sum)
+    vim = degenerate_div(vmm.rolling(length, min_periods=min_periods).sum(), tr_sum)
 
     # Offset
     vip, vim = apply_offset([vip, vim], offset)

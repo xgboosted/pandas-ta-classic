@@ -6,9 +6,9 @@ from pandas import DataFrame, Series
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
+    degenerate_div,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _number, _pos_int, nan_on_short_input
@@ -40,21 +40,26 @@ def brar(
     if open_ is None or high is None or low is None or close is None:
         return None
 
-    high_open_range = non_zero_range(high, open_)
-    open_low_range = non_zero_range(open_, low)
+    # All four differences are exact: an epsilon in a numerator would make a
+    # fully flat window divide eps / 0 and read inf instead of the 0.0 marker.
+    # degenerate_div masks only a window where numerator and denominator are
+    # both zero; a zero denominator with a positive numerator (a gap-up bar,
+    # open == low, high > open) is a real x/0 and reads inf.
+    high_open_range = high - open_
+    open_low_range = open_ - low
 
     # Calculate Result
-    hcy = non_zero_range(high, close.shift(drift))
-    cyl = non_zero_range(close.shift(drift), low)
+    hcy = high - close.shift(drift)
+    cyl = close.shift(drift) - low
 
     hcy[hcy < 0] = 0  # Zero negative values
     cyl[cyl < 0] = 0  # ""
 
-    ar = scalar * high_open_range.rolling(length).sum()
-    ar /= open_low_range.rolling(length).sum()
+    olr_sum = open_low_range.rolling(length).sum()
+    ar = scalar * degenerate_div(high_open_range.rolling(length).sum(), olr_sum)
 
-    br = scalar * hcy.rolling(length).sum()
-    br /= cyl.rolling(length).sum()
+    cyl_sum = cyl.rolling(length).sum()
+    br = scalar * degenerate_div(hcy.rolling(length).sum(), cyl_sum)
 
     # Offset
     ar, br = apply_offset([ar, br], offset)

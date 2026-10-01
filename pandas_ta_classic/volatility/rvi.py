@@ -25,9 +25,11 @@ def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: i
     neg_avg = ma(mode, neg_std, length=length)
     if neg_avg is None:
         return None
-    result = scalar * pos_avg
-    result /= pos_avg + neg_avg
-    return result
+    # A window with zero standard deviation has no up or down deviation to
+    # weigh, so this divides 0/0. It reads 0.0, the convention TA-Lib applies
+    # for a degenerate window; see tests/test_degenerate_input.py.
+    denominator = pos_avg + neg_avg
+    return (scalar * pos_avg / denominator).mask(denominator == 0, 0.0)
 
 
 def _rvi_mode(refined, thirds, high, low, close, length, scalar, mamode, drift):

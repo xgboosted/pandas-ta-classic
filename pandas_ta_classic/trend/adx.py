@@ -87,10 +87,15 @@ def adx(
             _dmn_ma = ma(mamode, neg, length=length)
             if _dmn_ma is None:
                 return None
-            dmp = k * _dmp_ma
-            dmn = k * _dmn_ma
+            # atr_ is 0.0 for a window with no true range, so k is inf and
+            # k * 0 is NaN. Both DI read 0.0 there, as on the rma path above.
+            dmp = (k * _dmp_ma).mask(atr_ == 0, 0.0)
+            dmn = (k * _dmn_ma).mask(atr_ == 0, 0.0)
 
-        dx = scalar * (dmp - dmn).abs() / (dmp + dmn)
+        # No directional movement at all divides 0/0. TA-Lib reads 0.0 there,
+        # and dx() already gave 0.0 for the same formula through non_zero_range.
+        denominator = dmp + dmn
+        dx = (scalar * (dmp - dmn).abs() / denominator).mask(denominator == 0, 0.0)
         adx_arr = ma(mamode, dx, length=lensig)
         if adx_arr is None:
             return None

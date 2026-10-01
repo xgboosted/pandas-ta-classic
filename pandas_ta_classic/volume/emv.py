@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input
@@ -41,11 +40,16 @@ def emv(
 
     # divisor=10000 matches tulipy's EMV scaling convention
     divisor = _pos_float(kwargs.pop("divisor", None), 10000, "divisor")
-    hl_range = non_zero_range(high, low)
+    # The range is a numerator factor -- EMV reduces to
+    # distance * range * divisor / volume -- so a bar that traded at one price
+    # moved nothing and reads 0.0 outright; that is the value, not a marker.
+    # non_zero_range() had reported an epsilon of movement instead. The mask
+    # only keeps the zero out of the reciprocal.
+    hl_range = high - low
     midpoint = 0.5 * (high + low)
     distance = midpoint - midpoint.shift(drift)
-    box_ratio = (volume / divisor) / hl_range
-    result = distance / box_ratio
+    box_ratio = (volume / divisor) / hl_range.where(hl_range != 0)
+    result = (distance / box_ratio).mask(hl_range == 0, 0.0)
 
     # Offset
     result = apply_offset(result, offset)

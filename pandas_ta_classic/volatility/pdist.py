@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import nan_on_short_input
@@ -37,9 +36,12 @@ def pdist(
         return None
 
     # Calculate Result
-    pdist = 2 * non_zero_range(high, low)
-    pdist += non_zero_range(open_, close.shift(drift)).abs()
-    pdist -= non_zero_range(close, open_).abs()
+    # Every term is added or subtracted, never divided by, so non_zero_range()
+    # could only report distance a bar did not cover: a flat bar came to
+    # 2 * eps + eps - eps rather than to no distance at all.
+    pdist = 2 * (high - low)
+    pdist += (open_ - close.shift(drift)).abs()
+    pdist -= (close - open_).abs()
 
     # Offset
     pdist = apply_offset(pdist, offset)

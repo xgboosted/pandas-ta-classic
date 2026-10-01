@@ -9,8 +9,8 @@ from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
+    degenerate_zero,
     get_offset,
-    non_zero_range,
     tal_ma,
     verify_series,
 )
@@ -80,9 +80,24 @@ def bbands(
             return None
         lower, mid, upper = result
 
-    ulr = non_zero_range(upper, lower)
+    # A window whose closes are all equal has a standard deviation of exactly
+    # zero, so the band has no width. This needs no malformed bar: a flat close
+    # run of `length` bars in otherwise moving, perfectly consistent OHLC does
+    # it. With an epsilon width, BBB read 2.2e-16 instead of 0.0, and BBP came
+    # out as eps/eps = 1.0 for the exact mamodes -- "price at the top of a band
+    # that has no top" -- or exploded to 1e14 for mamode="ema"/"rma", whose mid
+    # only converges on the constant and so leaves a non-zero numerator. That
+    # is why the mask keys on the width alone and not on both operands, as vhf
+    # and marketfi do: here a zero width does *not* imply a zero numerator. The
+    # degenerate window reads 0.0, TA-Lib's marker; an exact `ulr` also lets
+    # bandwidth reach it on its own.
+    ulr = upper - lower
+    # A flat close leaves a ~1e-16 standard-deviation residue (and TA-Lib's
+    # running STDDEV is not exactly 0 either), so snap it to an exact zero
+    # before the width and percent divide on it.
+    ulr = ulr.where(~degenerate_zero(ulr), 0.0)
     bandwidth = 100 * ulr / mid
-    percent = non_zero_range(close, lower) / ulr
+    percent = ((close - lower) / ulr.where(ulr != 0)).mask(ulr == 0, 0.0)
 
     # Offset
     lower, mid, upper, bandwidth, percent = apply_offset([lower, mid, upper, bandwidth, percent], offset)

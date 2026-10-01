@@ -431,6 +431,31 @@ def non_zero_range(high: Series, low: Series) -> Series:
     return diff.where(diff != 0, sflt.epsilon)
 
 
+def degenerate_div(numerator: Series, denominator: Series) -> Series:
+    """Divide ``numerator`` by ``denominator``, reading a true 0/0 window as 0.0.
+
+    Only a window where *both* are zero is masked to 0.0, the marker TA-Lib
+    applies throughout for a degenerate window.  A zero denominator with a
+    nonzero numerator is a real division by zero and reads ``inf``; masking on
+    the denominator alone would turn that into 0.0 and report the opposite of
+    what the data says (``vhf`` makes the same distinction in its own mask).
+    """
+    return (numerator / denominator).mask((denominator == 0) & (numerator == 0), 0.0)
+
+
+def degenerate_zero(x: Any, *, atol: float = 1e-12) -> Any:
+    """True where *x* is a flat-window float residue, not a real value.
+
+    A computed variance or standard deviation over a flat window leaves a
+    residue of roughly machine epsilon times the window's scale — 5.9e-17 for
+    a flat 0.3's standard deviation, 3.4e-33 for its variance — so an exact
+    ``== 0`` misses it and the value divides into a nonsense z-score, skew or
+    kurtosis.  *atol* is far above that residue and far below any real
+    variance (a 0.01% move is already 1e-4).
+    """
+    return np.isclose(x, 0, atol=atol)
+
+
 def recent_maximum_index(x: Series) -> int:
     return int(np.argmax(x[::-1]))
 
