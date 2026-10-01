@@ -32,6 +32,8 @@ def tsignals(
 ) -> DataFrame | None:
     """Indicator: Trend Signals"""
     # Validate Arguments
+    if trend is None:
+        raise ValueError("tsignals() requires a 'trend' Series; it has no default")
     trend = verify_series(trend)
     if trend is None:
         return None
