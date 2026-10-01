@@ -20,6 +20,12 @@ def beta(
     length = _pos_int(length, 30, "length", gt=1)
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
     close = verify_series(close, max(length, min_periods))
+    # Not given at all is a caller error, like mavp's 'periods': returning None
+    # made df.ta.beta() indistinguishable from a short-input result. A
+    # benchmark that is too short still returns None, under the short-input
+    # contract. strategy("all") leaves beta out unless a benchmark= is passed.
+    if benchmark is None:
+        raise ValueError("beta() requires a 'benchmark' Series; it has no default")
     benchmark = verify_series(benchmark, max(length, min_periods))
     offset = get_offset(offset)
 
@@ -75,5 +81,7 @@ Kwargs:
 
 Returns:
     pd.Series: New feature generated.
-    None: If benchmark is not provided; enables df.ta.strategy("all") compatibility.
+    None: If close or benchmark is shorter than the window (short-input contract).
+        A missing benchmark raises ValueError; strategy("all") excludes this
+        indicator unless a benchmark= is broadcast.
 """

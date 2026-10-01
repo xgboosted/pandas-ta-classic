@@ -20,6 +20,9 @@ def correl(
     length = _pos_int(length, 30, "length", gt=1)
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
     close = verify_series(close, max(length, min_periods))
+    # See beta(): not given at all is a caller error, too short is not.
+    if benchmark is None:
+        raise ValueError("correl() requires a 'benchmark' Series; it has no default")
     benchmark = verify_series(benchmark, max(length, min_periods))
     offset = get_offset(offset)
 
@@ -68,5 +71,7 @@ Kwargs:
 
 Returns:
     pd.Series: New feature generated.
-    None: If benchmark is not provided; enables df.ta.strategy("all") compatibility.
+    None: If close or benchmark is shorter than the window (short-input contract).
+        A missing benchmark raises ValueError; strategy("all") excludes this
+        indicator unless a benchmark= is broadcast.
 """
