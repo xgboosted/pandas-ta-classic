@@ -26,6 +26,8 @@ def xsignals(
 ) -> DataFrame | None:
     """Indicator: Cross Signals"""
     # Validate Arguments
+    if signal is None:
+        raise ValueError("xsignals() requires a 'signal' Series; it has no default")
     signal = verify_series(signal)
     if signal is None:
         return None

@@ -252,13 +252,32 @@ _PROBE_MAX_ROWS = 50_000
 _PROBE_HARD_MAX_ROWS = 2_000_000
 
 
+def _bound_series(arguments: dict) -> list[Series]:
+    """Every Series in *arguments*, including those inside the **kwargs bag.
+
+    An indicator can take a Series through **kwargs (stc's ma1/ma2/osc, the
+    signal helpers' xserie): those used to be invisible here, so the probe kept
+    the caller's short series, failed for the same reason the real call did, and
+    the short-input contract handed back None instead of an all-NaN result.
+    """
+    found = []
+    for value in arguments.values():
+        if isinstance(value, Series):
+            found.append(value)
+        elif isinstance(value, dict):
+            found.extend(v for v in value.values() if isinstance(v, Series))
+    return found
+
+
 def _probe_inputs(arguments: dict, rows: int) -> dict:
     """Replace every Series argument with a long, well-formed synthetic series.
 
     Values are deterministic OHLCV-shaped data on the same index type as the
-    caller's first Series, so every indicator can run on them.
+    caller's first Series, so every indicator can run on them.  Series passed
+    through **kwargs are replaced too; a name the OHLCV map does not know gets
+    the close series, which is what an oscillator-shaped input expects.
     """
-    first = next(v for v in arguments.values() if isinstance(v, Series))
+    first = _bound_series(arguments)[0]
     if isinstance(first.index, DatetimeIndex):
         end = first.index[-1] if len(first.index) else "2024-01-01"
         # minute steps: 2M rows span under 4 years, well inside the datetime64[ns] range
@@ -276,11 +295,16 @@ def _probe_inputs(arguments: dict, rows: int) -> dict:
         "periods": np.full(rows, 10.0),
         "trend": (np.arange(rows) // 20 % 2).astype(int),
     }
+
     # keep each name: some outputs are named after their inputs (vp: low_close, pos_volume)
-    return {
-        key: (Series(columns.get(key, close), index=index, name=value.name) if isinstance(value, Series) else value)
-        for key, value in arguments.items()
-    }
+    def synthetic(key: str, value: Any) -> Any:
+        if isinstance(value, Series):
+            return Series(columns.get(key, close), index=index, name=value.name)
+        if isinstance(value, dict):  # the **kwargs bag
+            return {k: synthetic(k, v) for k, v in value.items()}
+        return value
+
+    return {key: synthetic(key, value) for key, value in arguments.items()}
 
 
 def _nan_like(template: Any, index: Any, rows: int) -> Any:
@@ -358,10 +382,11 @@ def nan_on_short_input(fn: Callable) -> Callable:
                     return result
             bound = sig.bind(*args, **kwargs)
             series = {k: v for k, v in bound.arguments.items() if isinstance(v, Series)}
-            if not series:
+            all_series = _bound_series(bound.arguments)
+            if not all_series:
                 return None
             # results align to close, like a normal result; otherwise to the first Series
-            first = series.get("close", next(iter(series.values())))
+            first = series.get("close", all_series[0])
             numbers = [
                 v
                 for v in list(bound.arguments.values()) + list(bound.arguments.get("kwargs", {}).values())
