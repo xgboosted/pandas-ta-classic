@@ -61,9 +61,10 @@ def lean_workers():
     """Spawned children inherit this, as docs/strategies.rst recommends.
 
     Every fresh interpreter commits about 750 MB for OpenBLAS thread buffers
-    that the indicators never use. This module is the only one that starts
-    processes, and under "pytest -n auto" each xdist worker starts its own:
-    without this, peak system commit went from 85% to 97% on a 32-core machine.
+    that the indicators never use. This module starts most of the suite's
+    processes (a few other tests set df.ta.cores = 2), and under "pytest -n auto"
+    each xdist worker starts its own: without this, peak system commit went
+    from 85% to 97% on a 32-core machine.
     """
     previous = os.environ.get("OPENBLAS_NUM_THREADS")
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
