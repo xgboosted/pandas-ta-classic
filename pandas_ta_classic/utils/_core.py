@@ -105,6 +105,23 @@ def apply_fill(
     return series
 
 
+def _on_valid_rows(series: Series, smooth: Callable[[Series], Series | None]) -> Series | None:
+    """Run *smooth* over *series* from its first valid row on, on *series*'s index.
+
+    Smoothing only the valid rows keeps a leading NaN run from seeding the
+    moving average. The result is shorter than *series*, though, and a short
+    Series put into a DataFrame comes back with the missing rows as NaN after
+    ``apply_fill`` has run, so those rows never see ``fillna``. The result is
+    therefore reindexed onto *series*'s index before it is returned.
+
+    Returns None when *smooth* does.
+    """
+    result = smooth(series.loc[series.first_valid_index() :])
+    if result is None:
+        return None
+    return result.reindex(series.index)
+
+
 def _bool_param(val: Any, default: bool, name: str) -> bool:
     """Return *val* for a bool (numpy bools included), *default* for None; raise ValueError otherwise.
 
