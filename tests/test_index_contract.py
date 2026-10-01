@@ -314,13 +314,23 @@ def test_fillna_reaches_every_output_column(name: str, frame: dict[str, pd.Serie
         input's valid rows only and came back short, so the DataFrame join put
         the missing rows back as ``NaN`` after the fill; ``aobv``'s ``OBV_min``
         and ``OBV_max`` were rolled off OBV after ``apply_fill``.
+
+    The fill must also touch nothing but the ``NaN``: ``amat``, ``aobv``, ``bias``,
+    ``massi``, ``t3``, ``tema``, ``trix`` and ``tsi`` forwarded ``fillna`` to their
+    inner moving averages, which filled the inner warm-up with 0 and changed real
+    values (``tema(fillna=0)`` moved 190 SPY bars, 141.60 to 136.93 on the first).
     """
+    plain = output_columns(_results(name, frame))
     filled = output_columns(_results(name, frame, fillna=0))
 
     assert filled, f"{name} returned nothing on {_N_ROWS} rows"
 
     wrong = {column: int(values.isna().sum()) for column, values in filled.items() if values.isna().any()}
     assert not wrong, f"{name}(fillna=0) left NaN in {wrong}"
+    changed = [
+        column for column, values in plain.items() if not np.array_equal(filled[column].to_numpy(dtype=float), values.fillna(0).to_numpy(dtype=float))
+    ]
+    assert not changed, f"{name}(fillna=0) is not {name}().fillna(0) for: {changed}"
 
 
 @pytest.mark.parametrize("method", ["ffill", "bfill"])
@@ -351,6 +361,12 @@ def test_fill_method_reaches_every_output_column(name: str, method: str, frame: 
         if reachable.isna().any():
             wrong[column] = int(reachable.isna().sum())
     assert not wrong, f"{name}(fill_method={method!r}) left NaN in {wrong}"
+    changed = [
+        column
+        for column, values in plain.items()
+        if not np.array_equal(filled[column].to_numpy(dtype=float), getattr(values, method)().to_numpy(dtype=float), equal_nan=True)
+    ]
+    assert not changed, f"{name}(fill_method={method!r}) is not {name}().{method}() for: {changed}"
 
 
 @pytest.mark.parametrize(("name", "option"), [("macd", {"asmode": True}), ("macdfix", {"asmode": True})])

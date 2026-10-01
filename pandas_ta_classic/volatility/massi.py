@@ -32,6 +32,8 @@ def massi(
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     # A strategy-wide length (df.ta.strategy(..., length=N)) has no meaning here and the
     # inner calls set length themselves; drop it so it cannot collide with their keyword.
     kwargs.pop("length", None)
@@ -59,7 +61,7 @@ def massi(
     # Offset
     massi = apply_offset(massi, offset)
 
-    massi = apply_fill(massi, **kwargs)
+    massi = apply_fill(massi, **fill_kwargs)
 
     # Name and Categorize it
     massi.name = f"MASSI_{fast}_{slow}"

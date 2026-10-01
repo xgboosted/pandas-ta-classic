@@ -23,6 +23,8 @@ def tema(
     length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
@@ -43,7 +45,7 @@ def tema(
     # Offset
     tema = apply_offset(tema, offset)
 
-    tema = apply_fill(tema, **kwargs)
+    tema = apply_fill(tema, **fill_kwargs)
 
     # Name & Category
     tema.name = f"TEMA_{length}"

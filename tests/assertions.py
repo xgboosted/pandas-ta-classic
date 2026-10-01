@@ -1,3 +1,4 @@
+import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -5,6 +6,7 @@ from typing import Any
 import numpy as np
 import pandas.testing as pdt
 from pandas import DataFrame, Series
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 CORRELATION = "corr"
 CORRELATION_THRESHOLD = 1.0
@@ -52,14 +54,30 @@ class IndicatorSpec:
     length_override: int | None = None
 
 
+def _assert_same_result(test_case, actual, expected, msg):
+    test_case.assertIsInstance(actual, type(expected), msg)
+    try:
+        if isinstance(expected, DataFrame):
+            assert_frame_equal(actual, expected)
+        else:
+            assert_series_equal(actual, expected)
+    except AssertionError as ex:
+        raise test_case.failureException(f"{msg}\n{ex}") from None
+
+
 def assert_offset(test_case, func, args, **kwargs):
-    test_case.assertIsNotNone(func(*args, offset=1, **kwargs))
+    """``offset=1`` returns the default result shifted forward by one bar."""
+    expected = func(*args, **kwargs).shift(1)
+    _assert_same_result(test_case, func(*args, offset=1, **kwargs), expected, f"{func.__name__}: offset=1 must shift the result by one bar")
 
 
 def assert_fill(test_case, func, args, **kwargs):
-    test_case.assertIsNotNone(func(*args, fillna=0, **kwargs))
-    test_case.assertIsNotNone(func(*args, fill_method="ffill", **kwargs))
-    test_case.assertIsNotNone(func(*args, fill_method="bfill", **kwargs))
+    """``fillna`` and ``fill_method`` match the pandas operation on the default result."""
+    base = func(*args, **kwargs)
+    name = func.__name__
+    _assert_same_result(test_case, func(*args, fillna=0, **kwargs), base.fillna(0), f"{name}: fillna=0 must equal result.fillna(0)")
+    _assert_same_result(test_case, func(*args, fill_method="ffill", **kwargs), base.ffill(), f"{name}: fill_method='ffill' must equal result.ffill()")
+    _assert_same_result(test_case, func(*args, fill_method="bfill", **kwargs), base.bfill(), f"{name}: fill_method='bfill' must equal result.bfill()")
 
 
 def assert_length_in_name(test_case, func, args, length, **kwargs):
@@ -132,7 +150,9 @@ def assert_indicator_standard(test_case, spec: IndicatorSpec):
         test_case.assertListEqual(list(result.columns), spec.expected_columns)
     elif spec.expected_columns is not None:
         test_case.assertListEqual(list(result.columns), spec.expected_columns)
-    assert_offset(test_case, spec.func, spec.args, **spec.kwargs)
+    # vp has no offset: its rows are price bins, not bars
+    if "offset" in inspect.signature(spec.func).parameters:
+        assert_offset(test_case, spec.func, spec.args, **spec.kwargs)
     assert_fill(test_case, spec.func, spec.args, **spec.kwargs)
     if spec.none_arg_idx is not None:
         assert_none_guard(test_case, spec.func, spec.args, spec.none_arg_idx, **spec.kwargs)
