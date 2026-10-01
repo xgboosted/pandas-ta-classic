@@ -43,9 +43,16 @@ def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, d
     bp = close - min_l_or_pc
     tr = max_h_or_pc - min_l_or_pc
 
-    fast_avg = bp.rolling(fast).sum() / tr.rolling(fast).sum()
-    medium_avg = bp.rolling(medium).sum() / tr.rolling(medium).sum()
-    slow_avg = bp.rolling(slow).sum() / tr.rolling(slow).sum()
+    # A window with no true range has no buying pressure either, so each of
+    # these divides 0/0. TA-Lib reads 0.0 there; see
+    # tests/test_degenerate_input.py.
+    def _pressure(length: int):
+        denominator = tr.rolling(length).sum()
+        return (bp.rolling(length).sum() / denominator).mask(denominator == 0, 0.0)
+
+    fast_avg = _pressure(fast)
+    medium_avg = _pressure(medium)
+    slow_avg = _pressure(slow)
 
     total_weight = fast_w + medium_w + slow_w
     weights = (fast_w * fast_avg) + (medium_w * medium_avg) + (slow_w * slow_avg)

@@ -295,6 +295,18 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "INERTIAt_20_14")
 
+        # refined/thirds used to be bool()-coerced and were both silently
+        # optional: inertia(close, refined=True) returned None rather than
+        # saying it needs high/low.
+        for kwarg in ("refined", "thirds"):
+            with self.subTest(kwarg=kwarg):
+                with self.assertRaisesRegex(ValueError, rf"inertia\(\) {kwarg} must be True or False"):
+                    pandas_ta.inertia(self.close, self.high, self.low, **{kwarg: "yes"})
+                with self.assertRaisesRegex(ValueError, rf"inertia\(\) {kwarg}=True needs both high and low"):
+                    pandas_ta.inertia(self.close, **{kwarg: True})
+        with self.assertRaisesRegex(ValueError, "alternative modes"):
+            pandas_ta.inertia(self.close, self.high, self.low, refined=True, thirds=True)
+
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -702,6 +714,44 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_squeeze_detailed(self):
+        base = pandas_ta.squeeze(self.high, self.low, self.close)
+        result = pandas_ta.squeeze(self.high, self.low, self.close, detailed=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
+
+        detail_columns = ["SQZ_INC", "SQZ_DEC", "SQZ_PINC", "SQZ_PDEC", "SQZ_NDEC", "SQZ_NINC"]
+        self.assertEqual(list(result.columns), list(base.columns) + detail_columns)
+        # detailed=True only appends; the base columns keep their values
+        for col in base.columns:
+            self.assertTrue(result[col].equals(base[col]), col)
+
+        squeeze_series = result["SQZ_20_2.0_20_1.5"]
+        for col in detail_columns:
+            # Every detail column masks the bars it does not describe, so it is
+            # neither all NaN nor fully populated, and never carries a 0.
+            self.assertTrue(result[col].isna().any(), col)
+            self.assertTrue(result[col].notna().any(), col)
+            self.assertFalse((result[col] == 0).any(), col)
+            # Where a detail column has a value it is the squeeze value itself.
+            defined = result[col].notna()
+            self.assertTrue(result.loc[defined, col].equals(squeeze_series[defined]), col)
+
+        # SQZ_INC / SQZ_DEC partition the defined bars into rising and falling.
+        self.assertFalse((result["SQZ_INC"].notna() & result["SQZ_DEC"].notna()).any())
+        # PINC/PDEC only describe non-negative bars, NINC/NDEC only negative ones.
+        for col in ("SQZ_PINC", "SQZ_PDEC"):
+            self.assertTrue((result.loc[result[col].notna(), col] >= 0).all(), col)
+        for col in ("SQZ_NINC", "SQZ_NDEC"):
+            self.assertTrue((result.loc[result[col].notna(), col] < 0).all(), col)
+
+        # lazybear and the accessor reach the same detailed branch
+        lb = pandas_ta.squeeze(self.high, self.low, self.close, detailed=True, lazybear=True)
+        self.assertEqual(list(lb.columns), ["SQZ_20_2.0_20_1.5_LB", "SQZ_ON", "SQZ_OFF", "SQZ_NO"] + detail_columns)
+
+        via_accessor = self.data.ta.squeeze(detailed=True)
+        self.assertEqual(list(via_accessor.columns), list(result.columns))
+
     def test_squeeze_pro(self):
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
@@ -750,6 +800,50 @@ class TestMomentum(TestCase):
                 none_arg_idx=0,
             ),
         )
+
+    def test_stc_short_series_through_kwargs_is_all_nan(self):
+        # nan_on_short_input replaced only the declared Series parameters when
+        # probing, so a short Series arriving through **kwargs kept the
+        # caller's rows in the probe: it failed for the same reason the real
+        # call did and None came back instead of an all-NaN frame.
+        columns = list(pandas_ta.stc(self.close).columns)
+        ma1, ma2 = pandas_ta.ema(self.close, length=12), pandas_ta.ema(self.close, length=26)
+        for kwargs in ({"osc": (ma1 - ma2).iloc[:5]}, {"ma1": ma1.iloc[:5], "ma2": ma2.iloc[:5]}):
+            with self.subTest(kwargs=sorted(kwargs)):
+                short = pandas_ta.stc(self.close, **kwargs)
+                self.assertIsInstance(short, DataFrame)
+                self.assertEqual(list(short.columns), columns)
+                self.assertEqual(len(short), len(self.close))
+                self.assertTrue(short.isna().all().all())
+
+    def test_stc_external_series(self):
+        traditional = pandas_ta.stc(self.close)
+        macd_col = "STCmacd_10_12_26_0.5"
+
+        # ma1 + ma2 replace the internal EMA pair: feeding the same EMAs back in
+        # reproduces the traditional result exactly.
+        ma1, ma2 = pandas_ta.ema(self.close, length=12), pandas_ta.ema(self.close, length=26)
+        with_mas = pandas_ta.stc(self.close, ma1=ma1, ma2=ma2)
+        self.assertIsInstance(with_mas, DataFrame)
+        self.assertTrue(with_mas.equals(traditional))
+
+        # osc replaces both MAs with a ready-made oscillator.
+        with_osc = pandas_ta.stc(self.close, osc=ma1 - ma2)
+        self.assertTrue(with_osc.equals(traditional))
+        # osc wins over ma1/ma2 when all three are given.
+        self.assertTrue(pandas_ta.stc(self.close, ma1=ma1, ma2=ma2, osc=ma1 - ma2).equals(traditional))
+
+        # A distinct oscillator must change the macd column.
+        other = pandas_ta.stc(self.close, osc=pandas_ta.ema(self.close, length=5) - ma2)
+        self.assertFalse(other[macd_col].equals(traditional[macd_col]))
+
+        # ma1 and ma2 are only meaningful as a pair.
+        for kwargs in ({"ma1": ma1}, {"ma2": ma2}):
+            with self.assertRaises(ValueError):
+                pandas_ta.stc(self.close, **kwargs)
+
+        # slow < fast is swapped, so the pair is order independent.
+        self.assertTrue(pandas_ta.stc(self.close, fast=26, slow=12).equals(traditional))
 
     def test_stoch(self):
         # TV Correlation
@@ -883,6 +977,41 @@ class TestMomentum(TestCase):
                 none_arg_idx=0,
             ),
         )
+
+    def test_willr_guards_a_zero_range(self):
+        """willr was the only rolling-range divider without non_zero_range.
+
+        A window where every bar shares its high and low divided 0/0, and the
+        NaN then spread over the next length-1 windows: a flat block of b bars
+        cost max(0, b - (length - 1)) extra NaN and a fully flat series was all
+        NaN. The six siblings (stoch, stochf, stochrsi, kdj, fisher, stc) all
+        guard the same way.
+        """
+        length = 14
+        flat = Series([100.0] * 120)
+        result = pandas_ta.willr(flat, flat, flat, length=length)
+        # Only the warm-up is NaN now, and the window reads 0.0 -- TA-Lib's
+        # marker for a degenerate window, which this package follows
+        # throughout. -100 cannot double as the marker: it is a real %R value
+        # for a bar sitting at the low of a real range. See
+        # tests/test_degenerate_input.py.
+        self.assertEqual(int(result.isna().sum()), length - 1)
+        self.assertTrue((result.dropna() == 0.0).all())
+
+        # A flat block no longer bleeds NaN into the windows after it.
+        high, low, close = self.high.copy(), self.low.copy(), self.close.copy()
+        for block in (5, 14, 20, 30):
+            with self.subTest(block=block):
+                h, low_, c = high.copy(), low.copy(), close.copy()
+                h.iloc[80 : 80 + block] = low_.iloc[80 : 80 + block] = c.iloc[80 : 80 + block] = 100.0
+                out = pandas_ta.willr(h, low_, c, length=length)
+                self.assertEqual(int(out.loc[out.first_valid_index() :].isna().sum()), 0)
+
+        # Where the range is non-zero nothing changed: still TA-Lib's values.
+        if HAS_TALIB:
+            expected = talib.WILLR(self.high, self.low, self.close, length)
+            actual = pandas_ta.willr(self.high, self.low, self.close, length=length)
+            self.assertLess(float((actual - expected).abs().max()), 1e-10)
 
     def test_lrsi(self):
         assert_indicator_standard(

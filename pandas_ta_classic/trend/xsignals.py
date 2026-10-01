@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
-from pandas_ta_classic.utils._signals import cross_value
+from pandas_ta_classic.utils._signals import _require_number, cross_value
 
 from .tsignals import _reject_trend_reset, tsignals
 
@@ -26,6 +26,8 @@ def xsignals(
 ) -> DataFrame | None:
     """Indicator: Cross Signals"""
     # Validate Arguments
+    if signal is None:
+        raise ValueError("xsignals() requires a 'signal' Series; it has no default")
     signal = verify_series(signal)
     if signal is None:
         return None
@@ -33,6 +35,10 @@ def xsignals(
     above = _bool_param(above, True, "above")
     long = _bool_param(long, True, "long")
     _reject_trend_reset("xsignals", kwargs)
+    # Validate the thresholds here so an invalid value names xsignals and the
+    # argument, not cross_value (rule 2).
+    _require_number(xa, "xa")
+    _require_number(xb, "xb")
 
     # Calculate Result
     if above:

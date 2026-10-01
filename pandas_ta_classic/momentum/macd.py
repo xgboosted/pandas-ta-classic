@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, nan_on_short_input, skip_leading_nan
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -95,7 +95,7 @@ def macd(
 
     if as_mode:
         macd = macd - signalma
-        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        signalma = _on_valid_rows(macd, lambda s: ema(close=s, length=signal))
         if signalma is None:
             return None
         histogram = macd - signalma

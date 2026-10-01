@@ -54,7 +54,10 @@ def rsi(
         positive_avg = rma(positive, length=length)
         negative_avg = rma(negative, length=length)
 
-        rsi = scalar * positive_avg / (positive_avg + negative_avg.abs())
+        # A window with no movement at all divides 0/0. TA-Lib reads 0.0 there;
+        # `denominator == 0` is False for the warmup NaN, which stays NaN.
+        denominator = positive_avg + negative_avg.abs()
+        rsi = (scalar * positive_avg / denominator).mask(denominator == 0, 0.0)
 
     # Name it here: the signals below take their column names from it, and `.name`
     # survives the shift while a custom attribute such as `.category` does not.

@@ -41,10 +41,11 @@ def macdfix(
     # Read without popping: the native branch forwards it to macd(), which owns
     # the signal columns and the options that go with them.
     signal_indicators = _bool_param(kwargs.get("signal_indicators", None), False, "signal_indicators")
+    asmode = _bool_param(kwargs.get("asmode", None), False, "asmode")
 
     # TA-Lib's MACDFIX returns the three lines only; run natively instead of
-    # dropping the signal columns it cannot produce
-    if Imports["talib"] and mode_talib and not signal_indicators:
+    # dropping the signal columns or the AS variant it cannot produce
+    if Imports["talib"] and mode_talib and not signal_indicators and not asmode:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)

@@ -549,8 +549,13 @@ class TestTrend(TestCase):
                 func=pandas_ta.long_run,
                 args=[self.close, self.open],
                 expected_name="LR_2",
+                none_arg_idx=None,
             ),
         )
+        with self.assertRaisesRegex(ValueError, "long_run\\(\\) requires 'fast' and 'slow' Series"):
+            pandas_ta.long_run(None, self.open)
+        with self.assertRaisesRegex(ValueError, "long_run\\(\\) requires 'fast' and 'slow' Series"):
+            pandas_ta.long_run(self.close, None)
 
     def test_dx(self):
         result = pandas_ta.dx(self.high, self.low, self.close, talib=False)
@@ -662,8 +667,13 @@ class TestTrend(TestCase):
                 func=pandas_ta.short_run,
                 args=[self.close, self.open],
                 expected_name="SR_2",
+                none_arg_idx=None,
             ),
         )
+        with self.assertRaisesRegex(ValueError, "short_run\\(\\) requires 'fast' and 'slow' Series"):
+            pandas_ta.short_run(None, self.open)
+        with self.assertRaisesRegex(ValueError, "short_run\\(\\) requires 'fast' and 'slow' Series"):
+            pandas_ta.short_run(self.close, None)
 
     def test_ttm_trend(self):
         assert_indicator_standard(
@@ -723,6 +733,8 @@ class TestTrend(TestCase):
                 none_arg_idx=None,
             ),
         )
+        with self.assertRaisesRegex(ValueError, "tsignals\\(\\) requires a 'trend' Series"):
+            pandas_ta.tsignals(None)
 
     def test_xsignals(self):
         signal = pandas_ta.rsi(self.close)
@@ -738,3 +750,5 @@ class TestTrend(TestCase):
                 kwargs={"xa": 70, "xb": 30},
             ),
         )
+        with self.assertRaisesRegex(ValueError, "xsignals\\(\\) requires a 'signal' Series"):
+            pandas_ta.xsignals(None, 70, 30)

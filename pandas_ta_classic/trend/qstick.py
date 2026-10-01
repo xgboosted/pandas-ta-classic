@@ -12,7 +12,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
@@ -38,7 +37,10 @@ def qstick(
         return None
 
     # Calculate Result
-    diff = non_zero_range(close, open_)
+    # A doji's body is 0, and the average of the last `length` bodies is what
+    # this reports -- nothing divides by it, so non_zero_range()'s epsilon only
+    # ever reached the output as 2.2e-16 of body where there was none.
+    diff = close - open_
 
     if ma == "dema":
         qstick = dema(diff, length=length, **kwargs)

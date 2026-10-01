@@ -62,7 +62,12 @@ three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
   everywhere, slightly, when a bar is missing.
 
 No indicator publishes a value it could not compute: a result is either
-computed from the available bars or NaN.
+computed from the available bars or NaN. This also holds on the warm-up bars at
+the start of the series, and for the direction and flag columns that describe
+them — ``tests/test_warmup_contract.py`` checks both for every registered
+indicator and every column it returns. The two exceptions are ``CPR_POSITION``
+and ``CPR_WIDTH_CLASS``, which are ``int8`` and cannot hold NaN, so they read 0
+on the bar before the first completed period.
 
 Lookahead Bias and Causality
 -----------------------------
@@ -222,7 +227,60 @@ It appends threshold and comparison columns to the indicator and returns a
 
 ``macdfix`` forwards all of these to ``macd``. Because TA-Lib's ``MACDFIX``
 returns the three lines only, ``talib=True`` is ignored while
-``signal_indicators`` is set.
+``signal_indicators`` or ``asmode`` is set.
+
+Degenerate windows
+------------------
+
+A window with no range, no movement and no variance -- every bar at the same
+price -- makes every range-normalised indicator divide ``0 / 0``. It happens on
+illiquid instruments, halted sessions, forward-filled gaps and synthetic test
+data.
+
+Such a window reads ``0.0``, the convention TA-Lib applies. It is a marker for
+"this window was degenerate", not a reading on the indicator's scale: on a flat
+series ``willr`` reads ``0.0``, the top of its ``-100..0`` range, while
+``stoch`` reads ``0.0``, the bottom of its ``0..100`` one.
+
+.. code-block:: python
+
+    flat = pd.Series([100.0] * 120)
+    ta.rsi(flat)                 # 14 NaN of warmup, then 0.0
+    ta.willr(flat, flat, flat)   # 13 NaN of warmup, then 0.0
+
+Two indicators are deliberately left out, because their ``NaN`` means nothing
+happened rather than that a division failed:
+
+* ``hilo`` -- the Gann activator has no state until the first breakout.
+* ``td_seq`` -- a TD setup needs four bars of movement before it counts.
+
+The same applies to the sparse signal columns of ``psar``, ``qqe`` and
+``supertrend``, which mark the bars where a signal fired and are ``NaN``
+everywhere else by design.
+
+A band with no width is degenerate in the same way, and reads ``0.0`` too. A
+flat close run of ``length`` bars gives ``bbands`` a standard deviation of
+exactly zero, so ``BBU == BBM == BBL``; both derived columns mark it:
+
+.. code-block:: python
+
+    close = pd.Series([90.0] * 30 + [100.0] * 30)
+    bb = ta.bbands(close, length=5, mamode="ema")
+    bb["BBB_5_2.0"]   # 0.0 while the band has no width
+    bb["BBP_5_2.0"]   # 0.0 as well, not 1.0 and not 1e14
+
+Inconsistent OHLC
+-----------------
+
+Nothing validates that a bar satisfies ``low <= open, close <= high``. A bar
+that does not -- ``high == low`` with ``open != close``, for instance -- is
+impossible in real OHLC but is accepted, and it reaches the degenerate branch
+with a numerator that is *not* zero. Such a bar reads ``0.0`` rather than
+dividing by an epsilon: ``ad(open_=...)`` answered ``4.5e15`` per malformed bar
+and, because it accumulates, carried that to the end of the series.
+
+The library does not raise here. If your feed can emit such bars, check them
+before passing them in.
 
 
 Cycles (8)

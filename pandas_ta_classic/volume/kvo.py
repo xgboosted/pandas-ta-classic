@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _on_valid_rows, _pos_int, _str_param, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -50,23 +50,16 @@ def kvo(
 
     # Calculate Result
     signed_volume = volume * signed_series(hlc3(high, low, close), 1)
-    sv = signed_volume.loc[signed_volume.first_valid_index() :,]
-    _kvo_fast = ma(mamode, sv, length=fast)
+    _kvo_fast = _on_valid_rows(signed_volume, lambda s: ma(mamode, s, length=fast))
     if _kvo_fast is None:
         return None
-    _kvo_slow = ma(mamode, sv, length=slow)
+    _kvo_slow = _on_valid_rows(signed_volume, lambda s: ma(mamode, s, length=slow))
     if _kvo_slow is None:
         return None
     kvo = _kvo_fast - _kvo_slow
-    kvo_signal = ma(mamode, kvo.loc[kvo.first_valid_index() :,], length=signal)
+    kvo_signal = _on_valid_rows(kvo, lambda s: ma(mamode, s, length=signal))
     if kvo_signal is None:
         return None
-
-    # Both lines are computed over valid rows only and come back short. Put them
-    # back on the input index here: filled later, the missing rows would be
-    # reintroduced as NaN by the DataFrame join and never see `fillna`.
-    kvo = kvo.reindex(close.index)
-    kvo_signal = kvo_signal.reindex(close.index)
 
     # Offset
     kvo, kvo_signal = apply_offset([kvo, kvo_signal], offset)

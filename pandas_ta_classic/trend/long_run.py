@@ -21,6 +21,8 @@ def long_run(
     """Indicator: Long Run"""
     # Validate Arguments
     length = _pos_int(length, 2, "length")
+    if fast is None or slow is None:
+        raise ValueError("long_run() requires 'fast' and 'slow' Series; they have no default")
     fast = verify_series(fast, length)
     slow = verify_series(slow, length)
     offset = get_offset(offset)

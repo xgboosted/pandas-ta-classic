@@ -27,7 +27,9 @@ def md(
     if close is None:
         return None
 
-    result = mad(close, length=length, offset=offset, **kwargs)
+    # Only the fill reaches mad(): its min_periods option is not part of md's API.
+    fill_kwargs = {key: kwargs[key] for key in ("fillna", "fill_method") if key in kwargs}
+    result = mad(close, length=length, offset=offset, **fill_kwargs)
     if result is None:
         return None
 

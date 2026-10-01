@@ -57,7 +57,10 @@ def cmo(
             pos_ = positive.rolling(length).sum()
             neg_ = negative.rolling(length).sum()
 
-        cmo = scalar * (pos_ - neg_) / (pos_ + neg_)
+        # A window with no movement at all divides 0/0. TA-Lib reads 0.0 there;
+        # see tests/test_degenerate_input.py.
+        denominator = pos_ + neg_
+        cmo = (scalar * (pos_ - neg_) / denominator).mask(denominator == 0, 0.0)
 
     # Offset
     cmo = apply_offset(cmo, offset)

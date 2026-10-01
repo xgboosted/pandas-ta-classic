@@ -96,9 +96,11 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "SINC_3")
 
     def test_long_run_ext(self):
-        # Without fast/slow Series the indicator cannot compute: returns None,
-        # not the caller's whole DataFrame, which looked like a successful run.
-        self.assertIsNone(self.data.ta.long_run(append=True))
+        # Without fast/slow Series the indicator cannot compute. It used to
+        # return None, which named nothing; the accessor now says which
+        # arguments the DataFrame cannot supply.
+        with self.assertRaisesRegex(ValueError, r"df\.ta\.long_run\(\) requires 'fast', 'slow'"):
+            self.data.ta.long_run(append=True)
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)
@@ -120,9 +122,9 @@ class TestTrendExtension(TestCase):
         self.assertEqual(self.data.columns[-1], "QS_10")
 
     def test_short_run_ext(self):
-        # Without fast/slow Series the indicator cannot compute: returns None.
-        # See test_long_run_ext.
-        self.assertIsNone(self.data.ta.short_run(append=True))
+        # See test_long_run_ext: the accessor names the missing arguments.
+        with self.assertRaisesRegex(ValueError, r"df\.ta\.short_run\(\) requires 'fast', 'slow'"):
+            self.data.ta.short_run(append=True)
 
         fast = self.data.ta.ema(8)
         slow = self.data.ta.ema(21)
