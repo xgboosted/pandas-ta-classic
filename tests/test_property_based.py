@@ -25,6 +25,8 @@ Running
 """
 
 import math
+import warnings
+from fractions import Fraction
 from unittest import TestCase
 
 import numpy as np
@@ -323,6 +325,79 @@ class TestMiscUtils(TestCase):
         low = pd.Series(low_vals)
         diff = non_zero_range(high, low)
         assert (diff > 0).all()
+
+
+def _exact_slope(xs: np.ndarray, ys: np.ndarray) -> float:
+    """Least-squares slope in exact rational arithmetic: a reference without rounding."""
+    fx, fy = [Fraction(float(v)) for v in xs], [Fraction(float(v)) for v in ys]
+    x_mean, y_mean = sum(fx) / len(fx), sum(fy) / len(fy)
+    sxy = sum((a - x_mean) * (b - y_mean) for a, b in zip(fx, fy))
+    sxx = sum((a - x_mean) ** 2 for a in fx)
+    return float(sxy / sxx)
+
+
+class TestLinearRegression(TestCase):
+    """Property tests for ``linear_regression``.
+
+    The slope used the one-pass ``m * sum(x * y) - sum(x) * sum(y)``, which
+    cancels when x sits far from 0 with a small spread (99% off at 1e6, the
+    wrong sign at 1e8). Constancy was tested through ``std() != 0``, which
+    rounding defeats: a constant x, or one mixing two adjacent floats, fitted a
+    made-up slope, and a constant y gave r = NaN or +-1e-16 and made
+    ``np.corrcoef`` warn.
+    """
+
+    @given(
+        st.integers(min_value=3, max_value=40),
+        st.floats(min_value=-12.0, max_value=9.0),
+        st.sampled_from([1.0, -1.0]),
+        st.integers(min_value=1, max_value=9),
+        st.data(),
+    )
+    def test_slope_matches_the_exact_fit_at_any_level(self, n, exponent, sign, digits, data):
+        # x = level + a spread `digits` decimal digits below the level.
+        level = sign * 10.0**exponent
+        unit = abs(level) * 10.0**-digits
+        offsets = data.draw(arrays(np.float64, n, elements=st.floats(min_value=-1.0, max_value=1.0, width=64)))
+        xs = level + offsets * unit
+        assume(np.std(xs) > 1e-10 * abs(level))
+        ys = data.draw(arrays(np.float64, n, elements=st.floats(min_value=-1000.0, max_value=1000.0, width=64)))
+        expected = _exact_slope(xs, ys)
+        # The slope's natural scale is spread(y) / spread(x); measure the error against it.
+        scale = abs(expected) + (np.std(ys) + 1.0) / np.std(xs)
+        assert abs(ta.linear_regression(pd.Series(xs), pd.Series(ys))["b"] - expected) <= 1e-9 * scale
+
+    @given(st.integers(min_value=3, max_value=60), st.floats(min_value=-12.0, max_value=9.0), st.sampled_from([1.0, -1.0]), st.data())
+    def test_x_of_two_adjacent_floats_has_no_fit(self, n, exponent, sign, data):
+        # One ULP apart, x.std() is a rounding residue (8e-11 at 1e6), not a spread.
+        level = sign * 10.0**exponent
+        upper = data.draw(arrays(np.bool_, n))
+        assume(upper.any() and not upper.all())
+        x = pd.Series(np.where(upper, np.nextafter(level, np.inf), level))
+        y = pd.Series(np.arange(n, dtype=float))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = ta.linear_regression(x, y)
+        assert all(np.isnan(result[key]) for key in ("a", "b", "r", "t"))
+
+    @given(constant_price_series(min_size=3, max_size=100))
+    def test_constant_x_has_no_fit(self, x):
+        y = pd.Series(np.arange(x.size, dtype=float))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = ta.linear_regression(x, y)
+        assert all(np.isnan(result[key]) for key in ("a", "b", "r", "t", "line"))
+
+    @given(constant_price_series(min_size=3, max_size=100))
+    def test_constant_y_is_quiet(self, y):
+        x = pd.Series(np.arange(y.size, dtype=float))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = ta.linear_regression(x, y)
+        value = y.iloc[0]
+        assert abs(result["b"]) <= 1e-9 * value
+        assert result["a"] == pytest.approx(value, rel=1e-9)
+        assert np.isnan(result["r"]) and np.isnan(result["t"])
 
 
 # ======================================================================

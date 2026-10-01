@@ -1,4 +1,5 @@
 import math
+import warnings
 from unittest import TestCase
 
 import numpy as np
@@ -238,4 +239,6 @@ class TestUtilityMetrics(TestCase):
         # and the score falls back to 0 instead of NaN * cagr.
         idx = bdate_range("2021-01-04", periods=60)
         flat = Series([100.0] * 60, index=idx)
-        self.assertEqual(pandas_ta.pure_profit_score(flat), 0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # np.corrcoef used to warn twice here
+            self.assertEqual(pandas_ta.pure_profit_score(flat), 0)

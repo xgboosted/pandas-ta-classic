@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from pandas import DataFrame, Series
 
-from ._core import _bool_param, _pos_int, verify_series
+from ._core import _bool_param, _pos_int, degenerate_zero, verify_series
 
 logger = logging.getLogger(__name__)
 
@@ -218,35 +218,48 @@ def df_error_analysis(dfA: DataFrame, dfB: DataFrame, *, corr_method: str = "pea
     return corr
 
 
+def _is_flat(series: Series) -> bool:
+    """True when *series* is constant up to the float residue at its own scale.
+
+    degenerate_zero's absolute 1e-12 is a residue at price scale: two values one
+    ULP apart at 1e6 leave a deviation of ~8e-11, which it reads as a real spread.
+    """
+    return bool(degenerate_zero(series.std(), atol=1e-14 * np.abs(series).max()))
+
+
 def _linear_regression_np(x: Series, y: Series) -> dict:
     """Simple Linear Regression using Numpy for two 1d arrays."""
     result = {"a": np.nan, "b": np.nan, "r": np.nan, "t": np.nan, "line": np.nan}
-    x_sum = x.sum()
-    y_sum = y.sum()
 
     # A constant x (no variance) makes correlation and slope undefined; skip it.
     # The previous guard ``int(x_sum) != 0`` also skipped x whose values summed
     # to less than 1 in absolute value (daily benchmark returns), so the
-    # regression never ran for Jensen's alpha.
-    if x.std() != 0:
+    # regression never ran for Jensen's alpha. ``x.std() != 0`` then missed the
+    # float residue a flat 0.3 leaves (~4e-17), so the slope divided by it and
+    # read +-inf, with a correlation made of rounding noise. The tolerance scales
+    # with x: at 1e6 the residue is ~8e-11 and the slope read -1.8e8.
+    if _is_flat(x):
+        return result
+
+    # Centred sums, not m * sum(x * y) - sum(x) * sum(y): that one-pass form
+    # cancels catastrophically when x sits far from 0 with a small spread. At
+    # x ~ 1e6 with a 1e-3 spread the slope was 99% off, at 1e8 its sign flipped.
+    m = x.size
+    x_mean, y_mean = x.mean(), y.mean()
+    dx = x - x_mean
+    b = (dx * (y - y_mean)).sum() / (dx * dx).sum()
+    a = y_mean - b * x_mean
+    line = a + b * x
+
+    # A constant y still has a slope (0) and an intercept (its level), but no
+    # correlation: np.corrcoef divides by y's deviation and warns.
+    r = t = np.nan
+    if not _is_flat(y):
         # 1st row, 2nd col value corr(x, y)
         r = np.corrcoef(x, y)[0, 1]
+        # |r| == 1 or m == 2 divides by zero; that reads inf by design. A local
+        # errstate, not np.seterr: the global setting leaked if anything raised.
+        with np.errstate(divide="ignore", invalid="ignore"):
+            t = r / np.sqrt((1 - r * r) / (m - 2))
 
-        m = x.size
-        r_mix = m * (x * y).sum() - x_sum * y_sum
-        b = r_mix / (m * (x * x).sum() - x_sum * x_sum)
-        a = y.mean() - b * x.mean()
-        line = a + b * x
-
-        _np_err = np.seterr()
-        np.seterr(divide="ignore", invalid="ignore")
-        result = {
-            "a": a,
-            "b": b,
-            "r": r,
-            "t": r / np.sqrt((1 - r * r) / (m - 2)),
-            "line": line,
-        }
-        np.seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
-
-    return result
+    return {"a": a, "b": b, "r": r, "t": t, "line": line}
