@@ -17,6 +17,7 @@ import pytest
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 
 _GUARD = re.compile(r"_pos_(?:int|float)\((\w+),")
@@ -272,15 +273,24 @@ _NOT_FLAGS = {"ma1", "ma2", "osc", "tulipy"}  # stc's optional Series; msw's bac
 _SIGNAL_GATED = {"cross_values", "cross_series"}
 
 
+def _flags(source: str) -> set[str]:
+    return {a or b for a, b in _BOOL_KWARG.findall(source)}
+
+
+# er, rsi and rsx hand their flags to attach_signals, so a per-module scrape no
+# longer sees them. Read them off the helper, so a flag it gains joins the sweep.
+_HELPER_FLAGS = _flags(inspect.getsource(attach_signals))
+
+
 def _bool_kwarg_cases():
     cases = []
     for name in sorted(i for v in ta.Category.values() for i in v):
         func = _find_indicator_func(name)
         if func is None:
             continue
-        found = _BOOL_KWARG.findall(inspect.getsource(inspect.getmodule(inspect.unwrap(func))))
-        keys = sorted({a or b for a, b in found} - _NOT_FLAGS)
-        cases += [(name, key) for key in keys if name != "macd"]
+        source = inspect.getsource(inspect.getmodule(inspect.unwrap(func)))
+        keys = _flags(source) | (_HELPER_FLAGS if "attach_signals(" in source else set())
+        cases += [(name, key) for key in sorted(keys - _NOT_FLAGS) if name != "macd"]
     return cases
 
 

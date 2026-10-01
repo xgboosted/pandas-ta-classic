@@ -263,6 +263,24 @@ def test_fill_reaches_the_signal_columns(name: str, frame: dict[str, pd.Series])
 
 
 @pytest.mark.parametrize("name", [*sorted(_SIGNAL_INDICATOR_CASES), "macdfix"])
+def test_fillna_does_not_reach_the_signal_columns(name: str, frame: dict[str, pd.Series]) -> None:
+    """``fillna`` fills the indicator, not the 0/1 signal columns.
+
+    A flag column filled with 50 is neither "no signal" (0) nor "signal" (1).
+    The signal columns must stay within {0, 1} even with ``fillna=50``; only the
+    indicator column takes the caller's value.
+    """
+    kwargs = _SIGNAL_INDICATOR_CASES.get(name, {"signal_indicators": True})
+    (result,) = _results(name, frame, **kwargs, offset=_OFFSET, fillna=50)
+    for column, values in output_columns(result).items():
+        if "_A_" in column or "_B_" in column:
+            assert set(values.dropna().unique()) <= {
+                0.0,
+                1.0,
+            }, f"{name}: signal column {column} left {{0, 1}} with fillna=50: {sorted(set(values.dropna().unique()))}"
+
+
+@pytest.mark.parametrize("name", [*sorted(_SIGNAL_INDICATOR_CASES), "macdfix"])
 def test_signal_columns_keep_the_frame_name(name: str, frame: dict[str, pd.Series]) -> None:
     """``concat`` builds a new frame, which used to drop ``name``/``category``."""
     (plain,) = _results(name, frame)

@@ -2,17 +2,12 @@
 from typing import Any
 
 import numpy as np
-from pandas import DataFrame, Series, concat
+from pandas import DataFrame, Series
 
-from pandas_ta_classic.utils import (
-    apply_fill,
-    apply_offset,
-    get_offset,
-    signals,
-    verify_series,
-)
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils import get_offset, verify_series
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
+from pandas_ta_classic.utils._signals import attach_signals
 
 
 @njit(cache=True)
@@ -92,48 +87,13 @@ def rsx(
     c_arr = close.to_numpy(dtype=float)
     rsx = Series(_rsx_loop(c_arr, length, m), index=close.index)
 
-    # Name it here: the signals below take their column names from it, and `.name`
+    # Name it here: the signal columns take their names from it, and `.name`
     # survives the shift while a custom attribute such as `.category` does not.
     rsx.name = f"RSX_{length}"
 
-    # The signals read the unoffset, unfilled RSX and are offset once, inside
-    # signals(). Reading the shifted series shifted them a second time.
-    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
-    signal_df = (
-        signals(
-            indicator=rsx,
-            xa=kwargs.pop("xa", 80),
-            xb=kwargs.pop("xb", 20),
-            xserie=kwargs.pop("xserie", None),
-            xserie_a=kwargs.pop("xserie_a", None),
-            xserie_b=kwargs.pop("xserie_b", None),
-            cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values"),
-            cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
-            offset=offset,
-        )
-        if signal_indicators
-        else None
-    )
-
-    # Offset
-    rsx = apply_offset(rsx, offset)
-
-    # Categorize it
-    rsx.category = "momentum"
-
-    result: Series | DataFrame = rsx
-    if signal_df is not None:
-        result = concat([DataFrame({rsx.name: rsx}), signal_df], axis=1)
-        # concat builds a new frame, so the name and category are set on it
-        result.name = rsx.name
-        result.category = rsx.category
-
-    # The fill runs last, over every column returned, so the signal columns are
-    # filled too. Until 0.9.0 it ran on the indicator alone, and an offset call
-    # with fillna left NaN behind in the signal columns.
-    apply_fill(result, **kwargs)
-
-    return result
+    # attach_signals owns the order of the remaining steps (signals off the
+    # unoffset series, one shift, then the fill over every column).
+    return attach_signals(rsx, category="momentum", offset=offset, kwargs=kwargs)
 
 
 rsx.__doc__ = """Relative Strength Xtra (rsx)
