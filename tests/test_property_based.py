@@ -508,6 +508,47 @@ class TestDownsideDeviation(TestCase):
             ta.downside_deviation(_daily(values))
 
 
+# Every metric that turns a close into returns: their means and deviations skip
+# NaN, so a missing close silently dropped two returns (sharpe 0.3293 -> 0.3305).
+_METRICS_ON_CLOSE = {
+    "optimal_leverage": lambda s: ta.utils.optimal_leverage(s),
+    "pure_profit_score": lambda s: ta.utils.pure_profit_score(s),
+    "sharpe_ratio": lambda s: ta.utils.sharpe_ratio(s),
+    "sharpe_ratio(use_cagr)": lambda s: ta.utils.sharpe_ratio(s, use_cagr=True),
+    "sortino_ratio": lambda s: ta.utils.sortino_ratio(s),
+    "volatility": lambda s: ta.utils.volatility(s),
+    "volatility(log)": lambda s: ta.utils.volatility(s, log=True),
+}
+
+
+class TestMetricsOnClose(TestCase):
+    """Property tests for the metrics computed from a close's returns."""
+
+    @given(
+        arrays(np.float64, st.integers(min_value=5, max_value=200), elements=st.floats(min_value=1.0, max_value=1000.0, width=64)),
+        st.sampled_from(sorted(_METRICS_ON_CLOSE)),
+        st.data(),
+    )
+    def test_a_missing_close_anywhere_raises(self, values, name, data):
+        values[data.draw(st.integers(min_value=0, max_value=values.size - 1))] = np.nan
+        with pytest.raises(ValueError, match=rf"^{name.split('(')[0]}\(\) close has 1 missing value"):
+            _METRICS_ON_CLOSE[name](_daily(values))
+
+    @given(_returns, st.integers(min_value=0, max_value=5), st.integers(min_value=0, max_value=5))
+    def test_volatility_does_not_count_leading_and_trailing_nan(self, values, lead, trail):
+        # The periods per year counted the leading NaN of a percent return that
+        # the deviation skipped: the result depended on whether it was passed.
+        padded = _daily(np.concatenate([np.full(lead, np.nan), values, np.full(trail, np.nan)]))
+        trimmed = padded.iloc[lead : lead + values.size]
+        assert ta.utils.volatility(padded, returns=True) == ta.utils.volatility(trimmed, returns=True)
+
+    @given(arrays(np.float64, st.integers(min_value=3, max_value=200), elements=st.floats(min_value=1.0, max_value=1000.0, width=64)), st.booleans())
+    def test_volatility_of_a_close_equals_that_of_its_returns(self, values, log):
+        close = _daily(values)
+        returns = ta.log_return(close) if log else ta.percent_return(close)
+        assert ta.utils.volatility(close, log=log) == pytest.approx(ta.utils.volatility(returns, returns=True), rel=1e-12)
+
+
 # ======================================================================
 # 2. Indicator output invariants
 # ======================================================================

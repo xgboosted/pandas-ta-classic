@@ -83,6 +83,23 @@ class TestUtilityMetrics(TestCase):
         with self.assertRaisesRegex(ValueError, r"sortino_ratio\(\) close has 1 missing value"):
             pandas_ta.sortino_ratio(gappy)
 
+    def test_return_metrics_reject_missing_close(self):
+        # A gap dropped two returns from the mean and the deviation without a
+        # word: sharpe_ratio read 0.3305 instead of 0.3293 for one missing close.
+        gappy = self.close.copy()
+        gappy.iloc[2000] = np.nan
+        for name in ("sharpe_ratio", "optimal_leverage", "volatility"):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, rf"{name}\(\) close has 1 missing value"):
+                getattr(pandas_ta.utils, name)(gappy)
+
+    def test_volatility_does_not_count_the_first_bar(self):
+        # The periods per year counted the first bar, which has no return, so
+        # the result moved with whether the caller dropped it (0.198789 vs 0.198783).
+        self.assertTrue(np.isnan(self.pctret.iloc[0]))
+        with_nan = pandas_ta.utils.volatility(self.pctret, returns=True)
+        self.assertEqual(with_nan, pandas_ta.utils.volatility(self.pctret.iloc[1:], returns=True))
+        self.assertEqual(with_nan, pandas_ta.utils.volatility(self.close))
+
     def test_drawdown(self):
         result = pandas_ta.drawdown(self.pctret)
         self.assertIsInstance(result, DataFrame)

@@ -208,11 +208,19 @@ def optimal_leverage(
             percent_return. Default: False
         capital (float): Capital to scale the optimal leverage by. Default: 1.0
 
+    Raises:
+        ValueError: ``close`` contains NaN.
+
     >>> result = ta.optimal_leverage(close, benchmark_rate=0.0, log=False)
     """
     close = verify_series(close)
     if close is None:
         return np.nan
+    # A missing close dropped two returns from the mean and the deviation
+    # without a word (1.6553 -> 1.6613 on the sample data for one gap).
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"optimal_leverage() close has {gaps} missing value(s); fill or drop them first")
 
     returns = percent_return(close=close) if not log else log_return(close=close)
 
@@ -280,11 +288,19 @@ def sharpe_ratio(
             Annual Standard Deviation.
             Default: RATE["TRADING_DAYS_PER_YEAR"] (currently 252)
 
+    Raises:
+        ValueError: ``close`` contains NaN.
+
     >>> result = ta.sharpe_ratio(close, benchmark_rate=0.0, log=False)
     """
     close = verify_series(close)
     if close is None:
         return np.nan
+    # A missing close dropped two returns from the mean and the deviation
+    # without a word (0.3293 -> 0.3305 on the sample data for one gap).
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"sharpe_ratio() close has {gaps} missing value(s); fill or drop them first")
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     if use_cagr:
@@ -341,17 +357,37 @@ def volatility(
         log (bool): If True, calculates log_return. Otherwise it calculates
             percent_return. Default: False
 
+    Raises:
+        ValueError: ``close`` contains NaN; with ``returns=True``, the returns
+            have a NaN inside them or fewer than 2 values. A leading or
+            trailing NaN run of returns (the first bar of a percent return) is
+            not counted.
+
     >>> result = ta.volatility(close, tf="years", returns=False, log=False, **kwargs)
     """
     close = verify_series(close)
     if close is None:
         return np.nan
 
+    # The deviation skipped NaN while the periods per year counted it: the
+    # first bar of a computed return is always NaN, and a gap inside dropped
+    # two returns from the deviation without a word.
     _returns: Series
     if not returns:
+        gaps = int(close.isna().sum())
+        if gaps:
+            raise ValueError(f"volatility() close has {gaps} missing value(s); fill or drop them first")
         _returns = percent_return(close=close) if not log else log_return(close=close)
+        _returns = _returns.iloc[1:]  # bar 0 has no return
     else:
         _returns = close
+    valid = np.flatnonzero(_returns.notna().to_numpy())
+    if valid.size < 2:
+        raise ValueError(f"volatility() needs at least 2 returns, got {valid.size}")
+    _returns = _returns.iloc[valid[0] : valid[-1] + 1]
+    gaps = int(_returns.isna().sum())
+    if gaps:
+        raise ValueError(f"volatility() returns has {gaps} missing value(s) inside the series; fill or drop them first")
 
     factor = _returns.shape[0] / _span(_returns, tf, "volatility")
     if _bool_param(kwargs.pop("nearest_day", None), False, "nearest_day") and tf.lower() == "years":
