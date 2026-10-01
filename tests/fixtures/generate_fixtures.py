@@ -1199,7 +1199,7 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
         ("ttm_trend", ta.ttm_trend(h, low, c), None),
         # ---- Volume ----
         ("aobv", ta.aobv(c, v), None),
-        ("vfi", ta.vfi(c, v), None),
+        ("vfi", ta.vfi(h, low, c, v), None),
         # ---- Statistics ----
         ("tos_stdevall", ta.tos_stdevall(c, length=30), None),
         # ---- Cycles ----

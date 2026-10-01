@@ -229,3 +229,26 @@ def vidya(c, length=14):
     for i in range(length, len(c)):
         out[i] = a * k[i] * c[i] + (1 - a * k[i]) * out[i - 1]
     return out
+
+
+def vfi(h, l, c, v, length=130, coef=0.2, vcoef=2.5):
+    """VFI (Katsanos, S&C June 2004; LazyBear's Pine): capped volume signed by a typical-price move past
+    coef * stdev(log change, 30) * close, summed over `length` bars, over the prior bar's average volume, 3-bar EMA."""
+    n = len(c)
+    tp = (h + l + c) / 3
+    inter = np.full(n, np.nan)
+    for i in range(1, n):
+        inter[i] = np.log(tp[i]) - np.log(tp[i - 1])
+    vinter = rolling(inter, 30, np.std)  # population deviation, as Pine's stdev
+    vave = np.full(n, np.nan)
+    for i in range(length, n):
+        vave[i] = np.mean(v[i - length : i])
+    vcp = np.full(n, np.nan)
+    for i in range(1, n):
+        if not (np.isfinite(vinter[i]) and np.isfinite(vave[i])):
+            continue
+        cutoff = coef * vinter[i] * c[i]
+        vc = min(v[i], vave[i] * vcoef)
+        mf = tp[i] - tp[i - 1]
+        vcp[i] = vc if mf > cutoff else -vc if mf < -cutoff else 0.0
+    return ema(rolling(vcp, length, np.sum) / vave, 3)

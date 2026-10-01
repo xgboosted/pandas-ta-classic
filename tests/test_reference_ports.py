@@ -136,3 +136,12 @@ def test_vidya(spy):
     expected = ref.vidya(spy.close.to_numpy(float))
     np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
     _close(got, expected, 1e-9)
+
+
+def test_vfi(spy):
+    # The snapshot this replaces was 0.0 on every bar: the cutoff was coef * close.
+    got = ta.vfi(spy.high, spy.low, spy.close, spy.volume).to_numpy(float)
+    expected = ref.vfi(*(spy[c].to_numpy(float) for c in ("high", "low", "close", "volume")))
+    np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
+    _close(got, expected, 1e-9)
+    assert np.count_nonzero(got[np.isfinite(got)]) > 4000

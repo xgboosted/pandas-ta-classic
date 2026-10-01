@@ -320,7 +320,7 @@ class TestVolume(TestCase):
             self,
             IndicatorSpec(
                 func=pandas_ta.vfi,
-                args=[self.close, self.volume_],
+                args=[self.high, self.low, self.close, self.volume_],
                 expected_name="VFI_130",
             ),
         )

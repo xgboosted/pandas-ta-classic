@@ -12,9 +12,8 @@ adds three extra assertions for each one:
 For indicators whose output has known mathematical constraints the tests also
 assert the range (e.g. normalised oscillators in [0, 100] or [-100, 100]).
 
-Two known-broken indicators are excluded with a comment:
+One known-broken indicator is excluded with a comment:
   * pmax  — raises ValueError ("truth value of a Series is ambiguous")
-  * vfi   — same pandas ambiguity error
 These are pre-existing bugs; file a separate issue rather than masking them.
 
 All tests use the SPY_D.csv sample dataset (5241 rows, 1999-2020).
@@ -585,13 +584,7 @@ class TestNativeVolume(_NativeBase):
         self.assertIsInstance(r, pd.DataFrame)
 
     def test_vfi(self):
-        # Known bug: vfi raises "truth value of a Series is ambiguous"
-        try:
-            r = ta.vfi(self.h, self.l, self.c, self.v)
-            if r is not None:
-                self._assert_valid(r, "vfi")
-        except (ValueError, TypeError):
-            pass  # pre-existing bug — do not fail the test suite
+        self._assert_valid(ta.vfi(self.h, self.l, self.c, self.v), "vfi")
 
     def test_vhf(self):
         r = ta.vhf(self.c)
