@@ -242,3 +242,13 @@ class TestUtilityMetrics(TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("error")  # np.corrcoef used to warn twice here
             self.assertEqual(pandas_ta.pure_profit_score(flat), 0)
+
+    def test_pure_profit_score_rejects_missing_and_short_input(self):
+        # One NaN made r NaN, so a rising series scored 0 without a word.
+        idx = bdate_range("2021-01-04", periods=60)
+        rising = Series(np.linspace(100.0, 160.0, 60), index=idx)
+        rising.iloc[30] = np.nan
+        with self.assertRaisesRegex(ValueError, r"pure_profit_score\(\) close has 1 missing value"):
+            pandas_ta.pure_profit_score(rising)
+        with self.assertRaisesRegex(ValueError, r"pure_profit_score\(\) needs at least 3 bars, got 2"):
+            pandas_ta.pure_profit_score(Series([100.0, 101.0], index=idx[:2]))

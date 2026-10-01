@@ -108,12 +108,43 @@ def fibonacci(n: int = 2, *, zero: bool = False, weighted: bool = False) -> np.n
 
 
 def linear_regression(x: Series, y: Series) -> dict:
-    """Classic Linear Regression using Numpy"""
+    """Classic Linear Regression using Numpy
+
+    Args:
+        x (pd.Series): Independent values
+        y (pd.Series): Dependent values, on the same index as ``x``
+
+    Returns:
+        dict: ``a`` (intercept), ``b`` (slope), ``r`` (correlation), ``t``
+        (t-statistic of ``r``) and ``line`` (the fitted values). A flat ``x``
+        (constant up to rounding at its own scale) returns NaN for all five; a
+        flat ``y`` gives ``r`` and ``t`` NaN.
+
+    Raises:
+        ValueError: ``x`` and ``y`` differ in length or index, have fewer than
+            3 points, or contain NaN or an infinite value.
+    """
     x, y = verify_series(x), verify_series(y)
     m, n = x.size, y.size
 
     if m != n:
         raise ValueError(f"linear_regression() x and y must have equal length, got {m} and {n}")
+    # x * y aligns on the index, so two different indexes summed an empty product
+    # into a wrong slope while np.corrcoef, which is positional, still gave r.
+    if not x.index.equals(y.index):
+        raise ValueError("linear_regression() x and y must share the same index")
+    # t has m - 2 degrees of freedom: two points gave t = 0.0, fewer gave NaN.
+    if m < 3:
+        raise ValueError(f"linear_regression() needs at least 3 points, got {m}")
+    # The sums skip NaN while m counts it, so a NaN gave a wrong slope and intercept.
+    # An infinite value turned all five results into NaN, with numpy warnings.
+    for label, series in (("x", x), ("y", y)):
+        gaps = int(series.isna().sum())
+        if gaps:
+            raise ValueError(f"linear_regression() {label} has {gaps} missing value(s); fill or drop them first")
+        infinite = int(np.isinf(series).sum())
+        if infinite:
+            raise ValueError(f"linear_regression() {label} has {infinite} infinite value(s)")
 
     return _linear_regression_np(x, y)
 

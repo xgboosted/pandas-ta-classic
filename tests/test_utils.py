@@ -380,6 +380,23 @@ class TestUtilities(TestCase):
         self.assertAlmostEqual(perfect["b"], 2.0, places=12)
         self.assertGreater(perfect["t"], 1e6)
 
+    def test_linear_regression_rejects_what_it_cannot_fit(self):
+        # Two points gave t = 0.0 (no degrees of freedom), one or none gave NaN
+        # with numpy warnings, and a NaN gave a wrong slope: the sums skipped it
+        # while the point count did not (x = [0, 1, NaN, 3, 4] fitted b = 0.758).
+        for size in (0, 1, 2):
+            with self.subTest(size=size), self.assertRaisesRegex(ValueError, rf"needs at least 3 points, got {size}"):
+                self.utils.linear_regression(Series(range(size), dtype=float), Series(range(size), dtype=float))
+        line = Series([1.0, 2.0, 3.0, 4.0, 5.0])
+        gappy = Series([0.0, 1.0, np.nan, 3.0, 4.0])
+        with self.assertRaisesRegex(ValueError, r"x has 1 missing value"):
+            self.utils.linear_regression(gappy, line)
+        with self.assertRaisesRegex(ValueError, r"y has 1 missing value"):
+            self.utils.linear_regression(line, gappy)
+        # x * y aligned on two disjoint indexes and fitted y = 2x + 1 as b = -10.5.
+        with self.assertRaisesRegex(ValueError, r"must share the same index"):
+            self.utils.linear_regression(line, (2 * line + 1).set_axis(list("abcde")))
+
     def test_pascals_triangle(self):
         with self.assertRaisesRegex(ValueError, "inverse=True needs weighted=True"):  # used to return None
             self.utils.pascals_triangle(inverse=True)

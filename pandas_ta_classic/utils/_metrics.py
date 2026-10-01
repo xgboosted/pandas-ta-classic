@@ -202,11 +202,23 @@ def pure_profit_score(close: Series) -> float:
     Args:
         close (pd.Series): Series of 'close's
 
+    Returns:
+        float: correlation of ``close`` with time times its CAGR; 0 for a flat series.
+
+    Raises:
+        ValueError: ``close`` has fewer than 3 bars or contains NaN.
+
     >>> result = ta.pure_profit_score(df.close)
     """
     close = verify_series(close)
     if close is None:
         return np.nan
+    # Checked here as well so the error names the function the caller used.
+    if close.size < 3:
+        raise ValueError(f"pure_profit_score() needs at least 3 bars, got {close.size}")
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"pure_profit_score() close has {gaps} missing value(s); fill or drop them first")
     # A linear time index 0, 1, 2, ... — the x-axis of the trend line.  The
     # previous ``Series(0, ...)`` was a constant series of zeros, so the
     # correlation was always NaN and the function always returned 0.

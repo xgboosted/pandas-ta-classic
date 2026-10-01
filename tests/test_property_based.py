@@ -399,6 +399,50 @@ class TestLinearRegression(TestCase):
         assert result["a"] == pytest.approx(value, rel=1e-9)
         assert np.isnan(result["r"]) and np.isnan(result["t"])
 
+    # The sums skipped NaN while the point count did not, and x * y aligned on the
+    # index while np.corrcoef is positional: both gave a wrong slope without an error.
+    @given(price_series(min_size=3, max_size=100, allow_nan=False), st.sampled_from(["x", "y"]), st.data())
+    def test_nan_anywhere_raises(self, y, side, data):
+        x = pd.Series(np.arange(y.size, dtype=float))
+        pos = data.draw(st.integers(min_value=0, max_value=y.size - 1))
+        args = {"x": x, "y": y.copy()}
+        args[side].iloc[pos] = np.nan
+        with pytest.raises(ValueError, match=f"{side} has 1 missing value"):
+            ta.linear_regression(args["x"], args["y"])
+
+    @given(price_series(min_size=3, max_size=100, allow_nan=False), st.sampled_from(["x", "y"]), st.sampled_from([np.inf, -np.inf]), st.data())
+    def test_infinity_anywhere_raises(self, y, side, value, data):
+        # An infinite value made every result NaN, with numpy warnings and no error.
+        x = pd.Series(np.arange(y.size, dtype=float))
+        pos = data.draw(st.integers(min_value=0, max_value=y.size - 1))
+        args = {"x": x, "y": y.copy()}
+        args[side].iloc[pos] = value
+        with pytest.raises(ValueError, match=f"{side} has 1 infinite value"):
+            ta.linear_regression(args["x"], args["y"])
+
+    @given(price_series(min_size=3, max_size=100, allow_nan=False), st.data())
+    def test_reordered_index_raises(self, y, data):
+        order = data.draw(st.permutations(range(y.size)))
+        assume(list(order) != list(range(y.size)))
+        x = pd.Series(np.arange(y.size, dtype=float))
+        with pytest.raises(ValueError, match="must share the same index"):
+            ta.linear_regression(x, y.set_axis(y.index[list(order)]))
+
+    @given(price_series(min_size=3, max_size=100, allow_nan=False), st.integers(min_value=1, max_value=1000))
+    def test_shifted_index_raises(self, y, shift):
+        x = pd.Series(np.arange(y.size, dtype=float))
+        with pytest.raises(ValueError, match="must share the same index"):
+            ta.linear_regression(x, y.set_axis(y.index + shift))
+
+    @given(price_series(min_size=3, max_size=100, allow_nan=False), st.integers(min_value=-1000, max_value=1000))
+    def test_result_ignores_a_shared_relabelling(self, y, shift):
+        x = pd.Series(np.arange(y.size, dtype=float))
+        before = ta.linear_regression(x, y)
+        after = ta.linear_regression(x.set_axis(x.index + shift), y.set_axis(y.index + shift))
+        for key in ("a", "b", "r", "t"):
+            np.testing.assert_equal(after[key], before[key])
+        np.testing.assert_array_equal(after["line"].to_numpy(), before["line"].to_numpy())
+
 
 # ======================================================================
 # 2. Indicator output invariants
