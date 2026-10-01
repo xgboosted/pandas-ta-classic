@@ -137,7 +137,7 @@ def qqe(
     trend = Series(trend_arr, index=idx).where(qqe.notna())
 
     # Offset
-    rsi_ma, qqe, long, short, trend = apply_offset([rsi_ma, qqe, long, short, trend], offset)
+    rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_offset([rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], offset)
 
     rsi_ma, qqe, qqe_long, qqe_short, long, short, trend = apply_fill([rsi_ma, qqe, qqe_long, qqe_short, long, short, trend], **kwargs)
 
