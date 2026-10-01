@@ -466,6 +466,35 @@ class TestDataFrameAccessorInvariants(TestCase):
         assert "SMA_10" in df.columns
 
 
+class TestNoDirectionOnBarZero(TestCase):
+    """The first bar has no predecessor, so it has no bar-to-bar direction.
+
+    kvo, pvol(signed=True) and vp seeded the direction with +1 (``signed_series(x,
+    1)``), so bar 0 counted as a rising bar: kvo read -9.6 instead of 0.0 on a
+    flat series, pvol signed bar 0 positive, and vp booked bar 0's volume as
+    buying. On a flat series no bar has a direction, so nothing may be signed.
+    """
+
+    @given(
+        st.integers(min_value=120, max_value=300),
+        st.floats(min_value=0.01, max_value=1e5, width=64),
+        st.floats(min_value=1.0, max_value=1e9, width=64),
+        st.sampled_from(sorted(ta.ma())),
+    )
+    @settings(max_examples=60, deadline=None)
+    def test_a_flat_series_has_no_signed_volume(self, n, level, volume, mamode):
+        price = pd.Series(np.full(n, level))
+        vol = pd.Series(np.full(n, volume))
+        kvo = ta.kvo(price, price, price, vol, fast=5, slow=10, signal=3, mamode=mamode)
+        assert (kvo.dropna() == 0.0).all().all()
+        assert kvo.notna().any().all()
+        signed = ta.pvol(price, vol, signed=True)
+        assert ((signed == 0.0) | signed.isna()).all()
+        profile = ta.vp(price, vol, width=2)
+        assert (profile.filter(like="pos_").to_numpy() == 0.0).all()
+        assert (profile.filter(like="neg_").to_numpy() == 0.0).all()
+
+
 # ======================================================================
 # 3. Mathematical invariants
 # ======================================================================

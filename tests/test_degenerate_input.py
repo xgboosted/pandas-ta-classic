@@ -273,6 +273,9 @@ _CONVENTION_CASES = [
     "er",
     "inertia",
     "kurtosis",
+    # A flat series has no bar-to-bar direction, so no signed volume: bar 0 used
+    # to count as a rising bar and left a decaying -9.6 instead.
+    "kvo",
     "marketfi",
     "massi",
     "pdist",

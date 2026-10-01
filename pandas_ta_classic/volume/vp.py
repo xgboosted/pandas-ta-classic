@@ -40,7 +40,7 @@ def vp(
         return None
 
     # Setup
-    signed_price = signed_series(close, 1)
+    signed_price = signed_series(close)
     # where(), not signed_price[signed_price > 0]: see the note in nvi.py --
     # realigning the subset rebuilds the index and clears DatetimeIndex.freq on
     # the caller's own index object.
@@ -149,6 +149,9 @@ Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
     width (int): How many ranges to distrubute price into. Default: 10
+    Note: a bar's volume counts as positive or negative by the direction of
+    its close from the previous one; the first bar and an unchanged close
+    have no direction and count in neither.
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
