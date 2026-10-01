@@ -85,15 +85,21 @@ def fibonacci(n: int = 2, *, zero: bool = False, weighted: bool = False) -> np.n
         n -= 1
         a, b = 1, 1
 
-    result = np.array([a])
+    # Build in a Python list and convert once. The previous np.append() in the
+    # loop was quadratic and, worse, kept the seed array's int64 dtype: from
+    # n=91 the terms wrapped silently (fibonacci(91, weighted=True) summed to
+    # -6.2e18, so fwma(length=91) returned nonsense) until the object-dtype
+    # promotion at n>=93 happened to rescue it. Python ints do not overflow.
+    terms = [a]
     for _ in range(n):
         a, b = b, a + b
-        result = np.append(result, a)
+        terms.append(a)
+    result = np.array(terms, dtype=object if terms[-1] > np.iinfo(np.int64).max else np.int64)
 
     if weighted:
-        fib_sum: float = np.sum(result)
+        fib_sum = sum(terms)  # exact: a float64 sum loses precision past 2**53
         if fib_sum > 0:
-            return result / fib_sum
+            return np.array([term / fib_sum for term in terms], dtype=float)
         return result
     return result
 

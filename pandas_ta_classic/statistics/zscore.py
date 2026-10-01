@@ -14,12 +14,18 @@ def zscore(
     length: int | None = None,
     std: float | None = None,
     offset: int | None = None,
+    ddof: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Z Score"""
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)
-    std = _pos_float(std, 1, "std", gt=1)
+    std = _pos_float(std, 1, "std", gt=0)
+    # ddof sits after offset so an existing positional offset keeps its meaning.
+    # cdl_z has always forwarded it; without this parameter it landed in
+    # **kwargs and was dropped, so cdl_z(ddof=0) and cdl_z(ddof=1) returned
+    # identical values under different column names.
+    ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -33,7 +39,7 @@ def zscore(
     if n >= length:
         windows = np.lib.stride_tricks.sliding_window_view(values, length)
         window_mean = windows.mean(axis=1)
-        window_std = windows.std(axis=1, ddof=1)
+        window_std = windows.std(axis=1, ddof=ddof)
         # A window with zero variance divides 0/0. TA-Lib reads 0.0 for the
         # degenerate case throughout, and this follows it; see
         # tests/test_degenerate_input.py. degenerate_zero, not ``== 0``, so a
@@ -62,10 +68,10 @@ Sources:
 
 Calculation:
     Default Inputs:
-        length=30, std=1
+        length=30, std=1, ddof=1
     SMA = Simple Moving Average
     STDEV = Standard Deviation
-    std = std * STDEV(close, length)
+    std = std * STDEV(close, length, ddof)
     mean = SMA(close, length)
     ZSCORE = (close - mean) / std
 
@@ -74,6 +80,9 @@ Args:
     length (int): It's period. Default: 30
     std (float): It's period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
+    ddof (int): Delta Degrees of Freedom. The divisor used in the standard
+        deviation is ``length - ddof``; 1 is the sample deviation, 0 the
+        population one. Must be < length. Default: 1
 
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
