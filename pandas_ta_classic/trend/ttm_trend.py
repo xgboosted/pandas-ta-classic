@@ -31,8 +31,9 @@ def ttm_trend(
     # Calculate Result: close against the average HL2 of the previous `length`
     # bars (the current bar is not part of the average, as in the source).
     trend_avg = hl2(high, low).shift(1).rolling(length).mean()
-    # No trend until the average exists: NaN, not a -1 "downtrend".
-    tm_trend = ((close > trend_avg).astype(int) * 2 - 1).where(trend_avg.notna())
+    # No trend without both operands: `close > NaN` and `NaN > avg` are False,
+    # which would read as a -1 "downtrend" on the warm-up and on a missing close.
+    tm_trend = ((close > trend_avg).astype(int) * 2 - 1).where(trend_avg.notna() & close.notna())
 
     # Offset
     tm_trend = apply_offset(tm_trend, offset)
@@ -79,12 +80,13 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 6
+    length (int): Its period. Default: 6
     offset (int): How many periods to offset the result. Default: 0
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 Returns:
     pd.DataFrame: TTM_TRND_<length>: +1 when the close is above the average HL2
-        of the previous `length` bars, -1 otherwise, NaN until that average exists.
+        of the previous `length` bars, -1 when it is at or below it, NaN until
+        that average exists and on bars whose close is missing.
 """

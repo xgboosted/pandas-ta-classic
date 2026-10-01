@@ -462,7 +462,7 @@ Trend identification and direction indicators:
 * *Parabolic SAR Extended*: **sarext** (positive while long, negative while short, as TA-Lib ``SAREXT``, which it equals for every parameter)
 * *Short Run*: **short_run**
 * *Trend Signals*: **tsignals**
-* *TTM Trend*: **ttm_trend** (+1 when the close is above the average HL2 of the previous ``length`` bars, −1 below; NaN until that average exists)
+* *TTM Trend*: **ttm_trend** (+1 when the close is above the average HL2 of the previous ``length`` bars, −1 at or below it; NaN until that average exists and on bars whose close is missing)
 * *Vertical Horizontal Filter*: **vhf**
 * *Vortex*: **vortex**
 * *Cross Signals*: **xsignals**

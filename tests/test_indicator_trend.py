@@ -687,6 +687,17 @@ class TestTrend(TestCase):
             ),
         )
 
+    def test_ttm_trend_missing_close_is_nan(self):
+        # `close > avg` is False for a NaN close, which used to read as a -1
+        # downtrend on the missing bar between two uptrend bars.
+        high = Series(np.arange(20) + 2.0)
+        low = Series(np.arange(20) * 1.0)
+        close = Series(np.arange(20) + 1.0)
+        close[12] = np.nan
+        result = pandas_ta.ttm_trend(high, low, close)["TTM_TRND_6"]
+        assert result.iloc[6:12].eq(1).all() and result.iloc[13:].eq(1).all()
+        assert np.isnan(result.iloc[12])
+
     def test_vhf(self):
         assert_indicator_standard(
             self,
