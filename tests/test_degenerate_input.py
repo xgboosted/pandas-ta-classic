@@ -348,6 +348,52 @@ def test_a_flat_block_reads_zero_when_the_value_is_not_exact(flat_value: float) 
 # Each moment needs a minimum window: the skew divides by (n - 2), the excess
 # kurtosis by (n - 2)(n - 3). Below that the formula is undefined, which is not
 # the same as a degenerate window, so those bars read NaN and the bound raises.
+_NARROW_WINDOW_CASES = [("kurtosis", 4), ("skew", 3)]
+
+
+@pytest.mark.parametrize(("name", "minimum"), _NARROW_WINDOW_CASES)
+def test_a_window_too_narrow_for_the_formula_is_not_degenerate(name: str, minimum: int) -> None:
+    """Undefined is not degenerate, so it reads NaN rather than 0.0.
+
+    ``kurtosis`` divides by ``(n - 2) * (n - 3) * m2**2``, which is zero for
+    every window at ``length`` 2 or 3 however much the data moves: keying the
+    guard on that divisor read 0.0 for all of them. Both are keyed on the
+    variance instead, and ``length`` carries the bound. The sweeps above call
+    each indicator at its default length, so neither would catch this.
+    """
+    close = _moving_close()
+    func = getattr(ta, name)
+    with pytest.raises(ValueError, match=rf"{name}\(\) length must be an integer > {minimum - 1}"):
+        func(close, length=minimum - 1)
+
+    # min_periods may still let a narrower window through; those bars have no
+    # moment to report and must not read 0.0 or +-inf either.
+    narrow = func(close, length=10, min_periods=2)
+    head, tail = narrow.iloc[: minimum - 1], narrow.iloc[minimum - 1 :]
+    assert head.isna().all(), f"{name}: a window under {minimum} bars reads {head.tolist()}, expected NaN"
+    assert np.isfinite(tail).all(), f"{name}: {tail[~np.isfinite(tail)].tolist()} where the formula is defined"
+
+
+@pytest.mark.parametrize(("name", "minimum"), _NARROW_WINDOW_CASES)
+def test_min_periods_is_bounded_and_the_tail_matches_pandas(name: str, minimum: int) -> None:
+    """``min_periods`` is bounded to 1..length, and the tail matches pandas.
+
+    ``0`` read the loop start as ``-1`` and made the last bar NaN; ``> length``
+    was silently ignored. Both now raise. The partial-window tail must agree
+    with ``close.rolling(length, min_periods=...).kurt()``/``.skew()``.
+    """
+    close = _moving_close()
+    func = getattr(ta, name)
+    for bad in (0, 11):
+        with pytest.raises(ValueError, match=rf"{name}\(\) min_periods must be an integer >= 1 and < 11"):
+            func(close, length=10, min_periods=bad)
+    for mp in (1, 2, 5, 10):
+        native = func(close, length=10, min_periods=mp)
+        pandas_ref = close.rolling(10, min_periods=mp).kurt() if name == "kurtosis" else close.rolling(10, min_periods=mp).skew()
+        aligned = native.dropna()
+        assert np.allclose(
+            aligned.to_numpy(), pandas_ref.loc[aligned.index].to_numpy(), equal_nan=True
+        ), f"{name} min_periods={mp} disagrees with pandas rolling"
 
 
 # ---------------------------------------------------------------------------
