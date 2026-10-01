@@ -59,18 +59,23 @@ def aobv(
     obv_long = long_run(maf, mas, length=run_length)
     obv_short = short_run(maf, mas, length=run_length)
 
+    # The bounds are rolled off OBV before the offset and the fill: derived after
+    # them, their own warmup row would never see `fillna`.
+    obv_min = obv_.rolling(min_lookback).min()
+    obv_max = obv_.rolling(max_lookback).max()
+
     # Offset
-    obv_, maf, mas, obv_long, obv_short = apply_offset([obv_, maf, mas, obv_long, obv_short], offset)
+    obv_, obv_min, obv_max, maf, mas, obv_long, obv_short = apply_offset([obv_, obv_min, obv_max, maf, mas, obv_long, obv_short], offset)
 
     # Handle fills
-    obv_, maf, mas, obv_long, obv_short = apply_fill([obv_, maf, mas, obv_long, obv_short], **kwargs)
+    obv_, obv_min, obv_max, maf, mas, obv_long, obv_short = apply_fill([obv_, obv_min, obv_max, maf, mas, obv_long, obv_short], **kwargs)
 
     # Prepare DataFrame to return
     _mode = mamode.lower()[0] if len(mamode) else ""
     data = {
         obv_.name: obv_,
-        f"OBV_min_{min_lookback}": obv_.rolling(min_lookback).min(),
-        f"OBV_max_{max_lookback}": obv_.rolling(max_lookback).max(),
+        f"OBV_min_{min_lookback}": obv_min,
+        f"OBV_max_{max_lookback}": obv_max,
         f"OBV{_mode}_{fast}": maf,
         f"OBV{_mode}_{slow}": mas,
         f"AOBV_LR_{run_length}": obv_long,

@@ -77,7 +77,7 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
-- The registry-driven contract tests (`test_lookahead.py`, `test_short_input_contract.py`, `test_leading_nan_contract.py`, `test_interior_nan_contract.py`) run on every new indicator automatically and must pass; recursive indicators need `@skip_leading_nan(<series params>, interior=True)`
+- The registry-driven contract tests (`test_lookahead.py`, `test_short_input_contract.py`, `test_leading_nan_contract.py`, `test_interior_nan_contract.py`, `test_warmup_contract.py`) run on every new indicator automatically and must pass; recursive indicators need `@skip_leading_nan(<series params>, interior=True)`
 - If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
