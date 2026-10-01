@@ -94,10 +94,17 @@ def _make_ta_wrapper(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
         call_kwargs: dict[str, Any] = {}
-        # Map positional args to their non-column parameter names
-        for i, arg in enumerate(args):
-            if i < len(non_col_positional):
-                call_kwargs[non_col_positional[i]] = arg
+        # Map positional args to their non-column parameter names. TypeError, as
+        # for the direct call: a surplus positional used to be dropped without a
+        # word (df.ta.macd(12, 26, 9, False, 0, 7) ignored the 7), and a value
+        # given twice was reported by the inner function under its module path.
+        if len(args) > len(non_col_positional):
+            accepted = f"at most {len(non_col_positional)} ({', '.join(non_col_positional)})" if non_col_positional else "no"
+            raise TypeError(f"df.ta.{func.__name__}() takes {accepted} positional arguments but {len(args)} were given")
+        for pname, arg in zip(non_col_positional, args):
+            if pname in kwargs:
+                raise TypeError(f"df.ta.{func.__name__}() got multiple values for argument {pname!r}")
+            call_kwargs[pname] = arg
         # Always extract required column values from DataFrame
         for param_name in col_params_required:
             col_key = _COLUMN_PARAM_TO_COL_KEY[param_name]

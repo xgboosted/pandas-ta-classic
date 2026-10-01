@@ -11,6 +11,7 @@ Covers:
     documented.
 """
 
+import inspect
 from contextlib import redirect_stdout
 from io import StringIO
 from multiprocessing import cpu_count
@@ -338,6 +339,29 @@ class TestAccessorSettablePropertiesPersist(TestCase):
                 self.assertIn(f"df.ta.{name}()", message)
                 for arg in names:
                     self.assertIn(arg, message)
+
+    def test_accessor_rejects_a_surplus_positional_argument(self):
+        """The wrapper bound positionals by hand and dropped any past the last slot.
+
+        df.ta.macd(12, 26, 9, False, 0, 7) ran and ignored the 7, while the direct
+        call raises TypeError. Every registered indicator is checked: the error is
+        raised before anything is computed, so the sweep is cheap.
+        """
+        names = sorted({name for names in pandas_ta_classic.Category.values() for name in names})
+        for name in names:
+            method = getattr(self.df.ta, name)
+            slots = [p for p in inspect.signature(method).parameters.values() if p.kind in (p.POSITIONAL_OR_KEYWORD, p.POSITIONAL_ONLY)]
+            with self.subTest(name=name), self.assertRaisesRegex(TypeError, rf"df\.ta\.{name}\(\) takes .* but {len(slots) + 1} were given"):
+                method(*([None] * (len(slots) + 1)))
+
+    def test_accessor_rejects_a_value_given_positionally_and_by_keyword(self):
+        with self.assertRaisesRegex(TypeError, r"df\.ta\.sma\(\) got multiple values for argument 'length'"):
+            self.df.ta.sma(10, length=20)
+
+    def test_strategy_rejects_surplus_params(self):
+        strategy = pandas_ta_classic.Strategy("surplus", [{"kind": "sma", "params": (10, False, 0, 99)}])
+        with self.assertRaisesRegex(TypeError, r"df\.ta\.sma\(\) takes at most 3"):
+            self.df.ta.strategy(strategy, cores=0)
 
     def test_accessor_still_serves_those_indicators_when_given_the_argument(self):
         fast = pandas_ta_classic.ema(self.df["close"], length=10)
