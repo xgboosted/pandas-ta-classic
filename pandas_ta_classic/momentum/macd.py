@@ -145,15 +145,21 @@ def macd(
     df.category = macd.category
 
     if signal_frames:
+        # The fill runs last. fillna fills the three lines with the caller's
+        # value; the 0/1 signal columns fill with 0 (their "no signal" value)
+        # instead. fill_method runs over every column, after the concat.
+        apply_fill(df, **kwargs)
+        signal_kwargs = {"fillna": 0} if "fillna" in kwargs else {}
+        if "fill_method" in kwargs:
+            signal_kwargs["fill_method"] = kwargs["fill_method"]
+        for frame in signal_frames:
+            apply_fill(frame, **signal_kwargs)
         name, category = df.name, df.category
         df = concat([df, *signal_frames], axis=1)
         # concat builds a new frame, so the name and category are set on it
         df.name, df.category = name, category
-
-    # The fill runs last, over every column returned, so the signal columns are
-    # filled too. Until 0.9.0 it ran on the three lines alone, and an offset
-    # call with fillna left NaN behind in the signal columns.
-    apply_fill(df, **kwargs)
+    else:
+        apply_fill(df, **kwargs)
 
     return df
 

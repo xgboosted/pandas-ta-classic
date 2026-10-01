@@ -1,19 +1,13 @@
 # Relative Strength Index (RSI)
 from typing import Any
 
-from pandas import DataFrame, Series, concat
+from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.utils import (
-    apply_fill,
-    apply_offset,
-    get_drift,
-    get_offset,
-    signals,
-    verify_series,
-)
+from pandas_ta_classic.utils import get_drift, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._signals import attach_signals
 
 
 @nan_on_short_input
@@ -59,48 +53,13 @@ def rsi(
         denominator = positive_avg + negative_avg.abs()
         rsi = (scalar * positive_avg / denominator).mask(denominator == 0, 0.0)
 
-    # Name it here: the signals below take their column names from it, and `.name`
+    # Name it here: the signal columns take their names from it, and `.name`
     # survives the shift while a custom attribute such as `.category` does not.
     rsi.name = f"RSI_{length}"
 
-    # The signals read the unoffset, unfilled RSI and are offset once, inside
-    # signals(). Reading the shifted series shifted them a second time.
-    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
-    signal_df = (
-        signals(
-            indicator=rsi,
-            xa=kwargs.pop("xa", 80),
-            xb=kwargs.pop("xb", 20),
-            xserie=kwargs.pop("xserie", None),
-            xserie_a=kwargs.pop("xserie_a", None),
-            xserie_b=kwargs.pop("xserie_b", None),
-            cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values"),
-            cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
-            offset=offset,
-        )
-        if signal_indicators
-        else None
-    )
-
-    # Offset
-    rsi = apply_offset(rsi, offset)
-
-    # Categorize it
-    rsi.category = "momentum"
-
-    result: Series | DataFrame = rsi
-    if signal_df is not None:
-        result = concat([DataFrame({rsi.name: rsi}), signal_df], axis=1)
-        # concat builds a new frame, so the name and category are set on it
-        result.name = rsi.name
-        result.category = rsi.category
-
-    # The fill runs last, over every column returned, so the signal columns are
-    # filled too. Until 0.9.0 it ran on the indicator alone, and an offset call
-    # with fillna left NaN behind in the signal columns.
-    apply_fill(result, **kwargs)
-
-    return result
+    # attach_signals owns the order of the remaining steps (signals off the
+    # unoffset series, one shift, then the fill over every column).
+    return attach_signals(rsi, category="momentum", offset=offset, kwargs=kwargs)
 
 
 rsi.__doc__ = """Relative Strength Index (RSI)
