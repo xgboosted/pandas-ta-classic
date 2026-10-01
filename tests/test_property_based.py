@@ -444,6 +444,44 @@ class TestLinearRegression(TestCase):
         np.testing.assert_array_equal(after["line"].to_numpy(), before["line"].to_numpy())
 
 
+_returns = arrays(np.float64, st.integers(min_value=2, max_value=200), elements=st.floats(min_value=-0.2, max_value=0.2, width=64))
+
+
+def _daily(values: np.ndarray) -> pd.Series:
+    return pd.Series(values, index=pd.bdate_range("2021-01-04", periods=len(values)))
+
+
+class TestDownsideDeviation(TestCase):
+    """Property tests for ``downside_deviation``.
+
+    Its sum of squares skipped NaN while the divisor counted it, so the result
+    depended on whether the leading NaN of a percent return was still there,
+    and a gap inside the series gave a smaller value without an error.
+    """
+
+    @given(_returns, st.floats(min_value=-0.1, max_value=0.2, width=64))
+    def test_matches_the_definition(self, values, rate):
+        returns = _daily(values)
+        years = (returns.index[-1] - returns.index[0]).total_seconds() / (365.25 * 86400)
+        periods = values.size / years
+        target = (1 + rate) ** (1 / periods) - 1
+        expected = math.sqrt(np.sum(np.minimum(values - target, 0.0) ** 2) / values.size) * math.sqrt(periods)
+        assert ta.downside_deviation(returns, benchmark_rate=rate) == pytest.approx(expected, rel=1e-9, abs=1e-12)
+
+    @given(_returns, st.integers(min_value=0, max_value=5), st.integers(min_value=0, max_value=5))
+    def test_leading_and_trailing_nan_are_not_counted(self, values, lead, trail):
+        padded = _daily(np.concatenate([np.full(lead, np.nan), values, np.full(trail, np.nan)]))
+        trimmed = padded.iloc[lead : lead + values.size]
+        assert ta.downside_deviation(padded) == ta.downside_deviation(trimmed)
+
+    @given(arrays(np.float64, st.integers(min_value=3, max_value=200), elements=st.floats(min_value=-0.2, max_value=0.2, width=64)), st.data())
+    def test_nan_inside_raises(self, values, data):
+        pos = data.draw(st.integers(min_value=1, max_value=values.size - 2))
+        values[pos] = np.nan
+        with pytest.raises(ValueError, match="returns has 1 missing value"):
+            ta.downside_deviation(_daily(values))
+
+
 # ======================================================================
 # 2. Indicator output invariants
 # ======================================================================

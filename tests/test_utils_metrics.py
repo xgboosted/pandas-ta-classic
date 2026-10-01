@@ -62,6 +62,27 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
+    def test_downside_deviation_counts_only_the_returns_it_sums(self):
+        # The sum skipped NaN while the divisor counted it: the leading NaN of
+        # pct_change gave sqrt(ss / n), a clean series sqrt(ss / (n - 1)), and
+        # a gap inside a smaller value with no error.
+        returns = self.pctret
+        self.assertTrue(np.isnan(returns.iloc[0]))
+        self.assertEqual(pandas_ta.downside_deviation(returns), pandas_ta.downside_deviation(returns.iloc[1:]))
+
+        gappy = returns.copy()
+        gappy.iloc[100] = np.nan
+        with self.assertRaisesRegex(ValueError, r"downside_deviation\(\) returns has 1 missing value"):
+            pandas_ta.downside_deviation(gappy)
+        with self.assertRaisesRegex(ValueError, r"downside_deviation\(\) needs at least 2 returns, got 1"):
+            pandas_ta.downside_deviation(returns.iloc[:2])
+
+    def test_sortino_ratio_rejects_missing_close(self):
+        gappy = self.close.copy()
+        gappy.iloc[100] = np.nan
+        with self.assertRaisesRegex(ValueError, r"sortino_ratio\(\) close has 1 missing value"):
+            pandas_ta.sortino_ratio(gappy)
+
     def test_drawdown(self):
         result = pandas_ta.drawdown(self.pctret)
         self.assertIsInstance(result, DataFrame)

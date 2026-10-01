@@ -58,24 +58,44 @@ def downside_deviation(returns: Series, benchmark_rate: float = 0.0, tf: str = "
     number of periods per year seen in the data.
 
     Args:
-        close (pd.Series): Series of 'close's
+        returns (pd.Series): Series of returns
         benchmark_rate (float): Benchmark Rate to use. Default: 0.0
         tf (str): Time Frame options: 'days', 'weeks', 'months', and 'years'.
             Default: 'years'
 
+    Returns:
+        float: sqrt(sum(min(0, r - T)^2) / n) over the n returns, annualized.
+        A leading or trailing NaN run (the first bar of a percent return) is
+        not counted.
+
+    Raises:
+        ValueError: ``returns`` has a NaN inside it or fewer than 2 values.
+
     >>> result = ta.downside_deviation(returns, benchmark_rate=0.0, tf="years")
     """
-    # For both de-annualizing the benchmark rate and annualizing result
     returns = verify_series(returns)
     if returns is None:
         return np.nan
-    days_per_year = returns.shape[0] / total_time(returns, tf)
+    # The sum of squares skipped NaN while the divisor counted it, so the
+    # leading NaN of pct_change gave the population formula, a clean series the
+    # sample one, and a gap inside a smaller value without a word.
+    valid = np.flatnonzero(returns.notna().to_numpy())
+    if valid.size < 2:
+        raise ValueError(f"downside_deviation() needs at least 2 returns, got {valid.size}")
+    returns = returns.iloc[valid[0] : valid[-1] + 1]
+    gaps = int(returns.isna().sum())
+    if gaps:
+        raise ValueError(f"downside_deviation() returns has {gaps} missing value(s) inside the series; fill or drop them first")
+    n = returns.shape[0]
+
+    # For both de-annualizing the benchmark rate and annualizing result
+    days_per_year = n / total_time(returns, tf)
 
     adjusted_benchmark_rate = ((1 + benchmark_rate) ** (1 / days_per_year)) - 1
 
     downside = adjusted_benchmark_rate - returns
     downside_sum_of_squares = (downside[downside > 0] ** 2).sum()
-    downside_deviation = np.sqrt(downside_sum_of_squares / (returns.shape[0] - 1))
+    downside_deviation = np.sqrt(downside_sum_of_squares / n)
     return downside_deviation * np.sqrt(days_per_year)
 
 
@@ -272,11 +292,18 @@ def sortino_ratio(close: Series, benchmark_rate: float = 0.0, log: bool = False)
         log (bool): If True, calculates log_return. Otherwise it returns
             percent_return. Default: False
 
+    Raises:
+        ValueError: ``close`` contains NaN.
+
     >>> result = ta.sortino_ratio(close, benchmark_rate=0.0, log=False)
     """
     close = verify_series(close)
     if close is None:
         return np.nan
+    # Checked here so the error names the function the caller used.
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"sortino_ratio() close has {gaps} missing value(s); fill or drop them first")
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     result = cagr(close) - benchmark_rate
