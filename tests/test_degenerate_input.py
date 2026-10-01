@@ -322,6 +322,29 @@ def test_flat_window_reads_zero_without_an_oracle(name: str, frames) -> None:
         assert (finite == 0.0).all(), f"{column}: degenerate window reads {sorted(set(finite))[:5]}, expected 0.0"
 
 
+@pytest.mark.parametrize("flat_value", [0.3, 100.1])
+def test_a_flat_block_reads_zero_when_the_value_is_not_exact(flat_value: float) -> None:
+    """A flat block at a value binary float cannot represent exactly leaves a
+    ~1e-17 residue in the computed variance, so an exact ``== 0`` misses it and
+    a degenerate window divides into a nonsense moment or band position. The
+    block's windows must still read 0.0."""
+    length = 10
+    close = _moving_close()
+    close.iloc[100:140] = flat_value
+    frame = _ohlcv(close, 1.0)
+    pos = 139  # the window ending here is entirely inside the flat block
+    for name, kwargs, key in (
+        ("zscore", {"length": length}, "ZS_10"),
+        ("skew", {"length": length}, "SKEW_10"),
+        ("kurtosis", {"length": length}, "KURT_10"),
+        ("linreg", {"length": length, "r": True}, None),
+        ("bbands", {"length": length}, "BBP_10_2.0"),
+    ):
+        result = _call(name, frame, **kwargs)
+        values = result if isinstance(result, pd.Series) else result[key]
+        assert values.iloc[pos] == 0.0, f"{name} flat {flat_value} reads {values.iloc[pos]}, expected 0.0"
+
+
 # Each moment needs a minimum window: the skew divides by (n - 2), the excess
 # kurtosis by (n - 2)(n - 3). Below that the formula is undefined, which is not
 # the same as a degenerate window, so those bars read NaN and the bound raises.
@@ -337,6 +360,13 @@ def test_flat_window_reads_zero_without_an_oracle(name: str, frames) -> None:
 # moves. Their columns are all NaN together, which is why they are listed by
 # name rather than by column.
 _NO_SIGNAL_ON_FLAT_INPUT = {"hilo", "td_seq"}
+
+# A live numerator over a zero denominator is a real division by zero, not a
+# degenerate window: it reads +-inf (as it did before the degenerate-window
+# sweep), because the mask keys on *both* operands being zero. ``brar`` and
+# ``chop`` reach it at the boundary of a flat block, where the highs outlive
+# the lows on the block and inconsistent frames.
+_REAL_DIVISION_BY_ZERO = {"brar", "chop"}
 
 
 def _indicator_names() -> list[str]:
@@ -459,7 +489,7 @@ def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
 
 
 @pytest.mark.parametrize("label", ["flat", *sorted(_DEGENERATE_FRAMES)])
-@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT and n not in _REAL_DIVISION_BY_ZERO])
 def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, frames) -> None:
     """The marker for a degenerate window is 0.0, never an infinity.
 
@@ -662,14 +692,16 @@ def test_accumulation_stays_bounded_on_an_inconsistent_bar() -> None:
     assert float(cmf.abs().max()) <= 1.0, "CMF is a fraction of volume and cannot exceed 1"
 
 
-@pytest.mark.parametrize("name", ["brar", "rvgi"])
+@pytest.mark.parametrize("name", ["rvgi"])
 def test_a_rolling_sum_of_ranges_reads_zero_when_it_is_empty(name: str) -> None:
     """An epsilon survives a rolling sum as dust, not as a zero.
 
-    ``brar`` and ``rvgi`` divide by a rolling sum of bar ranges. With an epsilon
-    in each term a window with no range at all sums to ~5e-15 rather than to
-    zero, so the guard never fires and the quotient reaches 1e16. Their
-    denominators are exact differences for that reason.
+    ``rvgi`` divides by a rolling sum of bar ranges. With an epsilon in each
+    term a window with no range at all sums to ~5e-15 rather than to zero, so
+    the guard never fires and the quotient reaches 1e16. Its denominator is an
+    exact difference for that reason. (``brar`` used to be here too; its
+    numerator is exact now as well, and the real x/0 it reaches at a flat
+    block's boundary is covered by ``test_brar_reads_inf_for_a_live_numerator``.)
 
     The frame has to be the inconsistent one. On a *consistent* flat block both
     sides of each ratio are epsilon dust and the quotient comes out near 1, so
@@ -681,6 +713,24 @@ def test_a_rolling_sum_of_ranges_reads_zero_when_it_is_empty(name: str) -> None:
         finite = values.dropna()
         assert np.isfinite(finite).all(), f"{column}: {finite[~np.isfinite(finite)].tolist()}"
         assert float(finite.abs().max()) < 1e6, f"{column}: reaches {finite.abs().max():.3e} on a window with no range"
+
+
+def test_brar_reads_inf_for_a_live_numerator_over_a_zero_denominator() -> None:
+    """A gap-up bar leaves a live numerator over a zero denominator.
+
+    ``open == low`` and ``high > open`` put a positive numerator over a zero
+    exact denominator, which is a real division by zero and reads ``+inf`` --
+    not the ``0.0`` a divisor-only mask would report, and not the epsilon dust
+    the old ``non_zero_range`` numerator left (which read ``9.0e17``).
+    """
+    i = np.arange(40)
+    open_ = pd.Series(100.0 + 3 * i)
+    high = open_ + 2
+    low = open_  # open == low, so every low is above the previous close
+    close = open_ + 1
+    result = ta.brar(open_, high, low, close, length=5)
+    assert result["BR_5"].iloc[-1] == np.inf
+    assert result["AR_5"].iloc[-1] == np.inf
 
 
 @pytest.mark.parametrize("mamode", ["sma", "ema", "rma", "wma"])

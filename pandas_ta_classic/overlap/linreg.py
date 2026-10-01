@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_zero, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
 
 # TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
@@ -73,13 +73,16 @@ def _linreg_output(
     if r:
         y2_sums = (windows * windows).sum(axis=1)
         rn = length * xy_sums - x_sum * y_sums
-        rd = (divisor * (length * y2_sums - y_sums**2)) ** 0.5
-        # A window with zero variance has rd == 0, so this divides 0/0 and the
-        # NaN spreads over the following windows. It reads 0.0, the convention
-        # TA-Lib applies for a degenerate window; see
-        # tests/test_degenerate_input.py. cti() is a wrapper for this path.
+        # length*y2_sums - y_sums**2 is a variance: it comes out slightly
+        # negative for a flat 100.1 (so the sqrt warns and gives NaN) and
+        # leaves a ~1e-15 residue for a flat 0.3. Clamp to >= 0, then mask on
+        # the variance, not on rd -- rd is its square root (~1e-6), too large
+        # for the tolerance. A degenerate window reads 0.0, TA-Lib's marker;
+        # see tests/test_degenerate_input.py. cti() is a wrapper for this path.
+        disc = np.maximum(length * y2_sums - y_sums**2, 0.0)
+        rd = (divisor * disc) ** 0.5
         with np.errstate(divide="ignore", invalid="ignore"):
-            return np.where(rd == 0, 0.0, rn / rd)
+            return np.where(degenerate_zero(disc), 0.0, rn / rd)
     if tsf:
         return m_slopes * length + bs
     return m_slopes * (length - 1) + bs
