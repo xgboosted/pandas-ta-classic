@@ -3,11 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-import pandas.testing as pdt
 from pandas import DataFrame, Series
-
-CORRELATION = "corr"
-CORRELATION_THRESHOLD = 1.0
 
 # ---------------------------------------------------------------------------
 # Golden-value comparison
@@ -86,37 +82,39 @@ def assert_none_guard(test_case, func, args, none_arg_idx=0, **kwargs):
     test_case.assertIsNone(func(*none_args, **kwargs))
 
 
-def assert_talib(test_case, result, expected, correlation_threshold=None):
-    try:
-        if isinstance(result, DataFrame) and isinstance(expected, DataFrame):
-            pdt.assert_frame_equal(result, expected, check_dtype=False)
-        else:
-            pdt.assert_series_equal(result, expected, check_names=False, check_dtype=False)
-        return
-    except AssertionError:
-        if correlation_threshold is None:
-            raise
+# ---------------------------------------------------------------------------
+# TA-Lib comparison
+# ---------------------------------------------------------------------------
+#
+# Native and TA-Lib results agree to rounding: measured over all 71
+# assert_talib calls on SPY_D, the worst column (`adosc`, whose values reach
+# 6e8) needs |actual - expected| <= 2e-10 * (1 + |expected|) with TA-Lib 0.8.0
+# (1.2e-10 with 0.7.1), 1.9% of TALIB_ATOL + TALIB_RTOL * |expected|.  That
+# leaves ~50x margin for other TA-Lib releases and BLAS builds in the CI matrix.
+# The absolute term carries the columns that cross zero (`bop`, `stochrsi`,
+# `ppo`), where a relative error alone is unbounded.
+#
+# This replaces a correlation fallback (threshold 0.85-0.99) that a scaled,
+# offset or partly wrong result passed, and a `pdt.assert_*_equal` first try
+# whose default rtol of 1e-5 was three orders looser than TALIB_RTOL.
+TALIB_ATOL = 1e-8
+TALIB_RTOL = 1e-8
 
-    from pandas_ta_classic.utils import df_error_analysis
-    from tests.config import error_analysis
 
-    if isinstance(result, DataFrame):
-        n_cols = min(
-            len(result.columns),
-            (len(expected.columns) if isinstance(expected, DataFrame) else len(result.columns)),
-        )
-        cols = list(range(n_cols))
-    else:
-        cols = [None]
-    for i in cols:
-        r = result.iloc[:, i] if i is not None else result
-        e = expected.iloc[:, i] if (i is not None and isinstance(expected, DataFrame)) else expected
-        try:
-            corr = df_error_analysis(r, e)
-        except Exception as ex:  # noqa: BLE001 - any failure is reported through error_analysis
-            error_analysis(r, CORRELATION, ex)
-            continue
-        test_case.assertGreater(corr, correlation_threshold)
+def assert_talib(test_case, result, expected):
+    """*result* equals TA-Lib's *expected* within TALIB_ATOL + TALIB_RTOL * |expected|.
+
+    Columns are compared by position (TA-Lib's names differ), and NaN must sit
+    exactly where TA-Lib has NaN, so a different warm-up length fails too.
+    """
+    actual = result.to_numpy(dtype=float)
+    wanted = np.asarray(expected, dtype=float)
+    if isinstance(expected, DataFrame):
+        wanted = expected.to_numpy(dtype=float)
+    test_case.assertEqual(actual.shape, wanted.shape, "result and TA-Lib output differ in shape")
+    if isinstance(expected, (Series, DataFrame)):
+        test_case.assertTrue(result.index.equals(expected.index), "result and TA-Lib output differ in index")
+    np.testing.assert_allclose(actual, wanted, rtol=TALIB_RTOL, atol=TALIB_ATOL, equal_nan=True)
 
 
 def assert_indicator_standard(test_case, spec: IndicatorSpec):
