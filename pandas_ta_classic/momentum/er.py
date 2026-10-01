@@ -3,7 +3,7 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.utils import get_drift, get_offset, verify_series
+from pandas_ta_classic.utils import degenerate_div, get_drift, get_offset, verify_series
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 from pandas_ta_classic.utils._signals import attach_signals
 
@@ -30,8 +30,12 @@ def er(
     abs_diff = close.diff(length).abs()
     abs_volatility = close.diff(drift).abs()
 
-    er = abs_diff
-    er /= abs_volatility.rolling(window=length).sum()
+    # A window with no movement has no volatility to divide by, so this is
+    # 0/0. degenerate_div masks it to 0.0 (TA-Lib's degenerate marker); a
+    # nonzero numerator over a zero denominator (drift >= 2 over an exactly
+    # periodic close) is a real x/0 and reads inf.
+    denominator = abs_volatility.rolling(window=length).sum()
+    er = degenerate_div(abs_diff, denominator)
 
     # Name it here: the signal columns take their names from it, and `.name`
     # survives the shift while a custom attribute such as `.category` does not.

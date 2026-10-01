@@ -134,11 +134,24 @@ def window_schedule(index: pd.Index) -> pd.Series:
     return pd.Series([cycle[i % len(cycle)] for i in range(len(index))], index=index, dtype=float)
 
 
+def ma_pair(df: pd.DataFrame) -> dict[str, pd.Series]:
+    """A causal fast/slow pair, derived from the frame under test."""
+    return {"fast": ta.ema(df["close"], length=8), "slow": ta.ema(df["close"], length=21)}
+
+
 # Inputs an indicator needs but the accessor cannot derive from OHLCV.  This is
 # test data, not policy: an indicator missing from here raises on its default
-# call and fails its own case loudly rather than being skipped.
+# call and fails its own case loudly rather than being skipped.  The six below
+# used to return None instead, so the sweep saw nothing and skipped them; every
+# value here is itself causal, so a deviation it reports is the indicator's own.
 EXTRA_ARGS = {
     "mavp": lambda df: {"periods": window_schedule(df.index)},
+    "beta": lambda df: {"benchmark": df["open"]},
+    "correl": lambda df: {"benchmark": df["open"]},
+    "long_run": ma_pair,
+    "short_run": ma_pair,
+    "tsignals": lambda df: {"trend": ta.above(*ma_pair(df).values())},
+    "xsignals": lambda df: {"signal": ta.rsi(df["close"]), "xa": 20, "xb": 80},
 }
 
 

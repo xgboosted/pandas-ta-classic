@@ -4,7 +4,7 @@ from typing import Any
 import numpy as np
 from pandas import Series
 
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_zero, get_offset, verify_series
 from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
 
 
@@ -34,8 +34,14 @@ def zscore(
         windows = np.lib.stride_tricks.sliding_window_view(values, length)
         window_mean = windows.mean(axis=1)
         window_std = windows.std(axis=1, ddof=1)
+        # A window with zero variance divides 0/0. TA-Lib reads 0.0 for the
+        # degenerate case throughout, and this follows it; see
+        # tests/test_degenerate_input.py. degenerate_zero, not ``== 0``, so a
+        # flat 0.3's ~1e-17 std residue is still recognised as flat.
+        denominator = std * window_std
         with np.errstate(divide="ignore", invalid="ignore"):
-            result_arr[length - 1 :] = (values[length - 1 :] - window_mean) / (std * window_std)
+            scores = (values[length - 1 :] - window_mean) / denominator
+        result_arr[length - 1 :] = np.where(degenerate_zero(denominator), 0.0, scores)
     zscore = Series(result_arr, index=close.index, dtype=np.float64)
 
     # Offset

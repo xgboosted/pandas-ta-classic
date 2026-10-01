@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
@@ -41,13 +40,20 @@ def massi(
         return None
 
     # Calculate Result
-    high_low_range = non_zero_range(high, low)
+    # An epsilon range made both EMAs epsilon and their ratio exactly 1, so a
+    # window with no range at all summed to `slow` -- 25 by default, an entirely
+    # ordinary MASSI reading and indistinguishable from one. Exact zeros divide
+    # 0/0, and the window reads 0.0 instead: the convention TA-Lib applies for a
+    # degenerate window; see tests/test_degenerate_input.py. The divisor alone
+    # carries the mask, because an EMA of non-negative ranges is zero only where
+    # every range feeding it is.
+    high_low_range = high - low
     hl_ema1 = ema(close=high_low_range, length=fast, **kwargs)
     hl_ema2 = ema(close=hl_ema1, length=fast, **kwargs)
     if hl_ema1 is None or hl_ema2 is None:
         return None
 
-    hl_ratio = hl_ema1 / hl_ema2
+    hl_ratio = (hl_ema1 / hl_ema2.where(hl_ema2 != 0)).mask(hl_ema2 == 0, 0.0)
     massi = hl_ratio.rolling(slow, min_periods=slow).sum()
 
     # Offset

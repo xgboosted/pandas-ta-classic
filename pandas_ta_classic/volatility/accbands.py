@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
@@ -42,7 +41,10 @@ def accbands(
         return None
 
     # Calculate Result
-    high_low_range = non_zero_range(high, low)
+    # The range is the numerator here and high + low is the divisor, which no
+    # real bar makes zero, so the epsilon was never load-bearing: it only
+    # widened a flat bar's band by 2.2e-16 instead of leaving it unwidened.
+    high_low_range = high - low
     hl_ratio = high_low_range / (high + low)
     hl_ratio *= c
     _lower = low * (1 - hl_ratio)

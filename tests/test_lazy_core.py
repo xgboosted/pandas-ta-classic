@@ -13,6 +13,7 @@ Covers:
 
 import types
 import unittest
+from unittest import mock
 
 import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
@@ -182,6 +183,43 @@ class TestModuleGetattr(unittest.TestCase):
         self.assertTrue(callable(pandas_ta_classic.cdl))
         self.assertIs(pandas_ta_classic.cdl, pandas_ta_classic.candles.cdl)
         self.assertIn("cdl", dir(pandas_ta_classic))
+
+    def test_category_getattr_reloads_after_the_cache_is_cleared(self):
+        """The category branch of __getattr__ caches its module on the package.
+
+        Importing a submodule also binds it, so in a normal run the branch never
+        executes; dropping the cached attribute forces it.
+        """
+        for cat in ("momentum", "candles"):
+            with self.subTest(cat=cat):
+                cached = getattr(pandas_ta_classic, cat)
+                delattr(pandas_ta_classic, cat)
+                reloaded = getattr(pandas_ta_classic, cat)
+                self.assertIs(reloaded, cached)
+                # Re-cached, so a second access does not go through __getattr__.
+                self.assertIn(cat, vars(pandas_ta_classic))
+
+    def test_cdl_submodule_reraises_a_missing_dependency(self):
+        """A cdl_* module that imports something missing must not look absent.
+
+        Swallowing every ModuleNotFoundError turned "this pattern needs a
+        package you do not have" into AttributeError.
+        """
+        import importlib
+
+        real_import = importlib.import_module
+
+        def fake_import(name, package=None):
+            if name == "pandas_ta_classic.candles.cdl_2crows":
+                raise ModuleNotFoundError("No module named 'not_installed'", name="not_installed")
+            return real_import(name, package)
+
+        delattr(pandas_ta_classic, "cdl_2crows")
+        try:
+            with mock.patch.object(importlib, "import_module", fake_import), self.assertRaises(ModuleNotFoundError):
+                _ = pandas_ta_classic.cdl_2crows
+        finally:
+            self.assertIsInstance(pandas_ta_classic.cdl_2crows, types.ModuleType)
 
     def test_deprecated_names_removed(self):
         """Names deprecated in 0.8.32 are gone rather than served with a warning."""

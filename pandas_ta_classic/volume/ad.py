@@ -51,8 +51,14 @@ def ad(
         else:
             ad = 2 * close - (high + low)  # AD with High, Low, Close
 
-        high_low_range = non_zero_range(high, low)
-        ad *= volume / high_low_range
+        # A bar with high == low has no range to normalise by. An epsilon
+        # denominator only degrades gracefully while the numerator is zero too,
+        # which is the case for the High-Low-Close form but not for the Open
+        # one: (close - open_) / eps reaches 1e18, and cumsum() then carries it
+        # to the end of the series. The bar reads 0.0, TA-Lib's marker for a
+        # degenerate window. See tests/test_degenerate_input.py.
+        high_low_range = high - low
+        ad = (ad * (volume / high_low_range.where(high_low_range != 0))).mask(high_low_range == 0, 0.0)
         ad = ad.cumsum()
 
     # Offset

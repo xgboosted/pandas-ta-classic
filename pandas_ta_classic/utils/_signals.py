@@ -110,6 +110,10 @@ def cross_value(
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
+    # Like above_value/below_value: a non-number used to reach zero() and fail
+    # as "bad operand type for abs()", naming neither the function nor the
+    # argument.
+    _require_number(value, "value")
     series_a = verify_series(series_a)
     if series_a is None:
         return None

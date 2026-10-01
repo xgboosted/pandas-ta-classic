@@ -278,6 +278,42 @@ class TestStrategyMethods(TestCase):
         self.data.ta.strategy(verbose=verbose, timed=strategy_timed)
         self.data.ta.cores = cores
 
+    def test_verbose_and_timed_logging(self):
+        """verbose/timed only log; nothing else pins those branches.
+
+        The module-level ``verbose``/``strategy_timed`` switches are False, so
+        every other strategy test skips them.
+        """
+        self.category = "Cycles"
+
+        cores = self.data.ta.cores
+        self.data.ta.cores = 0
+        try:
+            with self.assertLogs("pandas_ta_classic.core", level="INFO") as logs:
+                self.data.ta.strategy(self.category, verbose=True, timed=True)
+        finally:
+            self.data.ta.cores = cores
+
+        output = "\n".join(logs.output)
+        self.assertIn(f"Strategy: {self.category}", output)
+        self.assertIn("Total indicators:", output)
+        self.assertIn("Columns added:", output)
+        self.assertIn("Last Run:", output)
+        self.assertIn("Runtime:", output)
+
+    def test_verbose_reports_excluded_indicators(self):
+        """A category run over OHLC-only data drops the volume indicators."""
+        self.category = "All"
+
+        no_volume = self.data.drop(columns=["volume"])
+        no_volume.ta.cores = 0
+        with self.assertLogs("pandas_ta_classic.core", level="INFO") as logs:
+            no_volume.ta.strategy(verbose=True)
+        self.assertTrue(any("Excluded[" in line for line in logs.output))
+
+        # tearDown measures self.data, so give it something to find.
+        self.data.ta.strategy("Cycles", verbose=verbose, timed=strategy_timed)
+
     # @skipUnless(verbose, "verbose mode only")
     def test_custom_no_multiprocessing(self):
         self.category = "Custom A with No Multiprocessing"

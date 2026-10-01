@@ -37,7 +37,13 @@ A column the indicator requires that the DataFrame does not have raises
 ``KeyError`` listing the available columns; an optional one (``cpr``'s
 ``volume``) is simply left out.
 
-An indicator that cannot compute from what it was given (``df.ta.beta()`` without ``benchmark``) returns ``None``.
+An argument the indicator requires and the DataFrame cannot supply raises
+``ValueError`` naming it: ``df.ta.beta()`` without a ``benchmark``, and
+``df.ta.long_run()``, ``short_run()``, ``tsignals()``, ``xsignals()`` or
+``mavp()`` without their Series. Both used to return ``None``, which looked
+like an ordinary empty result. Input that is merely shorter than the
+indicator's window is data rather than a mistake and still yields an all-NaN
+result.
 
 .. code-block:: python
 

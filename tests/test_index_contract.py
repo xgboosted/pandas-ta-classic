@@ -305,6 +305,75 @@ def test_fillna_reaches_every_output_column(name: str, frame: dict[str, pd.Serie
     assert not wrong, f"{name}(fillna=0) left NaN in {wrong}"
 
 
+@pytest.mark.parametrize("method", ["ffill", "bfill"])
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _EXEMPT and _takes_fill_kwargs(n)])
+def test_fill_method_reaches_every_output_column(name: str, method: str, frame: dict[str, pd.Series]) -> None:
+    """``fill_method`` reaches every column, as ``fillna`` does above.
+
+    A fill can only use values the column has, so the check is bounded by the
+    unfilled column: ``ffill`` leaves no ``NaN`` from its first value on, and
+    ``bfill`` none up to its last value. The bugs the ``fillna`` sweep describes
+    hid from ``bfill`` the same way -- on the old code ``bfill`` left the warmup
+    of ``md``, the three linreg wrappers, ``STOCHFd``, ``KVOs`` and the AOBV
+    bounds unfilled -- but a column could also forward one key and drop the
+    other, so both are swept.
+    """
+    plain = output_columns(_results(name, frame))
+    filled = output_columns(_results(name, frame, fill_method=method))
+
+    wrong = {}
+    for column, values in plain.items():
+        valid = values.notna().to_numpy()
+        if not valid.any():
+            continue
+        if method == "ffill":
+            reachable = filled[column].iloc[int(valid.argmax()) :]
+        else:
+            reachable = filled[column].iloc[: len(valid) - int(valid[::-1].argmax())]
+        if reachable.isna().any():
+            wrong[column] = int(reachable.isna().sum())
+    assert not wrong, f"{name}(fill_method={method!r}) left NaN in {wrong}"
+
+
+@pytest.mark.parametrize(("name", "option"), [("macd", {"asmode": True}), ("macdfix", {"asmode": True})])
+def test_fillna_reaches_every_output_column_of_an_option_path(name: str, option: dict, frame: dict[str, pd.Series]) -> None:
+    """The sweep above calls each indicator with its defaults only.
+
+    ``macd(asmode=True)`` smooths its signal over the valid rows only, so the
+    signal came back short and the DataFrame join put 33 ``NaN`` back into
+    ``MACDASs`` after the fill.
+    """
+    filled = output_columns(_results(name, frame, fillna=0, **option))
+
+    wrong = {column: int(values.isna().sum()) for column, values in filled.items() if values.isna().any()}
+    assert not wrong, f"{name}({option}, fillna=0) left NaN in {wrong}"
+
+
+@pytest.mark.parametrize(
+    ("name", "foreign"),
+    [
+        ("linregintercept", {"slope": True}),
+        ("linregslope", {"slope": False}),
+        ("linregangle", {"intercept": True}),
+        ("md", {"min_periods": 5}),
+    ],
+)
+def test_delegating_wrappers_forward_only_the_fill(name: str, foreign: dict, frame: dict[str, pd.Series]) -> None:
+    """A wrapper passes ``fillna``/``fill_method`` on, and nothing else.
+
+    Forwarding all of ``**kwargs`` let the delegate's own options through:
+    ``linregintercept(slope=True)`` returned the slope, ``linregslope(slope=False)``
+    raised ``TypeError`` from inside ``linreg()``, and ``md(min_periods=5)``
+    changed MD's warmup although ``md`` has no such option.
+    """
+    plain = output_columns(_results(name, frame))
+    other = output_columns(_results(name, frame, **foreign))
+
+    assert sorted(other) == sorted(plain), f"{name}({foreign}) changed the output columns: {sorted(other)} != {sorted(plain)}"
+    for column, values in plain.items():
+        pd.testing.assert_series_equal(other[column], values, obj=f"{name}({foreign}) {column}")
+
+
 def _input_state(series: pd.Series) -> dict:
     """Everything about a caller's Series an indicator must leave alone."""
     index = series.index

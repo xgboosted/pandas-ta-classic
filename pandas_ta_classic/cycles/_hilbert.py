@@ -137,10 +137,13 @@ def _hilbert_transform_loop(close_arr: np.ndarray, m: int, ht_start: int = 12) -
         # DC Phase — TA-Lib uses int(smoothPeriod + 0.5) for rounding
         sp = smooth_period_arr[i]
         if not np.isfinite(sp):
-            # A NaN anywhere in the input poisons the recursion, so the smoothed
-            # period — and every value derived from it — is undefined from here
-            # on. TA-Lib requires NaN-free input; emit NaN rather than crash in
-            # int(nan), so the indicator propagates NaN instead of raising.
+            # A NaN in the input makes the smoothed period — and every value
+            # derived from it — undefined for this bar. TA-Lib requires
+            # NaN-free input; emit NaN rather than crash in int(nan), so the
+            # indicator propagates NaN instead of raising. The recursion
+            # recovers on the next bar (it carries the previous period
+            # forward), so only this bar is NaN, but the state it carries is
+            # perturbed and later values no longer match a NaN-free run.
             dc_phase_arr[i] = np.nan
             in_phase_arr[i] = np.nan
             quad_arr[i] = np.nan
