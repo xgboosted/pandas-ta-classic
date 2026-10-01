@@ -78,9 +78,10 @@ def _label(code):
 @pytest.fixture(scope="module")
 def tracked():
     """(path, bytes) for every tracked file that holds text."""
-    listing = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=False)
-    if listing.returncode != 0:
-        pytest.skip("not a git checkout, so there is no file list to check")
+    # Fail, don't skip: without the file list the three tests below prove
+    # nothing, and a quiet skip would hide a missing git binary or an sdist
+    # that shipped without git metadata.
+    listing = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True)
     out = []
     for name in listing.stdout.decode().split("\0"):
         if not name:
@@ -104,7 +105,7 @@ def test_no_invisible_characters(tracked):
         except UnicodeDecodeError as exc:
             violations.append(f"{name}: not valid UTF-8 ({exc})")
             continue
-        for lineno, line in enumerate(text.splitlines(), 1):
+        for lineno, line in enumerate(text.split("\n"), 1):
             for column, char in enumerate(line, 1):
                 if ord(char) in FORBIDDEN:
                     violations.append(f"{name}:{lineno}:{column}: {_label(ord(char))}")
@@ -116,7 +117,7 @@ def test_no_invisible_characters_written_as_escapes(tracked):
     for name, raw in tracked:
         if not name.endswith(".py"):
             continue
-        for lineno, line in enumerate(raw.decode("utf-8").splitlines(), 1):
+        for lineno, line in enumerate(raw.decode("utf-8").split("\n"), 1):
             for match in ESCAPE.finditer(line):
                 if len(match.group(1)) % 2 == 0:
                     continue  # the backslash is escaped, so this is literal text
