@@ -6,6 +6,7 @@ from pandas import DataFrame, Series, concat
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
+    degenerate_div,
     get_drift,
     get_offset,
     signals,
@@ -37,10 +38,11 @@ def er(
     abs_volatility = close.diff(drift).abs()
 
     # A window with no movement has no volatility to divide by, so this is
-    # 0/0. It reads 0.0, the convention TA-Lib applies for a degenerate
-    # window; see tests/test_degenerate_input.py.
+    # 0/0. degenerate_div masks it to 0.0 (TA-Lib's degenerate marker); a
+    # nonzero numerator over a zero denominator (drift >= 2 over an exactly
+    # periodic close) is a real x/0 and reads inf.
     denominator = abs_volatility.rolling(window=length).sum()
-    er = (abs_diff / denominator).mask(denominator == 0, 0.0)
+    er = degenerate_div(abs_diff, denominator)
 
     # Offset
     er = apply_offset(er, offset)

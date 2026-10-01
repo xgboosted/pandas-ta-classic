@@ -290,6 +290,31 @@ class TestVolume(TestCase):
             ),
         )
 
+    def test_vp_sort_close(self):
+        chronological = pandas_ta.vp(self.close, self.volume_)
+        by_price = pandas_ta.vp(self.close, self.volume_, sort_close=True)
+        self.assertIsInstance(by_price, DataFrame)
+        self.assertEqual(list(by_price.columns), list(chronological.columns))
+        self.assertEqual(by_price.name, "VP_10")
+
+        # sort_close bins by price, so the bins are ordered and disjoint and the
+        # profile differs from the chronological split.
+        self.assertTrue(by_price["mean_close"].is_monotonic_increasing)
+        self.assertTrue((by_price["low_close"] <= by_price["mean_close"]).all())
+        self.assertTrue((by_price["mean_close"] <= by_price["high_close"]).all())
+        self.assertTrue((by_price["high_close"].iloc[:-1].to_numpy() <= by_price["low_close"].iloc[1:].to_numpy()).all())
+        self.assertFalse(by_price["total_volume"].equals(chronological["total_volume"]))
+
+        # Both splits account for the same total volume.
+        self.assertAlmostEqual(
+            float(by_price["total_volume"].sum()),
+            float(chronological["total_volume"].sum()),
+            places=6,
+        )
+
+        # width controls the number of bins on both paths.
+        self.assertLessEqual(len(pandas_ta.vp(self.close, self.volume_, width=5, sort_close=True)), 5)
+
     def test_vfi(self):
         assert_indicator_standard(
             self,

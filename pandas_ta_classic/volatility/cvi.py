@@ -4,7 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_div, get_offset, verify_series
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
 
 
@@ -33,10 +33,11 @@ def cvi(
         return None
 
     # Bars that trade at a single price smooth to a zero high-low range, so
-    # this divides 0/0. It reads 0.0, the convention TA-Lib applies for a
-    # degenerate window; see tests/test_degenerate_input.py.
+    # this divides 0/0. degenerate_div masks it to 0.0 (TA-Lib's degenerate
+    # marker); a nonzero numerator over a zero denominator (a flat stretch
+    # followed by a gap) is a real x/0 and reads inf.
     denominator = ema_hl.shift(length)
-    cvi_ = (100 * (ema_hl - denominator) / denominator).mask(denominator == 0, 0.0)
+    cvi_ = 100 * degenerate_div(ema_hl - denominator, denominator)
 
     # Offset
     cvi_ = apply_offset(cvi_, offset)

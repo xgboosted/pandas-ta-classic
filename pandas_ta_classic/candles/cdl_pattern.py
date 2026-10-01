@@ -6,8 +6,7 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic import Imports
-from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
+from pandas_ta_classic.utils import get_offset, verify_series
 from pandas_ta_classic.utils._core import _number, nan_on_short_input
 
 from . import cdl_doji, cdl_inside
@@ -101,7 +100,7 @@ def _discover_native_patterns() -> dict:
 _NATIVE_PATTERNS = _discover_native_patterns()
 
 
-def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offset, result, tala, **kwargs):
+def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offset, result, **kwargs):
     """Attempt to compute and store one candle pattern by name."""
     col_name = f"CDL_{n.upper()}"
     if n in pta_patterns:
@@ -112,15 +111,11 @@ def _run_one_cdl_pattern(n, open_, high, low, close, pta_patterns, scalar, offse
         pattern_result = _NATIVE_PATTERNS[n](open_, high, low, close, scalar=scalar, offset=offset, **kwargs)
         if pattern_result is not None:
             result[col_name] = pattern_result
-    elif tala is not None:
-        pattern_func = tala.Function(f"CDL{n.upper()}")
-        pattern_result = Series(pattern_func(open_, high, low, close, **kwargs) / 100 * scalar)
-        pattern_result.index = close.index
-        pattern_result = apply_offset(pattern_result, offset)
-        pattern_result = apply_fill(pattern_result, **kwargs)
-        result[col_name] = pattern_result
     else:
-        raise ImportError(f"cdl_pattern() {n!r} needs TA-Lib: pip install TA-Lib")
+        # ALL_PATTERNS is hand-maintained, _NATIVE_PATTERNS is discovered from
+        # candles/cdl_*.py, and cdl_pattern() rejects a name in neither. A name
+        # can only reach here if those two lists drift apart.
+        raise RuntimeError(f"cdl_pattern() {n!r} is listed in ALL_PATTERNS but no module implements it")
 
 
 @nan_on_short_input
@@ -162,10 +157,6 @@ def cdl_pattern(
     if unknown:
         raise ValueError(f"cdl_pattern() name has unknown pattern(s): {unknown}; see ta.ALL_PATTERNS")
 
-    tala: Any = None
-    if Imports["talib"]:
-        import talib.abstract as tala
-
     result: dict = {}
     for n in name:
         _run_one_cdl_pattern(
@@ -178,7 +169,6 @@ def cdl_pattern(
             scalar,
             offset,
             result,
-            tala,
             **kwargs,
         )
 

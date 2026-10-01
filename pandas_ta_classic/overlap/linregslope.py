@@ -28,7 +28,10 @@ def linregslope(
     if close is None:
         return None
 
-    return linreg(close, length=length, talib=talib, offset=offset, slope=True, **kwargs)
+    # Only the fill reaches linreg(): its mode flags (slope, intercept, angle, ...)
+    # would otherwise change which line this function returns.
+    fill_kwargs = {key: kwargs[key] for key in ("fillna", "fill_method") if key in kwargs}
+    return linreg(close, length=length, talib=talib, offset=offset, slope=True, **fill_kwargs)
 
 
 linregslope.__doc__ = """Linear Regression Slope (LINEARREG_SLOPE)

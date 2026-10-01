@@ -59,6 +59,24 @@ class TestStatistics(TestCase):
             ),
         )
 
+    def test_beta_and_correl_require_a_benchmark(self):
+        """Omitting it used to return None, like an ordinary short input.
+
+        strategy("all") leaves both out unless a benchmark= is broadcast, so
+        nothing depends on the silent None any more.
+        """
+        for func, name in ((pandas_ta.beta, "beta"), (pandas_ta.correl, "correl")):
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, rf"{name}\(\) requires a 'benchmark' Series"):
+                    func(self.close)
+                with self.assertRaisesRegex(ValueError, rf"{name}\(\) requires a 'benchmark' Series"):
+                    func(self.close, benchmark=None)
+                # A benchmark that is merely too short is data, not a mistake,
+                # so the short-input contract still applies.
+                short = func(self.close, benchmark=self.high.iloc[:5])
+                self.assertIsInstance(short, Series)
+                self.assertTrue(short.isna().all())
+
     def test_entropy(self):
         assert_indicator_standard(
             self,

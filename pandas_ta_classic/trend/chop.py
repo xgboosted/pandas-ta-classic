@@ -51,19 +51,16 @@ def chop(
         return None
     atr_sum = atr_.rolling(length).sum()
 
-    # A window with no range takes log(0) on both sides: HH - LL is 0, and so is
-    # ATR_SUM, since a flat bar's true range is 0.0. Feed the logarithms NaN
-    # there instead of -inf, which warns, and read 0.0 below -- the convention
-    # TA-Lib applies throughout for a degenerate window; see
-    # tests/test_degenerate_input.py.
-    ranged = diff.where(diff != 0)
-    smoothed = atr_sum.where(atr_sum != 0)
-
-    if ln:
-        chop = scalar * (np.log(smoothed) - np.log(ranged)) / np.log(length)
-    else:
-        chop = scalar * (np.log10(smoothed) - np.log10(ranged)) / np.log10(length)
-    chop = chop.mask(diff == 0, 0.0)
+    # A window with no range takes log(0) on both sides: HH - LL is 0, and so
+    # is ATR_SUM, since a flat bar's true range is 0.0. That 0/0 is the only
+    # case masked to 0.0 (TA-Lib's degenerate marker). A zero range with a
+    # nonzero ATR sum (a gap) reads +inf: log(0) is -inf under errstate.
+    with np.errstate(divide="ignore"):
+        if ln:
+            chop = scalar * (np.log(atr_sum) - np.log(diff)) / np.log(length)
+        else:
+            chop = scalar * (np.log10(atr_sum) - np.log10(diff)) / np.log10(length)
+    chop = chop.mask((diff == 0) & (atr_sum == 0), 0.0)
 
     # Offset
     chop = apply_offset(chop, offset)

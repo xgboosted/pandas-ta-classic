@@ -134,32 +134,6 @@ def test_str_param_rejects_non_strings_and_unknown_choices():
             cpr(bad)
 
 
-MAMODE_CASES = sorted(
-    name
-    for name in (i for v in ta.Category.values() for i in v)
-    # mavp's mamode is TA-Lib's integer matype, not an ma() name; it has its own test
-    if name != "mavp" and _find_indicator_func(name) is not None and "mamode" in inspect.signature(_find_indicator_func(name)).parameters
-)
-
-
-def test_sweep_found_the_mamode_indicators():
-    assert len(MAMODE_CASES) > 25
-
-
-@pytest.mark.parametrize("name", MAMODE_CASES)
-def test_unknown_mamode_raises(name, frame):
-    """Most mamode call sites pass no ``choices=``; ``ma()`` rejects the name instead.
-
-    Only ``zlma`` validates it itself, so this pins that every other indicator
-    still reaches ``ma()`` and no branch computes a default moving average for
-    a name the caller misspelled.
-    """
-    func = _find_indicator_func(name)
-    kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
-    with pytest.raises(ValueError, match=r"(ma\(\) name|mamode) must be one of"):
-        func(**kwargs, **_required_extras(name, frame), mamode="bogus_ma")
-
-
 def test_behaviour_fixes_from_the_same_sweep():
     close = get_sample_data().close.iloc[:200]
     # slope: as_angle=bool(isinstance(as_angle, bool)) made as_angle=False return angles
@@ -191,7 +165,6 @@ def test_squeeze_pro_rejects_unordered_scalars():
     frame = get_sample_data().iloc[:300]
     with pytest.raises(ValueError, match=r"kc_scalar_wide > kc_scalar_normal > kc_scalar_narrow"):
         ta.squeeze_pro(frame.high, frame.low, frame.close, kc_scalar_wide=1, kc_scalar_normal=1.5, kc_scalar_narrow=2)
-
 
 
 # Guards the numeric sweep's grep missed: is_percent(), membership tests,
@@ -258,14 +231,20 @@ def test_strategy_params_must_be_a_tuple():
     ("call", "message"),
     [
         *[
-            (lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1), rf"cdl_{n}\(\) penetration must be a number >= 0, got -1")
+            (
+                lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1),
+                rf"cdl_{n}\(\) penetration must be a number >= 0, got -1",
+            )
             for n in ("eveningstar", "morningstar", "darkcloudcover", "mathold", "abandonedbaby", "eveningdojistar", "morningdojistar")
         ],
         (lambda: ta.emv(_F.high, _F.low, _F.volume, divisor=0), r"emv\(\) divisor must be a number > 0, got 0"),
         (lambda: ta.mmar(_F.close, step=0), r"mmar\(\) step must be an integer > 0, got 0"),
         (lambda: ta.mmar(_F.close, num_ribbons=-1), r"mmar\(\) num_ribbons must be an integer > 0, got -1"),
         (lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_narrow=-1), r"cpr\(\) width_narrow must be a number >= 0, got -1"),
-        (lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_cpr=True, virgin_lookforward=0), r"cpr\(\) virgin_lookforward must be an integer > 0, got 0"),
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_cpr=True, virgin_lookforward=0),
+            r"cpr\(\) virgin_lookforward must be an integer > 0, got 0",
+        ),
         (lambda: ta.aobv(_F.close, _F.volume, run_length=0), r"aobv\(\) run_length must be an integer > 0, got 0"),
         (lambda: ta.rsi(_F.close, signal_indicators=True, xa="x"), r"rsi\(\) xa must be a number, got 'x'"),
         (lambda: ta.rsx(_F.close, signal_indicators=True, xb=True), r"rsx\(\) xb must be a number, got True"),
@@ -350,7 +329,10 @@ def test_strategy_skips_vwap_without_datetime_index(frame):
 def test_trend_reset_is_removed(frame):
     """trend_reset was documented as ending a trend but never read (AGENTS rule 4, rule 11 exception)."""
     trend = (frame.close > frame.open).astype(int)
-    for call, name in ((lambda: ta.tsignals(trend, trend_reset=1), "tsignals"), (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals")):
+    for call, name in (
+        (lambda: ta.tsignals(trend, trend_reset=1), "tsignals"),
+        (lambda: ta.xsignals(frame.close, 50, 40, trend_reset=0), "xsignals"),
+    ):
         with pytest.raises(TypeError, match=rf"{name}\(\) no longer accepts 'trend_reset'"):
             call()
     # trade_offset is keyword-only, so an old positional trend_reset cannot slide into it

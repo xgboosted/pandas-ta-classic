@@ -9,6 +9,7 @@ from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
+    degenerate_zero,
     get_offset,
     tal_ma,
     verify_series,
@@ -91,6 +92,10 @@ def bbands(
     # degenerate window reads 0.0, TA-Lib's marker; an exact `ulr` also lets
     # bandwidth reach it on its own.
     ulr = upper - lower
+    # A flat close leaves a ~1e-16 standard-deviation residue (and TA-Lib's
+    # running STDDEV is not exactly 0 either), so snap it to an exact zero
+    # before the width and percent divide on it.
+    ulr = ulr.where(~degenerate_zero(ulr), 0.0)
     bandwidth = 100 * ulr / mid
     percent = ((close - lower) / ulr.where(ulr != 0)).mask(ulr == 0, 0.0)
 

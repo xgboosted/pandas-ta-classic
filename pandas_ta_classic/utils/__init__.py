@@ -2,6 +2,8 @@ from ._candles import candle_color
 from ._core import (
     apply_fill,
     apply_offset,
+    degenerate_div,
+    degenerate_zero,
     get_drift,
     get_offset,
     is_datetime_ordered,
@@ -68,6 +70,8 @@ __all__ = [
     "cross",
     "cross_value",
     "crossover",
+    "degenerate_div",
+    "degenerate_zero",
     "df_error_analysis",
     "df_year_to_date",
     "downside_deviation",

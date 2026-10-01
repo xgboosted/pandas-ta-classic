@@ -116,6 +116,9 @@ Edge-Case Tests
   missing bar inside the series recovers, or differs persistently only for
   cumulative indicators and whole-series fits (see "Missing Values" in the
   indicator reference).
+- ``test_warmup_contract.py`` — for every registered indicator, no column
+  holds a value before its own warm-up, and bar-describing flag columns are
+  NaN wherever the continuous columns of the same result are.
 
 **Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
 
