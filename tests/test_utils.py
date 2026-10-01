@@ -502,6 +502,15 @@ class TestUtilities(TestCase):
         result = self.utils.total_time(self.data, "seconds")
         self.assertEqual(657158400.0, result)
 
+    def test_total_time_needs_an_ascending_index(self):
+        # A descending index gave -20.8 years, which the metrics turned into NaN.
+        with self.assertRaisesRegex(ValueError, r"total_time\(\) needs an index sorted in ascending order"):
+            self.utils.total_time(self.data.iloc[::-1])
+        # A single row, or rows sharing one timestamp, truly span 0.
+        self.assertEqual(self.utils.total_time(self.data.iloc[:1]), 0)
+        twice = pd.concat([self.data.iloc[:1], self.data.iloc[:1]])
+        self.assertEqual(self.utils.total_time(twice, "days"), 0)
+
     def test_version(self):
         result = pandas_ta.version
         self.assertIsInstance(result, str)

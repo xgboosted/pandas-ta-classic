@@ -326,6 +326,32 @@ class TestMiscUtils(TestCase):
         diff = non_zero_range(high, low)
         assert (diff > 0).all()
 
+    @given(st.integers(min_value=2, max_value=60), st.data())
+    def test_total_time_rejects_any_unsorted_index(self, n, data):
+        """A descending index gave a negative span; any reordering now raises."""
+        index = pd.date_range("2021-01-04", periods=n, freq="D")
+        order = data.draw(st.permutations(range(n)))
+        assume(list(order) != list(range(n)))
+        with pytest.raises(ValueError, match="sorted in ascending order"):
+            ta.utils.total_time(pd.Series(range(n), index=index[list(order)]))
+        assert ta.utils.total_time(pd.Series(range(n), index=index), "days") == n - 1
+
+    @given(
+        st.integers(min_value=3, max_value=30),
+        st.datetimes(min_value=pd.Timestamp("1990-01-01").to_pydatetime(), max_value=pd.Timestamp("2040-01-01").to_pydatetime()),
+        st.sampled_from(["cagr", "downside_deviation", "volatility"]),
+    )
+    def test_metrics_reject_a_zero_span(self, n, stamp, name):
+        """Rows sharing one timestamp span 0; dividing by it raised a bare ZeroDivisionError."""
+        series = pd.Series(np.linspace(100.0, 101.0, n), index=pd.DatetimeIndex([stamp] * n))
+        calls = {
+            "cagr": lambda: ta.cagr(series),
+            "downside_deviation": lambda: ta.downside_deviation(series.pct_change()),
+            "volatility": lambda: ta.utils.volatility(series),
+        }
+        with pytest.raises(ValueError, match=rf"^{name}\(\) needs at least two distinct timestamps"):
+            calls[name]()
+
 
 def _exact_slope(xs: np.ndarray, ys: np.ndarray) -> float:
     """Least-squares slope in exact rational arithmetic: a reference without rounding."""

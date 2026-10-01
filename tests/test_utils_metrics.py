@@ -227,6 +227,23 @@ class TestUtilityMetrics(TestCase):
         self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(None, None)))
         self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(self.pctret, None)))
 
+    def test_metrics_need_a_time_span(self):
+        # They divide by total_time(): a span of 0 raised a bare ZeroDivisionError,
+        # and a descending index a NaN or a negative growth rate without an error.
+        one_day = self.close.iloc[:1]
+        same_day = Series([0.01, -0.02], index=[self.close.index[0]] * 2)
+        cases = [
+            ("cagr", lambda s: pandas_ta.cagr(s), one_day),
+            ("downside_deviation", lambda s: pandas_ta.downside_deviation(s), same_day),
+            ("volatility", lambda s: pandas_ta.utils.volatility(s, returns=True), same_day),
+        ]
+        for name, func, flat in cases:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, rf"{name}\(\) needs at least two distinct timestamps; the index spans 0 years"):
+                    func(flat)
+                with self.assertRaisesRegex(ValueError, r"total_time\(\) needs an index sorted in ascending order"):
+                    func(self.pctret.iloc[1:][::-1] if name != "cagr" else self.close.iloc[::-1])
+
     def test_volatility_is_only_reachable_through_utils(self):
         """The volatility category subpackage shadows the metric of that name.
 

@@ -13,6 +13,17 @@ from ._math import linear_regression
 from ._time import total_time
 
 
+def _span(series: Series, tf: str, caller: str) -> float:
+    """total_time() for a metric that divides by it: a span of 0 raises naming *caller*.
+
+    One row, or rows sharing one timestamp, raised a bare ZeroDivisionError.
+    """
+    span = total_time(series, tf)
+    if span == 0:
+        raise ValueError(f"{caller}() needs at least two distinct timestamps; the index spans 0 {tf}")
+    return span
+
+
 def cagr(close: Series) -> float:
     """Compounded Annual Growth Rate
 
@@ -25,7 +36,7 @@ def cagr(close: Series) -> float:
     if close is None:
         return np.nan
     start, end = close.iloc[0], close.iloc[-1]
-    return ((end / start) ** (1 / total_time(close))) - 1
+    return ((end / start) ** (1 / _span(close, "years", "cagr"))) - 1
 
 
 def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> float:
@@ -89,7 +100,7 @@ def downside_deviation(returns: Series, benchmark_rate: float = 0.0, tf: str = "
     n = returns.shape[0]
 
     # For both de-annualizing the benchmark rate and annualizing result
-    days_per_year = n / total_time(returns, tf)
+    days_per_year = n / _span(returns, tf, "downside_deviation")
 
     adjusted_benchmark_rate = ((1 + benchmark_rate) ** (1 / days_per_year)) - 1
 
@@ -342,7 +353,7 @@ def volatility(
     else:
         _returns = close
 
-    factor = _returns.shape[0] / total_time(_returns, tf)
+    factor = _returns.shape[0] / _span(_returns, tf, "volatility")
     if _bool_param(kwargs.pop("nearest_day", None), False, "nearest_day") and tf.lower() == "years":
         factor = int(factor + 1)
     return float(np.sqrt(factor) * _returns.std())
