@@ -1,8 +1,13 @@
+import sys
+from types import SimpleNamespace
 from unittest import TestCase
+from unittest.mock import patch
 
+import numpy as np
 from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
+from pandas_ta_classic.cycles.msw import _msw_native
 from tests.assertions import IndicatorSpec, assert_indicator_standard
 from tests.config import get_sample_data
 
@@ -145,3 +150,20 @@ class TestCycles(TestCase):
                 expected_columns=["MSW_SINE_5", "MSW_LEAD_5"],
             ),
         )
+
+    def test_msw_window_with_a_missing_bar_is_nan_on_both_paths(self):
+        # The DFT sums turn NaN, `abs(rp) > 0.001` reads False and the fallback set a
+        # phase of +-pi: sine -1.0 for every window holding the gap. Tulip Indicators
+        # runs the same loop, so the opt-in tulipy path is faked with the native loop
+        # at tulipy's pi, which reproduces it bit for bit.
+        def fake_msw(arr, period):
+            sine, lead = _msw_native(arr, period, pi=3.1415926)
+            return sine[period:], lead[period:]
+
+        close = self.close.iloc[:200].copy()
+        close.iloc[100] = np.nan
+        with patch.dict(pandas_ta.Imports, {"tulipy": True}), patch.dict(sys.modules, {"tulipy": SimpleNamespace(msw=fake_msw)}):
+            tulip = pandas_ta.msw(close, tulipy=True)
+        for result in (pandas_ta.msw(close), tulip):
+            self.assertTrue(result.iloc[100:105].isna().all().all())
+            self.assertTrue(result.iloc[[99, 105]].notna().all().all())

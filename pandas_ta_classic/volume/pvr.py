@@ -21,8 +21,10 @@ def pvr(close: Series, volume: Series, offset: int | None = None, **kwargs: Any)
     offset = get_offset(offset)
 
     # Calculate Result
-    close_diff = close.diff().fillna(0)
-    volume_diff = volume.diff().fillna(0)
+    # No fillna(0): a missing difference (bar 0, a missing close or volume) made
+    # `>= 0` True and ranked the bar 1 or 2, a rising close. It stays NaN now.
+    close_diff = close.diff()
+    volume_diff = volume.diff()
     pvr_ = Series(np.nan, index=close.index)
     pvr_.loc[(close_diff >= 0) & (volume_diff >= 0)] = 1
     pvr_.loc[(close_diff >= 0) & (volume_diff < 0)] = 2

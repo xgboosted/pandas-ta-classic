@@ -45,6 +45,15 @@ def msw(
     else:
         sine_arr, lead_arr = _msw_native(np.array(close, dtype=float), period)
 
+    # A window holding a missing bar has no phase, on either path: the DFT sums
+    # turn NaN, `abs(rp) > 0.001` reads False and the fallback invented a phase
+    # of +-pi, publishing sine -1.0 and lead -0.707 for every such window.
+    gap = np.isnan(close.to_numpy(dtype=float))
+    if gap.any():
+        in_window = np.convolve(gap, np.ones(period), "full")[: gap.size] > 0
+        sine_arr[in_window] = np.nan
+        lead_arr[in_window] = np.nan
+
     sine = Series(sine_arr, index=close.index)
     lead = Series(lead_arr, index=close.index)
 
