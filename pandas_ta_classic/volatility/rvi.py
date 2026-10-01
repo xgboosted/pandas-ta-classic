@@ -6,7 +6,7 @@ from pandas import Series
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Series | None:
@@ -73,8 +73,10 @@ def rvi(
     # Validate arguments
     length = _pos_int(length, 14, "length", gt=1)  # stdev needs at least two rows
     scalar = _pos_float(scalar, 100, "scalar")
-    refined = bool(refined)
-    thirds = bool(thirds)
+    refined = _bool_param(refined, False, "refined")
+    thirds = _bool_param(thirds, False, "thirds")
+    if refined and thirds:
+        raise ValueError("rvi() refined and thirds are alternative modes; pass at most one")
     mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, length)
     drift = get_drift(drift)
@@ -84,6 +86,12 @@ def rvi(
         return None
 
     if refined or thirds:
+        # Not given at all is a caller error: both modes are defined over
+        # high/low, and returning None made rvi(close, refined=True) look like
+        # an ordinary short-input result.
+        if high is None or low is None:
+            mode = "refined" if refined else "thirds"
+            raise ValueError(f"rvi() {mode}=True needs both high and low")
         high = verify_series(high)
         low = verify_series(low)
         if high is None or low is None:

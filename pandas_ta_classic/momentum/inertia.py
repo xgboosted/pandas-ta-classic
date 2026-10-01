@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.rvi import rvi
 
 
@@ -76,8 +76,10 @@ def inertia(
     length = _pos_int(length, 20, "length")
     rvi_length = _pos_int(rvi_length, 14, "rvi_length")
     scalar = _pos_float(scalar, 100, "scalar")
-    refined = bool(refined)
-    thirds = bool(thirds)
+    refined = _bool_param(refined, False, "refined")
+    thirds = _bool_param(thirds, False, "thirds")
+    if refined and thirds:
+        raise ValueError("inertia() refined and thirds are alternative modes; pass at most one")
     mamode = _str_param(mamode, "ema", "mamode")
     _length = max(length, rvi_length)
     close = verify_series(close, _length)
@@ -90,6 +92,12 @@ def inertia(
         return None
 
     if refined or thirds:
+        # Not given at all is a caller error: both modes are defined over
+        # high/low, and returning None made inertia(close, refined=True) look
+        # like an ordinary short-input result.
+        if high is None or low is None:
+            mode = "refined" if refined else "thirds"
+            raise ValueError(f"inertia() {mode}=True needs both high and low")
         high = verify_series(high, _length)
         low = verify_series(low, _length)
         if high is None or low is None:
