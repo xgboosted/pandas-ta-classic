@@ -146,3 +146,22 @@ def assert_indicator_standard(test_case, spec: IndicatorSpec):
             **base_kwargs,
         )
     return result
+
+
+def output_columns(result: Any) -> dict[str, Series]:
+    """Every output column of an indicator result, keyed uniquely across parts.
+
+    Takes a Series, a DataFrame, or a sequence of either (some indicators
+    return a tuple); ``None`` parts are skipped.
+    """
+    parts = result if isinstance(result, (tuple, list)) else (result,)
+    columns: dict[str, Series] = {}
+    for position, part in enumerate(parts):
+        if part is None:
+            continue
+        if isinstance(part, Series):
+            columns[f"[{position}]{part.name}"] = part
+        else:
+            for column in part.columns:
+                columns[f"[{position}]{column}"] = part[column]
+    return columns

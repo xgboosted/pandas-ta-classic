@@ -124,23 +124,34 @@ def _make_ta_wrapper(func: Callable) -> Callable:
             for alias in aliases:
                 kwargs.pop(alias, None)
             call_kwargs[param_name] = self._get_column(col_val)
-        # Fill in None for any required non-column positional args not yet provided
-        # (allows functions like long_run/short_run to return None when called with
-        # no fast/slow args; _post_process passes that None through)
-        for pname, param in sig.parameters.items():
-            if (
-                pname not in _COLUMN_PARAM_TO_COL_KEY
-                and pname not in _SERIES_COLUMN_PARAMS
-                and pname not in call_kwargs
-                and pname not in kwargs
-                and param.default is inspect.Parameter.empty
-                and param.kind
-                in (
-                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                    inspect.Parameter.POSITIONAL_ONLY,
-                )
-            ):
-                call_kwargs[pname] = None
+        # A required non-column argument the caller did not give used to be
+        # filled with None, so df.ta.long_run() / short_run() / tsignals() /
+        # xsignals() returned None with nothing to say which argument was
+        # missing -- the frame cannot supply fast/slow, trend or signal/xa/xb.
+        # mavp already raised for its 'periods'; now they all do.
+        missing = [
+            pname
+            for pname, param in sig.parameters.items()
+            if pname not in _COLUMN_PARAM_TO_COL_KEY
+            and pname not in _SERIES_COLUMN_PARAMS
+            and pname not in call_kwargs
+            and pname not in kwargs
+            and param.default is inspect.Parameter.empty
+            and param.kind
+            in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.POSITIONAL_ONLY,
+            )
+        ]
+        if missing:
+            named = ", ".join(repr(name) for name in missing)
+            # ValueError, not TypeError: every other argument error in the
+            # package is a ValueError, and mavp already raised one for its
+            # missing 'periods'.
+            raise ValueError(
+                f"df.ta.{func.__name__}() requires {named}; {'it has' if len(missing) == 1 else 'they have'} no default and the DataFrame cannot supply "
+                f"{'it' if len(missing) == 1 else 'them'}"
+            )
         result = func(**call_kwargs, **kwargs)
         return self._post_process(result, **kwargs)
 

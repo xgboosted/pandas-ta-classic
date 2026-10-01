@@ -36,7 +36,10 @@ def thermo(
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    asint = _bool_param(kwargs.pop("asint", None), True, "asint")
+    # ``asint`` is absorbed for strategy-broadcast compatibility.  The signal
+    # columns are always float now (NaN must survive on the warm-up bars), so
+    # its value no longer changes the dtype.
+    _bool_param(kwargs.pop("asint", None), True, "asint")
 
     if high is None or low is None:
         return None
@@ -57,10 +60,19 @@ def thermo(
     thermo_long = thermo < (thermo_ma * long)
     thermo_short = thermo > (thermo_ma * short)
 
-    # Binary output, useful for signals
-    if asint:
-        thermo_long = thermo_long.astype(int)
-        thermo_short = thermo_short.astype(int)
+    # Both comparisons are False against a NaN average, so the signals would read
+    # 0 on the warm-up bars.  Mask them where the thermometer or its average is
+    # not defined yet.
+    defined = thermo.notna() & thermo_ma.notna()
+    thermo_long = thermo_long.where(defined)
+    thermo_short = thermo_short.where(defined)
+
+    # Binary output, useful for signals.  float in both branches: NaN must
+    # survive on the warm-up bars, so the flags cannot stay bool (``asint=False``
+    # used to leave them object dtype) or int.  ``asint`` is still accepted but
+    # no longer changes the dtype.
+    thermo_long = thermo_long.astype(float)
+    thermo_short = thermo_short.astype(float)
 
     # Offset
     thermo, thermo_ma, thermo_long, thermo_short = apply_offset([thermo, thermo_ma, thermo_long, thermo_short], offset)
@@ -111,8 +123,8 @@ Calculation:
 
     thermo_long = thermo < (thermo_ma * long)
     thermo_short = thermo > (thermo_ma * short)
-    thermo_long = thermo_long.astype(int)
-    thermo_short = thermo_short.astype(int)
+    thermo_long = thermo_long.where(defined).astype(float)
+    thermo_short = thermo_short.where(defined).astype(float)
 
 Args:
     high (pd.Series): Series of 'high's
@@ -130,4 +142,6 @@ Kwargs:
 
 Returns:
     pd.DataFrame: thermo, thermo_ma, thermo_long, thermo_short columns.
+        The two signal columns are float (0.0/1.0/NaN) regardless of ``asint``:
+        NaN must survive until thermo_ma exists.
 """

@@ -11,7 +11,7 @@ TestConstantInput
     Constant price series exercises degenerate arithmetic:
     - sma returns the constant value for all valid rows
     - stdev returns 0 for all valid rows
-    - rsi returns all-NaN (no gains or losses → division by zero in RSI formula)
+    - rsi reads 0.0 (no gains or losses, so 0/0; see tests/test_degenerate_input.py)
 
 TestInfInInput
     A single ±Inf value inserted mid-series must not crash any indicator.
@@ -124,14 +124,16 @@ class TestConstantInput(TestCase):
         self.assertFalse(valid.empty, "stdev on constant returned all-NaN")
         self.assertTrue((valid.abs() < 1e-10).all(), "stdev of constant series must be 0")
 
-    def test_rsi_constant_is_all_nan(self):
-        """RSI on a constant series is undefined (0/0) — result must be all-NaN."""
+    def test_rsi_constant_reads_zero(self):
+        """RSI on a constant series divides 0/0 and reads 0.0, as TA-Lib does.
+
+        It used to be all-NaN. See tests/test_degenerate_input.py for the
+        convention and the sweep that applies it across the package.
+        """
         result = ta.rsi(_CONST_C, length=14, talib=False)
         self.assertIsNotNone(result)
-        self.assertTrue(
-            result.isna().all(),
-            "rsi of constant series should be all-NaN (no gains or losses)",
-        )
+        self.assertEqual(int(result.isna().sum()), 14, "only the warmup is NaN")
+        self.assertTrue((result.dropna() == 0.0).all(), "rsi of a constant series reads 0.0")
 
     def test_atr_constant_returns_valid(self):
         """ATR on constant H/L/C should not crash and must produce finite values."""

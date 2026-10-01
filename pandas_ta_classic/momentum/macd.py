@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, nan_on_short_input, skip_leading_nan
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -95,31 +95,24 @@ def macd(
 
     if as_mode:
         macd = macd - signalma
-        signalma = ema(close=macd.loc[macd.first_valid_index() :,], length=signal)
+        signalma = _on_valid_rows(macd, lambda s: ema(close=s, length=signal))
         if signalma is None:
             return None
         histogram = macd - signalma
 
-    # Offset
-    macd, histogram, signalma = apply_offset([macd, histogram, signalma], offset)
-
-    macd, histogram, signalma = apply_fill([macd, histogram, signalma], **kwargs)
-
-    # Name and Categorize it
+    # Name them here: the signals below take their column names from these, and
+    # `.name` survives the shift while a custom attribute such as `.category`
+    # does not.
     _asmode = "AS" if as_mode else ""
     _props = f"_{fast}_{slow}_{signal}"
     macd.name = f"MACD{_asmode}{_props}"
     histogram.name = f"MACD{_asmode}h{_props}"
     signalma.name = f"MACD{_asmode}s{_props}"
-    macd.category = histogram.category = signalma.category = "momentum"
 
-    # Prepare DataFrame to return
-    data = {macd.name: macd, histogram.name: histogram, signalma.name: signalma}
-    df = DataFrame(data)
-    df.name = f"MACD{_asmode}{_props}"
-    df.category = macd.category
-
+    # The signals read the unoffset, unfilled lines and are offset once, inside
+    # signals(). Reading the shifted lines shifted them a second time.
     signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
+    signal_frames = []
     if signal_indicators:
         # Read each option once and give it to both signal sets. Popping it inside
         # the first signals() call left the MACD-line signals with the defaults.
@@ -133,15 +126,34 @@ def macd(
             "offset": offset,
         }
         cross_values = kwargs.pop("cross_values", None)
-        return concat(
-            [
-                df,
-                # cross_values defaults differ: crossings for the histogram, levels for the MACD line
-                signals(indicator=histogram, cross_values=_bool_param(cross_values, True, "cross_values"), **signal_kwargs),
-                signals(indicator=macd, cross_values=_bool_param(cross_values, False, "cross_values"), **signal_kwargs),
-            ],
-            axis=1,
-        )
+        # cross_values defaults differ: crossings for the histogram, levels for the MACD line
+        signal_frames = [
+            signals(indicator=histogram, cross_values=_bool_param(cross_values, True, "cross_values"), **signal_kwargs),
+            signals(indicator=macd, cross_values=_bool_param(cross_values, False, "cross_values"), **signal_kwargs),
+        ]
+
+    # Offset
+    macd, histogram, signalma = apply_offset([macd, histogram, signalma], offset)
+
+    # Categorize it
+    macd.category = histogram.category = signalma.category = "momentum"
+
+    # Prepare DataFrame to return
+    data = {macd.name: macd, histogram.name: histogram, signalma.name: signalma}
+    df = DataFrame(data)
+    df.name = f"MACD{_asmode}{_props}"
+    df.category = macd.category
+
+    if signal_frames:
+        name, category = df.name, df.category
+        df = concat([df, *signal_frames], axis=1)
+        # concat builds a new frame, so the name and category are set on it
+        df.name, df.category = name, category
+
+    # The fill runs last, over every column returned, so the signal columns are
+    # filled too. Until 0.9.0 it ran on the three lines alone, and an offset
+    # call with fillna left NaN behind in the signal columns.
+    apply_fill(df, **kwargs)
 
     return df
 
@@ -182,6 +194,24 @@ Args:
 Kwargs:
     asmode (value, optional): When True, enables AS version of MACD.
         Default: False
+    signal_indicators (bool): When True, threshold and comparison signal
+        columns for both the MACD line and the histogram are appended. The
+        options below are only read when it is True. Default: False
+    xa (float): Upper threshold. Default: 0
+    xb (float): Lower threshold; no lower column is produced when it is None.
+        Default: None
+    cross_values (bool): When True, the xa/xb columns mark the bars that cross
+        the threshold instead of flagging every bar on one side of it. When it
+        is not given, the histogram uses crossings and the MACD line uses
+        levels. Default: None
+    xserie (pd.Series): Comparison series; used for both xserie_a and xserie_b
+        unless one of them is given. Default: None
+    xserie_a (pd.Series): Comparison series for the "above" column.
+        Default: None
+    xserie_b (pd.Series): Comparison series for the "below" column.
+        Default: None
+    cross_series (bool): When True, the xserie columns mark crossings instead
+        of flagging every bar on one side of the series. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

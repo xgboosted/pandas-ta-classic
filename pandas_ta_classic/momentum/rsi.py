@@ -54,38 +54,53 @@ def rsi(
         positive_avg = rma(positive, length=length)
         negative_avg = rma(negative, length=length)
 
-        rsi = scalar * positive_avg / (positive_avg + negative_avg.abs())
+        # A window with no movement at all divides 0/0. TA-Lib reads 0.0 there;
+        # `denominator == 0` is False for the warmup NaN, which stays NaN.
+        denominator = positive_avg + negative_avg.abs()
+        rsi = (scalar * positive_avg / denominator).mask(denominator == 0, 0.0)
+
+    # Name it here: the signals below take their column names from it, and `.name`
+    # survives the shift while a custom attribute such as `.category` does not.
+    rsi.name = f"RSI_{length}"
+
+    # The signals read the unoffset, unfilled RSI and are offset once, inside
+    # signals(). Reading the shifted series shifted them a second time.
+    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
+    signal_df = (
+        signals(
+            indicator=rsi,
+            xa=kwargs.pop("xa", 80),
+            xb=kwargs.pop("xb", 20),
+            xserie=kwargs.pop("xserie", None),
+            xserie_a=kwargs.pop("xserie_a", None),
+            xserie_b=kwargs.pop("xserie_b", None),
+            cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values"),
+            cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
+            offset=offset,
+        )
+        if signal_indicators
+        else None
+    )
 
     # Offset
     rsi = apply_offset(rsi, offset)
 
-    rsi = apply_fill(rsi, **kwargs)
-
-    # Name and Categorize it
-    rsi.name = f"RSI_{length}"
+    # Categorize it
     rsi.category = "momentum"
 
-    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
-    if signal_indicators:
-        return concat(
-            [
-                DataFrame({rsi.name: rsi}),
-                signals(
-                    indicator=rsi,
-                    xa=kwargs.pop("xa", 80),
-                    xb=kwargs.pop("xb", 20),
-                    xserie=kwargs.pop("xserie", None),
-                    xserie_a=kwargs.pop("xserie_a", None),
-                    xserie_b=kwargs.pop("xserie_b", None),
-                    cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values"),
-                    cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
-                    offset=offset,
-                ),
-            ],
-            axis=1,
-        )
+    result: Series | DataFrame = rsi
+    if signal_df is not None:
+        result = concat([DataFrame({rsi.name: rsi}), signal_df], axis=1)
+        # concat builds a new frame, so the name and category are set on it
+        result.name = rsi.name
+        result.category = rsi.category
 
-    return rsi
+    # The fill runs last, over every column returned, so the signal columns are
+    # filled too. Until 0.9.0 it ran on the indicator alone, and an offset call
+    # with fillna left NaN behind in the signal columns.
+    apply_fill(result, **kwargs)
+
+    return result
 
 
 rsi.__doc__ = """Relative Strength Index (RSI)
@@ -121,9 +136,26 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
+    signal_indicators (bool): When True, threshold and comparison signal
+        columns are appended and the result becomes a DataFrame instead of a
+        Series. The options below are only read when it is True. Default: False
+    xa (float): Upper threshold. Default: 80
+    xb (float): Lower threshold. Default: 20
+    cross_values (bool): When True, the xa/xb columns mark the bars that cross
+        the threshold instead of flagging every bar on one side of it.
+        Default: False
+    xserie (pd.Series): Comparison series; used for both xserie_a and xserie_b
+        unless one of them is given. Default: None
+    xserie_a (pd.Series): Comparison series for the "above" column.
+        Default: None
+    xserie_b (pd.Series): Comparison series for the "below" column.
+        Default: None
+    cross_series (bool): When True, the xserie columns mark crossings instead
+        of flagging every bar on one side of the series. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.Series: New feature generated.
+    pd.Series: New feature generated, or a pd.DataFrame with the indicator and
+        its signal columns when signal_indicators is True.
 """

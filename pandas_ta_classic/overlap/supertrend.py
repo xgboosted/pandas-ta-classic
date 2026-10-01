@@ -12,8 +12,8 @@ from pandas_ta_classic.utils._njit import njit
 
 @njit(cache=True)
 def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
-    dir_ = np.ones(m)
-    trend = np.zeros(m)
+    dir_ = np.full(m, np.nan)
+    trend = np.full(m, np.nan)
     long = np.full(m, np.nan)
     short = np.full(m, np.nan)
     # Ratchet BOTH bands independently on every bar with the "or" rule from the
@@ -28,7 +28,7 @@ def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
             # through the whole series.
             final_ub[i] = ub_arr[i]
             final_lb[i] = lb_arr[i]
-            dir_[i] = 1.0
+            direction = 1.0
         else:
             if ub_arr[i] < final_ub[i - 1] or c_arr[i - 1] > final_ub[i - 1]:
                 final_ub[i] = ub_arr[i]
@@ -40,13 +40,20 @@ def _supertrend_loop(c_arr, ub_arr, lb_arr, m):
                 final_lb[i] = final_lb[i - 1]
 
             if c_arr[i] > final_ub[i - 1]:
-                dir_[i] = 1.0
+                direction = 1.0
             elif c_arr[i] < final_lb[i - 1]:
-                dir_[i] = -1.0
+                direction = -1.0
             else:
-                dir_[i] = dir_[i - 1]
+                direction = dir_[i - 1]
 
-        if dir_[i] > 0:
+        if np.isnan(final_ub[i]) or np.isnan(final_lb[i]):
+            # The ATR is still NaN, so there is no band and no stop level.  Bar 0
+            # and the warm-up bars stay NaN instead of reporting the array's
+            # initial value as a level of 0.0 in an uptrend.
+            continue
+
+        dir_[i] = direction
+        if direction > 0:
             trend[i] = final_lb[i]
             long[i] = final_lb[i]
         else:
@@ -167,4 +174,6 @@ Kwargs:
 
 Returns:
     pd.DataFrame: SUPERT (trend), SUPERTd (direction), SUPERTl (long), SUPERTs (short) columns.
+        All four are NaN until the ATR exists; there is no direction before the
+        first band.
 """

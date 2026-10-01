@@ -176,3 +176,66 @@ class TestUtilityMetrics(TestCase):
             with self.subTest(tf=tf):
                 self.assertIsInstance(result, float)
                 self.assertGreaterEqual(result, 0)
+
+        # nearest_day rounds the bars-per-year factor up, so it cannot lower the
+        # annualised figure.
+        yearly = pandas_ta.utils.volatility(self.close, "years")
+        nearest = pandas_ta.utils.volatility(self.close, "years", nearest_day=True)
+        self.assertGreaterEqual(nearest, yearly)
+
+    def test_metrics_return_nan_for_a_missing_series(self):
+        # verify_series(None) means "this optional argument was not given"; the
+        # metrics answer with NaN rather than raising, and none of them is
+        # reachable as an indicator, so nothing else pins this path.
+        one_arg = [
+            pandas_ta.utils.cagr,
+            pandas_ta.utils.calmar_ratio,
+            pandas_ta.utils.downside_deviation,
+            pandas_ta.utils.log_max_drawdown,
+            pandas_ta.utils.max_drawdown,
+            pandas_ta.utils.optimal_leverage,
+            pandas_ta.utils.pure_profit_score,
+            pandas_ta.utils.sharpe_ratio,
+            pandas_ta.utils.sortino_ratio,
+            pandas_ta.utils.volatility,
+        ]
+        for func in one_arg:
+            with self.subTest(func=func.__name__):
+                self.assertTrue(np.isnan(func(None)))
+        self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(None, None)))
+        self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(self.pctret, None)))
+
+    def test_volatility_is_only_reachable_through_utils(self):
+        """The volatility category subpackage shadows the metric of that name.
+
+        __all__ used to list 'volatility', promising ta.volatility(close) —
+        which is the subpackage and raises TypeError. Every sibling metric is
+        reachable as ta.<name>; this one is the documented exception.
+        """
+        siblings = [
+            "cagr",
+            "calmar_ratio",
+            "downside_deviation",
+            "jensens_alpha",
+            "log_max_drawdown",
+            "max_drawdown",
+            "optimal_leverage",
+            "pure_profit_score",
+            "sharpe_ratio",
+            "sortino_ratio",
+        ]
+        for name in siblings:
+            with self.subTest(name=name):
+                self.assertIn(name, pandas_ta.__all__)
+                self.assertTrue(callable(getattr(pandas_ta, name)))
+
+        self.assertNotIn("volatility", pandas_ta.__all__)
+        self.assertFalse(callable(pandas_ta.volatility))
+        self.assertTrue(callable(pandas_ta.utils.volatility))
+
+    def test_pure_profit_score_is_zero_without_a_correlation(self):
+        # A flat series has zero variance, so linear_regression gives r = NaN
+        # and the score falls back to 0 instead of NaN * cagr.
+        idx = bdate_range("2021-01-04", periods=60)
+        flat = Series([100.0] * 60, index=idx)
+        self.assertEqual(pandas_ta.pure_profit_score(flat), 0)

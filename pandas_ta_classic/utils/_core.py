@@ -105,6 +105,23 @@ def apply_fill(
     return series
 
 
+def _on_valid_rows(series: Series, smooth: Callable[[Series], Series | None]) -> Series | None:
+    """Run *smooth* over *series* from its first valid row on, on *series*'s index.
+
+    Smoothing only the valid rows keeps a leading NaN run from seeding the
+    moving average. The result is shorter than *series*, though, and a short
+    Series put into a DataFrame comes back with the missing rows as NaN after
+    ``apply_fill`` has run, so those rows never see ``fillna``. The result is
+    therefore reindexed onto *series*'s index before it is returned.
+
+    Returns None when *smooth* does.
+    """
+    result = smooth(series.loc[series.first_valid_index() :])
+    if result is None:
+        return None
+    return result.reindex(series.index)
+
+
 def _bool_param(val: Any, default: bool, name: str) -> bool:
     """Return *val* for a bool (numpy bools included), *default* for None; raise ValueError otherwise.
 
@@ -235,13 +252,32 @@ _PROBE_MAX_ROWS = 50_000
 _PROBE_HARD_MAX_ROWS = 2_000_000
 
 
+def _bound_series(arguments: dict) -> list[Series]:
+    """Every Series in *arguments*, including those inside the **kwargs bag.
+
+    An indicator can take a Series through **kwargs (stc's ma1/ma2/osc, the
+    signal helpers' xserie): those used to be invisible here, so the probe kept
+    the caller's short series, failed for the same reason the real call did, and
+    the short-input contract handed back None instead of an all-NaN result.
+    """
+    found = []
+    for value in arguments.values():
+        if isinstance(value, Series):
+            found.append(value)
+        elif isinstance(value, dict):
+            found.extend(v for v in value.values() if isinstance(v, Series))
+    return found
+
+
 def _probe_inputs(arguments: dict, rows: int) -> dict:
     """Replace every Series argument with a long, well-formed synthetic series.
 
     Values are deterministic OHLCV-shaped data on the same index type as the
-    caller's first Series, so every indicator can run on them.
+    caller's first Series, so every indicator can run on them.  Series passed
+    through **kwargs are replaced too; a name the OHLCV map does not know gets
+    the close series, which is what an oscillator-shaped input expects.
     """
-    first = next(v for v in arguments.values() if isinstance(v, Series))
+    first = _bound_series(arguments)[0]
     if isinstance(first.index, DatetimeIndex):
         end = first.index[-1] if len(first.index) else "2024-01-01"
         # minute steps: 2M rows span under 4 years, well inside the datetime64[ns] range
@@ -259,11 +295,16 @@ def _probe_inputs(arguments: dict, rows: int) -> dict:
         "periods": np.full(rows, 10.0),
         "trend": (np.arange(rows) // 20 % 2).astype(int),
     }
+
     # keep each name: some outputs are named after their inputs (vp: low_close, pos_volume)
-    return {
-        key: (Series(columns.get(key, close), index=index, name=value.name) if isinstance(value, Series) else value)
-        for key, value in arguments.items()
-    }
+    def synthetic(key: str, value: Any) -> Any:
+        if isinstance(value, Series):
+            return Series(columns.get(key, close), index=index, name=value.name)
+        if isinstance(value, dict):  # the **kwargs bag
+            return {k: synthetic(k, v) for k, v in value.items()}
+        return value
+
+    return {key: synthetic(key, value) for key, value in arguments.items()}
 
 
 def _nan_like(template: Any, index: Any, rows: int) -> Any:
@@ -341,10 +382,11 @@ def nan_on_short_input(fn: Callable) -> Callable:
                     return result
             bound = sig.bind(*args, **kwargs)
             series = {k: v for k, v in bound.arguments.items() if isinstance(v, Series)}
-            if not series:
+            all_series = _bound_series(bound.arguments)
+            if not all_series:
                 return None
             # results align to close, like a normal result; otherwise to the first Series
-            first = series.get("close", next(iter(series.values())))
+            first = series.get("close", all_series[0])
             numbers = [
                 v
                 for v in list(bound.arguments.values()) + list(bound.arguments.get("kwargs", {}).values())
@@ -389,6 +431,31 @@ def non_zero_range(high: Series, low: Series) -> Series:
     return diff.where(diff != 0, sflt.epsilon)
 
 
+def degenerate_div(numerator: Series, denominator: Series) -> Series:
+    """Divide ``numerator`` by ``denominator``, reading a true 0/0 window as 0.0.
+
+    Only a window where *both* are zero is masked to 0.0, the marker TA-Lib
+    applies throughout for a degenerate window.  A zero denominator with a
+    nonzero numerator is a real division by zero and reads ``inf``; masking on
+    the denominator alone would turn that into 0.0 and report the opposite of
+    what the data says (``vhf`` makes the same distinction in its own mask).
+    """
+    return (numerator / denominator).mask((denominator == 0) & (numerator == 0), 0.0)
+
+
+def degenerate_zero(x: Any, *, atol: float = 1e-12) -> Any:
+    """True where *x* is a flat-window float residue, not a real value.
+
+    A computed variance or standard deviation over a flat window leaves a
+    residue of roughly machine epsilon times the window's scale — 5.9e-17 for
+    a flat 0.3's standard deviation, 3.4e-33 for its variance — so an exact
+    ``== 0`` misses it and the value divides into a nonsense z-score, skew or
+    kurtosis.  *atol* is far above that residue and far below any real
+    variance (a 0.01% move is already 1e-4).
+    """
+    return np.isclose(x, 0, atol=atol)
+
+
 def recent_maximum_index(x: Series) -> int:
     return int(np.argmax(x[::-1]))
 
@@ -406,6 +473,10 @@ def signed_series(series: Series, initial: int | None = None) -> Series:
     sign = Series([NaN, -1.0, 0.0, -1.0, 0.0, 1.0, 1.0, 0.0, 1.0, -1.0])
     """
     series = verify_series(series)
+    # An unvalidated initial reached the float64 block and failed as
+    # "Invalid value 'zz' for dtype 'float64'", naming neither this function
+    # nor the parameter.
+    initial = _number(initial, None, "initial")
     sign = series.diff(1)
     sign[sign > 0] = 1
     sign[sign < 0] = -1

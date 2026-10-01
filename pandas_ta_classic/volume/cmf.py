@@ -47,7 +47,10 @@ def cmf(
     else:
         ad = 2 * close - (high + low)  # AD with High, Low, Close
 
-    ad *= volume / non_zero_range(high, low)
+    # A bar with high == low reads 0.0 rather than dividing by an epsilon; see
+    # the note in ad(), which this shares the Open form with.
+    high_low_range = high - low
+    ad = (ad * (volume / high_low_range.where(high_low_range != 0))).mask(high_low_range == 0, 0.0)
     cmf = ad.rolling(length, min_periods=min_periods).sum()
     cmf /= volume.rolling(length, min_periods=min_periods).sum()
 

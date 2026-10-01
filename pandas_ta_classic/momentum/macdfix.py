@@ -34,7 +34,18 @@ def macdfix(
     kwargs.pop("fast", None)
     kwargs.pop("slow", None)
 
-    if Imports["talib"] and mode_talib:
+    # The offset and the fill are applied once, below, to whichever branch ran.
+    # macd() would otherwise apply them a second time on the native path.
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
+
+    # Read without popping: the native branch forwards it to macd(), which owns
+    # the signal columns and the options that go with them.
+    signal_indicators = _bool_param(kwargs.get("signal_indicators", None), False, "signal_indicators")
+    asmode = _bool_param(kwargs.get("asmode", None), False, "asmode")
+
+    # TA-Lib's MACDFIX returns the three lines only; run natively instead of
+    # dropping the signal columns or the AS variant it cannot produce
+    if Imports["talib"] and mode_talib and not signal_indicators and not asmode:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)
@@ -45,7 +56,7 @@ def macdfix(
         }
         result = DataFrame(data, index=close.index)
     else:
-        result = macd(close, fast=12, slow=26, signal=signal, talib=False, offset=offset, **kwargs)
+        result = macd(close, fast=12, slow=26, signal=signal, talib=False, **kwargs)
         if result is None:
             return None
 
@@ -63,7 +74,7 @@ def macdfix(
 
     # Offset
     result = apply_offset(result, offset)
-    result = apply_fill(result, **kwargs)
+    result = apply_fill(result, **fill_kwargs)
 
     result.name = f"MACDFIX_{signal}"
     result.category = "momentum"
@@ -85,31 +96,13 @@ Args:
     offset (int): Number of periods to offset the result. Default: 0.
 
 Kwargs:
+    signal_indicators (bool): When True, the signal columns macd() produces
+        are appended; the TA-Lib path cannot produce them, so talib=True is
+        ignored while it is set. The xa, xb, cross_values, xserie, xserie_a,
+        xserie_b and cross_series options are forwarded to macd(). Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
 Returns:
     pd.DataFrame: DataFrame with MACDFIX line, histogram, signal columns.
-"""
-
-
-macdfix.__doc__ = """MACD with Fixed Periods (MACDFIX)
-
-MACD using fixed fast=12 and slow=26 with a variable signal period.
-Equivalent to ta.macd(close, fast=12, slow=26, signal=signalperiod).
-
-TA-Lib name: MACDFIX.
-
-Args:
-    close (pd.Series): Series of 'close' prices
-    signal (int): Signal period. Default: 9
-    talib (bool): Use TA-Lib C library if installed. Default: False
-    offset (int): Periods to offset. Default: 0
-
-Kwargs:
-    fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
-
-Returns:
-    pd.DataFrame: macdfix, histogram, signal columns.
 """
