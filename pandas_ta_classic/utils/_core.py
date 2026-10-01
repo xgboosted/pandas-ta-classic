@@ -616,5 +616,8 @@ def _sliding_argextreme(series: Series, length: int, argfunc: Any, reverse: bool
         windows = np.lib.stride_tricks.sliding_window_view(arr, length)
         if reverse:
             windows = windows[:, ::-1]
-        result[length - 1 :] = argfunc(windows, axis=1)
+        # argmax/argmin take a NaN for the extreme, so a window holding a missing
+        # bar pointed at the gap (maxindex jumped from 1 to 29). rolling.apply
+        # gives NaN for such a window; so does this.
+        result[length - 1 :] = np.where(np.isnan(windows).any(axis=1), np.nan, argfunc(windows, axis=1))
     return Series(result, index=series.index)

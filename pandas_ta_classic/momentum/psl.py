@@ -45,7 +45,8 @@ def psl(
     else:
         diff = np.sign(close.diff(drift))
 
-    diff.fillna(0, inplace=True)
+    # A bar without a direction (the first diff, a missing close) stays NaN, so
+    # every window holding it is NaN: it used to count as a down bar.
     diff[diff <= 0] = 0  # Zero negative values
 
     psl = scalar * diff.rolling(length).sum()
@@ -83,10 +84,9 @@ Calculation:
     ELSE:
         DIFF = SIGN(close - open)
 
-    DIFF.fillna(0)
-    DIFF[DIFF <= 0] = 0
+    DIFF[DIFF <= 0] = 0  # NaN stays NaN: a bar without a direction
 
-    PSL = scalar * SUM(DIFF, length) / length
+    PSL = scalar * SUM(DIFF, length) / length  # NaN for a window holding one
 
 Args:
     close (pd.Series): Series of 'close's

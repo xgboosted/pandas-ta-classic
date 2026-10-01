@@ -53,7 +53,9 @@ three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
   for 20 bars. Recursive indicators (``macd``, ``kama``, ``jma``, ``mama``,
   ``rsx``, the ``ht_*`` family, ``ha``, ...) skip the missing bar: it reads NaN
   and the recursion continues as if the bar did not exist. TA-Lib instead
-  reports NaN from the gap to the end of the series.
+  reports NaN from the gap to the end of the series. A bar whose every input
+  is missing reads NaN; the indicators that still publish a value there are
+  listed in ``PUBLISHES_AT_THE_GAP`` in that test, pending review.
 * **Cumulative** (``ad``, ``aobv``, ``nvi``, ``obv``, ``pvi``, ``pvt``,
   ``wad``): a running total cannot know the missing bar's contribution, so
   later values differ from the complete series by a persistent amount. Their

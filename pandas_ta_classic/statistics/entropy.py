@@ -36,7 +36,9 @@ def entropy(
     if n >= length:
         windows = np.lib.stride_tricks.sliding_window_view(values, length)  # (n-length+1, length)
         window_sums = windows.sum(axis=1)  # (n-length+1,)
-        valid = window_sums != 0
+        # A NaN sum (a missing bar in the window) compared != 0 as True, and
+        # np.nansum then turned the all-NaN probabilities into 0.0 entropy.
+        valid = np.isfinite(window_sums) & (window_sums != 0)
         with np.errstate(divide="ignore", invalid="ignore"):
             p = np.where(valid[:, None], windows / window_sums[:, None], np.nan)
             p_term = -p * np.log(p) / np.log(base)
