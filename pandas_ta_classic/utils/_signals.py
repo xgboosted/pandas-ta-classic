@@ -280,8 +280,8 @@ def attach_signals(
       inside ``signals()`` -- reading the shifted series shifted them twice;
     * ``concat`` builds a new frame, so ``name`` and ``category`` are set on it
       rather than inherited;
-    * the fill runs last, over every column returned, so the signal columns are
-      filled too.
+    * the fill runs last: the indicator takes the caller's ``fillna`` value and
+      the 0/1 signal columns fill with 0 (their "no signal" value) instead.
 
     *indicator* arrives named, because the signal columns take their names from
     it. The indicator function itself is read off the frame above, as
@@ -292,16 +292,31 @@ def attach_signals(
     """
     caller = sys._getframe(1).f_code.co_name
     signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators", caller=caller)
+
+    # Read and validate every signal option regardless of signal_indicators: a
+    # bad value is a caller error, not a request to skip the signals. signals()
+    # re-validates xa/xb, but it only runs when the signals are wanted.
+    xa = kwargs.pop("xa", 80)
+    xb = kwargs.pop("xb", 20)
+    xserie = kwargs.pop("xserie", None)
+    xserie_a = kwargs.pop("xserie_a", None)
+    xserie_b = kwargs.pop("xserie_b", None)
+    cross_values = _bool_param(kwargs.pop("cross_values", None), False, "cross_values", caller=caller)
+    cross_series = _bool_param(kwargs.pop("cross_series", None), True, "cross_series", caller=caller)
+    for label, value in (("xa", xa), ("xb", xb)):
+        if value is not None and not (isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)):
+            raise ValueError(f"{caller}() {label} must be a number, got {value!r}")
+
     signal_df = (
         signals(
             indicator=indicator,
-            xa=kwargs.pop("xa", 80),
-            xb=kwargs.pop("xb", 20),
-            xserie=kwargs.pop("xserie", None),
-            xserie_a=kwargs.pop("xserie_a", None),
-            xserie_b=kwargs.pop("xserie_b", None),
-            cross_values=_bool_param(kwargs.pop("cross_values", None), False, "cross_values", caller=caller),
-            cross_series=_bool_param(kwargs.pop("cross_series", None), True, "cross_series", caller=caller),
+            xa=xa,
+            xb=xb,
+            xserie=xserie,
+            xserie_a=xserie_a,
+            xserie_b=xserie_b,
+            cross_values=cross_values,
+            cross_series=cross_series,
             offset=offset,
             caller=caller,
         )
@@ -313,13 +328,22 @@ def attach_signals(
     indicator = apply_offset(indicator, offset)
     indicator.category = category
 
-    result: Series | DataFrame = indicator
-    if signal_df is not None:
-        result = concat([DataFrame({name: indicator}), signal_df], axis=1)
-        result.name = name
-        result.category = category
+    if signal_df is None:
+        return apply_fill(indicator, **kwargs)
 
-    apply_fill(result, **kwargs)
+    # fillna fills the indicator column with the caller's value; the 0/1 signal
+    # columns must not take it -- a flag of 50 is neither "no signal" nor
+    # "signal" -- so they fill with 0 (their "no signal" value) instead, and
+    # the same fill_method.
+    apply_fill(indicator, **kwargs)
+    signal_kwargs = {"fillna": 0} if "fillna" in kwargs else {}
+    if "fill_method" in kwargs:
+        signal_kwargs["fill_method"] = kwargs["fill_method"]
+    apply_fill(signal_df, **signal_kwargs)
+
+    result = concat([DataFrame({name: indicator}), signal_df], axis=1)
+    result.name = name
+    result.category = category
     return result
 
 

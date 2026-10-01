@@ -74,6 +74,14 @@ def macdfix(
 
     # Offset
     result = apply_offset(result, offset)
+    # fillna fills the three lines with the caller's value; the 0/1 signal
+    # columns fill with 0 (their "no signal" value) instead. fill_method still
+    # runs over every column.
+    if "fillna" in fill_kwargs:
+        fillna = fill_kwargs.pop("fillna")
+        lines = (f"MACDFIX_{signal}_{signal}", f"MACDFIXh_{signal}_{signal}", f"MACDFIXs_{signal}_{signal}")
+        for col in result.columns:
+            result[col] = result[col].fillna(fillna if col in lines else 0)
     result = apply_fill(result, **fill_kwargs)
 
     result.name = f"MACDFIX_{signal}"
