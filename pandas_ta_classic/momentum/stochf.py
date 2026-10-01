@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _str_param, nan_on_short_input
 
 
 def _stochf_native(high, low, close, fastk, fastd, mamode):
@@ -33,13 +33,9 @@ def _stochf_native(high, low, close, fastk, fastd, mamode):
     lowest_low = low.rolling(fastk).min()
     highest_high = high.rolling(fastk).max()
     fastk_ = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
-    fastk_first_valid = fastk_.first_valid_index()
-    if fastk_first_valid is None:
-        fastd_ = fastk_.copy()
-    else:
-        fastd_ = ma(mamode, fastk_.loc[fastk_first_valid:,], length=fastd)
-        if fastd_ is None:
-            return None
+    fastd_ = _on_valid_rows(fastk_, lambda s: ma(mamode, s, length=fastd))
+    if fastd_ is None:
+        return None
     return fastk_, fastd_
 
 
