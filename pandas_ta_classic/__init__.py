@@ -134,7 +134,11 @@ __all__ = [
     "utils",
     "verify_series",
     "version",
-    "volatility",
+    # 'volatility' is deliberately absent: the name belongs to the volatility
+    # category subpackage, which shadows the metric of the same name. Listing
+    # it here promised ta.volatility(close), which raises
+    # "'_LazySubpackage' object is not callable". The metric is
+    # ta.utils.volatility; see utils/__init__.py.
     "weights",
     "zero",
 ]

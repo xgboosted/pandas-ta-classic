@@ -295,6 +295,18 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "INERTIAt_20_14")
 
+        # refined/thirds used to be bool()-coerced and were both silently
+        # optional: inertia(close, refined=True) returned None rather than
+        # saying it needs high/low.
+        for kwarg in ("refined", "thirds"):
+            with self.subTest(kwarg=kwarg):
+                with self.assertRaisesRegex(ValueError, rf"inertia\(\) {kwarg} must be True or False"):
+                    pandas_ta.inertia(self.close, self.high, self.low, **{kwarg: "yes"})
+                with self.assertRaisesRegex(ValueError, rf"inertia\(\) {kwarg}=True needs both high and low"):
+                    pandas_ta.inertia(self.close, **{kwarg: True})
+        with self.assertRaisesRegex(ValueError, "alternative modes"):
+            pandas_ta.inertia(self.close, self.high, self.low, refined=True, thirds=True)
+
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -702,6 +714,44 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_squeeze_detailed(self):
+        base = pandas_ta.squeeze(self.high, self.low, self.close)
+        result = pandas_ta.squeeze(self.high, self.low, self.close, detailed=True)
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
+
+        detail_columns = ["SQZ_INC", "SQZ_DEC", "SQZ_PINC", "SQZ_PDEC", "SQZ_NDEC", "SQZ_NINC"]
+        self.assertEqual(list(result.columns), list(base.columns) + detail_columns)
+        # detailed=True only appends; the base columns keep their values
+        for col in base.columns:
+            self.assertTrue(result[col].equals(base[col]), col)
+
+        squeeze_series = result["SQZ_20_2.0_20_1.5"]
+        for col in detail_columns:
+            # Every detail column masks the bars it does not describe, so it is
+            # neither all NaN nor fully populated, and never carries a 0.
+            self.assertTrue(result[col].isna().any(), col)
+            self.assertTrue(result[col].notna().any(), col)
+            self.assertFalse((result[col] == 0).any(), col)
+            # Where a detail column has a value it is the squeeze value itself.
+            defined = result[col].notna()
+            self.assertTrue(result.loc[defined, col].equals(squeeze_series[defined]), col)
+
+        # SQZ_INC / SQZ_DEC partition the defined bars into rising and falling.
+        self.assertFalse((result["SQZ_INC"].notna() & result["SQZ_DEC"].notna()).any())
+        # PINC/PDEC only describe non-negative bars, NINC/NDEC only negative ones.
+        for col in ("SQZ_PINC", "SQZ_PDEC"):
+            self.assertTrue((result.loc[result[col].notna(), col] >= 0).all(), col)
+        for col in ("SQZ_NINC", "SQZ_NDEC"):
+            self.assertTrue((result.loc[result[col].notna(), col] < 0).all(), col)
+
+        # lazybear and the accessor reach the same detailed branch
+        lb = pandas_ta.squeeze(self.high, self.low, self.close, detailed=True, lazybear=True)
+        self.assertEqual(list(lb.columns), ["SQZ_20_2.0_20_1.5_LB", "SQZ_ON", "SQZ_OFF", "SQZ_NO"] + detail_columns)
+
+        via_accessor = self.data.ta.squeeze(detailed=True)
+        self.assertEqual(list(via_accessor.columns), list(result.columns))
+
     def test_squeeze_pro(self):
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, tr=False)
         self.assertIsInstance(result, DataFrame)
@@ -750,6 +800,35 @@ class TestMomentum(TestCase):
                 none_arg_idx=0,
             ),
         )
+
+    def test_stc_external_series(self):
+        traditional = pandas_ta.stc(self.close)
+        macd_col = "STCmacd_10_12_26_0.5"
+
+        # ma1 + ma2 replace the internal EMA pair: feeding the same EMAs back in
+        # reproduces the traditional result exactly.
+        ma1, ma2 = pandas_ta.ema(self.close, length=12), pandas_ta.ema(self.close, length=26)
+        with_mas = pandas_ta.stc(self.close, ma1=ma1, ma2=ma2)
+        self.assertIsInstance(with_mas, DataFrame)
+        self.assertTrue(with_mas.equals(traditional))
+
+        # osc replaces both MAs with a ready-made oscillator.
+        with_osc = pandas_ta.stc(self.close, osc=ma1 - ma2)
+        self.assertTrue(with_osc.equals(traditional))
+        # osc wins over ma1/ma2 when all three are given.
+        self.assertTrue(pandas_ta.stc(self.close, ma1=ma1, ma2=ma2, osc=ma1 - ma2).equals(traditional))
+
+        # A distinct oscillator must change the macd column.
+        other = pandas_ta.stc(self.close, osc=pandas_ta.ema(self.close, length=5) - ma2)
+        self.assertFalse(other[macd_col].equals(traditional[macd_col]))
+
+        # ma1 and ma2 are only meaningful as a pair.
+        for kwargs in ({"ma1": ma1}, {"ma2": ma2}):
+            with self.assertRaises(ValueError):
+                pandas_ta.stc(self.close, **kwargs)
+
+        # slow < fast is swapped, so the pair is order independent.
+        self.assertTrue(pandas_ta.stc(self.close, fast=26, slow=12).equals(traditional))
 
     def test_stoch(self):
         # TV Correlation

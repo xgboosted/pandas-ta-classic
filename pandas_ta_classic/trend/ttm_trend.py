@@ -54,10 +54,12 @@ def ttm_trend(
 
 ttm_trend.__doc__ = """TTM Trend (TTM_TRND)
 
-This indicator is from John Carters book “Mastering the Trade” and plots the
-bars green or red. It checks if the price is above or under the average price of
-the previous 5 bars. The indicator should hep you stay in a trade until the
-colors chance. Two bars of the opposite color is the signal to get in or out.
+This indicator is from John Carter's book “Mastering the Trade” and plots the
+bars green or red. It checks if the close is above or under the average HL2 of
+the `length` bars before it — the six previous bars by default, with the current
+bar left out, as in the cited source. The indicator should help you stay in a
+trade until the colors change. Two bars of the opposite color is the signal to
+get in or out.
 
 Sources:
     https://www.prorealcode.com/prorealtime-indicators/ttm-trend-price/

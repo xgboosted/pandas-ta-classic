@@ -98,6 +98,39 @@ class TestCycles(TestCase):
             ),
         )
 
+    def test_ht_indicators_propagate_an_interior_nan(self):
+        """TA-Lib requires NaN-free input; the ports emit NaN instead of crashing.
+
+        The smoothed period feeds its own recursion, so one missing bar makes
+        every later value undefined — int(nan) used to raise instead.
+        """
+        gap = self.close.copy()
+        gap.iloc[200] = float("nan")
+
+        funcs = {
+            "ht_dcperiod": pandas_ta.ht_dcperiod,
+            "ht_dcphase": pandas_ta.ht_dcphase,
+            "ht_phasor": pandas_ta.ht_phasor,
+            "ht_sine": pandas_ta.ht_sine,
+            "ht_trendline": pandas_ta.ht_trendline,
+            "ht_trendmode": pandas_ta.ht_trendmode,
+        }
+        for name, func in funcs.items():
+            with self.subTest(name=name):
+                clean, poisoned = func(self.close), func(gap)
+                self.assertEqual(poisoned.shape, clean.shape)
+                # Bars before the gap are untouched. astype(float) because
+                # ht_trendmode is int64 without a NaN and float64 with one.
+                self.assertTrue(poisoned.iloc[:200].astype(float).equals(clean.iloc[:200].astype(float)))
+                # The gap is NaN rather than a crash in int(nan) ...
+                self.assertTrue(poisoned.iloc[200].isna().all() if poisoned.ndim > 1 else poisoned.isna().iloc[200])
+                # ... and it is the only extra NaN: the recursion carries the
+                # previous state forward, so values resume on the next bar.
+                self.assertTrue(poisoned.iloc[201:].notna().all().all())
+                # They no longer match the clean run, though: the gap perturbed
+                # the state the recursion carries.
+                self.assertFalse(poisoned.iloc[201:].equals(clean.iloc[201:]))
+
     def test_msw(self):
         result = pandas_ta.msw(self.close, period=10)
         self.assertIsNotNone(result)
