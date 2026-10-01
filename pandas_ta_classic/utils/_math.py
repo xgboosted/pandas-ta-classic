@@ -94,14 +94,17 @@ def fibonacci(n: int = 2, *, zero: bool = False, weighted: bool = False) -> np.n
     for _ in range(n):
         a, b = b, a + b
         terms.append(a)
-    result = np.array(terms, dtype=object if terms[-1] > np.iinfo(np.int64).max else np.int64)
 
     if weighted:
         fib_sum = sum(terms)  # exact: a float64 sum loses precision past 2**53
         if fib_sum > 0:
             return np.array([term / fib_sum for term in terms], dtype=float)
-        return result
-    return result
+        # A zero sum is reachable only for fibonacci(0, zero=True) ([0]); there
+        # is no weight to distribute, so the weighted result is all zeros rather
+        # than silently the unweighted int array (rule 1 forbids that fallback).
+        return np.zeros(len(terms), dtype=float)
+
+    return np.array(terms, dtype=object if terms[-1] > np.iinfo(np.int64).max else np.int64)
 
 
 def linear_regression(x: Series, y: Series) -> dict:

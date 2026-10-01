@@ -598,7 +598,7 @@ class TestApplyFill(TestCase):
 
 
 class TestNoneGuards(TestCase):
-    """Regression tests for PR #95 – None-guard coverage.
+    """Regression tests for PR #95 - None-guard coverage.
 
     Each patched indicator must return None (not raise) when given a Series
     shorter than its minimum required length.  A 4-row Series is used because

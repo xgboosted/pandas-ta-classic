@@ -149,8 +149,6 @@ class TestCandle(TestCase):
         zscore() had no such parameter, so the forwarded value landed in
         **kwargs and was dropped; ddof=0 and ddof=1 were bit-identical.
         """
-        import numpy as np
-
         args = (self.open, self.high, self.low, self.close)
         sample = pandas_ta.cdl_z(*args, ddof=1)
         population = pandas_ta.cdl_z(*args, ddof=0)
@@ -206,8 +204,10 @@ _PATTERN_CASES = [
     ("cdl_concealbabyswall", "CDLCONCEALBABYSWALL", {}, [(120, 120, 110, 110), (110, 110, 100, 100), (95, 101, 89, 90), (99, 102, 85, 88)], 100),
     # white marubozu / black marubozu gapping down below it
     ("cdl_kicking", "CDLKICKING", {}, [(100, 110, 100, 110), (97, 97, 85, 85)], -100),
-    # white marubozu, body 10 / black marubozu, body 12 -- the longer one names the signal
-    ("cdl_kickingbylength", "CDLKICKINGBYLENGTH", {}, [(100, 110, 100, 110), (97, 97, 85, 85)], -100),
+    # white marubozu, body 12 / black marubozu, body 10 -- the *first* marubozu is
+    # longer, so the signal is the opposite of cdl_kicking's: that is what tells
+    # the two apart, and the shared bars of cdl_kicking would not.
+    ("cdl_kickingbylength", "CDLKICKINGBYLENGTH", {}, [(100, 112, 100, 112), (97, 97, 87, 87)], 100),
     # long white / small black gapping up / reaction day holding above half the 1st body / lower again, still holding / white closing above
     #   every reaction high
     (
@@ -240,20 +240,49 @@ _PATTERN_CASES = [
     ("cdl_3linestrike", "CDL3LINESTRIKE", {}, [(100, 110, 100, 110), (105, 115, 105, 115), (110, 120, 110, 120), (122, 122, 95, 95)], 100),
     # black; its close is the sandwich level / white trading entirely above that close / black closing back at the level
     ("cdl_sticksandwich", "CDLSTICKSANDWICH", {}, [(110, 110, 100, 100), (105, 115, 105, 115), (112, 112, 99, 100)], 100),
+    # The six two-sided patterns above are mirrored -- p -> 200 - p, high and
+    # low swapped -- so the opposite-sign branch fires too. Each is the same
+    # case upside down, and native matches TA-Lib on every bar.
+    # long white / doji gapping up, shadows clear of the 1st / long black gapping back down over the doji
+    ("cdl_abandonedbaby", "CDLABANDONEDBABY", {"penetration": 0.3}, [(80, 90, 80, 90), (95, 95.2, 94.8, 95), (94, 94, 82, 82)], -100),
+    # long black / black gapping down / lower high and low / lower again / white closing inside the gap
+    (
+        "cdl_breakaway",
+        "CDLBREAKAWAY",
+        {},
+        [(90, 90, 80, 80), (75, 76, 72, 73), (73, 74, 70, 71), (71, 72, 67, 68), (68, 79, 67, 78)],
+        100,
+    ),
+    # black marubozu / white marubozu gapping up above it
+    ("cdl_kicking", "CDLKICKING", {}, [(100, 100, 90, 90), (103, 115, 103, 115)], 100),
+    # black marubozu, body 12 / white marubozu, body 10 -- the *first* is longer
+    ("cdl_kickingbylength", "CDLKICKINGBYLENGTH", {}, [(100, 100, 88, 88), (103, 113, 103, 113)], -100),
+    # long black / three small white bars rising inside its range / long black closing below the 1st close
+    (
+        "cdl_risefall3methods",
+        "CDLRISEFALL3METHODS",
+        {},
+        [(90, 91, 79, 80), (80.2, 80.7, 80, 80.5), (80.7, 81.2, 80.5, 81), (81.2, 81.7, 81, 81.5), (81, 81, 69, 69)],
+        -100,
+    ),
+    # 1st black / 2nd black opens inside the 1st body, closes lower / 3rd black opens inside the 2nd body, closes lower / white engulfing
+    #   all three: opens below, closes above
+    ("cdl_3linestrike", "CDL3LINESTRIKE", {}, [(100, 100, 90, 90), (95, 95, 85, 85), (90, 90, 80, 80), (78, 105, 78, 105)], -100),
 ]
 
 
 class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
-    """Fourteen patterns on bars built to satisfy their conditions.
+    """Fourteen patterns on bars built to satisfy their conditions, plus the six
+    two-sided ones mirrored to fire the opposite sign.
 
-    `tests/test_oracle_talib.py` compares all 62 patterns against TA-Lib over
-    SPY_D and they agree on every bar -- but eight of them return 0 for all 5241
-    rows, so that agreement said nothing about the branch that emits the signal,
-    and six more fire between one and four times, resting the comparison on a
-    handful of rows. The bars are frozen literals, not a search at test time:
-    each run was built from the pattern's own condition block (a random search
-    supplied the starting point for some of the eight) and then reduced to round
-    numbers that still satisfy every clause.
+    `tests/test_oracle_talib.py` compares 59 patterns against TA-Lib over the
+    last 2000 bars of SPY_D and they agree on every bar -- but eight of them
+    return 0 for all 2000 rows, so that agreement said nothing about the branch
+    that emits the signal, and six more fire between one and four times, resting
+    the comparison on a handful of rows. The bars are frozen literals, not a
+    search at test time: each run was built from the pattern's own condition
+    block (a random search supplied the starting point for some of the eight)
+    and then reduced to round numbers that still satisfy every clause.
     """
 
     def _frame(self, bars):
@@ -280,8 +309,8 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
     def test_each_pattern_matches_talib_on_its_own_bars(self):
         """Bar for bar, including the signal itself.
 
-        `talib=True` falls back to the native formula when TA-Lib is missing, so
-        this comparison is worthless without it -- hence the skip.
+        The comparison calls `talib.<name>` directly, which needs TA-Lib
+        installed; the `cdl_*` functions have no `talib` parameter to fall back.
         """
         for name, talib_name, kwargs, bars, _expected in _PATTERN_CASES:
             with self.subTest(pattern=name):

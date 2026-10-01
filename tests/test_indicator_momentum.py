@@ -984,8 +984,9 @@ class TestMomentum(TestCase):
         A window where every bar shares its high and low divided 0/0, and the
         NaN then spread over the next length-1 windows: a flat block of b bars
         cost max(0, b - (length - 1)) extra NaN and a fully flat series was all
-        NaN. The six siblings (stoch, stochf, stochrsi, kdj, fisher, stc) all
-        guard the same way.
+        NaN. The six siblings (stoch, stochf, stochrsi, kdj, fisher, stc) read
+        0.0 on a degenerate window too, each through its own zero-denominator
+        guard rather than non_zero_range.
         """
         length = 14
         flat = Series([100.0] * 120)

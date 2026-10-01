@@ -120,6 +120,8 @@ Args:
     length (int): The period. Default: 30
     full (bool): Use an anchored (expanding) window instead of a rolling one
         of `length` bars. Default: False
+    ddof (int): Delta Degrees of Freedom for the rolling standard deviation.
+        Must be 0 <= ddof < length; ignored when full=True. Default: 1
 
 Kwargs:
     naive (bool, optional): If True, prefills potential Doji less than

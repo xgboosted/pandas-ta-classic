@@ -16,7 +16,7 @@ def _pmax_trend_arrays(close_arr, pmax_up_arr, pmax_down_arr):
     """Compute PMAX trend direction and band arrays.
 
     Iterates over ``close_arr`` updating the adaptive upper / lower ATR bands
-    and determining the per-bar trend direction (1 = uptrend, −1 = downtrend).
+    and determining the per-bar trend direction (1 = uptrend, -1 = downtrend).
 
     Args:
         close_arr (np.ndarray): 1-D float close-price array.

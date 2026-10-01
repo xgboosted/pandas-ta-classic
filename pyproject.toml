@@ -166,10 +166,14 @@ exclude = [
 line-length = 150
 
 [tool.ruff.lint]
-# ruff's default rule set (floating with the `>=` pin) plus ICN. ICN001 enforces
-# the conventional aliases (numpy as np, pandas as pd); ICN003 with banned-from
-# rejects `from numpy import x`, so numpy is always reached through `np.`.
-extend-select = ["ICN"]
+# ruff's default rule set (floating with the `>=` pin) plus ICN, the confusable-
+# character rules (RUF001-003) and the bidi-control rule (PLE2502). ICN001
+# enforces the conventional aliases (numpy as np, pandas as pd); ICN003 with
+# banned-from rejects `from numpy import x`, so numpy is always reached through
+# `np.`. RUF001-003/PLE2502 reject characters that are invisible or ambiguous
+# with ASCII in strings, docstrings and comments (the hand-written
+# tests/test_no_invisible_characters.py scan covers non-Python files).
+extend-select = ["ICN", "RUF001", "RUF002", "RUF003", "PLE2502"]
 
 [tool.ruff.lint.isort]
 # Keep `from x import a as b, c` on one line instead of one statement per alias.

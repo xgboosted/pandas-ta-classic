@@ -43,7 +43,7 @@ def er(
 
     # attach_signals owns the order of the remaining steps (signals off the
     # unoffset series, one shift, then the fill over every column).
-    return attach_signals(er, category="momentum", offset=offset, kwargs=kwargs)
+    return attach_signals(er, category="momentum", offset=offset, kwargs=kwargs, xa_default=0.8, xb_default=0.2)
 
 
 er.__doc__ = """Efficiency Ratio (ER)
@@ -74,8 +74,8 @@ Kwargs:
     signal_indicators (bool): When True, threshold and comparison signal
         columns are appended and the result becomes a DataFrame instead of a
         Series. The options below are only read when it is True. Default: False
-    xa (float): Upper threshold. Default: 80
-    xb (float): Lower threshold. Default: 20
+    xa (float): Upper threshold. Default: 0.8 (ER is a ratio in [0, 1])
+    xb (float): Lower threshold. Default: 0.2
     cross_values (bool): When True, the xa/xb columns mark the bars that cross
         the threshold instead of flagging every bar on one side of it.
         Default: False

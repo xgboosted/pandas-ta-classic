@@ -30,7 +30,7 @@ def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, d
         drift (int): Periods to shift ``close`` for the previous-close column.
 
     Returns:
-        Series: UO values scaled to 0–100.
+        Series: UO values scaled to 0-100.
     """
     tdf = DataFrame({"high": high, "low": low, f"close_{drift}": close.shift(drift)})
     # skipna=False so a missing previous close (the first `drift` bars) yields a
