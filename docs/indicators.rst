@@ -203,6 +203,32 @@ Other candle indicators:
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
        # variance, wcp, willr, wma
 
+Signal columns
+--------------
+
+``er``, ``macd``, ``macdfix``, ``rsi`` and ``rsx`` accept ``signal_indicators=True``.
+It appends threshold and comparison columns to the indicator and returns a
+``DataFrame`` instead of a ``Series``:
+
+* ``xa`` / ``xb`` — upper and lower thresholds (80 / 20; ``macd`` uses 0 / ``None``).
+  ``None`` drops that side's column.
+* ``cross_values`` — ``True`` marks the bars that cross a threshold, ``False``
+  flags every bar on one side of it. Default ``False``; ``macd`` defaults to
+  crossings for the histogram and levels for the MACD line.
+* ``xserie`` — comparison series, used for both directions unless ``xserie_a``
+  (above) or ``xserie_b`` (below) is given. Default ``None``.
+* ``cross_series`` — ``True`` (the default) marks crossings of those series,
+  ``False`` flags every bar on one side of them.
+
+.. code-block:: python
+
+    df.ta.rsi(length=14, signal_indicators=True, xa=70, xb=30)
+    # RSI_14, RSI_14_A_70, RSI_14_B_30
+
+``macdfix`` forwards all of these to ``macd``. Because TA-Lib's ``MACDFIX``
+returns the three lines only, ``talib=True`` is ignored while
+``signal_indicators`` or ``asmode`` is set.
+
 Degenerate windows
 ------------------
 

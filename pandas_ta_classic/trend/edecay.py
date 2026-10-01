@@ -64,25 +64,3 @@ Kwargs:
 Returns:
     pd.Series: Exponential decay series.
 """
-
-
-edecay.__doc__ = """Exponential Decay (EDECAY)
-
-Exponential variant of linear decay.  At each bar the value decays by
-exp(-length) from the previous bar, floored at the current close price.
-
-Equivalent to ta.decay(close, length, mode='exponential').
-tulipy name: EDECAY.
-
-Args:
-    close (pd.Series): Series of 'close' prices
-    length (int): Decay period. Default: 5
-    offset (int): Periods to offset. Default: 0
-
-Kwargs:
-    fillna (value, optional): pd.DataFrame.fillna(value)
-    fill_method (value, optional): Type of fill method
-
-Returns:
-    pd.Series
-"""

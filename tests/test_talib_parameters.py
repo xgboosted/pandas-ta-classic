@@ -68,3 +68,33 @@ def test_non_default_parameter_runs_natively():
     close = get_sample_data().close.iloc[:300]
     assert ta.rsi(close, scalar=50, talib=True).equals(ta.rsi(close, scalar=50, talib=False))
     assert not ta.rsi(close, talib=True).equals(ta.rsi(close, talib=False))  # defaults still use TA-Lib
+
+
+def test_macdfix_keeps_its_signal_columns_on_the_talib_path():
+    """The sweep above reads the signature, so a `**kwargs` option is invisible to it.
+
+    `macdfix(talib=True)` builds its own frame from TA-Lib's three lines instead
+    of delegating to `macd()`, so `signal_indicators=True` used to come back with
+    the three columns and no signals at all -- silently. TA-Lib has no signal
+    columns, so that call runs natively, like every other parameter TA-Lib cannot
+    express.
+    """
+    close = get_sample_data().close.iloc[:300]
+    expected = [
+        "MACDFIX_9_9",
+        "MACDFIXh_9_9",
+        "MACDFIXs_9_9",
+        "MACDFIXh_9_9_XA_0",
+        "MACDFIXh_9_9_XB_0",
+        "MACDFIX_9_9_A_0",
+    ]
+
+    native = ta.macdfix(close, signal_indicators=True, talib=False)
+    talib_path = ta.macdfix(close, signal_indicators=True, talib=True)
+
+    assert list(native.columns) == expected
+    assert list(talib_path.columns) == expected
+    assert talib_path.equals(native), "signal_indicators=True must give the same result on both paths"
+    # Without the keyword, talib=True still uses TA-Lib -- which seeds its EMAs
+    # differently, so the two paths must not agree there.
+    assert not ta.macdfix(close, talib=True).equals(ta.macdfix(close, talib=False))
