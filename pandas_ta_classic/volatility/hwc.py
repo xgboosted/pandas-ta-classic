@@ -109,8 +109,13 @@ def hwc(
     if channel_eval:
         hwc_width = Series(upper_arr - lower_arr, index=close.index)
         denom = upper_arr - lower_arr
+        numer = c_arr - lower_arr
         pct_arr = np.full(m, np.nan, dtype=float)
-        np.divide(c_arr - lower_arr, denom, out=pct_arr, where=denom != 0.0)
+        np.divide(numer, denom, out=pct_arr, where=denom != 0.0)
+        # A channel with no width around a close on it is a degenerate window:
+        # 0.0, the convention of tests/test_degenerate_input.py. A close off a
+        # zero-width channel (the warm-up bars, before any variance) stays NaN.
+        pct_arr[(denom == 0.0) & (numer == 0.0)] = 0.0
         hwc_pctwidth = Series(pct_arr, index=close.index)
 
     # Offset

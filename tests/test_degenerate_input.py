@@ -48,6 +48,7 @@ import pytest
 
 import pandas_ta_classic as ta
 from tests.assertions import output_columns
+from tests.test_lookahead import candidate_calls
 
 try:
     import talib
@@ -322,6 +323,18 @@ def test_flat_window_reads_zero_without_an_oracle(name: str, frames) -> None:
         assert (finite == 0.0).all(), f"{column}: degenerate window reads {sorted(set(finite))[:5]}, expected 0.0"
 
 
+# cdl_z(full=True) is anchored: its first bar has no deviation yet. hwc has no warm-up.
+@pytest.mark.parametrize(("name", "kwargs", "prefix", "warm_up"), [("cdl_z", {"full": True}, "", 1), ("hwc", {"channel_eval": True}, "HWPCT", 0)])
+def test_an_option_path_reads_zero_on_a_flat_series(name: str, kwargs: dict, prefix: str, warm_up: int, frames) -> None:
+    """The option paths the default-only sweep missed follow the same 0.0 convention."""
+    for column, values in output_columns(_call(name, frames["flat"], **kwargs)).items():
+        if not _starts_with(column, (prefix,)):
+            continue
+        finite = values.dropna()
+        assert len(finite) == len(values) - warm_up, f"{column}: {values.isna().sum()} NaN, expected {warm_up}"
+        assert (finite == 0.0).all(), f"{column}: flat series reads {sorted(set(finite))[:5]}, expected 0.0"
+
+
 @pytest.mark.parametrize("flat_value", [0.3, 100.1])
 def test_a_flat_block_reads_zero_when_the_value_is_not_exact(flat_value: float) -> None:
     """A flat block at a value binary float cannot represent exactly leaves a
@@ -419,10 +432,16 @@ def _indicator_names() -> list[str]:
     return sorted({n for names in ta.Category.values() for n in names if callable(getattr(ta, n, None)) and not inspect.isclass(getattr(ta, n))})
 
 
-@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
-def test_no_column_is_all_nan_on_a_flat_series(name: str, frames) -> None:
+# The default call plus each boolean keyword flipped on its own: a guard added on
+# the default path misses an option path with its own division -- the default-only
+# sweep let ``cdl_z(full=True)`` and ``hwc(channel_eval=True)`` stay all NaN.
+_FLAT_SERIES_CALLS = [(n, kwargs) for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT for kwargs in candidate_calls(n)]
+
+
+@pytest.mark.parametrize(("name", "kwargs"), _FLAT_SERIES_CALLS, ids=[f"{n}-{k}" if k else n for n, k in _FLAT_SERIES_CALLS])
+def test_no_column_is_all_nan_on_a_flat_series(name: str, kwargs: dict, frames) -> None:
     """A flat series is degenerate input, not missing data."""
-    result = _call(name, frames["flat"])
+    result = _call(name, frames["flat"], **kwargs)
     if result is None:
         pytest.skip(f"{name} returns None for this input")
     for column, values in output_columns(result).items():

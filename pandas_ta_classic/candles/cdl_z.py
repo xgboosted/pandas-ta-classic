@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.statistics.zscore import zscore
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, degenerate_div, nan_on_short_input
 
 
 def _anchored_zscore(series: Series) -> Series:
@@ -14,7 +14,8 @@ def _anchored_zscore(series: Series) -> Series:
     Expanding rather than whole-sample: bar ``t`` is standardised with the mean
     and standard deviation of bars ``0..t`` only, so the value at ``t`` never
     depends on a later bar.  The first bar has no standard deviation and stays
-    ``NaN``.
+    ``NaN``.  A flat run reads 0.0, as the rolling mode does: its deviation and
+    its distance from the mean are both exactly zero, a 0/0 and not a value.
     """
     # pandas' expanding moments, not the pure-numpy style of statistics/zscore.py:
     # that one slides a fixed window, where numpy is exact and trivial.  Over an
@@ -22,7 +23,7 @@ def _anchored_zscore(series: Series) -> Series:
     # cancellation (measured ~1e-11 relative against a two-pass reference, versus
     # ~8e-13 here), and pandas' online algorithm also matches its NaN handling.
     expanding = series.expanding(min_periods=2)
-    return (series - expanding.mean()) / expanding.std(ddof=1)
+    return degenerate_div(series - expanding.mean(), expanding.std(ddof=1))
 
 
 @nan_on_short_input
