@@ -309,27 +309,6 @@ class TestUtilities(TestCase):
         self.assertEqual(int(big[-1]), int(big[-2]) + int(big[-3]))
         self.assertGreater(int(big[-1]), 2**63)
 
-    def test_get_time(self):
-        result = self.utils.get_time(to_string=True)
-        self.assertIsInstance(result, str)
-
-        result = self.utils.get_time("NZSX", to_string=True)
-        self.assertTrue("NZSX" in result)
-        self.assertIsInstance(result, str)
-
-        result = self.utils.get_time("SSE", to_string=True)
-        self.assertIsInstance(result, str)
-        self.assertTrue("SSE" in result)
-
-        # An unknown exchange used to raise a bare KeyError and a non-str fell
-        # back to NYSE without a word.  None selects NYSE; any other non-str
-        # raises ValueError.
-        with self.assertRaisesRegex(ValueError, "unknown exchange 'XXX'"):
-            self.utils.get_time("XXX", to_string=True)
-        with self.assertRaisesRegex(ValueError, "exchange must be a str, got int 5"):
-            self.utils.get_time(5, to_string=True)
-        self.assertTrue("NYSE" in self.utils.get_time(None, to_string=True))
-
     def test_linear_regression(self):
         x = Series([1, 2, 3, 4, 5])
         y = Series([1.8, 2.1, 2.7, 3.2, 4])

@@ -6,6 +6,7 @@ from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from multiprocessing import cpu_count, current_process, get_context
 from numbers import Integral
 from threading import Lock
@@ -24,8 +25,8 @@ from pandas_ta_classic._indicator_loader import (
     _find_indicator_func,
     _make_ta_wrapper,
 )
-from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
-from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, total_time
+from pandas_ta_classic._meta import _MATH_ALIASES, Category, Imports, version
+from pandas_ta_classic.utils import final_time, is_datetime_ordered, total_time
 from pandas_ta_classic.utils._core import _bool_param, _pos_int
 from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
@@ -46,6 +47,10 @@ _STRATEGY_GUARD_DEPTH = 0
 _TO_UTC_REMOVED = (
     "df.ta.to_utc was removed in 0.9.0: reading the attribute converted df's index, so hasattr() and IDE "
     "introspection did too. Use df = ta.to_utc(df), which returns a converted copy"
+)
+_EXCHANGE_REMOVED = (
+    "df.ta.exchange was removed in 0.9.0: last_run is a UTC datetime now; convert it "
+    "with df.ta.last_run.astimezone(zoneinfo.ZoneInfo('America/New_York')) or another time zone"
 )
 
 _MAIN_GUARD_HINT = (
@@ -107,7 +112,7 @@ class Strategy:
         ta (list of dicts): A list of dicts containing keyword arguments where "kind" is the indicator.
             None runs every indicator.
         description (str): A more detailed description of what the Strategy tries to capture. Default: None
-        created (str): At datetime string of when it was created. Default: Automatically generated. *Subject to change*
+        created (datetime): When the Strategy was created, in UTC. Default: Automatically generated.
 
     Example TA:
     ta = [
@@ -124,8 +129,8 @@ class Strategy:
     ta: list | None = field(default_factory=list)  # Required. None means every indicator.
     # Helpful. More descriptive version or notes or w/e.
     description: str = "TA Description"
-    # Optional. Gets Exchange Time and Local Time execution time
-    created: str | None = field(default_factory=lambda: get_time(to_string=True))
+    # Optional. When the Strategy was created, in UTC.
+    created: datetime | None = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self):
         required_args = ["[X] Strategy requires the following argument(s):"]
@@ -351,7 +356,6 @@ class AnalysisIndicators(PandasObject):
     _adjusted = None
     _cores = 0
     _df = pd.DataFrame()
-    _exchange = "NYSE"
     _time_range = "years"
 
     def __init__(self, pandas_obj):
@@ -400,7 +404,7 @@ class AnalysisIndicators(PandasObject):
 
         # Run the indicator
         result = fn(**kwargs)
-        self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)  # Save when it completed it's run
+        self._df.attrs["_ta_last_run"] = datetime.now(timezone.utc)  # Save when it completed its run
 
         if timed:
             if result is not None:
@@ -442,24 +446,21 @@ class AnalysisIndicators(PandasObject):
         self._df.attrs["_ta_cores"] = min(int(value), cpus)
 
     @property
-    def exchange(self) -> str:
-        """Returns the current Exchange. Default: "NYSE"."""
-        return self._df.attrs.get("_ta_exchange", self._exchange)
+    def exchange(self) -> None:
+        """Removed in 0.9.0: it only chose the exchange clock shown in last_run."""
+        # AttributeError, so hasattr() is False and getattr(..., default) works.
+        # __getattr__ re-runs this getter, so the message survives the fallback.
+        raise AttributeError(_EXCHANGE_REMOVED)
 
     @exchange.setter
     def exchange(self, value: str) -> None:
-        """property: df.ta.exchange = "LSE" (None resets to NYSE)"""
-        if value is None:
-            self._df.attrs.pop("_ta_exchange", None)
-            return
-        if not isinstance(value, str) or value not in EXCHANGE_TZ:
-            # an unknown exchange used to be ignored, leaving the previous one in place
-            raise ValueError(f"df.ta.exchange must be one of {sorted(EXCHANGE_TZ)} or None, got {value!r}")
-        self._df.attrs["_ta_exchange"] = value
+        # Without this setter, pandas 3 would store the value on a throwaway
+        # accessor instance and the assignment would silently do nothing.
+        raise AttributeError(_EXCHANGE_REMOVED)
 
     @property
-    def last_run(self) -> str | None:
-        """Returns when df.ta(kind=...) or df.ta.strategy() last ran on the DataFrame, or None."""
+    def last_run(self) -> datetime | None:
+        """Returns when df.ta(kind=...) or df.ta.strategy() last ran on the DataFrame (UTC), or None."""
         return self._df.attrs.get("_ta_last_run")
 
     # Public Get DataFrame Properties
@@ -1143,7 +1144,7 @@ class AnalysisIndicators(PandasObject):
         else:
             self._run_serially(tasks, verbose)
 
-        self._df.attrs["_ta_last_run"] = get_time(self.exchange, to_string=True)
+        self._df.attrs["_ta_last_run"] = datetime.now(timezone.utc)
 
         if verbose:
             logger.info(f"Total indicators: {len(ta)}")
