@@ -12,7 +12,8 @@ from typing import Any, TypeGuard
 
 import numpy as np
 from pandas import DataFrame, DatetimeIndex, RangeIndex, Series, date_range
-from pandas.api.types import is_datetime64_any_dtype
+from pandas.api.extensions import ExtensionDtype
+from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
 
 logger = logging.getLogger(__name__)
 
@@ -565,6 +566,12 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
     Anything else -- a list, a numpy array, a DataFrame -- is a caller error
     and raises TypeError, so the mistake surfaces where it was made rather than
     as a missing column or an unrelated error several frames later.
+
+    A nullable numeric Series (``Float64``, ``Int64``, ...) is returned as a
+    new float64 Series with ``pd.NA`` as NaN. Indicators compute on float64:
+    with the nullable dtype a comparison against a NaN warm-up value gives
+    ``pd.NA`` instead of False, and ``astype(int)`` or a truth test on it
+    raises.
     """
     # A float or numpy min_length used to be ignored without a word, although
     # the signature accepts it, and NaN or a negative one still passed silently.
@@ -575,6 +582,8 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
         if has_length and series.size < min_length:
             logger.warning(f"[X] Series has {series.size} rows but indicator requires" f" at least {min_length}; the result is all NaN.")
             return None
+        if isinstance(series.dtype, ExtensionDtype) and is_numeric_dtype(series.dtype):
+            return Series(series.to_numpy(dtype=float, na_value=np.nan), index=series.index, name=series.name)
         return series
     if series is not None:
         indicator = sys._getframe(1).f_code.co_name  # the indicator that called verify_series

@@ -71,6 +71,12 @@ indicator and every column it returns. The two exceptions are ``CPR_POSITION``
 and ``CPR_WIDTH_CLASS``, which are ``int8`` and cannot hold NaN, so they read 0
 on the bar before the first completed period.
 
+**Nullable input** (``Float64``, ``Int64`` and the other pandas extension
+numeric dtypes, as ``read_csv(dtype_backend="numpy_nullable")`` returns) is
+computed as float64, with ``pd.NA`` read as a missing bar (NaN). Results are
+the same as for the data in float64, dtype included: float64, not ``Float64``.
+``tests/test_nullable_input_contract.py`` checks every registered indicator.
+
 Lookahead Bias and Causality
 -----------------------------
 
