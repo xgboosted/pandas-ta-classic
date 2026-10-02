@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,26 +15,11 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    real_body,
-    O_,
-    H,
-    L,
-    C,
-    body_hi,
-    body_lo,
-    arr_bl,
-    out,
-    start_idx,
-    body_long_trail,
-    body_long_total,
-    f_bl,
-):
+def _detect_nb(color, real_body, O_, H, L, C, body_hi, body_lo, body_long_4, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # 1st: long body
-            real_body[i - 4] > f_bl * body_long_total
+            real_body[i - 4] > body_long_4[i]
             # 1st, 2nd, 4th same color; 5th opposite
             and color[i - 4] == color[i - 3]
             and color[i - 3] == color[i - 1]
@@ -74,29 +59,12 @@ def _detect_nb(
         ):
             out[i] = color[i] * 100
 
-        # Update: add current, subtract trailing (both reference i-4)
-        body_long_total += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
-        body_long_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: TA_CANDLEAVGPERIOD(BodyLong) + 4
-    body_long_period = candle_avg_period(CandleSetting.BodyLong)
-    lookback = body_long_period + 4
-    start_idx = lookback
+    start_idx = candle_avg_period(CandleSetting.BodyLong) + 4
     if start_idx >= len(out):
         return
-
-    arr_bl = ca._ranges[CandleSetting.BodyLong]
-    body_hi = ca.body_high
-    body_lo = ca.body_low
-
-    # Trailing index for BodyLong setting applied to i-4
-    body_long_trail = start_idx - body_long_period
-
-    # Seed BodyLong total: sum of the BodyLong range values at i-4
-    # for i from body_long_trail to start_idx-1
-    body_long_total = float(arr_bl[body_long_trail - 4 : start_idx - 4].sum())
 
     _detect_nb(
         ca.color,
@@ -105,14 +73,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.high,
         ca.low,
         ca.close,
-        body_hi,
-        body_lo,
-        arr_bl,
+        ca.body_high,
+        ca.body_low,
+        candle_average(ca, CandleSetting.BodyLong, 4, start_idx),
         out,
         start_idx,
-        body_long_trail,
-        body_long_total,
-        AVG_FACTOR[CandleSetting.BodyLong],
     )
 
 

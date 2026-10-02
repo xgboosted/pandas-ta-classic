@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,50 +15,25 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    real_body,
-    upper_shadow,
-    lower_shadow,
-    color,
-    arr_bs,
-    out,
-    start_idx,
-    body_short_trail,
-    body_short_total,
-    f_bs,
-):
+def _detect_nb(real_body, upper_shadow, lower_shadow, color, body_short, out, start_idx):
     for i in range(start_idx, len(out)):
-        if real_body[i] < f_bs * body_short_total and upper_shadow[i] > real_body[i] and lower_shadow[i] > real_body[i]:
+        if real_body[i] < body_short[i] and upper_shadow[i] > real_body[i] and lower_shadow[i] > real_body[i]:
             out[i] = color[i] * 100
-
-        # Update trailing windows
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-        body_short_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    body_short_period = candle_avg_period(CandleSetting.BodyShort)
-    lookback = body_short_period
-    start_idx = lookback
+    start_idx = candle_avg_period(CandleSetting.BodyShort)
     if start_idx >= len(out):
         return
-
-    arr_bs = ca._ranges[CandleSetting.BodyShort]
-
-    body_short_trail = start_idx - body_short_period
-    body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
 
     _detect_nb(
         ca.real_body,
         ca.upper_shadow,
         ca.lower_shadow,
         ca.color,
-        arr_bs,
+        candle_average(ca, CandleSetting.BodyShort, 0, start_idx),
         out,
         start_idx,
-        body_short_trail,
-        body_short_total,
-        AVG_FACTOR[CandleSetting.BodyShort],
     )
 
 

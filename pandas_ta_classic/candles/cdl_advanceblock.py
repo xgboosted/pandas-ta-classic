@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,40 +15,7 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    real_body,
-    upper_shadow,
-    O_,
-    C,
-    arr_bl,
-    arr_fr,
-    arr_nr,
-    arr_sl,
-    arr_ss,
-    out,
-    start_idx,
-    shadow_short_trail,
-    shadow_long_trail,
-    near_trail,
-    far_trail,
-    body_long_trail,
-    ss_total_2,
-    ss_total_1,
-    ss_total_0,
-    sl_total_1,
-    sl_total_0,
-    near_total_2,
-    near_total_1,
-    far_total_2,
-    far_total_1,
-    body_long_total,
-    f_near,
-    f_bl,
-    f_ss,
-    f_far,
-    f_sl,
-):
+def _detect_nb(color, real_body, upper_shadow, O_, C, ss_2, ss_1, ss_0, shadow_long, near_2, near_1, far_2, far_1, body_long_2, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # 1st white
@@ -62,111 +29,42 @@ def _detect_nb(
             and C[i - 1] > C[i - 2]
             # 2nd opens within/near 1st real body
             and O_[i - 1] > O_[i - 2]
-            and O_[i - 1] <= C[i - 2] + f_near * near_total_2
+            and O_[i - 1] <= C[i - 2] + near_2[i]
             # 3rd opens within/near 2nd real body
             and O_[i] > O_[i - 1]
-            and O_[i] <= C[i - 1] + f_near * near_total_1
+            and O_[i] <= C[i - 1] + near_1[i]
             # 1st: long real body
-            and real_body[i - 2] > f_bl * body_long_total
+            and real_body[i - 2] > body_long_2[i]
             # 1st: short upper shadow
-            and upper_shadow[i - 2] < f_ss * ss_total_2
+            and upper_shadow[i - 2] < ss_2[i]
             # Signs of weakening (any of 4 sub-conditions)
             and (
                 # Sub-condition 1: 2nd far smaller than 1st AND
                 # 3rd not longer than 2nd
-                (real_body[i - 1] < real_body[i - 2] - f_far * far_total_2 and real_body[i] < real_body[i - 1] + f_near * near_total_1)
+                (real_body[i - 1] < real_body[i - 2] - far_2[i] and real_body[i] < real_body[i - 1] + near_1[i])
                 # Sub-condition 2: 3rd far smaller than 2nd
-                or (real_body[i] < real_body[i - 1] - f_far * far_total_1)
+                or (real_body[i] < real_body[i - 1] - far_1[i])
                 # Sub-condition 3: progressively smaller bodies AND
                 # (3rd or 2nd has non-short upper shadow)
                 or (
                     real_body[i] < real_body[i - 1]
                     and real_body[i - 1] < real_body[i - 2]
-                    and (upper_shadow[i] > f_ss * ss_total_0 or upper_shadow[i - 1] > f_ss * ss_total_1)
+                    and (upper_shadow[i] > ss_0[i] or upper_shadow[i - 1] > ss_1[i])
                 )
                 # Sub-condition 4: 3rd smaller than 2nd AND
                 # 3rd has long upper shadow
-                or (real_body[i] < real_body[i - 1] and upper_shadow[i] > f_sl * arr_sl[i])
+                or (real_body[i] < real_body[i - 1] and upper_shadow[i] > shadow_long[i])
             )
         ):
             out[i] = -100  # Always bearish
 
-        # Update ShadowShort totals [2], [1], [0]
-        ss_total_2 += arr_ss[i - 2] - arr_ss[shadow_short_trail - 2]
-        ss_total_1 += arr_ss[i - 1] - arr_ss[shadow_short_trail - 1]
-        ss_total_0 += arr_ss[i] - arr_ss[shadow_short_trail]
-
-        # Update ShadowLong totals [1], [0]
-        sl_total_1 += arr_sl[i - 1] - arr_sl[shadow_long_trail - 1]
-        sl_total_0 += arr_sl[i] - arr_sl[shadow_long_trail]
-
-        # Update Far and Near totals [2], [1]
-        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
-        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
-        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
-        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
-
-        # Update BodyLong total (applied to i-2)
-        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail - 2]
-
-        shadow_short_trail += 1
-        shadow_long_trail += 1
-        near_trail += 1
-        far_trail += 1
-        body_long_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    # Settings and their avg periods
-    shadow_short_period = candle_avg_period(CandleSetting.ShadowShort)
-    shadow_long_period = candle_avg_period(CandleSetting.ShadowLong)
-    near_period = candle_avg_period(CandleSetting.Near)
-    far_period = candle_avg_period(CandleSetting.Far)
-    body_long_period = candle_avg_period(CandleSetting.BodyLong)
-
+    settings = (CandleSetting.ShadowLong, CandleSetting.ShadowShort, CandleSetting.Far, CandleSetting.Near, CandleSetting.BodyLong)
     # Lookback: max(all avg periods) + 2
-    lookback = (
-        max(
-            shadow_long_period,
-            shadow_short_period,
-            far_period,
-            near_period,
-            body_long_period,
-        )
-        + 2
-    )
-    start_idx = lookback
+    start_idx = max(candle_avg_period(s) for s in settings) + 2
     if start_idx >= len(out):
         return
-
-    arr_bl = ca._ranges[CandleSetting.BodyLong]
-    arr_fr = ca._ranges[CandleSetting.Far]
-    arr_nr = ca._ranges[CandleSetting.Near]
-    arr_sl = ca._ranges[CandleSetting.ShadowLong]
-    arr_ss = ca._ranges[CandleSetting.ShadowShort]
-
-    # Trailing indices
-    shadow_short_trail = start_idx - shadow_short_period
-    shadow_long_trail = start_idx - shadow_long_period
-    near_trail = start_idx - near_period
-    far_trail = start_idx - far_period
-    body_long_trail = start_idx - body_long_period
-
-    # Seed ShadowShort totals [2], [1], [0]
-    ss_total_2 = float(arr_ss[shadow_short_trail - 2 : start_idx - 2].sum())
-    ss_total_1 = float(arr_ss[shadow_short_trail - 1 : start_idx - 1].sum())
-    ss_total_0 = float(arr_ss[shadow_short_trail:start_idx].sum())
-    # Seed ShadowLong totals [1], [0]
-    sl_total_1 = float(arr_sl[shadow_long_trail - 1 : start_idx - 1].sum())
-    sl_total_0 = float(arr_sl[shadow_long_trail:start_idx].sum())
-    # Seed Near totals [2], [1]
-    near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
-    near_total_1 = float(arr_nr[near_trail - 1 : start_idx - 1].sum())
-    # Seed Far totals [2], [1]
-    far_total_2 = float(arr_fr[far_trail - 2 : start_idx - 2].sum())
-    far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
-    # Seed BodyLong total (applied to i-2)
-    body_long_total = float(arr_bl[body_long_trail - 2 : start_idx - 2].sum())
 
     _detect_nb(
         ca.color,
@@ -174,33 +72,17 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.upper_shadow,
         ca.open,
         ca.close,
-        arr_bl,
-        arr_fr,
-        arr_nr,
-        arr_sl,
-        arr_ss,
+        candle_average(ca, CandleSetting.ShadowShort, 2, start_idx),
+        candle_average(ca, CandleSetting.ShadowShort, 1, start_idx),
+        candle_average(ca, CandleSetting.ShadowShort, 0, start_idx),
+        candle_average(ca, CandleSetting.ShadowLong, 0, start_idx),
+        candle_average(ca, CandleSetting.Near, 2, start_idx),
+        candle_average(ca, CandleSetting.Near, 1, start_idx),
+        candle_average(ca, CandleSetting.Far, 2, start_idx),
+        candle_average(ca, CandleSetting.Far, 1, start_idx),
+        candle_average(ca, CandleSetting.BodyLong, 2, start_idx),
         out,
         start_idx,
-        shadow_short_trail,
-        shadow_long_trail,
-        near_trail,
-        far_trail,
-        body_long_trail,
-        ss_total_2,
-        ss_total_1,
-        ss_total_0,
-        sl_total_1,
-        sl_total_0,
-        near_total_2,
-        near_total_1,
-        far_total_2,
-        far_total_1,
-        body_long_total,
-        AVG_FACTOR[CandleSetting.Near],
-        AVG_FACTOR[CandleSetting.BodyLong],
-        AVG_FACTOR[CandleSetting.ShadowShort],
-        AVG_FACTOR[CandleSetting.Far],
-        AVG_FACTOR[CandleSetting.ShadowLong],
     )
 
 

@@ -13,6 +13,7 @@ from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _number
+from pandas_ta_classic.utils._njit import njit
 
 # ---------------------------------------------------------------------------
 # Enums (mirror TA-Lib ta_defs.h)
@@ -135,6 +136,59 @@ class CandleArrays:
 
 def candle_avg_period(setting: CandleSetting) -> int:
     return CANDLE_DEFAULTS[setting][1]
+
+
+# ---------------------------------------------------------------------------
+# Candle averages (TA_CANDLEAVERAGE with its rolling period total)
+# ---------------------------------------------------------------------------
+
+
+@njit(cache=True)
+def _candle_average_nb(arr, period, lag, start_idx, factor, total, out):
+    # Same additions in the same order as TA-Lib's
+    # ``PeriodTotal += range[i - lag] - range[trailingIdx - lag]``, so the totals
+    # are bit-identical to the scalar bookkeeping each pattern used to carry.
+    for i in range(start_idx, len(out)):
+        out[i] = factor * total
+        total += arr[i - lag] - arr[i - lag - period]
+
+
+def candle_average(ca: CandleArrays, setting: CandleSetting, lag: int, start_idx: int, *, sequential_seed: bool = False) -> np.ndarray:
+    """Pattern threshold of *setting* for candle ``i - lag``.
+
+    Element ``i`` (for ``i >= start_idx``) is ``AVG_FACTOR[setting] * total``,
+    where ``total`` is the sum of the setting's range over the ``period`` candles
+    before candle ``i - lag``, or that candle's own range when the period is 0.
+    This is TA-Lib's ``TA_CANDLEAVERAGE(setting, PeriodTotal, i - lag)`` up to
+    rounding, and bit-identical to the scalar bookkeeping the patterns carried
+    before. Elements before *start_idx* are NaN; patterns never read them.
+
+    The first total is numpy's pairwise ``sum()``, or a left-to-right loop as
+    in TA-Lib with ``sequential_seed=True``. From 8 candles on the two can
+    differ in the last bit; each pattern keeps the seed it has always used.
+
+    Raises:
+        ValueError: if ``start_idx < lag + period``, which would read before
+            the first candle.
+    """
+    arr = ca._ranges[setting]
+    period = candle_avg_period(setting)
+    if start_idx < lag + period:
+        raise ValueError(f"candle_average() start_idx must be >= lag + period ({lag + period}) for {setting.name}, got {start_idx}")
+    out = np.empty(len(arr))
+    out[:start_idx] = np.nan
+    if period == 0:
+        np.multiply(AVG_FACTOR[setting], arr[start_idx - lag : len(arr) - lag], out=out[start_idx:])
+    else:
+        window = arr[start_idx - lag - period : start_idx - lag]
+        if sequential_seed:
+            seed = 0.0
+            for value in window:
+                seed += value
+        else:
+            seed = float(window.sum())
+        _candle_average_nb(arr, period, lag, start_idx, AVG_FACTOR[setting], seed, out)
+    return out
 
 
 # ---------------------------------------------------------------------------

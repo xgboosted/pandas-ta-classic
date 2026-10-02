@@ -4,8 +4,8 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -13,30 +13,13 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    real_body,
-    open_,
-    close,
-    body_hi,
-    body_lo,
-    arr_bl,
-    arr_bs,
-    out,
-    start_idx,
-    body_long_trail,
-    body_short_trail,
-    body_long_total,
-    body_short_total,
-    f_bl,
-    f_bs,
-):
+def _detect_nb(color, real_body, open_, close, body_hi, body_lo, body_long_2, body_short_1, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             color[i - 2] == 1
-            and real_body[i - 2] > f_bl * body_long_total
+            and real_body[i - 2] > body_long_2[i]
             and color[i - 1] == -1
-            and real_body[i - 1] <= f_bs * body_short_total
+            and real_body[i - 1] <= body_short_1[i]
             and body_lo[i - 1] > body_hi[i - 2]
             and color[i] == -1
             and open_[i] > open_[i - 1]
@@ -45,47 +28,23 @@ def _detect_nb(
         ):
             out[i] = -100
 
-        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
-        body_short_total += arr_bs[i - 1] - arr_bs[body_short_trail]
-        body_long_trail += 1
-        body_short_trail += 1
-
 
 def _detect(ca, out, **kwargs):
-    body_long_period = candle_avg_period(CandleSetting.BodyLong)
-    body_short_period = candle_avg_period(CandleSetting.BodyShort)
-    lookback = max(body_long_period, body_short_period) + 2
-    start_idx = lookback
+    start_idx = max(candle_avg_period(CandleSetting.BodyLong), candle_avg_period(CandleSetting.BodyShort)) + 2
     if start_idx >= len(out):
         return
-
-    arr_bl = ca._ranges[CandleSetting.BodyLong]
-    arr_bs = ca._ranges[CandleSetting.BodyShort]
-    body_hi = ca.body_high
-    body_lo = ca.body_low
-
-    body_long_trail = start_idx - 2 - body_long_period
-    body_short_trail = start_idx - 1 - body_short_period
-    body_long_total = float(arr_bl[body_long_trail : start_idx - 2].sum())
-    body_short_total = float(arr_bs[body_short_trail : start_idx - 1].sum())
 
     _detect_nb(
         ca.color,
         ca.real_body,
         ca.open,
         ca.close,
-        body_hi,
-        body_lo,
-        arr_bl,
-        arr_bs,
+        ca.body_high,
+        ca.body_low,
+        candle_average(ca, CandleSetting.BodyLong, 2, start_idx),
+        candle_average(ca, CandleSetting.BodyShort, 1, start_idx),
         out,
         start_idx,
-        body_long_trail,
-        body_short_trail,
-        body_long_total,
-        body_short_total,
-        AVG_FACTOR[CandleSetting.BodyLong],
-        AVG_FACTOR[CandleSetting.BodyShort],
     )
 
 

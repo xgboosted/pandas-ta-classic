@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,64 +15,26 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    real_body,
-    upper_shadow,
-    lower_shadow,
-    color,
-    arr_bs,
-    arr_ss,
-    out,
-    start_idx,
-    body_short_trail,
-    shadow_short_trail,
-    body_short_total,
-    shadow_short_total,
-    f_bs,
-    f_ss,
-):
+def _detect_nb(real_body, upper_shadow, lower_shadow, color, body_short, shadow_short, out, start_idx):
     for i in range(start_idx, len(out)):
-        if real_body[i] < f_bs * body_short_total and upper_shadow[i] < f_ss * shadow_short_total and lower_shadow[i] < f_ss * shadow_short_total:
+        if real_body[i] < body_short[i] and upper_shadow[i] < shadow_short[i] and lower_shadow[i] < shadow_short[i]:
             out[i] = color[i] * 100
-
-        # Update trailing windows
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-        shadow_short_total += arr_ss[i] - arr_ss[shadow_short_trail]
-        body_short_trail += 1
-        shadow_short_trail += 1
 
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    body_short_period = candle_avg_period(CandleSetting.BodyShort)
-    shadow_short_period = candle_avg_period(CandleSetting.ShadowShort)
-    lookback = max(body_short_period, shadow_short_period)
-    start_idx = lookback
+    start_idx = max(candle_avg_period(CandleSetting.BodyShort), candle_avg_period(CandleSetting.ShadowShort))
     if start_idx >= len(out):
         return
-
-    arr_bs = ca._ranges[CandleSetting.BodyShort]
-    arr_ss = ca._ranges[CandleSetting.ShadowShort]
-
-    body_short_trail = start_idx - body_short_period
-    shadow_short_trail = start_idx - shadow_short_period
-    body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
-    shadow_short_total = float(arr_ss[shadow_short_trail:start_idx].sum())
 
     _detect_nb(
         ca.real_body,
         ca.upper_shadow,
         ca.lower_shadow,
         ca.color,
-        arr_bs,
-        arr_ss,
+        candle_average(ca, CandleSetting.BodyShort, 0, start_idx),
+        candle_average(ca, CandleSetting.ShadowShort, 0, start_idx),
         out,
         start_idx,
-        body_short_trail,
-        shadow_short_trail,
-        body_short_total,
-        shadow_short_total,
-        AVG_FACTOR[CandleSetting.BodyShort],
-        AVG_FACTOR[CandleSetting.ShadowShort],
     )
 
 

@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,123 +15,44 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    upper_shadow,
-    real_body,
-    O_,
-    C,
-    arr_bs,
-    arr_fr,
-    arr_nr,
-    arr_svs,
-    out,
-    start_idx,
-    svs_trail,
-    near_trail,
-    far_trail,
-    body_short_trail,
-    svs_total_2,
-    svs_total_1,
-    svs_total_0,
-    near_total_2,
-    near_total_1,
-    far_total_2,
-    far_total_1,
-    body_short_total,
-    f_svs,
-    f_near,
-    f_far,
-    f_bs,
-):
+def _detect_nb(color, upper_shadow, real_body, O_, C, svs_2, svs_1, svs_0, near_2, near_1, far_2, far_1, body_short, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # 1st white
             color[i - 2] == 1
             # 1st: very short upper shadow
-            and upper_shadow[i - 2] < f_svs * svs_total_2
+            and upper_shadow[i - 2] < svs_2[i]
             # 2nd white
             and color[i - 1] == 1
             # 2nd: very short upper shadow
-            and upper_shadow[i - 1] < f_svs * svs_total_1
+            and upper_shadow[i - 1] < svs_1[i]
             # 3rd white
             and color[i] == 1
             # 3rd: very short upper shadow
-            and upper_shadow[i] < f_svs * svs_total_0
+            and upper_shadow[i] < svs_0[i]
             # Consecutive higher closes
             and C[i] > C[i - 1]
             and C[i - 1] > C[i - 2]
             # 2nd opens within/near 1st real body
             and O_[i - 1] > O_[i - 2]
-            and O_[i - 1] <= C[i - 2] + f_near * near_total_2
+            and O_[i - 1] <= C[i - 2] + near_2[i]
             # 3rd opens within/near 2nd real body
             and O_[i] > O_[i - 1]
-            and O_[i] <= C[i - 1] + f_near * near_total_1
+            and O_[i] <= C[i - 1] + near_1[i]
             # 2nd not far shorter than 1st
-            and real_body[i - 1] > real_body[i - 2] - f_far * far_total_2
+            and real_body[i - 1] > real_body[i - 2] - far_2[i]
             # 3rd not far shorter than 2nd
-            and real_body[i] > real_body[i - 1] - f_far * far_total_1
+            and real_body[i] > real_body[i - 1] - far_1[i]
             # 3rd: not short real body
-            and real_body[i] > f_bs * body_short_total
+            and real_body[i] > body_short[i]
         ):
             out[i] = 100  # Always bullish
 
-        # Update ShadowVeryShort totals [2], [1], [0]
-        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
-        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
-
-        # Update Far and Near totals [2], [1]
-        far_total_2 += arr_fr[i - 2] - arr_fr[far_trail - 2]
-        far_total_1 += arr_fr[i - 1] - arr_fr[far_trail - 1]
-        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
-        near_total_1 += arr_nr[i - 1] - arr_nr[near_trail - 1]
-
-        # Update BodyShort total
-        body_short_total += arr_bs[i] - arr_bs[body_short_trail]
-
-        svs_trail += 1
-        near_trail += 1
-        far_trail += 1
-        body_short_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    # Settings and their avg periods
-    svs_period = candle_avg_period(CandleSetting.ShadowVeryShort)
-    body_short_period = candle_avg_period(CandleSetting.BodyShort)
-    far_period = candle_avg_period(CandleSetting.Far)
-    near_period = candle_avg_period(CandleSetting.Near)
-
-    # Lookback: max(all avg periods) + 2
-    lookback = max(svs_period, body_short_period, far_period, near_period) + 2
-    start_idx = lookback
+    start_idx = max(candle_avg_period(s) for s in (CandleSetting.ShadowVeryShort, CandleSetting.BodyShort, CandleSetting.Far, CandleSetting.Near)) + 2
     if start_idx >= len(out):
         return
-
-    arr_bs = ca._ranges[CandleSetting.BodyShort]
-    arr_fr = ca._ranges[CandleSetting.Far]
-    arr_nr = ca._ranges[CandleSetting.Near]
-    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
-
-    # Trailing indices
-    svs_trail = start_idx - svs_period
-    near_trail = start_idx - near_period
-    far_trail = start_idx - far_period
-    body_short_trail = start_idx - body_short_period
-
-    # Seed ShadowVeryShort totals [2], [1], [0]
-    svs_total_2 = float(arr_svs[svs_trail - 2 : start_idx - 2].sum())
-    svs_total_1 = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
-    svs_total_0 = float(arr_svs[svs_trail:start_idx].sum())
-    # Seed Near totals [2], [1] (not [0])
-    near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
-    near_total_1 = float(arr_nr[near_trail - 1 : start_idx - 1].sum())
-    # Seed Far totals [2], [1] (not [0])
-    far_total_2 = float(arr_fr[far_trail - 2 : start_idx - 2].sum())
-    far_total_1 = float(arr_fr[far_trail - 1 : start_idx - 1].sum())
-    # Seed BodyShort total
-    body_short_total = float(arr_bs[body_short_trail:start_idx].sum())
 
     _detect_nb(
         ca.color,
@@ -139,28 +60,16 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.real_body,
         ca.open,
         ca.close,
-        arr_bs,
-        arr_fr,
-        arr_nr,
-        arr_svs,
+        candle_average(ca, CandleSetting.ShadowVeryShort, 2, start_idx),
+        candle_average(ca, CandleSetting.ShadowVeryShort, 1, start_idx),
+        candle_average(ca, CandleSetting.ShadowVeryShort, 0, start_idx),
+        candle_average(ca, CandleSetting.Near, 2, start_idx),
+        candle_average(ca, CandleSetting.Near, 1, start_idx),
+        candle_average(ca, CandleSetting.Far, 2, start_idx),
+        candle_average(ca, CandleSetting.Far, 1, start_idx),
+        candle_average(ca, CandleSetting.BodyShort, 0, start_idx),
         out,
         start_idx,
-        svs_trail,
-        near_trail,
-        far_trail,
-        body_short_trail,
-        svs_total_2,
-        svs_total_1,
-        svs_total_0,
-        near_total_2,
-        near_total_1,
-        far_total_2,
-        far_total_1,
-        body_short_total,
-        AVG_FACTOR[CandleSetting.ShadowVeryShort],
-        AVG_FACTOR[CandleSetting.Near],
-        AVG_FACTOR[CandleSetting.Far],
-        AVG_FACTOR[CandleSetting.BodyShort],
     )
 
 
