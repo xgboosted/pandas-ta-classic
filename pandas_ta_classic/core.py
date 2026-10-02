@@ -237,6 +237,22 @@ def _run_task_group(df: pd.DataFrame, group: list[tuple]) -> list[tuple]:
     return out
 
 
+def _custom_kinds(kinds: list[str]) -> list[str]:
+    """The *kinds* whose df.ta method was bound by user code (custom.import_dir, custom.bind).
+
+    A worker process is a fresh interpreter that never ran that code, so it
+    either has no such method or, for a custom module that reuses a built-in
+    name (trend/sma.py), would silently run the built-in one instead.
+    """
+    custom = []
+    for kind in dict.fromkeys(kinds):
+        method = AnalysisIndicators.__dict__.get(kind)  # None: built-in, resolved lazily by __getattr__
+        module = getattr(method, "__module__", None) or ""
+        if method is not None and module != "pandas_ta_classic" and not module.startswith("pandas_ta_classic."):
+            custom.append(kind)
+    return custom
+
+
 # Pandas TA - DataFrame Analysis Indicators
 @pd.api.extensions.register_dataframe_accessor("ta")
 class AnalysisIndicators(PandasObject):
@@ -1078,6 +1094,16 @@ class AnalysisIndicators(PandasObject):
             if verbose:
                 logger.info("Running serially: strategy() was called inside a worker process.")
             executor, cores = None, 0
+
+        # Every worker raised AttributeError for a custom indicator, after the
+        # parent had accepted it; refuse before any process starts.
+        if executor is not None or cores > 0:
+            custom = _custom_kinds([kind for _, kind, _, _ in tasks])
+            if custom:
+                raise ValueError(
+                    f"strategy() cannot run the custom indicators {custom} in worker processes: each worker is a fresh "
+                    "interpreter that never loaded them. Run this strategy with cores=0 and no executor."
+                )
 
         if timed:
             stime = perf_counter()

@@ -514,3 +514,58 @@ class TestCustomStrategyLength(TestCase):
         direct = self.data.ta.sma(length=500)
         self.assertTrue(self.data["SMA_500"].equals(direct))
         self.assertTrue(self.data["SMA_500"].isna().all())
+
+
+def _dbl_method(self, **kwargs):
+    out = self._get_column("close") * 2
+    out.name = "DBL"
+    return self._post_process(out, **kwargs)
+
+
+class TestCustomIndicatorsNeedSerialStrategy(TestCase):
+    """A worker process is a fresh interpreter that never ran custom.import_dir():
+    every worker raised AttributeError for a custom indicator the parent had
+    accepted, and a custom module reusing a built-in name ran the built-in."""
+
+    def setUp(self):
+        self.df = get_sample_data().iloc[:300].copy()
+        self.strategy = pandas_ta.Strategy("custom", [{"kind": "sma"}, {"kind": "dbl"}])
+        patches = (
+            mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
+            mock.patch.dict(pandas_ta.Category, {"trend": [*pandas_ta.Category["trend"], "dbl"]}),
+        )
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_cores_raise_before_any_worker_starts(self):
+        with self.assertRaisesRegex(ValueError, r"cannot run the custom indicators \['dbl'\] in worker processes.*cores=0"):
+            self.df.ta.strategy(self.strategy, cores=2)
+        self.assertNotIn("SMA_10", self.df.columns)
+
+    def test_an_executor_raises_too(self):
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(2) as executor, self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+            self.df.ta.strategy(self.strategy, executor=executor)
+
+    def test_a_custom_override_of_a_built_in_name_raises(self):
+        with (
+            mock.patch.object(pandas_ta.AnalysisIndicators, "sma", _dbl_method, create=True),
+            self.assertRaisesRegex(ValueError, r"custom indicators \['sma', 'dbl'\]"),
+        ):
+            self.df.ta.strategy(self.strategy, cores=2)
+
+    def test_a_module_that_only_shares_the_prefix_is_custom(self):
+        from pandas_ta_classic.core import _custom_kinds
+
+        def ext_method(self, **kwargs):
+            return None
+
+        ext_method.__module__ = "pandas_ta_classic_ext"
+        with mock.patch.object(pandas_ta.AnalysisIndicators, "ext", ext_method, create=True):
+            self.assertEqual(_custom_kinds(["ext", "sma"]), ["ext"])
+
+    def test_serial_strategy_still_runs_them(self):
+        self.df.ta.strategy(self.strategy, cores=0)
+        self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
