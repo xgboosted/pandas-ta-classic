@@ -43,6 +43,7 @@ from pandas_ta_classic.utils import (
     non_zero_range,
     verify_series,
 )
+from tests.config import get_sample_data
 
 # ---------------------------------------------------------------------------
 # Custom Hypothesis strategies
@@ -774,3 +775,22 @@ def test_hypothesis_correlation_non_negative(s1, s2):
     except Exception:  # noqa: BLE001 - pathological generated input is acceptable
         return
     assert -1.0 <= corr <= 1.0, f"Correlation out of bounds: {corr}"
+
+
+_SAMPLE = get_sample_data()
+
+
+@pytest.mark.hypothesis
+@given(scale=st.floats(min_value=1e-3, max_value=1e6), start=st.integers(min_value=0, max_value=4000))
+@settings(max_examples=30, deadline=None)
+def test_hypothesis_vfi_ignores_the_volume_unit(scale, start):
+    """VFI divides summed signed volume by an average volume, so the unit cancels.
+
+    It must also move: a cutoff of ``coef * close`` instead of ``coef * stdev *
+    close`` made it 0.0 on every bar of the sample data.
+    """
+    df = _SAMPLE.iloc[start : start + 1000]
+    base = ta.vfi(df["high"], df["low"], df["close"], df["volume"])
+    scaled = ta.vfi(df["high"], df["low"], df["close"], df["volume"] * scale)
+    np.testing.assert_allclose(scaled.to_numpy(), base.to_numpy(), rtol=1e-9, atol=1e-12, equal_nan=True)
+    assert base.dropna().nunique() > 100

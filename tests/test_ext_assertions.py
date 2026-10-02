@@ -24,7 +24,7 @@ Design decisions
 * Each test starts with a *fresh copy* of the sample DataFrame so that
   columns appended by earlier tests do not interfere.  A class-level copy is
   held and each test deep-copies it before calling ``append=True``.
-* ``pmax`` and ``vfi`` are excluded (known pre-existing ValueError bugs).
+* ``pmax`` is excluded (a known pre-existing ValueError bug).
 """
 
 import math

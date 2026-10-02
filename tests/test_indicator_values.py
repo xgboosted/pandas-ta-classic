@@ -190,7 +190,7 @@ def _compute_all(df: pd.DataFrame) -> dict[str, object]:
         "pvol": ta.pvol(c, v),
         "pvr": ta.pvr(c, v),
         "pvt": ta.pvt(c, v),
-        "vfi": ta.vfi(c, v),
+        "vfi": ta.vfi(h, low, c, v),
         # ---- Statistics (TA-Lib backed) ----
         "stdev_20": ta.stdev(c, length=20, talib=False),
         "variance_20": ta.variance(c, length=20, talib=False),

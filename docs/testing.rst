@@ -403,5 +403,5 @@ Still regression-only, with no independent check of their values:
 ``inertia``, ``jma``, ``kdj``, ``long_run``, ``lrsi``, ``mcgd``, ``mmar``,
 ``pmax``, ``psl``, ``rainbow``, ``rsx``, ``rvgi``, ``rvi_vol``,
 ``short_run``, ``ssf``, ``td_seq``, ``thermo``, ``tos_stdevall``, ``trixh``,
-``tsignals``, ``vfi``, ``vp``, ``vwmacd``, ``xsignals``, ``zlma``.
+``tsignals``, ``vp``, ``vwmacd``, ``xsignals``, ``zlma``.
 Add a port to ``reference_ports.py`` to move one off this list.

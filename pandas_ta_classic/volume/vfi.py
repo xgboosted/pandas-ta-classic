@@ -1,15 +1,22 @@
 # Volume Flow Indicator (VFI)
 from typing import Any
 
+import numpy as np
 from pandas import Series
 
+from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, degenerate_div, nan_on_short_input
+
+# The source fixes the volatility window at 30 bars, independent of `length`.
+_VINTER_LENGTH = 30
 
 
 @nan_on_short_input
 def vfi(
+    high: Series,
+    low: Series,
     close: Series,
     volume: Series,
     length: int | None = None,
@@ -25,41 +32,46 @@ def vfi(
     coef = _number(coef, 0.2, "coef")
     vcoef = _number(vcoef, 2.5, "vcoef")
     mamode = _str_param(mamode, "ema", "mamode")
-    _length = length
+    _length = max(length, _VINTER_LENGTH) + 1
+    high = verify_series(high, _length)
+    low = verify_series(low, _length)
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
 
-    if close is None or volume is None:
+    if high is None or low is None or close is None or volume is None:
         return None
 
-    # Calculate Result
-    # Typical price
-    typical = close
+    # Calculate Result, as Katsanos and LazyBear define it. The previous version
+    # used the close for the typical price, a cutoff of coef * close (a 20 % move
+    # at the default coef, so VFI was 0.0 on every SPY_D bar), volume times the
+    # price change instead of signed volume, and divided by an average of vave.
+    typical = hlc3(high, low, close)
+    inter = np.log(typical).diff().to_numpy(dtype=float)
+    # Population deviation (Pine's stdev) of the log change. Pure numpy: an
+    # all-finite window is required, so a missing bar leaves its windows NaN.
+    vinter = np.full(inter.size, np.nan)
+    if _VINTER_LENGTH <= inter.size:
+        vinter[_VINTER_LENGTH - 1 :] = np.lib.stride_tricks.sliding_window_view(inter, _VINTER_LENGTH).std(axis=1)
+    cutoff = coef * vinter * close.to_numpy(dtype=float)
 
-    # Volume cutoff
     vave = volume.rolling(length).mean().shift(1)
-    vmax = vave * vcoef
-    vc = volume.clip(upper=vmax)
+    # np.minimum, not clip(upper=): clip ignores a NaN bound and passed the
+    # uncapped volume through wherever vave was missing.
+    vc = np.minimum(volume.to_numpy(dtype=float), vave.to_numpy(dtype=float) * vcoef)
+    mf = typical.diff().to_numpy(dtype=float)
 
-    # Calculate MF (Money Flow) with volatility threshold
-    # Only consider price changes above the threshold
-    inter = typical - typical.shift(1)
+    # Signed, capped volume where the typical price moved past the cutoff, 0
+    # inside it. NaN where any operand is missing: a comparison with NaN is
+    # False and would read as "no flow".
+    vcp = np.where(mf > cutoff, vc, np.where(mf < -cutoff, -vc, 0.0))
+    vcp[np.isnan(mf) | np.isnan(cutoff) | np.isnan(vc)] = np.nan
+    vcp = Series(vcp, index=close.index)
 
-    # Apply volatility threshold: coef * close
-    cutoff = coef * close
-    mf = inter.where(inter.abs() > cutoff, 0)
-
-    # VCP (Volume times Cutoff Price)
-    vcp = vc * mf
-
-    # Calculate VFI. vave_mean is a rolling mean of the volume's own rolling
-    # mean, not a price quantity: the mask below fires only for a stretch of
-    # ~2*length bars with no volume at all, and turns that stretch from NaN
-    # ("no data") into 0.0, the convention TA-Lib applies for a degenerate
-    # window; see tests/test_degenerate_input.py.
-    vave_mean = vave.rolling(length).mean()
-    vfi = (vcp.rolling(length).sum() / vave_mean).mask(vave_mean == 0, 0.0)
+    # A flat series has no flow and, with no volume, no average: 0/0 reads 0.0
+    # (tests/test_degenerate_input.py); any other zero average is a real
+    # division by zero.
+    vfi = degenerate_div(vcp.rolling(length).sum(), vave)
 
     # Smooth VFI
     vfi = ma(mamode, vfi, length=3)
@@ -85,6 +97,7 @@ the strength of bulls vs bears in the market. It combines price movement with
 volume to show the flow of money into or out of a security.
 
 Sources:
+    Markos Katsanos, "Volume Flow Indicator", Technical Analysis of Stocks & Commodities, June 2004
     https://www.tradingview.com/script/MhlDpfdS-Volume-Flow-Indicator-LazyBear/
     https://www.investopedia.com/terms/v/volume-analysis.asp
 
@@ -92,21 +105,24 @@ Calculation:
     Default Inputs:
         length=130, coef=0.2, vcoef=2.5, mamode='ema'
 
-    typical = close
-    inter = typical - typical.shift(1)  # Price change
-    cutoff = coef * close  # Volatility threshold
-    mf = inter if abs(inter) > cutoff else 0  # Filter minimal price changes
-    
+    typical = HLC3
+    inter = LOG(typical) - LOG(typical.shift(1))
+    vinter = STDEV(inter, 30)  # population deviation, fixed 30 bars
+    cutoff = coef * vinter * close
+
     vave = SMA(volume, length).shift(1)
     vmax = vave * vcoef
-    vc = min(volume, vmax)  # Clipped volume
+    vc = MIN(volume, vmax)
 
-    vcp = vc * mf  # Volume-weighted money flow
+    mf = typical - typical.shift(1)
+    vcp = vc if mf > cutoff else -vc if mf < -cutoff else 0
 
-    VFI = SUM(vcp, length) / SMA(vave, length)  # Protected against division by zero
-    VFI = EMA(VFI, 3)  # Smooth the result
+    VFI = SUM(vcp, length) / vave
+    VFI = MA(mamode, VFI, 3)  # Katsanos' 3-bar EMA; LazyBear's script leaves it off by default
 
 Args:
+    high (pd.Series): Series of 'high's
+    low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
     length (int): The period. Default: 130
