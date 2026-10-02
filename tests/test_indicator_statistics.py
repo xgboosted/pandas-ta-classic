@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import numpy as np
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
@@ -257,8 +258,6 @@ class TestStatistics(TestCase):
         The window deviation divides by length - ddof, so ddof=0 scales every
         value by sqrt(length / (length - 1)) against the ddof=1 default.
         """
-        import numpy as np
-
         length = 30
         default = pandas_ta.zscore(self.close, length=length)
         sample = pandas_ta.zscore(self.close, length=length, ddof=1)

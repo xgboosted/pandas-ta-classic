@@ -411,7 +411,7 @@ class TestNativeVolatility(_NativeBase):
 
     def test_ui(self):
         r = ta.ui(self.c)
-        # UI is 0–1 normally but can exceed 1 in extreme markets; just check finite
+        # UI is 0-1 normally but can exceed 1 in extreme markets; just check finite
         self._assert_valid(r, "ui")
         valid = r.dropna()
         self.assertTrue((valid >= 0).all(), "ui has negative values")

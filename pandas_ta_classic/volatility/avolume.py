@@ -1,4 +1,4 @@
-# Historical Volatility – annualised (tulipy: VOLATILITY)
+# Historical Volatility - annualised (tulipy: VOLATILITY)
 from typing import Any
 
 import numpy as np

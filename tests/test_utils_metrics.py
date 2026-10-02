@@ -166,8 +166,8 @@ class TestUtilityMetrics(TestCase):
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
 
-        # Annualised daily volatility must land near σ·√252.  The old
-        # calendar-days/252 bug understated it by ~17% (√173.6 vs √252).
+        # Annualised daily volatility must land near stddev * sqrt(252).  The old
+        # calendar-days/252 bug understated it by ~17% (sqrt(173.6) vs sqrt(252)).
         expected = float(returns_.std() * np.sqrt(252))
         self.assertAlmostEqual(result, expected, delta=expected * 0.02)
 

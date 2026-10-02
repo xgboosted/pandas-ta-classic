@@ -269,12 +269,15 @@ def attach_signals(
     category: str,
     offset: int,
     kwargs: dict[str, Any],
+    xa_default: float = 80,
+    xb_default: float = 20,
 ) -> Series | DataFrame:
     """Offset *indicator*, append its signal columns on request, then fill.
 
-    ``er``, ``rsi`` and ``rsx`` differ only in their name, so the order these
-    steps have to run in lives here once. Three things it gets right that the
-    three of them each got wrong:
+    ``er``, ``rsi`` and ``rsx`` share this order; they differ in their name and,
+    for ``er``, in their default thresholds (``xa_default``/``xb_default``, since
+    ER is a ratio in [0, 1] rather than a percentage). Three things it gets
+    right that the three of them each got wrong:
 
     * the signals read the unoffset, unfilled indicator and are offset once,
       inside ``signals()`` -- reading the shifted series shifted them twice;
@@ -296,8 +299,8 @@ def attach_signals(
     # Read and validate every signal option regardless of signal_indicators: a
     # bad value is a caller error, not a request to skip the signals. signals()
     # re-validates xa/xb, but it only runs when the signals are wanted.
-    xa = kwargs.pop("xa", 80)
-    xb = kwargs.pop("xb", 20)
+    xa = kwargs.pop("xa", xa_default)
+    xb = kwargs.pop("xb", xb_default)
     xserie = kwargs.pop("xserie", None)
     xserie_a = kwargs.pop("xserie_a", None)
     xserie_b = kwargs.pop("xserie_b", None)

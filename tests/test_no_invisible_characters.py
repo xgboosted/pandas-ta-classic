@@ -1,7 +1,7 @@
 """No tracked file may contain a character that cannot be seen.
 
 Non-ASCII text is fine: the em dashes in this CHANGELOG, the macrons in
-"Ichimoku Kinkō Hyō", the © in a source citation and the × in a benchmark table
+"Ichimoku Kinkō Hyō", the © in a source citation and a times sign in a benchmark table
 all say what they mean, and Python 3 source is UTF-8 by default (PEP 3120).
 
 What is not fine is a character that is invisible, or indistinguishable from an

@@ -53,11 +53,11 @@ def vfi(
     # VCP (Volume times Cutoff Price)
     vcp = vc * mf
 
-    # Calculate VFI. A window with no price movement has no cut-off flow
-    # either, so this divides 0/0; substituting NaN for the zero denominator
-    # left the whole column NaN on such input. It reads 0.0, the convention
-    # TA-Lib applies for a degenerate window; see
-    # tests/test_degenerate_input.py.
+    # Calculate VFI. vave_mean is a rolling mean of the volume's own rolling
+    # mean, not a price quantity: the mask below fires only for a stretch of
+    # ~2*length bars with no volume at all, and turns that stretch from NaN
+    # ("no data") into 0.0, the convention TA-Lib applies for a degenerate
+    # window; see tests/test_degenerate_input.py.
     vave_mean = vave.rolling(length).mean()
     vfi = (vcp.rolling(length).sum() / vave_mean).mask(vave_mean == 0, 0.0)
 

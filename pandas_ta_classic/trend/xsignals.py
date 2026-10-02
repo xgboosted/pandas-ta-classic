@@ -114,7 +114,7 @@ Calculation:
 Args:
     signal (pd.Series): Oscillator or signal Series to evaluate.
     xa (float): Entry threshold. Choose based on indicator range.
-        RSI/Stoch/KDJ (0–100): typical 20–30 (oversold) or 70–80 (overbought).
+        RSI/Stoch/KDJ (0-100): typical 20-30 (oversold) or 70-80 (overbought).
         Unbounded indicators (MACD, CCI): must match their actual value range.
         WARNING: xa=80 with MACD (range ~-5 to +5) will never trigger.
     xb (float): Exit threshold, opposite side of xa (e.g. if xa=20 use xb=80).
