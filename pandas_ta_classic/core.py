@@ -16,6 +16,7 @@ from warnings import catch_warnings, simplefilter, warn
 import pandas as pd
 from pandas.core.base import PandasObject
 
+import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
     _COLUMN_KWARG_KEYS,
     _COLUMN_PARAM_TO_COL_KEY,
@@ -863,7 +864,12 @@ class AnalysisIndicators(PandasObject):
 
     def _missing_required_column(self, name: str, kwargs: dict) -> bool:
         """True when indicator *name* needs a column (no default) that the DataFrame does not have."""
-        func = _find_indicator_func(name)
+        # custom.import_dir() binds its function onto the package and lists the
+        # name in Category, but the loader only knows the package's own modules,
+        # so strategy("all") raised "unknown indicator" once one was loaded. The
+        # package attribute is also what replaces a built-in of the same name.
+        bound = vars(pandas_ta_classic).get(name)
+        func = bound if inspect.isfunction(bound) else _find_indicator_func(name)
         if func is None:
             raise ValueError(f"unknown indicator {name!r}")
         sig = inspect.signature(func)

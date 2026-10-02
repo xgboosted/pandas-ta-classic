@@ -516,10 +516,24 @@ class TestCustomStrategyLength(TestCase):
         self.assertTrue(self.data["SMA_500"].isna().all())
 
 
-def _dbl_method(self, **kwargs):
-    out = self._get_column("close") * 2
+def _dbl(close, **kwargs):
+    out = close * 2
     out.name = "DBL"
-    return self._post_process(out, **kwargs)
+    return out
+
+
+def _dbl_method(self, **kwargs):
+    return self._post_process(_dbl(self._get_column("close")), **kwargs)
+
+
+def _vtw(close, volume, **kwargs):
+    out = close * volume
+    out.name = "VTW"
+    return out
+
+
+def _vtw_method(self, **kwargs):
+    return self._post_process(_vtw(self._get_column("close"), self._get_column("volume")), **kwargs)
 
 
 class TestCustomIndicatorsNeedSerialStrategy(TestCase):
@@ -569,3 +583,50 @@ class TestCustomIndicatorsNeedSerialStrategy(TestCase):
     def test_serial_strategy_still_runs_them(self):
         self.df.ta.strategy(self.strategy, cores=0)
         self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
+
+
+class TestCategoryStrategyWithCustomIndicators(TestCase):
+    """custom.import_dir() lists a custom indicator in Category and binds its
+    function onto the package, but the column check only asked the package's
+    own loader, so strategy("all") and strategy("<category>") raised
+    "unknown indicator" as soon as one custom indicator was loaded."""
+
+    def setUp(self):
+        self.df = get_sample_data().iloc[:300].copy()
+        self.df.ta.cores = 0
+        patches = (
+            mock.patch.object(pandas_ta, "dbl", _dbl, create=True),
+            mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
+            mock.patch.object(pandas_ta, "vtw", _vtw, create=True),
+            mock.patch.object(pandas_ta.AnalysisIndicators, "vtw", _vtw_method, create=True),
+            mock.patch.dict(
+                pandas_ta.Category,
+                {"trend": [*pandas_ta.Category["trend"], "dbl"], "volume": [*pandas_ta.Category["volume"], "vtw"]},
+            ),
+        )
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_category_and_all_run_custom_indicators(self):
+        self.df.ta.strategy("trend")
+        self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
+        df = get_sample_data().iloc[:300].copy()
+        df.ta.cores = 0
+        df.ta.strategy("all")
+        self.assertIn("DBL", df.columns)
+        self.assertIn("VTW", df.columns)
+
+    def test_custom_indicator_missing_a_column_is_skipped(self):
+        ohlc = self.df[["open", "high", "low", "close"]].copy()
+        ohlc.ta.cores = 0
+        ohlc.ta.strategy("volume")
+        self.assertNotIn("VTW", ohlc.columns)
+
+    def test_a_custom_override_is_checked_with_its_own_signature(self):
+        # the built-in sma needs only close; this replacement needs volume too
+        with mock.patch.object(pandas_ta, "sma", _vtw):
+            ohlc = self.df[["open", "high", "low", "close"]].copy()
+            ohlc.ta.cores = 0
+            ohlc.ta.strategy("overlap")
+        self.assertNotIn("SMA_10", ohlc.columns)
