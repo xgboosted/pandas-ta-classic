@@ -1,3 +1,4 @@
+import warnings
 from unittest import TestCase
 
 import numpy as np
@@ -331,6 +332,71 @@ class TestUtilities(TestCase):
         with self.assertRaisesRegex(ValueError, r"must have equal length"):
             self.utils.linear_regression(x, y.iloc[:-1])
 
+    def test_linear_regression_slope_survives_a_far_from_zero_x(self):
+        # m * sum(x * y) - sum(x) * sum(y) cancelled: at x ~ 1e6 with a 1e-3
+        # spread the slope was 99% off, at 1e8 its sign flipped.
+        rng = np.random.default_rng(0)
+        for level, spread in [(1e4, 1e-3), (1e6, 1e-3), (1e8, 1e-2)]:
+            with self.subTest(level=level):
+                x = Series(level + rng.normal(0, spread, 300))
+                y = 2.0 * (x - level) / spread + rng.normal(0, 0.1, 300)
+                expected = np.polyfit(x - x.mean(), y, 1)[0]
+                self.assertAlmostEqual(self.utils.linear_regression(x, y)["b"] / expected, 1.0, places=10)
+
+    def test_linear_regression_near_flat_x_is_undefined(self):
+        # 0.1 + 0.2 and 0.3 differ by one ULP: x.std() is ~4e-17, not 0, so the
+        # old `!= 0` guard let the slope divide by it and read inf.
+        x = Series([0.1 + 0.2] * 150 + [0.3] * 150)
+        y = Series(np.random.default_rng(1).normal(0, 1, 300))
+        result = self.utils.linear_regression(x, y)
+        for key in ("a", "b", "r", "t"):
+            self.assertTrue(np.isnan(result[key]), f"{key} = {result[key]}")
+
+    def test_linear_regression_flat_x_is_undefined_at_any_level(self):
+        # One ULP apart at 1e6 the deviation is ~8e-11, past an absolute 1e-12
+        # tolerance: the slope read -1.8e8 instead of NaN.
+        y = Series(np.random.default_rng(1).normal(0, 1, 300))
+        for level in (0.3, 1e3, 1e6, 1e9):
+            with self.subTest(level=level):
+                x = Series([level] * 150 + [np.nextafter(level, np.inf)] * 150)
+                self.assertTrue(np.isnan(self.utils.linear_regression(x, y)["b"]))
+
+    def test_linear_regression_small_scale_x_is_not_flat(self):
+        # A real spread below 1e-12 is not a residue when x itself is that small.
+        x = Series(np.linspace(0.0, 1e-13, 300))
+        self.assertAlmostEqual(self.utils.linear_regression(x, 2.0 * x / 1e-13)["b"] * 1e-13, 2.0, places=8)
+
+    def test_linear_regression_flat_y_has_a_slope_but_no_correlation(self):
+        x = Series(np.arange(300.0))
+        y = Series(5.0, index=x.index)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # np.corrcoef warned "invalid value encountered in divide"
+            result = self.utils.linear_regression(x, y)
+            # A perfect fit has 1 - r * r = 0: t is inf, the answer, not a warning.
+            perfect = self.utils.linear_regression(x, 2.0 * x + 1.0)
+        self.assertAlmostEqual(result["b"], 0.0, places=12)
+        self.assertAlmostEqual(result["a"], 5.0, places=12)
+        self.assertTrue(np.isnan(result["r"]) and np.isnan(result["t"]))
+        self.assertAlmostEqual(perfect["b"], 2.0, places=12)
+        self.assertGreater(perfect["t"], 1e6)
+
+    def test_linear_regression_rejects_what_it_cannot_fit(self):
+        # Two points gave t = 0.0 (no degrees of freedom), one or none gave NaN
+        # with numpy warnings, and a NaN gave a wrong slope: the sums skipped it
+        # while the point count did not (x = [0, 1, NaN, 3, 4] fitted b = 0.758).
+        for size in (0, 1, 2):
+            with self.subTest(size=size), self.assertRaisesRegex(ValueError, rf"needs at least 3 points, got {size}"):
+                self.utils.linear_regression(Series(range(size), dtype=float), Series(range(size), dtype=float))
+        line = Series([1.0, 2.0, 3.0, 4.0, 5.0])
+        gappy = Series([0.0, 1.0, np.nan, 3.0, 4.0])
+        with self.assertRaisesRegex(ValueError, r"x has 1 missing value"):
+            self.utils.linear_regression(gappy, line)
+        with self.assertRaisesRegex(ValueError, r"y has 1 missing value"):
+            self.utils.linear_regression(line, gappy)
+        # x * y aligned on two disjoint indexes and fitted y = 2x + 1 as b = -10.5.
+        with self.assertRaisesRegex(ValueError, r"must share the same index"):
+            self.utils.linear_regression(line, (2 * line + 1).set_axis(list("abcde")))
+
     def test_pascals_triangle(self):
         with self.assertRaisesRegex(ValueError, "inverse=True needs weighted=True"):  # used to return None
             self.utils.pascals_triangle(inverse=True)
@@ -435,6 +501,15 @@ class TestUtilities(TestCase):
 
         result = self.utils.total_time(self.data, "seconds")
         self.assertEqual(657158400.0, result)
+
+    def test_total_time_needs_an_ascending_index(self):
+        # A descending index gave -20.8 years, which the metrics turned into NaN.
+        with self.assertRaisesRegex(ValueError, r"total_time\(\) needs an index sorted in ascending order"):
+            self.utils.total_time(self.data.iloc[::-1])
+        # A single row, or rows sharing one timestamp, truly span 0.
+        self.assertEqual(self.utils.total_time(self.data.iloc[:1]), 0)
+        twice = pd.concat([self.data.iloc[:1], self.data.iloc[:1]])
+        self.assertEqual(self.utils.total_time(twice, "days"), 0)
 
     def test_version(self):
         result = pandas_ta.version

@@ -1,4 +1,5 @@
 import math
+import warnings
 from unittest import TestCase
 
 import numpy as np
@@ -60,6 +61,44 @@ class TestUtilityMetrics(TestCase):
         result = pandas_ta.downside_deviation(self.logret)
         self.assertIsInstance(result, float)
         self.assertGreaterEqual(result, 0)
+
+    def test_downside_deviation_counts_only_the_returns_it_sums(self):
+        # The sum skipped NaN while the divisor counted it: the leading NaN of
+        # pct_change gave sqrt(ss / n), a clean series sqrt(ss / (n - 1)), and
+        # a gap inside a smaller value with no error.
+        returns = self.pctret
+        self.assertTrue(np.isnan(returns.iloc[0]))
+        self.assertEqual(pandas_ta.downside_deviation(returns), pandas_ta.downside_deviation(returns.iloc[1:]))
+
+        gappy = returns.copy()
+        gappy.iloc[100] = np.nan
+        with self.assertRaisesRegex(ValueError, r"downside_deviation\(\) returns has 1 missing value"):
+            pandas_ta.downside_deviation(gappy)
+        with self.assertRaisesRegex(ValueError, r"downside_deviation\(\) needs at least 2 returns, got 1"):
+            pandas_ta.downside_deviation(returns.iloc[:2])
+
+    def test_sortino_ratio_rejects_missing_close(self):
+        gappy = self.close.copy()
+        gappy.iloc[100] = np.nan
+        with self.assertRaisesRegex(ValueError, r"sortino_ratio\(\) close has 1 missing value"):
+            pandas_ta.sortino_ratio(gappy)
+
+    def test_return_metrics_reject_missing_close(self):
+        # A gap dropped two returns from the mean and the deviation without a
+        # word: sharpe_ratio read 0.3305 instead of 0.3293 for one missing close.
+        gappy = self.close.copy()
+        gappy.iloc[2000] = np.nan
+        for name in ("sharpe_ratio", "optimal_leverage", "volatility"):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, rf"{name}\(\) close has 1 missing value"):
+                getattr(pandas_ta.utils, name)(gappy)
+
+    def test_volatility_does_not_count_the_first_bar(self):
+        # The periods per year counted the first bar, which has no return, so
+        # the result moved with whether the caller dropped it (0.198789 vs 0.198783).
+        self.assertTrue(np.isnan(self.pctret.iloc[0]))
+        with_nan = pandas_ta.utils.volatility(self.pctret, returns=True)
+        self.assertEqual(with_nan, pandas_ta.utils.volatility(self.pctret.iloc[1:], returns=True))
+        self.assertEqual(with_nan, pandas_ta.utils.volatility(self.close))
 
     def test_drawdown(self):
         result = pandas_ta.drawdown(self.pctret)
@@ -205,6 +244,23 @@ class TestUtilityMetrics(TestCase):
         self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(None, None)))
         self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(self.pctret, None)))
 
+    def test_metrics_need_a_time_span(self):
+        # They divide by total_time(): a span of 0 raised a bare ZeroDivisionError,
+        # and a descending index a NaN or a negative growth rate without an error.
+        one_day = self.close.iloc[:1]
+        same_day = Series([0.01, -0.02], index=[self.close.index[0]] * 2)
+        cases = [
+            ("cagr", lambda s: pandas_ta.cagr(s), one_day),
+            ("downside_deviation", lambda s: pandas_ta.downside_deviation(s), same_day),
+            ("volatility", lambda s: pandas_ta.utils.volatility(s, returns=True), same_day),
+        ]
+        for name, func, flat in cases:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, rf"{name}\(\) needs at least two distinct timestamps; the index spans 0 years"):
+                    func(flat)
+                with self.assertRaisesRegex(ValueError, r"total_time\(\) needs an index sorted in ascending order"):
+                    func(self.pctret.iloc[1:][::-1] if name != "cagr" else self.close.iloc[::-1])
+
     def test_volatility_is_only_reachable_through_utils(self):
         """The volatility category subpackage shadows the metric of that name.
 
@@ -238,4 +294,16 @@ class TestUtilityMetrics(TestCase):
         # and the score falls back to 0 instead of NaN * cagr.
         idx = bdate_range("2021-01-04", periods=60)
         flat = Series([100.0] * 60, index=idx)
-        self.assertEqual(pandas_ta.pure_profit_score(flat), 0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # np.corrcoef used to warn twice here
+            self.assertEqual(pandas_ta.pure_profit_score(flat), 0)
+
+    def test_pure_profit_score_rejects_missing_and_short_input(self):
+        # One NaN made r NaN, so a rising series scored 0 without a word.
+        idx = bdate_range("2021-01-04", periods=60)
+        rising = Series(np.linspace(100.0, 160.0, 60), index=idx)
+        rising.iloc[30] = np.nan
+        with self.assertRaisesRegex(ValueError, r"pure_profit_score\(\) close has 1 missing value"):
+            pandas_ta.pure_profit_score(rising)
+        with self.assertRaisesRegex(ValueError, r"pure_profit_score\(\) needs at least 3 bars, got 2"):
+            pandas_ta.pure_profit_score(Series([100.0, 101.0], index=idx[:2]))

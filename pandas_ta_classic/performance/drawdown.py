@@ -22,10 +22,9 @@ def drawdown(close: Series, offset: int | None = None, **kwargs: Any) -> DataFra
     dd = max_close - close
     dd_pct = 1 - (close / max_close)
 
-    _np_err = np.seterr()
-    np.seterr(divide="ignore", invalid="ignore")
-    dd_log = np.log(max_close) - np.log(close)
-    np.seterr(divide=_np_err["divide"], invalid=_np_err["invalid"])
+    # A local errstate, not np.seterr: the global setting leaked if anything raised.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        dd_log = np.log(max_close) - np.log(close)
 
     # Offset
     dd, dd_pct, dd_log = apply_offset([dd, dd_pct, dd_log], offset)
