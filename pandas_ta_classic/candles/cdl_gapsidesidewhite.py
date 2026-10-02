@@ -41,8 +41,8 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.open,
         ca.body_high,
         ca.body_low,
-        candle_average(ca, CandleSetting.Near, 1, start_idx, sequential_seed=True),
-        candle_average(ca, CandleSetting.Equal, 1, start_idx, sequential_seed=True),
+        candle_average(ca, CandleSetting.Near, 1, start_idx),
+        candle_average(ca, CandleSetting.Equal, 1, start_idx),
         out,
         start_idx,
     )

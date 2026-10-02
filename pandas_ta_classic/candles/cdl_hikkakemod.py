@@ -68,7 +68,7 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         return
 
     # The Near average (applied to i-2) already runs over the 3 warm-up bars
-    near_2 = candle_average(ca, CandleSetting.Near, 2, start_idx - 3, sequential_seed=True)
+    near_2 = candle_average(ca, CandleSetting.Near, 2, start_idx - 3)
     _detect_nb(ca.high, ca.low, ca.close, near_2, out, start_idx)
 
 

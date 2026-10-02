@@ -4,7 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
-from pandas_ta_classic.candles._cdl_math import AVG_FACTOR, CandleArrays, CandleSetting, candle_average, candle_avg_period
+from pandas_ta_classic.candles._cdl_math import CANDLE_DEFAULTS, CandleArrays, CandleSetting, RangeType, candle_average, candle_avg_period
 from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
 from tests.config import get_sample_data
 
@@ -322,21 +322,21 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
 
 
 class TestCandleAverage(TestCase):
-    """`candle_average` against the per-pattern bookkeeping it replaced.
+    """`candle_average` against a plain port of TA-Lib's candle-average macros.
 
-    Every pattern used to carry TA-Lib's ``PeriodTotal`` as a scalar: seed it,
-    compare ``factor * total``, then ``total += range[i - lag] - range[trail - lag]``.
-    The helper must reproduce that bit for bit, or a threshold that lands
-    exactly on a candle's range would flip a signal.
+    TA-Lib seeds ``PeriodTotal`` left to right from 0, compares each candle with
+    ``TA_CANDLEAVERAGE = factor * (total / period) / divisor`` and then updates
+    ``total += range[i - lag] - range[trail - lag]``. The helper must reproduce
+    that bit for bit, or a candle that lands exactly on the threshold is judged
+    differently from TA-Lib.
     """
 
     @classmethod
     def setUpClass(cls):
         # Bodies and shadows spread over many orders of magnitude, with opens
-        # near zero so the ranges keep their full mantissa: their window sums
-        # then round differently depending on the order they are added in. On
-        # price-like bars the ranges sit on one grid, both seeds add up exactly
-        # and the test could not tell them apart.
+        # near zero so the ranges keep their full mantissa. On price-like bars
+        # the ranges sit on one grid, sums are exact and a helper that adds in
+        # another order or rearranges the formula would still pass.
         rng = np.random.default_rng(7)
         n = 3000
         open_ = rng.normal(0, 1e-3, n)
@@ -346,45 +346,52 @@ class TestCandleAverage(TestCase):
         cls.ca = CandleArrays(open_, high, low, close)
 
     @staticmethod
-    def _scalar_bookkeeping(arr, period, lag, start_idx, factor, sequential_seed):
+    def _talib_macros(arr, setting, lag, start_idx):
+        range_type, period, factor = CANDLE_DEFAULTS[setting]
+        divisor = 2.0 if range_type == RangeType.Shadows else 1.0
         out = np.full(len(arr), np.nan)
-        window = arr[start_idx - lag - period : start_idx - lag]
-        if sequential_seed:
-            total = 0.0
-            for value in window:
-                total += value
-        else:
-            total = float(window.sum())
+        total = 0.0
         trail = start_idx - period
+        for j in range(trail, start_idx):
+            total += arr[j - lag]
         for i in range(start_idx, len(arr)):
-            out[i] = factor * (arr[i - lag] if period == 0 else total)
+            out[i] = factor * (total / period if period != 0 else arr[i - lag]) / divisor
             total += arr[i - lag] - arr[trail - lag]
             trail += 1
         return out
 
-    def test_bit_identical_to_scalar_bookkeeping(self):
+    def test_bit_identical_to_talib_macros(self):
         for setting in CandleSetting:
             period = candle_avg_period(setting)
             for lag in range(5):
                 for extra in (0, 3, 7):
-                    for sequential_seed in (False, True):
-                        with self.subTest(setting=setting.name, lag=lag, extra=extra, sequential_seed=sequential_seed):
-                            start_idx = period + lag + extra
-                            got = candle_average(self.ca, setting, lag, start_idx, sequential_seed=sequential_seed)
-                            want = self._scalar_bookkeeping(self.ca._ranges[setting], period, lag, start_idx, AVG_FACTOR[setting], sequential_seed)
-                            self.assertTrue(np.isnan(got[:start_idx]).all())
-                            np.testing.assert_array_equal(got[start_idx:].view(np.int64), want[start_idx:].view(np.int64))
+                    with self.subTest(setting=setting.name, lag=lag, extra=extra):
+                        start_idx = period + lag + extra
+                        got = candle_average(self.ca, setting, lag, start_idx)
+                        want = self._talib_macros(self.ca._ranges[setting], setting, lag, start_idx)
+                        self.assertTrue(np.isnan(got[:start_idx]).all())
+                        np.testing.assert_array_equal(got[start_idx:].view(np.int64), want[start_idx:].view(np.int64))
 
-    def test_the_two_seeds_differ_on_this_data(self):
-        """Guards the test above: if both seeds agreed here, it would not notice a helper that ignores the flag."""
-        differing = 0
+    def test_the_data_tells_each_part_of_the_arithmetic_apart(self):
+        """Guards the test above: on this data a pairwise seed alone, and the old
+        formula alone, must each give different thresholds from TA-Lib's."""
+        seed_differs = formula_differs = 0
         for setting in CandleSetting:
-            start_idx = candle_avg_period(setting) + 4
-            for lag in range(5):
-                pairwise = candle_average(self.ca, setting, lag, start_idx)
-                sequential = candle_average(self.ca, setting, lag, start_idx, sequential_seed=True)
-                differing += int((pairwise[start_idx:].view(np.int64) != sequential[start_idx:].view(np.int64)).any())
-        self.assertGreater(differing, 0)
+            range_type, period, factor = CANDLE_DEFAULTS[setting]
+            if period == 0:
+                continue
+            divisor = 2.0 if range_type == RangeType.Shadows else 1.0
+            arr = self.ca._ranges[setting]
+            for first in range(len(arr) - period):  # every window of the setting's length
+                window = arr[first : first + period]
+                sequential = 0.0
+                for value in window:
+                    sequential += value
+                want = factor * (sequential / period) / divisor
+                seed_differs += int(factor * (float(window.sum()) / period) / divisor != want)
+                formula_differs += int(factor / (period * divisor) * sequential != want)
+        self.assertGreater(seed_differs, 0)
+        self.assertGreater(formula_differs, 0)
 
     def test_start_before_the_first_window_raises(self):
         period = candle_avg_period(CandleSetting.BodyLong)
@@ -392,3 +399,45 @@ class TestCandleAverage(TestCase):
             candle_average(self.ca, CandleSetting.BodyLong, 2, period + 1)
         with self.assertRaisesRegex(ValueError, "start_idx"):
             candle_average(self.ca, CandleSetting.ShadowLong, 3, 2)
+
+
+# A candle exactly on a pattern's threshold, built so that TA-Lib's arithmetic
+# and the one used before 0.9.0 (pairwise seed, factor / (period * divisor) * total)
+# land on different sides of it. The expected value is what TA-Lib 0.6+ returns.
+_THRESHOLD_CASES = [
+    # BodyDoji (HighLow): the body equals TA-Lib's doji threshold, so it is a doji (body <= threshold).
+    (
+        "cdl_longleggeddoji",
+        "CDLLONGLEGGEDDOJI",
+        [0.0] * 11,
+        [0.35, 0.79, 2.42, 1.79, 0.37, 1.36, 1.49, 0.56, 2.23, 0.43, 5.1179],
+        [0.0] * 10 + [-5.0],
+        [0.0] * 10 + [0.1179],
+        100,
+    ),
+    # ShadowShort (Shadows, halved): the upper shadow equals TA-Lib's threshold, so it is not short (shadow < threshold).
+    (
+        "cdl_shortline",
+        "CDLSHORTLINE",
+        [0.0] * 11,
+        [3.48, 1.01, 3.38, 1.9700000000000002, 2.21, 2.85, 3.28, 2.8600000000000003, 2.34, 2.66, 0.6514999999999999],
+        [0.0] * 11,
+        [1.33, 0.91, 1.82, 0.6, 1.52, 1.81, 0.84, 1.84, 1.81, 0.53, 0.0],
+        0,
+    ),
+]
+
+
+class TestCandleAtTheExactThreshold(TestCase):
+    def test_native_decides_as_talib(self):
+        for name, _talib_name, open_, high, low, close, expected in _THRESHOLD_CASES:
+            with self.subTest(pattern=name):
+                result = getattr(getattr(pandas_ta, name), name)(*(Series(x) for x in (open_, high, low, close)))
+                self.assertEqual(int(result.iloc[-1]), expected)
+
+    @skipUnless(HAS_TALIB, "TA-Lib is not installed")
+    def test_expected_values_are_talibs(self):
+        for name, talib_name, open_, high, low, close, expected in _THRESHOLD_CASES:
+            with self.subTest(pattern=name):
+                got = getattr(talib, talib_name)(*(np.array(x) for x in (open_, high, low, close)))
+                self.assertEqual(int(got[-1]), expected)
