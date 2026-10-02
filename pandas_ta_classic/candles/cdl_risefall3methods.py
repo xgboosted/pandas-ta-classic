@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,31 +15,15 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    real_body,
-    color,
-    O_,
-    H,
-    L,
-    C,
-    arr_bl,
-    arr_bs,
-    body_total,
-    out,
-    start_idx,
-    body_short_trail,
-    body_long_trail,
-    f_bl,
-    f_bs,
-):
+def _detect_nb(real_body, color, O_, H, L, C, body_long_4, body_short_3, body_short_2, body_short_1, body_long_0, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # 1st long, then 3 small, 5th long
-            real_body[i - 4] > f_bl * body_total[4]
-            and real_body[i - 3] < f_bs * body_total[3]
-            and real_body[i - 2] < f_bs * body_total[2]
-            and real_body[i - 1] < f_bs * body_total[1]
-            and real_body[i] > f_bl * body_total[0]
+            real_body[i - 4] > body_long_4[i]
+            and real_body[i - 3] < body_short_3[i]
+            and real_body[i - 2] < body_short_2[i]
+            and real_body[i - 1] < body_short_1[i]
+            and real_body[i] > body_long_0[i]
             # white, 3 black, white  ||  black, 3 white, black
             and color[i - 4] == -color[i - 3]
             and color[i - 3] == color[i - 2]
@@ -62,47 +46,12 @@ def _detect_nb(
         ):
             out[i] = 100 * color[i - 4]
 
-        # Update totals
-        body_total[4] += arr_bl[i - 4] - arr_bl[body_long_trail - 4]
-        for k in range(3, 0, -1):
-            body_total[k] += arr_bs[i - k] - arr_bs[body_short_trail - k]
-        body_total[0] += arr_bl[i] - arr_bl[body_long_trail]
-        body_short_trail += 1
-        body_long_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: max(TA_CANDLEAVGPERIOD(BodyShort), TA_CANDLEAVGPERIOD(BodyLong)) + 4
-    body_short_period = candle_avg_period(CandleSetting.BodyShort)
-    body_long_period = candle_avg_period(CandleSetting.BodyLong)
-    lookback = max(body_short_period, body_long_period) + 4
-    start_idx = lookback
+    start_idx = max(candle_avg_period(CandleSetting.BodyShort), candle_avg_period(CandleSetting.BodyLong)) + 4
     if start_idx >= len(out):
         return
-
-    arr_bl = ca._ranges[CandleSetting.BodyLong]
-    arr_bs = ca._ranges[CandleSetting.BodyShort]
-
-    body_short_trail = start_idx - body_short_period
-    body_long_trail = start_idx - body_long_period
-
-    # [0]=BodyLong at i, [1..3]=BodyShort at i-1..i-3, [4]=BodyLong at i-4
-    body_total = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-
-    # Seed BodyShort totals for i-3, i-2, i-1
-    j = body_short_trail
-    while j < start_idx:
-        body_total[3] += arr_bs[j - 3]
-        body_total[2] += arr_bs[j - 2]
-        body_total[1] += arr_bs[j - 1]
-        j += 1
-
-    # Seed BodyLong totals for i-4 and i (both use BodyLong period)
-    j = body_long_trail
-    while j < start_idx:
-        body_total[4] += arr_bl[j - 4]
-        body_total[0] += arr_bl[j]
-        j += 1
 
     _detect_nb(
         ca.real_body,
@@ -111,15 +60,13 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.high,
         ca.low,
         ca.close,
-        arr_bl,
-        arr_bs,
-        body_total,
+        candle_average(ca, CandleSetting.BodyLong, 4, start_idx, sequential_seed=True),
+        candle_average(ca, CandleSetting.BodyShort, 3, start_idx, sequential_seed=True),
+        candle_average(ca, CandleSetting.BodyShort, 2, start_idx, sequential_seed=True),
+        candle_average(ca, CandleSetting.BodyShort, 1, start_idx, sequential_seed=True),
+        candle_average(ca, CandleSetting.BodyLong, 0, start_idx, sequential_seed=True),
         out,
         start_idx,
-        body_short_trail,
-        body_long_trail,
-        AVG_FACTOR[CandleSetting.BodyLong],
-        AVG_FACTOR[CandleSetting.BodyShort],
     )
 
 

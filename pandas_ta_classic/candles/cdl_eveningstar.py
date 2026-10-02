@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -16,95 +16,41 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    real_body,
-    color,
-    close,
-    body_hi,
-    body_lo,
-    arr_bl,
-    arr_bs,
-    out,
-    start_idx,
-    body_long_trail,
-    body_short_trail,
-    body_long_total,
-    body_short_total,
-    body_short_total2,
-    f_bl,
-    f_bs,
-    penetration,
-):
+def _detect_nb(real_body, color, close, body_hi, body_lo, body_long_2, body_short_1, body_short_0, out, start_idx, penetration):
     for i in range(start_idx, len(out)):
         if (
             # 1st: long white
-            real_body[i - 2] > f_bl * body_long_total
+            real_body[i - 2] > body_long_2[i]
             and color[i - 2] == 1
             # 2nd: short, gapping up
-            and real_body[i - 1] <= f_bs * body_short_total
+            and real_body[i - 1] <= body_short_1[i]
             and body_lo[i - 1] > body_hi[i - 2]
             # 3rd: longer than short, black, closing well within 1st rb
-            and real_body[i] > f_bs * body_short_total2
+            and real_body[i] > body_short_0[i]
             and color[i] == -1
             and close[i] < close[i - 2] - real_body[i - 2] * penetration
         ):
             out[i] = -100
 
-        # Update trailing windows
-        body_long_total += arr_bl[i - 2] - arr_bl[body_long_trail]
-        body_short_total += arr_bs[i - 1] - arr_bs[body_short_trail]
-        body_short_total2 += arr_bs[i] - arr_bs[body_short_trail + 1]
-        body_long_trail += 1
-        body_short_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     penetration = kwargs["penetration"]
 
-    # Lookback: max(BodyShort, BodyLong) + 2
-    body_long_period = candle_avg_period(CandleSetting.BodyLong)
-    body_short_period = candle_avg_period(CandleSetting.BodyShort)
-    lookback = max(body_short_period, body_long_period) + 2
-    start_idx = lookback
+    start_idx = max(candle_avg_period(CandleSetting.BodyShort), candle_avg_period(CandleSetting.BodyLong)) + 2
     if start_idx >= len(out):
         return
-
-    arr_bl = ca._ranges[CandleSetting.BodyLong]
-    arr_bs = ca._ranges[CandleSetting.BodyShort]
-    body_hi = ca.body_high
-    body_lo = ca.body_low
-
-    # Trailing indices
-    # BodyLong at offset i-2: trail = startIdx - 2 - period
-    body_long_trail = start_idx - 2 - body_long_period
-    # BodyShort at offset i-1: trail = startIdx - 1 - period
-    # Both BodyShort totals share the same trailing index
-    body_short_trail = start_idx - 1 - body_short_period
-
-    # Seed totals
-    body_long_total = float(arr_bl[body_long_trail : start_idx - 2].sum())
-    # BodyShortPeriodTotal tracks BodyShort at i-1
-    # BodyShortPeriodTotal2 tracks BodyShort at i
-    body_short_total = float(arr_bs[body_short_trail : start_idx - 1].sum())
-    body_short_total2 = float(arr_bs[body_short_trail + 1 : start_idx - 1 + 1].sum())
 
     _detect_nb(
         ca.real_body,
         ca.color,
         ca.close,
-        body_hi,
-        body_lo,
-        arr_bl,
-        arr_bs,
+        ca.body_high,
+        ca.body_low,
+        candle_average(ca, CandleSetting.BodyLong, 2, start_idx),
+        candle_average(ca, CandleSetting.BodyShort, 1, start_idx),
+        candle_average(ca, CandleSetting.BodyShort, 0, start_idx),
         out,
         start_idx,
-        body_long_trail,
-        body_short_trail,
-        body_long_total,
-        body_short_total,
-        body_short_total2,
-        AVG_FACTOR[CandleSetting.BodyLong],
-        AVG_FACTOR[CandleSetting.BodyShort],
         penetration,
     )
 

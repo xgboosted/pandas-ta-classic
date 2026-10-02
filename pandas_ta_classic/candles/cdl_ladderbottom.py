@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,19 +15,7 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    upper_shadow,
-    O_,
-    H,
-    C,
-    arr_svs,
-    out,
-    start_idx,
-    svs_trail,
-    svs_total,
-    f_svs,
-):
+def _detect_nb(color, upper_shadow, O_, H, C, svs_1, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # First three are black candlesticks
@@ -42,7 +30,7 @@ def _detect_nb(
             and C[i - 3] > C[i - 2]
             # 4th: black with an upper shadow
             and color[i - 1] == -1
-            and upper_shadow[i - 1] > f_svs * svs_total
+            and upper_shadow[i - 1] > svs_1[i]
             # 5th: white
             and color[i] == 1
             # That opens above prior candle's body (open, since bearish)
@@ -52,25 +40,12 @@ def _detect_nb(
         ):
             out[i] = 100
 
-        # Update total: add current range, subtract trailing range
-        svs_total += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-        svs_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: TA_CANDLEAVGPERIOD(ShadowVeryShort) + 4
-    svs_period = candle_avg_period(CandleSetting.ShadowVeryShort)
-    lookback = svs_period + 4
-    start_idx = lookback
+    start_idx = candle_avg_period(CandleSetting.ShadowVeryShort) + 4
     if start_idx >= len(out):
         return
-
-    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
-
-    svs_trail = start_idx - svs_period
-
-    # Seed ShadowVeryShort total: applied to bar i-1
-    svs_total = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
 
     _detect_nb(
         ca.color,
@@ -78,12 +53,9 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.open,
         ca.high,
         ca.close,
-        arr_svs,
+        candle_average(ca, CandleSetting.ShadowVeryShort, 1, start_idx),
         out,
         start_idx,
-        svs_trail,
-        svs_total,
-        AVG_FACTOR[CandleSetting.ShadowVeryShort],
     )
 
 

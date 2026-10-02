@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,21 +15,7 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    lower_shadow,
-    O_,
-    H,
-    C,
-    arr_svs,
-    out,
-    start_idx,
-    svs_trail,
-    svs_total_2,
-    svs_total_1,
-    svs_total_0,
-    f_svs,
-):
+def _detect_nb(color, lower_shadow, O_, H, C, svs_2, svs_1, svs_0, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # Prior candle (i-3) is white
@@ -37,15 +23,15 @@ def _detect_nb(
             # 1st black
             and color[i - 2] == -1
             # very short lower shadow
-            and lower_shadow[i - 2] < f_svs * svs_total_2
+            and lower_shadow[i - 2] < svs_2[i]
             # 2nd black
             and color[i - 1] == -1
             # very short lower shadow
-            and lower_shadow[i - 1] < f_svs * svs_total_1
+            and lower_shadow[i - 1] < svs_1[i]
             # 3rd black
             and color[i] == -1
             # very short lower shadow
-            and lower_shadow[i] < f_svs * svs_total_0
+            and lower_shadow[i] < svs_0[i]
             # 2nd black opens within 1st black's real body
             and O_[i - 1] < O_[i - 2]
             and O_[i - 1] > C[i - 2]
@@ -60,29 +46,12 @@ def _detect_nb(
         ):
             out[i] = -100
 
-        # Update totals: add current range, subtract trailing range
-        svs_total_2 += arr_svs[i - 2] - arr_svs[svs_trail - 2]
-        svs_total_1 += arr_svs[i - 1] - arr_svs[svs_trail - 1]
-        svs_total_0 += arr_svs[i] - arr_svs[svs_trail]
-        svs_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: TA_CANDLEAVGPERIOD(ShadowVeryShort) + 3
-    svs_period = candle_avg_period(CandleSetting.ShadowVeryShort)
-    lookback = svs_period + 3
-    start_idx = lookback
+    start_idx = candle_avg_period(CandleSetting.ShadowVeryShort) + 3
     if start_idx >= len(out):
         return
-
-    arr_svs = ca._ranges[CandleSetting.ShadowVeryShort]
-
-    svs_trail = start_idx - svs_period
-
-    # Seed ShadowVeryShort totals for i-2, i-1, i (indices 2, 1, 0)
-    svs_total_2 = float(arr_svs[svs_trail - 2 : start_idx - 2].sum())
-    svs_total_1 = float(arr_svs[svs_trail - 1 : start_idx - 1].sum())
-    svs_total_0 = float(arr_svs[svs_trail:start_idx].sum())
 
     _detect_nb(
         ca.color,
@@ -90,14 +59,11 @@ def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
         ca.open,
         ca.high,
         ca.close,
-        arr_svs,
+        candle_average(ca, CandleSetting.ShadowVeryShort, 2, start_idx),
+        candle_average(ca, CandleSetting.ShadowVeryShort, 1, start_idx),
+        candle_average(ca, CandleSetting.ShadowVeryShort, 0, start_idx),
         out,
         start_idx,
-        svs_trail,
-        svs_total_2,
-        svs_total_1,
-        svs_total_0,
-        AVG_FACTOR[CandleSetting.ShadowVeryShort],
     )
 
 

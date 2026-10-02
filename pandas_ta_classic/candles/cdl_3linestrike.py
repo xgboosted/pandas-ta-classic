@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,18 +15,7 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    color,
-    O_,
-    C,
-    arr_nr,
-    out,
-    start_idx,
-    near_trail,
-    near_total_3,
-    near_total_2,
-    f_near,
-):
+def _detect_nb(color, O_, C, near_3, near_2, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
             # Three candles with same color
@@ -35,11 +24,11 @@ def _detect_nb(
             # 4th opposite color
             and color[i] == -color[i - 1]
             # 2nd opens within/near 1st real body
-            and O_[i - 2] >= min(O_[i - 3], C[i - 3]) - f_near * near_total_3
-            and O_[i - 2] <= max(O_[i - 3], C[i - 3]) + f_near * near_total_3
+            and O_[i - 2] >= min(O_[i - 3], C[i - 3]) - near_3[i]
+            and O_[i - 2] <= max(O_[i - 3], C[i - 3]) + near_3[i]
             # 3rd opens within/near 2nd real body
-            and O_[i - 1] >= min(O_[i - 2], C[i - 2]) - f_near * near_total_2
-            and O_[i - 1] <= max(O_[i - 2], C[i - 2]) + f_near * near_total_2
+            and O_[i - 1] >= min(O_[i - 2], C[i - 2]) - near_2[i]
+            and O_[i - 1] <= max(O_[i - 2], C[i - 2]) + near_2[i]
             and (
                 (
                     # If three white
@@ -67,39 +56,21 @@ def _detect_nb(
         ):
             out[i] = color[i - 1] * 100
 
-        # Update totals: add current range, subtract trailing range
-        near_total_3 += arr_nr[i - 3] - arr_nr[near_trail - 3]
-        near_total_2 += arr_nr[i - 2] - arr_nr[near_trail - 2]
-        near_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
     # Lookback: TA_CANDLEAVGPERIOD(Near) + 3
-    near_period = candle_avg_period(CandleSetting.Near)
-    lookback = near_period + 3
-    start_idx = lookback
+    start_idx = candle_avg_period(CandleSetting.Near) + 3
     if start_idx >= len(out):
         return
-
-    arr_nr = ca._ranges[CandleSetting.Near]
-
-    near_trail = start_idx - near_period
-
-    # Seed Near totals for i-3 and i-2 (indices 3, 2)
-    near_total_3 = float(arr_nr[near_trail - 3 : start_idx - 3].sum())
-    near_total_2 = float(arr_nr[near_trail - 2 : start_idx - 2].sum())
 
     _detect_nb(
         ca.color,
         ca.open,
         ca.close,
-        arr_nr,
+        candle_average(ca, CandleSetting.Near, 3, start_idx),
+        candle_average(ca, CandleSetting.Near, 2, start_idx),
         out,
         start_idx,
-        near_trail,
-        near_total_3,
-        near_total_2,
-        AVG_FACTOR[CandleSetting.Near],
     )
 
 

@@ -5,9 +5,9 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.candles._cdl_math import (
-    AVG_FACTOR,
     CandleArrays,
     CandleSetting,
+    candle_average,
     candle_avg_period,
     run_pattern,
 )
@@ -15,92 +15,36 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _detect_nb(
-    real_body,
-    lower_shadow,
-    upper_shadow,
-    body_hi,
-    body_lo,
-    low,
-    hl_range,
-    arr_bd,
-    arr_sl,
-    arr_nr,
-    out,
-    start_idx,
-    body_doji_trail,
-    shadow_long_trail,
-    near_trail,
-    body_doji_total,
-    shadow_long_total,
-    near_total,
-    f_bd,
-    f_sl,
-    f_near,
-):
+def _detect_nb(real_body, lower_shadow, upper_shadow, body_hi, body_lo, low, hl_range, body_doji, shadow_long, near, out, start_idx):
     for i in range(start_idx, len(out)):
         if (
-            real_body[i] <= f_bd * body_doji_total
-            and lower_shadow[i] > f_sl * arr_sl[i]
-            and upper_shadow[i] > f_sl * arr_sl[i]
-            and (body_lo[i] <= low[i] + hl_range[i] / 2.0 + f_near * near_total)
-            and (body_hi[i] >= low[i] + hl_range[i] / 2.0 - f_near * near_total)
+            real_body[i] <= body_doji[i]
+            and lower_shadow[i] > shadow_long[i]
+            and upper_shadow[i] > shadow_long[i]
+            and (body_lo[i] <= low[i] + hl_range[i] / 2.0 + near[i])
+            and (body_hi[i] >= low[i] + hl_range[i] / 2.0 - near[i])
         ):
             out[i] = 100
 
-        # Update trailing windows
-        body_doji_total += arr_bd[i] - arr_bd[body_doji_trail]
-        shadow_long_total += arr_sl[i] - arr_sl[shadow_long_trail]
-        near_total += arr_nr[i] - arr_nr[near_trail]
-        body_doji_trail += 1
-        shadow_long_trail += 1
-        near_trail += 1
-
 
 def _detect(ca: CandleArrays, out: np.ndarray, **kwargs: Any) -> None:
-    body_doji_period = candle_avg_period(CandleSetting.BodyDoji)
-    shadow_long_period = candle_avg_period(CandleSetting.ShadowLong)
-    near_period = candle_avg_period(CandleSetting.Near)
-    lookback = max(body_doji_period, shadow_long_period, near_period)
-    start_idx = lookback
+    start_idx = max(candle_avg_period(s) for s in (CandleSetting.BodyDoji, CandleSetting.ShadowLong, CandleSetting.Near))
     if start_idx >= len(out):
         return
-
-    arr_bd = ca._ranges[CandleSetting.BodyDoji]
-    arr_nr = ca._ranges[CandleSetting.Near]
-    arr_sl = ca._ranges[CandleSetting.ShadowLong]
-    body_hi = ca.body_high
-    body_lo = ca.body_low
-
-    body_doji_trail = start_idx - body_doji_period
-    shadow_long_trail = start_idx - shadow_long_period
-    near_trail = start_idx - near_period
-    body_doji_total = float(arr_bd[body_doji_trail:start_idx].sum())
-    shadow_long_total = float(arr_sl[shadow_long_trail:start_idx].sum())
-    near_total = float(arr_nr[near_trail:start_idx].sum())
 
     _detect_nb(
         ca.real_body,
         ca.lower_shadow,
         ca.upper_shadow,
-        body_hi,
-        body_lo,
+        ca.body_high,
+        ca.body_low,
         ca.low,
         ca.hl_range,
-        arr_bd,
-        arr_sl,
-        arr_nr,
+        candle_average(ca, CandleSetting.BodyDoji, 0, start_idx),
+        candle_average(ca, CandleSetting.ShadowLong, 0, start_idx),
+        candle_average(ca, CandleSetting.Near, 0, start_idx),
         out,
         start_idx,
-        body_doji_trail,
-        shadow_long_trail,
-        near_trail,
-        body_doji_total,
-        shadow_long_total,
-        near_total,
-        AVG_FACTOR[CandleSetting.BodyDoji],
-        AVG_FACTOR[CandleSetting.ShadowLong],
-        AVG_FACTOR[CandleSetting.Near],
     )
 
 

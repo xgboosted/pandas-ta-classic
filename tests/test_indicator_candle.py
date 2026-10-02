@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
+from pandas_ta_classic.candles._cdl_math import AVG_FACTOR, CandleArrays, CandleSetting, candle_average, candle_avg_period
 from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
 from tests.config import get_sample_data
 
@@ -318,3 +319,76 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
                 native = self._native(name)(open_, high, low, close, **kwargs)
                 expected = getattr(talib, talib_name)(open_, high, low, close, **kwargs)
                 np.testing.assert_array_equal(native.to_numpy(dtype=float), np.asarray(expected, dtype=float), err_msg=f"{name} differs from TA-Lib")
+
+
+class TestCandleAverage(TestCase):
+    """`candle_average` against the per-pattern bookkeeping it replaced.
+
+    Every pattern used to carry TA-Lib's ``PeriodTotal`` as a scalar: seed it,
+    compare ``factor * total``, then ``total += range[i - lag] - range[trail - lag]``.
+    The helper must reproduce that bit for bit, or a threshold that lands
+    exactly on a candle's range would flip a signal.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # Bodies and shadows spread over many orders of magnitude, with opens
+        # near zero so the ranges keep their full mantissa: their window sums
+        # then round differently depending on the order they are added in. On
+        # price-like bars the ranges sit on one grid, both seeds add up exactly
+        # and the test could not tell them apart.
+        rng = np.random.default_rng(7)
+        n = 3000
+        open_ = rng.normal(0, 1e-3, n)
+        close = open_ + rng.lognormal(0, 3, n) * rng.choice([-1.0, 1.0], n)
+        high = np.maximum(open_, close) + rng.lognormal(0, 3, n)
+        low = np.minimum(open_, close) - rng.lognormal(0, 3, n)
+        cls.ca = CandleArrays(open_, high, low, close)
+
+    @staticmethod
+    def _scalar_bookkeeping(arr, period, lag, start_idx, factor, sequential_seed):
+        out = np.full(len(arr), np.nan)
+        window = arr[start_idx - lag - period : start_idx - lag]
+        if sequential_seed:
+            total = 0.0
+            for value in window:
+                total += value
+        else:
+            total = float(window.sum())
+        trail = start_idx - period
+        for i in range(start_idx, len(arr)):
+            out[i] = factor * (arr[i - lag] if period == 0 else total)
+            total += arr[i - lag] - arr[trail - lag]
+            trail += 1
+        return out
+
+    def test_bit_identical_to_scalar_bookkeeping(self):
+        for setting in CandleSetting:
+            period = candle_avg_period(setting)
+            for lag in range(5):
+                for extra in (0, 3, 7):
+                    for sequential_seed in (False, True):
+                        with self.subTest(setting=setting.name, lag=lag, extra=extra, sequential_seed=sequential_seed):
+                            start_idx = period + lag + extra
+                            got = candle_average(self.ca, setting, lag, start_idx, sequential_seed=sequential_seed)
+                            want = self._scalar_bookkeeping(self.ca._ranges[setting], period, lag, start_idx, AVG_FACTOR[setting], sequential_seed)
+                            self.assertTrue(np.isnan(got[:start_idx]).all())
+                            np.testing.assert_array_equal(got[start_idx:].view(np.int64), want[start_idx:].view(np.int64))
+
+    def test_the_two_seeds_differ_on_this_data(self):
+        """Guards the test above: if both seeds agreed here, it would not notice a helper that ignores the flag."""
+        differing = 0
+        for setting in CandleSetting:
+            start_idx = candle_avg_period(setting) + 4
+            for lag in range(5):
+                pairwise = candle_average(self.ca, setting, lag, start_idx)
+                sequential = candle_average(self.ca, setting, lag, start_idx, sequential_seed=True)
+                differing += int((pairwise[start_idx:].view(np.int64) != sequential[start_idx:].view(np.int64)).any())
+        self.assertGreater(differing, 0)
+
+    def test_start_before_the_first_window_raises(self):
+        period = candle_avg_period(CandleSetting.BodyLong)
+        with self.assertRaisesRegex(ValueError, r"candle_average\(\) start_idx must be >= lag \+ period"):
+            candle_average(self.ca, CandleSetting.BodyLong, 2, period + 1)
+        with self.assertRaisesRegex(ValueError, "start_idx"):
+            candle_average(self.ca, CandleSetting.ShadowLong, 3, 2)
