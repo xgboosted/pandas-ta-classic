@@ -9,7 +9,6 @@ import importlib
 import logging
 import subprocess
 import sys
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -210,9 +209,3 @@ def test_df_ta_lists_indicators_and_rejects_unknown_kinds(spy, capsys):
         spy.ta(kind=5)
 
 
-def test_to_utc_property_converts_the_frame():
-    df = pd.DataFrame({"close": [1.0, 2.0]}, index=pd.date_range("2024-01-01", periods=2))
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        df.ta.to_utc  # noqa: B018  (a property with an effect, as documented)
-    assert str(df.index.tz) == "UTC"  # it used to leave df unchanged

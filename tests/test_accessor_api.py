@@ -6,7 +6,7 @@ Covers:
   * The removed data-fetching API (``df.ta.ticker``, ``ta.yf``, ``ta.av``) is gone.
   * ``prefix``/``suffix`` work as per-call kwargs, not as properties.
   * ``time_range`` accepts valid unit strings and rejects invalid ones.
-  * ``to_utc`` is a property (not callable).
+  * ``df.ta.to_utc`` was removed and raises without touching the frame.
   * ``append=True`` leaves the caller's warning filters unchanged.
   * ``indicators(as_list=True)`` and ``indicators(exclude=[...])`` behave as
     documented.
@@ -468,11 +468,6 @@ class TestAccessorPropertyErrorsAreNotMasked(TestCase):
         # RangeIndex: the time-based properties cannot work on it.
         self.df = pd.DataFrame({"close": [1.0, 2.0]})
 
-    def test_to_utc_reports_the_real_failure(self):
-        with self.assertRaises(AttributeError) as ctx:
-            _ = self.df.ta.to_utc
-        self.assertIn("tz_localize", str(ctx.exception))
-
     def test_time_range_reports_the_real_failure(self):
         # Used to surface as AttributeError: 'int' object has no attribute 'days'
         with self.assertRaisesRegex(TypeError, r"total_time\(\) needs a DatetimeIndex, got RangeIndex"):
@@ -526,22 +521,30 @@ class TestAccessorAppendWarningFilter(TestCase):
         self.assertGreater(len(df.columns), 100)
 
 
-class TestAccessorToUtcProperty(TestCase):
-    """to_utc is a property, not a callable method."""
+class TestAccessorToUtcRemoved(TestCase):
+    """df.ta.to_utc was a property that converted df's index when it was read.
 
-    def test_to_utc_is_not_callable(self):
-        """Accessing df.ta.to_utc must not raise; result is not a method."""
-        df = get_sample_data()
-        # Accessing the property converts the index in-place and returns None.
-        # It must not raise TypeError like "NoneType is not callable".
-        result = df.ta.to_utc  # property access — no parentheses
-        self.assertIsNone(result)
+    hasattr(), dir()-based introspection and IDE autocompletion read it too, so
+    merely looking at the accessor changed the caller's frame. It now raises and
+    leaves the frame alone; ta.to_utc(df) returns a converted copy.
+    """
 
-    def test_to_utc_not_callable_as_method(self):
-        """Calling df.ta.to_utc() (with parentheses) should raise TypeError."""
-        df = get_sample_data()
-        with self.assertRaises(TypeError):
-            df.ta.to_utc()  # type: ignore[operator]
+    def setUp(self):
+        self.df = pd.DataFrame({"close": [1.0, 2.0]}, index=pd.date_range("2024-01-01", periods=2))
+
+    def test_reading_it_raises_and_leaves_the_index_naive(self):
+        with self.assertRaisesRegex(AttributeError, r"df\.ta\.to_utc was removed in 0\.9\.0.*ta\.to_utc\(df\)"):
+            _ = self.df.ta.to_utc
+        self.assertIsNone(self.df.index.tz)
+
+    def test_hasattr_does_not_convert_the_frame(self):
+        self.assertFalse(hasattr(self.df.ta, "to_utc"))
+        self.assertIsNone(self.df.index.tz)
+
+    def test_the_function_still_converts_a_copy(self):
+        utc = pandas_ta_classic.to_utc(self.df)
+        self.assertEqual(str(utc.index.tz), "UTC")
+        self.assertIsNone(self.df.index.tz)
 
 
 class TestIsDatetimeOrdered(TestCase):

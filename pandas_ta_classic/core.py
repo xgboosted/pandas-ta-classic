@@ -24,7 +24,7 @@ from pandas_ta_classic._indicator_loader import (
     _make_ta_wrapper,
 )
 from pandas_ta_classic._meta import _MATH_ALIASES, EXCHANGE_TZ, Category, Imports, version
-from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, to_utc, total_time
+from pandas_ta_classic.utils import final_time, get_time, is_datetime_ordered, total_time
 from pandas_ta_classic.utils._core import _bool_param, _pos_int
 from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
@@ -41,6 +41,11 @@ _STRATEGY_GUARD_ENV = "_PANDAS_TA_CLASSIC_STRATEGY_PID"
 # while another is still starting children.
 _STRATEGY_GUARD_LOCK = Lock()
 _STRATEGY_GUARD_DEPTH = 0
+
+_TO_UTC_REMOVED = (
+    "df.ta.to_utc was removed in 0.9.0: reading the attribute converted df's index, so hasattr() and IDE "
+    "introspection did too. Use df = ta.to_utc(df), which returns a converted copy"
+)
 
 _MAIN_GUARD_HINT = (
     "df.ta.strategy() ran indicators on worker processes from a script that does "
@@ -471,13 +476,10 @@ class AnalysisIndicators(PandasObject):
 
     @property
     def to_utc(self) -> None:
-        """Sets the DataFrame's index to UTC (localises a naive index, converts an aware one).
-
-        This changes ``df`` itself, as documented. It had stopped doing so when
-        ``ta.to_utc()`` began returning a copy: it rebound the accessor's own
-        reference instead, which pandas 3 discards immediately.
-        """
-        self._df.index = to_utc(self._df).index
+        """Removed in 0.9.0: reading it converted df's index, so hasattr() did too."""
+        # AttributeError, so hasattr() is False and getattr(..., default) works.
+        # __getattr__ re-runs this getter, so the message survives the fallback.
+        raise AttributeError(_TO_UTC_REMOVED)
 
     @property
     def version(self) -> str:
