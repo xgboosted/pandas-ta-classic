@@ -10,7 +10,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
@@ -80,7 +79,9 @@ def dx(
         if dmp is None or dmn is None:
             return None
 
-        dx_ = scalar * (dmp - dmn).abs() / non_zero_range(dmp, -dmn)
+        # No directional movement in either direction reads 0.0, as in TA-Lib's DX.
+        dm_sum = dmp + dmn
+        dx_ = (scalar * (dmp - dmn).abs() / dm_sum).mask(dm_sum == 0, 0.0)
 
     # Offset
     dx_ = apply_offset(dx_, offset)

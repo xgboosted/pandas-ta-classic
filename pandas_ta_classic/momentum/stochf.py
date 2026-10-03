@@ -9,7 +9,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _str_param, nan_on_short_input
@@ -32,7 +31,9 @@ def _stochf_native(high, low, close, fastk, fastd, mamode):
     """
     lowest_low = low.rolling(fastk).min()
     highest_high = high.rolling(fastk).max()
-    fastk_ = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
+    # A window with no range reads 0.0, as in TA-Lib's STOCHF (see willr).
+    window_range = highest_high - lowest_low
+    fastk_ = (100 * (close - lowest_low) / window_range).mask(window_range == 0, 0.0)
     fastd_ = _on_valid_rows(fastk_, lambda s: ma(mamode, s, length=fastd))
     if fastd_ is None:
         return None

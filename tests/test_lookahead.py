@@ -8,7 +8,7 @@ backtest run over the full history would use information that did not exist at
 the time the signal is claimed to have been produced.
 
 Covered:
-  1. Issue #149 — ``non_zero_range`` added its epsilon to *every* row as soon as
+  1. Issue #149 — ``non_zero_range`` (removed in 0.9.0) added its epsilon to *every* row as soon as
      any row in the batch had a zero range, so appending one flat bar shifted
      the whole history.  27 indicators inherited the leak.
   2. ``mavp`` — the default ``periods`` was ``linspace(min, max, len(close))``,
@@ -37,14 +37,12 @@ Run:
 import inspect
 import typing
 from pathlib import Path
-from sys import float_info as sflt
 
 import numpy as np
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
-from pandas_ta_classic.utils import non_zero_range
 
 # Number of bars in the synthetic frame, and the prefix lengths compared
 # against it.  Two cuts so both a short and a long history are exercised.
@@ -94,7 +92,7 @@ def causal_test_data(bars: int = BARS) -> pd.DataFrame:
     Each planted feature is the trigger for a branch that has historically been
     written batch-globally:
 
-    * flat bars (``high == low``) -- the epsilon substitution in ``non_zero_range``
+    * flat bars (``high == low``) -- zero-range divisors (issue #149)
     * zero-volume bars            -- volume-weighted divisions
     * a constant-price run        -- zero standard deviation / zero range windows
     * a single extreme bar        -- whole-series min/max normalisation
@@ -346,41 +344,7 @@ def test_lookahead_false_is_all_or_nothing(frames, name):
     assert deviations(frames, name, {**kwargs, "lookahead": False}) == []
 
 
-# --- issue #149: the epsilon must apply to the flat row only ---------------
-
-
-def test_flat_bar_does_not_change_other_rows():
-    high = pd.Series([10.0, 11.0, 12.0, 13.0])
-    low = pd.Series([9.0, 10.0, 11.0, 13.0])
-
-    result = non_zero_range(high, low)
-
-    np.testing.assert_array_equal(result.iloc[:3].to_numpy(), np.array([1.0, 1.0, 1.0]))
-    assert result.iloc[3] == sflt.epsilon
-
-
-def test_appending_flat_bar_leaves_history_untouched():
-    high = pd.Series([10.0, 11.0, 12.0])
-    low = pd.Series([9.0, 10.0, 11.0])
-
-    before = non_zero_range(high, low)
-    after = non_zero_range(
-        pd.concat([high, pd.Series([13.0], index=[3])]),
-        pd.concat([low, pd.Series([13.0], index=[3])]),
-    )
-
-    pd.testing.assert_series_equal(before, after.iloc[:3])
-
-
-def test_nan_rows_are_preserved():
-    high = pd.Series([np.nan, 11.0, 12.0])
-    low = pd.Series([np.nan, 11.0, 11.0])
-
-    result = non_zero_range(high, low)
-
-    assert np.isnan(result.iloc[0])
-    assert result.iloc[1] == sflt.epsilon
-    assert result.iloc[2] == 1.0
+# --- issue #149: a flat bar may not move earlier rows ------------------------
 
 
 @pytest.mark.parametrize("name", ["pdist", "brar", "true_range", "atr", "ad"])

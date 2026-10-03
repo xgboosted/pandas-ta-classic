@@ -24,10 +24,12 @@ marker for "this window was degenerate", not a reading. This package follows
 it, so that every indicator with a TA-Lib counterpart agrees with it bar for
 bar, and the indicators without one answer the same way.
 
-Note that this is *not* ``non_zero_range``, which substitutes an epsilon and
-lets the value fall out of the formula. The two agree wherever the numerator is
-also zero, and disagree where the formula has an affine term: with an epsilon
-denominator ``willr`` reads ``-100``, with the zero convention ``0.0``.
+Note that this is *not* what ``non_zero_range`` did (removed in 0.9.0): it
+substituted an epsilon and let the value fall out of the formula. The two agree
+wherever the numerator is also zero, and disagree where the formula has an
+affine term: with an epsilon denominator ``willr`` reads ``-100``, with the
+zero convention ``0.0``. The properties at the end of this module keep the
+epsilon from coming back.
 
 Indicators left out
 -------------------
@@ -45,6 +47,8 @@ import inspect
 import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import given, settings, strategies as st
+from hypothesis.extra.numpy import arrays
 
 import pandas_ta_classic as ta
 from tests.assertions import output_columns
@@ -533,14 +537,6 @@ def test_a_flat_series_gives_bollinger_no_width_and_no_position(frames) -> None:
 # churn in a file with known cross-OS ULP drift.
 
 
-# brar is deliberately left on non_zero_range. Its epsilon cancels between the
-# numerator and the divisor of each ratio, so a degenerate window reads `scalar`
-# -- 100, BRAR's neutral value -- rather than an epsilon-scale artifact, and
-# there is nothing here of the kind this module is about. Taking the exact
-# ranges instead would replace that 100 with the 0.0 marker and, where a flat
-# run ends, leave the numerator alive over a zero divisor: +-inf.
-
-
 def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
     """0.0 is the degenerate marker; it may not stand in for a real 1/0.
 
@@ -595,8 +591,8 @@ def _finite_max(values: pd.Series) -> float | None:
 def test_a_degenerate_window_does_not_inflate_the_output(name: str, label: str, frames) -> None:
     """A degenerate window may not answer beyond the scale of the same data.
 
-    This is the property the sweeps above cannot see. Dividing by
-    ``non_zero_range``'s epsilon multiplies the quotient by 4.5e15, which is
+    This is the property the sweeps above cannot see. Dividing by the epsilon
+    the removed ``non_zero_range`` substituted multiplies the quotient by 4.5e15, which is
     finite, is not NaN, and bleeds no NaN -- ``ad`` reached 3.6e23 that way and
     ``cumsum`` carried it to the end of the series, while every other check here
     passed. An epsilon *residue* hides just as well at the other end: 2.2e-16 is
@@ -824,3 +820,179 @@ def test_bbands_reads_zero_for_a_band_with_no_width(mamode: str) -> None:
         assert (values == 0.0).all(), f"{column}: degenerate window reads {sorted(set(values))[:5]}, expected 0.0"
 
     assert float(result[f"BBP_{length}_2.0"].dropna().abs().max()) < 1e3, "BBP still explodes somewhere on this frame"
+
+
+# ---------------------------------------------------------------------------
+# Properties: a flat bar never leaves an epsilon in the output.
+# ---------------------------------------------------------------------------
+
+# ``non_zero_range`` (removed in 0.9.0) replaced a zero difference with
+# ``sys.float_info.epsilon``. Each property below covers one way that epsilon
+# reached the output, on generated frames with flat bars, bodiless bars, a
+# fully flat run and, optionally, int64 prices. Prices sit on a 0.25 tick, so
+# no legitimate value of the checked columns is epsilon-scale: anything with
+# ``0 < |x| < 1e-12`` is the artifact.
+_TICK = 0.25
+_EPSILON_SCALE = 1e-12
+_PROPERTY_LENGTH = 10
+
+
+@st.composite
+def _tick_frame(draw, *, consistent: bool = True) -> dict[str, pd.Series]:
+    """OHLCV on a 0.25 tick with flat bars, bodiless bars and one flat run.
+
+    ``consistent=False`` keeps ``high == low`` on the flat run but moves the
+    close off it, the malformed bar on which a zero range meets a live
+    numerator.
+    """
+    n = draw(st.integers(min_value=40, max_value=160))
+    ticks = lambda lo, hi: draw(arrays(np.int64, n, elements=st.integers(lo, hi)))
+    close = 400 + np.cumsum(ticks(-4, 4))
+    high = close + ticks(0, 3) * draw(arrays(np.int64, n, elements=st.integers(0, 1)))
+    low = close - ticks(0, 3) * draw(arrays(np.int64, n, elements=st.integers(0, 1)))
+    open_ = low + ticks(0, 6) % (high - low + 1)
+    bodiless = draw(arrays(bool, n))
+    open_[bodiless] = close[bodiless]
+
+    start = draw(st.integers(min_value=0, max_value=n - 2 * _PROPERTY_LENGTH))
+    stop = draw(st.integers(min_value=start + 2 * _PROPERTY_LENGTH, max_value=n))
+    price = close[start]
+    open_[start:stop] = high[start:stop] = low[start:stop] = close[start:stop] = price
+    if not consistent:
+        close[start:stop] = price + draw(st.integers(min_value=1, max_value=4))
+
+    volume = draw(arrays(np.int64, n, elements=st.integers(1, 10_000)))
+    if draw(st.booleans()):  # int64 prices: the epsilon was once downcast to 0 there
+        cast = lambda x: pd.Series(x, dtype="int64")
+    else:
+        cast = lambda x: pd.Series(x * _TICK, dtype="float64")
+    return {"open_": cast(open_), "high": cast(high), "low": cast(low), "close": cast(close), "volume": pd.Series(volume, dtype="float64")}
+
+
+def _epsilon_scale(values: pd.Series) -> pd.Series:
+    return (values != 0) & (values.abs() < _EPSILON_SCALE)
+
+
+@settings(max_examples=200, deadline=None)
+@given(_tick_frame())
+def test_a_bar_with_no_range_or_no_body_contributes_exactly_nothing(frame: dict[str, pd.Series]) -> None:
+    """Per-bar ratios over the range: ``bop`` and the ``ad`` accumulation.
+
+    ``bop`` read ``eps / range`` on a bodiless bar and ``ad(open_=)`` added
+    ``eps * volume / range`` per such bar, where both are exactly 0.
+    """
+    o, h, l, c, v = frame["open_"], frame["high"], frame["low"], frame["close"], frame["volume"]
+    nothing = (h == l) | (c == o)
+
+    bop = ta.bop(o, h, l, c)
+    assert (bop[nothing] == 0.0).all(), f"bop on a bar with no range or body: {sorted(set(bop[nothing]))[:5]}"
+    assert not _epsilon_scale(bop).any()
+
+    for ad in (ta.ad(h, l, c, v, open_=o), ta.ad(h, l, c, v)):
+        step = ad.diff()
+        step.iloc[0] = ad.iloc[0]
+        moved = step[(h == l) | ((c == o) & (ad.name == "ADo"))]
+        assert (moved == 0.0).all(), f"{ad.name} moved by {sorted(set(moved))[:5]} on a bar that adds nothing"
+
+
+@settings(max_examples=200, deadline=None)
+@given(_tick_frame(consistent=False))
+def test_a_window_with_no_range_reads_exactly_zero(frame: dict[str, pd.Series]) -> None:
+    """Rolling-range dividers: the 0.0 marker, not ``x / eps``.
+
+    The frame is the malformed one, so the close can sit off a zero range:
+    an epsilon divisor read 4.5e15 times the gap there, the mask reads 0.0.
+    """
+    h, l, c = frame["high"], frame["low"], frame["close"]
+    no_range = (h.rolling(_PROPERTY_LENGTH).max() - l.rolling(_PROPERTY_LENGTH).min()) == 0
+    for values in (
+        ta.stochf(h, l, c, fastk=_PROPERTY_LENGTH).iloc[:, 0],
+        ta.willr(h, l, c, length=_PROPERTY_LENGTH),
+    ):
+        assert (values[no_range] == 0.0).all(), f"{values.name} on a window with no range: {sorted(set(values[no_range]))[:5]}"
+        assert not _epsilon_scale(values).any(), f"{values.name} carries an epsilon"
+
+
+@settings(max_examples=200, deadline=None)
+@given(_tick_frame())
+def test_a_window_with_no_movement_closes_on_the_price_at_the_fast_rate(frame: dict[str, pd.Series]) -> None:
+    """``kama``'s efficiency ratio is 1.0 on a window that did not move.
+
+    That is TA-Lib's KAMA. An epsilon per diff made it ``eps / (length * eps)``,
+    ``1 / length``, and the average crawled towards a flat price at nearly the
+    slow rate instead: 0.085 off TA-Lib on a 40-bar flat block.
+    """
+    close = frame["close"].astype(float)
+    kama = ta.kama(close, length=_PROPERTY_LENGTH)
+    fast = (2 / 3) ** 2  # sc at er == 1 for the default fast=2
+    still = close.diff().abs().rolling(_PROPERTY_LENGTH).sum() == 0
+    for i in np.flatnonzero(still.to_numpy()):
+        if i <= _PROPERTY_LENGTH - 1:
+            continue
+        expected = fast * close.iloc[i] + (1 - fast) * kama.iloc[i - 1]
+        assert kama.iloc[i] == pytest.approx(expected, rel=1e-12), f"bar {i}: {kama.iloc[i]!r}, expected {expected!r}"
+
+
+@settings(max_examples=200, deadline=None)
+@given(_tick_frame())
+def test_a_bar_with_no_body_is_always_a_doji(frame: dict[str, pd.Series]) -> None:
+    """``body <= 0.01 * factor * average range`` holds for a zero body.
+
+    The epsilon body failed it where the average range was 0 too -- inside a
+    flat run -- so a flat bar was not a doji there. TA-Lib's CDLDOJI says it is.
+    """
+    o, h, l, c = frame["open_"], frame["high"], frame["low"], frame["close"]
+    doji = ta.cdl_doji(o, h, l, c, length=_PROPERTY_LENGTH)
+    bodiless = (c == o).to_numpy(copy=True)
+    bodiless[: _PROPERTY_LENGTH + 1] = False  # the average range is warming up
+    assert (doji[bodiless] == 100).all(), f"bodiless bars read {sorted(set(doji[bodiless]))}"
+
+
+@pytest.mark.skipif(not HAS_TALIB, reason="TA-Lib not installed")
+@settings(max_examples=100, deadline=None)
+@given(_tick_frame())
+def test_former_epsilon_readers_match_talib_on_flat_bars(frame: dict[str, pd.Series]) -> None:
+    """Every module that used ``non_zero_range`` and has a TA-Lib twin agrees with it."""
+    o, h, l, c = (frame[k].astype(float) for k in ("open_", "high", "low", "close"))
+    n = _PROPERTY_LENGTH
+    pairs = {
+        "cdl_doji": (ta.cdl_doji(o, h, l, c, length=n), talib.CDLDOJI(o, h, l, c)),
+        "bop": (ta.bop(o, h, l, c), talib.BOP(o, h, l, c)),
+        "kama": (ta.kama(c, length=n), talib.KAMA(c, n)),
+        "stochf": (ta.stochf(h, l, c, fastk=n).iloc[:, 0], talib.STOCHF(h, l, c, n, 3, 0)[0]),
+        "dx": (ta.dx(h, l, c, length=n), talib.DX(h, l, c, n)),
+    }
+    for name, (native, oracle) in pairs.items():
+        native, oracle = np.asarray(native, dtype=float), np.asarray(oracle, dtype=float)
+        both = np.isfinite(native) & np.isfinite(oracle)
+        np.testing.assert_allclose(native[both], oracle[both], rtol=1e-9, atol=1e-9, err_msg=name)
+
+
+# Rounding residue, not a substituted epsilon. `ht_phasor`: the Hilbert FIR
+# leaves 6e-17 on a constant input (see the Hilbert FIR note above).
+# `cpr`: CPR_WIDTH is |TC - BC|, two pivot sums that round apart by 2.8e-14 on
+# ordinary moving bars, flat or not. `stochrsi`: the %K/%D moving averages
+# leave 1e-14 as the window enters a flat block, the usual rolling-sum residue.
+_RESIDUE_NOT_EPSILON = {"cpr", "ht_phasor", "stochrsi"}
+
+
+@pytest.mark.parametrize("label", ["flat", "block", "no_range"])
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _RESIDUE_NOT_EPSILON])
+def test_no_column_carries_an_epsilon_scale_value(name: str, label: str, frames) -> None:
+    """Registry-wide: a degenerate window answers 0.0 or a real value, never ~1e-16.
+
+    The inflation sweep above catches an epsilon *divisor* with a live
+    numerator; this catches the epsilon that reaches the output as itself, as
+    ``bop``, ``ad``, ``adosc`` and ``cmf`` did through ``non_zero_range``
+    before 0.9.0 (bodiless bars inside the block frame). The frames are
+    consistent OHLC, where an exact formula leaves either 0.0 or a value on
+    the data's own scale. The inconsistent frame is left out: on it, EMA-based
+    columns legitimately converge on a constant and pass through 1e-13.
+    """
+    result = _call(name, frames[label])
+    if result is None:
+        pytest.skip(f"{name} returns None for this input")
+    for column, values in output_columns(result).items():
+        numeric = pd.to_numeric(values, errors="coerce")
+        tiny = numeric[_epsilon_scale(numeric)]
+        assert tiny.empty, f"{column}: {len(tiny)} epsilon-scale values on the {label} frame, e.g. {tiny.iloc[0]!r} at {tiny.index[0]}"

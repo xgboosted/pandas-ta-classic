@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
@@ -46,8 +45,11 @@ def cdl_doji(
     # Calculate Result
     # TA-Lib averages the HL range of the *previous* ``length`` bars
     # (excluding the current bar), so shift the SMA by 1.
-    body = non_zero_range(close, open_).abs()
-    hl_range = non_zero_range(high, low).abs()
+    # Both are only compared, never divided by, so they stay exact: an epsilon
+    # body failed `body <= 0.01 * factor * avg` on a window of flat bars, where
+    # TA-Lib's CDLDOJI (0 <= 0) reports a doji.
+    body = (close - open_).abs()
+    hl_range = (high - low).abs()
     # Average the previous ``length`` finite bars, as if NaN rows were dropped:
     # a row resample() inserts for a missing session would otherwise leave the
     # next ``length`` averages NaN, and weekend gaps keep every average NaN.

@@ -15,7 +15,7 @@ Covered:
      'close'; an explicitly named column still works.
   4. cross / cross_value: the below-cross fired on NaN bars and ties, the
      above-cross missed a touch followed by a cross.
-  5. non_zero_range on int64 prices, and bop on a flat bar.
+  5. Flat bars on int64 prices read like float ones, and bop on a flat bar.
   6. stdev forwards min_periods to variance.
   7. stochrsi(talib=True) only uses TA-Lib when it can express k and
      rsi_length, so it equals the native result.
@@ -31,7 +31,6 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
-from pandas_ta_classic.utils import non_zero_range
 from pandas_ta_classic.utils._cpr import get_previous_period_ohlcv
 
 _SPY = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
@@ -187,10 +186,20 @@ def test_cross_value_below_ignores_warmup():
 # ---------------------------------------------------------------------------
 
 
-def test_non_zero_range_int64_matches_float():
-    high = pd.Series([10, 12, 11], dtype="int64")
-    low = pd.Series([10, 9, 11], dtype="int64")
-    np.testing.assert_array_equal(non_zero_range(high, low).to_numpy(), non_zero_range(high.astype(float), low.astype(float)).to_numpy())
+def test_flat_bars_on_int64_prices_match_float():
+    # non_zero_range (removed in 0.9.0) downcast its epsilon to 0 on int64
+    # input; the modules that used it must read int64 flat bars like float ones.
+    o, h, l, c, v = (pd.Series(x * 5, dtype="int64") for x in ([10, 10, 11, 12, 11], [10, 12, 11, 12, 13], [10, 9, 11, 12, 10], [10, 11, 11, 12, 12], [1, 2, 3, 4, 5]))
+    as_float = [s.astype(float) for s in (o, h, l, c, v)]
+    for call in (
+        lambda o, h, l, c, v: ta.bop(o, h, l, c),
+        lambda o, h, l, c, v: ta.ad(h, l, c, v, open_=o),
+        lambda o, h, l, c, v: ta.cmf(h, l, c, v, open_=o, length=2),
+        lambda o, h, l, c, v: ta.cdl_doji(o, h, l, c, length=2),
+        lambda o, h, l, c, v: ta.stochf(h, l, c, fastk=2, fastd=2),
+        lambda o, h, l, c, v: ta.kama(c, length=2, fast=2, slow=2),
+    ):
+        pd.testing.assert_frame_equal(pd.DataFrame(call(o, h, l, c, v)), pd.DataFrame(call(*as_float)))
 
 
 @pytest.mark.parametrize("dtype", ["int64", "float64"])

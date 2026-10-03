@@ -7,7 +7,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
@@ -43,7 +42,7 @@ def cmf(
         open_ = verify_series(open_)
         if open_ is None:
             return None
-        ad = non_zero_range(close, open_)  # AD with Open
+        ad = close - open_  # AD with Open
     else:
         ad = 2 * close - (high + low)  # AD with High, Low, Close
 

@@ -9,7 +9,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _str_param, nan_on_short_input
@@ -65,8 +64,9 @@ def stoch(
         lowest_low = low.rolling(k).min()
         highest_high = high.rolling(k).max()
 
-        stoch = 100 * (close - lowest_low)
-        stoch /= non_zero_range(highest_high, lowest_low)
+        # A window with no range reads 0.0, as in TA-Lib's STOCH (see willr).
+        window_range = highest_high - lowest_low
+        stoch = (100 * (close - lowest_low) / window_range).mask(window_range == 0, 0.0)
 
         stoch_k = _on_valid_rows(stoch, lambda s: ma(mamode, s, length=smooth_k))
         if stoch_k is None:

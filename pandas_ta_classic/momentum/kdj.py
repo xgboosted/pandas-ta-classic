@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
@@ -41,7 +40,11 @@ def kdj(
     highest_high = high.rolling(length).max()
     lowest_low = low.rolling(length).min()
 
-    fastk = 100 * (close - lowest_low) / non_zero_range(highest_high, lowest_low)
+    # A window with no range reads 0.0, TA-Lib's marker for a degenerate
+    # window (see willr). The mask sits on the divisor, so a close outside a
+    # zero range (malformed OHLC) reads 0.0 too rather than x/0.
+    window_range = highest_high - lowest_low
+    fastk = (100 * (close - lowest_low) / window_range).mask(window_range == 0, 0.0)
 
     k = rma(fastk, length=signal)
     if k is None:

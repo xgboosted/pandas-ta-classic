@@ -7,7 +7,6 @@ import sys
 import warnings
 from collections.abc import Callable
 from numbers import Real
-from sys import float_info as sflt
 from typing import Any, TypeGuard
 
 import numpy as np
@@ -435,24 +434,6 @@ def nan_on_short_input(fn: Callable) -> Callable:
             _OUTER_INDICATOR.reset(token)
 
     return wrapper
-
-
-def non_zero_range(high: Series, low: Series) -> Series:
-    """Returns the difference of two series, replacing exact zeros with epsilon.  This occurs commonly in crypto data when 'high' = 'low'.
-
-    The replacement is pointwise: a flat bar at row ``t`` only affects row ``t``.
-    Rows with a non-zero range keep their exact difference, so the value at row
-    ``t`` never depends on bars at ``t + 1`` or later.
-    """
-    _require_input(high, "non_zero_range", "high")
-    _require_input(low, "non_zero_range", "low")
-    diff = high - low
-    # Cast to float before substituting epsilon: on an int64 series,
-    # ``diff.where(diff != 0, epsilon)`` downcasts the float epsilon to 0,
-    # leaving flat bars as 0 instead of epsilon (and then 0/0 = NaN downstream).
-    if diff.dtype.kind in "iu":
-        diff = diff.astype(float)
-    return diff.where(diff != 0, sflt.epsilon)
 
 
 def degenerate_div(numerator: Series, denominator: Series) -> Series:

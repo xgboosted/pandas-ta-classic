@@ -9,7 +9,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
@@ -58,7 +57,8 @@ def fisher(
     highest_hl2 = hl2_.rolling(length).max()
     lowest_hl2 = hl2_.rolling(length).min()
 
-    hlr = non_zero_range(highest_hl2, lowest_hl2)
+    # The floor below already keeps a flat window off a zero divisor.
+    hlr = highest_hl2 - lowest_hl2
     hlr[hlr < 0.001] = 0.001
 
     hl_range = hlr
