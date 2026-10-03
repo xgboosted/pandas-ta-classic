@@ -49,7 +49,7 @@ def kvo(
         return None
 
     # Calculate Result
-    signed_volume = volume * signed_series(hlc3(high, low, close), 1)
+    signed_volume = volume * signed_series(hlc3(high, low, close))
     _kvo_fast = _on_valid_rows(signed_volume, lambda s: ma(mamode, s, length=fast))
     if _kvo_fast is None:
         return None
@@ -95,7 +95,7 @@ Calculation:
         fast=34, slow=55, signal=13
     EMA = Exponential Moving Average
 
-    SV = volume * signed_series(HLC3, 1)
+    SV = volume * signed_series(HLC3)  # NaN on the first bar: no direction yet
     KVO = EMA(SV, fast) - EMA(SV, slow)
     Signal = EMA(KVO, signal)
 

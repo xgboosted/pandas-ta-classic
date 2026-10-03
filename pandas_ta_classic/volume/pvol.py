@@ -32,7 +32,7 @@ def pvol(
     # Calculate Result
     pvol = close * volume
     if signed:
-        pvol *= signed_series(close, 1)
+        pvol *= signed_series(close)
 
     # Offset
     pvol = apply_offset(pvol, offset)
@@ -52,14 +52,15 @@ Returns a series of the product of price and volume.
 
 Calculation:
     if signed:
-        pvol = signed_series(close, 1) * close * volume
+        pvol = signed_series(close) * close * volume
     else:
         pvol = close * volume
 
 Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
-    signed (bool): Keeps the sign of the difference in 'close's. Default: False
+    signed (bool): Keeps the sign of the difference in 'close's. The first
+        bar has no difference and reads NaN. Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
