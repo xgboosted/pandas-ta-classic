@@ -47,8 +47,10 @@ def tsignals(
     # parameter was removed in 0.9.0. Drop it rather than forward it to apply_fill.
     kwargs.pop("drift", None)
 
-    # Calculate Result
-    trends = trend.fillna(0).astype(int)
+    # Calculate Result. A missing trend value holds the last known trend: filled
+    # with 0 it read as "no trend", so a gap inside an uptrend fabricated an exit
+    # and a re-entry. Before the first known value there is no position.
+    trends = trend.ffill().fillna(0).astype(int)
     trades = trends.diff().shift(trade_offset).fillna(0).astype(int)
     entries = (trades > 0).astype(int)
     exits = (trades < 0).abs().astype(int)
@@ -104,7 +106,9 @@ Calculation:
 
 Args:
     trend (pd.Series): Series of 'trend's. The trend can be either a boolean or
-        integer series of '0's and '1's
+        integer series of '0's and '1's. A missing value holds the last known
+        trend, so a gap makes no trade; before the first known value the trend
+        is 0.
     asbool (bool): If True, it converts the Trends, Entries and Exits columns to
         booleans. When boolean, it is also useful for backtesting with
         vectorbt's Portfolio.from_signal(close, entries, exits) Default: False

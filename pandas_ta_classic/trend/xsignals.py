@@ -40,14 +40,20 @@ def xsignals(
     _require_number(xa, "xa")
     _require_number(xb, "xb")
 
-    # Calculate Result
+    # Calculate Result. Crossings are taken over the observed values only: a
+    # missing bar compared NaN with the threshold on both sides of it, so a
+    # crossing that fell on the gap was lost, and the whole trade with it.
+    # Written back by position: a label reindex fails on a duplicated index.
+    is_observed = signal.notna().to_numpy()
+    observed = signal[is_observed]
     if above:
-        entries = cross_value(signal, xa)
-        exits = -cross_value(signal, xb, above=False)
+        entries = cross_value(observed, xa)
+        exits = -cross_value(observed, xb, above=False)
     else:
-        entries = cross_value(signal, xa, above=False)
-        exits = -cross_value(signal, xb)
-    trades = entries + exits
+        entries = cross_value(observed, xa, above=False)
+        exits = -cross_value(observed, xb)
+    trades = Series(0, index=signal.index, dtype=(entries + exits).dtype)
+    trades.iloc[is_observed] = (entries + exits).to_numpy()
 
     # Modify trades to fill gaps for trends
     trades.replace({0: np.nan}, inplace=True)
@@ -112,7 +118,9 @@ Calculation:
     exits = (trades < 0).abs().astype(int)
 
 Args:
-    signal (pd.Series): Oscillator or signal Series to evaluate.
+    signal (pd.Series): Oscillator or signal Series to evaluate. A missing value
+        is skipped: a crossing is found between the observed values around it,
+        and the trend holds through it.
     xa (float): Entry threshold. Choose based on indicator range.
         RSI/Stoch/KDJ (0-100): typical 20-30 (oversold) or 70-80 (overbought).
         Unbounded indicators (MACD, CCI): must match their actual value range.

@@ -325,6 +325,58 @@ class TestMiscUtils(TestCase):
         assert (diff > 0).all()
 
 
+def _with_gaps(values: list, gaps: list, repeated: bool) -> pd.Series:
+    """values with NaN at the drawn positions, on 0..n-1 or on an index with repeated labels."""
+    index = [i // 2 for i in range(len(values))] if repeated else list(range(len(values)))
+    series = pd.Series(values, index=index, dtype=float)
+    series.iloc[[g % len(values) for g in gaps]] = np.nan
+    return series
+
+
+class TestSignalGaps(TestCase):
+    """A missing trend or signal value makes no trade of its own.
+
+    tsignals filled a missing trend with 0, so a gap inside an uptrend gave an
+    exit and a re-entry; xsignals compared the missing bar with the thresholds,
+    so a crossing that fell on the gap was lost with its whole trade. On the
+    observed bars both must equal the result for the series without the gaps,
+    and a gap bar carries no trade. Compared by position, so a repeated index
+    label is covered too.
+    """
+
+    @staticmethod
+    def _check(result: pd.DataFrame, without_gaps: pd.DataFrame, is_observed: np.ndarray) -> None:
+        np.testing.assert_array_equal(result.to_numpy()[is_observed], without_gaps.to_numpy())
+        assert (result["TS_Trades"].to_numpy()[~is_observed] == 0).all()
+
+    # Gaps after the first bar: a leading NaN run means "no position yet" and,
+    # unchanged, gives an entry on the first known uptrend bar.
+    @given(
+        st.lists(st.sampled_from([0, 1]), min_size=2, max_size=60),
+        st.lists(st.integers(min_value=1, max_value=59), max_size=10),
+        st.booleans(),
+    )
+    def test_tsignals_gaps_change_nothing_on_observed_bars(self, values, gaps, repeated):
+        trend = _with_gaps(values, [max(g % len(values), 1) for g in gaps], repeated)
+        is_observed = trend.notna().to_numpy()
+        assume(is_observed.sum() >= 2)
+        self._check(ta.tsignals(trend), ta.tsignals(trend[is_observed]), is_observed)
+
+    @given(
+        st.lists(st.floats(min_value=0.0, max_value=100.0, width=64), min_size=2, max_size=60),
+        st.lists(st.integers(min_value=0, max_value=59), max_size=10),
+        st.booleans(),
+        st.booleans(),
+        st.booleans(),
+    )
+    def test_xsignals_gaps_change_nothing_on_observed_bars(self, values, gaps, above, long, repeated):
+        signal = _with_gaps(values, gaps, repeated)
+        is_observed = signal.notna().to_numpy()
+        assume(is_observed.sum() >= 2)
+        kwargs = {"above": above, "long": long}
+        self._check(ta.xsignals(signal, 30, 70, **kwargs), ta.xsignals(signal[is_observed], 30, 70, **kwargs), is_observed)
+
+
 # ======================================================================
 # 2. Indicator output invariants
 # ======================================================================

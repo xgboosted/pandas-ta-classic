@@ -752,3 +752,18 @@ class TestTrend(TestCase):
         )
         with self.assertRaisesRegex(ValueError, "xsignals\\(\\) requires a 'signal' Series"):
             pandas_ta.xsignals(None, 70, 30)
+
+    def test_tsignals_gap_in_the_trend_makes_no_trade(self):
+        # The gap read as "no trend": an exit at bar 3 and a re-entry at bar 4.
+        result = pandas_ta.tsignals(Series([0, 1, 1, np.nan, 1, 0.0]))
+        self.assertEqual(result["TS_Trends"].tolist(), [0, 1, 1, 1, 1, 0])
+        self.assertEqual(result["TS_Trades"].tolist(), [0, 1, 0, 0, 0, -1])
+
+    def test_xsignals_crossing_on_a_gap_is_kept(self):
+        # The up-cross through 20 fell on the missing bar, so the whole trade
+        # (entry at bar 2, exit at bar 5) was lost and bars 3-4 read no trend.
+        signal = Series([10, 15, np.nan, 30, 25, 15, 10.0])
+        result = pandas_ta.xsignals(signal, 20, 20)
+        self.assertEqual(result["TS_Trends"].tolist(), [0, 0, 0, 1, 1, 0, 0])
+        self.assertEqual(result["TS_Entries"].tolist(), [0, 0, 0, 1, 0, 0, 0])
+        self.assertEqual(result["TS_Exits"].tolist(), [0, 0, 0, 0, 0, 1, 0])
