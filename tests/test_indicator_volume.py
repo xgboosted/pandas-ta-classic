@@ -254,7 +254,8 @@ class TestVolume(TestCase):
             ),
         )
         # sample indicator values from SPY
-        self.assertEqual(result.iloc[0], 1)
+        # Bar 0 has no difference to rank; it read 1, a rising close, before.
+        self.assertTrue(result.isna().iloc[0])
         self.assertEqual(result.iloc[1], 3)
         self.assertEqual(result.iloc[4], 2)
         self.assertEqual(result.iloc[6], 4)

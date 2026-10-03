@@ -72,3 +72,59 @@ def test_one_missing_bar(name, frames):
     if name in CUMULATIVE | WHOLE_SERIES:
         return
     np.testing.assert_allclose(tail_gapped, tail_clean, rtol=1e-6, atol=1e-9, equal_nan=True, err_msg=f"{name}: did not recover")
+
+
+# "Recovers" says the missing bar itself reads NaN (docs/indicators.rst, "Missing
+# Values"); test_one_missing_bar only checks the bars before the gap and the tail.
+# A bar with every input missing must read NaN, or the indicator publishes a value
+# it could not compute: ttm_trend read -1, entropy 0.0 for a whole window, maxindex
+# pointed at the gap, psl counted it as a down bar.
+#
+# Values taken from earlier bars by definition: the forward-shifted Ichimoku spans,
+# the previous period's pivots, Fisher's one-bar-lagged trigger.
+FROM_EARLIER_BARS = {"cpr", "fisher", "ichimoku"}
+# Found 2026-10-01 publishing at a fully missing bar, against the rule above; not
+# yet reviewed. Recursive smoothers carry their state through the gap, flags default
+# to 0 or 1 (increasing 0, cdl_doji 0). Each one either moves to
+# the NaN rule or gets a documented reason; do not add to this list.
+PUBLISHES_AT_THE_GAP = {
+    "aberration", "adx", "adxr", "amat", "aobv", "atr", "cdl_doji", "cdl_pattern", "cvi", "decay",
+    "decreasing", "dema", "dm", "dx", "efi", "ema", "hilo", "increasing", "inertia", "kc", "kdj", "kvo",
+    "macdext", "massi", "mfi", "minus_dm", "mmar", "nvi", "plus_dm", "pmax", "ppo", "psar", "pvi",
+    "pvo", "qqe", "rma", "rsi", "rvi", "sarext", "smc_sweep", "smi", "stc", "stochrsi",
+    "supertrend", "t3", "tema", "thermo", "trix", "trixh", "tsi", "vfi", "wad", "zlma",
+}  # fmt: skip
+
+
+@pytest.fixture(scope="module")
+def bar_gapped(frames):
+    clean, _ = frames
+    gapped = clean.copy()
+    gapped.iloc[GAP] = np.nan
+    return gapped
+
+
+@pytest.mark.parametrize("name", INDICATORS)
+def test_a_missing_bar_reads_nan(name, bar_gapped):
+    at_gap = _call(name, bar_gapped)[GAP]
+    published = bool(np.isfinite(at_gap).any())
+    if name in FROM_EARLIER_BARS | PUBLISHES_AT_THE_GAP:
+        assert published, f"{name}: reads NaN at the missing bar now; drop it from its exemption list"
+    else:
+        assert not published, f"{name}: publishes {at_gap[np.isfinite(at_gap)][:4]} at a bar whose every input is missing"
+
+
+# The same rule for one missing column: an indicator that reads the close alone has
+# nothing to compute where only the close is missing, the gap test_one_missing_bar
+# makes. The exemptions above carry over, because for these the close is every input.
+CLOSE_ONLY = [name for name in INDICATORS if [p for p in COLUMNS if p in inspect.signature(getattr(ta, name)).parameters] == ["close"]]
+
+
+@pytest.mark.parametrize("name", CLOSE_ONLY)
+def test_a_missing_close_reads_nan_where_it_is_the_only_input(name, frames):
+    at_gap = _call(name, frames[1])[GAP]
+    published = bool(np.isfinite(at_gap).any())
+    if name in FROM_EARLIER_BARS | PUBLISHES_AT_THE_GAP:
+        assert published, f"{name}: reads NaN at the missing close now; drop it from its exemption list"
+    else:
+        assert not published, f"{name}: publishes {at_gap[np.isfinite(at_gap)][:4]} where its only input is missing"
