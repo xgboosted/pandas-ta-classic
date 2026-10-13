@@ -14,6 +14,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._signals import _require_number
 
 
 def _ema_aligned(arr, m, period, seed_end):
@@ -112,24 +113,34 @@ def macd(
     # The signals read the unoffset, unfilled lines and are offset once, inside
     # signals(). Reading the shifted lines shifted them a second time.
     signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
+    # Read each option once and give it to both signal sets. Popping it inside
+    # the first signals() call left the MACD-line signals with the defaults.
+    # Every option is validated whether or not the signals are wanted, as
+    # attach_signals() does: a bad value is a caller error, not a request to
+    # skip the signals.
+    signal_kwargs = {
+        "xa": kwargs.pop("xa", 0),
+        "xb": kwargs.pop("xb", None),
+        "xserie": kwargs.pop("xserie", None),
+        "xserie_a": kwargs.pop("xserie_a", None),
+        "xserie_b": kwargs.pop("xserie_b", None),
+        "cross_series": _bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
+        "offset": offset,
+    }
+    for label in ("xa", "xb"):
+        if signal_kwargs[label] is not None:
+            _require_number(signal_kwargs[label], label)
+    cross_values = kwargs.pop("cross_values", None)
+    # cross_values defaults differ: crossings for the histogram, levels for the MACD line
+    cross_values_hist, cross_values_macd = (
+        _bool_param(cross_values, True, "cross_values"),
+        _bool_param(cross_values, False, "cross_values"),
+    )
     signal_frames = []
     if signal_indicators:
-        # Read each option once and give it to both signal sets. Popping it inside
-        # the first signals() call left the MACD-line signals with the defaults.
-        signal_kwargs = {
-            "xa": kwargs.pop("xa", 0),
-            "xb": kwargs.pop("xb", None),
-            "xserie": kwargs.pop("xserie", None),
-            "xserie_a": kwargs.pop("xserie_a", None),
-            "xserie_b": kwargs.pop("xserie_b", None),
-            "cross_series": _bool_param(kwargs.pop("cross_series", None), True, "cross_series"),
-            "offset": offset,
-        }
-        cross_values = kwargs.pop("cross_values", None)
-        # cross_values defaults differ: crossings for the histogram, levels for the MACD line
         signal_frames = [
-            signals(indicator=histogram, cross_values=_bool_param(cross_values, True, "cross_values"), **signal_kwargs),
-            signals(indicator=macd, cross_values=_bool_param(cross_values, False, "cross_values"), **signal_kwargs),
+            signals(indicator=histogram, cross_values=cross_values_hist, **signal_kwargs),
+            signals(indicator=macd, cross_values=cross_values_macd, **signal_kwargs),
         ]
 
     # Offset
@@ -202,7 +213,8 @@ Kwargs:
         Default: False
     signal_indicators (bool): When True, threshold and comparison signal
         columns for both the MACD line and the histogram are appended. The
-        options below are only read when it is True. Default: False
+        options below take effect only when it is True, but are validated
+        either way. Default: False
     xa (float): Upper threshold. Default: 0
     xb (float): Lower threshold; no lower column is produced when it is None.
         Default: None

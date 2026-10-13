@@ -251,6 +251,11 @@ def test_strategy_params_must_be_a_tuple():
         (lambda: ta.rsx(_F.close, signal_indicators=True, xb=True), r"rsx\(\) xb must be a number, got True"),
         (lambda: ta.er(_F.close, signal_indicators=True, xa=np.nan), r"er\(\) xa must be a number, got nan"),
         (lambda: ta.macd(_F.close, signal_indicators=True, xa="0"), r"macd\(\) xa must be a number, got '0'"),
+        # A bad signal option is a caller error even when the signals are off.
+        (lambda: ta.macd(_F.close, xa="0"), r"macd\(\) xa must be a number, got '0'"),
+        (lambda: ta.macd(_F.close, xb=np.inf), r"macd\(\) xb must be a number, got inf"),
+        (lambda: ta.macd(_F.close, cross_values="yes"), r"macd\(\) cross_values"),
+        (lambda: ta.macd(_F.close, cross_series=1), r"macd\(\) cross_series"),
     ],
 )
 def test_unvalidated_kwargs_raise(call, message):
