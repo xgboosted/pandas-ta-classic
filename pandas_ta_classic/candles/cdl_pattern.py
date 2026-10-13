@@ -1,6 +1,7 @@
 # Candle Pattern (CDL_PATTERN)
 import importlib
 import os
+import pkgutil
 from collections.abc import Sequence
 from typing import Any
 
@@ -81,12 +82,10 @@ def _discover_native_patterns() -> dict:
     """Auto-discover native cdl_*.py pattern implementations."""
     skip = {"cdl_pattern", "cdl_z", "cdl_inside", "cdl_doji"}
     native = {}
-    pkg_dir = os.path.dirname(__file__)
-    for fname in os.listdir(pkg_dir):
-        if not fname.startswith("cdl_") or not fname.endswith(".py"):
-            continue
-        mod_name = fname[:-3]  # strip .py
-        if mod_name in skip:
+    # through the import system, not os.listdir, so a zip archive works too
+    for module in pkgutil.iter_modules([os.path.dirname(__file__)]):
+        mod_name = module.name
+        if not mod_name.startswith("cdl_") or module.ispkg or mod_name in skip:
             continue
         pattern_name = mod_name[4:]  # strip cdl_
         # A broken pattern module is a bug: let it raise instead of silently

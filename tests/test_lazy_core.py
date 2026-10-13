@@ -11,9 +11,15 @@ Covers:
     ``indicators()`` list matches ``Category`` union.
 """
 
+import importlib.metadata
+import os
+import re
+import sys
 import types
 import unittest
 from unittest import mock
+
+import pytest
 
 import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
@@ -381,3 +387,89 @@ class TestRegression(unittest.TestCase):
         accessor_cats = set(self.df.ta.categories)
         meta_cats = set(Category.keys())
         self.assertEqual(accessor_cats, meta_cats)
+
+
+def test_category_discovery_raises_when_it_finds_no_categories():
+    """A layout pkgutil cannot list (frozen, sourceless) used to give Category = {}
+    without a word, and every indicator lookup failed later; Path.iterdir raised there."""
+    from pandas_ta_classic import _meta
+
+    with (
+        mock.patch.object(_meta.pkgutil, "iter_modules", return_value=iter(())),
+        pytest.raises(ImportError, match=r"could not list the indicator modules of \['candles', 'cycles'"),
+    ):
+        _meta._build_category_dict()
+
+
+def _numba_cannot_cache_from_a_zip() -> bool:
+    """numba >= 0.62 fails to import an ``@njit(cache=True)`` module from a zip on Windows.
+
+    Its ``ZipCacheLocator`` joins the member path with ``str(Path(...))``, i.e. with
+    backslashes on Windows, while zip members use ``/``; since 0.62 the cache stamp
+    opens that member and raises KeyError. A numba bug, not one of this package:
+    https://github.com/numba/numba/issues/10889
+    """
+    if sys.platform != "win32" or os.environ.get("NUMBA_DISABLE_JIT") == "1":
+        return False
+    try:
+        version = importlib.metadata.version("numba")
+    except importlib.metadata.PackageNotFoundError:
+        return False
+    # "0.63.0rc1" and the like: compare the leading major.minor numbers only
+    major, minor = (int(part) for part in re.match(r"(\d+)\.(\d+)", version).groups())
+    return (major, minor) >= (0, 62)
+
+
+@unittest.skipIf(
+    _numba_cannot_cache_from_a_zip(),
+    "numba >= 0.62 cannot cache an @njit function imported from a zip on Windows (https://github.com/numba/numba/issues/10889)",
+)
+class TestZipImport(unittest.TestCase):
+    def test_package_imports_from_a_zip_archive(self):
+        """Category and the candle patterns are discovered through the import
+        system: ``Path.iterdir`` / ``os.listdir`` raised FileNotFoundError when
+        the package was imported from a zip archive (zipimport)."""
+        import json
+        import subprocess
+        import sys
+        import tempfile
+        import zipfile
+        from pathlib import Path
+
+        from pandas_ta_classic.candles.cdl_pattern import _NATIVE_PATTERNS
+
+        package_dir = Path(pandas_ta_classic.__file__).parent
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp, "pandas_ta_classic.zip")
+            with zipfile.ZipFile(archive, "w") as zf:
+                for path in package_dir.rglob("*"):
+                    if path.is_file() and "__pycache__" not in path.parts:
+                        zf.write(path, path.relative_to(package_dir.parent).as_posix())
+            script = (
+                "import json\n"
+                "import pandas_ta_classic as ta\n"
+                "from pandas_ta_classic.candles.cdl_pattern import _NATIVE_PATTERNS\n"
+                "from tests.config import get_sample_data\n"
+                "df = get_sample_data().iloc[:300]\n"
+                "patterns = ta.cdl_pattern(df.open, df.high, df.low, df.close, name='all')\n"
+                "print(json.dumps([ta.__file__, list(ta.Category.items()), sorted(_NATIVE_PATTERNS), patterns.shape[1]]))\n"
+            )
+            # The archive comes first on PYTHONPATH, the checkout second for
+            # tests.config. cwd is the temp dir: with -c, sys.path[0] is the cwd,
+            # and the checkout there would shadow the archive.
+            repo_root = Path(__file__).resolve().parents[1]
+            result = subprocess.run(
+                [sys.executable, "-c", script],
+                capture_output=True,
+                text=True,
+                cwd=tmp,
+                env={**os.environ, "PYTHONPATH": os.pathsep.join([str(archive), str(repo_root)])},
+                timeout=300,
+                check=False,  # the return code is asserted below, with stderr as context
+            )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        loaded_from, categories, patterns, columns = json.loads(result.stdout)
+        self.assertTrue(loaded_from.startswith(str(archive)), loaded_from)  # not the checkout or an editable install
+        self.assertEqual(categories, [[k, v] for k, v in Category.items()])
+        self.assertEqual(patterns, sorted(_NATIVE_PATTERNS))
+        self.assertEqual(columns, 62)

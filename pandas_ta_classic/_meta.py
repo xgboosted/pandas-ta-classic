@@ -3,6 +3,7 @@ Meta information for pandas-ta-classic
 Contains Category definitions, version information, and import checks.
 """
 
+import pkgutil
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -51,37 +52,40 @@ _VALID_CATEGORIES = {
 def _collect_category_indicators(category_path, category_name):
     """Return a sorted list of public indicator names found in *category_path*.
 
-    Files whose names start with ``_`` are treated as internal helpers and are
+    Modules are listed through the import system (:func:`pkgutil.iter_modules`),
+    not the file system, so a package imported from a zip archive is scanned
+    too. Modules whose names start with ``_`` are treated as internal helpers and are
     excluded.  For the ``candles`` category only the handful of top-level
     indicators defined in :data:`_CANDLE_TOP_LEVEL` are included; the
     individual ``cdl_*`` pattern modules are accessed through
     ``cdl_pattern()`` and must not appear as standalone indicators.
 
     Args:
-        category_path (Path): Directory to scan.
+        category_path (Path): Directory (or path inside a zip archive) to scan.
         category_name (str): Name of the category (e.g. ``"candles"``).
 
     Returns:
         list[str]: Sorted indicator stem names.
     """
     indicators = []
-    for file_path in category_path.glob("*.py"):
-        if file_path.name.startswith("_"):
+    for module in pkgutil.iter_modules([str(category_path)]):
+        if module.ispkg or module.name.startswith("_"):
             continue
-        stem = file_path.stem
-        if category_name == "candles" and stem not in _CANDLE_TOP_LEVEL:
+        if category_name == "candles" and module.name not in _CANDLE_TOP_LEVEL:
             continue
-        indicators.append(stem)
+        indicators.append(module.name)
     return sorted(indicators)
 
 
 def _build_category_dict():
     """Dynamically build the Category dictionary by scanning the package
-    directory structure.
+    structure.
 
-    Discovers all indicator modules by iterating over valid category
-    sub-directories and delegating per-directory collection to
-    :func:`_collect_category_indicators`.
+    Discovers all indicator modules by iterating over the valid category
+    subpackages, in name order, and delegating per-subpackage collection to
+    :func:`_collect_category_indicators`. ``Path.iterdir`` used to fail with
+    FileNotFoundError when the package was imported from a zip archive, and its
+    order was the file system's.
 
     Returns:
         dict: Mapping of category names to sorted lists of indicator names.
@@ -89,15 +93,19 @@ def _build_category_dict():
     categories = {}
     package_dir = Path(__file__).parent
 
-    for category_path in package_dir.iterdir():
-        if not category_path.is_dir():
+    for package in sorted(pkgutil.iter_modules([str(package_dir)]), key=lambda m: m.name):
+        category_name = package.name
+        if not package.ispkg or category_name not in _VALID_CATEGORIES:
             continue
-        category_name = category_path.name
-        if category_name.startswith(("_", ".")) or category_name == "__pycache__" or category_name not in _VALID_CATEGORIES:
-            continue
-        indicators = _collect_category_indicators(category_path, category_name)
+        indicators = _collect_category_indicators(package_dir / category_name, category_name)
         if indicators:
             categories[category_name] = indicators
+
+    # A layout pkgutil cannot list (frozen, sourceless) would leave Category
+    # empty without a word, and every lookup fail later; say so here instead.
+    missing = sorted(_VALID_CATEGORIES - categories.keys())
+    if missing:
+        raise ImportError(f"pandas_ta_classic could not list the indicator modules of {missing} under {package_dir}")
 
     return categories
 
