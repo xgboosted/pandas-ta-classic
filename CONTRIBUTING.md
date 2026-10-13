@@ -339,7 +339,6 @@ Contributions in these areas are especially welcome. Check the issues list for a
 
 ### Getting Help
 - Check existing [Issues](https://github.com/xgboosted/pandas-ta-classic/issues)
-- Ask questions in [Discussions](https://github.com/xgboosted/pandas-ta-classic/discussions)
 - Review documentation and examples
 
 ### Reporting Issues

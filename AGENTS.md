@@ -213,7 +213,7 @@ Not greppable, so check in review: **dead code** your change orphaned, and the *
 | `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
 | `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) |
 | `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
-| `documentation` | Builds Sphinx docs + deploys to GitHub Pages (on push only) |
+| `documentation` | Builds Sphinx docs with `-W` (any warning fails) + advisory linkcheck, deploys to GitHub Pages (on push only, so it does not gate PRs) |
 | `pypi-publish` | Builds wheel, twine check, publishes to PyPI (on release published only) |
 
 Triggers: `push` to main, `pull_request` to main, `release` published, `workflow_dispatch`.
@@ -334,7 +334,7 @@ pytest tests/test_indicator_momentum.py::TestRSI::test_rsi -v
 pytest tests/test_property_based.py -v
 
 # Docs build
-cd docs && make html
+cd docs && make html SPHINXOPTS="-W"   # as CI; plain `make html` ignores warnings
 
 # Build distribution
 python -m build
@@ -369,6 +369,7 @@ python -m build
 │   ├── installation.rst
 │   ├── quickstart.md
 │   ├── tutorials.md
+│   ├── tutorials/                    # Per-framework integration guides
 │   ├── testing.rst
 │   └── indicator_support_matrix.rst
 ├── pandas_ta_classic/                # Main package source

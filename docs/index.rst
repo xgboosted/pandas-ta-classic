@@ -61,6 +61,7 @@ Table of Contents
    strategies
    dataframe_api
    indicators
+   indicator_support_matrix
    performance
 
 .. toctree::

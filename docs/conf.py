@@ -1,14 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
-# full list# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-#
-# epub_identifier = ''
+# full list see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# A unique identification for the text.
-#
-# epub_uid = ''
+from datetime import datetime, timezone
 
 # -- Additional HTML configuration -------------------------------------------
 
@@ -27,10 +23,6 @@ html_short_title = "Pandas TA Classic"
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 html_last_updated_fmt = "%b %d, %Y"
-
-# If true, SmartyPants will be used to convert quotes and dashes to
-# typographically correct entities.
-html_use_smartypants = True
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -57,7 +49,8 @@ html_show_copyright = True
 # -- Project information -----------------------------------------------------
 
 project = "Pandas TA Classic"
-copyright = "2025, xgboosted"
+_year = datetime.now(timezone.utc).year
+copyright = f"2025-{_year}, xgboosted" if _year > 2025 else "2025, xgboosted"
 author = "xgboosted"
 
 # Get version dynamically from the package
@@ -87,9 +80,6 @@ extensions = [
     "sphinx_rtd_theme",
     "myst_parser",
 ]
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -230,9 +220,17 @@ epub_title = project
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ["search.html"]
 
+# -- Options for linkcheck builder -------------------------------------------
+
+# GitHub prefixes every heading id it renders from Markdown with "user-content-"
+# and resolves the plain fragment client-side, so linkcheck's anchor probe
+# reports false "Anchor not found" on every valid github.com deep link.
+linkcheck_anchors_ignore_for_url = ["https://github.com/.*"]
+
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for todo extension ----------------------------------------------
 
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+# `todo` directives are notes to ourselves. Keep them out of the published
+# HTML: False makes `todo` and `todoList` render nothing.
+todo_include_todos = False

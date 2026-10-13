@@ -582,4 +582,7 @@ Utility / signal functions (accessible directly or via ``df.ta``):
 * *Crossover*: **crossover** (returns Boolean Series that is True on the bar where ``a`` crosses above ``b``)
 * *Lag*: **lag** (returns a Series offset by ``n`` periods; equivalent to tulipy ``lag``)
 
-.. include:: indicator_support_matrix.rst
+.. seealso::
+
+   :doc:`indicator_support_matrix` — per-indicator table of which
+   implementations (Native / TA-Lib / tulipy) back the indicators listed above.

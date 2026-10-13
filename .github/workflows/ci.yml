@@ -249,7 +249,18 @@ jobs:
     - name: Build Sphinx documentation
       run: |
         cd docs
-        make html
+        # -W turns Sphinx warnings into errors (orphan pages, broken references,
+        # unresolved cross-links) so they cannot reach GitHub Pages unnoticed.
+        make html SPHINXOPTS="-W"
+
+    - name: Check documentation links (advisory)
+      continue-on-error: true
+      run: |
+        cd docs
+        # External links rot outside our control, so a failure here reports
+        # rather than blocks. Anchor probing on github.com is disabled in
+        # conf.py -- GitHub prefixes rendered heading ids with "user-content-".
+        make linkcheck
         
     - name: Upload Pages artifact (Sphinx)
       uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5

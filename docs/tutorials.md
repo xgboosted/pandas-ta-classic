@@ -828,7 +828,7 @@ You've completed the tutorials! Here's what to explore next:
 2. **Optimize Parameters** - Use grid search to find best indicator settings
 3. **Paper Trade** - Test strategies in real-time without risk
 4. **Read the Docs** - Deep dive into the [full documentation](https://xgboosted.github.io/pandas-ta-classic/)
-5. **Join the Community** - Share your strategies in [Discussions](https://github.com/xgboosted/pandas-ta-classic/discussions)
+5. **Join the Community** - Share your strategies and questions in [Issues](https://github.com/xgboosted/pandas-ta-classic/issues)
 
 ## Additional Resources
 

@@ -189,7 +189,7 @@ If your platform is not covered by binary wheels, or you prefer a source build, 
     conda install -c conda-forge libta-lib
     conda install -c conda-forge ta-lib
 
-See the `TA-Lib Python README <https://github.com/TA-Lib/ta-lib-python#dependencies>`_ for platform-specific instructions and troubleshooting.
+See the `TA-Lib Python README <https://github.com/TA-Lib/ta-lib-python>`_ for platform-specific instructions and troubleshooting.
 
 Installing tulipy
 ~~~~~~~~~~~~~~~~~

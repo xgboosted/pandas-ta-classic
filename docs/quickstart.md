@@ -485,7 +485,6 @@ Now that you've got the basics, explore more:
 ## Need Help?
 
 - **Issues**: [GitHub Issues](https://github.com/xgboosted/pandas-ta-classic/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/xgboosted/pandas-ta-classic/discussions)
 - **Examples**: Check the [examples directory](https://github.com/xgboosted/pandas-ta-classic/tree/main/examples)
 
 Happy Trading! 
