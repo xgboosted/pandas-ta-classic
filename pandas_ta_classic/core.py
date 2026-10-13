@@ -96,8 +96,10 @@ class Strategy:
     A way to name and group your favorite indicators
 
     Args:
-        name (str): Some short memorable string.  Note: Case-insensitive "All" is reserved.
+        name (str): Some short memorable string. Only a label: a name such as
+            "All" or "momentum" does not select indicators.
         ta (list of dicts): A list of dicts containing keyword arguments where "kind" is the indicator.
+            None runs every indicator.
         description (str): A more detailed description of what the Strategy tries to capture. Default: None
         created (str): At datetime string of when it was created. Default: Automatically generated. *Subject to change*
 
@@ -126,7 +128,7 @@ class Strategy:
         ta_is_list = isinstance(self.ta, list)
 
         if self.name is None or not name_is_str:
-            required_args.append(' - name. Must be a string. Example: "My TA". Note: "all" is reserved.')
+            required_args.append(' - name. Must be a string. Example: "My TA".')
 
         if self.ta is not None and not ta_is_list:
             s = " - ta. Format is a list of dicts. Example: [{'kind': 'sma', 'length': 10}]"
@@ -827,13 +829,12 @@ class AnalysisIndicators(PandasObject):
                 raise ValueError(f"strategy() got {arg!r}, which is neither 'all' nor a category ({categories}). Pass a Strategy to run a named one.")
             return name, mode
         if isinstance(arg, Strategy):
-            strategy_ = arg
-            if strategy_.ta is None or strategy_.name.lower() == "all":
+            # The name is a label: a name equal to "all" or a category used to
+            # discard the ta list and run that whole set instead.
+            if arg.ta is None:
                 mode["all"] = True
-            elif strategy_.name.lower() in self.categories:
-                name, mode["category"] = strategy_.name, True
             else:
-                name, mode["custom"] = strategy_.name, True
+                name, mode["custom"] = arg.name, True
             return name, mode
         raise TypeError(f"strategy() expected a category name or a Strategy, got {type(arg).__name__}")
 
@@ -954,10 +955,11 @@ class AnalysisIndicators(PandasObject):
                 performance (td_seq), not a ohlcv chart (vp) etc. A custom
                 Strategy lists its own entries, so passing 'exclude' with one
                 raises.
-            name (str): Select all indicators or indicators by
-                Category such as: "candles", "cycles", "momentum", "overlap",
-                "performance", "statistics", "trend", "volatility", "volume", or
-                "all". Default: "all"
+            name (str): Not a selector: the first positional argument picks
+                "all", a category or a Strategy. Like any other keyword, name
+                is passed to every indicator the run calls; it is the moving
+                average ma() dispatches to, so ma runs only when name is given.
+                Default: None
             timed (bool): Show the process time of the strategy().
                 Default: False
             verbose (bool): Provide some additional insight on the progress of

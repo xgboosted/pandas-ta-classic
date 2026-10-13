@@ -14,8 +14,10 @@ A **Pandas TA Classic** Strategy is a named group of indicators to be run by the
 Strategy Requirements
 ---------------------
 
-* **name**: Some short memorable string. *Note*: Case-insensitive "All" is reserved.
-* **ta**: A list of dicts containing keyword arguments to identify the indicator and the indicator's arguments
+* **name**: Some short memorable string. It is only a label: a ``Strategy`` named ``"All"`` or after a category
+  (``"momentum"``) runs its ``ta`` list, not that set of indicators.
+* **ta**: A list of dicts containing keyword arguments to identify the indicator and the indicator's arguments.
+  ``ta=None`` runs every indicator, as ``AllStrategy`` does.
 * **Note**: A Strategy will fail when consumed by Pandas TA if there is no ``{"kind": "indicator name"}`` attribute.
 
 Optional Parameters
