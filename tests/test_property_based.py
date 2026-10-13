@@ -735,6 +735,26 @@ class TestDataFrameAccessorInvariants(TestCase):
         df.ta.sma(length=10, append=True)
         assert "SMA_10" in df.columns
 
+    @given(
+        ohlcv_dataframe(min_size=30, max_size=150),
+        st.lists(st.sampled_from(["sma", "macd", "bbands", "rsi"]), min_size=1, max_size=40),
+        st.booleans(),
+    )
+    @settings(
+        max_examples=30,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=5000,
+    )
+    def test_df_ta_append_leaves_warning_filters_unchanged(self, df, kinds, bad_col_names):
+        """However many appends, and whether the last one raises, the filters are as before."""
+        before = list(warnings.filters)
+        for kind in kinds:
+            getattr(df.ta, kind)(append=True)
+        if bad_col_names:  # the append path raises after the filter is in place
+            with pytest.raises(ValueError):
+                df.ta.macd(append=True, col_names=("only_one",))
+        assert list(warnings.filters) == before
+
 
 class TestNoDirectionOnBarZero(TestCase):
     """The first bar has no predecessor, so it has no bar-to-bar direction.

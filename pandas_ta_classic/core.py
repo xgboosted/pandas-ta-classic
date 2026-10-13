@@ -11,7 +11,7 @@ from numbers import Integral
 from threading import Lock
 from time import perf_counter
 from typing import Any
-from warnings import simplefilter, warn
+from warnings import catch_warnings, simplefilter, warn
 
 import pandas as pd
 from pandas.core.base import PandasObject
@@ -542,16 +542,21 @@ class AnalysisIndicators(PandasObject):
         df = self._df
         if df is None or result is None:
             return
-        simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
         if "col_names" in kwargs and not isinstance(kwargs["col_names"], tuple):
             kwargs["col_names"] = (kwargs["col_names"],)
-        if isinstance(result, pd.DataFrame):
-            _append_dataframe(df, result, kwargs)
-        else:
-            if "col_names" in kwargs and len(kwargs["col_names"]) != 1:
-                raise ValueError(f"col_names has {len(kwargs['col_names'])} names for one column ({result.name})")
-            ind_name = kwargs["col_names"][0] if "col_names" in kwargs else result.name
-            df[ind_name] = result
+        # Appending column by column fragments the frame, and pandas says so once
+        # it holds more than 100 blocks. Silence that here only: a bare
+        # simplefilter() used to switch PerformanceWarning off for the rest of
+        # the caller's process.
+        with catch_warnings():
+            simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+            if isinstance(result, pd.DataFrame):
+                _append_dataframe(df, result, kwargs)
+            else:
+                if "col_names" in kwargs and len(kwargs["col_names"]) != 1:
+                    raise ValueError(f"col_names has {len(kwargs['col_names'])} names for one column ({result.name})")
+                ind_name = kwargs["col_names"][0] if "col_names" in kwargs else result.name
+                df[ind_name] = result
 
     def _default_column(self, name: str) -> str:
         """The column an indicator reads when the caller names none.

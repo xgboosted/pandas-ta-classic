@@ -7,11 +7,13 @@ Covers:
   * ``prefix``/``suffix`` work as per-call kwargs, not as properties.
   * ``time_range`` accepts valid unit strings and rejects invalid ones.
   * ``to_utc`` is a property (not callable).
+  * ``append=True`` leaves the caller's warning filters unchanged.
   * ``indicators(as_list=True)`` and ``indicators(exclude=[...])`` behave as
     documented.
 """
 
 import inspect
+import warnings
 from contextlib import redirect_stdout
 from io import StringIO
 from multiprocessing import cpu_count
@@ -480,6 +482,48 @@ class TestAccessorPropertyErrorsAreNotMasked(TestCase):
         with self.assertRaises(AttributeError) as ctx:
             _ = self.df.ta.definitely_not_an_indicator
         self.assertIn("has no attribute 'definitely_not_an_indicator'", str(ctx.exception))
+
+
+class TestAccessorAppendWarningFilter(TestCase):
+    """append=True silences pandas' fragmentation warning only while it appends.
+
+    _append() used to call warnings.simplefilter() bare, which prepended an
+    "ignore PerformanceWarning" filter for the rest of the caller's process.
+    """
+
+    def test_append_leaves_the_warning_filters_unchanged(self):
+        df = get_sample_data().iloc[:100].copy()
+        before = list(warnings.filters)
+        df.ta.sma(length=10, append=True)
+        df.ta.macd(append=True)
+        self.assertEqual(list(warnings.filters), before)
+
+    def test_callers_performance_warning_is_still_shown(self):
+        df = get_sample_data().iloc[:100].copy()
+        df.ta.sma(length=10, append=True)
+        # No simplefilter() here: one would sit in front of the leaked filter and hide it.
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.warn("caller's own warning", pd.errors.PerformanceWarning)
+        self.assertEqual([str(w.message) for w in caught], ["caller's own warning"])
+
+    def test_fragmentation_warning_stays_silenced_during_strategy(self):
+        # 400+ appended columns is far past pandas' 100-block threshold. The
+        # filter names PerformanceWarning only: a bare "always" would sit in
+        # front of pyproject's error::UserWarning/DeprecationWarning gates.
+        def performance_warnings(run):
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always", pd.errors.PerformanceWarning)
+                run()
+            return [w for w in caught if issubclass(w.category, pd.errors.PerformanceWarning)]
+
+        # Control: the same kind of column-by-column insertion warns without the silence,
+        # so an empty result below means "silenced", not "pandas did not warn".
+        plain = get_sample_data().iloc[:300].copy()
+        self.assertNotEqual(performance_warnings(lambda: [plain.insert(len(plain.columns), f"x{i}", 0.0) for i in range(120)]), [])
+
+        df = get_sample_data().iloc[:300].copy()
+        self.assertEqual(performance_warnings(lambda: df.ta.strategy("all")), [])
+        self.assertGreater(len(df.columns), 100)
 
 
 class TestAccessorToUtcProperty(TestCase):
