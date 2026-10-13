@@ -90,14 +90,16 @@ def apply_fill(
     Returns:
         The processed object(s), same type structure as *series*.
     """
-    if isinstance(series, (list, tuple)):
-        return [apply_fill(s, **kwargs) for s in series]
-    if "fillna" in kwargs:
-        series.fillna(kwargs["fillna"], inplace=True)
     fill_method = kwargs.get("fill_method")
     if fill_method is not None:
-        # any other value used to be ignored silently
-        fill_method = _str_param(fill_method, "ffill", "fill_method", choices={"ffill", "bfill"})
+        # any other value used to be ignored silently; the error names the
+        # indicator the user called, not apply_fill or an inner indicator
+        caller = _OUTER_INDICATOR.get() or sys._getframe(1).f_code.co_name
+        fill_method = _str_param(fill_method, "ffill", "fill_method", choices={"ffill", "bfill"}, caller=caller)
+    if isinstance(series, (list, tuple)):
+        return [apply_fill(s, **{**kwargs, "fill_method": fill_method}) for s in series]
+    if "fillna" in kwargs:
+        series.fillna(kwargs["fillna"], inplace=True)
     if fill_method == "ffill":
         series.ffill(inplace=True)
     elif fill_method == "bfill":
@@ -139,9 +141,13 @@ def _bool_param(val: Any, default: bool, name: str, *, caller: str | None = None
     raise ValueError(f"{indicator}() {name} must be True or False, got {val!r}")
 
 
-def _str_param(val: Any, default: str, name: str, *, choices: Any = None, lower: bool = True) -> str:
-    """Return a (lower-cased) string, *default* for None; raise ValueError for other types or unknown choices."""
-    indicator = sys._getframe(1).f_code.co_name
+def _str_param(val: Any, default: str, name: str, *, choices: Any = None, lower: bool = True, caller: str | None = None) -> str:
+    """Return a (lower-cased) string, *default* for None; raise ValueError for other types or unknown choices.
+
+    *caller* names the indicator in the message when a shared helper validates
+    on its behalf, as for :func:`_bool_param`.
+    """
+    indicator = caller or sys._getframe(1).f_code.co_name
     if val is None:
         return default
     if not isinstance(val, str) or not val:
@@ -246,10 +252,12 @@ def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
     return decorator
 
 
-# Nesting depth of nan_on_short_input calls: only the outermost indicator call
-# converts a short-input None into an all-NaN result, so indicators calling
-# each other internally keep seeing None and their early returns still work.
-_INDICATOR_DEPTH: contextvars.ContextVar[int] = contextvars.ContextVar("pandas_ta_classic_indicator_depth", default=0)
+# Name of the outermost nan_on_short_input call, None outside any indicator:
+# only the outermost indicator call converts a short-input None into an all-NaN
+# result, so indicators calling each other internally keep seeing None and their
+# early returns still work. apply_fill names it in its errors, because the user
+# passed fill_method to that indicator, not to the inner one that applies it.
+_OUTER_INDICATOR: contextvars.ContextVar[str | None] = contextvars.ContextVar("pandas_ta_classic_outer_indicator", default=None)
 _PROBE_ROWS = 1000
 _PROBE_MAX_ROWS = 50_000
 _PROBE_HARD_MAX_ROWS = 2_000_000
@@ -368,9 +376,9 @@ def nan_on_short_input(fn: Callable) -> Callable:
 
     @functools.wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        if _INDICATOR_DEPTH.get():
+        if _OUTER_INDICATOR.get() is not None:
             return fn(*args, **kwargs)
-        token = _INDICATOR_DEPTH.set(1)
+        token = _OUTER_INDICATOR.set(fn.__name__)
         try:
             # An empty Series is shorter than any window, but indicators that read
             # bar 0 (obv, psar, hwma, ...) raised IndexError on it instead of
@@ -413,7 +421,7 @@ def nan_on_short_input(fn: Callable) -> Callable:
                 return fn(*args, **kwargs) if empty else None
             return _nan_like(template, first.index, rows)
         finally:
-            _INDICATOR_DEPTH.reset(token)
+            _OUTER_INDICATOR.reset(token)
 
     return wrapper
 

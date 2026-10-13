@@ -13,6 +13,7 @@ import re
 
 import numpy as np
 import pytest
+from pandas import Series
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
@@ -323,6 +324,50 @@ def test_strategy_and_metric_flags_reject_non_bool(frame):
             df.ta.strategy("candles", **{key: 1})
     with pytest.raises(ValueError, match=r"volatility\(\) nearest_day must be True or False"):
         ta.utils.volatility(frame.close, nearest_day="yes")
+
+
+def _fill_inputs(name, func, frame):
+    """Every input *name* needs, including the math operators' two operands and xsignals' thresholds."""
+    params = inspect.signature(func).parameters
+    kwargs = {p: frame[p.rstrip("_")] for p in params if p in _SERIES}
+    if "series_a" in params:
+        kwargs |= {"series_a": frame.close, "series_b": frame.open}
+    if "benchmark" in params:
+        kwargs["benchmark"] = frame.open
+    if name == "xsignals":
+        kwargs |= {"signal": ta.rsi(frame.close), "xa": 70, "xb": 30}
+    return kwargs | _required_extras(name, frame)
+
+
+FILL_NAMES = sorted(i for v in ta.Category.values() for i in v if _find_indicator_func(i) is not None)
+
+
+@pytest.mark.parametrize("name", FILL_NAMES)
+def test_bad_fill_method_names_the_indicator_called(name, frame):
+    """apply_fill validates fill_method, but the error named apply_fill(), or the
+    inner indicator that applied it (ema for tema, linreg for linregslope)."""
+    func = _find_indicator_func(name)
+    source = {"name": "sma", "source": frame.close} if name == "ma" else _fill_inputs(name, func, frame)
+    with pytest.raises(ValueError, match=rf"^{name}\(\) fill_method must be one of \['bfill', 'ffill'\], got 'bogus'$"):
+        func(**source, fill_method="bogus")
+
+
+def test_bad_fill_method_leaves_the_input_unfilled():
+    """fill_method is validated before fillna runs: a rejected call must not have
+    filled the caller's Series in place on its way to the error (AGENTS rule 19)."""
+    series = Series([1.0, np.nan, 3.0])
+    with pytest.raises(ValueError, match="fill_method"):
+        ta.utils.apply_fill(series, fillna=0, fill_method="bogus")
+    assert series.isna().tolist() == [False, True, False]
+
+
+def test_bad_fill_method_names_the_indicator_through_the_accessor(frame):
+    df = frame.copy()
+    df.ta.cores = 0
+    with pytest.raises(ValueError, match=r"^tema\(\) fill_method"):
+        df.ta.tema(fill_method="bogus")
+    with pytest.raises(ValueError, match=r"^bbands\(\) fill_method"):
+        df.ta.strategy(ta.Strategy("fill", [{"kind": "bbands", "fill_method": "bogus"}]))
 
 
 def test_vwap_without_datetime_index_raises_type_error(frame):
