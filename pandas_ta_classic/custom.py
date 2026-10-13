@@ -4,7 +4,7 @@ import os
 import sys
 import types
 from glob import glob
-from os.path import abspath, basename, exists, join, splitext
+from os.path import abspath, basename, exists, join, normcase, realpath, splitext
 
 import pandas_ta_classic
 from pandas_ta_classic import AnalysisIndicators
@@ -78,6 +78,16 @@ def get_module_functions(module):
     return module_functions
 
 
+def _resolve(name):
+    """The spec an import of *name* would load now, found the way reload() finds it: through sys.meta_path, ignoring sys.modules."""
+    for finder in sys.meta_path:
+        find_spec = getattr(finder, "find_spec", None)
+        spec = find_spec(name, None) if find_spec is not None else None
+        if spec is not None:
+            return spec
+    return None
+
+
 def _load_and_bind_module(module_path, dirname, category_dir, verbose):
     """Load one indicator module from *module_path* and bind it to
     ``pandas_ta_classic``.
@@ -85,8 +95,9 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
     The function (re)loads the Python file at *module_path*, looks up the
     mandatory ``<name>`` and ``<name>_method`` callables, registers the
     indicator in the appropriate category, and binds it via :func:`bind`.
-    A module that fails to import, or lacks either callable, raises
-    ImportError (a missing callable used to be logged and skipped).
+    A module that fails to import, lacks either callable, or whose name
+    already resolves to another module (a stdlib or installed module, or a
+    file of the same name in another category) raises ImportError.
 
     Args:
         module_path (str): Absolute path to the ``.py`` file to load.
@@ -96,6 +107,23 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
         verbose (bool): Whether to emit info-level log messages on success.
     """
     module_name = splitext(basename(module_path))[0]
+    if not module_name.isidentifier():
+        # ab.cd.py would import a package 'ab'; an empty name has nothing to import
+        raise ImportError(f"custom indicator '{module_path}': '{module_name}' is not a valid module name. Rename the file.")
+
+    # The module is imported by name, and category_dir comes last on sys.path, so
+    # a name that is already taken (a stdlib or installed module, or the same file
+    # name in another category) used to reload that other module and bind it.
+    # Resolve it the way reload() does, ignoring the sys.modules cache, and do so
+    # before category_dir joins sys.path, so a refusal leaves sys.path unchanged.
+    spec = _resolve(module_name)
+    if spec is not None:  # None: not found yet; category_dir is added below
+        origin = spec.origin  # a path, 'built-in', 'frozen', or None for a namespace package
+        if origin is None or not exists(origin) or normcase(realpath(origin)) != normcase(realpath(module_path)):
+            raise ImportError(
+                f"custom indicator '{module_path}' cannot be imported as '{module_name}': that name already resolves to "
+                f"{origin or spec}. Rename the file and its two functions."
+            )
 
     if category_dir not in sys.path:
         sys.path.append(category_dir)
@@ -183,7 +211,9 @@ sub-folders for all available indicator categories, e.g.:
 3. You can now create your own custom indicator e.g. by copying existing
 ones from pandas_ta_classic core module and modifying them.
 
-IMPORTANT: Each custom indicator should have a unique name and have both
+IMPORTANT: Each custom indicator needs a unique name, which must not be the
+name of a stdlib or installed module either (import_dir raises ImportError
+otherwise), and must have both
 a) a function named exactly as the module, e.g. 'ni' if the module is ni.py
 b) a matching method used by AnalysisIndicators named as the module but
    ending with '_method'. E.g. 'ni_method'
