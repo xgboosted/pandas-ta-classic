@@ -126,8 +126,8 @@ format:
 	@echo "Formatting code with black..."
 	black pandas_ta_classic/
 
-# Target 3.12, not the 3.10 requires-python floor: numpy >= 2.5 stubs use PEP 695
-# `type` statements that mypy cannot parse below 3.12. Runtime 3.10/3.11 support
+# Target 3.12, not the 3.11 requires-python floor: numpy >= 2.5 stubs use PEP 695
+# `type` statements that mypy cannot parse below 3.12. Runtime 3.11 support
 # is covered by the testing-core matrix.
 typecheck:
 	@echo "Type checking against Python 3.12..."

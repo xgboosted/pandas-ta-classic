@@ -8,7 +8,7 @@ We welcome contributions from the community! This document provides guidelines a
 
 ### Prerequisites
 
-- Python (latest stable plus prior 4 minor versions - see CI workflows for current supported versions)
+- Python 3.11–3.15 (latest stable plus prior 4 minor versions; set by `LATEST_PYTHON_VERSION` in `.github/workflows/ci.yml`)
 - Git
 - GitHub account
 

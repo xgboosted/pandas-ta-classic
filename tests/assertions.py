@@ -25,7 +25,7 @@ CORRELATION_THRESHOLD = 1.0
 #
 # Measured across all 423 tracked columns, the worst native-vs-golden
 # disagreement needs a relative term of 3.6e-15; GOLDEN_RTOL leaves nine
-# orders of margin for platform and BLAS differences across the 3.10-3.14 CI
+# orders of margin for platform and BLAS differences across the 3.11-3.15 CI
 # matrix.  It replaces a flat 1e-4, which was loose enough to accept a 0.005%
 # error in an indicator whose own numerics are accurate to 1e-14.
 GOLDEN_ATOL = 1e-8

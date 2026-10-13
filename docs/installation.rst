@@ -11,7 +11,7 @@ Requirements
 - numpy
 
 .. note::
-   Python version support follows a **rolling policy**: the latest stable Python version plus 4 preceding minor versions. When new Python versions are released, support is automatically updated via CI/CD workflows. Check the `CI workflow <https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml>`_ for the current supported versions.
+   Python version support follows a **rolling policy**: the latest stable Python version plus 4 preceding minor versions, currently **Python 3.11–3.15**. The window is set by ``LATEST_PYTHON_VERSION`` in the `CI workflow <https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml>`_, which a maintainer raises after a new Python release.
 
 Optional Dependencies
 ---------------------

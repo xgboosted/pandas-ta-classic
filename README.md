@@ -185,9 +185,9 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 
 ## Python Version Support
 
-**Pandas TA Classic** follows a **rolling support policy** for the latest stable Python version plus 4 preceding minor versions.
+**Pandas TA Classic** follows a **rolling support policy** for the latest stable Python version plus 4 preceding minor versions: currently **Python 3.11–3.15**.
 
-> **Note:** Python version support is **dynamically managed** via CI/CD workflows. When new Python versions are released, the library automatically updates to support the latest 5 minor versions. Check the [CI workflow](https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml) `LATEST_PYTHON_VERSION` for the current configuration.
+> **Note:** The window is set by `LATEST_PYTHON_VERSION` in the [CI workflow](https://github.com/xgboosted/pandas-ta-classic/blob/main/.github/workflows/ci.yml). A maintainer raises it after a new Python release; the CI test matrix follows from it, and each release derives the PyPI classifiers and `requires-python` from it.
 
 **TA-Lib and tulipy serve different roles** — both are fully optional and skip gracefully when not installed.
 
