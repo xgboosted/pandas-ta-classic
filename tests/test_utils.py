@@ -229,6 +229,18 @@ class TestUtilities(TestCase):
         self.assertFalse(self.utils.is_percent("50"))
         self.assertFalse(self.utils.is_percent(None))
 
+    def test_unsigned_differences_default(self):
+        # the docstring's example; without asint the flags stay float, even for an int series
+        series = Series([3, 2, 2, 1, 1, 5, 6, 6, 7, 5, 3])
+        positive, negative = self.utils.unsigned_differences(series)
+        self.assertEqual(positive.dtype, np.float64)
+        self.assertEqual(negative.dtype, np.float64)
+        np.testing.assert_array_equal(positive.to_numpy(), [0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0])
+        np.testing.assert_array_equal(negative.to_numpy(), [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1])
+        # None selects the default, like every other option
+        for flags, default in zip(self.utils.unsigned_differences(series, asint=None), (positive, negative)):
+            pd.testing.assert_series_equal(flags, default)
+
     def test_unsigned_differences_asint(self):
         series = Series([1.0, 2.0, 2.0, 1.0])
         positive, negative = self.utils.unsigned_differences(series, asint=True)

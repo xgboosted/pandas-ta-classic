@@ -44,7 +44,6 @@ _SERIES_PARAMS = frozenset({"open_", "open", "high", "low", "close", "volume", "
 _EXCLUDED = frozenset({"add", "div", "mult", "sub", "long_run", "short_run", "tsignals", "xsignals", "ma"})
 
 
-
 def _frame_kwargs(name: str, frame: dict[str, pd.Series]) -> dict:
     """Extra arguments that have to be built from *frame* itself."""
     if name == "mavp":
@@ -343,7 +342,8 @@ def test_cdl_pattern_skips_uncomputable_subpatterns() -> None:
     """
     result = _call("cdl_pattern")
     assert isinstance(result, pd.DataFrame)
-    assert "CDL_DOJI_10" not in result.columns
+    # the column is CDL_DOJI_10_0.1: checking for "CDL_DOJI_10" could never fail
+    assert not any(column.startswith("CDL_DOJI_") for column in result.columns), list(result.columns)
     assert "CDL_INSIDE" in result.columns
 
 
@@ -383,4 +383,40 @@ def test_window_longer_than_first_probe_still_returns_all_nan(length: int) -> No
     assert isinstance(result, pd.Series)
     assert result.name == f"SMA_{length}"
     assert result.index.equals(close.index)
+    assert result.isna().all()
+
+
+# The two tests below each pin a `None` branch in utils/_core.py that a mutation
+# run showed no test reached: removing the branch failed nothing, although the
+# code would then call `.reindex` on None.
+
+
+def test_inner_stage_too_short_for_its_window_returns_all_nan() -> None:
+    """``_on_valid_rows`` passes on a None from its smoothing stage.
+
+    On 15 rows the 14-bar raw stochastic has 2 valid bars, fewer than
+    ``smooth_k=3``, so the smoothing stage returns None and the caller gets
+    all NaN on its own index.
+    """
+    index = pd.date_range("2020-01-01", periods=15)
+    close = pd.Series(np.linspace(100, 130, 15) + np.sin(np.arange(15)), index=index)
+    result = ta.stoch(close + 1, close - 1, close, talib=False)
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns) == ["STOCHk_14_3_3", "STOCHd_14_3_3"]
+    assert result.index.equals(index)
+    assert result.isna().all().all()
+
+
+def test_leading_nan_run_leaving_too_few_rows_returns_all_nan() -> None:
+    """``skip_leading_nan`` passes on a None from the trimmed call.
+
+    25 leading NaN leave 10 rows for a 30-bar window: the trimmed call returns
+    None, and the caller gets all NaN on its own index.
+    """
+    index = pd.date_range("2020-01-01", periods=35)
+    close = pd.Series(np.r_[np.full(25, np.nan), np.arange(1.0, 11.0)], index=index)
+    result = ta.maxindex(close, length=30)
+    assert isinstance(result, pd.Series)
+    assert result.name == "MAXINDEX_30"
+    assert result.index.equals(index)
     assert result.isna().all()

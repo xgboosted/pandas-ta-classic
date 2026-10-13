@@ -524,6 +524,17 @@ class TestIsDatetimeOrdered(TestCase):
         df = self._make_dt_df(["2020-01-01"])
         self.assertFalse(df.ta.datetime_ordered)
 
+    def test_two_rows_are_enough(self):
+        self.assertTrue(self._make_dt_df(["2020-01-01", "2020-01-02"]).ta.datetime_ordered)
+
+    def test_only_duplicate_timestamps_are_not_ordered(self):
+        self.assertFalse(self._make_dt_df(["2020-01-01", "2020-01-01"]).ta.datetime_ordered)
+
+    def test_duplicates_at_either_end_are_ordered(self):
+        # the first and last labels are what is compared, not their neighbours
+        self.assertTrue(self._make_dt_df(["2020-01-01", "2020-01-01", "2020-01-02"]).ta.datetime_ordered)
+        self.assertTrue(self._make_dt_df(["2020-01-01", "2020-01-02", "2020-01-02"]).ta.datetime_ordered)
+
     def test_non_datetime_index_returns_false(self):
         df = pd.DataFrame({"close": [1, 2, 3]}, index=[0, 1, 2])
         self.assertFalse(df.ta.datetime_ordered)

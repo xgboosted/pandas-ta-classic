@@ -32,7 +32,7 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import HealthCheck, assume, given, settings, strategies as st
+from hypothesis import HealthCheck, assume, example, given, settings, strategies as st
 from hypothesis.extra.numpy import arrays
 
 import pandas_ta_classic as ta
@@ -57,8 +57,7 @@ def price_series(
     draw,
     min_size: int = 2,
     max_size: int = 200,
-    allow_nan: bool = True,
-    allow_inf: bool = False,
+    allow_nan: bool = False,
     nan_prob: float = 0.0,
 ) -> pd.Series:
     """Generate a realistic price-like Series.
@@ -68,56 +67,22 @@ def price_series(
     min_size, max_size : int
         Length bounds.
     allow_nan : bool
-        If False, no NaN values are injected.
-    allow_inf : bool
-        If True, ±Inf may appear with low probability.
+        If True, each value is NaN with probability *nan_prob*.
     nan_prob : float
-        Probability of a value being NaN (only when *allow_nan* is True).
+        Probability of a value being NaN, in (0, 1). Required with
+        *allow_nan*; a value above 0 without it is rejected.
     """
+    if allow_nan != (nan_prob > 0) or not 0 <= nan_prob < 1:
+        raise ValueError(f"price_series() needs allow_nan=True with 0 < nan_prob < 1, or neither; got allow_nan={allow_nan}, nan_prob={nan_prob}")
     n = draw(st.integers(min_value=min_size, max_value=max_size))
-
-    if allow_nan and nan_prob > 0:
-        # ``floats`` forbids min/max when allow_nan=True, so generate
-        # finite floats then selectively replace with NaN.
-        raw = draw(
-            arrays(
-                dtype=np.float64,
-                shape=n,
-                elements=st.floats(
-                    min_value=1.0,
-                    max_value=1000.0,
-                    allow_nan=False,
-                    allow_infinity=allow_inf,
-                    width=64,
-                ),
-            )
-        )
-        # Inject NaN at controlled rate by sampling a boolean mask
-        nan_mask = draw(
-            arrays(
-                dtype=bool,
-                shape=n,
-                elements=st.sampled_from(
-                    [True, False],
-                ),
-            )
-        )
-        raw[nan_mask] = np.nan
-    else:
-        raw = draw(
-            arrays(
-                dtype=np.float64,
-                shape=n,
-                elements=st.floats(
-                    min_value=1.0,
-                    max_value=1000.0,
-                    allow_nan=allow_nan,
-                    allow_infinity=allow_inf,
-                    width=64,
-                ),
-            )
-        )
-
+    raw = draw(arrays(dtype=np.float64, shape=n, elements=st.floats(min_value=1.0, max_value=1000.0, width=64)))
+    if allow_nan:
+        # ``floats`` cannot combine allow_nan with min/max, so draw finite
+        # prices and replace each with NaN with probability nan_prob. The mask
+        # comes from a drawn seed: element-wise Hypothesis floats shrink towards
+        # 0.0 and would turn the whole series NaN.
+        rng = np.random.default_rng(draw(st.integers(min_value=0, max_value=2**32 - 1)))
+        raw[rng.random(n) < nan_prob] = np.nan
     return pd.Series(raw, name="close")
 
 
@@ -201,6 +166,34 @@ def constant_price_series(draw, min_size: int = 20, max_size: int = 200):
 _positive_int = st.integers(min_value=1, max_value=100)
 _small_positive_int = st.integers(min_value=2, max_value=50)
 _offset_int = st.integers(min_value=0, max_value=20)
+
+
+class TestPriceSeriesStrategy(TestCase):
+    """The ``price_series`` generator does what its arguments say."""
+
+    @given(price_series())
+    def test_default_draws_finite_prices(self, s):
+        # The old default (allow_nan=True, nan_prob=0) raised InvalidArgument.
+        assert s.between(1.0, 1000.0).all()
+
+    @given(price_series(min_size=20, max_size=20, allow_nan=True, nan_prob=0.5))
+    def test_nan_or_price(self, s):
+        assert (s.isna() | s.between(1.0, 1000.0)).all()
+
+    @given(st.data(), st.sampled_from([0.05, 0.6]))
+    def test_nan_prob_sets_the_nan_rate(self, data, nan_prob):
+        # The old mask was sampled_from([True, False]) whatever nan_prob said.
+        # Five binomial standard deviations over 2000 bars (0.024 at 0.05, 0.055
+        # at 0.6): a rate off by 0.05 fails, and a correct one exceeds the bound
+        # with probability below 1e-6 per example.
+        n = 2000
+        s = data.draw(price_series(min_size=n, max_size=n, allow_nan=True, nan_prob=nan_prob))
+        assert abs(s.isna().mean() - nan_prob) < 5 * math.sqrt(nan_prob * (1 - nan_prob) / n)
+
+    @given(st.data(), st.sampled_from([{"allow_nan": True}, {"nan_prob": 0.2}, {"allow_nan": True, "nan_prob": 1.0}]))
+    def test_contradictory_arguments_raise(self, data, kwargs):
+        with pytest.raises(ValueError, match="price_series"):
+            data.draw(price_series(**kwargs))
 
 
 # ======================================================================
@@ -980,6 +973,8 @@ class TestPropertyBasedEdgeCases(TestCase):
         price_series(min_size=50, max_size=100, allow_nan=True, nan_prob=0.1),
         _small_positive_int,
     )
+    # The seeded NaN mask practically never draws an all-NaN series; pin it.
+    @example(pd.Series([np.nan] * 50, name="close"), 5)
     def test_sma_with_nans_no_crash(self, s, length):
         """SMA with some NaN values must not crash."""
         assume(len(s) >= length + 2)

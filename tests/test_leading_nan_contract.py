@@ -22,7 +22,10 @@ import pytest
 
 import pandas_ta_classic as ta
 
-PAD = 40
+# 1 is what diff(), shift(1) and returns hand on; 40 covers a long indicator warm-up.
+# skip_leading_nan used to be checked with 40 only, so treating a run of 1 as clean
+# input (start > 1 instead of start > 0) failed no test.
+PADS = (1, 40)
 COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
 # Not a function of one OHLCV frame: two-series math, signal helpers, a
 # required benchmark or periods series, the ma() dispatcher.
@@ -34,13 +37,16 @@ INDICATORS = sorted({name for names in ta.Category.values() for name in names} -
 
 
 @pytest.fixture(scope="module")
-def frames():
+def clean():
     df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
     df = df.drop(columns=["Unnamed: 0"], errors="ignore")
     df.columns = df.columns.str.lower()
-    clean = df.iloc[-600:]
-    pad = pd.DataFrame(np.nan, index=pd.date_range(end=clean.index[0] - pd.Timedelta(days=1), periods=PAD, freq="D"), columns=clean.columns)
-    return clean, pd.concat([pad, clean])
+    return df.iloc[-600:]
+
+
+def _padded(clean, pad):
+    lead = pd.DataFrame(np.nan, index=pd.date_range(end=clean.index[0] - pd.Timedelta(days=1), periods=pad, freq="D"), columns=clean.columns)
+    return pd.concat([lead, clean])
 
 
 def _call(name, df):
@@ -52,13 +58,14 @@ def _call(name, df):
     return result.to_frame() if isinstance(result, pd.Series) else result
 
 
+@pytest.mark.parametrize("pad", PADS)
 @pytest.mark.parametrize("name", INDICATORS)
-def test_leading_nan_run_does_not_change_the_result(name, frames):
-    clean, padded = frames
+def test_leading_nan_run_does_not_change_the_result(name, pad, clean):
+    padded = _padded(clean, pad)
     expected = _call(name, clean)
     got = _call(name, padded)
     assert got is not None and len(got) == len(padded), f"{name}: result has {None if got is None else len(got)} rows for {len(padded)}"
-    got = got.iloc[PAD:]
+    got = got.iloc[pad:]
     assert list(got.columns) == list(expected.columns)
     x, y = got.to_numpy(float, na_value=np.nan), expected.to_numpy(float, na_value=np.nan)
     np.testing.assert_array_equal(np.isnan(x), np.isnan(y), err_msg=f"{name}: NaN pattern differs")
