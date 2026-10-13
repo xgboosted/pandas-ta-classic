@@ -77,7 +77,6 @@ Args:
 
 Kwargs:
     adjust (bool): Default: True
-    presma (bool, optional): If True, uses SMA for initial value.
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

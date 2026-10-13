@@ -106,9 +106,6 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
-    adjust (bool, optional): Use adjust option for EMA calculation. Default: False
-    sma (bool, optional): If True, uses SMA for initial value for EMA calculation. Default: True
-    talib (bool): If True, uses TA-Libs implementation for CMO. Otherwise uses EMA version. Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

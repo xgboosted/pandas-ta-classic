@@ -102,7 +102,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    open (pd.Series): Series of 'open's
+    open_ (pd.Series): Series of 'open's
     volume (pd.Series): Series of 'volume's
     fast (int): The short period. Default: 3
     slow (int): The long period. Default: 10

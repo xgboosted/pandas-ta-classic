@@ -109,7 +109,6 @@ Args:
     length (int): It's max cycle/trend period. Values between 40-48 work like
         expected with minimum value: 39. Default: 40.
     bars (int): Period of low pass filtering. Default: 10
-    drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

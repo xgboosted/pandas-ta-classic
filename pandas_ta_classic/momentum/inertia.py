@@ -143,7 +143,6 @@ Calculation:
     INERTIA = LSQRMA(RVI(length), ma_length)
 
 Args:
-    open_ (pd.Series): Series of 'open's
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's

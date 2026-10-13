@@ -132,7 +132,6 @@ Args:
     long (bool): Passes the long trend into tsignals' trend argument. When
         False, it passes the short trend into tsignals trend argument.
         Default: True
-    drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
     # TSIGNAL Passthrough arguments

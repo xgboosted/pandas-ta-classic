@@ -125,9 +125,6 @@ Args:
         Must be 0 <= ddof < length; ignored when full=True. Default: 1
 
 Kwargs:
-    naive (bool, optional): If True, prefills potential Doji less than
-        the length if less than a percentage of it's high-low range.
-        Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

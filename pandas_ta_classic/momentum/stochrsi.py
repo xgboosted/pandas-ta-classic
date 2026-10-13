@@ -138,8 +138,6 @@ Calculation:
     STOCHRSId = SMA(STOCHRSIk, d)
 
 Args:
-    high (pd.Series): Series of 'high's
-    low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
     length (int): The STOCHRSI period. Default: 14
     rsi_length (int): RSI period. Default: 14

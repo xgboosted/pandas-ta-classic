@@ -83,7 +83,7 @@ Calculation:
     qstick = xMA(close - open, length)
 
 Args:
-    open (pd.Series): Series of 'open's
+    open_ (pd.Series): Series of 'open's
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
     ma (str): The type of moving average to use. Default: None, which is 'sma'

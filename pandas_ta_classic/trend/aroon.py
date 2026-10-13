@@ -97,7 +97,6 @@ Calculation:
     AROON_OSC = AROON_UP - AROON_DN
 
 Args:
-    close (pd.Series): Series of 'close's
     length (int): It's period. Default: 14
     scalar (float): How much to magnify. Default: 100
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib

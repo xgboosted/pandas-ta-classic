@@ -68,8 +68,6 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
-    adjust (bool): Default: True
-    presma (bool, optional): If True, uses SMA for initial value.
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

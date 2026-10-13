@@ -74,9 +74,14 @@ Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 20
     centered (bool): Shift the dpo back by int(0.5 * length) + 1. Default: True
+        Not causal: the value at a bar uses the SMA ending int(0.5 * length) + 1
+        bars later, which includes later closes. Forced to False by lookahead=False.
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
+    lookahead (bool): When False, centered is forced off so no value depends
+        on later bars. Both modes name the column DPO_{length}, so the name
+        does not tell them apart. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

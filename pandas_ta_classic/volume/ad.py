@@ -97,7 +97,7 @@ Args:
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
-    open (pd.Series): Series of 'open's
+    open_ (pd.Series): Series of 'open's
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: False
     offset (int): How many periods to offset the result. Default: 0

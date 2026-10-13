@@ -76,7 +76,6 @@ Calculation:
         UI = SQRT(SUM(DOWNSIDE^2, length) / length)
 
 Args:
-    high (pd.Series): Series of 'high's
     close (pd.Series): Series of 'close's
     length (int): The short period.  Default: 14
     scalar (float): A positive float to scale the bands. Default: 100

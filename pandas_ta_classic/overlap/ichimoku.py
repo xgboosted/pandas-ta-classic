@@ -144,6 +144,8 @@ Args:
     kijun (int): Kijun period. Default: 26
     senkou (int): Senkou period. Default: 52
     include_chikou (bool): Whether to include chikou component. Default: True
+        Not causal: the chikou span is close.shift(-kijun), a later bar's close.
+        Forced to False by lookahead=False.
     offset (int): How many periods to offset the result. Default: 0
     append_span (bool): When False (default) only the visible period is
         returned (no future-dated rows, safe to append to the input frame).
@@ -151,6 +153,8 @@ Args:
         appended as extra rows. Default: False
 
 Kwargs:
+    lookahead (bool): When False, include_chikou is forced off so no column
+        depends on later bars. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
