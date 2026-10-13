@@ -17,14 +17,18 @@ def minmaxindex(
 ) -> DataFrame | None:
     """Window-relative Min and Max indices over *length* periods.
 
-    Returns a DataFrame with columns ``MINIDX_<n>`` and ``MAXIDX_<n>``, each a
-    0-based index *within* the rolling window (0..length-1), i.e. how many bars
-    back the low/high sits.
+    Returns a DataFrame with columns ``MINIDX_<n>`` and ``MAXIDX_<n>``, the
+    values ``minindex`` and ``maxindex`` return: the 0-based position of the
+    minimum and maximum *within* the rolling window, counted from its oldest
+    bar (0 is the bar ``length - 1`` bars back, ``length - 1`` the current
+    bar). On a tie the oldest bar wins, and a window holding a NaN gives NaN.
 
-    Named after TA-Lib's MINMAXINDEX, but the convention differs on purpose: it
-    is not TA-Lib's absolute array index. There is deliberately no ``talib``
-    passthrough — TA-Lib's MINMAXINDEX would return different values, and
-    neither tulipy nor Tulip Indicators expose an equivalent.
+    Named after TA-Lib's MINMAXINDEX, but the convention differs on purpose:
+    TA-Lib returns the absolute array index, so at bar ``i`` (its position in
+    the series)
+    ``talib = result + i - length + 1``, except on a tie, where TA-Lib may pick
+    a later bar. There is deliberately no ``talib`` passthrough, and neither
+    tulipy nor Tulip Indicators expose an equivalent.
     """
     length = _pos_int(length, 30, "length")
     close = verify_series(close, length)

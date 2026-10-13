@@ -562,10 +562,12 @@ Mathematical transforms (wrapping NumPy / SciPy math, TA-Lib ``MATH TRANSFORM`` 
 
 Index / position operators (TA-Lib ``MATH OPERATORS`` group):
 
-* *Maximum Index*: **maxindex** — index of rolling maximum over a window
-* *Minimum Index*: **minindex** — index of rolling minimum over a window
+* *Maximum Index*: **maxindex** — position of the rolling maximum within its window, counted from the oldest bar (0 = oldest, ``length - 1`` = current bar; a tie picks the oldest; a window holding a NaN gives NaN)
+* *Minimum Index*: **minindex** — position of the rolling minimum within its window, counted the same way
 * *Min-Max*: **minmax** — rolling minimum and maximum over a window
-* *Min-Max Index*: **minmaxindex** — indices of rolling min/max over a window
+* *Min-Max Index*: **minmaxindex** — ``minindex`` and ``maxindex`` in one frame
+
+Unlike TA-Lib's ``MAXINDEX``/``MININDEX``/``MINMAXINDEX``, which return the absolute array index, the three index operators are relative to the window: at bar ``i`` (its position in the series), TA-Lib's value is ``result + i - length + 1``, except on a tie, where TA-Lib may pick a later bar.
 
 Tulipy extras (NumPy wrappers):
 

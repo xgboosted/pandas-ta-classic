@@ -18,11 +18,14 @@ def maxindex(
     """Window-relative index of the Maximum value over *length* periods.
 
     Named after TA-Lib's MAXINDEX, but the convention differs on purpose: this
-    returns the 0-based index *within* the rolling window (0..length-1), i.e.
-    how many bars back the high sits, not TA-Lib's absolute array index. There
-    is deliberately no ``talib`` passthrough — TA-Lib's MAXINDEX would return
-    different values, and neither tulipy nor Tulip Indicators expose an
-    equivalent.
+    returns the 0-based position of the maximum *within* the rolling window,
+    counted from its oldest bar: 0 is the bar ``length - 1`` bars back, and
+    ``length - 1`` is the current bar. On a tie the oldest bar wins, and a
+    window holding a NaN gives NaN. TA-Lib returns the absolute array index
+    instead, so at bar ``i`` (its position in the series)
+    ``talib = result + i - length + 1``, except on a tie, where TA-Lib may pick
+    a later bar. There is deliberately no ``talib`` passthrough, and neither
+    tulipy nor Tulip Indicators expose an equivalent.
     """
     length = _pos_int(length, 30, "length")
     close = verify_series(close, length)

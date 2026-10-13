@@ -10,6 +10,9 @@ published -1 on warm-up bars).
 ``vidya`` (CMO over ``length``), ``ichimoku``, ``squeeze``, ``supertrend``
 (direction), daily ``cpr`` and ``vwap`` were verified during the same review; their checks live here too.
 
+``maxindex``, ``minindex`` and ``minmaxindex`` had no value test at all, and
+their docstrings described the result as "how many bars back", which it is not.
+
 Warm-up bars are skipped, where seed conventions differ between sources.
 """
 
@@ -129,6 +132,20 @@ def test_vwap_anchors(anchor, key):
     expected = ref.vwap(high, low, close, volume, [key(t) for t in index])
     np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
     np.testing.assert_allclose(got, expected, rtol=1e-12, equal_nan=True)
+
+
+@pytest.mark.parametrize("name, pick", [("maxindex", max), ("minindex", min)])
+def test_window_index(spy, name, pick):
+    # SPY_D has 63 tied 30-bar maxima, so the oldest-wins rule is exercised too
+    got = getattr(ta, name)(spy.close).to_numpy(float)
+    np.testing.assert_array_equal(got, ref.window_position(spy.close.to_numpy(float), 30, pick))
+
+
+def test_minmaxindex(spy):
+    got = ta.minmaxindex(spy.close)
+    close = spy.close.to_numpy(float)
+    np.testing.assert_array_equal(got["MINIDX_30"].to_numpy(float), ref.window_position(close, 30, min))
+    np.testing.assert_array_equal(got["MAXIDX_30"].to_numpy(float), ref.window_position(close, 30, max))
 
 
 def test_vidya(spy):

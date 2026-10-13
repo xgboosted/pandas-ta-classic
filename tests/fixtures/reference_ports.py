@@ -66,6 +66,15 @@ def rsi(c: np.ndarray, n: int) -> np.ndarray:
     return 100 - 100 / (1 + rma(up, n) / rma(dn, n))
 
 
+def window_position(x: np.ndarray, n: int, pick) -> np.ndarray:
+    """Position of each window's ``pick`` (max or min), counted from its oldest bar; the oldest wins a tie."""
+    out = np.full(len(x), np.nan)
+    for i in range(n - 1, len(x)):
+        w = list(x[i - n + 1 : i + 1])
+        out[i] = w.index(pick(w))
+    return out
+
+
 def true_range(h: np.ndarray, l: np.ndarray, c: np.ndarray) -> np.ndarray:
     return np.r_[np.nan, np.maximum(h[1:], c[:-1]) - np.minimum(l[1:], c[:-1])]
 
