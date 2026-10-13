@@ -290,7 +290,7 @@ class AnalysisIndicators(PandasObject):
 
     1. Loading the 'ta' module:
     >>> import pandas as pd
-    >>> import ta as ta
+    >>> import pandas_ta_classic as ta
 
     2. Load some data:
     >>> df = pd.read_csv("AAPL.csv", index_col="date", parse_dates=True)

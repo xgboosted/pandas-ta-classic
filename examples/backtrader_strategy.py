@@ -32,7 +32,7 @@ class SMACrossover(bt.Strategy):
         if self.crossover > 0 and not self.position:
             self.order = self.buy(size=0.1)
         elif self.crossover < 0 and self.position:
-            self.order = self.sell()
+            self.order = self.close()  # sell() would sell the default stake of 1, not the 0.1 held
 
     def notify_order(self, order):
         if order.status in (order.Completed, order.Cancelled, order.Rejected):

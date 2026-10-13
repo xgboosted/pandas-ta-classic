@@ -23,7 +23,7 @@ You explicitly define the input columns and take care of the output.
     # Returns a Series with name: SMA_10
     
     # Donchian Channel
-    donchiandf = ta.donchian(df["HIGH"], df["low"], lower_length=10, upper_length=15)
+    donchiandf = ta.donchian(df["High"], df["Low"], lower_length=10, upper_length=15)
     # Returns a DataFrame named DC_10_15 and column names: DCL_10_15, DCM_10_15, DCU_10_15
     
     # Chaining indicators

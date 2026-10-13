@@ -190,17 +190,17 @@ Examples:
 Get all candle patterns (This is the default behaviour)
 >>> df = df.ta.cdl_pattern(name="all")
 Or
->>> df.ta.cdl("all", append=True) # = df.ta.cdl_pattern("all", append=True)
+>>> df.ta.cdl_pattern("all", append=True)
 
 Get only one pattern
 >>> df = df.ta.cdl_pattern(name="doji")
 Or
->>> df.ta.cdl("doji", append=True)
+>>> df.ta.cdl_pattern("doji", append=True)
 
 Get some patterns
 >>> df = df.ta.cdl_pattern(name=["doji", "inside"])
 Or
->>> df.ta.cdl(["doji", "inside"], append=True)
+>>> df.ta.cdl_pattern(["doji", "inside"], append=True)
 
 Args:
     open_ (pd.Series): Series of 'open's

@@ -264,7 +264,7 @@ Others return a DataFrame with multiple columns:
 # Returns a DataFrame
 bbands = df.ta.bbands(length=20)
 print(type(bbands)) # pandas.DataFrame
-print(bbands.columns) # ['BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0']
+print(bbands.columns) # ['BBL_20_2.0', 'BBM_20_2.0', 'BBU_20_2.0', 'BBB_20_2.0', 'BBP_20_2.0']
 
 # Access individual bands
 lower_band = bbands['BBL_20_2.0']

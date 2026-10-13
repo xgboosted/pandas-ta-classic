@@ -193,13 +193,13 @@ Other candle indicators:
 
    .. code-block:: python
 
-        # Uses native EMA (default behaviour)
-        ema = df.ta.ema(length=20)
+       # Uses native EMA (default behaviour)
+       ema = df.ta.ema(length=20)
 
-        # Use TA-Lib implementation if installed
-        ema = df.ta.ema(length=20, talib=True)
+       # Use TA-Lib implementation if installed
+       ema = df.ta.ema(length=20, talib=True)
 
-        # Indicators with TA-Lib passthrough:
+       # Indicators with TA-Lib passthrough:
        # ad, adosc, apo, aroon, atr, bbands, bop, cci, cmo, dema, dm,
        # ema, hlc3, macd, mfi, midpoint, midprice, mom, natr, obv, ppo,
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,

@@ -274,7 +274,7 @@ from pandas_ta_classic import (
 )
 
 # Calculate metrics on strategy equity curve
-strategy_equity = df['Close'] * df['cumulative_strategy_returns'] / df['cumulative_returns']
+strategy_equity = (df['Close'] * df['cumulative_strategy_returns'] / df['cumulative_returns']).dropna()  # first row has no return
 
 # CAGR (Compound Annual Growth Rate)
 strategy_cagr = ta.cagr(strategy_equity)
@@ -451,7 +451,7 @@ portfolio.plot().show()
 
 # Plot trades on price chart
 fig = df['Close'].vbt.plot()
-portfolio.positions.plot(trace_kwargs=dict(name='Position')).show()
+portfolio.positions.plot().show()
 ```
 
 ### Key Takeaways
