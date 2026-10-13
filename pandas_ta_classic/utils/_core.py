@@ -555,6 +555,10 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
 
     Returns None for a Series shorter than *min_length* (an ordinary data
     condition) and for ``None`` (an optional argument that was not given).
+    *min_length* is compared with the number of rows, NaN rows included; any
+    finite number >= 0 is applied, a float or a numpy number as well as an int.
+    Anything else (NaN, inf, a negative number, a bool, a string) raises
+    ValueError.
     Indicators wrapped in :func:`nan_on_short_input` turn the short-input None
     into an all-NaN result for their callers.
 
@@ -562,7 +566,11 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
     and raises TypeError, so the mistake surfaces where it was made rather than
     as a missing column or an unrelated error several frames later.
     """
-    has_length = min_length is not None and isinstance(min_length, int)
+    # A float or numpy min_length used to be ignored without a word, although
+    # the signature accepts it, and NaN or a negative one still passed silently.
+    has_length = min_length is not None
+    if has_length:
+        _number(min_length, None, "min_length", ge=0)
     if series is not None and isinstance(series, Series):
         if has_length and series.size < min_length:
             logger.warning(f"[X] Series has {series.size} rows but indicator requires" f" at least {min_length}; the result is all NaN.")

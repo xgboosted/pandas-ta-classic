@@ -717,6 +717,20 @@ class TestNoneGuards(TestCase):
         result = pandas_ta.utils.verify_series(self.c, 4)
         self.assertIsInstance(result, Series)
 
+    def test_verify_series_applies_a_float_min_length(self):
+        # it used to be ignored: verify_series(4 rows, 4.5) returned the series
+        self.assertIsNone(pandas_ta.utils.verify_series(self.c, 4.5))
+        self.assertIsInstance(pandas_ta.utils.verify_series(self.c, 3.5), Series)
+        # numpy numbers were ignored the same way (np.int64 is not an int)
+        self.assertIsNone(pandas_ta.utils.verify_series(self.c, np.int64(5)))
+
+    def test_verify_series_rejects_an_invalid_min_length(self):
+        # NaN, a negative number and a bool passed silently (size < nan is False),
+        # inf blanked the result and a string raised a bare TypeError from "<"
+        for bad in (np.nan, -3, np.inf, True, "5"):
+            with self.subTest(min_length=bad), self.assertRaisesRegex(ValueError, r"^verify_series\(\) min_length must be a number >= 0"):
+                pandas_ta.utils.verify_series(self.c, bad)
+
     def test_verify_series_non_series_raises_type_error(self):
         """Issue #145 case (A): non-Series input is a caller error.
 
