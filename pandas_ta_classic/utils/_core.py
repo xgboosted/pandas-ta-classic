@@ -264,20 +264,14 @@ _PROBE_HARD_MAX_ROWS = 2_000_000
 
 
 def _bound_series(arguments: dict) -> list[Series]:
-    """Every Series in *arguments*, including those inside the **kwargs bag.
+    """Every Series passed as a named argument, in signature order.
 
-    An indicator can take a Series through **kwargs (stc's ma1/ma2/osc, the
-    signal helpers' xserie): those used to be invisible here, so the probe kept
-    the caller's short series, failed for the same reason the real call did, and
-    the short-input contract handed back None instead of an all-NaN result.
+    Series inside the **kwargs bag (stc's ma1/ma2/osc, the signal helpers'
+    xserie) are left out on purpose: every indicator that takes one also needs a
+    named Series, so without one the call returns None either way, and
+    ``_probe_inputs`` replaces the **kwargs Series itself.
     """
-    found = []
-    for value in arguments.values():
-        if isinstance(value, Series):
-            found.append(value)
-        elif isinstance(value, dict):
-            found.extend(v for v in value.values() if isinstance(v, Series))
-    return found
+    return [value for value in arguments.values() if isinstance(value, Series)]
 
 
 def _probe_inputs(arguments: dict, rows: int) -> dict:

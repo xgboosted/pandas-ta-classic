@@ -326,6 +326,23 @@ def test_short_input_returns_all_nan(name: str) -> None:
         assert list(short.columns) == list(full.columns)
 
 
+@pytest.mark.parametrize("extra", ["osc", "ma1_ma2"])
+def test_short_series_passed_through_kwargs_still_returns_all_nan(extra: str) -> None:
+    """``stc`` takes ``ma1``/``ma2``/``osc`` through **kwargs.
+
+    The shape-learning call must replace those too: keeping the caller's short
+    series made it fail for the same reason the real call did, so the contract
+    handed back None instead of an all-NaN result.
+    """
+    close = _short_frame()["close"]
+    kwargs = {"osc": close} if extra == "osc" else {"ma1": close, "ma2": close}
+    result = ta.stc(close, **kwargs)
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns) == ["STC_10_12_26_0.5", "STCmacd_10_12_26_0.5", "STCstoch_10_12_26_0.5"]
+    assert result.index.equals(close.index)
+    assert result.isna().all().all()
+
+
 @pytest.mark.parametrize("name", sorted(RETURNS_SERIES))
 def test_short_input_returns_result(name: str) -> None:
     """No window (or a window <= 3 rows), so a real result comes back."""
