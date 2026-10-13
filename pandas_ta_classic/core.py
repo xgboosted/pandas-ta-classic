@@ -759,10 +759,8 @@ class AnalysisIndicators(PandasObject):
                 # Re-raise what the indicator raised: the exception type is part
                 # of the contract, so a caller catching ValueError must not start
                 # seeing RuntimeError when it opts into workers.  The traceback
-                # does not survive pickling, hence the note (PEP 678, 3.11+; on
-                # 3.10 the message already names the function).
-                if hasattr(error, "add_note"):
-                    error.add_note(f"strategy(): raised by {kind}() in a worker process")
+                # does not survive pickling, hence the note (PEP 678).
+                error.add_note(f"strategy(): raised by {kind}() in a worker process")
                 raise error
             if result is None:
                 self._warn_no_result(kind, task_kwargs, stacklevel=5)

@@ -14,7 +14,7 @@ env:
   # This value controls the rolling 5-version support policy (LATEST-4 through LATEST)
   # Used by generate-matrix job to compute supported Python versions dynamically
   # Also used for pyproject.toml placeholder replacement: {{LATEST-N}} → actual versions
-  LATEST_PYTHON_VERSION: "3.14"
+  LATEST_PYTHON_VERSION: "3.15"
 
 permissions:
   contents: read
@@ -91,7 +91,7 @@ jobs:
     - name: Generate Python version matrix
       id: versions
       run: |
-        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.14" -> "14")
+        # Extract minor version from LATEST_PYTHON_VERSION (e.g., "3.15" -> "15")
         latest="${{ env.LATEST_PYTHON_VERSION }}"
         minor_version=$(echo "$latest" | cut -d'.' -f2)
         
@@ -343,11 +343,11 @@ jobs:
     - name: Update pyproject.toml with dynamic Python classifiers
       # Replaces all {{LATEST-N}} placeholders in pyproject.toml with actual Python versions
       # This includes:
-      #   - Programming Language :: Python :: {{LATEST-4}} → 3.10
-      #   - Programming Language :: Python :: {{LATEST-3}} → 3.11
-      #   - Programming Language :: Python :: {{LATEST-2}} → 3.12
-      #   - Programming Language :: Python :: {{LATEST-1}} → 3.13
-      #   - Programming Language :: Python :: {{LATEST}} → 3.14
+      #   - Programming Language :: Python :: {{LATEST-4}} → 3.11
+      #   - Programming Language :: Python :: {{LATEST-3}} → 3.12
+      #   - Programming Language :: Python :: {{LATEST-2}} → 3.13
+      #   - Programming Language :: Python :: {{LATEST-1}} → 3.14
+      #   - Programming Language :: Python :: {{LATEST}} → 3.15
       #   - requires-python: Updates minimum version if it changes
       # Preserves all other classifiers including Development Status :: 5 - Production/Stable
       run: |

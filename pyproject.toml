@@ -35,7 +35,7 @@ classifiers = [
     "Programming Language :: Python :: {{LATEST-1}}",
     "Programming Language :: Python :: {{LATEST}}",
 ]
-requires-python = ">=3.10"  # Minimum Python version; matches AGENTS.md's rolling 5-version window (LATEST-4..LATEST)
+requires-python = ">=3.11"  # Minimum Python version; matches AGENTS.md's rolling 5-version window (LATEST-4..LATEST)
 dependencies = [
     "numpy>=2.0.0",
     "pandas>=2.0.0",
@@ -211,9 +211,9 @@ local_scheme = "no-local-version"  # Omit local version for clean releases
 [tool.mypy]
 packages = ["pandas_ta_classic"]
 # python_version is passed by `make typecheck` (--python-version 3.12). It is not
-# the 3.10 requires-python floor: numpy >= 2.5 stubs use PEP 695 `type`
+# the 3.11 requires-python floor: numpy >= 2.5 stubs use PEP 695 `type`
 # statements that mypy cannot parse below 3.12. The testing-core matrix covers
-# runtime support for 3.10 and 3.11.
+# runtime support for 3.11.
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false

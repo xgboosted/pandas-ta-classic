@@ -4,7 +4,7 @@
 # full list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # -- Additional HTML configuration -------------------------------------------
 
@@ -49,7 +49,7 @@ html_show_copyright = True
 # -- Project information -----------------------------------------------------
 
 project = "Pandas TA Classic"
-_year = datetime.now(timezone.utc).year
+_year = datetime.now(UTC).year
 copyright = f"2025-{_year}, xgboosted" if _year > 2025 else "2025, xgboosted"
 author = "xgboosted"
 
