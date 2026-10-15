@@ -173,12 +173,15 @@ def get_offset(x: int | None) -> int:
 
 
 def _require_input(value: Any, function: str, parameter: str) -> None:
-    """Raise ValueError when a required Series/DataFrame input is None.
+    """Raise ValueError when a required input (a Series, a frame or a scalar) is None.
 
     ``verify_series(None)`` is None by design (an optional input not given).
     A helper whose input is required failed on it inside pandas instead --
     ``'NoneType' object has no attribute 'diff'`` -- naming neither the
-    function nor the argument.
+    function nor the argument. ValueError, as for any other argument the
+    function cannot use (AGENTS.md rule 1); a value of the wrong type, such
+    as a list where a Series belongs, is the TypeError ``verify_series``
+    raises.
     """
     if value is None:
         raise ValueError(f"{function}() requires {parameter!r}, got None")

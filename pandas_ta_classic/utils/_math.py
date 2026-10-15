@@ -32,6 +32,7 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     """
     _require_input(values, "np_rolling_moments", "values")
     _require_input(length, "np_rolling_moments", "length")
+    length = _pos_int(length, None, "length")
 
     if min_periods is None:
         min_periods = length
@@ -231,7 +232,7 @@ def weights(w: Any) -> Callable[[Any], Any]:
 
 def zero(x: float) -> float:
     """If the value is close to zero, then return zero. Otherwise return itself."""
-    _require_input(x, "zero", "x")
+    # No _require_input: Series.apply runs this once per element (adx, dm, psar, cross).
     return 0 if abs(x) < sflt.epsilon else x
 
 

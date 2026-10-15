@@ -995,33 +995,10 @@ class TestRequiredUtilityInputs(TestCase):
     not listed here.
     """
 
-    def test_none_input_names_the_function_and_the_argument(self):
-        idx = pd.date_range("2020-01-01", periods=30, freq="D")
-        s = Series(np.linspace(10.0, 20.0, 30), index=idx)
-        df = DataFrame({"close": s})
+    def test_signals_names_a_missing_indicator(self):
+        # signals takes keyword options the sweep below cannot fill in.
+        s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
         u = pandas_ta.utils
-        cases = {
-            u.candle_color: {"open_": s, "close": s},
-            u.degenerate_div: {"numerator": s, "denominator": s},
-            # annotated DataFrame, but only Series work: DataFrame.corr() takes no other frame
-            u.df_error_analysis: {"dfA": s, "dfB": s},
-            u.df_year_to_date: {"df": df},
-            u.is_datetime_ordered: {"df": df},
-            u.linear_regression: {"x": s, "y": s},
-            u.non_zero_range: {"high": s, "low": s},
-            u.recent_maximum_index: {"x": s.to_numpy()},
-            u.recent_minimum_index: {"x": s.to_numpy()},
-            u.signed_series: {"series": s},
-            u.to_utc: {"df": df},
-            u.total_time: {"df": df},
-            u.unsigned_differences: {"series": s},
-        }
-        for func, inputs in cases.items():
-            func(**inputs)  # the valid call works
-            for name in inputs:
-                pattern = rf"^{func.__name__}\(\) requires '{name}', got None$"
-                with self.subTest(func=func.__name__, argument=name), self.assertRaisesRegex(ValueError, pattern):
-                    func(**{**inputs, name: None})
         signals_args = {
             "xa": 15,
             "xb": None,
@@ -1036,12 +1013,18 @@ class TestRequiredUtilityInputs(TestCase):
         with self.assertRaisesRegex(ValueError, r"^signals\(\) requires 'indicator', got None$"):
             u.signals(None, **signals_args)
 
+    def test_np_rolling_moments_rejects_a_length_below_one(self):
+        # length=0 used to fail inside numpy: could not broadcast input array from shape (11,) into shape (1,)
+        for length in (0, -1, 2.5):
+            with self.subTest(length=length), self.assertRaisesRegex(ValueError, r"^np_rolling_moments\(\) length must be"):
+                pandas_ta.utils.np_rolling_moments(np.arange(10.0), length, 2)
+
     def test_every_utility_names_a_required_input_passed_as_none(self):
         """Sweep utils.__all__, so a new helper cannot crash inside pandas on None.
 
-        The list above was kept by hand and missed final_time, np_rolling_moments,
-        weights, zero and degenerate_zero. Each exemption below is a contract of
-        its own, not an oversight.
+        A hand-kept list missed final_time, np_rolling_moments, weights and
+        degenerate_zero. Each exemption below is a contract of its own, not an
+        oversight.
         """
         exempt = {
             # None selects the default.
@@ -1051,6 +1034,8 @@ class TestRequiredUtilityInputs(TestCase):
             "is_percent": "predicate",
             # Raises TypeError naming the function for any non-str, None included.
             "tal_ma": "type check",
+            # Series.apply runs it once per element (adx, dm, psar, cross); a guard there costs every bar.
+            "zero": "scalar element helper",
             # None in, None out: an indicator's missing optional input flows through.
             "apply_fill": "passthrough",
             "apply_offset": "passthrough",
