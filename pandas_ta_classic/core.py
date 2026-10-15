@@ -10,7 +10,7 @@ from multiprocessing import cpu_count, current_process, get_context
 from numbers import Integral
 from threading import Lock
 from time import perf_counter
-from typing import Any
+from typing import Any, NoReturn
 from warnings import catch_warnings, simplefilter, warn
 
 import pandas as pd
@@ -475,7 +475,7 @@ class AnalysisIndicators(PandasObject):
         self._df.attrs["_ta_time_range"] = "years" if value is None else value
 
     @property
-    def to_utc(self) -> None:
+    def to_utc(self) -> NoReturn:
         """Removed in 0.9.0: reading it converted df's index, so hasattr() did too."""
         # AttributeError, so hasattr() is False and getattr(..., default) works.
         # __getattr__ re-runs this getter, so the message survives the fallback.

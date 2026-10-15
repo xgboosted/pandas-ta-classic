@@ -207,5 +207,3 @@ def test_df_ta_lists_indicators_and_rejects_unknown_kinds(spy, capsys):
         spy.ta(kind="smaa")
     with pytest.raises(TypeError, match="kind must be an indicator name"):
         spy.ta(kind=5)
-
-
