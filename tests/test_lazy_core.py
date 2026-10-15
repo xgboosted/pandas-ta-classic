@@ -235,7 +235,7 @@ class TestModuleGetattr(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pandas_ta_classic.candles.CDL_PATTERN_NAMES
         # Its only callers were last_run, Strategy.created and df.ta.exchange,
-        # which now use a UTC pd.Timestamp; removed in 0.9.0.
+        # which now use a UTC datetime; removed in 0.9.0.
         self.assertFalse(hasattr(pandas_ta_classic.utils, "get_time"))
 
 class TestDirCompleteness(unittest.TestCase):

@@ -13,6 +13,7 @@ Covers:
 """
 
 import inspect
+import json
 import warnings
 from contextlib import redirect_stdout
 from datetime import UTC, datetime
@@ -322,6 +323,14 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertTrue(before <= last_run <= datetime.now(UTC))
         self.df.ta.strategy(pandas_ta_classic.CommonStrategy)
         self.assertGreaterEqual(self.df.ta.last_run, last_run)
+
+    def test_attrs_stay_json_serialisable(self):
+        # to_parquet() runs json.dumps(df.attrs), and to_feather() drops attrs it cannot
+        # serialise: a datetime stored there broke both after any indicator ran.
+        self.df.ta(kind="sma", length=10)
+        json.dumps(self.df.attrs)
+        self.df.ta.strategy(pandas_ta_classic.CommonStrategy)
+        json.dumps(self.df.attrs)
 
     def test_version_kwarg_removed_and_show_version_validated(self):
         # the 'version' alias of show_version was removed in 0.9.0; the

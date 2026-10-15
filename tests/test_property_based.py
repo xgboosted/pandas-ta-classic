@@ -768,16 +768,16 @@ class TestDataFrameAccessorInvariants(TestCase):
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
-    def test_df_ta_last_run_is_a_monotonic_utc_timestamp(self, df, kinds):
-        """last_run is a stdlib UTC datetime that never goes backwards, whatever ran."""
-        previous = datetime.now(UTC)
+    def test_df_ta_last_run_is_a_utc_timestamp_of_each_run(self, df, kinds):
+        """last_run is a stdlib UTC datetime taken during the run, whatever ran."""
         for kind in kinds:
+            before = datetime.now(UTC)
             df.ta(kind=kind)
+            after = datetime.now(UTC)
             last_run = df.ta.last_run
             assert type(last_run) is datetime
             assert last_run.tzinfo is UTC
-            assert previous <= last_run <= datetime.now(UTC)
-            previous = last_run
+            assert before <= last_run <= after
 
     @given(ohlcv_dataframe(min_size=30, max_size=150))
     @settings(

@@ -404,7 +404,8 @@ class AnalysisIndicators(PandasObject):
 
         # Run the indicator
         result = fn(**kwargs)
-        self._df.attrs["_ta_last_run"] = datetime.now(UTC)  # Save when it completed its run
+        # Save when it completed its run, as a string: attrs must stay JSON-serialisable for to_parquet().
+        self._df.attrs["_ta_last_run"] = datetime.now(UTC).isoformat()
 
         if timed:
             if result is not None:
@@ -460,8 +461,14 @@ class AnalysisIndicators(PandasObject):
 
     @property
     def last_run(self) -> datetime | None:
-        """Returns when df.ta(kind=...) or df.ta.strategy() last ran on the DataFrame (UTC), or None."""
-        return self._df.attrs.get("_ta_last_run")
+        """Returns when df.ta(kind=...) or df.ta.strategy() last ran on the DataFrame (UTC), or None.
+
+        df.attrs holds it as an ISO string: to_parquet() and to_feather() serialise
+        attrs as JSON, and a datetime there made to_parquet() raise and to_feather()
+        drop every df.ta setting.
+        """
+        stamp = self._df.attrs.get("_ta_last_run")
+        return None if stamp is None else datetime.fromisoformat(stamp)
 
     # Public Get DataFrame Properties
     @property
@@ -1144,7 +1151,7 @@ class AnalysisIndicators(PandasObject):
         else:
             self._run_serially(tasks, verbose)
 
-        self._df.attrs["_ta_last_run"] = datetime.now(UTC)
+        self._df.attrs["_ta_last_run"] = datetime.now(UTC).isoformat()
 
         if verbose:
             logger.info(f"Total indicators: {len(ta)}")
