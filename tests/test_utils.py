@@ -1040,7 +1040,6 @@ class TestRequiredUtilityInputs(TestCase):
             "final_time": {"stime": 0.0},
             "is_datetime_ordered": {"df": df},
             "linear_regression": {"x": s, "y": s},
-            "non_zero_range": {"high": s, "low": s},
             "np_rolling_moments": {"values": s.to_numpy(), "length": 5},
             "recent_maximum_index": {"x": s.to_numpy()},
             "recent_minimum_index": {"x": s.to_numpy()},
@@ -1085,3 +1084,15 @@ class TestRequiredUtilityInputs(TestCase):
                 with self.subTest(func=name, argument=arg), self.assertRaisesRegex(ValueError, rf"^{name}\(\) requires '{arg}', got None$"):
                     func(**{**inputs, arg: None})
 
+
+class TestNonZeroRangeRemoved(TestCase):
+    """non_zero_range() was removed in 0.9.0; both access paths name the replacement."""
+
+    def test_attribute_access_raises_with_the_recipe(self):
+        for owner in (pandas_ta, pandas_ta.utils):
+            with self.subTest(owner=owner.__name__), self.assertRaisesRegex(AttributeError, r"non_zero_range\(\) was removed in 0\.9\.0"):
+                owner.non_zero_range  # noqa: B018
+
+    def test_import_raises(self):
+        with self.assertRaises(ImportError):
+            from pandas_ta_classic.utils import non_zero_range  # noqa: F401

@@ -444,6 +444,11 @@ def degenerate_div(numerator: Series, denominator: Series) -> Series:
     nonzero numerator is a real division by zero and reads ``inf``; masking on
     the denominator alone would turn that into 0.0 and report the opposite of
     what the data says (``vhf`` makes the same distinction in its own mask).
+
+    Indicators with a TA-Lib twin follow TA-Lib's own rule instead and mask on
+    the divisor alone (``stoch``, ``stochf``, ``kdj``, ``stochrsi``, ``dx``:
+    ``if diff != 0 ... else 0``), so they read 0.0 where TA-Lib does, also on
+    malformed bars with a close outside a zero range.
     """
     _require_input(numerator, "degenerate_div", "numerator")
     _require_input(denominator, "degenerate_div", "denominator")
