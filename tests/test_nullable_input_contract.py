@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import pandas_ta_classic as ta
 from tests.test_leading_nan_contract import INDICATORS, _call
 
 NA_ROW = 300
@@ -44,3 +45,61 @@ def test_nullable_input_matches_float64(name, frames):
     df, nullable, with_nan, with_na = frames
     pd.testing.assert_frame_equal(_call(name, nullable), _call(name, df), obj=name)
     pd.testing.assert_frame_equal(_call(name, with_na), _call(name, with_nan), obj=f"{name} with NA")
+
+
+def _non_ohlcv_calls(c, o, fast, slow, rsi, up):
+    # The indicators INDICATORS leaves out take derived series, not OHLCV columns.
+    return {
+        "add": lambda: ta.add(c, o),
+        "sub": lambda: ta.sub(c, o),
+        "mult": lambda: ta.mult(c, o),
+        "div": lambda: ta.div(c, o),
+        "above": lambda: ta.above(c, o),
+        "below": lambda: ta.below(c, o),
+        "cross": lambda: ta.cross(c, o),
+        "above_value": lambda: ta.above_value(c, 400),
+        "below_value": lambda: ta.below_value(c, 400),
+        "cross_value": lambda: ta.cross_value(c, 400),
+        "long_run": lambda: ta.long_run(fast, slow, length=2),
+        "short_run": lambda: ta.short_run(fast, slow, length=2),
+        "tsignals": lambda: ta.tsignals(up),
+        "xsignals": lambda: ta.xsignals(rsi, 70, 30),
+        "beta": lambda: ta.beta(c, o),
+        "correl": lambda: ta.correl(c, o),
+        "mavp": lambda: ta.mavp(c, c * 0 + 5),
+        "ma": lambda: ta.ma("ema", c, length=5),
+    }
+
+
+@pytest.fixture(scope="module")
+def non_ohlcv(frames):
+    df = frames[0]
+    c, o = df["close"], df["open"]
+    # Derived inputs carry a NaN warm-up, which the nullable copies hold as pd.NA.
+    fast, slow, rsi = ta.ema(c, 5), ta.ema(c, 20), ta.rsi(c)
+    up = c > ta.sma(c, 10)
+    plain = _non_ohlcv_calls(c, o, fast, slow, rsi, up)
+    as_f64 = [s.astype("Float64") for s in (c, o, fast, slow, rsi)]
+    nullable = _non_ohlcv_calls(*as_f64, up.astype("boolean"))
+    return plain, nullable
+
+
+@pytest.mark.parametrize("name", sorted(_non_ohlcv_calls(*[None] * 6)))
+def test_nullable_input_matches_float64_for_derived_inputs(name, non_ohlcv):
+    plain, nullable = non_ohlcv
+    expected, result = plain[name](), nullable[name]()
+    if isinstance(expected, pd.DataFrame):
+        pd.testing.assert_frame_equal(result, expected, obj=name)
+    else:
+        pd.testing.assert_series_equal(result, expected, obj=name)
+
+
+@pytest.mark.parametrize("dtype", ["double[pyarrow]", "int64[pyarrow]"])
+def test_pyarrow_input_matches_float64(dtype, frames):
+    pytest.importorskip("pyarrow")
+    df = frames[0]
+    # int64[pyarrow] needs whole numbers: prices in cents, as tick data arrives.
+    base = (df * 100).round() if dtype.startswith("int") else df
+    arrow = base.astype(dtype)
+    for name in INDICATORS:
+        pd.testing.assert_frame_equal(_call(name, arrow), _call(name, base), obj=f"{name} {dtype}")

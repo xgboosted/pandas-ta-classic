@@ -72,7 +72,8 @@ and ``CPR_WIDTH_CLASS``, which are ``int8`` and cannot hold NaN, so they read 0
 on the bar before the first completed period.
 
 **Nullable input** (``Float64``, ``Int64`` and the other pandas extension
-numeric dtypes, as ``read_csv(dtype_backend="numpy_nullable")`` returns) is
+numeric dtypes, as ``read_csv(dtype_backend="numpy_nullable")`` returns, and
+pyarrow numeric dtypes such as ``double[pyarrow]`` and ``int64[pyarrow]``) is
 computed as float64, with ``pd.NA`` read as a missing bar (NaN). Results are
 the same as for the data in float64, dtype included: float64, not ``Float64``.
 As with any float64 data, ``Int64`` values beyond 2**53 lose precision.

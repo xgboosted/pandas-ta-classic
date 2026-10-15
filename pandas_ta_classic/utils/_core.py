@@ -567,8 +567,9 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
     and raises TypeError, so the mistake surfaces where it was made rather than
     as a missing column or an unrelated error several frames later.
 
-    A nullable numeric Series (``Float64``, ``Int64``, ...) is returned as a
-    new float64 Series with ``pd.NA`` as NaN. Indicators compute on float64:
+    A nullable or pyarrow numeric Series (``Float64``, ``Int64``,
+    ``int64[pyarrow]``, ...) is returned as a new float64 Series with ``pd.NA``
+    as NaN. Indicators compute on float64:
     with the nullable dtype a comparison against a NaN warm-up value gives
     ``pd.NA`` instead of False, and ``astype(int)`` or a truth test on it
     raises.
