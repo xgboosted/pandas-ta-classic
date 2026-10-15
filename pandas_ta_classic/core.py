@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 from collections.abc import Hashable, Iterator
-from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -869,7 +869,7 @@ class AnalysisIndicators(PandasObject):
         # so strategy("all") raised "unknown indicator" once one was loaded. The
         # package attribute is also what replaces a built-in of the same name.
         bound = vars(pandas_ta_classic).get(name)
-        func = bound if inspect.isfunction(bound) else _find_indicator_func(name)
+        func = bound if callable(bound) else _find_indicator_func(name)
         if func is None:
             raise ValueError(f"unknown indicator {name!r}")
         sig = inspect.signature(func)
@@ -1102,13 +1102,15 @@ class AnalysisIndicators(PandasObject):
             executor, cores = None, 0
 
         # Every worker raised AttributeError for a custom indicator, after the
-        # parent had accepted it; refuse before any process starts.
-        if executor is not None or cores > 0:
+        # parent had accepted it; refuse before any process starts. A thread
+        # shares this interpreter and its custom methods, so it may run them.
+        if (executor is None and cores > 0) or (executor is not None and not isinstance(executor, ThreadPoolExecutor)):
             custom = _custom_kinds([kind for _, kind, _, _ in tasks])
             if custom:
                 raise ValueError(
                     f"strategy() cannot run the custom indicators {custom} in worker processes: each worker is a fresh "
-                    "interpreter that never loaded them. Run this strategy with cores=0 and no executor."
+                    "interpreter that never loaded them. Run this strategy with cores=0 or a ThreadPoolExecutor, or "
+                    "leave them out with exclude=[...]."
                 )
 
         if timed:

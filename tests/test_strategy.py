@@ -557,11 +557,21 @@ class TestCustomIndicatorsNeedSerialStrategy(TestCase):
             self.df.ta.strategy(self.strategy, cores=2)
         self.assertNotIn("SMA_10", self.df.columns)
 
-    def test_an_executor_raises_too(self):
+    def test_a_process_executor_raises_too(self):
+        from concurrent.futures import ProcessPoolExecutor
+
+        # Nothing is submitted, so the pool never spawns a worker.
+        with ProcessPoolExecutor(2) as executor, self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+            self.df.ta.strategy(self.strategy, executor=executor)
+
+    def test_a_thread_executor_runs_them(self):
         from concurrent.futures import ThreadPoolExecutor
 
-        with ThreadPoolExecutor(2) as executor, self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+        # Threads share this interpreter, custom methods included; this worked before the refusal and still does.
+        with ThreadPoolExecutor(2) as executor:
             self.df.ta.strategy(self.strategy, executor=executor)
+        self.assertIn("DBL", self.df.columns)
+        self.assertTrue(self.df["DBL"].equals(self.df["close"] * 2))
 
     def test_a_custom_override_of_a_built_in_name_raises(self):
         with (
