@@ -1031,7 +1031,7 @@ class TestRequiredUtilityInputs(TestCase):
         }
         exempt = {
             # No required input at all.
-            "combination", "fibonacci", "get_time", "pascals_triangle", "symmetric_triangle",
+            "combination", "fibonacci", "pascals_triangle", "symmetric_triangle",
             # Covered by test_signals_names_a_missing_indicator: its options need values of their own.
             "signals",
             # None selects the default.
