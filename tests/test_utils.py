@@ -996,7 +996,7 @@ class TestRequiredUtilityInputs(TestCase):
     """
 
     def test_signals_names_a_missing_indicator(self):
-        # signals takes keyword options the sweep below cannot fill in.
+        # signals takes keyword options the table below leaves out.
         s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
         u = pandas_ta.utils
         signals_args = {
@@ -1020,81 +1020,58 @@ class TestRequiredUtilityInputs(TestCase):
                 pandas_ta.utils.np_rolling_moments(np.arange(10.0), length, 2)
 
     def test_every_utility_names_a_required_input_passed_as_none(self):
-        """Sweep utils.__all__, so a new helper cannot crash inside pandas on None.
-
-        A hand-kept list missed final_time, np_rolling_moments, weights and
-        degenerate_zero. Each exemption below is a contract of its own, not an
-        oversight.
-        """
-        exempt = {
-            # None selects the default.
-            "get_drift": "default",
-            "get_offset": "default",
-            # A predicate: None is not a percent.
-            "is_percent": "predicate",
-            # Raises TypeError naming the function for any non-str, None included.
-            "tal_ma": "type check",
-            # Series.apply runs it once per element (adx, dm, psar, cross); a guard there costs every bar.
-            "zero": "scalar element helper",
-            # None in, None out: an indicator's missing optional input flows through.
-            "apply_fill": "passthrough",
-            "apply_offset": "passthrough",
-            "verify_series": "passthrough",
-            "above": "passthrough",
-            "above_value": "passthrough",
-            "below_value": "passthrough",
-            "cross_value": "passthrough",
-            "below": "passthrough",
-            "cross": "passthrough",
-            "crossover": "passthrough",
-            "lag": "passthrough",
-            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series.
-            "cagr": "nan metric",
-            "calmar_ratio": "nan metric",
-            "downside_deviation": "nan metric",
-            "jensens_alpha": "nan metric",
-            "log_max_drawdown": "nan metric",
-            "max_drawdown": "nan metric",
-            "optimal_leverage": "nan metric",
-            "pure_profit_score": "nan metric",
-            "sharpe_ratio": "nan metric",
-            "sortino_ratio": "nan metric",
-        }
+        """Every public utility is either in the table below or exempt, so a new one cannot be missed."""
         s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
+        df = DataFrame({"close": s})
+        # A valid call for each utility with required inputs; each input in turn is replaced by None.
+        valid_calls = {
+            "candle_color": {"open_": s, "close": s},
+            "degenerate_div": {"numerator": s, "denominator": s},
+            "degenerate_zero": {"x": s},
+            # annotated DataFrame, but only Series work: DataFrame.corr() takes no other frame
+            "df_error_analysis": {"dfA": s, "dfB": s},
+            "df_year_to_date": {"df": df},
+            "final_time": {"stime": 0.0},
+            "is_datetime_ordered": {"df": df},
+            "linear_regression": {"x": s, "y": s},
+            "non_zero_range": {"high": s, "low": s},
+            "np_rolling_moments": {"values": s.to_numpy(), "length": 5},
+            "recent_maximum_index": {"x": s.to_numpy()},
+            "recent_minimum_index": {"x": s.to_numpy()},
+            "signed_series": {"series": s},
+            "to_utc": {"df": df},
+            "total_time": {"df": df},
+            "unsigned_differences": {"series": s},
+            "weights": {"w": np.ones(5)},
+        }
+        exempt = {
+            # No required input at all.
+            "combination", "fibonacci", "get_time", "pascals_triangle", "symmetric_triangle",
+            # Covered by test_signals_names_a_missing_indicator: its options need values of their own.
+            "signals",
+            # None selects the default.
+            "get_drift", "get_offset",
+            # A predicate: None is not a percent.
+            "is_percent",
+            # Raises TypeError naming the function for any non-str, None included.
+            "tal_ma",
+            # Series.apply runs it once per element (adx, dm, psar, cross); a guard there costs every bar.
+            "zero",
+            # None in, None out: an indicator's missing optional input flows through.
+            "apply_fill", "apply_offset", "verify_series", "above", "above_value", "below", "below_value",
+            "cross", "cross_value", "crossover", "lag",
+            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series.
+            "cagr", "calmar_ratio", "downside_deviation", "jensens_alpha", "log_max_drawdown", "max_drawdown",
+            "optimal_leverage", "pure_profit_score", "sharpe_ratio", "sortino_ratio",
+        }  # fmt: skip
+        public = {name for name in pandas_ta.utils.__all__ if inspect.isfunction(getattr(pandas_ta.utils, name))}
+        self.assertEqual(public - exempt, set(valid_calls), "add the new utility to valid_calls or to exempt, with the reason")
+        self.assertFalse(exempt - public, "an exempt name is not a public utility any more")
 
-        def filler(annotation: str):
-            # A value the parameter accepts, so None is the only thing wrong with the call.
-            if "None" in annotation:
-                return None
-            if annotation in ("<class 'bool'>",):
-                return False
-            if annotation in ("<class 'int'>",):
-                return 5
-            if annotation in ("<class 'float'>",):
-                return 1.0
-            return s
-
-        swept = set()
-        for name in pandas_ta.utils.__all__:
+        for name, inputs in valid_calls.items():
             func = getattr(pandas_ta.utils, name)
-            if not inspect.isfunction(func) or name in exempt:
-                continue
-            required = [
-                (p.name, str(p.annotation))
-                for p in inspect.signature(func).parameters.values()
-                if p.default is p.empty and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
-            ]
-            for i, (param, annotation) in enumerate(required):
-                # Optional by its type, or a flag (None selects its default, as _bool_param does).
-                if "None" in annotation or annotation == "<class 'bool'>":
-                    continue
-                args = [filler(a) for _, a in required]
-                args[i] = None
-                swept.add(name)
-                # _require_input's wording, or a scalar validator's (above_value() value must be a number, got None)
-                pattern = rf"^{name}\(\) (requires '{param}', got None|{param} must be .*, got None)$"
-                with self.subTest(func=name, argument=param), self.assertRaisesRegex(ValueError, pattern):
-                    func(*args)
-        # The exemptions must name real utilities, or a rename hides one from the sweep.
-        self.assertFalse(set(exempt) - set(pandas_ta.utils.__all__))
-        self.assertIn("final_time", swept)
+            func(**inputs)  # the valid call works, so None is the only thing wrong below
+            for arg in inputs:
+                with self.subTest(func=name, argument=arg), self.assertRaisesRegex(ValueError, rf"^{name}\(\) requires '{arg}', got None$"):
+                    func(**{**inputs, arg: None})
+
