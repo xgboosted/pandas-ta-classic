@@ -15,7 +15,7 @@ Covers:
 import inspect
 import warnings
 from contextlib import redirect_stdout
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import StringIO
 from multiprocessing import cpu_count
 from unittest import TestCase, skipIf
@@ -314,12 +314,12 @@ class TestAccessorSettablePropertiesPersist(TestCase):
     def test_last_run_set_after_an_indicator_runs(self):
         # A UTC timestamp, not the old display string built from the local
         # clock plus a fixed exchange offset.
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         self.df.ta(kind="sma", length=10)
         last_run = self.df.ta.last_run
         self.assertIs(type(last_run), datetime)  # stdlib, not pd.Timestamp (a subclass)
-        self.assertIs(last_run.tzinfo, timezone.utc)
-        self.assertTrue(before <= last_run <= datetime.now(timezone.utc))
+        self.assertIs(last_run.tzinfo, UTC)
+        self.assertTrue(before <= last_run <= datetime.now(UTC))
         self.df.ta.strategy(pandas_ta_classic.CommonStrategy)
         self.assertGreaterEqual(self.df.ta.last_run, last_run)
 

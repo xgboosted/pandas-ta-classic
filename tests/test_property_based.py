@@ -26,7 +26,7 @@ Running
 
 import math
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from fractions import Fraction
 from unittest import TestCase
 
@@ -770,13 +770,13 @@ class TestDataFrameAccessorInvariants(TestCase):
     )
     def test_df_ta_last_run_is_a_monotonic_utc_timestamp(self, df, kinds):
         """last_run is a stdlib UTC datetime that never goes backwards, whatever ran."""
-        previous = datetime.now(timezone.utc)
+        previous = datetime.now(UTC)
         for kind in kinds:
             df.ta(kind=kind)
             last_run = df.ta.last_run
             assert type(last_run) is datetime
-            assert last_run.tzinfo is timezone.utc
-            assert previous <= last_run <= datetime.now(timezone.utc)
+            assert last_run.tzinfo is UTC
+            assert previous <= last_run <= datetime.now(UTC)
             previous = last_run
 
     @given(ohlcv_dataframe(min_size=30, max_size=150))
