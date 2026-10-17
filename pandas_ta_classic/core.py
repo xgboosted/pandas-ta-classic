@@ -50,8 +50,8 @@ _TO_UTC_REMOVED = (
     "introspection did too. Use df = ta.to_utc(df), which returns a converted copy"
 )
 
-# What last_run writes into df.attrs: datetime.now(UTC).isoformat(), offset included.
-_UTC_ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?[+-]\d{2}:\d{2}")
+# What last_run writes into df.attrs: datetime.now(UTC).isoformat(), so +00:00.
+_UTC_ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?\+00:00")
 
 _EXCHANGE_REMOVED = (
     "df.ta.exchange was removed in 0.9.0: last_run is a UTC datetime now; convert it "

@@ -329,6 +329,7 @@ class TestAccessorSettablePropertiesPersist(TestCase):
             "Thursday October 17, 2026, NYSE: 7:48:00, Local: 13:48:00 CEST, Day 290/365 (79.0%)",
             datetime.now(UTC),
             "2026-10-17T10:00:00",  # no offset: would come back naive, not UTC
+            "2026-10-17T10:00:00+02:00",  # an offset, but not UTC
         ):
             self.df.attrs["_ta_last_run"] = stamp
             with self.subTest(stamp=stamp), self.assertRaisesRegex(ValueError, r"df.ta.last_run: .* not a UTC ISO timestamp \(a frame saved by 0.8.x"):
