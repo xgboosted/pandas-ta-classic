@@ -1,3 +1,4 @@
+import inspect
 import warnings
 from unittest import TestCase
 
@@ -982,3 +983,105 @@ class TestNpRollingMoments(TestCase):
         (m2,) = self.fn(arr, 1, 2)
         # Window of size 1: deviation is 0, sum = 0
         np.testing.assert_allclose(m2[0], 0.0, atol=1e-12)
+
+
+class TestRequiredUtilityInputs(TestCase):
+    """A required input passed as None raises ValueError naming the function and the argument.
+
+    These helpers called a pandas method on it and failed with
+    ``'NoneType' object has no attribute 'diff'`` (or ``index``, ``copy``,
+    ``size``), naming neither. The metrics that answer None with NaN, and the
+    signal helpers that answer it with None, are a separate contract and are
+    not listed here.
+    """
+
+    def test_signals_names_a_missing_indicator(self):
+        # signals takes keyword options the table below leaves out.
+        s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
+        u = pandas_ta.utils
+        signals_args = {
+            "xa": 15,
+            "xb": None,
+            "cross_values": False,
+            "xserie": None,
+            "xserie_a": None,
+            "xserie_b": None,
+            "cross_series": True,
+            "offset": None,
+        }
+        u.signals(s, **signals_args)
+        with self.assertRaisesRegex(ValueError, r"^signals\(\) requires 'indicator', got None$"):
+            u.signals(None, **signals_args)
+
+    def test_np_rolling_moments_rejects_a_length_below_one(self):
+        # length=0 used to fail inside numpy: could not broadcast input array from shape (11,) into shape (1,)
+        for length in (0, -1, 2.5):
+            with self.subTest(length=length), self.assertRaisesRegex(ValueError, r"^np_rolling_moments\(\) length must be"):
+                pandas_ta.utils.np_rolling_moments(np.arange(10.0), length, 2)
+
+    def test_np_rolling_moments_rejects_a_min_periods_outside_1_to_length(self):
+        # min_periods=0 or -3 started the partial-window loop at -1 and wrote the last bar
+        for min_periods in (0, -3, 6, 2.5):
+            with self.subTest(min_periods=min_periods), self.assertRaisesRegex(ValueError, r"^np_rolling_moments\(\) min_periods must be"):
+                pandas_ta.utils.np_rolling_moments(np.arange(10.0), 5, 2, min_periods=min_periods)
+
+    def test_every_utility_names_a_required_input_passed_as_none(self):
+        """Every public utility is either in the table below or exempt, so a new one cannot be missed."""
+        s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
+        df = DataFrame({"close": s})
+        # A valid call for each utility with required inputs; each input in turn is replaced by None.
+        valid_calls = {
+            "candle_color": {"open_": s, "close": s},
+            "degenerate_div": {"numerator": s, "denominator": s},
+            "degenerate_zero": {"x": s},
+            # annotated DataFrame, but only Series work: DataFrame.corr() takes no other frame
+            "df_error_analysis": {"dfA": s, "dfB": s},
+            "df_year_to_date": {"df": df},
+            "final_time": {"stime": 0.0},
+            "is_datetime_ordered": {"df": df},
+            "linear_regression": {"x": s, "y": s},
+            "non_zero_range": {"high": s, "low": s},
+            "np_rolling_moments": {"values": s.to_numpy(), "length": 5},
+            "recent_maximum_index": {"x": s.to_numpy()},
+            "recent_minimum_index": {"x": s.to_numpy()},
+            "signed_series": {"series": s},
+            "to_utc": {"df": df},
+            "total_time": {"df": df},
+            "unsigned_differences": {"series": s},
+            "weights": {"w": np.ones(5)},
+        }
+        exempt = {
+            # No required input at all.
+            "combination", "fibonacci", "get_time", "pascals_triangle", "symmetric_triangle",
+            # Covered by test_signals_names_a_missing_indicator: its options need values of their own.
+            "signals",
+            # None selects the default.
+            "get_drift", "get_offset",
+            # A predicate: None is not a percent.
+            "is_percent",
+            # Raises TypeError naming the function for any non-str, None included.
+            "tal_ma",
+            # Series.apply runs it once per element (adx, dm, psar, cross); a guard there costs every bar.
+            "zero",
+            # None in, None out: an indicator's missing optional input flows through.
+            "apply_fill", "apply_offset", "verify_series", "above", "above_value", "below", "below_value",
+            "cross", "cross_value", "crossover", "lag",
+            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series (as does
+            # utils.volatility, which is re-exported but kept out of __all__ on purpose).
+            "cagr", "calmar_ratio", "downside_deviation", "jensens_alpha", "log_max_drawdown", "max_drawdown",
+            "optimal_leverage", "pure_profit_score", "sharpe_ratio", "sortino_ratio",
+        }  # fmt: skip
+        public = {name for name in pandas_ta.utils.__all__ if inspect.isfunction(getattr(pandas_ta.utils, name))}
+        self.assertEqual(public - exempt, set(valid_calls), "add the new utility to valid_calls or to exempt, with the reason")
+        self.assertFalse(exempt - public, "an exempt name is not a public utility any more")
+
+        for name, inputs in valid_calls.items():
+            func = getattr(pandas_ta.utils, name)
+            params = inspect.signature(func).parameters.values()
+            required = {p.name for p in params if p.default is p.empty and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)}
+            self.assertEqual(set(inputs), required, f"{name}: list every required input in valid_calls")
+            func(**inputs)  # the valid call works, so None is the only thing wrong below
+            for arg in inputs:
+                with self.subTest(func=name, argument=arg), self.assertRaisesRegex(ValueError, rf"^{name}\(\) requires '{arg}', got None$"):
+                    func(**{**inputs, arg: None})
+
