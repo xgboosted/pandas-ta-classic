@@ -239,6 +239,20 @@ class TestVerifySeries(TestCase):
         """Passing None directly must return None."""
         assert verify_series(None, min_length=1) is None
 
+    @given(price_series(min_size=1, max_size=100, allow_nan=True, nan_prob=0.2), st.sampled_from(["Float64", "Float32", "Int64"]))
+    def test_verify_series_turns_nullable_numeric_into_float64(self, s, dtype):
+        """A nullable Series comes back as float64, ``pd.NA`` as NaN, index and name kept, input untouched."""
+        if dtype == "Int64":
+            s = s.round()
+        s.name = "close"
+        nullable = s.astype(dtype)
+        before = nullable.copy()
+        result = verify_series(nullable, min_length=1)
+        assert result.dtype == np.float64
+        pd.testing.assert_series_equal(result, nullable.astype(float))
+        assert result.index is nullable.index
+        pd.testing.assert_series_equal(nullable, before)
+
 
 class TestApplyOffset(TestCase):
     """Property tests for ``apply_offset``."""

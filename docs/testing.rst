@@ -119,6 +119,11 @@ Edge-Case Tests
 - ``test_warmup_contract.py`` — for every registered indicator, no column
   holds a value before its own warm-up, and bar-describing flag columns are
   NaN wherever the continuous columns of the same result are.
+- ``test_nullable_input_contract.py`` — for every registered indicator,
+  nullable ``Float64`` / ``Int64`` input gives the same result, dtype
+  included, as the same data in float64, with ``pd.NA`` read as NaN; so do the
+  indicators that take derived series and, where pyarrow is installed,
+  ``double[pyarrow]`` / ``int64[pyarrow]`` input.
 
 **Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
 
