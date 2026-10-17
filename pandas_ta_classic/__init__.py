@@ -18,6 +18,7 @@ from pandas_ta_classic.core import (
     Strategy,
 )
 from pandas_ta_classic.utils import (
+    _REMOVED,
     above,
     above_value,
     apply_fill,
@@ -222,8 +223,6 @@ def __getattr__(name: str) -> Any:
         else:
             setattr(sys.modules[__name__], name, mod)  # cache in module dict
             return mod
-
-    from pandas_ta_classic.utils import _REMOVED
 
     if name in _REMOVED:
         raise AttributeError(_REMOVED[name])
