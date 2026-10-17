@@ -33,6 +33,8 @@ def trix(
     close = verify_series(close, max(length, signal))
     drift = get_drift(drift)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
@@ -51,7 +53,7 @@ def trix(
     # Offset
     trix, trix_signal = apply_offset([trix, trix_signal], offset)
 
-    trix, trix_signal = apply_fill([trix, trix_signal], **kwargs)
+    trix, trix_signal = apply_fill([trix, trix_signal], **fill_kwargs)
 
     # Name & Category
     trix.name = f"TRIX_{length}_{signal}"

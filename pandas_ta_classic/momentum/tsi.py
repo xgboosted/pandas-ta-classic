@@ -38,6 +38,8 @@ def tsi(
     close = verify_series(close, max(fast, slow))
     drift = get_drift(drift)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mamode = _str_param(mamode, "ema", "mamode")
     # A strategy-wide length (df.ta.strategy(..., length=N)) has no meaning here and the
     # inner calls set length themselves; drop it so it cannot collide with their keyword.
@@ -74,7 +76,7 @@ def tsi(
     # Offset
     tsi, tsi_signal = apply_offset([tsi, tsi_signal], offset)
 
-    tsi, tsi_signal = apply_fill([tsi, tsi_signal], **kwargs)
+    tsi, tsi_signal = apply_fill([tsi, tsi_signal], **fill_kwargs)
 
     # Name and Categorize it
     tsi.name = f"TSI_{fast}_{slow}_{signal}"

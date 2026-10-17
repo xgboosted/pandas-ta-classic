@@ -25,6 +25,8 @@ def t3(
     a = _pos_float(a, 0.7, "a", lt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
@@ -50,7 +52,7 @@ def t3(
     # Offset
     t3 = apply_offset(t3, offset)
 
-    t3 = apply_fill(t3, **kwargs)
+    t3 = apply_fill(t3, **fill_kwargs)
 
     # Name & Category
     t3.name = f"T3_{length}_{a}"

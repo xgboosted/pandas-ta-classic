@@ -22,6 +22,8 @@ def bias(
     mamode = _str_param(mamode, "sma", "mamode")
     close = verify_series(close, length)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
 
     if close is None:
         return None
@@ -35,7 +37,7 @@ def bias(
     # Offset
     bias = apply_offset(bias, offset)
 
-    bias = apply_fill(bias, **kwargs)
+    bias = apply_fill(bias, **fill_kwargs)
 
     # Name and Categorize it
     bias.name = f"BIAS_{bma.name}"
