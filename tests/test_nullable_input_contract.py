@@ -8,9 +8,9 @@ with ``pd.NA`` treated as NaN.
 Before this contract ``cdl_doji`` (and with it ``cdl_pattern``),
 ``increasing``, ``decreasing`` and ``ttm_trend`` raised ``cannot convert NA to
 integer``, ``smc_sweep`` raised ``boolean value of NA is ambiguous`` and
-``td_seq`` failed to compile its numba kernel, on any ``Float64`` input, NA or
-not: a comparison against a NaN warm-up value gives ``pd.NA`` in the nullable
-dtype.
+``td_seq`` failed to compile its numba kernel, on ``Float64`` input (``Int64``
+too, except for ``cdl_doji``), NA or not: a comparison against a NaN warm-up
+value gives ``pd.NA`` in the nullable dtype.
 
 Indicators are discovered through ``ta.Category``, so new ones are covered.
 """
@@ -77,10 +77,13 @@ def non_ohlcv(frames):
     c, o = df["close"], df["open"]
     # Derived inputs carry a NaN warm-up, which the nullable copies hold as pd.NA.
     fast, slow, rsi = ta.ema(c, 5), ta.ema(c, 20), ta.rsi(c)
+    # A trend that is unknown during the warm-up: boolean with pd.NA there made
+    # tsignals raise "Invalid value '0' for dtype 'boolean'"; float64 reads it as NaN.
+    warmup = ta.sma(c, 10).isna()
     up = c > ta.sma(c, 10)
-    plain = _non_ohlcv_calls(c, o, fast, slow, rsi, up)
+    plain = _non_ohlcv_calls(c, o, fast, slow, rsi, up.astype(float).mask(warmup))
     as_f64 = [s.astype("Float64") for s in (c, o, fast, slow, rsi)]
-    nullable = _non_ohlcv_calls(*as_f64, up.astype("boolean"))
+    nullable = _non_ohlcv_calls(*as_f64, up.astype("boolean").mask(warmup))
     return plain, nullable
 
 
@@ -103,3 +106,14 @@ def test_pyarrow_input_matches_float64(dtype, frames):
     arrow = base.astype(dtype)
     for name in INDICATORS:
         pd.testing.assert_frame_equal(_call(name, arrow), _call(name, base), obj=f"{name} {dtype}")
+
+
+def test_pyarrow_boolean_trend_matches_float64(frames):
+    pytest.importorskip("pyarrow")
+    c = frames[0]["close"]
+    warmup = ta.sma(c, 10).isna()
+    up = c > ta.sma(c, 10)
+    # bool[pyarrow] is not a numeric dtype to pandas, so it was passed through and
+    # tsignals raised ArrowInvalid on the null
+    expected = ta.tsignals(up.astype(float).mask(warmup))
+    pd.testing.assert_frame_equal(ta.tsignals(up.astype("bool[pyarrow]").mask(warmup)), expected)
