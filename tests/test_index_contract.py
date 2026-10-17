@@ -318,7 +318,8 @@ def test_fillna_reaches_every_output_column(name: str, frame: dict[str, pd.Serie
     The fill must also touch nothing but the ``NaN``: ``amat``, ``aobv``, ``bias``,
     ``massi``, ``t3``, ``tema``, ``trix`` and ``tsi`` forwarded ``fillna`` to their
     inner moving averages, which filled the inner warm-up with 0 and changed real
-    values (``tema(fillna=0)`` moved 190 SPY bars, 141.60 to 136.93 on the first).
+    values (``tema(fillna=0)`` moved 190 SPY bars, 141.60 to 136.93 on the first),
+    or, for ``bias``, wrote ``inf`` into the warm-up.
     """
     plain = output_columns(_results(name, frame))
     filled = output_columns(_results(name, frame, fillna=0))
