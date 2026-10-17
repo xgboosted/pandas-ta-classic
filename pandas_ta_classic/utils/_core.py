@@ -179,9 +179,9 @@ def _require_input(value: Any, function: str, parameter: str) -> None:
     A helper whose input is required failed on it inside pandas instead --
     ``'NoneType' object has no attribute 'diff'`` -- naming neither the
     function nor the argument. ValueError, as for any other argument the
-    function cannot use (AGENTS.md rule 1); a value of the wrong type, such
-    as a list where a Series belongs, is the TypeError ``verify_series``
-    raises.
+    function cannot use (AGENTS.md rule 1). Only None is checked here; a
+    value of the wrong type fails as before (``verify_series`` raises
+    TypeError for it in the helpers that call it).
     """
     if value is None:
         raise ValueError(f"{function}() requires {parameter!r}, got None")

@@ -1019,6 +1019,12 @@ class TestRequiredUtilityInputs(TestCase):
             with self.subTest(length=length), self.assertRaisesRegex(ValueError, r"^np_rolling_moments\(\) length must be"):
                 pandas_ta.utils.np_rolling_moments(np.arange(10.0), length, 2)
 
+    def test_np_rolling_moments_rejects_a_min_periods_outside_1_to_length(self):
+        # min_periods=0 or -3 started the partial-window loop at -1 and wrote the last bar
+        for min_periods in (0, -3, 6, 2.5):
+            with self.subTest(min_periods=min_periods), self.assertRaisesRegex(ValueError, r"^np_rolling_moments\(\) min_periods must be"):
+                pandas_ta.utils.np_rolling_moments(np.arange(10.0), 5, 2, min_periods=min_periods)
+
     def test_every_utility_names_a_required_input_passed_as_none(self):
         """Every public utility is either in the table below or exempt, so a new one cannot be missed."""
         s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
@@ -1060,7 +1066,8 @@ class TestRequiredUtilityInputs(TestCase):
             # None in, None out: an indicator's missing optional input flows through.
             "apply_fill", "apply_offset", "verify_series", "above", "above_value", "below", "below_value",
             "cross", "cross_value", "crossover", "lag",
-            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series.
+            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series (as does
+            # utils.volatility, which is re-exported but kept out of __all__ on purpose).
             "cagr", "calmar_ratio", "downside_deviation", "jensens_alpha", "log_max_drawdown", "max_drawdown",
             "optimal_leverage", "pure_profit_score", "sharpe_ratio", "sortino_ratio",
         }  # fmt: skip
@@ -1070,6 +1077,9 @@ class TestRequiredUtilityInputs(TestCase):
 
         for name, inputs in valid_calls.items():
             func = getattr(pandas_ta.utils, name)
+            params = inspect.signature(func).parameters.values()
+            required = {p.name for p in params if p.default is p.empty and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)}
+            self.assertEqual(set(inputs), required, f"{name}: list every required input in valid_calls")
             func(**inputs)  # the valid call works, so None is the only thing wrong below
             for arg in inputs:
                 with self.subTest(func=name, argument=arg), self.assertRaisesRegex(ValueError, rf"^{name}\(\) requires '{arg}', got None$"):

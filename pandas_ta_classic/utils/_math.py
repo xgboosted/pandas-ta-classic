@@ -34,8 +34,9 @@ def np_rolling_moments(values: np.ndarray, length: int, *orders: int, min_period
     _require_input(length, "np_rolling_moments", "length")
     length = _pos_int(length, None, "length")
 
-    if min_periods is None:
-        min_periods = length
+    # As in skew() and kurtosis(): below 1 the partial-window loop started at -1
+    # and wrote the last bar.
+    min_periods = _pos_int(min_periods, length, "min_periods", gt=None, ge=1, lt=length + 1)
 
     arr = values.astype(np.float64)
     n = len(arr)
