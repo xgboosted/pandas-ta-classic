@@ -61,18 +61,6 @@ CANDLE_DEFAULTS = {
 
 
 # ---------------------------------------------------------------------------
-# Pre-computed average parameters (module-level for direct access in _detect)
-# ---------------------------------------------------------------------------
-
-AVG_FACTOR = {}
-for _s in CandleSetting:
-    _rt, _ap, _f = CANDLE_DEFAULTS[_s]
-    _d = 2.0 if _rt == RangeType.Shadows else 1.0
-    AVG_FACTOR[_s] = _f / (_ap * _d) if _ap != 0 else _f / _d
-del _s, _rt, _ap, _f, _d
-
-
-# ---------------------------------------------------------------------------
 # CandleArrays — pre-computed numpy arrays + TA-Lib macro equivalents
 # ---------------------------------------------------------------------------
 
@@ -144,50 +132,43 @@ def candle_avg_period(setting: CandleSetting) -> int:
 
 
 @njit(cache=True)
-def _candle_average_nb(arr, period, lag, start_idx, factor, total, out):
-    # Same additions in the same order as TA-Lib's
-    # ``PeriodTotal += range[i - lag] - range[trailingIdx - lag]``, so the totals
-    # are bit-identical to the scalar bookkeeping each pattern used to carry.
+def _candle_average_nb(arr, period, lag, start_idx, factor, divisor, total, out):
+    # TA-Lib's TA_CANDLEAVERAGE operation for operation, ``factor * (total / period)
+    # / divisor``, then ``PeriodTotal += range[i - lag] - range[trailingIdx - lag]``.
     for i in range(start_idx, len(out)):
-        out[i] = factor * total
+        out[i] = factor * (total / period) / divisor
         total += arr[i - lag] - arr[i - lag - period]
 
 
-def candle_average(ca: CandleArrays, setting: CandleSetting, lag: int, start_idx: int, *, sequential_seed: bool = False) -> np.ndarray:
-    """Pattern threshold of *setting* for candle ``i - lag``.
+def candle_average(ca: CandleArrays, setting: CandleSetting, lag: int, start_idx: int) -> np.ndarray:
+    """TA-Lib's ``TA_CANDLEAVERAGE(setting, PeriodTotal, i - lag)`` for every candle ``i``.
 
-    Element ``i`` (for ``i >= start_idx``) is ``AVG_FACTOR[setting] * total``,
-    where ``total`` is the sum of the setting's range over the ``period`` candles
-    before candle ``i - lag``, or that candle's own range when the period is 0.
-    This is TA-Lib's ``TA_CANDLEAVERAGE(setting, PeriodTotal, i - lag)`` up to
-    rounding, and bit-identical to the scalar bookkeeping the patterns carried
-    before. Elements before *start_idx* are NaN; patterns never read them.
-
-    The first total is numpy's pairwise ``sum()``, or a left-to-right loop as
-    in TA-Lib with ``sequential_seed=True``. From 8 candles on the two can
-    differ in the last bit; each pattern keeps the seed it has always used.
+    Element ``i`` (for ``i >= start_idx``) is the setting's factor times the mean
+    range of the ``period`` candles before candle ``i - lag``, or times that
+    candle's own range when the period is 0, halved for the Shadows range type.
+    It uses TA-Lib's arithmetic -- the total seeded left to right from 0, then
+    ``factor * (total / period) / divisor`` -- so a candle that lands exactly on
+    the threshold is judged as TA-Lib judges it. Elements before *start_idx*
+    are NaN; patterns never read them.
 
     Raises:
         ValueError: if ``start_idx < lag + period``, which would read before
             the first candle.
     """
     arr = ca._ranges[setting]
-    period = candle_avg_period(setting)
+    range_type, period, factor = CANDLE_DEFAULTS[setting]
+    divisor = 2.0 if range_type == RangeType.Shadows else 1.0
     if start_idx < lag + period:
         raise ValueError(f"candle_average() start_idx must be >= lag + period ({lag + period}) for {setting.name}, got {start_idx}")
     out = np.empty(len(arr))
     out[:start_idx] = np.nan
     if period == 0:
-        np.multiply(AVG_FACTOR[setting], arr[start_idx - lag : len(arr) - lag], out=out[start_idx:])
+        out[start_idx:] = factor * arr[start_idx - lag : len(arr) - lag] / divisor
     else:
-        window = arr[start_idx - lag - period : start_idx - lag]
-        if sequential_seed:
-            seed = 0.0
-            for value in window:
-                seed += value
-        else:
-            seed = float(window.sum())
-        _candle_average_nb(arr, period, lag, start_idx, AVG_FACTOR[setting], seed, out)
+        total = 0.0
+        for value in arr[start_idx - lag - period : start_idx - lag]:
+            total += value
+        _candle_average_nb(arr, period, lag, start_idx, factor, divisor, total, out)
     return out
 
 
