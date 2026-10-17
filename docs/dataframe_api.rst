@@ -191,15 +191,17 @@ days. Setting any other value raises ``ValueError``.
 to_utc
 ~~~~~~
 
-``df.ta.to_utc`` is a **property** (no parentheses) that converts ``df``'s
-index to UTC in place: a naive index is localised, an aware one converted.
-The ``ta.to_utc`` function does the same on a copy and leaves its argument
-unchanged.
+.. note::
+   ``df.ta.to_utc`` was removed in 0.9.0 and raises ``AttributeError``. It was a
+   property that converted ``df``'s index when it was read, so ``hasattr()`` and
+   IDE introspection changed the frame too.
+
+Use the ``ta.to_utc`` function, which returns a copy with a UTC index (a naive
+index is localised, an aware one converted) and leaves its argument unchanged:
 
 .. code-block:: python
 
-    df.ta.to_utc          # changes df
-    utc = ta.to_utc(df)   # returns a converted copy
+    df = ta.to_utc(df)
 
 Methods
 -------
