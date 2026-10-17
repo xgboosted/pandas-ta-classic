@@ -91,13 +91,16 @@ def assert_none_guard(test_case, func, args, none_arg_idx=0, **kwargs):
 # 6e8) needs |actual - expected| <= 2e-10 * (1 + |expected|) with TA-Lib 0.8.0
 # (1.2e-10 with 0.7.1), 1.9% of TALIB_ATOL + TALIB_RTOL * |expected|.  That
 # leaves ~50x margin for other TA-Lib releases and BLAS builds in the CI matrix.
-# The absolute term carries the columns that cross zero (`bop`, `stochrsi`,
-# `ppo`), where a relative error alone is unbounded.
+# The absolute term carries the columns that cross zero, where a relative error
+# alone is unbounded. The most it has to cover beyond TALIB_RTOL * |expected| is
+# 8.2e-11 with TA-Lib 0.8.2 (`linreg_angle`, degrees near 0) and 2.4e-13 with
+# 0.7.1 (`stochrsi`), so TALIB_ATOL = 1e-9 keeps ~12x margin without letting a
+# column of small values (`macd`, `apo`) pass on its relative error alone.
 #
 # This replaces a correlation fallback (threshold 0.85-0.99) that a scaled,
 # offset or partly wrong result passed, and a `pdt.assert_*_equal` first try
 # whose default rtol of 1e-5 was three orders looser than TALIB_RTOL.
-TALIB_ATOL = 1e-8
+TALIB_ATOL = 1e-9
 TALIB_RTOL = 1e-8
 
 
@@ -109,8 +112,6 @@ def assert_talib(test_case, result, expected):
     """
     actual = result.to_numpy(dtype=float)
     wanted = np.asarray(expected, dtype=float)
-    if isinstance(expected, DataFrame):
-        wanted = expected.to_numpy(dtype=float)
     test_case.assertEqual(actual.shape, wanted.shape, "result and TA-Lib output differ in shape")
     if isinstance(expected, (Series, DataFrame)):
         test_case.assertTrue(result.index.equals(expected.index), "result and TA-Lib output differ in index")

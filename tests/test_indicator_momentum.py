@@ -346,8 +346,9 @@ class TestMomentum(TestCase):
                     "MACDs_12_26_9": signal,
                 }
             )
-            # TA-Lib starts the fast EMA on the slow EMA's first bar, native at its own;
-            # the difference decays below 1e-9 by bar 150.
+            # TA-Lib starts the fast EMA on the slow EMA's first bar, native at its own,
+            # so native's MACD line is valid from bar 25 and TA-Lib's from bar 33; the
+            # difference is inside the tolerance from bar 132 on.
             assert_talib(self, result.iloc[200:], expecteddf.iloc[200:])
         assert_indicator_standard(
             self,
