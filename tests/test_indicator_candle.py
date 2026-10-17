@@ -403,7 +403,7 @@ class TestCandleAverage(TestCase):
 
 # A candle exactly on a pattern's threshold, built so that TA-Lib's arithmetic
 # and the one used before 0.9.0 (pairwise seed, factor / (period * divisor) * total)
-# land on different sides of it. The expected value is what TA-Lib 0.6+ returns.
+# land on different sides of it. The expected value is what TA-Lib 0.7.1 and 0.8.2 return.
 _THRESHOLD_CASES = [
     # BodyDoji (HighLow): the body equals TA-Lib's doji threshold, so it is a doji (body <= threshold).
     (
