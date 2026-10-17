@@ -1,6 +1,7 @@
 import inspect
 import logging
 import os
+import re
 from collections.abc import Hashable, Iterator
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
@@ -48,6 +49,10 @@ _TO_UTC_REMOVED = (
     "df.ta.to_utc was removed in 0.9.0: reading the attribute converted df's index, so hasattr() and IDE "
     "introspection did too. Use df = ta.to_utc(df), which returns a converted copy"
 )
+
+# What last_run writes into df.attrs: datetime.now(UTC).isoformat(), offset included.
+_UTC_ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?[+-]\d{2}:\d{2}")
+
 _EXCHANGE_REMOVED = (
     "df.ta.exchange was removed in 0.9.0: last_run is a UTC datetime now; convert it "
     "with df.ta.last_run.astimezone(zoneinfo.ZoneInfo('America/New_York')) or another time zone"
@@ -447,14 +452,14 @@ class AnalysisIndicators(PandasObject):
         self._df.attrs["_ta_cores"] = min(int(value), cpus)
 
     @property
-    def exchange(self) -> None:
+    def exchange(self) -> NoReturn:
         """Removed in 0.9.0: it only chose the exchange clock shown in last_run."""
         # AttributeError, so hasattr() is False and getattr(..., default) works.
         # __getattr__ re-runs this getter, so the message survives the fallback.
         raise AttributeError(_EXCHANGE_REMOVED)
 
     @exchange.setter
-    def exchange(self, value: str) -> None:
+    def exchange(self, value: str) -> NoReturn:
         # Without this setter, pandas 3 would store the value on a throwaway
         # accessor instance and the assignment would silently do nothing.
         raise AttributeError(_EXCHANGE_REMOVED)
@@ -468,7 +473,17 @@ class AnalysisIndicators(PandasObject):
         drop every df.ta setting.
         """
         stamp = self._df.attrs.get("_ta_last_run")
-        return None if stamp is None else datetime.fromisoformat(stamp)
+        if stamp is None:
+            return None
+        # A frame saved by 0.8.x carries get_time()'s display string here, which
+        # fromisoformat() rejects without naming last_run.
+        if not isinstance(stamp, str) or not _UTC_ISO.fullmatch(stamp):
+            raise ValueError(
+                f"df.ta.last_run: df.attrs['_ta_last_run'] holds {stamp!r}, not a UTC ISO timestamp (a frame saved by "
+                "0.8.x stored a display string); run an indicator through df.ta(kind=...) or strategy() to overwrite "
+                "it, or remove the key"
+            )
+        return datetime.fromisoformat(stamp)
 
     # Public Get DataFrame Properties
     @property
@@ -922,7 +937,6 @@ class AnalysisIndicators(PandasObject):
             "categories",
             "cores",
             "datetime_ordered",
-            "exchange",
             "last_run",
             "reverse",
             "time_range",

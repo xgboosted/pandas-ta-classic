@@ -91,7 +91,6 @@ class TestAccessorHelperClassification(TestCase):
             "categories",
             "cores",
             "datetime_ordered",
-            "exchange",
             "last_run",
             "reverse",
             "time_range",
@@ -323,6 +322,19 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertTrue(before <= last_run <= datetime.now(UTC))
         self.df.ta.strategy(pandas_ta_classic.CommonStrategy)
         self.assertGreaterEqual(self.df.ta.last_run, last_run)
+
+    def test_last_run_names_a_stamp_it_cannot_read(self):
+        # 0.8.32 stored get_time()'s display string; fromisoformat() raised on it without naming last_run.
+        for stamp in (
+            "Thursday October 17, 2026, NYSE: 7:48:00, Local: 13:48:00 CEST, Day 290/365 (79.0%)",
+            datetime.now(UTC),
+            "2026-10-17T10:00:00",  # no offset: would come back naive, not UTC
+        ):
+            self.df.attrs["_ta_last_run"] = stamp
+            with self.subTest(stamp=stamp), self.assertRaisesRegex(ValueError, r"df.ta.last_run: .* not a UTC ISO timestamp \(a frame saved by 0.8.x"):
+                _ = self.df.ta.last_run
+        self.df.ta(kind="sma", length=10)  # overwrites it
+        self.assertIs(self.df.ta.last_run.tzinfo, UTC)
 
     def test_attrs_stay_json_serialisable(self):
         # to_parquet() runs json.dumps(df.attrs), and to_feather() drops attrs it cannot
