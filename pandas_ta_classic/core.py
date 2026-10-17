@@ -244,6 +244,9 @@ def _custom_kinds(kinds: list[str]) -> list[str]:
     A worker process is a fresh interpreter that never ran that code, so it
     either has no such method or, for a custom module that reuses a built-in
     name (trend/sma.py), would silently run the built-in one instead.
+
+    The test is the method's module, so a method built with the package's own
+    private wrapper helpers counts as built-in and is not caught here.
     """
     custom = []
     for kind in dict.fromkeys(kinds):
@@ -969,6 +972,9 @@ class AnalysisIndicators(PandasObject):
             executor (concurrent.futures.Executor): Run this call on a pool the
                 caller owns and reuses, which avoids paying for process start-up
                 per call. Takes precedence over 'cores'. Default: None
+                A strategy with a custom indicator (custom.import_dir,
+                custom.bind) raises ValueError when 'cores' > 0 or 'executor'
+                is anything but a ThreadPoolExecutor.
             exclude (list): List of indicator names to leave out of an "all" or
                 category run; an unknown name raises. Some are excluded by
                 default for various reasons; they require additional sources,
@@ -1101,16 +1107,20 @@ class AnalysisIndicators(PandasObject):
                 logger.info("Running serially: strategy() was called inside a worker process.")
             executor, cores = None, 0
 
-        # Every worker raised AttributeError for a custom indicator, after the
-        # parent had accepted it; refuse before any process starts. A thread
-        # shares this interpreter and its custom methods, so it may run them.
+        # The pool strategy() opens spawns its workers, so every one raised
+        # AttributeError for a custom indicator after the parent had accepted it;
+        # refuse before any worker starts. A thread shares this interpreter and
+        # its custom methods, so it may run them. Any other executor is refused
+        # too: whether its workers started after the custom code was loaded (a
+        # fork pool on Linux) cannot be checked.
         if (executor is None and cores > 0) or (executor is not None and not isinstance(executor, ThreadPoolExecutor)):
             custom = _custom_kinds([kind for _, kind, _, _ in tasks])
             if custom:
+                leave_out = "leave them out of the Strategy's 'ta' list" if mode["custom"] else "leave them out with exclude=[...]"
                 raise ValueError(
-                    f"strategy() cannot run the custom indicators {custom} in worker processes: each worker is a fresh "
-                    "interpreter that never loaded them. Run this strategy with cores=0 or a ThreadPoolExecutor, or "
-                    "leave them out with exclude=[...]."
+                    f"strategy() runs the custom indicators {custom} only serially or on a ThreadPoolExecutor: a worker "
+                    "process has them only if it started after they were loaded, which cannot be checked. Run this "
+                    f"strategy with cores=0 or a ThreadPoolExecutor, or {leave_out}."
                 )
 
         if timed:
