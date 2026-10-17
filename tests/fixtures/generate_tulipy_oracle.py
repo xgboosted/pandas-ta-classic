@@ -8,7 +8,7 @@ version — no tulipy install required at test time.
 
 Run offline on a Python where tulipy installs (CPython <3.12):
 
-    python tests/fixtures/generate_tulipy_oracle.py
+    python -m tests.fixtures.generate_tulipy_oracle
 
 This overwrites ``tests/fixtures/tulipy_oracle.json``.  Each value is a
 front-trimmed array exactly as tulipy returns it; ``NaN`` is serialized as
@@ -20,7 +20,8 @@ import json
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
+
+from tests.config import SAMPLE_CSV, get_sample_data
 
 try:
     import tulipy as tp
@@ -30,7 +31,6 @@ except ImportError as exc:  # pragma: no cover - generator guard
     ) from exc
 
 _HERE = Path(__file__).parent
-_DATA_PATH = _HERE.parent.parent / "examples" / "data" / "SPY_D.csv"
 _OUT_PATH = _HERE / "tulipy_oracle.json"
 
 # The test only ever compares the last <=2000 bars.  Store a slightly larger
@@ -46,9 +46,7 @@ def _to_list(arr):
 
 
 def main():
-    df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
+    df = get_sample_data()
     o = df["open"].to_numpy(dtype=np.float64)
     h = df["high"].to_numpy(dtype=np.float64)
     low = df["low"].to_numpy(dtype=np.float64)
@@ -136,7 +134,7 @@ def main():
         "_meta": {
             "source": "tulipy",
             "tulipy_version": getattr(tp, "__version__", "0.4.0"),
-            "data_file": _DATA_PATH.name,
+            "data_file": SAMPLE_CSV.name,
             "rows": len(c),
             "tail": _TAIL,
             "note": "Frozen tulipy output (tail only); regenerate with generate_tulipy_oracle.py on CPython <3.12.",
