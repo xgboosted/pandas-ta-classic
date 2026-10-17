@@ -93,7 +93,6 @@ class TestAccessorHelperClassification(TestCase):
             "last_run",
             "reverse",
             "time_range",
-            "to_utc",
             "version",
         ):
             self.assertNotIn(

@@ -893,7 +893,6 @@ class AnalysisIndicators(PandasObject):
             "last_run",
             "reverse",
             "time_range",
-            "to_utc",
             "version",
         ]
 
