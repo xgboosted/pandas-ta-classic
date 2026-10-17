@@ -9,7 +9,7 @@ Before this contract ``cdl_doji`` (and with it ``cdl_pattern``),
 ``increasing``, ``decreasing`` and ``ttm_trend`` raised ``cannot convert NA to
 integer``, ``smc_sweep`` raised ``boolean value of NA is ambiguous`` and
 ``td_seq`` failed to compile its numba kernel, on ``Float64`` input (``Int64``
-too, except for ``cdl_doji``), NA or not: a comparison against a NaN warm-up
+too, except for ``cdl_doji`` and ``cdl_pattern``), NA or not: a comparison against a NaN warm-up
 value gives ``pd.NA`` in the nullable dtype.
 
 Indicators are discovered through ``ta.Category``, so new ones are covered.
