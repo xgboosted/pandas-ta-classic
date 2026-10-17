@@ -46,12 +46,7 @@ class TestTrend(TestCase):
     def test_adx(self):
         result = pandas_ta.adx(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result.iloc[:, 0],
-                talib.ADX(self.high, self.low, self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result.iloc[:, 0], talib.ADX(self.high, self.low, self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -93,7 +88,7 @@ class TestTrend(TestCase):
         if HAS_TALIB:
             aroond, aroonu = talib.AROON(self.high, self.low)
             expecteddf = DataFrame({"AROOND_14": aroond, "AROONU_14": aroonu})
-            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+            assert_talib(self, result.iloc[:, :2], expecteddf)  # TA-Lib's AROON has no oscillator column
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -108,12 +103,7 @@ class TestTrend(TestCase):
     def test_aroon_osc(self):
         result = pandas_ta.aroon(self.high, self.low)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result.iloc[:, 2],
-                talib.AROONOSC(self.high, self.low),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result.iloc[:, 2], talib.AROONOSC(self.high, self.low))
 
     def test_chop(self):
         result = pandas_ta.chop(self.high, self.low, self.close, ln=True)
@@ -560,12 +550,7 @@ class TestTrend(TestCase):
     def test_dx(self):
         result = pandas_ta.dx(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.DX(self.high, self.low, self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.DX(self.high, self.low, self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -578,12 +563,7 @@ class TestTrend(TestCase):
     def test_minus_dm(self):
         result = pandas_ta.minus_dm(self.high, self.low, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.MINUS_DM(self.high, self.low),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.MINUS_DM(self.high, self.low))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -596,12 +576,7 @@ class TestTrend(TestCase):
     def test_plus_dm(self):
         result = pandas_ta.plus_dm(self.high, self.low, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.PLUS_DM(self.high, self.low),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.PLUS_DM(self.high, self.low))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -614,15 +589,10 @@ class TestTrend(TestCase):
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
         if HAS_TALIB:
-            psar_combined = result[result.columns[:2]].fillna(0)
-            psar_combined = psar_combined[psar_combined.columns[0]] + psar_combined[psar_combined.columns[1]]
-            psar_combined.name = result.name
-            assert_talib(
-                self,
-                psar_combined,
-                talib.SAR(self.high, self.low),
-                correlation_threshold=0.99,
-            )
+            # TA-Lib's SAR is one line; native splits it into long and short. combine_first,
+            # unlike the old fillna(0) sum, keeps the first bar NaN where both are.
+            psar_combined = result.iloc[:, 0].combine_first(result.iloc[:, 1])
+            assert_talib(self, psar_combined, talib.SAR(self.high, self.low))
         assert_indicator_standard(
             self,
             IndicatorSpec(

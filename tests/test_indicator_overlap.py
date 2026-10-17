@@ -59,7 +59,7 @@ class TestOverlap(TestCase):
     def test_dema(self):
         result = pandas_ta.dema(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.DEMA(self.close, 10), correlation_threshold=0.99)
+            assert_talib(self, result, talib.DEMA(self.close, 10))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -73,9 +73,9 @@ class TestOverlap(TestCase):
         if HAS_TALIB:
             expected = talib.EMA(self.close, 10)
             result_presma = pandas_ta.ema(self.close, presma=False)
-            assert_talib(self, result_presma, expected, correlation_threshold=0.99)
+            assert_talib(self, result_presma, expected)
             result_talib_false = pandas_ta.ema(self.close, talib=False)
-            assert_talib(self, result_talib_false, expected, correlation_threshold=0.99)
+            assert_talib(self, result_talib_false, expected)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -121,12 +121,7 @@ class TestOverlap(TestCase):
     def test_hlc3(self):
         result = pandas_ta.hlc3(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.TYPPRICE(self.high, self.low, self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.TYPPRICE(self.high, self.low, self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -229,7 +224,7 @@ class TestOverlap(TestCase):
     def test_linreg(self):
         result = pandas_ta.linreg(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.LINEARREG(self.close), correlation_threshold=0.99)
+            assert_talib(self, result, talib.LINEARREG(self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -242,12 +237,7 @@ class TestOverlap(TestCase):
     def test_linreg_angle(self):
         result = pandas_ta.linreg(self.close, angle=True, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.LINEARREG_ANGLE(self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.LINEARREG_ANGLE(self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -262,12 +252,7 @@ class TestOverlap(TestCase):
     def test_linreg_intercept(self):
         result = pandas_ta.linreg(self.close, intercept=True, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.LINEARREG_INTERCEPT(self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.LINEARREG_INTERCEPT(self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -294,12 +279,7 @@ class TestOverlap(TestCase):
     def test_linreg_slope(self):
         result = pandas_ta.linreg(self.close, slope=True, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.LINEARREG_SLOPE(self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.LINEARREG_SLOPE(self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -329,7 +309,7 @@ class TestOverlap(TestCase):
         if HAS_TALIB:
             mama, fama = talib.MAMA(self.close)
             expecteddf = DataFrame({"MAMA_0.5_0.05": mama, "FAMA_0.5_0.05": fama})
-            assert_talib(self, result, expecteddf, correlation_threshold=0.99)
+            assert_talib(self, result, expecteddf)
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -386,7 +366,7 @@ class TestOverlap(TestCase):
     def test_midpoint(self):
         result = pandas_ta.midpoint(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.MIDPOINT(self.close, 2), correlation_threshold=0.99)
+            assert_talib(self, result, talib.MIDPOINT(self.close, 2))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -399,12 +379,7 @@ class TestOverlap(TestCase):
     def test_midprice(self):
         result = pandas_ta.midprice(self.high, self.low, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.MIDPRICE(self.high, self.low, 2),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.MIDPRICE(self.high, self.low, 2))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -458,7 +433,7 @@ class TestOverlap(TestCase):
     def test_sma(self):
         result = pandas_ta.sma(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.SMA(self.close, 10), correlation_threshold=0.99)
+            assert_talib(self, result, talib.SMA(self.close, 10))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -515,7 +490,7 @@ class TestOverlap(TestCase):
     def test_t3(self):
         result = pandas_ta.t3(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.T3(self.close, 10), correlation_threshold=0.99)
+            assert_talib(self, result, talib.T3(self.close, 10))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -528,7 +503,7 @@ class TestOverlap(TestCase):
     def test_tema(self):
         result = pandas_ta.tema(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.TEMA(self.close, 10), correlation_threshold=0.99)
+            assert_talib(self, result, talib.TEMA(self.close, 10))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -541,7 +516,7 @@ class TestOverlap(TestCase):
     def test_trima(self):
         result = pandas_ta.trima(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.TRIMA(self.close, 10), correlation_threshold=0.99)
+            assert_talib(self, result, talib.TRIMA(self.close, 10))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -596,12 +571,7 @@ class TestOverlap(TestCase):
     def test_wcp(self):
         result = pandas_ta.wcp(self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.WCLPRICE(self.high, self.low, self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.WCLPRICE(self.high, self.low, self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -643,7 +613,7 @@ class TestOverlap(TestCase):
     def test_wma(self):
         result = pandas_ta.wma(self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(self, result, talib.WMA(self.close, 10), correlation_threshold=0.99)
+            assert_talib(self, result, talib.WMA(self.close, 10))
         assert_indicator_standard(
             self,
             IndicatorSpec(
