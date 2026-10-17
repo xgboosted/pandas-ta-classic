@@ -895,6 +895,22 @@ def test_a_bar_with_no_range_or_no_body_contributes_exactly_nothing(frame: dict[
         assert (moved == 0.0).all(), f"{ad.name} moved by {sorted(set(moved))[:5]} on a bar that adds nothing"
 
 
+def test_stochastics_read_zero_on_a_malformed_window_with_no_range() -> None:
+    # high == low with the close 0.25 off it: the epsilon divisor read 1.1e17 here.
+    n = 80
+    h = pd.Series(np.linspace(90.0, 110.0, n))
+    l = h - 2.0
+    c = h - 1.0
+    h.iloc[30:60] = l.iloc[30:60] = 100.0
+    c.iloc[30:60] = 100.25
+    window = slice(50, 60)  # every 14-bar window and its smoothing inside the flat block
+    assert (ta.stochf(h, l, c).iloc[window, 0] == 0.0).all()
+    assert (ta.stoch(h, l, c).iloc[window, 0] == 0.0).all()
+    assert (ta.kdj(h, l, c).iloc[window].abs() < 100).all().all()  # decays from the last real value, no 1e17
+    c.iloc[55] = np.nan  # a missing close inside the block reads 0.0, as in TA-Lib and willr
+    assert ta.stochf(h, l, c).iloc[55, 0] == 0.0
+
+
 @settings(max_examples=200, deadline=None)
 @given(_tick_frame(consistent=False))
 def test_a_window_with_no_range_reads_exactly_zero(frame: dict[str, pd.Series]) -> None:
