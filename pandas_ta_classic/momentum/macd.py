@@ -14,6 +14,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._signals import _require_number
 
 
@@ -38,8 +39,14 @@ def _ema_aligned(arr, m, period, seed_end):
     start = seed_end - period + 1
     if start < 0 or seed_end >= m:
         return result
+    # The seed stays a numpy mean: numba's mean sums in another order.
     result[seed_end] = arr[start : seed_end + 1].mean()
-    for i in range(seed_end + 1, m):
+    return _ema_loop(arr, result, seed_end, k)
+
+
+@njit(cache=True)
+def _ema_loop(arr, result, seed_end, k):
+    for i in range(seed_end + 1, arr.shape[0]):
         result[i] = k * arr[i] + (1 - k) * result[i - 1]
     return result
 

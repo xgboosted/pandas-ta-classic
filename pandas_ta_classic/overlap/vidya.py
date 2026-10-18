@@ -12,6 +12,14 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._njit import njit
+
+
+@njit(cache=True)
+def _vidya_loop(c_arr, cmo_arr, out, length, alpha):
+    for i in range(length, out.shape[0]):
+        out[i] = alpha * cmo_arr[i] * c_arr[i] + out[i - 1] * (1 - alpha * cmo_arr[i])
+    return out
 
 
 @nan_on_short_input
@@ -57,10 +65,7 @@ def vidya(
     abs_cmo = _cmo(close, length, drift).abs()
     vidya_arr = np.full(m, np.nan)
     vidya_arr[length - 1] = close.iloc[:length].mean()  # SMA seed
-    cmo_arr = abs_cmo.to_numpy()
-    c_arr = close.to_numpy()
-    for i in range(length, m):
-        vidya_arr[i] = alpha * cmo_arr[i] * c_arr[i] + vidya_arr[i - 1] * (1 - alpha * cmo_arr[i])
+    vidya_arr = _vidya_loop(close.to_numpy(dtype=float), abs_cmo.to_numpy(dtype=float), vidya_arr, length, alpha)
     vidya = Series(vidya_arr, index=close.index)
 
     # Offset
