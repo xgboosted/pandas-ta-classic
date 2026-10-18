@@ -5,6 +5,8 @@ from pandas import DataFrame, DatetimeIndex, Timestamp
 
 from pandas_ta_classic._meta import EXCHANGE_TZ
 
+from ._core import _require_input
+
 logger = logging.getLogger(__name__)
 
 
@@ -13,6 +15,7 @@ def df_year_to_date(df: DataFrame) -> DataFrame:
 
     It used to return the whole DataFrame in that case.
     """
+    _require_input(df, "df_year_to_date", "df")
     in_ytd = df.index >= Timestamp.now().strftime("%Y-01-01")
     return df[in_ytd]
 
@@ -20,6 +23,7 @@ def df_year_to_date(df: DataFrame) -> DataFrame:
 def final_time(stime: float) -> str:
     """Human readable elapsed time. Calculates the final time elasped since
     stime and returns a string with microseconds and seconds."""
+    _require_input(stime, "final_time", "stime")
     time_diff = perf_counter() - stime
     return f"{time_diff * 1000:2.4f} ms ({time_diff:2.4f} s)"
 
@@ -73,6 +77,7 @@ def total_time(df: DataFrame, tf: str = "years") -> float:
     not sorted in ascending order, and TypeError when the index is not
     datetime-like. A single row, or rows sharing one timestamp, span 0.
     """
+    _require_input(df, "total_time", "df")
     if tf not in TIME_RANGE_UNITS:
         raise ValueError(f"total_time() tf must be one of {list(TIME_RANGE_UNITS)}, got {tf!r}")
     if not isinstance(df.index, DatetimeIndex):
@@ -105,6 +110,7 @@ def to_utc(df: DataFrame) -> DataFrame:
 
     Returns a copy; the caller's DataFrame is left unchanged.
     """
+    _require_input(df, "to_utc", "df")
     df = df.copy()
     if not df.empty:
         try:

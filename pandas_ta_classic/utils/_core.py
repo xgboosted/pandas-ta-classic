@@ -173,12 +173,28 @@ def get_offset(x: int | None) -> int:
     return _validate_number(x, 0, "offset", integer=True, gt=None, ge=None, lt=None)
 
 
+def _require_input(value: Any, function: str, parameter: str) -> None:
+    """Raise ValueError when a required input (a Series, a frame or a scalar) is None.
+
+    ``verify_series(None)`` is None by design (an optional input not given).
+    A helper whose input is required failed on it inside pandas instead --
+    ``'NoneType' object has no attribute 'diff'`` -- naming neither the
+    function nor the argument. ValueError, as for any other argument the
+    function cannot use (AGENTS.md rule 1). Only None is checked here; a
+    value of the wrong type fails as before (``verify_series`` raises
+    TypeError for it in the helpers that call it).
+    """
+    if value is None:
+        raise ValueError(f"{function}() requires {parameter!r}, got None")
+
+
 def is_datetime_ordered(df: DataFrame | Series) -> bool:
     """Returns True if the index is a datetime index in ascending order.
 
     It used to compare only the first and last labels, so an index sorted
     everywhere but the middle counted as ordered.
     """
+    _require_input(df, "is_datetime_ordered", "df")
     index_is_datetime = is_datetime64_any_dtype(df.index)
     if not index_is_datetime or len(df.index) < 2:
         return False
@@ -428,6 +444,8 @@ def non_zero_range(high: Series, low: Series) -> Series:
     Rows with a non-zero range keep their exact difference, so the value at row
     ``t`` never depends on bars at ``t + 1`` or later.
     """
+    _require_input(high, "non_zero_range", "high")
+    _require_input(low, "non_zero_range", "low")
     diff = high - low
     # Cast to float before substituting epsilon: on an int64 series,
     # ``diff.where(diff != 0, epsilon)`` downcasts the float epsilon to 0,
@@ -446,6 +464,8 @@ def degenerate_div(numerator: Series, denominator: Series) -> Series:
     the denominator alone would turn that into 0.0 and report the opposite of
     what the data says (``vhf`` makes the same distinction in its own mask).
     """
+    _require_input(numerator, "degenerate_div", "numerator")
+    _require_input(denominator, "degenerate_div", "denominator")
     return (numerator / denominator).mask((denominator == 0) & (numerator == 0), 0.0)
 
 
@@ -459,14 +479,17 @@ def degenerate_zero(x: Any, *, atol: float = 1e-12) -> Any:
     kurtosis.  *atol* is far above that residue and far below any real
     variance (a 0.01% move is already 1e-4).
     """
+    _require_input(x, "degenerate_zero", "x")
     return np.isclose(x, 0, atol=atol)
 
 
 def recent_maximum_index(x: Series) -> int:
+    _require_input(x, "recent_maximum_index", "x")
     return int(np.argmax(x[::-1]))
 
 
 def recent_minimum_index(x: Series) -> int:
+    _require_input(x, "recent_minimum_index", "x")
     return int(np.argmin(x[::-1]))
 
 
@@ -478,6 +501,7 @@ def signed_series(series: Series, initial: int | None = None) -> Series:
     and returns:
     sign = Series([NaN, -1.0, 0.0, -1.0, 0.0, 1.0, 1.0, 0.0, 1.0, -1.0])
     """
+    _require_input(series, "signed_series", "series")
     series = verify_series(series)
     # An unvalidated initial reached the float64 block and failed as
     # "Invalid value 'zz' for dtype 'float64'", naming neither this function
@@ -532,6 +556,7 @@ def unsigned_differences(series: Series, amount: int | None = None, *, asint: bo
     postive  = Series([0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     negative = Series([0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1])
     """
+    _require_input(series, "unsigned_differences", "series")
     asint = _bool_param(asint, False, "asint")
     amount = _pos_int(amount, 1, "amount")
     negative = series.diff(amount)

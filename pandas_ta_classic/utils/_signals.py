@@ -5,7 +5,7 @@ from typing import Any
 
 from pandas import DataFrame, Series, concat
 
-from ._core import _bool_param, _pos_int, apply_fill, apply_offset, get_offset, verify_series
+from ._core import _bool_param, _pos_int, _require_input, apply_fill, apply_offset, get_offset, verify_series
 from ._math import zero
 
 
@@ -233,6 +233,7 @@ def signals(
     *,
     caller: str | None = None,
 ) -> DataFrame:
+    _require_input(indicator, "signals", "indicator")
     # A non-number threshold used to be skipped, silently dropping its column
     # (and numpy integers were skipped with it). Keep the caller's value: it
     # names the column (RSI_14_A_70).
