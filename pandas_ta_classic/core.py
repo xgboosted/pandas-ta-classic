@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 from collections.abc import Hashable, Iterator
-from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -16,6 +16,7 @@ from warnings import catch_warnings, simplefilter, warn
 import pandas as pd
 from pandas.core.base import PandasObject
 
+import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
     _COLUMN_KWARG_KEYS,
     _COLUMN_PARAM_TO_COL_KEY,
@@ -240,6 +241,25 @@ def _run_task_group(df: pd.DataFrame, group: list[tuple]) -> list[tuple]:
         except Exception as exc:  # noqa: BLE001 - re-raised in the parent with the indicator name
             out.append((order, None, exc))
     return out
+
+
+def _custom_kinds(kinds: list[str]) -> list[str]:
+    """The *kinds* whose df.ta method was bound by user code (custom.import_dir, custom.bind).
+
+    A worker process is a fresh interpreter that never ran that code, so it
+    either has no such method or, for a custom module that reuses a built-in
+    name (trend/sma.py), would silently run the built-in one instead.
+
+    The test is the method's module, so a method built with the package's own
+    private wrapper helpers counts as built-in and is not caught here.
+    """
+    custom = []
+    for kind in dict.fromkeys(kinds):
+        method = AnalysisIndicators.__dict__.get(kind)  # None: built-in, resolved lazily by __getattr__
+        module = getattr(method, "__module__", None) or ""
+        if method is not None and module != "pandas_ta_classic" and not module.startswith("pandas_ta_classic."):
+            custom.append(kind)
+    return custom
 
 
 # Pandas TA - DataFrame Analysis Indicators
@@ -849,7 +869,12 @@ class AnalysisIndicators(PandasObject):
 
     def _missing_required_column(self, name: str, kwargs: dict) -> bool:
         """True when indicator *name* needs a column (no default) that the DataFrame does not have."""
-        func = _find_indicator_func(name)
+        # custom.import_dir() binds its function onto the package and lists the
+        # name in Category, but the loader only knows the package's own modules,
+        # so strategy("all") raised "unknown indicator" once one was loaded. The
+        # package attribute is also what replaces a built-in of the same name.
+        bound = vars(pandas_ta_classic).get(name)
+        func = bound if callable(bound) else _find_indicator_func(name)
         if func is None:
             raise ValueError(f"unknown indicator {name!r}")
         sig = inspect.signature(func)
@@ -948,6 +973,9 @@ class AnalysisIndicators(PandasObject):
             executor (concurrent.futures.Executor): Run this call on a pool the
                 caller owns and reuses, which avoids paying for process start-up
                 per call. Takes precedence over 'cores'. Default: None
+                A strategy with a custom indicator (custom.import_dir,
+                custom.bind) raises ValueError when 'cores' > 0 or 'executor'
+                is anything but a ThreadPoolExecutor.
             exclude (list): List of indicator names to leave out of an "all" or
                 category run; an unknown name raises. Some are excluded by
                 default for various reasons; they require additional sources,
@@ -1079,6 +1107,22 @@ class AnalysisIndicators(PandasObject):
             if verbose:
                 logger.info("Running serially: strategy() was called inside a worker process.")
             executor, cores = None, 0
+
+        # The pool strategy() opens spawns its workers, so every one raised
+        # AttributeError for a custom indicator after the parent had accepted it;
+        # refuse before any worker starts. A thread shares this interpreter and
+        # its custom methods, so it may run them. Any other executor is refused
+        # too: whether its workers started after the custom code was loaded (a
+        # fork pool on Linux) cannot be checked.
+        if (executor is None and cores > 0) or (executor is not None and not isinstance(executor, ThreadPoolExecutor)):
+            custom = _custom_kinds([kind for _, kind, _, _ in tasks])
+            if custom:
+                leave_out = "leave them out of the Strategy's 'ta' list" if mode["custom"] else "leave them out with exclude=[...]"
+                raise ValueError(
+                    f"strategy() runs the custom indicators {custom} only serially or on a ThreadPoolExecutor: a worker "
+                    "process has them only if it started after they were loaded, which cannot be checked. Run this "
+                    f"strategy with cores=0 or a ThreadPoolExecutor, or {leave_out}."
+                )
 
         if timed:
             stime = perf_counter()

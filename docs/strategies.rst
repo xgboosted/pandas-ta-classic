@@ -198,6 +198,14 @@ cannot start children of its own. A ``ProcessPoolExecutor`` worker is not
 daemonic, so there ``strategy(cores=N)`` does open a nested pool and the process
 count multiplies; pass ``cores=0`` in code that may run inside one.
 
+Custom indicators (``custom.import_dir()``, ``custom.bind()``) exist only in the
+interpreter that loaded them; a *spawn* worker, which is what ``cores`` starts,
+never ran that code, and a forked one has them only if it started after they
+were loaded, which cannot be checked. A strategy that contains one therefore
+raises ``ValueError`` when ``cores`` > 0 or the ``executor`` is anything but a
+``ThreadPoolExecutor``, so run it with ``cores=0`` or on a ``ThreadPoolExecutor``,
+whose threads share the interpreter.
+
 Renaming columns with col_names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

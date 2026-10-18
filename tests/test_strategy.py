@@ -1,5 +1,9 @@
 # Must run seperately from the rest of the tests
 # in order to successfully run
+import os
+import sys
+import tempfile
+from concurrent.futures import Executor, Future, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import cpu_count
 from time import perf_counter
 from unittest import TestCase, mock
@@ -7,6 +11,8 @@ from unittest import TestCase, mock
 from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
+from pandas_ta_classic.core import _custom_kinds
+from pandas_ta_classic.custom import import_dir
 from tests.config import get_sample_data
 
 # Strategy Testing Parameters
@@ -514,3 +520,193 @@ class TestCustomStrategyLength(TestCase):
         direct = self.data.ta.sma(length=500)
         self.assertTrue(self.data["SMA_500"].equals(direct))
         self.assertTrue(self.data["SMA_500"].isna().all())
+
+
+def _dbl(close, **kwargs):
+    out = close * 2
+    out.name = "DBL"
+    return out
+
+
+def _dbl_method(self, **kwargs):
+    return self._post_process(_dbl(self._get_column("close")), **kwargs)
+
+
+def _vtw(close, volume, **kwargs):
+    out = close * volume
+    out.name = "VTW"
+    return out
+
+
+def _vtw_method(self, **kwargs):
+    return self._post_process(_vtw(self._get_column("close"), self._get_column("volume")), **kwargs)
+
+
+class TestCustomIndicatorsNeedSerialStrategy(TestCase):
+    """A worker process is a fresh interpreter that never ran custom.import_dir():
+    every worker raised AttributeError for a custom indicator the parent had
+    accepted, and a custom module reusing a built-in name ran the built-in."""
+
+    def setUp(self):
+        self.df = get_sample_data().iloc[:300].copy()
+        self.strategy = pandas_ta.Strategy("custom", [{"kind": "sma"}, {"kind": "dbl"}])
+        patches = (
+            mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
+            mock.patch.dict(pandas_ta.Category, {"trend": [*pandas_ta.Category["trend"], "dbl"]}),
+        )
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_cores_raise_before_any_worker_starts(self):
+        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\] only serially.*cores=0.*out of the Strategy's 'ta' list"):
+            self.df.ta.strategy(self.strategy, cores=2)
+        self.assertNotIn("SMA_10", self.df.columns)
+
+    def test_cores_set_on_the_frame_raise_too(self):
+        self.df.ta.cores = 2
+        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+            self.df.ta.strategy(self.strategy)
+        self.assertNotIn("SMA_10", self.df.columns)
+
+    def test_a_category_run_points_to_exclude(self):
+        # A category run checks columns against the package function, which import_dir binds too.
+        patch = mock.patch.object(pandas_ta, "dbl", _dbl, create=True)
+        patch.start()
+        self.addCleanup(patch.stop)
+        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
+            self.df.ta.strategy("trend", cores=2)
+        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
+            self.df.ta.strategy("all", cores=2)
+
+    def test_a_process_executor_raises_too(self):
+        # Nothing is submitted, so the pool never spawns a worker.
+        with ProcessPoolExecutor(2) as executor, self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+            self.df.ta.strategy(self.strategy, executor=executor)
+
+    def test_any_executor_but_a_thread_pool_raises(self):
+        class Inline(Executor):
+            def submit(self, fn, /, *args, **kwargs):
+                future = Future()
+                future.set_result(fn(*args, **kwargs))
+                return future
+
+        # Whether an executor's workers have the custom methods cannot be checked.
+        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+            self.df.ta.strategy(self.strategy, executor=Inline())
+
+    def test_a_thread_executor_runs_them(self):
+        # Threads share this interpreter, custom methods included; this worked before the refusal and still does.
+        with ThreadPoolExecutor(2) as executor:
+            self.df.ta.strategy(self.strategy, executor=executor)
+        self.assertIn("DBL", self.df.columns)
+        self.assertTrue(self.df["DBL"].equals(self.df["close"] * 2))
+
+    def test_a_custom_override_of_a_built_in_name_raises(self):
+        with (
+            mock.patch.object(pandas_ta.AnalysisIndicators, "sma", _dbl_method, create=True),
+            self.assertRaisesRegex(ValueError, r"custom indicators \['sma', 'dbl'\]"),
+        ):
+            self.df.ta.strategy(self.strategy, cores=2)
+
+    def test_a_module_that_only_shares_the_prefix_is_custom(self):
+        def ext_method(self, **kwargs):
+            return None
+
+        ext_method.__module__ = "pandas_ta_classic_ext"
+        with mock.patch.object(pandas_ta.AnalysisIndicators, "ext", ext_method, create=True):
+            self.assertEqual(_custom_kinds(["ext", "sma"]), ["ext"])
+
+    def test_serial_strategy_still_runs_them(self):
+        self.df.ta.strategy(self.strategy, cores=0)
+        self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
+
+
+class TestImportDirWithWorkers(TestCase):
+    """The same refusal for an indicator loaded the documented way, through
+    custom.import_dir() rather than a patched method."""
+
+    NAME = "_strategy_custom_triple_"
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        cat_dir = os.path.join(self.tmpdir, "trend")
+        os.makedirs(cat_dir)
+        with open(os.path.join(cat_dir, f"{self.NAME}.py"), "w") as f:
+            f.write(
+                f"def {self.NAME}(close, **kwargs):\n"
+                f"    out = close * 3\n"
+                f"    out.name = 'TRIPLE'\n"
+                f"    return out\n"
+                f"def {self.NAME}_method(self, **kwargs):\n"
+                f"    return self._post_process({self.NAME}(self._get_column('close')), **kwargs)\n"
+            )
+        # import_dir appends to Category's lists; a fresh list keeps the real one untouched.
+        patch = mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])})
+        patch.start()
+        self.addCleanup(patch.stop)
+        self.addCleanup(self._unload, cat_dir)
+        import_dir(self.tmpdir, verbose=False)
+        self.df = get_sample_data().iloc[:300].copy()
+        self.strategy = pandas_ta.Strategy("custom", [{"kind": self.NAME}])
+
+    def _unload(self, cat_dir):
+        for target in (pandas_ta, pandas_ta.AnalysisIndicators):
+            if hasattr(target, self.NAME):
+                delattr(target, self.NAME)
+        if cat_dir in sys.path:
+            sys.path.remove(cat_dir)
+        sys.modules.pop(self.NAME, None)
+
+    def test_workers_raise_and_a_serial_run_computes_it(self):
+        with self.assertRaisesRegex(ValueError, rf"custom indicators \['{self.NAME}'\]"):
+            self.df.ta.strategy(self.strategy, cores=2)
+        self.df.ta.strategy(self.strategy, cores=0)
+        self.assertTrue((self.df["TRIPLE"] == self.df["close"] * 3).all())
+
+
+class TestCategoryStrategyWithCustomIndicators(TestCase):
+    """custom.import_dir() lists a custom indicator in Category and binds its
+    function onto the package, but the column check only asked the package's
+    own loader, so strategy("all") and strategy("<category>") raised
+    "unknown indicator" as soon as one custom indicator was loaded."""
+
+    def setUp(self):
+        self.df = get_sample_data().iloc[:300].copy()
+        self.df.ta.cores = 0
+        patches = (
+            mock.patch.object(pandas_ta, "dbl", _dbl, create=True),
+            mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
+            mock.patch.object(pandas_ta, "vtw", _vtw, create=True),
+            mock.patch.object(pandas_ta.AnalysisIndicators, "vtw", _vtw_method, create=True),
+            mock.patch.dict(
+                pandas_ta.Category,
+                {"trend": [*pandas_ta.Category["trend"], "dbl"], "volume": [*pandas_ta.Category["volume"], "vtw"]},
+            ),
+        )
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_category_and_all_run_custom_indicators(self):
+        self.df.ta.strategy("trend")
+        self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
+        df = get_sample_data().iloc[:300].copy()
+        df.ta.cores = 0
+        df.ta.strategy("all")
+        self.assertIn("DBL", df.columns)
+        self.assertIn("VTW", df.columns)
+
+    def test_custom_indicator_missing_a_column_is_skipped(self):
+        ohlc = self.df[["open", "high", "low", "close"]].copy()
+        ohlc.ta.cores = 0
+        ohlc.ta.strategy("volume")
+        self.assertNotIn("VTW", ohlc.columns)
+
+    def test_a_custom_override_is_checked_with_its_own_signature(self):
+        # the built-in sma needs only close; this replacement needs volume too
+        with mock.patch.object(pandas_ta, "sma", _vtw):
+            ohlc = self.df[["open", "high", "low", "close"]].copy()
+            ohlc.ta.cores = 0
+            ohlc.ta.strategy("overlap")
+        self.assertNotIn("SMA_10", ohlc.columns)
