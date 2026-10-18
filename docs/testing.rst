@@ -171,6 +171,28 @@ reason, so an entry that starts passing fails until it is removed.
 **Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
 
 
+API Consistency Map
+-------------------
+
+**Why:** Keep an up-to-date list of where the public API is not uniform.
+
+``test_api_consistency.py`` asks registry-wide questions of the API: one table
+per question (output dtype, flag encoding, float32 input, all-NaN input,
+duplicate or unsorted index, column-name style, explicit defaults, signature
+defaults, docstrings, accessor vs function, parameter names, percent vs
+fraction, shared column names, names shadowing builtins, pandas or the stdlib),
+each listing the indicators that answer differently from the majority. A new
+deviation fails until it is added to its table, and a fixed one fails until
+its row is removed, so the tables are an up-to-date map of where the API is
+not uniform.
+
+Each table carries a status: ``OPEN:`` for a defect or an undecided question,
+``KEPT:`` for a decided exception; single rows can override their table's
+status, and a failure names the status of every row it reports.
+
+**Run:** ``python -m pytest tests/test_api_consistency.py -v``
+
+
 Integration / E2E Tests
 -----------------------
 
