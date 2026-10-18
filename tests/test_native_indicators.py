@@ -494,14 +494,8 @@ class TestNativeTrend(_NativeBase):
         self.assertTrue(set(valid.unique()).issubset({0.0, 1.0}), "long_run must be binary")
 
     def test_pmax(self):
-        # Known bug: pmax raises "truth value of a Series is ambiguous"
-        # Tracked separately; skip rather than fail.
-        try:
-            r = ta.pmax(self.h, self.l, self.c, self.v)
-            if r is not None:
-                self._assert_valid(r, "pmax")
-        except (ValueError, TypeError):
-            pass  # pre-existing bug — do not fail the test suite
+        r = ta.pmax(self.h, self.l, self.c)
+        self._assert_valid(r, "pmax")
 
     def test_psar(self):
         r = ta.psar(self.h, self.l, self.c)

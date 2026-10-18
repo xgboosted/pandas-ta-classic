@@ -93,12 +93,7 @@ class TestCandle(TestCase):
     def test_cdl_doji(self):
         result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close, talib=False)
         if HAS_TALIB:
-            assert_talib(
-                self,
-                result,
-                talib.CDLDOJI(self.open, self.high, self.low, self.close),
-                correlation_threshold=0.99,
-            )
+            assert_talib(self, result, talib.CDLDOJI(self.open, self.high, self.low, self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
