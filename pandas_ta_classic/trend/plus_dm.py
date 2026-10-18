@@ -10,9 +10,9 @@ from pandas_ta_classic.utils import (
     get_drift,
     get_offset,
     verify_series,
-    zero,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._math import _zero_small
 
 
 @nan_on_short_input
@@ -51,7 +51,7 @@ def plus_dm(
         up = high - high.shift(drift)
         dn = low.shift(drift) - low
         pos_ = ((up > dn) & (up > 0)) * up
-        pos_ = pos_.apply(zero)
+        pos_ = _zero_small(pos_)
         result = wilder_smooth(pos_, length)  # Wilder's raw DM, TA-Lib seeding
 
     # Offset

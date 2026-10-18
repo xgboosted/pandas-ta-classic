@@ -6,7 +6,7 @@ from typing import Any
 from pandas import DataFrame, Series, concat
 
 from ._core import _bool_param, _pos_int, _require_input, apply_fill, apply_offset, get_offset, verify_series
-from ._math import zero
+from ._math import _zero_small
 
 
 def _require_number(value: Any, label: str) -> None:
@@ -32,8 +32,8 @@ def _above_below(
 
     offset = get_offset(offset)
 
-    series_a = series_a.apply(zero)
-    series_b = series_b.apply(zero)
+    series_a = _zero_small(series_a)
+    series_b = _zero_small(series_b)
 
     # Calculate Result
     current = series_a >= series_b if above else series_a <= series_b
@@ -138,8 +138,8 @@ def cross(
 
     offset = get_offset(offset)
 
-    series_a = series_a.apply(zero)
-    series_b = series_b.apply(zero)
+    series_a = _zero_small(series_a)
+    series_b = _zero_small(series_b)
 
     # Calculate Result
     # A cross is a strict transition through the other series: above-cross is

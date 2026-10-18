@@ -14,6 +14,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._math import _zero_small
 
 
 @nan_on_short_input
@@ -57,10 +58,8 @@ def dx(
         pos = ((up > dn) & (up > 0)) * up
         neg = ((dn > up) & (dn > 0)) * dn
 
-        from pandas_ta_classic.utils import zero
-
-        pos = pos.apply(zero)
-        neg = neg.apply(zero)
+        pos = _zero_small(pos)
+        neg = _zero_small(neg)
 
         if mamode == "rma":
             # TA-Lib seeding (see utils/_wilder.py); DX is a ratio of the two
