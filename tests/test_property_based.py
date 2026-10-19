@@ -42,7 +42,6 @@ from pandas_ta_classic.utils import (
     df_error_analysis,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from tests.config import get_sample_data
@@ -319,20 +318,6 @@ class TestMiscUtils(TestCase):
         """Zero and negative drifts raise instead of becoming 1."""
         with pytest.raises(ValueError, match="drift must be an integer > 0"):
             get_drift(x)
-
-    @given(
-        st.integers(min_value=10, max_value=100),
-        st.floats(min_value=1.0, max_value=1000.0, allow_nan=False),
-        st.floats(min_value=0.01, max_value=10.0, allow_nan=False),
-    )
-    def test_non_zero_range_no_zeros(self, n, base, spread):
-        """non_zero_range of strictly positive diff must be all-positive."""
-        high_vals = np.full(n, base + spread, dtype=np.float64)
-        low_vals = np.full(n, base, dtype=np.float64)
-        high = pd.Series(high_vals)
-        low = pd.Series(low_vals)
-        diff = non_zero_range(high, low)
-        assert (diff > 0).all()
 
     @given(st.integers(min_value=2, max_value=60), st.data())
     def test_total_time_rejects_any_unsorted_index(self, n, data):

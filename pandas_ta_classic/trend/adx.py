@@ -93,7 +93,7 @@ def adx(
             dmn = (k * _dmn_ma).mask(atr_ == 0, 0.0)
 
         # No directional movement at all divides 0/0. TA-Lib reads 0.0 there,
-        # and dx() already gave 0.0 for the same formula through non_zero_range.
+        # and dx() masks the same divisor.
         denominator = dmp + dmn
         dx = (scalar * (dmp - dmn).abs() / denominator).mask(denominator == 0, 0.0)
         adx_arr = ma(mamode, dx, length=lensig)

@@ -18,6 +18,7 @@ from pandas_ta_classic.core import (
     Strategy,
 )
 from pandas_ta_classic.utils import (
+    _REMOVED,
     above,
     above_value,
     apply_fill,
@@ -45,7 +46,6 @@ from pandas_ta_classic.utils import (
     linear_regression,
     log_max_drawdown,
     max_drawdown,
-    non_zero_range,
     np_rolling_moments,
     optimal_leverage,
     pascals_triangle,
@@ -115,7 +115,6 @@ __all__ = [
     "log_max_drawdown",
     "max_drawdown",
     "name",
-    "non_zero_range",
     "np_rolling_moments",
     "optimal_leverage",
     "pascals_triangle",
@@ -224,5 +223,8 @@ def __getattr__(name: str) -> Any:
         else:
             setattr(sys.modules[__name__], name, mod)  # cache in module dict
             return mod
+
+    if name in _REMOVED:
+        raise AttributeError(_REMOVED[name])
 
     raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")

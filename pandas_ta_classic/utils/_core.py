@@ -7,7 +7,6 @@ import sys
 import warnings
 from collections.abc import Callable
 from numbers import Real
-from sys import float_info as sflt
 from typing import Any, TypeGuard
 
 import numpy as np
@@ -437,24 +436,6 @@ def nan_on_short_input(fn: Callable) -> Callable:
     return wrapper
 
 
-def non_zero_range(high: Series, low: Series) -> Series:
-    """Returns the difference of two series, replacing exact zeros with epsilon.  This occurs commonly in crypto data when 'high' = 'low'.
-
-    The replacement is pointwise: a flat bar at row ``t`` only affects row ``t``.
-    Rows with a non-zero range keep their exact difference, so the value at row
-    ``t`` never depends on bars at ``t + 1`` or later.
-    """
-    _require_input(high, "non_zero_range", "high")
-    _require_input(low, "non_zero_range", "low")
-    diff = high - low
-    # Cast to float before substituting epsilon: on an int64 series,
-    # ``diff.where(diff != 0, epsilon)`` downcasts the float epsilon to 0,
-    # leaving flat bars as 0 instead of epsilon (and then 0/0 = NaN downstream).
-    if diff.dtype.kind in "iu":
-        diff = diff.astype(float)
-    return diff.where(diff != 0, sflt.epsilon)
-
-
 def degenerate_div(numerator: Series, denominator: Series) -> Series:
     """Divide ``numerator`` by ``denominator``, reading a true 0/0 window as 0.0.
 
@@ -463,6 +444,14 @@ def degenerate_div(numerator: Series, denominator: Series) -> Series:
     nonzero numerator is a real division by zero and reads ``inf``; masking on
     the denominator alone would turn that into 0.0 and report the opposite of
     what the data says (``vhf`` makes the same distinction in its own mask).
+
+    Indicators that follow a TA-Lib formula mask on the divisor alone instead,
+    as TA-Lib does (``if diff != 0 ... else 0``), among them the former
+    ``non_zero_range`` users ``stoch``, ``stochf``, ``stochrsi``, ``dx``,
+    ``bop``, ``ad``/``adosc``, and ``kdj`` and ``cmf``, which inherit STOCH's and
+    AD's formula, next to ``willr``, ``rsi``, ``cci``, ``mfi`` and others. They read 0.0 where TA-Lib
+    does, also on malformed bars with a close outside a zero range; ``kama``'s
+    efficiency ratio reads 1.0 there, TA-Lib's KAMA value.
     """
     _require_input(numerator, "degenerate_div", "numerator")
     _require_input(denominator, "degenerate_div", "denominator")

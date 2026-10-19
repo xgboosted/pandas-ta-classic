@@ -8,7 +8,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _number, nan_on_short_input
@@ -45,11 +44,11 @@ def bop(
 
         bop = BOP(open_, high, low, close)
     else:
-        high_low_range = non_zero_range(high, low)
-        close_open_range = non_zero_range(close, open_)
+        high_low_range = high - low
+        close_open_range = close - open_
         bop = scalar * close_open_range / high_low_range
         # A fully flat bar (high == low, hence open == close) has no direction:
-        # TA-Lib returns 0 there, but epsilon/epsilon would yield a bogus +1.0.
+        # TA-Lib returns 0 there, where the division gives 0/0.
         bop = bop.where(high != low, 0.0)
 
     # Offset

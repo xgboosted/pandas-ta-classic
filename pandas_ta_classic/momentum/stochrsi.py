@@ -9,7 +9,6 @@ from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
@@ -93,8 +92,9 @@ def stochrsi(
     lowest_rsi = rsi_.rolling(length).min()
     highest_rsi = rsi_.rolling(length).max()
 
-    stoch = 100 * (rsi_ - lowest_rsi)
-    stoch /= non_zero_range(highest_rsi, lowest_rsi)
+    # A window with no RSI range reads 0.0, TA-Lib's marker (see willr).
+    rsi_range = highest_rsi - lowest_rsi
+    stoch = (100 * (rsi_ - lowest_rsi) / rsi_range).mask(rsi_range == 0, 0.0)
 
     stochrsi_k = ma(mamode, stoch, length=k)
     if stochrsi_k is None:

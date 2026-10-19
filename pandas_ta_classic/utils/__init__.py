@@ -1,3 +1,5 @@
+from typing import NoReturn
+
 from ._candles import candle_color
 from ._core import (
     apply_fill,
@@ -8,7 +10,6 @@ from ._core import (
     get_offset,
     is_datetime_ordered,
     is_percent,
-    non_zero_range,
     recent_maximum_index,
     recent_minimum_index,
     signed_series,
@@ -87,7 +88,6 @@ __all__ = [
     "linear_regression",
     "log_max_drawdown",
     "max_drawdown",
-    "non_zero_range",
     "np_rolling_moments",
     "optimal_leverage",
     "pascals_triangle",
@@ -107,3 +107,19 @@ __all__ = [
     "weights",
     "zero",
 ]
+
+# Removed in 0.9.0 without a deprecation step (AGENTS.md rule 11). Each name
+# answers with its replacement instead of a bare AttributeError.
+_REMOVED = {
+    "non_zero_range": (
+        "non_zero_range() was removed in 0.9.0: it replaced a zero difference with sys.float_info.epsilon, "
+        "which turned a degenerate window into an epsilon-scale or epsilon-inflated value. "
+        "Take the exact difference (high - low) and mask the divisor instead: (num / den).mask(den == 0, 0.0)"
+    ),
+}
+
+
+def __getattr__(name: str) -> NoReturn:
+    if name in _REMOVED:
+        raise AttributeError(_REMOVED[name])
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

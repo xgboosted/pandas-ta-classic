@@ -10,7 +10,6 @@ from pandas_ta_classic.utils import (
     apply_offset,
     get_drift,
     get_offset,
-    non_zero_range,
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
@@ -67,10 +66,14 @@ def kama(
         fr = weight(fast)
         sr = weight(slow)
 
-        abs_diff = non_zero_range(close, close.shift(length)).abs()
-        peer_diff = non_zero_range(close, close.shift(drift)).abs()
+        abs_diff = (close - close.shift(length)).abs()
+        peer_diff = (close - close.shift(drift)).abs()
         peer_diff_sum = peer_diff.rolling(length).sum()
-        er = abs_diff / peer_diff_sum
+        # A window with no movement has an efficiency ratio of 1.0, as in
+        # TA-Lib's KAMA, so the average closes on the price at the fast rate.
+        # An epsilon per diff made it eps / (length * eps) = 1 / length instead,
+        # and the average crawled towards a flat price at nearly the slow rate.
+        er = (abs_diff / peer_diff_sum).mask(peer_diff_sum == 0, 1.0)
         x = er * (fr - sr) + sr
         sc = x * x
 
