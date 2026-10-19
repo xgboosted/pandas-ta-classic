@@ -85,6 +85,10 @@ Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
+Zero volume:
+    A bar that moved on no volume divides by zero and reads +-inf; see
+    "Zero Volume" in the indicator reference.
+
 Returns:
     pd.Series
 """

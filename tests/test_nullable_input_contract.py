@@ -108,6 +108,19 @@ def test_pyarrow_input_matches_float64(dtype, frames):
         pd.testing.assert_frame_equal(_call(name, arrow), _call(name, base), obj=f"{name} {dtype}")
 
 
+@pytest.mark.parametrize("dtype", ["int64", "Int64"])
+def test_integer_ticks_match_float64(dtype, frames):
+    # Feeds deliver prices in ticks: whole numbers as int64, or as Int64 once a
+    # column holds a missing value. Prices included, not only the volume.
+    # Values must match exactly. Int64 is converted to float64 like the other
+    # nullable dtypes, so its dtype must match too; numpy int64 is left alone,
+    # and integer-valued results (ceil, npround, pvol, ...) keep int64 by numpy's rules.
+    base = (frames[0] * 100).round()
+    ticks = base.astype(dtype)
+    for name in INDICATORS:
+        pd.testing.assert_frame_equal(_call(name, ticks), _call(name, base), check_dtype=dtype == "Int64", obj=f"{name} {dtype}")
+
+
 def test_pyarrow_boolean_trend_matches_float64(frames):
     pytest.importorskip("pyarrow")
     c = frames[0]["close"]

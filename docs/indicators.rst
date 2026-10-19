@@ -71,6 +71,11 @@ indicator and every column it returns. The two exceptions are ``CPR_POSITION``
 and ``CPR_WIDTH_CLASS``, which are ``int8`` and cannot hold NaN, so they read 0
 on the bar before the first completed period.
 
+``tests/test_data_gaps_contract.py`` extends the missing-bar contract to a
+whole missing bar, a five-bar outage, a bar missing only its volume or only its
+high and low, a missing newest bar, and a calendar with missing days: an
+indicator that counts bars gives the same numbers whatever the timestamps.
+
 **Nullable input** (``Float64``, ``Int64`` and the other pandas extension
 numeric dtypes, as ``read_csv(dtype_backend="numpy_nullable")`` returns, and
 pyarrow numeric dtypes such as ``double[pyarrow]`` and ``int64[pyarrow]``) is
@@ -78,6 +83,26 @@ computed as float64, with ``pd.NA`` read as a missing bar (NaN). Results are
 the same as for the data in float64, dtype included: float64, not ``Float64``.
 As with any float64 data, ``Int64`` values beyond 2**53 lose precision.
 ``tests/test_nullable_input_contract.py`` checks every registered indicator.
+
+Zero Volume
+-----------
+
+A session with no volume -- a halt, an illiquid instrument, a feed that writes
+0 for "unknown" -- leaves the volume dividers without a value to divide by.
+What each one does, pinned in ``tests/test_degenerate_input.py`` so that any
+change is noticed:
+
+* ``emv`` and ``eom`` divide the bar's movement by its volume. A bar that moved
+  on no volume reads ``+-inf`` in ``emv``, and ``eom`` (a 14-bar average of the
+  same ratio) reads NaN for every window that contains it. A bar that did not
+  move reads 0.0.
+* ``marketfi`` divides the bar's range by its volume and reads ``inf`` for a
+  bar with a range and no volume.
+* ``cmf`` and ``vosc`` read NaN over a window with no volume at all (0/0).
+* ``vwma``, ``vwap`` and ``vwmacd`` read NaN over a window with no volume: a
+  volume-weighted price is undefined where nothing traded.
+
+Drop or fill zero-volume bars before computing these if a value is needed.
 
 Lookahead Bias and Causality
 -----------------------------
