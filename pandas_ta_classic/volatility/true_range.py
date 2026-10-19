@@ -2,7 +2,7 @@
 from typing import Any
 
 import numpy as np
-from pandas import Series, concat
+from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
@@ -49,9 +49,9 @@ def true_range(
         # CHANGELOG.md for the indicators that did.
         high_low_range = high - low
         prev_close = close.shift(drift)
-        ranges = [high_low_range, high - prev_close, prev_close - low]
-        true_range = concat(ranges, axis=1)
-        true_range = true_range.abs().max(axis=1)
+        # fmax skips NaN like max(axis=1) did: the first bar, with no previous
+        # close, still reads its high - low.
+        true_range = np.fmax(np.fmax(high_low_range.abs(), (high - prev_close).abs()), (prev_close - low).abs())
         # True range needs a previous close. max(axis=1) skips NaN, so the
         # first bar after a leading NaN run silently became high - low; blank
         # it like row 0, as TA-Lib does. A NaN mid-series is left as before.

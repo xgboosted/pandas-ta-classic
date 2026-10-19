@@ -1,7 +1,8 @@
 # Ultimate Oscillator (UO)
 from typing import Any
 
-from pandas import DataFrame, Series
+import numpy as np
+from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
@@ -32,13 +33,12 @@ def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, d
     Returns:
         Series: UO values scaled to 0-100.
     """
-    tdf = DataFrame({"high": high, "low": low, f"close_{drift}": close.shift(drift)})
-    # skipna=False so a missing previous close (the first `drift` bars) yields a
-    # NaN true range instead of silently using high/low.  Otherwise bar 0 gets
-    # TR = high - low and publishes a value one bar before TA-Lib.
-    max_h_or_pc = tdf.loc[:, ["high", f"close_{drift}"]].max(axis=1, skipna=False)
-    min_l_or_pc = tdf.loc[:, ["low", f"close_{drift}"]].min(axis=1, skipna=False)
-    del tdf
+    prev_close = close.shift(drift)
+    # maximum/minimum propagate NaN, so a missing previous close (the first
+    # `drift` bars) yields a NaN true range instead of silently using high/low.
+    # Otherwise bar 0 gets TR = high - low and publishes a value one bar before TA-Lib.
+    max_h_or_pc = np.maximum(high, prev_close)
+    min_l_or_pc = np.minimum(low, prev_close)
 
     bp = close - min_l_or_pc
     tr = max_h_or_pc - min_l_or_pc

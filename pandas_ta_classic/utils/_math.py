@@ -233,8 +233,19 @@ def weights(w: Any) -> Callable[[Any], Any]:
 
 def zero(x: float) -> float:
     """If the value is close to zero, then return zero. Otherwise return itself."""
-    # No _require_input: Series.apply runs this once per element (adx, dm, psar, cross).
+    # No _require_input: kept cheap for scalar callers; Series go through _zero_small.
     return 0 if abs(x) < sflt.epsilon else x
+
+
+def _zero_small(x: Series) -> Series:
+    """:func:`zero` for a whole Series in one pass: values closer to 0 than epsilon read 0.0.
+
+    ``Series.apply(zero)`` returned Python floats, so float32 input came back as
+    float64; the cast keeps that, so callers compute exactly as before.
+    """
+    if x.dtype.kind == "f" and x.dtype != np.float64:
+        x = x.astype(np.float64)
+    return x.mask(x.abs() < sflt.epsilon, 0.0)
 
 
 def df_error_analysis(dfA: DataFrame, dfB: DataFrame, *, corr_method: str = "pearson", plot: bool = False, triangular: bool = False) -> DataFrame:

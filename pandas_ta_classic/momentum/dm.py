@@ -11,9 +11,9 @@ from pandas_ta_classic.utils import (
     get_drift,
     get_offset,
     verify_series,
-    zero,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._math import _zero_small
 
 
 @nan_on_short_input
@@ -53,8 +53,8 @@ def dm(
         pos_ = ((up > dn) & (up > 0)) * up
         neg_ = ((dn > up) & (dn > 0)) * dn
 
-        pos_ = pos_.apply(zero)
-        neg_ = neg_.apply(zero)
+        pos_ = _zero_small(pos_)
+        neg_ = _zero_small(neg_)
 
         if mamode == "rma":
             # TA-Lib PLUS_DM/MINUS_DM: Wilder cumsum seeding —
@@ -107,8 +107,8 @@ Calculation:
         pos_ = ((up > dn) & (up > 0)) * up
         neg_ = ((dn > up) & (dn > 0)) * dn
 
-        pos_ = pos_.apply(zero)
-        neg_ = neg_.apply(zero)
+        pos_ = pos_.mask(pos_.abs() < eps, 0.0)
+        neg_ = neg_.mask(neg_.abs() < eps, 0.0)
 
         # For RMA (default), Wilder cumsum smoothing is used to match TA-Lib.
         # Other MA modes are applied via the standard MA pipeline.

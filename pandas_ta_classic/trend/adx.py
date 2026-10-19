@@ -11,9 +11,9 @@ from pandas_ta_classic.utils import (
     get_drift,
     get_offset,
     verify_series,
-    zero,
 )
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._math import _zero_small
 from pandas_ta_classic.utils._wilder import wilder_di
 from pandas_ta_classic.volatility.atr import atr
 from pandas_ta_classic.volatility.true_range import true_range
@@ -64,8 +64,8 @@ def adx(
         pos = ((up > dn) & (up > 0)) * up
         neg = ((dn > up) & (dn > 0)) * dn
 
-        pos = pos.apply(zero)
-        neg = neg.apply(zero)
+        pos = _zero_small(pos)
+        neg = _zero_small(neg)
 
         if mamode == "rma":
             # Wilder's smoothing with TA-Lib's seeding (sum of the first
