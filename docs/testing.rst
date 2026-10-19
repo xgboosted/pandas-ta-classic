@@ -60,15 +60,30 @@ TA-Lib (C library) and tulipy outputs to catch numerical divergence.
 ``test_oracle_talib.py`` needs ``ta-lib`` installed and skips without it;
 ``test_oracle_tulipy.py`` compares against tulipy values frozen in
 ``tests/fixtures/tulipy_oracle.json``, so tulipy itself is not needed.
-No oracle test passes ``talib=True``: that would compare TA-Lib with itself.
+No oracle test lets ``talib=True`` reach TA-Lib: that would compare TA-Lib
+with itself. (``test_oracle_registry.py`` passes it once, for ``cmo``, together
+with a ``scalar`` TA-Lib cannot express, which keeps the call native.)
+
+``test_oracle_registry.py`` compares every indicator and candle pattern with a
+TA-Lib counterpart from one table, on ``SPY_D`` and on frames that plant the
+data problems met so far: a fully flat series, a flat block, ``high == low``
+with a moving close, scattered flat and bodiless bars, malformed OHLC,
+zero-volume sessions, prices scaled by ``1e-6`` and ``1e6``, a flash spike and
+crash, and very large volume. It compares the NaN mask as well as the values, from the
+first bar both sides hold a value, so native giving up where TA-Lib answers is
+a failure rather than a bar dropped by ``dropna()``. An indicator listed with
+TA-Lib in ``indicator_support_matrix.rst`` must have a case in the table or a
+reason in ``NO_ORACLE``; known differences are strict xfails in
+``KNOWN_DIFFERENCES``.
 
 For indicators neither library covers, ``test_reference_ports.py`` compares
 against independent ports of the cited definitions (see *Reference ports*
 below). ``test_adversarial_review_fixes.py`` pins the defects found by the
 2026-09 review, each against a loop reference, TA-Lib or a decision table.
 
-**Files:** ``test_oracle_talib.py``, ``test_oracle_tulipy.py``,
-``test_reference_ports.py``, ``test_adversarial_review_fixes.py``.
+**Files:** ``test_oracle_talib.py``, ``test_oracle_registry.py``,
+``test_oracle_tulipy.py``, ``test_reference_ports.py``,
+``test_adversarial_review_fixes.py``.
 
 **Run:** ``python -m pytest tests/test_oracle_talib.py -v``
 
