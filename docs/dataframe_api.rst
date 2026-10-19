@@ -116,24 +116,25 @@ datetime_ordered
     # Otherwise it returns False.
     df.ta.datetime_ordered
 
-exchange
-~~~~~~~~
-
-.. code-block:: python
-
-    # Sets the Exchange
-    df.ta.exchange = "NYSE"
-
-    # Returns the Exchange
-    df.ta.exchange
-
 last_run
 ~~~~~~~~
 
+``df.ta.last_run`` is when ``df.ta(kind=...)`` or ``df.ta.strategy()`` last
+finished on this DataFrame, as a UTC :class:`datetime.datetime`, or ``None``
+before the first run. ``Strategy.created`` is a UTC ``datetime`` too.
+
 .. code-block:: python
 
-    # Returns the time it took to run the last indicator or strategy
-    df.ta.last_run
+    from zoneinfo import ZoneInfo
+
+    df.ta.strategy(ta.CommonStrategy)
+    df.ta.last_run                                          # datetime(..., tzinfo=timezone.utc)
+    df.ta.last_run.astimezone(ZoneInfo("America/New_York"))  # the same instant in New York
+
+.. note::
+   ``df.ta.exchange`` was removed in 0.9.0. It only chose whose clock the old
+   ``last_run`` string showed; reading or setting it raises ``AttributeError``.
+   Convert ``last_run`` to the time zone you need instead.
 
 reverse
 ~~~~~~~
@@ -245,7 +246,9 @@ Removed helpers
    ``df.ta.constants()``, ``ta.get_time``, ``ta.EXCHANGE_TZ`` and
    ``ta.CDL_PATTERN_NAMES`` were deprecated in 0.8.32 and removed in
    0.9.0. Add a constant column directly (``df["0"] = 0``) and use
-   ``ta.ALL_PATTERNS`` for the candle pattern names.
+   ``ta.ALL_PATTERNS`` for the candle pattern names. ``ta.utils.get_time``
+   and ``df.ta.exchange`` were removed in 0.9.0 as well; ``df.ta.last_run``
+   is a UTC ``datetime`` (see `last_run`_).
 
 chain
 ~~~~~

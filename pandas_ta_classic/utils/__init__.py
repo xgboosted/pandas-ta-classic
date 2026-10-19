@@ -55,7 +55,7 @@ from ._signals import (
     lag,
     signals,
 )
-from ._time import df_year_to_date, final_time, get_time, to_utc, total_time
+from ._time import df_year_to_date, final_time, to_utc, total_time
 
 __all__ = [
     "above",
@@ -80,7 +80,6 @@ __all__ = [
     "final_time",
     "get_drift",
     "get_offset",
-    "get_time",
     "is_datetime_ordered",
     "is_percent",
     "jensens_alpha",

@@ -13,8 +13,10 @@ Covers:
 """
 
 import inspect
+import json
 import warnings
 from contextlib import redirect_stdout
+from datetime import UTC, datetime
 from io import StringIO
 from multiprocessing import cpu_count
 from unittest import TestCase, skipIf
@@ -89,7 +91,6 @@ class TestAccessorHelperClassification(TestCase):
             "categories",
             "cores",
             "datetime_ordered",
-            "exchange",
             "last_run",
             "reverse",
             "time_range",
@@ -262,9 +263,22 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.df.ta.adjusted = None
         self.assertIsNone(self.df.ta.adjusted)
 
-    def test_exchange_persists(self):
-        self.df.ta.exchange = "LSE"
-        self.assertEqual(self.df.ta.exchange, "LSE")
+    def test_exchange_removed(self):
+        """df.ta.exchange only chose the clock in the last_run string; removed in 0.9.0.
+
+        Reading and setting both raise AttributeError: without the setter, pandas 3
+        would put the value on a throwaway accessor and the assignment would do
+        nothing. AttributeError, not TypeError, so feature checks keep working.
+        """
+        before = dict(self.df.attrs)
+        for value in ("NYSE", "LSE", None):
+            with self.subTest(value=value), self.assertRaisesRegex(AttributeError, r"df.ta.exchange was removed in 0.9.0"):
+                self.df.ta.exchange = value
+        with self.assertRaisesRegex(AttributeError, r"df.ta.exchange was removed in 0.9.0"):
+            _ = self.df.ta.exchange
+        self.assertFalse(hasattr(self.df.ta, "exchange"))
+        self.assertIsNone(getattr(self.df.ta, "exchange", None))
+        self.assertEqual(self.df.attrs, before)
 
     def test_time_range_unit_persists(self):
         self.df.ta.time_range = "years"
@@ -273,7 +287,7 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertGreater(self.df.ta.time_range, years)
 
     def test_invalid_settings_raise(self):
-        """-1, 1.0 and True became cpu_count(); an unknown exchange was ignored; a non-str adjusted became None."""
+        """-1, 1.0 and True became cpu_count(); a non-str adjusted became None."""
         for bad in (-1, 1.0, True, "2"):
             with self.assertRaisesRegex(ValueError, r"df.ta.cores must be an integer >= 0 or None"):
                 self.df.ta.cores = bad
@@ -281,20 +295,13 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertEqual(self.df.ta.cores, cpu_count())  # capped, as documented
         self.df.ta.cores = None
         self.assertEqual(self.df.ta.cores, 0)  # None resets to the serial default
-        with self.assertRaisesRegex(ValueError, r"df.ta.exchange must be one of .* got 'nope'"):
-            self.df.ta.exchange = "nope"
-        self.df.ta.exchange = "LSE"
-        self.df.ta.exchange = None
-        self.assertEqual(self.df.ta.exchange, "NYSE")
         with self.assertRaisesRegex(ValueError, r"df.ta.adjusted must be a column name or None, got 5"):
             self.df.ta.adjusted = 5
 
     def test_settings_do_not_leak_to_other_frames(self):
         self.df.ta.cores = 2
-        self.df.ta.exchange = "LSE"
         other = get_sample_data()
         self.assertEqual(other.ta.cores, 0)  # the serial default, not this frame's 2
-        self.assertEqual(other.ta.exchange, "NYSE")
 
     def test_accessing_df_ta_does_not_mutate_attrs(self):
         """Touching df.ta must not write into the caller's DataFrame.attrs."""
@@ -305,8 +312,38 @@ class TestAccessorSettablePropertiesPersist(TestCase):
         self.assertIsNone(self.df.ta.last_run)
 
     def test_last_run_set_after_an_indicator_runs(self):
+        # A UTC timestamp, not the old display string built from the local
+        # clock plus a fixed exchange offset.
+        before = datetime.now(UTC)
         self.df.ta(kind="sma", length=10)
-        self.assertIsInstance(self.df.ta.last_run, str)
+        last_run = self.df.ta.last_run
+        self.assertIs(type(last_run), datetime)  # stdlib, not pd.Timestamp (a subclass)
+        self.assertIs(last_run.tzinfo, UTC)
+        self.assertTrue(before <= last_run <= datetime.now(UTC))
+        self.df.ta.strategy(pandas_ta_classic.CommonStrategy)
+        self.assertGreaterEqual(self.df.ta.last_run, last_run)
+
+    def test_last_run_names_a_stamp_it_cannot_read(self):
+        # 0.8.32 stored get_time()'s display string; fromisoformat() raised on it without naming last_run.
+        for stamp in (
+            "Thursday October 17, 2026, NYSE: 7:48:00, Local: 13:48:00 CEST, Day 290/365 (79.0%)",
+            datetime.now(UTC),
+            "2026-10-17T10:00:00",  # no offset: would come back naive, not UTC
+            "2026-10-17T10:00:00+02:00",  # an offset, but not UTC
+        ):
+            self.df.attrs["_ta_last_run"] = stamp
+            with self.subTest(stamp=stamp), self.assertRaisesRegex(ValueError, r"df.ta.last_run: .* not a UTC ISO timestamp \(a frame saved by 0.8.x"):
+                _ = self.df.ta.last_run
+        self.df.ta(kind="sma", length=10)  # overwrites it
+        self.assertIs(self.df.ta.last_run.tzinfo, UTC)
+
+    def test_attrs_stay_json_serialisable(self):
+        # to_parquet() runs json.dumps(df.attrs), and to_feather() drops attrs it cannot
+        # serialise: a datetime stored there broke both after any indicator ran.
+        self.df.ta(kind="sma", length=10)
+        json.dumps(self.df.attrs)
+        self.df.ta.strategy(pandas_ta_classic.CommonStrategy)
+        json.dumps(self.df.attrs)
 
     def test_version_kwarg_removed_and_show_version_validated(self):
         # the 'version' alias of show_version was removed in 0.9.0; the

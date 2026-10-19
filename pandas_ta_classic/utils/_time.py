@@ -1,13 +1,8 @@
-import logging
-from time import localtime, perf_counter
+from time import perf_counter
 
 from pandas import DataFrame, DatetimeIndex, Timestamp
 
-from pandas_ta_classic._meta import EXCHANGE_TZ
-
 from ._core import _require_input
-
-logger = logging.getLogger(__name__)
 
 
 def df_year_to_date(df: DataFrame) -> DataFrame:
@@ -26,42 +21,6 @@ def final_time(stime: float) -> str:
     _require_input(stime, "final_time", "stime")
     time_diff = perf_counter() - stime
     return f"{time_diff * 1000:2.4f} ms ({time_diff:2.4f} s)"
-
-
-def get_time(exchange: str = "NYSE", full: bool = True, to_string: bool = False) -> str:
-    """Returns Current Time, Day of the Year and Percentage, and the current
-    time of the selected Exchange. Always returns the formatted time string.
-    When to_string=False (default), also prints to stdout."""
-    # A non-str used to fall back to NYSE without a word, and an unknown name
-    # raised a bare KeyError naming neither the function nor the parameter.
-    if exchange is None:
-        exchange = "NYSE"
-    elif not isinstance(exchange, str):
-        raise ValueError(f"get_time() exchange must be a str, got {type(exchange).__name__} {exchange!r}")
-    exchange = exchange.upper()
-    if exchange not in EXCHANGE_TZ:
-        raise ValueError(f"get_time() unknown exchange {exchange!r}; valid: {sorted(EXCHANGE_TZ)}")
-    tz = EXCHANGE_TZ[exchange]
-
-    today = Timestamp.now()
-    date = f"{today.day_name()} {today.month_name()} {today.day}, {today.year}"
-
-    _today = today.timetuple()
-    exchange_time = f"{(_today.tm_hour + tz) % 24}:{_today.tm_min:02d}:{_today.tm_sec:02d}"
-
-    if full:
-        lt = localtime()
-        local_ = f"Local: {lt.tm_hour}:{lt.tm_min:02d}:{lt.tm_sec:02d} {lt.tm_zone}"
-        doy = f"Day {today.dayofyear}/365 ({100 * round(today.dayofyear / 365, 2):.2f}%)"
-        exchange_ = f"{exchange}: {exchange_time}"
-
-        s = f"{date}, {exchange_}, {local_}, {doy}"
-    else:
-        s = f"{date}, {exchange}: {exchange_time}"
-
-    if not to_string:
-        logger.debug(s)
-    return s
 
 
 TIME_RANGE_UNITS = ("years", "months", "weeks", "days", "hours", "minutes", "seconds")

@@ -26,6 +26,7 @@ Running
 
 import math
 import warnings
+from datetime import UTC, datetime
 from fractions import Fraction
 from unittest import TestCase
 
@@ -722,6 +723,46 @@ class TestDataFrameAccessorInvariants(TestCase):
         result = df.ta.bbands(length=20)
         assert isinstance(result, pd.DataFrame)
         assert any(col.startswith("BB") for col in result.columns)
+
+    @given(
+        ohlcv_dataframe(min_size=30, max_size=60),
+        st.one_of(st.none(), st.text(max_size=8), st.integers(), st.floats(allow_nan=True), st.booleans()),
+    )
+    @settings(
+        max_examples=50,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=2000,
+    )
+    def test_df_ta_removed_exchange_rejects_any_value(self, df, value):
+        """Assigning to the removed df.ta.exchange raises instead of vanishing.
+
+        pandas 3 builds a new accessor per access, so without a raising setter
+        the value would land on a throwaway instance and do nothing at all.
+        """
+        before = dict(df.attrs)
+        with pytest.raises(AttributeError, match="df.ta.exchange was removed in 0.9.0"):
+            df.ta.exchange = value
+        assert df.attrs == before
+
+    @given(
+        ohlcv_dataframe(min_size=30, max_size=60),
+        st.lists(st.sampled_from(["sma", "rsi", "macd"]), min_size=1, max_size=5),
+    )
+    @settings(
+        max_examples=30,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=2000,
+    )
+    def test_df_ta_last_run_is_a_utc_timestamp_of_each_run(self, df, kinds):
+        """last_run is a stdlib UTC datetime taken during the run, whatever ran."""
+        for kind in kinds:
+            before = datetime.now(UTC)
+            df.ta(kind=kind)
+            after = datetime.now(UTC)
+            last_run = df.ta.last_run
+            assert type(last_run) is datetime
+            assert last_run.tzinfo is UTC
+            assert before <= last_run <= after
 
     @given(ohlcv_dataframe(min_size=30, max_size=150))
     @settings(
