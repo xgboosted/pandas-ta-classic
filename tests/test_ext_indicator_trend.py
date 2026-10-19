@@ -160,9 +160,12 @@ class TestTrendExtension(TestCase):
         self.assertEqual(list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
 
     def test_adxr_ext(self):
-        self.data.ta.adxr(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-3:]), ["DMP_14", "DMN_14", "ADXR_14"])
+        # A frame of its own: on the shared one, test_adx_ext has already appended
+        # DMP_14/DMN_14, so append=True overwrote them in place and ADXR_14 came
+        # last only when the tests ran in file order.
+        data = get_sample_data()
+        data.ta.adxr(append=True)
+        self.assertEqual(list(data.columns[-3:]), ["ADXR_14", "DMP_14", "DMN_14"])
 
     def test_dx_ext(self):
         self.data.ta.dx(append=True)
