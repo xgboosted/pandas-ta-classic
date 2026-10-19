@@ -1012,3 +1012,23 @@ def test_no_column_carries_an_epsilon_scale_value(name: str, label: str, frames)
         numeric = pd.to_numeric(values, errors="coerce")
         tiny = numeric[_epsilon_scale(numeric)]
         assert tiny.empty, f"{column}: {len(tiny)} epsilon-scale values on the {label} frame, e.g. {tiny.iloc[0]!r} at {tiny.index[0]}"
+
+
+def test_stochrsi_reads_zero_where_the_rsi_only_wobbles() -> None:
+    """A flat block after real movement leaves the RSI constant up to 1e-14.
+
+    Wilder's averages decay by the same factor every flat bar, so their ratio --
+    the RSI -- does not change in exact arithmetic; in floating point it wobbles
+    by about 1e-14. %K divided that wobble by itself and read anything in
+    0..100 (TA-Lib's STOCHRSI before 0.8 still does). Once the %K window sits wholly in the
+    block, the window has no RSI range and reads the 0.0 marker.
+    """
+    frame = _block_frame()
+    length = rsi_length = 14
+    result = ta.stochrsi(frame["close"], length=length, rsi_length=rsi_length, k=1, d=1)
+    k = result[f"STOCHRSIk_{length}_{rsi_length}_1_1"]
+    # The RSI is constant from the block's second bar; the %K window then needs
+    # `length` of those bars.
+    inside = k.iloc[100 + 1 + length : 140]
+    assert not inside.empty
+    assert (inside == 0.0).all(), f"STOCHRSIk on a flat block: {sorted(set(inside))[:5]}"
