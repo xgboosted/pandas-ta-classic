@@ -607,7 +607,6 @@ class TestIndicatorOutputInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_sma_returns_series_with_length_name(self, s, length):
         assume(len(s) >= length + 2)
         result = ta.sma(s, length=length, talib=False)
@@ -620,7 +619,6 @@ class TestIndicatorOutputInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_ema_returns_series_with_length_name(self, s, length):
         assume(len(s) >= length + 2)
         result = ta.ema(s, length=length, talib=False)
@@ -633,7 +631,6 @@ class TestIndicatorOutputInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_rsi_returns_series_with_length_name(self, s, length):
         assume(len(s) >= length + 2)
         result = ta.rsi(s, length=length, talib=False)
@@ -646,7 +643,6 @@ class TestIndicatorOutputInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_mom_returns_series_with_length_name(self, s, length):
         assume(len(s) >= length + 2)
         result = ta.mom(s, length=length, talib=False)
@@ -658,7 +654,6 @@ class TestIndicatorOutputInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_roc_returns_series_with_length_name(self, s, length):
         assume(len(s) >= length + 2)
         result = ta.roc(s, length=length, talib=False)
@@ -670,7 +665,6 @@ class TestIndicatorOutputInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_stdev_returns_series_with_length_name(self, s, length):
         assume(len(s) >= length + 2)
         result = ta.stdev(s, length=length, talib=False)
@@ -679,7 +673,6 @@ class TestIndicatorOutputInvariants(TestCase):
         assert str(length) in result.name
 
     @given(price_series(min_size=60, max_size=200, allow_nan=False))
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_bbands_returns_dataframe_with_columns(self, s):
         result = ta.bbands(s, length=20, talib=False)
         if result is not None:
@@ -694,7 +687,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     @given(ohlcv_dataframe(min_size=30, max_size=150))
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_df_ta_sma_no_crash(self, df):
@@ -705,7 +697,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     @given(ohlcv_dataframe(min_size=30, max_size=150))
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_df_ta_rsi_no_crash(self, df):
@@ -716,7 +707,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     @given(ohlcv_dataframe(min_size=30, max_size=150))
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_df_ta_bbands_no_crash(self, df):
@@ -730,7 +720,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     )
     @settings(
         max_examples=50,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_df_ta_removed_exchange_rejects_any_value(self, df, value):
@@ -750,7 +739,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     )
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_df_ta_last_run_is_a_utc_timestamp_of_each_run(self, df, kinds):
@@ -767,7 +755,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     @given(ohlcv_dataframe(min_size=30, max_size=150))
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_df_ta_append_adds_column(self, df):
@@ -782,7 +769,6 @@ class TestDataFrameAccessorInvariants(TestCase):
     )
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=5000,
     )
     def test_df_ta_append_leaves_warning_filters_unchanged(self, df, kinds, bad_col_names):
@@ -837,7 +823,6 @@ class TestMathematicalInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_sma_of_constant_equals_constant(self, s, length):
         """If input is constant, SMA must equal that constant for valid rows."""
         assume(len(s) >= length + 2)
@@ -852,7 +837,6 @@ class TestMathematicalInvariants(TestCase):
         price_series(min_size=50, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_rsi_no_crash_and_has_name(self, s, length):
         """RSI must not crash and must return a Series with length in name."""
         assume(len(s) >= length + 2)
@@ -864,7 +848,6 @@ class TestMathematicalInvariants(TestCase):
             assert str(length) in result.name
 
     @given(price_series(min_size=60, max_size=200, allow_nan=False))
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_bbands_lower_mid_upper_ordering(self, s):
         """BBANDS: lower ≤ mid ≤ upper for every row."""
         result = ta.bbands(s, length=20, std=2.0, talib=False)
@@ -880,7 +863,6 @@ class TestMathematicalInvariants(TestCase):
     @given(ohlcv_dataframe(min_size=60, max_size=150))
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_atr_non_negative(self, df):
@@ -894,7 +876,6 @@ class TestMathematicalInvariants(TestCase):
     @given(ohlcv_dataframe(min_size=60, max_size=150))
     @settings(
         max_examples=30,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=2000,
     )
     def test_stoch_no_crash_and_dataframe(self, df):
@@ -911,7 +892,6 @@ class TestMathematicalInvariants(TestCase):
             assert len(result.columns) >= 2  # STOCHk and STOCHd
 
     @given(price_series(min_size=60, max_size=200, allow_nan=False))
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_stdev_non_negative(self, s):
         """Standard deviation must be non-negative."""
         result = ta.stdev(s, length=10, talib=False)
@@ -924,7 +904,6 @@ class TestMathematicalInvariants(TestCase):
         price_series(min_size=30, max_size=200, allow_nan=False),
         _small_positive_int,
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_mom_roc_relationship(self, s, length):
         """MOM and ROC relationship: ROC ≈ (MOM / close[t-length]) * 100."""
         assume(len(s) >= length + 2)
@@ -1021,7 +1000,7 @@ class TestPropertyBasedEdgeCases(TestCase):
         price_series(min_size=5, max_size=50, allow_nan=False),
         st.integers(min_value=1, max_value=5),
     )
-    @settings(suppress_health_check=[HealthCheck.filter_too_much])
+    @settings(suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])  # replaces the conftest profile's list
     def test_sma_short_series_no_crash(self, s, length):
         """Very short series must not crash SMA."""
         assume(len(s) >= length)
