@@ -81,8 +81,8 @@ def test_one_missing_bar(name, frames):
 # pointed at the gap, psl counted it as a down bar.
 #
 # Values taken from earlier bars by definition: the forward-shifted Ichimoku spans,
-# the previous period's pivots, Fisher's one-bar-lagged trigger.
-FROM_EARLIER_BARS = {"cpr", "fisher", "ichimoku"}
+# the previous period's pivots.
+FROM_EARLIER_BARS = {"cpr", "ichimoku"}
 # Found 2026-10-01 publishing at a fully missing bar, against the rule above; not
 # yet reviewed. Recursive smoothers carry their state through the gap, flags default
 # to 0 or 1 (increasing 0, cdl_doji 0). Each one either moves to
