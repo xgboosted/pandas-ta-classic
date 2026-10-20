@@ -2,7 +2,7 @@
 from typing import Any
 
 import numpy as np
-from pandas import DataFrame, Series
+from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.overlap.hlc3 import hlc3
@@ -53,27 +53,24 @@ def mfi(
         typical_price = hlc3(high=high, low=low, close=close)
         raw_money_flow = typical_price * volume
 
-        tdf = DataFrame({"diff": 0, "rmf": raw_money_flow, "+mf": 0.0, "-mf": 0.0})
-
-        tdf.loc[(typical_price.diff(drift) > 0), "diff"] = 1
-        tdf.loc[tdf["diff"] == 1, "+mf"] = raw_money_flow
-
-        tdf.loc[(typical_price.diff(drift) < 0), "diff"] = -1
-        tdf.loc[tdf["diff"] == -1, "-mf"] = raw_money_flow
+        # where(), not a .loc assignment: assigning a Series aligns it by label,
+        # which raises on a duplicated index label.
+        change = typical_price.diff(drift)
+        positive_flow = raw_money_flow.where(change > 0, 0.0)
+        negative_flow = raw_money_flow.where(change < 0, 0.0)
         # The first `drift` bars have no previous price, so their flow is undefined,
         # not zero; a window that includes them is incomplete (TA-Lib and tulipy
         # start at bar `length`).
-        tdf.iloc[:drift, tdf.columns.get_indexer(["+mf", "-mf"])] = np.nan
+        positive_flow.iloc[:drift] = np.nan
+        negative_flow.iloc[:drift] = np.nan
 
-        psum = tdf["+mf"].rolling(length).sum()
-        nsum = tdf["-mf"].rolling(length).sum()
-        tdf["mr"] = psum / nsum
+        psum = positive_flow.rolling(length).sum()
+        nsum = negative_flow.rolling(length).sum()
         # A window with no price movement has no money flow in either
         # direction, so this divides 0/0. TA-Lib reads 0.0 there; see
         # tests/test_degenerate_input.py.
         denominator = psum + nsum
         mfi = (100 * psum / denominator).mask(denominator == 0, 0.0)
-        tdf["mfi"] = mfi
 
     # Offset
     mfi = apply_offset(mfi, offset)

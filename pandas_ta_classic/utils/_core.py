@@ -10,7 +10,7 @@ from numbers import Real
 from typing import Any, TypeGuard
 
 import numpy as np
-from pandas import DataFrame, DatetimeIndex, RangeIndex, Series, date_range
+from pandas import DataFrame, DatetimeIndex, Index, RangeIndex, Series, date_range
 from pandas.api.extensions import ExtensionDtype
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
 
@@ -118,10 +118,21 @@ def _on_valid_rows(series: Series, smooth: Callable[[Series], Series | None]) ->
 
     Returns None when *smooth* does.
     """
-    result = smooth(series.loc[series.first_valid_index() :])
+    valid = series.notna().to_numpy()
+    start = int(valid.argmax()) if valid.any() else 0
+    result = smooth(series.iloc[start:])
     if result is None:
         return None
-    return result.reindex(series.index)
+    return pad_positions(result, series.index, np.arange(start, series.size))
+
+
+def pad_positions(result: Any, index: Index, positions: np.ndarray) -> Any:
+    """*result*, one row per entry of *positions*, placed on *index* with NaN elsewhere.
+
+    By position rather than label: ``result.reindex(index)`` raises on a
+    duplicated index label, which an indicator otherwise computes through.
+    """
+    return result.set_axis(positions).reindex(np.arange(len(index))).set_axis(index)
 
 
 def _bool_param(val: Any, default: bool, name: str, *, caller: str | None = None) -> bool:
@@ -257,7 +268,7 @@ def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
             result = fn(*bound.args, **bound.kwargs)
             if result is None:
                 return None
-            padded = result.reindex(primary[0].index)
+            padded = pad_positions(result, primary[0].index, np.arange(size)[rows])
             for attr in ("name", "category"):
                 if hasattr(result, attr):
                     setattr(padded, attr, getattr(result, attr))

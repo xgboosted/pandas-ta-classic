@@ -155,6 +155,37 @@ def test_result_keeps_the_input_index(name: str, frame: dict[str, pd.Series]) ->
         assert part.index.equals(expected), f"{name} replaced the input index (got {type(part.index).__name__})"
 
 
+# A duplicated timestamp moves its bar into the previous bar's calendar day.
+_DUPLICATE_LABEL_EXEMPT = _EXEMPT | {"vwap"}
+
+
+@pytest.mark.parametrize("lead", [0, 20], ids=["plain", "leading-nan"])
+@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _DUPLICATE_LABEL_EXEMPT])
+def test_a_duplicated_index_label_computes_like_a_unique_one(name: str, lead: int, frame: dict[str, pd.Series]) -> None:
+    """One repeated label changes no value: indicators work by position.
+
+    dema, kvo, mfi, stoch, stochf, t3 and tema raised pandas' "cannot reindex
+    on an axis with duplicate labels" from a label-based reindex or ``.loc``
+    assignment, where every other indicator computed. ``lead`` adds a leading
+    NaN run, which takes the trimming paths (``skip_leading_nan``,
+    ``_on_valid_rows``, ``_ema_chain``).
+    """
+    unique = {k: v.copy() for k, v in frame.items()}
+    for series in unique.values():
+        series.iloc[:lead] = np.nan
+    labels = frame["close"].index.tolist()
+    labels[100] = labels[99]
+    duplicated = {k: v.set_axis(pd.DatetimeIndex(labels)) for k, v in unique.items()}
+    expected, got = _results(name, unique), _results(name, duplicated)
+    assert len(got) == len(expected), f"{name} returned {len(got)} results, expected {len(expected)}"
+    for want, have in zip(expected, got):
+        pd.testing.assert_frame_equal(
+            have.to_frame() if isinstance(have, pd.Series) else have,
+            (want.to_frame() if isinstance(want, pd.Series) else want).set_axis(have.index),
+            check_names=False,
+        )
+
+
 def _accepts(name: str, parameter: str) -> bool:
     """Whether indicator *name* declares *parameter*."""
     return parameter in inspect.signature(getattr(ta, name)).parameters
