@@ -4,9 +4,8 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.mom import mom
-from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simplify_columns
-from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.overlap.sma import sma
+from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simplify_columns, _squeeze_use_tr
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
@@ -56,10 +55,10 @@ def squeeze_pro(
     if high is None or low is None or close is None:
         return None
 
-    use_tr = kwargs.setdefault("tr", True)
+    use_tr = _squeeze_use_tr(use_tr, kwargs, "squeeze_pro")
     asint = _bool_param(kwargs.pop("asint", None), True, "asint")
     detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
@@ -100,10 +99,7 @@ def squeeze_pro(
     kch_narrow.columns = _squeeze_simplify_columns(kch_narrow)
 
     momo = mom(close, length=mom_length)
-    if mamode.lower() == "ema":
-        squeeze = ema(momo, length=mom_smooth)
-    else:  # "sma"
-        squeeze = sma(momo, length=mom_smooth)
+    squeeze = ma(mamode, momo, length=mom_smooth)
 
     # Classify Squeezes
     squeeze_on_wide = (bbd.l > kch_wide.l) & (bbd.u < kch_wide.u)
@@ -214,8 +210,7 @@ Calculation:
     BB = Bollinger Bands
     KC = Keltner Channels
     MOM = Momentum
-    SMA = Simple Moving Average
-    EMA = Exponential Moving Average
+    MA = the moving average mamode selects, see help(ta.ma)
     TR = True Range
 
     RANGE = TR(high, low, close) if using_tr else high - low
@@ -225,10 +220,7 @@ Calculation:
     KC_LOW_NARROW, KC_MID_NARROW, KC_HIGH_NARROW = KC(high, low, close, kc_length, kc_scalar_narrow, TR)
 
     MOMO = MOM(close, mom_length)
-    if mamode == "ema":
-        SQZPRO = EMA(MOMO, mom_smooth)
-    else:
-        SQZPRO = EMA(momo, mom_smooth)
+    SQZPRO = MA(mamode, MOMO, mom_smooth)
 
     SQZPRO_ON_WIDE  = (BB_LOW > KC_LOW_WIDE) and (BB_HIGH < KC_HIGH_WIDE)
     SQZPRO_ON_NORMAL  = (BB_LOW > KC_LOW_NORMAL) and (BB_HIGH < KC_HIGH_NORMAL)
@@ -248,14 +240,15 @@ Args:
     kc_scalar_narrow (float): Keltner Channel scalar for narrow channel. Default: 1
     mom_length (int): Momentum Period. Default: 12
     mom_smooth (int): Smoothing Period of Momentum. Default: 6
-    mamode (str): Only "ema" or "sma". Default: "sma"
+    use_tr (bool): Use True Range for Keltner Channels. Default: True
+    mamode (str): The MA of the bands and of the momentum smoothing.
+        See ``help(ta.ma)``. Default: "sma"
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
-    tr (value, optional): Use True Range for Keltner Channels. Default: True
+    tr (value, optional): Older name of ``use_tr``; passing both raises.
     asint (value, optional): Flags as numbers (1.0/0.0) instead of bool; NaN on
         warm-up bars, where the bands do not exist yet. Default: True
-    mamode (value, optional): Which MA to use. Default: "sma"
     detailed (value, optional): Return additional variations of SQZ for
         visualization. Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)

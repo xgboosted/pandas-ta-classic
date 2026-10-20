@@ -99,3 +99,27 @@ def test_every_boolean_parameter_changes_the_result(name, flag, frame):
     off = _frame(func(**inputs(name, frame), **{flag: False}))
     same_values = on.shape == off.shape and np.array_equal(on.to_numpy(float, na_value=np.nan), off.to_numpy(float, na_value=np.nan), equal_nan=True)
     assert not (same_values and list(on.columns) == list(off.columns)), f"{name}({flag}=True) == {name}({flag}=False)"
+
+
+@pytest.mark.parametrize("name", ["squeeze", "squeeze_pro"])
+def test_squeeze_tr_is_the_older_name_of_use_tr(name, frame):
+    """The docstring listed `tr` under Kwargs and the signature `use_tr`; only `tr` was read."""
+    func = getattr(ta, name)
+    df = frame.iloc[-300:]
+    assert func(df.high, df.low, df.close, tr=False).equals(func(df.high, df.low, df.close, use_tr=False))
+    with pytest.raises(TypeError, match=rf"{name}\(\) got both use_tr and tr"):
+        func(df.high, df.low, df.close, use_tr=False, tr=True)
+
+
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        (lambda df: ta.qstick(df.open, df.close, ma="bogus"), r"qstick\(\) ma must be one of"),
+        (lambda df: ta.squeeze(df.high, df.low, df.close, mamode="bogus"), r"squeeze\(\) mamode must be one of"),
+        (lambda df: ta.squeeze_pro(df.high, df.low, df.close, mamode="bogus"), r"squeeze_pro\(\) mamode must be one of"),
+    ],
+)
+def test_an_unknown_ma_names_the_function_called(call, message, frame):
+    """qstick(ma="bogus") used to return an SMA; squeeze's error named bbands' ma()."""
+    with pytest.raises(ValueError, match=message):
+        call(frame.iloc[-300:])

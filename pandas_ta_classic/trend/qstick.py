@@ -3,18 +3,14 @@ from typing import Any
 
 from pandas import Series
 
-from pandas_ta_classic.overlap.dema import dema
-from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.overlap.hma import hma
-from pandas_ta_classic.overlap.rma import rma
-from pandas_ta_classic.overlap.sma import sma
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -28,7 +24,9 @@ def qstick(
     """Indicator: Q Stick"""
     # Validate Arguments
     length = _pos_int(length, 10, "length")
-    ma = kwargs.pop("ma", "sma")
+    mamode = _str_param(kwargs.pop("ma", None), "sma", "ma", choices=ma())
+    # The fill applies to the result only; the other options go to the chosen MA (ema's adjust, talib)
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     open_ = verify_series(open_, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
@@ -42,16 +40,7 @@ def qstick(
     # ever reached the output as 2.2e-16 of body where there was none.
     diff = close - open_
 
-    if ma == "dema":
-        qstick = dema(diff, length=length, **kwargs)
-    elif ma == "ema":
-        qstick = ema(diff, length=length, **kwargs)
-    elif ma == "hma":
-        qstick = hma(diff, length=length)
-    elif ma == "rma":
-        qstick = rma(diff, length=length)
-    else:  # "sma"
-        qstick = sma(diff, length=length)
+    qstick = ma(mamode, diff, length=length, **kwargs)
 
     if qstick is None:
         return None
@@ -59,7 +48,7 @@ def qstick(
     # Offset
     qstick = apply_offset(qstick, offset)
 
-    qstick = apply_fill(qstick, **kwargs)
+    qstick = apply_fill(qstick, **fill_kwargs)
 
     # Name and Categorize it
     qstick.name = f"QS_{length}"
@@ -79,14 +68,14 @@ Sources:
 Calculation:
     Default Inputs:
         length=10
-    xMA is one of: sma (default), dema, ema, hma, rma
+    xMA is any MA of help(ta.ma); sma by default
     qstick = xMA(close - open, length)
 
 Args:
     open_ (pd.Series): Series of 'open's
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
-    ma (str): The type of moving average to use. Default: None, which is 'sma'
+    ma (str): The moving average to use, see help(ta.ma). Default: 'sma'
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
