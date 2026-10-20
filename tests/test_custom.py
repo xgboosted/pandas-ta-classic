@@ -6,6 +6,9 @@ import tempfile
 import types
 from unittest import TestCase
 
+import pytest
+from hypothesis import given, settings, strategies as st
+
 import pandas_ta_classic
 from pandas_ta_classic import AnalysisIndicators
 from pandas_ta_classic.custom import (
@@ -322,3 +325,45 @@ class TestCustom(TestCase):
             self.assertEqual(getattr(pandas_ta_classic, name)(10), 3000)
         finally:
             self._unload(name, cat_dir)
+
+
+# import_dir() bound each module as it went, so a refused file left every module
+# before it bound and listed in Category. Whatever the directory holds, a refusal
+# must leave pandas_ta_classic as it was.
+_BAD_FILES = {
+    "no_function": "def unrelated(close):\n    return close\n",
+    "no_method": "def {name}(close, **kwargs):\n    return close\n",
+    "raises": "raise RuntimeError('boom')\n",
+}
+_atomic_counter = iter(range(10**9))
+
+
+@settings(max_examples=40, deadline=None)
+@given(
+    good=st.lists(st.sampled_from(["momentum", "trend", "volume"]), min_size=1, max_size=4),
+    bad_category=st.sampled_from(["momentum", "trend", "volume"]),
+    bad_kind=st.sampled_from(sorted(_BAD_FILES)),
+)
+def test_import_dir_binds_nothing_when_one_file_is_refused(good, bad_category, bad_kind):
+    run = next(_atomic_counter)
+    names = [f"_test_atomic_{run}_{i}_" for i in range(len(good))]
+    bad = f"_test_atomic_{run}_bad_"
+    category_before = {k: list(v) for k, v in pandas_ta_classic.Category.items()}
+    path_before = list(sys.path)
+    with tempfile.TemporaryDirectory(prefix="pta_atomic_") as base:
+        for name, category in zip(names, good, strict=True):
+            TestCustom._write_indicator(os.path.join(base, category), name, 2)
+        os.makedirs(os.path.join(base, bad_category), exist_ok=True)
+        with open(os.path.join(base, bad_category, f"{bad}.py"), "w") as f:
+            f.write(_BAD_FILES[bad_kind].format(name=bad))
+        try:
+            with pytest.raises(ImportError, match=bad):
+                import_dir(base, verbose=False)
+            bound = [n for n in names if hasattr(pandas_ta_classic, n) or hasattr(AnalysisIndicators, n)]
+            assert not bound, f"bound before the refusal: {bound}"
+            assert {k: list(v) for k, v in pandas_ta_classic.Category.items()} == category_before
+            assert sys.path == path_before
+        finally:
+            for name in [*names, bad]:
+                TestCustom._unload(name)
+            sys.path[:] = path_before
