@@ -625,7 +625,8 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
 
     A nullable or pyarrow numeric or boolean Series (``Float64``, ``Int64``,
     ``boolean``, ``int64[pyarrow]``, ``bool[pyarrow]``, ...) is returned as a
-    new float64 Series with ``pd.NA`` as NaN. Indicators compute on float64:
+    new float64 Series with ``pd.NA`` as NaN, and so is a numpy ``float32`` or
+    ``float16`` Series. Indicators compute on float64:
     with the nullable dtype a comparison against a NaN warm-up value gives
     ``pd.NA`` instead of False, and ``astype(int)`` or a truth test on it
     raises.
@@ -642,6 +643,11 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
         # kind "b": bool[pyarrow] is not numeric to pandas, while the nullable boolean is
         if isinstance(series.dtype, ExtensionDtype) and (is_numeric_dtype(series.dtype) or series.dtype.kind == "b"):
             return Series(series.to_numpy(dtype=float, na_value=np.nan), index=series.index, name=series.name)
+        # float32/float16 input computes in float64 too: the result stayed float32 in
+        # 54 indicators, mixed with float64 in 4 more, and lost digits on the way.
+        # numpy integers are left alone (tests/test_nullable_input_contract.py).
+        if series.dtype.kind == "f" and series.dtype != np.float64:
+            return series.astype(np.float64)
         return series
     if series is not None:
         indicator = sys._getframe(1).f_code.co_name  # the indicator that called verify_series
