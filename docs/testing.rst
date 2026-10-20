@@ -132,8 +132,10 @@ Edge-Case Tests
   cumulative indicators and whole-series fits (see "Missing Values" in the
   indicator reference).
 - ``test_warmup_contract.py`` — for every registered indicator, no column
-  holds a value before its own warm-up, and bar-describing flag columns are
-  NaN wherever the continuous columns of the same result are.
+  holds a value before its own warm-up, bar-describing flag columns are
+  NaN wherever the continuous columns of the same result are, and the first
+  values differ between five unrelated random price paths, so a recursion's
+  seed or a placeholder (a fixed 0.0 or 50.0) is never published as a result.
 - ``test_nullable_input_contract.py`` — for every registered indicator,
   nullable ``Float64`` / ``Int64`` input gives the same result, dtype
   included, as the same data in float64, with ``pd.NA`` read as NaN; so do the

@@ -13,7 +13,6 @@ from pandas_ta_classic.utils._signals import attach_signals
 @njit(cache=True)
 def _rsx_loop(c_arr, length, m):
     result = np.full(m, np.nan)
-    result[length - 1] = 0.0
     vC = v1C = v4 = v8 = v10 = v14 = v18 = v20 = 0.0
     f0 = f8 = f10 = f18 = f20 = f28 = f30 = f38 = f40 = 0.0
     f48 = f50 = f58 = f60 = f68 = f70 = f78 = f80 = f88 = f90 = 0.0
@@ -58,7 +57,10 @@ def _rsx_loop(c_arr, length, m):
             v4 = max(v4, 0.0)
         else:
             v4 = 50.0
-        result[i] = v4
+        # The first f88 bars after the seed read the 50.0 placeholder of the
+        # published code while its warm-up counter runs; they have no value yet.
+        if i > length - 1 + max(length - 1.0, 5.0):
+            result[i] = v4
     return result
 
 

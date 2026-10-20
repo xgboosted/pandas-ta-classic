@@ -132,3 +132,48 @@ def test_flags_only_where_there_is_a_value(name, frame):
             f"{name}['{col}']: flag on {int(published.sum())} bar(s) {np.flatnonzero(published)[:8].tolist()} "
             f"where every value column of the result is NaN"
         )
+
+
+def _random_frame(seed: int, rows: int = 400) -> pd.DataFrame:
+    """A random OHLCV walk; five of them share no price path."""
+    rng = np.random.default_rng(seed)
+    close = 100 * np.exp(np.cumsum(rng.normal(0, 0.02, rows)))
+    open_ = close * np.exp(rng.normal(0, 0.005, rows))
+    high = np.maximum(open_, close) * (1 + rng.uniform(0.001, 0.02, rows))
+    low = np.minimum(open_, close) * (1 - rng.uniform(0.001, 0.02, rows))
+    index = pd.date_range("2020-01-01", periods=rows, freq="D")
+    return pd.DataFrame({"open": open_, "high": high, "low": low, "close": close, "volume": rng.uniform(1e5, 1e6, rows)}, index=index)
+
+
+# A value that is the same on every price path is the definition, not a placeholder.
+_SAME_ON_EVERY_PATH = {
+    "nvi": "KEPT: the index starts at `initial` (1000) by definition",
+    "pvi": "KEPT: the index starts at `initial` (1000) by definition",
+    "ebsw": "OPEN: the recursion starts at bar `length` from a 0.0 previous close, so its first value is 1/sqrt(3) on any data",
+}
+_FIRST_BARS = 3
+
+
+@pytest.mark.parametrize("name", INDICATORS)
+def test_the_first_values_come_from_the_data(name, request):
+    """The first published values differ between unrelated price paths.
+
+    A recursion's seed or a published code's placeholder reads the same whatever
+    the data, and the warm-up checks above cannot tell it from a result: stc read
+    0.0 through its warm-up, rsx 0.0 then a 50.0 placeholder for 13 bars, fisher,
+    ebsw and lrsi 0.0 on their first bar, wad 0.0 on bar 0. Only continuous
+    columns are checked, and a value at the column's own minimum or maximum is
+    skipped, since a bounded oscillator saturates there on real data.
+    """
+    if name in _SAME_ON_EVERY_PATH:
+        request.applymarker(pytest.mark.xfail(strict=True, reason=_SAME_ON_EVERY_PATH[name]))
+    runs = [_columns(name, _random_frame(seed)) for seed in range(5)]
+    for col in runs[0]:
+        values = np.vstack([run[col] for run in runs])
+        finite = values[~np.isnan(values)]
+        if np.unique(finite).size <= 10:
+            continue  # a flag, a count or a pattern code
+        first = np.flatnonzero(~np.isnan(values[0]))[:_FIRST_BARS]
+        same = [int(i) for i in first if not np.isnan(values[:, i]).any() and np.all(values[:, i] == values[0, i])]
+        same = [i for i in same if values[0, i] not in (np.nanmin(values[0]), np.nanmax(values[0]))]
+        assert not same, f"{name}['{col}']: bar(s) {same} read {values[0, same].tolist()} on five unrelated price paths"
