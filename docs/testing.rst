@@ -126,7 +126,9 @@ Edge-Case Tests
   requirements, boundary conditions.
 - ``test_leading_nan_contract.py`` — for every registered indicator, a
   leading NaN run (chained input) leaves the result on the real bars
-  unchanged.
+  unchanged, the padded bars themselves read NaN, and an all-NaN input reads
+  NaN throughout; flag columns and candle patterns, which read 0 there, are
+  pinned as decided.
 - ``test_interior_nan_contract.py`` — for every registered indicator, one
   missing bar inside the series recovers, or differs persistently only for
   cumulative indicators and whole-series fits (see "Missing Values" in the
@@ -154,6 +156,14 @@ Edge-Case Tests
 - ``test_scale_contract.py`` — for every registered indicator, prices scaled
   by ``1e-6`` and ``1e6`` leave each column unchanged or scale it by ``k`` or
   ``k**2``; an absolute constant hidden in a formula breaks this.
+- ``test_index_contract.py`` — for every registered indicator, the result
+  keeps the input's length and index, ``offset`` is a plain shift of every
+  column, ``fillna`` reaches every column, a repeated index label gives the
+  same values as a unique index (with and without a leading NaN run), and
+  ``result.category`` names the category the indicator is registered under.
+- ``test_parameter_validation.py`` — besides rejecting invalid values, every
+  numeric default of every registered indicator is passed explicitly, as an
+  int and as a float, and must name the output as the default call does.
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
