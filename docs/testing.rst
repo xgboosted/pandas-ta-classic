@@ -139,6 +139,22 @@ Edge-Case Tests
   included, as the same data in float64, with ``pd.NA`` read as NaN; so do the
   indicators that take derived series and, where pyarrow is installed,
   ``double[pyarrow]`` / ``int64[pyarrow]`` input.
+- ``test_degenerate_input.py`` — for every registered indicator, a flat
+  series, a flat block, bars with no range, malformed OHLC and zero-volume
+  sessions give no all-NaN column, no infinity, no output inflated beyond the
+  control frame, no NaN bleeding past the degenerate part and no
+  epsilon-scale value.
+- ``test_data_gaps_contract.py`` — for every registered indicator, a missing
+  whole bar, a five-bar outage, a bar missing only its volume or only its
+  range, and a missing newest bar leave earlier bars untouched and are
+  forgotten once they leave every window; the same bars under a gappy
+  calendar give the same numbers unless the indicator anchors to the calendar.
+- ``test_scale_contract.py`` — for every registered indicator, prices scaled
+  by ``1e-6`` and ``1e6`` leave each column unchanged or scale it by ``k`` or
+  ``k**2``; an absolute constant hidden in a formula breaks this.
+
+The data-problem modules keep their known exceptions in a table of strict xfails with the
+reason, so an entry that starts passing fails until it is removed.
 
 **Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
 

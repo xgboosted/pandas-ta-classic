@@ -162,10 +162,31 @@ def _inconsistent_block_frame(*, flat: bool = True) -> dict[str, pd.Series]:
     }
 
 
+def _zero_volume_frame(*, flat: bool = True) -> dict[str, pd.Series]:
+    """Moving prices with a 40-bar block of no volume, half of it at one price.
+
+    A halted or illiquid session: volume dividers (``vwap``, ``mfi``, ``cmf``,
+    ``eom``, ``marketfi``, ``vwma``, ...) see a zero denominator, and on the
+    halted half the price terms are zero too. Isolated zero-volume bars follow
+    the block. ``flat=False`` builds the control: the same prices with volume.
+    """
+    frame = _ohlcv(_moving_close(), 1.0)
+    if flat:
+        volume = frame["volume"].copy()
+        volume.iloc[100:140] = 0.0
+        volume.iloc[160:260:9] = 0.0
+        frame["volume"] = volume
+        for key in ("open_", "open", "high", "low", "close", "benchmark", "series_a", "series_b", "source"):
+            frame[key] = frame[key].copy()
+            frame[key].iloc[120:140] = frame["close"].iloc[120]
+    return frame
+
+
 _DEGENERATE_FRAMES = {
     "block": _block_frame,
     "no_range": _no_range_frame,
     "inconsistent": _inconsistent_block_frame,
+    "zero_volume": _zero_volume_frame,
 }
 
 
@@ -554,7 +575,7 @@ def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
 
 @pytest.mark.parametrize("label", ["flat", *sorted(_DEGENERATE_FRAMES)])
 @pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT and n not in _REAL_DIVISION_BY_ZERO])
-def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, frames) -> None:
+def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, frames, request) -> None:
     """The marker for a degenerate window is 0.0, never an infinity.
 
     "Not all NaN" does not cover this: a zero that reaches a logarithm, or the
@@ -562,12 +583,36 @@ def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, fra
     reads as a real and enormous value and passes every NaN check above. Both
     `chop` (log of HH - LL) and `vhf` (non_zero_range in the numerator) did.
     """
+    _pin_open_finding(request, "inf", name, label)
     result = _call(name, frames[label])
     if result is None:
         pytest.skip(f"{name} returns None for this input")
     for column, values in output_columns(result).items():
         numeric = pd.to_numeric(values, errors="coerce").to_numpy(dtype=float)
         assert not np.isinf(numeric).any(), f"{column}: {int(np.isinf(numeric).sum())} infinite values on the {label} frame"
+
+
+# Open findings of the zero-volume frame, pinned as strict xfails until each is
+# decided: one that starts passing fails, so the list cannot go stale.
+_X_OVER_ZERO_VOLUME = "OPEN: a bar that moved on no volume divides by zero volume and reads +-inf"
+_ZERO_VOLUME_WINDOW_NAN = "OPEN: a window with no volume divides 0/0 and reads NaN; the convention would read 0.0"
+_NO_VOLUME_NO_PRICE = "OPEN: a volume-weighted price over a window with no volume is undefined; NaN may be the right answer"
+_OPEN_FINDINGS: dict[tuple[str, str, str], str] = {
+    ("inf", "emv", "zero_volume"): _X_OVER_ZERO_VOLUME,
+    ("inf", "marketfi", "zero_volume"): "KEPT: a bar with a range and no volume reads inf, on purpose (marketfi entry in CHANGELOG.md)",
+    ("bleed", "eom", "zero_volume"): _X_OVER_ZERO_VOLUME + "; sma() turns the inf into NaN for 146 bars",
+    ("bleed", "cmf", "zero_volume"): _ZERO_VOLUME_WINDOW_NAN,
+    ("bleed", "vosc", "zero_volume"): _ZERO_VOLUME_WINDOW_NAN,
+    ("bleed", "vwma", "zero_volume"): _NO_VOLUME_NO_PRICE,
+    ("bleed", "vwap", "zero_volume"): _NO_VOLUME_NO_PRICE,
+    ("bleed", "vwmacd", "zero_volume"): _NO_VOLUME_NO_PRICE,
+}
+
+
+def _pin_open_finding(request, check: str, name: str, label: str) -> None:
+    reason = _OPEN_FINDINGS.get((check, name, label))
+    if reason:
+        request.applymarker(pytest.mark.xfail(strict=True, reason=reason))
 
 
 # An unguarded divider multiplies by 1/epsilon = 4.5e15. A legitimate blow-up
@@ -629,7 +674,7 @@ def _interior_nan(values: pd.Series) -> int | None:
 
 @pytest.mark.parametrize("label", sorted(_DEGENERATE_FRAMES))
 @pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
-def test_a_degenerate_window_does_not_bleed_nan(name: str, label: str, frames) -> None:
+def test_a_degenerate_window_does_not_bleed_nan(name: str, label: str, frames, request) -> None:
     """A flat run costs no bar beyond itself.
 
     Without a guard the NaN from a degenerate window spreads over the next
@@ -641,6 +686,7 @@ def test_a_degenerate_window_does_not_bleed_nan(name: str, label: str, frames) -
     centres its SMA and ``ichimoku`` shifts its Chikou span back, so both carry
     trailing NaN by design on any input, and only an *increase* is a bleed.
     """
+    _pin_open_finding(request, "bleed", name, label)
     result = _call(name, frames[label])
     control = _call(name, frames[f"{label}:control"])
     if result is None or control is None:
