@@ -17,6 +17,7 @@ from pandas import Series, Timedelta
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
+from pandas_ta_classic.utils import _metrics
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
@@ -325,7 +326,7 @@ def test_signal_thresholds_keep_their_column_names():
 # meant True and lookahead=0 meant False. Each must be True or False now.
 # Match converted flags and raw True/False defaults alike, so a site that loses its
 # _bool_param wrapper stays in the sweep and fails instead of dropping out of it.
-_BOOL_KWARG = re.compile(r'_bool_param\(kwargs\.(?:pop|get)\("(\w+)"|kwargs\.(?:pop|get)\("(\w+)", (?:True|False)\)')
+_BOOL_KWARG = re.compile(r'_bool_param\(kwargs\.(?:pop|get)\("(\w+)"|kwargs\.(?:pop|get|setdefault)\("(\w+)", (?:True|False)\)')
 _NOT_FLAGS = {"ma1", "ma2", "osc", "tulipy"}  # stc's optional Series; msw's backend switch
 _SIGNAL_GATED = {"cross_values", "cross_series"}
 
@@ -347,7 +348,7 @@ def _bool_kwarg_cases():
             continue
         source = inspect.getsource(inspect.getmodule(inspect.unwrap(func)))
         keys = _flags(source) | (_HELPER_FLAGS if "attach_signals(" in source else set())
-        cases += [(name, key) for key in sorted(keys - _NOT_FLAGS) if name != "macd"]
+        cases += [(name, key) for key in sorted(keys - _NOT_FLAGS)]
     return cases
 
 
@@ -365,6 +366,26 @@ def test_bool_kwarg_rejects_non_bool(name, key, frame):
     extra = {"signal_indicators": True} if key in _SIGNAL_GATED else {}
     with pytest.raises(ValueError, match=rf"{name}\(\) {key} must be True or False, got 'no'"):
         func(**kwargs, **_required_extras(name, frame), **extra, **{key: "no"})
+
+
+METRIC_BOOL_CASES = [
+    (name, param.name)
+    for name, func in sorted(inspect.getmembers(_metrics, inspect.isfunction))
+    if not name.startswith("_") and func.__module__ == _metrics.__name__
+    for param in inspect.signature(func).parameters.values()
+    if isinstance(param.default, bool)
+]
+
+
+def test_metric_bool_sweep_found_the_flags():
+    assert len(METRIC_BOOL_CASES) >= 7
+
+
+@pytest.mark.parametrize(("name", "param"), METRIC_BOOL_CASES)
+def test_metric_bool_rejects_non_bool(name, param, frame):
+    """sharpe_ratio(log="no") computed log returns: the flags were read by truthiness."""
+    with pytest.raises(ValueError, match=rf"{name}\(\) {param} must be True or False, got 'no'"):
+        getattr(_metrics, name)(frame.close, **{param: "no"})
 
 
 def test_strategy_and_metric_flags_reject_non_bool(frame):

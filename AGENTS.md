@@ -196,8 +196,9 @@ command grep -rnE "^\s+(\w+) = .*\b\1\b.* if .*\b\1\b.* else |int\(kwargs\[|= in
 grep -rnoE 'kwargs\.(pop|get)\("\w+", -?[0-9.]+\)' pandas_ta_classic/ --include=*.py | grep -vE '\("x[ab]",'
 
 # 8. True/False options read from **kwargs by truthiness (wrap them: _bool_param(kwargs.pop("x", None), False, "x")).
+#    setdefault counts too: kwargs.setdefault("asmode", False) returned "no" as given (macd, td_seq).
 #    stc's ma1/ma2/osc default to False but take Series; msw's tulipy flag is handled in its own module.
-grep -rnE 'kwargs\.(pop|get)\("\w+", (True|False)\)' pandas_ta_classic/ --include=*.py | grep -vE '"(ma1|ma2|osc|tulipy)"'
+grep -rnE 'kwargs\.(pop|get|setdefault)\("\w+", (True|False)\)' pandas_ta_classic/ --include=*.py | grep -vE '"(ma1|ma2|osc|tulipy)"'
 
 # 9. A bare coercion of a declared parameter (`refined = bool(refined)`), which greps 5 and 6
 #    miss because there is no `if`. It turned refined="yes" into True and refined=[] into the
