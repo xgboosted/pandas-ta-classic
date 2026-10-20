@@ -17,8 +17,8 @@ their known exceptions:
 
 - ``OPEN:`` a defect, or a question nobody has decided yet. A fix removes the
   row; the table shrinks as the API converges.
-- ``KEPT:`` a decided exception the convention allows (an ``int8`` class
-  column, ``vwap`` refusing an unsorted index, TA-Lib's +-200 hikkake).
+- ``KEPT:`` a decided exception the convention allows (``ht_trendmode``'s int
+  flag, ``vwap`` refusing an unsorted index, TA-Lib's +-200 hikkake).
 
 A table can be ``OPEN:`` as a whole and keep single rows as ``KEPT:`` (and the
 other way round), so a failure says whether a changed row was a defect or a
@@ -71,49 +71,33 @@ SPECIAL_INPUT = {"ma", "mavp", "beta", "correl", "add", "sub", "mult", "div", "l
 # Output dtype
 # ---------------------------------------------------------------------------
 
-# The majority returns float64 in every column. These return integers, all of
-# them flags or classes. BY DESIGN for the flags -- but note the split: the
-# same kind of 0/1 or +-1 flag is float64 in psar, qqe, squeeze, supertrend,
-# thermo and ttm_trend (see FLAG_COLUMNS).
-NOT_FLOAT64 = {
-    "amat": "int64",
-    "aobv": "float64, int64",
-    "cdl_doji": "int64",
-    "cdl_inside": "int64",
-    "cdl_pattern": "float64, int64",
-    "cpr": "float64, int8",
-    "decreasing": "int64",
-    "ht_trendmode": "int64",
-    "increasing": "int64",
-    "long_run": "int64",
-    "short_run": "int64",
-    "smc_sweep": "int64",
-    "tsignals": "int64",
-    "xsignals": "int64",
-}
+# The majority returns float64 in every column. KEPT: ht_trendmode reads 0/1 as
+# int, as TA-Lib's integer output does over its lookback; tsignals and xsignals
+# derive trade signals from a trend the caller gives, defined on every bar of it.
+# The other 0/1 and +-1 flags are float64 and read NaN before they can know (#302).
+NOT_FLOAT64 = {"ht_trendmode": "int64", "tsignals": "int64", "xsignals": "int64"}
 
 # Every column with at most three distinct values on SPY, outside the candle
-# patterns: dtype and value set. Four encodings for "a flag" coexist -- {0, 1},
-# {-1, 1} without a neutral state, {-1, 0, 1}, and TA-Lib's {0, 100} -- in two
-# dtypes, and with NaN warm-up (float) or 0 warm-up (int). OPEN as a question:
-# which flags read 0 and which read NaN before they can know.
+# patterns: dtype and value set. KEPT as decided (#302): a flag is float64 and
+# reads NaN before it can know; ht_trendmode, tsignals and xsignals are the int
+# exceptions above, and psar's reversal flag is defined from its first bar.
 FLAG_COLUMNS = {
-    "amat:AMATe_LR_8_21_2": "int64 {0, 1}",
-    "amat:AMATe_SR_8_21_2": "int64 {0, 1}",
-    "aobv:AOBV_LR_2": "int64 {0, 1}",
-    "aobv:AOBV_SR_2": "int64 {0, 1}",
-    "cdl_doji:CDL_DOJI_10_0.1": "int64 {0, 100}",
-    "cdl_inside:CDL_INSIDE": "int64 {-1, 0, 1}",
-    "cpr:CPR_POSITION": "int8 {-1, 0, 1}",
-    "cpr:CPR_WIDTH_CLASS": "int8 {-1, 0, 1}",
-    "decreasing:DEC_1": "int64 {0, 1}",
+    "amat:AMATe_LR_8_21_2": "float64 {0, 1} +NaN",
+    "amat:AMATe_SR_8_21_2": "float64 {0, 1} +NaN",
+    "aobv:AOBV_LR_2": "float64 {0, 1} +NaN",
+    "aobv:AOBV_SR_2": "float64 {0, 1} +NaN",
+    "cdl_doji:CDL_DOJI_10_0.1": "float64 {0, 100}",
+    "cdl_inside:CDL_INSIDE": "float64 {-100, 0, 100}",
+    "cpr:CPR_POSITION": "float64 {-1, 0, 1} +NaN",
+    "cpr:CPR_WIDTH_CLASS": "float64 {-1, 0, 1} +NaN",
+    "decreasing:DEC_1": "float64 {0, 1} +NaN",
     "ht_trendmode:HT_TRENDMODE": "int64 {0, 1}",
-    "increasing:INC_1": "int64 {0, 1}",
-    "long_run:LR_2": "int64 {0, 1}",
+    "increasing:INC_1": "float64 {0, 1} +NaN",
+    "long_run:LR_2": "float64 {0, 1} +NaN",
     "psar:PSARr_0.02_0.2": "float64 {0, 1}",
     "qqe:QQEd_14_5_4.236": "float64 {-1, 1} +NaN",
-    "short_run:SR_2": "int64 {0, 1}",
-    "smc_sweep:SMC_SWEEP_15_1.5": "int64 {-1, 0, 1}",
+    "short_run:SR_2": "float64 {0, 1} +NaN",
+    "smc_sweep:SMC_SWEEP_15_1.5": "float64 {-1, 0, 1} +NaN",
     "squeeze:SQZ_NO": "float64 {0} +NaN",
     "squeeze:SQZ_OFF": "float64 {0, 1} +NaN",
     "squeeze:SQZ_ON": "float64 {0, 1} +NaN",
@@ -136,67 +120,40 @@ FLAG_COLUMNS = {
     "xsignals:TS_Trends": "int64 {0, 1}",
 }
 
-# Candle patterns follow TA-Lib: {-100, 0, 100}. OPEN: CDL_INSIDE reads +-1,
-# and the same pattern has a different dtype standalone (cdl_doji, cdl_inside:
-# int64) than inside cdl_pattern (float64, except CDL_INSIDE).
-# CDL_HIKKAKE: BY DESIGN, TA-Lib marks a confirmed hikkake with +-200.
-CANDLE_ENCODING_EXCEPTIONS = {"CDL_HIKKAKE": "float64 {-200, -100, 0, 100, 200}", "CDL_INSIDE": "int64 {-1, 0, 1}"}
-CANDLE_STANDALONE_DTYPE = {"cdl_doji": ("int64", "float64"), "cdl_inside": ("int64", "int64")}
+# Candle patterns follow TA-Lib: float64 {-100, 0, 100}, the same dtype standalone
+# as inside cdl_pattern (#297, #303). KEPT: CDL_HIKKAKE, TA-Lib marks a confirmed
+# hikkake with +-200.
+CANDLE_ENCODING_EXCEPTIONS = {"CDL_HIKKAKE": "float64 {-200, -100, 0, 100, 200}"}
+CANDLE_STANDALONE_DTYPE = {"cdl_doji": ("float64", "float64"), "cdl_inside": ("float64", "float64")}
 
-# float32 input: the majority upcasts to float64. OPEN: these keep float32 in
-# every float column (a pandas expression end to end) ...
-KEEPS_FLOAT32 = {
-    "acos", "ad", "add", "asin", "atan", "avgprice", "bop", "ceil", "cos", "cosh", "cpr", "div", "drawdown", "emv", "exp", "floor", "hl2",
-    "hlc3", "ln", "log10", "log_return", "marketfi", "medprice", "mom", "mult", "npabs", "npround", "nvi", "obv", "ohlc4", "pdist",
-    "percent_return", "pvi", "pvol", "pvt", "roc", "rocp", "rocr", "rocr100", "sin", "sinh", "slope", "sqrt", "sub", "tan", "tanh", "todeg",
-    "torad", "true_range", "trunc", "typprice", "vp", "vwap", "wcp",
-}  # fmt: skip
-# ... and these mix float32 and float64 columns in one result.
-MIXED_FLOAT32 = {"aobv", "ha", "ichimoku", "thermo"}
+# float32 input computes in float64 (#301): no indicator keeps float32 ...
+KEEPS_FLOAT32: set[str] = set()
+# ... or mixes float32 and float64 columns in one result.
+MIXED_FLOAT32: set[str] = set()
 
 
 # ---------------------------------------------------------------------------
 # Data problems
 # ---------------------------------------------------------------------------
 
-# An input that is NaN on every bar: the majority returns NaN on every bar.
-# These produce numbers from no data. Flags reading 0 are the open
-# increasing/decreasing dtype decision; seeds (nvi/pvi 1000, psar's
-# acceleration 0.02) and oscillators reading a fixed level (rsx) are OPEN.
+# An input that is NaN on every bar: the majority returns NaN on every bar (#294).
+# KEPT: candle patterns read 0 where they cannot match, as TA-Lib's do (#282);
+# tsignals and xsignals read the trend the caller gives (0 here), and vp sums no
+# volume to 0.
 INVENTS_VALUES_FROM_NAN = {
-    "amat": "AMATe_LR_8_21_2=0, AMATe_SR_8_21_2=0",
-    "aobv": "AOBV_LR_2=0, AOBV_SR_2=0",
-    "cdl_pattern": "60 columns, values 0",
-    "cpr": "CPR_POSITION=0, CPR_WIDTH_CLASS=0",
-    "decay": "LDECAY_5=0",
-    "decreasing": "DEC_1=0",
-    "ebsw": "EBSW_40_10=0",
-    "fisher": "FISHERT_9_1=0, FISHERTs_9_1=0",
-    "ht_trendmode": "HT_TRENDMODE=0",
-    "increasing": "INC_1=0",
-    "long_run": "LR_2=0",
-    "mfi": "MFI_14=0",
-    "nvi": "NVI_1=1000",
-    "psar": "PSARaf_0.02_0.2=0.02, PSARr_0.02_0.2=0",
-    "pvi": "PVI_1=1000",
-    "rsx": "RSX_14=0|50",
-    "short_run": "SR_2=0",
-    "smc_sweep": "SMC_SWEEP_15_1.5=0",
-    "stc": "STC_10_12_26_0.5=0, STCstoch_10_12_26_0.5=0",
+    "cdl_doji": "CDL_DOJI_10_0.1=0",
+    "cdl_pattern": "61 columns, values 0",
     "tsignals": "TS_Entries=0, TS_Exits=0, TS_Trades=0, TS_Trends=0",
     "vp": "neg_volume=0, pos_volume=0, total_volume=0",
-    "wad": "WAD=0",
     "xsignals": "TS_Entries=0, TS_Exits=0, TS_Trades=0, TS_Trends=0",
 }
 
-# The set of output columns does not depend on the input for the majority.
-# OPEN: cdl_pattern drops its doji column when the input is all NaN (and when
-# it is shorter than the doji window).
-COLUMNS_DEPEND_ON_INPUT = {"cdl_pattern": "all-NaN input drops CDL_DOJI_10_0.1"}
+# The set of output columns does not depend on the input (cdl_pattern dropped
+# its doji column on all-NaN input before #282).
+COLUMNS_DEPEND_ON_INPUT: dict[str, str] = {}
 
-# A duplicated index label: the majority computes. OPEN: these raise pandas'
-# "cannot reindex on an axis with duplicate labels" from an internal reindex.
-DUPLICATE_INDEX_RAISES = {"dema", "kvo", "mfi", "stoch", "stochf", "t3", "tema"}
+# A duplicated index label: every indicator computes (#293).
+DUPLICATE_INDEX_RAISES: set[str] = set()
 # An unsorted index: the majority computes on the bars in the order given.
 # BY DESIGN for vwap, whose session anchor needs time order; the rest do not check.
 UNSORTED_INDEX_RAISES = {"vwap"}
@@ -206,14 +163,16 @@ UNSORTED_INDEX_RAISES = {"vwap"}
 # Result metadata and naming
 # ---------------------------------------------------------------------------
 
-# result.category names the registry category for the majority. OPEN.
-CATEGORY_ATTRIBUTE_MISMATCH = {"dm": "trend (registered under momentum)", "ttm_trend": "momentum (registered under trend)"}
+# result.category names the registry category (#295).
+CATEGORY_ATTRIBUTE_MISMATCH: dict[str, str] = {}
 
-# One output column comes back as a Series for the majority. OPEN.
+# One output column comes back as a Series for the majority. KEPT: ttm_trend's
+# one-column DataFrame is pandas-ta's API.
 SINGLE_COLUMN_DATAFRAME = {"ttm_trend"}
 
 # Column names are UPPERCASE_<params>, optionally with a short lowercase
-# qualifier (STOCHk, ATRr, PSARaf). These use words in mixed or lower case.
+# qualifier (STOCHk, ATRr, PSARaf). KEPT: these mixed- and lower-case names are
+# pandas-ta's, which code migrating from it reads; renaming them would break it.
 COLUMN_NAME_STYLE = {
     "aobv": "OBV_min_2, OBV_max_2",
     "cdl_z": "open_Z_30_1, high_Z_30_1, low_Z_30_1, close_Z_30_1",
@@ -224,53 +183,25 @@ COLUMN_NAME_STYLE = {
 }
 FRAME_NAME_STYLE = {"ha": "Heikin-Ashi"}
 
-# Passing a parameter's default explicitly leaves the result alone for 484 of
-# 490 (indicator, parameter) pairs. OPEN: these format an int default as an int
-# but an explicit value as a float, so kc() is KCLe_20_2 and kc(scalar=2) is
-# KCLe_20_2.0 -- same values, two column names, two columns after append.
-EXPLICIT_DEFAULT_RENAMES = {
-    ("chop", "scalar"): "CHOP_14_1_100 -> CHOP_14_1_100.0",
-    ("eom", "divisor"): "EOM_14_100000000 -> EOM_14_100000000.0",
-    ("kc", "scalar"): "KCLe_20_2 -> KCLe_20_2.0",
-    ("squeeze_pro", "kc_scalar_narrow"): "SQZPRO_20_2.0_20_2_1.5_1 -> SQZPRO_20_2.0_20_2_1.5_1.0",
-    ("squeeze_pro", "kc_scalar_wide"): "SQZPRO_20_2.0_20_2_1.5_1 -> SQZPRO_20_2.0_20_2.0_1.5_1",
-    ("thermo", "long"): "THERMO_20_2_0.5 -> THERMO_20_2.0_0.5",
-}
+# Passing a parameter's default explicitly leaves the result alone (#292).
+EXPLICIT_DEFAULT_RENAMES: dict[tuple[str, str], str] = {}
 
 
 # ---------------------------------------------------------------------------
 # Signatures, docs and the accessor
 # ---------------------------------------------------------------------------
 
-# None selects the default for the majority. These put the value in the signature.
-SIGNATURE_DEFAULTS = {
-    "bbands": "ddof=0",
-    "cdl_doji": "asint=True",
-    "cdl_inside": "asbool=False",
-    "cdl_pattern": "name='all'",
-    "cpr": "method='classic', timeframe='daily', levels='standard', width_analysis=True, price_position=True, virgin_cpr=False",
-    "dpo": "centered=True",
-    "ichimoku": "include_chikou=True, append_span=False",
-    "xsignals": "above=True, long=True",
-}
+# None selects the default in every signature (#305).
+SIGNATURE_DEFAULTS: dict[str, str] = {}
+# KEPT: ma forwards offset to the average it dispatches to; vp's result is a set
+# of price bins, not a time series to shift.
 NO_OFFSET = {"ma", "vp"}
-NO_DOCSTRING = ELEMENTWISE | {
-    "add",
-    "sub",
-    "mult",
-    "div",
-    "maxindex",
-    "minindex",
-    "minmax",
-    "minmaxindex",
-    "rolling_max",
-    "rolling_min",
-    "rolling_sum",
-}
+# Every registered indicator documents its arguments (#304).
+NO_DOCSTRING: set[str] = set()
 # df.ta.<name>() returns what the function returns when given every OHLCV
-# column it accepts, names and values. OPEN: the accessor does not pass open_
-# to ad, adosc, cmf and psl, so df.ta.ad() is AD while ta.ad(..., open_=df.open)
-# is ADo, and the other three keep their names but compute without open_.
+# column it accepts, names and values. KEPT (#291): df.ta fills an optional open_
+# only when asked (df.ta.ad(open="open")), so df.ta.ad() is the classic AD while
+# ta.ad(..., open_=df.open) is ADo; adosc, cmf and psl likewise.
 ACCESSOR_DIFFERS = {"ad": "AD vs ADo", "adosc": "values", "cmf": "values", "psl": "values"}
 
 
@@ -278,9 +209,12 @@ ACCESSOR_DIFFERS = {"ad": "AD vs ADo", "adosc": "values", "cmf": "values", "psl"
 # Parameter names
 # ---------------------------------------------------------------------------
 
-# The window is `length` for the majority.
+# The window is `length` for the majority. KEPT: amat's lookback is the run
+# length, not a window; mavp's periods is a Series of windows; msw's period is
+# tulipy's name for it. Renaming would break pandas-ta code.
 WINDOW_SYNONYMS = {"amat": "lookback", "msw": "period", "mavp": "periods"}
 # Two spellings of "return integers/booleans instead of the default form".
+# KEPT: pandas-ta's names, which renaming would break.
 OUTPUT_FORM_FLAGS = {
     "asint": {"cdl_doji", "decreasing", "increasing", "td_seq"},
     "asbool": {"cdl_inside", "tsignals", "xsignals"},
@@ -289,9 +223,9 @@ OUTPUT_FORM_FLAGS = {
 # scale (100, 1) almost everywhere but a band width in kc; `k` is a window in
 # stoch and a smoothing length in stochrsi; `factor` is a percentage, a
 # multiplier and a smoothing weight; `c` a band width, CCI's constant and
-# McGinley's constant.
+# McGinley's constant. KEPT: each name follows its indicator's literature.
 PARAMETER_HOMONYMS = {
-    "scalar": {"adx": 100, "adxr": 100, "aroon": 100, "bop": 1, "brar": 100, "cdl_doji": 100, "cdl_pattern": 100, "cfo": 100,
+    "scalar": {"adx": 100, "adxr": 100, "aroon": 100, "bop": 1, "brar": 100, "cdl_doji": 100, "cdl_inside": 100, "cdl_pattern": 100, "cfo": 100,
                "chop": 100, "cmo": 100, "dx": 100, "hwc": 1, "inertia": 100, "kc": 2, "natr": 100, "ppo": 100, "psl": 100,
                "pvo": 100, "roc": 100, "rsi": 100, "rvi": 100, "smi": 1, "trix": 100, "trixh": 100, "tsi": 100, "ui": 100},
     "k": {"stoch": 14, "stochrsi": 3},
@@ -300,7 +234,8 @@ PARAMETER_HOMONYMS = {
 }  # fmt: skip
 
 # Percent or fraction: measured against the plain-ratio definition, so a value
-# of 100 means "percent" and 1 means "fraction". Both conventions are in use.
+# of 100 means "percent" and 1 means "fraction". KEPT: each follows its
+# definition (roc/rocp, BBB/BBP, TA-Lib's natr percent).
 RATE_UNITS = {
     "roc": 100,
     "rocp": 1,
@@ -319,9 +254,9 @@ RATE_UNITS = {
 # Name collisions
 # ---------------------------------------------------------------------------
 
-# Two indicators writing the same column name. Aliases (same values) are
-# harmless; OPEN: tsignals and xsignals write different values under the same
-# names, so appending one overwrites the other without a word.
+# Two indicators writing the same column name. KEPT: aliases (same values) are
+# harmless, and tsignals and xsignals are two ways to produce pandas-ta's trade
+# signal columns from different inputs, so the same names are the point.
 SHARED_COLUMNS = {
     "CDL_DOJI_10_0.1": ("cdl_doji, cdl_pattern", "same"),
     "CDL_INSIDE": ("cdl_inside, cdl_pattern", "same"),
@@ -340,6 +275,7 @@ SHARED_COLUMNS = {
 }
 # Registered names that are also pandas Series/DataFrame methods with a
 # different meaning (df.median() is one number, df.ta.median() a rolling median).
+# KEPT, like the two tables below: the names live under ta. and df.ta only.
 SHADOWS_PANDAS_METHOD = {"add", "div", "kurtosis", "median", "quantile", "skew", "squeeze", "sub"}
 # Registered names that are also functions of the stdlib math module.
 SHADOWS_STDLIB_MATH = {"acos", "asin", "atan", "ceil", "cos", "cosh", "exp", "floor", "log10", "sin", "sinh", "sqrt", "tan", "tanh", "trunc"}
@@ -460,7 +396,7 @@ def test_flag_column_encodings() -> None:
             if 0 < uniq.size <= 3:
                 nan = " +NaN" if result[column].isna().any() else ""
                 found[f"{name}:{column}"] = f"{result[column].dtype} {{{', '.join(_fmt(v) for v in uniq)}}}{nan}"
-    _check(found, FLAG_COLUMNS, "OPEN: which flags read 0 and which NaN before they can know; discrete columns (dtype and value set)")
+    _check(found, FLAG_COLUMNS, "KEPT: flags read NaN before they can know (#302); discrete columns (dtype and value set)")
 
 
 def test_candle_pattern_encoding() -> None:
@@ -470,12 +406,12 @@ def test_candle_pattern_encoding() -> None:
         uniq = np.unique(patterns[column].dropna().to_numpy(float))
         if patterns[column].dtype != np.float64 or not set(uniq) <= {-100.0, 0.0, 100.0}:
             found[column] = f"{patterns[column].dtype} {{{', '.join(_fmt(v) for v in uniq)}}}"
-    _check(found, CANDLE_ENCODING_EXCEPTIONS, "OPEN: candle pattern columns outside float64 {-100, 0, 100}", kept=frozenset({"CDL_HIKKAKE"}))
+    _check(found, CANDLE_ENCODING_EXCEPTIONS, "KEPT: candle pattern columns outside float64 {-100, 0, 100}")
     standalone = {}
     for name in CANDLE_STANDALONE_DTYPE:
         alone = _default(name)
         standalone[name] = (str(alone.dtypes.iloc[0]), str(patterns[alone.columns[0]].dtype))
-    _check(standalone, CANDLE_STANDALONE_DTYPE, "OPEN: one pattern, two dtypes; dtype standalone vs inside cdl_pattern (hand-picked rows)")
+    _check(standalone, CANDLE_STANDALONE_DTYPE, "KEPT: one pattern, one dtype; dtype standalone vs inside cdl_pattern (hand-picked rows)")
 
 
 def test_float32_input() -> None:
@@ -507,7 +443,7 @@ def test_all_nan_input() -> None:
         if parts:
             # cdl_pattern's 60 columns are summarised: how many, and which values.
             found[name] = f"{len(parts)} columns, values {'|'.join(sorted(seen))}" if name == "cdl_pattern" else ", ".join(sorted(parts))
-    _check(found, INVENTS_VALUES_FROM_NAN, "OPEN: values produced from an all-NaN input")
+    _check(found, INVENTS_VALUES_FROM_NAN, "KEPT: values produced from an all-NaN input")
 
 
 def test_columns_do_not_depend_on_the_input() -> None:
@@ -558,7 +494,7 @@ def test_result_category_attribute() -> None:
 
 def test_single_output_is_a_series() -> None:
     found = {name for name in INDICATORS if isinstance(_call(name), pd.DataFrame) and _default(name).shape[1] == 1}
-    _check(found, SINGLE_COLUMN_DATAFRAME, "OPEN: one column returned as a DataFrame")
+    _check(found, SINGLE_COLUMN_DATAFRAME, "KEPT: one column returned as a DataFrame")
 
 
 def test_column_and_frame_name_style() -> None:
@@ -572,8 +508,8 @@ def test_column_and_frame_name_style() -> None:
         result = _call(name)
         if isinstance(result, pd.DataFrame) and not re.fullmatch(r"[A-Z0-9_.]+[a-z]?[A-Z0-9_.]*", str(getattr(result, "name", ""))):
             frames[name] = str(result.name)
-    _check(columns, COLUMN_NAME_STYLE, "OPEN: column names with lower- or mixed-case words")
-    _check(frames, FRAME_NAME_STYLE, "OPEN: DataFrame .name outside the column-name alphabet")
+    _check(columns, COLUMN_NAME_STYLE, "KEPT: column names with lower- or mixed-case words")
+    _check(frames, FRAME_NAME_STYLE, "KEPT: DataFrame .name outside the column-name alphabet")
 
 
 def test_explicit_default_keeps_the_column_names() -> None:
@@ -605,7 +541,7 @@ def test_signature_shape() -> None:
         if "offset" not in params:
             no_offset.add(name)
     _check(defaults, SIGNATURE_DEFAULTS, "OPEN: signature defaults other than None")
-    _check(no_offset, NO_OFFSET, "OPEN: no offset parameter")
+    _check(no_offset, NO_OFFSET, "KEPT: no offset parameter")
 
 
 def test_docstring_present() -> None:
@@ -627,7 +563,7 @@ def test_accessor_matches_the_function() -> None:
             found[name] = f"{via_accessor.columns[0]} vs {function.columns[0]}"
         elif not np.allclose(via_accessor.to_numpy(float, na_value=np.nan), function.to_numpy(float, na_value=np.nan), equal_nan=True):
             found[name] = "values"
-    _check(found, ACCESSOR_DIFFERS, "OPEN: df.ta.<name>() differs from the function given every OHLCV column")
+    _check(found, ACCESSOR_DIFFERS, "KEPT: df.ta.<name>() differs from the function given every OHLCV column")
 
 
 def test_parameter_names() -> None:
@@ -637,19 +573,19 @@ def test_parameter_names() -> None:
         for alias in ("period", "periods", "lookback", "window", "n"):
             if alias in params:
                 synonyms[name] = alias
-    _check(synonyms, WINDOW_SYNONYMS, "OPEN: window parameter not called length")
+    _check(synonyms, WINDOW_SYNONYMS, "KEPT: window parameter not called length")
     for flag, pinned in OUTPUT_FORM_FLAGS.items():
         _check(
             {n for n in INDICATORS if flag in inspect.signature(getattr(ta, n)).parameters},
             pinned,
-            f"OPEN: two spellings of one option; indicators taking {flag}",
+            f"KEPT: two spellings of one option; indicators taking {flag}",
         )
     for param, pinned_defaults in PARAMETER_HOMONYMS.items():
         found = {}
         for name in INDICATORS:
             if param in inspect.signature(getattr(ta, name)).parameters:
                 found[name] = _code_defaults((PACKAGE / REGISTRY[name] / f"{name}.py").read_text(encoding="utf-8")).get(param)
-        _check(found, pinned_defaults, f"OPEN: one name, several meanings; defaults of the parameter `{param}`")
+        _check(found, pinned_defaults, f"KEPT: one name, several meanings; defaults of the parameter `{param}`")
 
 
 def test_rate_units() -> None:
@@ -675,7 +611,7 @@ def test_rate_units() -> None:
         ratio = (value / plain).replace([np.inf, -np.inf], np.nan).dropna()
         units[key] = round(float(ratio.median()))
         assert np.allclose(ratio, units[key], rtol=1e-6), f"{key}: not a constant multiple of its plain ratio"
-    _check(units, RATE_UNITS, "OPEN: percent (100) vs fraction (1)")
+    _check(units, RATE_UNITS, "KEPT: percent (100) vs fraction (1)")
 
 
 def test_output_column_collisions() -> None:
@@ -693,7 +629,6 @@ def test_output_column_collisions() -> None:
         found,
         SHARED_COLUMNS,
         "KEPT: aliases writing the same values; column names written by more than one indicator",
-        open_=frozenset(k for k, (_, values) in SHARED_COLUMNS.items() if values == "different"),
     )
     lower: dict[str, set[str]] = {}
     for column in owners:
@@ -703,8 +638,8 @@ def test_output_column_collisions() -> None:
 
 
 def test_name_shadowing() -> None:
-    _check(set(INDICATORS) & (set(dir(pd.Series)) | set(dir(pd.DataFrame))), SHADOWS_PANDAS_METHOD, "OPEN: registered names that are pandas methods")
-    _check(set(INDICATORS) & set(dir(math)), SHADOWS_STDLIB_MATH, "OPEN: registered names that are stdlib math functions")
+    _check(set(INDICATORS) & (set(dir(pd.Series)) | set(dir(pd.DataFrame))), SHADOWS_PANDAS_METHOD, "KEPT: registered names that are pandas methods")
+    _check(set(INDICATORS) & set(dir(math)), SHADOWS_STDLIB_MATH, "KEPT: registered names that are stdlib math functions")
     builtin_names = {n: getattr(ta, n).__name__ for n in dir(ta) if not n.startswith("_") and n in dir(builtins)}
     _check(builtin_names, SHADOWS_BUILTIN, "KEPT: documented aliases outside __all__; ta.<builtin name> (value: what it really is)")
     clashes = {}
@@ -713,7 +648,7 @@ def test_name_shadowing() -> None:
             clashes[category] = "stdlib module"
         elif category in OHLCV:
             clashes[category] = "OHLCV column"
-    _check(clashes, CATEGORY_NAME_CLASHES, "OPEN: category names that clash")
+    _check(clashes, CATEGORY_NAME_CLASHES, "KEPT: category names that clash")
 
 
 def test_tables_name_registered_indicators() -> None:
