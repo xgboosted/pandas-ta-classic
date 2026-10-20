@@ -130,3 +130,15 @@ def test_pyarrow_boolean_trend_matches_float64(frames):
     # tsignals raised ArrowInvalid on the null
     expected = ta.tsignals(up.astype(float).mask(warmup))
     pd.testing.assert_frame_equal(ta.tsignals(up.astype("bool[pyarrow]").mask(warmup)), expected)
+
+
+@pytest.mark.parametrize("dtype", ["float32"])  # float16 cannot hold SPY volume (max 65504)
+def test_narrow_float_input_matches_float64(dtype, frames):
+    # A float32 frame (a memory-saving read, a float32 feed) computed in float32:
+    # 54 indicators returned float32, 4 mixed float32 and float64 columns, and the
+    # values lost digits. It now computes in float64, so the result equals the same
+    # values given as float64, dtype included.
+    narrow = frames[0].astype(dtype)
+    base = narrow.astype("float64")
+    for name in INDICATORS:
+        pd.testing.assert_frame_equal(_call(name, narrow), _call(name, base), obj=f"{name} {dtype}")
