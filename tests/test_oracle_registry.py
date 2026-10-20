@@ -420,16 +420,17 @@ _TALIB_CCI_RESIDUE = (
     "reads the 0.0 marker"
 )
 _STOCHRSI_NOISE = (
-    "OPEN DEFECT: RSI is constant on a flat block in exact arithmetic but wobbles by 1e-14, and "
-    "native %K divides that wobble by itself (0/50/100); TA-Lib 0.7 does too (33/40), TA-Lib 0.8 "
-    "reads the 0.0 marker"
+    "RSI is constant on a flat block in exact arithmetic but wobbles by 1e-14; TA-Lib 0.7's STOCHRSI "
+    "divides that wobble by itself and reads noise (33, 40, ...), native and TA-Lib 0.8 treat the "
+    "residue range as no range and read the 0.0 marker"
 )
 _HILBERT_ON_A_CONSTANT = (
     "the Hilbert transform of a constant input has no dominant cycle; both sides amplify "
     "rounding (equal to 1e-8, then up to 19 apart), so neither value means anything"
 )
 # TA-Lib changed between 0.7 and 0.8 (measured with 0.7.1 and 0.8.2, the
-# version CI installs): 0.8 fixed the CCI residue and CORREL's zero test, and
+# version CI installs): 0.8 fixed the CCI residue, CORREL's zero test and
+# STOCHRSI's flat-block noise (as native stochrsi does), and
 # clamps WILLR to -100..0 where malformed bars put the close outside the range.
 # The behaviour is the C library's, read from it: a source build can link a C
 # library of another version than the Python wrapper (wrapper 0.8.2 ships C 0.8.1).
@@ -437,8 +438,6 @@ _TA_C_VERSION = talib.__ta_version__.decode().split()[0]
 _TALIB_08 = tuple(int(part) for part in _TA_C_VERSION.split(".")[:2]) >= (0, 8)
 
 KNOWN_DIFFERENCES: dict[tuple[str, str], str] = {
-    ("stochrsi", "flat_block"): _STOCHRSI_NOISE,
-    ("stochrsi", "planted"): _STOCHRSI_NOISE,
     ("ht_dcperiod", "flat"): _HILBERT_ON_A_CONSTANT,
     ("ht_dcphase", "flat"): _HILBERT_ON_A_CONSTANT,
     ("ht_dcphase", "flat_block"): _HILBERT_ON_A_CONSTANT,
@@ -456,6 +455,8 @@ if _TALIB_08:
         "outside -100..0 there and shows the bad bars"
     )
 else:
+    KNOWN_DIFFERENCES[("stochrsi", "flat_block")] = _STOCHRSI_NOISE
+    KNOWN_DIFFERENCES[("stochrsi", "planted")] = _STOCHRSI_NOISE
     KNOWN_DIFFERENCES[("cci", "flat_block")] = _TALIB_CCI_RESIDUE
     KNOWN_DIFFERENCES[("cci", "planted")] = _TALIB_CCI_RESIDUE
     KNOWN_DIFFERENCES[("correl", "x1e-6")] = (
