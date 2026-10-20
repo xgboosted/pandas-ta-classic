@@ -213,7 +213,7 @@ class TestMomentumExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(
             list(self.data.columns[-3:]),
-            ["SMI_5_20_5_10.0", "SMIs_5_20_5_10.0", "SMIo_5_20_5_10.0"],
+            ["SMI_5_20_5_10", "SMIs_5_20_5_10", "SMIo_5_20_5_10"],
         )
 
     def test_squeeze_ext(self):

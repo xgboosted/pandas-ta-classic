@@ -20,6 +20,8 @@ from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
+from tests.test_degenerate_input import _call
+from tests.test_docstring_defaults import _MODULES, _code_defaults
 
 _GUARD = re.compile(r"_pos_(?:int|float)\((\w+),")
 _SERIES = ("open_", "high", "low", "close", "volume")
@@ -84,6 +86,54 @@ def test_pos_helpers_accept_none_and_valid_values():
     assert _pos_int(np.int64(5), 10, "length") == 5
     assert _pos_float(0.5, 0.2, "na", lt=1) == 0.5
     assert _pos_int(0, 1, "ddof", gt=None, ge=0, lt=30) == 0
+
+
+def test_a_whole_number_keeps_the_type_of_an_int_default():
+    assert type(_pos_float(2.0, 2, "scalar")) is int
+    assert type(_pos_float(2, 2.0, "std")) is float
+    assert type(_pos_float(2.5, 2, "scalar")) is float
+    assert type(_number(100.0, 100, "scalar")) is int
+
+
+def _explicit_default_cases():
+    cases = []
+    for module in _MODULES:
+        if module.stem not in _REGISTERED:
+            continue
+        for param, default in _code_defaults(module.read_text(encoding="utf-8")).items():
+            if isinstance(default, (int, float)) and not isinstance(default, bool):
+                spellings = [int(default), float(default)] if float(default).is_integer() else [default]
+                cases += [(module.stem, param, value) for value in spellings]
+    return cases
+
+
+_REGISTERED = {n for names in ta.Category.values() for n in names}
+_EXPLICIT_DEFAULTS = _explicit_default_cases()
+
+
+def _output_names(result):
+    return [result.name] if isinstance(result, Series) else list(result.columns)
+
+
+@pytest.mark.parametrize(("name", "param", "value"), _EXPLICIT_DEFAULTS)
+def test_passing_the_default_explicitly_keeps_the_output_names(name, param, value, frame):
+    """``kc(scalar=2)`` named its columns ``KCLe_20_2.0`` where ``kc()`` gives ``KCLe_20_2``.
+
+    ``_pos_float`` returned ``float(2)`` for an int default of 2; chop, eom, kc,
+    squeeze_pro and thermo renamed their output when given their own default.
+    """
+    columns = {"open": frame.open, "high": frame.high, "low": frame.low, "close": frame.close, "volume": frame.volume}
+    columns |= {"open_": frame.open, "benchmark": frame.close, "series_a": frame.close, "series_b": frame.open, "source": frame.close}
+    default = _call(name, columns)
+    if default is None:
+        pytest.skip(f"{name} returns None for this input")
+    assert _output_names(_call(name, columns, **{param: value})) == _output_names(default)
+
+
+def test_explicit_default_sweep_covers_the_int_defaults_read_as_floats():
+    swept = {(name, param) for name, param, _ in _EXPLICIT_DEFAULTS}
+    assert {("chop", "scalar"), ("eom", "divisor"), ("kc", "scalar"), ("thermo", "long"), ("squeeze_pro", "kc_scalar_wide")} <= swept
+    assert len(swept) > 300
 
 
 def test_direct_call_message_names_indicator_and_value():

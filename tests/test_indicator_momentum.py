@@ -666,12 +666,12 @@ class TestMomentum(TestCase):
             IndicatorSpec(
                 func=pandas_ta.smi,
                 args=[self.close],
-                expected_name="SMI_5_20_5_10.0",
+                expected_name="SMI_5_20_5_10",
                 expected_type=DataFrame,
                 expected_columns=[
-                    "SMI_5_20_5_10.0",
-                    "SMIs_5_20_5_10.0",
-                    "SMIo_5_20_5_10.0",
+                    "SMI_5_20_5_10",
+                    "SMIs_5_20_5_10",
+                    "SMIo_5_20_5_10",
                 ],
                 none_arg_idx=0,
                 kwargs={"scalar": 10},
@@ -753,11 +753,11 @@ class TestMomentum(TestCase):
 
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, 20, 2, 20, 3, 2, 1)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZPRO_20_2.0_20_3.0_2.0_1.0")
+        self.assertEqual(result.name, "SQZPRO_20_2.0_20_3_2.0_1")
 
         result = pandas_ta.squeeze_pro(self.high, self.low, self.close, 20, 2, 20, 3, 2, 1, tr=False)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3.0_2.0_1.0")
+        self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3_2.0_1")
 
         assert_indicator_standard(
             self,
