@@ -88,23 +88,22 @@ def _resolve(name):
     return None
 
 
-def _load_and_bind_module(module_path, dirname, category_dir, verbose):
-    """Load one indicator module from *module_path* and bind it to
-    ``pandas_ta_classic``.
+def _load_module(module_path, category_dir, added_paths):
+    """Load one indicator module from *module_path*; bind nothing.
 
-    The function (re)loads the Python file at *module_path*, looks up the
-    mandatory ``<name>`` and ``<name>_method`` callables, registers the
-    indicator in the appropriate category, and binds it via :func:`bind`.
-    A module that fails to import, lacks either callable, or whose name
-    already resolves to another module (a stdlib or installed module, or a
-    file of the same name in another category) raises ImportError.
+    The function (re)loads the Python file at *module_path* and returns its
+    name with the mandatory ``<name>`` and ``<name>_method`` callables;
+    :func:`import_dir` binds them once every file has loaded. A module that
+    fails to import, lacks either callable, or whose name already resolves to
+    another module (a stdlib or installed module, or a file of the same name
+    in another category) raises ImportError.
 
     Args:
         module_path (str): Absolute path to the ``.py`` file to load.
-        dirname (str): Category sub-directory name (e.g. ``"trend"``).
         category_dir (str): Absolute path to the category directory; added to
             :data:`sys.path` when not already present.
-        verbose (bool): Whether to emit info-level log messages on success.
+        added_paths (list): Collects the directories this call added to
+            :data:`sys.path`, so :func:`import_dir` can take them back.
     """
     module_name = splitext(basename(module_path))[0]
     if not module_name.isidentifier():
@@ -127,6 +126,7 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
 
     if category_dir not in sys.path:
         sys.path.append(category_dir)
+        added_paths.append(category_dir)
 
     module_functions = load_indicator_module(module_name)
 
@@ -137,16 +137,7 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
         if found is None:
             raise ImportError(f"custom indicator module '{module_path}' has no function named '{required}'")
 
-    if module_name not in pandas_ta_classic.Category[dirname]:
-        pandas_ta_classic.Category[dirname].append(module_name)
-
-    bind(module_name, fcn_callable, fcn_method_callable)
-    if verbose:
-        logger.info(
-            "Successfully imported the custom indicator '%s' into category '%s'.",
-            module_path,
-            dirname,
-        )
+    return module_name, fcn_callable, fcn_method_callable
 
 
 def import_dir(path, verbose=True):
@@ -158,22 +149,41 @@ def import_dir(path, verbose=True):
     # list the contents of the directory
     dirs = glob(abspath(join(path, "*")))
 
-    # traverse full directory, importing all modules found there
-    for d in dirs:
-        dirname = basename(d)
+    # Load every module first and bind only when all of them loaded: binding as
+    # it went left the modules before a refused file bound and listed in
+    # Category, and the refused file's directory on sys.path.
+    loaded = []
+    added_paths: list[str] = []
+    try:
+        for d in dirs:
+            dirname = basename(d)
 
-        # only look in directories which are valid pandas_ta_classic categories
-        if dirname not in [*pandas_ta_classic.Category]:
-            if verbose:
-                logger.info(
-                    "Skipping the sub-directory '%s' since it's not a valid pandas_ta_classic category.",
-                    dirname,
-                )
-            continue
+            # only look in directories which are valid pandas_ta_classic categories
+            if dirname not in [*pandas_ta_classic.Category]:
+                if verbose:
+                    logger.info(
+                        "Skipping the sub-directory '%s' since it's not a valid pandas_ta_classic category.",
+                        dirname,
+                    )
+                continue
 
-        # for each module found in that category (directory), load and bind
-        for module in glob(abspath(join(path, dirname, "*.py"))):
-            _load_and_bind_module(module, dirname, d, verbose)
+            for module in glob(abspath(join(path, dirname, "*.py"))):
+                loaded.append((module, dirname, *_load_module(module, d, added_paths)))
+    except BaseException:
+        for added in added_paths:
+            sys.path.remove(added)
+        raise
+
+    for module, dirname, module_name, function, method in loaded:
+        if module_name not in pandas_ta_classic.Category[dirname]:
+            pandas_ta_classic.Category[dirname].append(module_name)
+        bind(module_name, function, method)
+        if verbose:
+            logger.info(
+                "Successfully imported the custom indicator '%s' into category '%s'.",
+                module,
+                dirname,
+            )
 
 
 import_dir.__doc__ = """

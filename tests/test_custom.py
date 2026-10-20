@@ -268,7 +268,9 @@ class TestCustom(TestCase):
         try:
             with self.assertRaisesRegex(ImportError, rf"cannot be imported as '{name}': that name already resolves to .*{name}\.py"):
                 import_dir(base, verbose=False)
-            self.assertEqual(sum(name in names for names in pandas_ta_classic.Category.values()), 1)
+            # and import_dir binds neither: it binds only when every file loaded
+            self.assertEqual(sum(name in names for names in pandas_ta_classic.Category.values()), 0)
+            self.assertFalse(hasattr(pandas_ta_classic, name))
         finally:
             self._unload(name, *cat_dirs)
 
