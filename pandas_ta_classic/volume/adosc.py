@@ -7,8 +7,23 @@ from pandas import Series
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._njit import njit
 
 from .ad import ad
+
+
+@njit(cache=True)
+def _adosc_loop(ad_arr, fastk, slowk, slow):
+    m = ad_arr.shape[0]
+    fast_ema = ad_arr[0]
+    slow_ema = ad_arr[0]
+    result = np.full(m, np.nan)
+    for i in range(1, m):
+        fast_ema = fastk * ad_arr[i] + (1 - fastk) * fast_ema
+        slow_ema = slowk * ad_arr[i] + (1 - slowk) * slow_ema
+        if i >= slow - 1:
+            result[i] = fast_ema - slow_ema
+    return result
 
 
 @nan_on_short_input
@@ -51,20 +66,11 @@ def adosc(
     else:
         ad_ = ad(high=high, low=low, close=close, volume=volume, open_=open_)
         ad_arr = ad_.to_numpy(dtype=float)
-        m = ad_arr.shape[0]
 
         # TA-Lib ADOSC: seed both EMAs with AD[0] (scalar seed, not SMA)
         fastk = 2.0 / (fast + 1)
         slowk = 2.0 / (slow + 1)
-        fast_ema = ad_arr[0]
-        slow_ema = ad_arr[0]
-        result = np.full(m, np.nan)
-
-        for i in range(1, m):
-            fast_ema = fastk * ad_arr[i] + (1 - fastk) * fast_ema
-            slow_ema = slowk * ad_arr[i] + (1 - slowk) * slow_ema
-            if i >= slow - 1:
-                result[i] = fast_ema - slow_ema
+        result = _adosc_loop(ad_arr, fastk, slowk, slow)
 
         adosc = Series(result, index=close.index)
 
