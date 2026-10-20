@@ -52,7 +52,9 @@ def smc_sweep(
         0,
     )
 
-    result = Series(bull_sweep + bear_sweep, index=close.index)
+    # NaN until the swing window exists, and on a bar with a missing price: it read 0 there
+    known = swing_low.notna() & swing_high.notna() & open_.notna() & high.notna() & low.notna() & close.notna()
+    result = Series((bull_sweep + bear_sweep).astype(float), index=close.index).where(known)
 
     # Offset
     result = apply_offset(result, offset)

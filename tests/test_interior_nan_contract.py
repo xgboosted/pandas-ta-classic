@@ -89,10 +89,10 @@ FROM_EARLIER_BARS = {"cpr", "ichimoku"}
 # the NaN rule or gets a documented reason; do not add to this list.
 PUBLISHES_AT_THE_GAP = {
     "aberration", "adx", "adxr", "amat", "aobv", "atr", "cdl_doji", "cdl_pattern", "cvi", "decay",
-    "decreasing", "dema", "dm", "dx", "efi", "ema", "hilo", "increasing", "inertia", "kc", "kdj", "kvo",
-    "macdext", "massi", "mfi", "minus_dm", "mmar", "nvi", "plus_dm", "pmax", "ppo", "psar", "pvi",
-    "pvo", "qqe", "rma", "rsi", "rvi", "sarext", "smc_sweep", "smi", "stc", "stochrsi",
-    "supertrend", "t3", "tema", "thermo", "trix", "trixh", "tsi", "vfi", "wad", "zlma",
+    "dema", "dm", "dx", "efi", "ema", "hilo", "inertia", "kc", "kdj", "kvo", "macdext", "massi", "mfi",
+    "minus_dm", "mmar", "nvi", "plus_dm", "pmax", "ppo", "psar", "pvi", "pvo", "qqe", "rma", "rsi",
+    "rvi", "sarext", "smi", "stc", "stochrsi", "supertrend", "t3", "tema", "thermo", "trix", "trixh",
+    "tsi", "vfi", "wad", "zlma",
 }  # fmt: skip
 
 

@@ -126,3 +126,9 @@ def test_docstring_examples_pass_parameters_that_are_read(name):
     for accessor, call in re.findall(_EXAMPLE_CALL.format(name), func.__doc__ or ""):
         unread |= set(_EXAMPLE_KEYWORD.findall(call)) - _accepted(func) - _FILL - (_ACCESSOR if accessor else set())
     assert not unread, f"{name}() docstring examples pass parameters it never reads: {sorted(unread)}"
+
+
+def test_every_registered_indicator_has_an_args_section():
+    # The 31 math functions documented one line and no arguments.
+    missing = sorted(n for names in ta.Category.values() for n in names if not re.search(r"^\s*Args:\s*$", getattr(ta, n).__doc__ or "", re.MULTILINE))
+    assert not missing, f"no Args: section in the docstring of {missing}"

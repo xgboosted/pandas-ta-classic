@@ -67,9 +67,8 @@ No indicator publishes a value it could not compute: a result is either
 computed from the available bars or NaN. This also holds on the warm-up bars at
 the start of the series, and for the direction and flag columns that describe
 them — ``tests/test_warmup_contract.py`` checks both for every registered
-indicator and every column it returns. The two exceptions are ``CPR_POSITION``
-and ``CPR_WIDTH_CLASS``, which are ``int8`` and cannot hold NaN, so they read 0
-on the bar before the first completed period.
+indicator and every column it returns, ``CPR_POSITION`` and ``CPR_WIDTH_CLASS``
+included (float64, NaN before the first completed period).
 
 ``tests/test_data_gaps_contract.py`` extends the missing-bar contract to a
 whole missing bar, a five-bar outage, a bar missing only its volume or only its

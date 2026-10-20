@@ -20,3 +20,21 @@ def ceil(close: Series, offset: int | None = None, **kwargs: Any) -> Series | No
     result.name = "CEIL"
     result.category = "math"
     return result
+
+
+ceil.__doc__ = """Vector Ceil (TA-Lib: CEIL)
+
+Calculation:
+    CEIL = ceil(close)
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""
