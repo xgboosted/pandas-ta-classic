@@ -149,7 +149,6 @@ def _random_frame(seed: int, rows: int = 400) -> pd.DataFrame:
 _SAME_ON_EVERY_PATH = {
     "nvi": "KEPT: the index starts at `initial` (1000) by definition",
     "pvi": "KEPT: the index starts at `initial` (1000) by definition",
-    "ebsw": "OPEN: the recursion starts at bar `length` from a 0.0 previous close, so its first value is 1/sqrt(3) on any data",
 }
 _FIRST_BARS = 3
 

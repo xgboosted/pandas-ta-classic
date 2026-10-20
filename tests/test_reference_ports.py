@@ -61,6 +61,13 @@ def test_stc(spy):
     _close(ta.stc(spy.close).iloc[:, 0], ref.stc(spy.close.to_numpy(float)), 1e-9)
 
 
+def test_ebsw(spy):
+    # The port read 360/length and sqrt(2)*180/bars as radians where ProRealCode
+    # (and Ehlers) mean degrees, and started its recursion at bar `length` from a
+    # previous close of 0.0, so its first value was 1/sqrt(3) on any data.
+    _close(ta.ebsw(spy.close), ref.ebsw(spy.close.to_numpy(float)), 1e-12)
+
+
 def test_qqe(spy):
     got = ta.qqe(spy.close)
     line, rsima = ref.qqe(spy.close.to_numpy(float))

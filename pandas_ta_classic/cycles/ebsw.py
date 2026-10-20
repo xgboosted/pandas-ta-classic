@@ -8,27 +8,37 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
+# ProRealCode's listing starts at barindex > 10.
+_START = 11
+
 
 @njit(cache=True)
 def _ebsw_nb(close, length, bars):
     m = close.size
     result = np.full(m, np.nan)
 
-    # HighPass and SuperSmoother coefficients are constant across bars
-    alpha1 = (1 - np.sin(360 / length)) / np.cos(360 / length)
-    a1 = np.exp(-np.sqrt(2) * np.pi / bars)
-    b1 = 2 * a1 * np.cos(np.sqrt(2) * 180 / bars)
+    # ProRealCode's coefficients: the angles are radians, 2*pi/length being
+    # Ehlers' 360 degrees / Duration. The port had read 360/length and
+    # sqrt(2)*180/bars as radians.
+    angle = 2 * np.pi / length
+    alpha1 = (1 - np.sin(angle)) / np.cos(angle)
+    ang = np.sqrt(2) * np.pi / bars
+    a1 = np.exp(-ang)
+    b1 = 2 * a1 * np.cos(ang)
     c2 = b1
     c3 = -1 * a1 * a1
     c1 = 1 - c2 - c3
 
-    lastClose = 0.0
     lastHP = 0.0
     fh0 = 0.0  # FilterHist[0] (older)
     fh1 = 0.0  # FilterHist[1] (recent)
 
-    for i in range(length, m):
-        HP = 0.5 * (1 + alpha1) * (close[i] - lastClose) + alpha1 * lastHP
+    # The source runs from barindex 11 on close - close[1], with the filters at
+    # 0 before it; the result is published from bar `length`, as before. The
+    # port had started at bar `length` from a previous close of 0.0, so its first
+    # value was 1/sqrt(3) on any data.
+    for i in range(_START, m):
+        HP = 0.5 * (1 + alpha1) * (close[i] - close[i - 1]) + alpha1 * lastHP
         Filt = c1 * (HP + lastHP) / 2 + c2 * fh1 + c3 * fh0
 
         # 3 Bar average of Wave amplitude and power
@@ -42,8 +52,8 @@ def _ebsw_nb(close, length, bars):
         fh0 = fh1
         fh1 = Filt
         lastHP = HP
-        lastClose = close[i]
-        result[i] = Wave
+        if i >= length:
+            result[i] = Wave
 
     return result
 
@@ -82,7 +92,7 @@ def ebsw(
     return ebsw
 
 
-ebsw.__doc__ = """Even Better SineWave (EBSW) *beta*
+ebsw.__doc__ = """Even Better SineWave (EBSW)
 
 This indicator measures market cycles and uses a low pass filter to remove noise.
 Its output is bound signal between -1 and 1 and the maximum length of a detected
@@ -91,8 +101,9 @@ trend is limited by its length input.
 Written by rengel8 for Pandas TA based on a publication at 'prorealcode.com' and
 a book by J.F.Ehlers.
 
-* This implementation seems to be logically limited. It would make sense to
-implement exactly the version from prorealcode and compare the behaviour.
+It follows the prorealcode listing line by line, which
+tests/test_reference_ports.py checks: its recursion starts at bar 11 and the
+result is published from bar ``length``.
 
 
 Sources:
