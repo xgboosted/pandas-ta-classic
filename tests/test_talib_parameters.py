@@ -8,8 +8,10 @@ default, so talib=True and talib=False agree on it.
 """
 
 import inspect
+import re
 import warnings
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -30,7 +32,32 @@ def _talib_indicators():
 
 
 def _same(a, b):
-    return pd.DataFrame(a).equals(pd.DataFrame(b))
+    """Compare values only: `DataFrame.equals` also compares column labels, and a
+    parameter that is part of the name (`ATRe_14`, `CCI_14_0.5`) made every pair
+    differ, so a talib=True path that ignored the value still passed."""
+    a, b = pd.DataFrame(a).to_numpy(dtype=float), pd.DataFrame(b).to_numpy(dtype=float)
+    return a.shape == b.shape and np.array_equal(a, b, equal_nan=True)
+
+
+def _options(func):
+    """The options of *func*: its keyword parameters, a price column it takes as an
+    optional input (`ad(open_=...)` switches to the Open form), and the options its
+    module reads from ``**kwargs`` (`sma(min_periods=...)`), which the signature hides."""
+    params = inspect.signature(func).parameters
+    found = {}
+    for param, spec in params.items():
+        if param in _SKIP or spec.kind in (spec.VAR_KEYWORD, spec.VAR_POSITIONAL):
+            continue
+        if param in _SERIES:
+            if spec.default is None:
+                found[param] = [_SERIES[param]]
+            continue
+        found[param] = _CANDIDATES
+    source = inspect.getsource(inspect.getmodule(inspect.unwrap(func)))
+    for param in re.findall(r'kwargs\.(?:get|pop|setdefault)\("(\w+)"', source):
+        if param not in _SKIP and param not in found:
+            found[param] = _CANDIDATES
+    return found
 
 
 @pytest.mark.parametrize("name", _talib_indicators())
@@ -38,7 +65,7 @@ def test_talib_true_honours_every_parameter(name):
     frame = get_sample_data().iloc[:600]
     func = _find_indicator_func(name)
     params = inspect.signature(func).parameters
-    series = {p: frame[c] for p, c in _SERIES.items() if p in params}
+    series = {p: frame[c] for p, c in _SERIES.items() if p in params and params[p].default is not None}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
@@ -47,10 +74,9 @@ def test_talib_true_honours_every_parameter(name):
         except Exception:  # noqa: BLE001 - indicators that need extra inputs are out of scope
             pytest.skip("needs inputs beyond price columns")
         ignored = []
-        for param, spec in params.items():
-            if param in _SKIP or param in series or spec.kind in (spec.VAR_KEYWORD, spec.VAR_POSITIONAL):
-                continue
-            for value in _CANDIDATES:
+        for param, candidates in _options(func).items():
+            for label in candidates:
+                value = frame[label] if param in _SERIES else label
                 try:
                     native = func(**series, talib=False, **{param: value})
                 except (ValueError, TypeError):
@@ -59,7 +85,7 @@ def test_talib_true_honours_every_parameter(name):
                     continue
                 talib = func(**series, talib=True, **{param: value})
                 if _same(talib, talib_default):
-                    ignored.append(f"{param}={value!r}")
+                    ignored.append(f"{param}={label!r}")
                 break
     assert not ignored, f"{name}(talib=True) ignores {ignored}"
 
