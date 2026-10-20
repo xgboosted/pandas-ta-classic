@@ -42,7 +42,7 @@ def ttm_trend(
 
     # Name and Categorize it
     tm_trend.name = f"TTM_TRND_{length}"
-    tm_trend.category = "momentum"
+    tm_trend.category = "trend"
 
     # Prepare DataFrame to return
     data = {tm_trend.name: tm_trend}

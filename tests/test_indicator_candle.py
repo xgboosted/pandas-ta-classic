@@ -1,3 +1,4 @@
+import warnings
 from unittest import TestCase, skipUnless
 
 import numpy as np
@@ -509,7 +510,10 @@ class TestCdlDojiAtTheEdges(TestCase):
         high = [2.0] * 12 + [1e308] + [2.0] * 17
         low = [0.0] * 12 + [-1e308] + [0.0] * 17
         args = ([1.0] * 30, high, low, [1.05] * 30)
-        np.testing.assert_array_equal(self._doji(*args, naive=True)[10:], self._doji(*args)[10:])
+        # inf - inf is NaN by design; without numba, numpy scalars used to warn about it
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            np.testing.assert_array_equal(self._doji(*args, naive=True)[10:], self._doji(*args)[10:])
 
     def test_inf_row_is_dropped_like_a_nan_row(self):
         # An inf high made sma() of the range NaN for every window holding it,

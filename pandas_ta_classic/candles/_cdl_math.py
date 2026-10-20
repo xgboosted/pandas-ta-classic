@@ -173,10 +173,13 @@ def period_average(arr: np.ndarray, period: int, factor: float, divisor: float, 
     if period == 0:
         out[start_idx:] = factor * arr[start_idx - lag : len(arr) - lag] / divisor
     else:
-        total = 0.0
-        for value in arr[start_idx - lag - period : start_idx - lag]:
-            total += value
-        _candle_average_nb(arr, period, lag, start_idx, factor, divisor, total, out)
+        # An infinite range makes the running total inf - inf = NaN, as in TA-Lib;
+        # without numba the loop runs on numpy scalars, which warn about it.
+        with np.errstate(invalid="ignore"):
+            total = 0.0
+            for value in arr[start_idx - lag - period : start_idx - lag]:
+                total += value
+            _candle_average_nb(arr, period, lag, start_idx, factor, divisor, total, out)
     return out
 
 

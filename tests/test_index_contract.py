@@ -155,6 +155,21 @@ def test_result_keeps_the_input_index(name: str, frame: dict[str, pd.Series]) ->
         assert part.index.equals(expected), f"{name} replaced the input index (got {type(part.index).__name__})"
 
 
+_REGISTERED_CATEGORY = {name: category for category, names in ta.Category.items() for name in names}
+
+
+@pytest.mark.parametrize("name", _indicator_names())
+def test_result_category_matches_the_registry(name: str, frame: dict[str, pd.Series]) -> None:
+    """``result.category`` names the category the indicator is registered under.
+
+    ``dm`` (registered under momentum) reported "trend" and ``ttm_trend``
+    (registered under trend) reported "momentum".
+    """
+    for part in _results(name, frame):
+        category = getattr(part, "category", None)
+        assert category == _REGISTERED_CATEGORY[name], f"{name}.category is {category!r}, registered under {_REGISTERED_CATEGORY[name]!r}"
+
+
 def _accepts(name: str, parameter: str) -> bool:
     """Whether indicator *name* declares *parameter*."""
     return parameter in inspect.signature(getattr(ta, name)).parameters
