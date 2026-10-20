@@ -415,6 +415,54 @@ def test_fillna_reaches_every_output_column_of_an_option_path(name: str, option:
     assert not wrong, f"{name}({option}, fillna=0) left NaN in {wrong}"
 
 
+def _option_paths() -> list:
+    """Every non-default path the fill can take: an offset, each moving average
+    a ``mamode`` accepts, and the TA-Lib branch."""
+    from pandas_ta_classic.overlap.ma import _MA_DISPATCH
+
+    paths = []
+    for name in _indicator_names():
+        if name in _EXEMPT or not _takes_fill_kwargs(name):
+            continue
+        if _accepts(name, "offset"):
+            paths.append(pytest.param(name, {"offset": _OFFSET}, id=f"{name}-offset"))
+        if _accepts(name, "mamode") and name != "mavp":  # mavp's mamode is TA-Lib's integer enum
+            paths += [pytest.param(name, {"mamode": mode}, id=f"{name}-mamode-{mode}") for mode in sorted(_MA_DISPATCH)]
+        if _accepts(name, "talib") and ta.Imports["talib"]:
+            paths.append(pytest.param(name, {"talib": True}, id=f"{name}-talib"))
+    return paths
+
+
+@pytest.mark.parametrize("fill", [{"fillna": 0}, {"fill_method": "ffill"}, {"fill_method": "bfill"}], ids=["fillna", "ffill", "bfill"])
+@pytest.mark.parametrize(("name", "option"), _option_paths())
+def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: dict, fill: dict, frame: dict[str, pd.Series]) -> None:
+    """``f(option, fill)`` equals ``f(option)`` filled afterwards, on every option path.
+
+    The sweeps above call each indicator with its defaults. The fill went wrong
+    only on other paths: ``aroon`` and ``donchian`` filled before the offset, so
+    ``fillna`` left the ``offset`` rows ``NaN``; ``psar(talib=True)`` returned
+    from its TA-Lib branch without filling; ``bbands`` passed ``fillna`` to its
+    inner ``dema``/``hma``/``zlma``/..., which filled the warm-up of the middle
+    band and turned it into band values.
+    """
+    try:
+        plain = output_columns(_results(name, frame, **option))
+    except ValueError as error:
+        if "mamode" in str(error):
+            pytest.skip(f"{name} does not offer {option}")
+        raise
+    filled = output_columns(_results(name, frame, **option, **fill))
+
+    assert sorted(filled) == sorted(plain), f"{name}({option}, {fill}) changed the columns"
+    method = fill.get("fill_method")
+    changed = []
+    for column, values in plain.items():
+        expected = values.fillna(0) if method is None else getattr(values, method)()
+        if not np.array_equal(filled[column].to_numpy(dtype=float), expected.to_numpy(dtype=float), equal_nan=True):
+            changed.append(column)
+    assert not changed, f"{name}({option}, {fill}) is not {name}({option}) filled afterwards for: {changed}"
+
+
 @pytest.mark.parametrize(
     ("name", "foreign"),
     [
