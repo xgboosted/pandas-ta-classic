@@ -20,14 +20,19 @@ from pandas_ta_classic.utils._njit import njit
 def _kama_nb(sc, close, length):
     m = close.size
     result = np.full(m, np.nan)
-    if length - 1 < m:
-        result[length - 1] = close[length - 1]
-    for i in range(length, m):
-        result[i] = sc[i] * close[i] + (1 - sc[i]) * result[i - 1]
-    # The seed is the close of bar length - 1, not an average: TA-Lib's KAMA
-    # starts one bar later, at bar length, where the first ratio exists.
-    if length - 1 < m:
-        result[length - 1] = np.nan
+    # The first bar with an efficiency ratio: bar length for drift=1, as in
+    # TA-Lib's KAMA, later for a larger drift, whose first price change is
+    # drift bars in. Starting at bar length carried a NaN ratio to the end.
+    start = length
+    while start < m and np.isnan(sc[start]):
+        start += 1
+    if start >= m:
+        return result
+    # The seed is the close of the bar before, as in TA-Lib; it is not published.
+    previous = close[start - 1]
+    for i in range(start, m):
+        previous = sc[i] * close[i] + (1 - sc[i]) * previous
+        result[i] = previous
     return result
 
 
