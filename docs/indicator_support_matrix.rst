@@ -266,7 +266,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - uo
      - momentum
      - yes
-     - no
+     - yes
      - no
    * - vwmacd
      - momentum
@@ -361,7 +361,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - true_range
      - volatility
      - yes
-     - no
+     - yes
      - no
    * - ui
      - volatility
@@ -511,7 +511,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - linreg
      - overlap
      - yes
-     - no
+     - yes
      - yes
    * - linregangle
      - overlap
@@ -656,7 +656,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - wcp
      - overlap
      - yes
-     - no
+     - yes
      - yes
    * - wma
      - overlap
