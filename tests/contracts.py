@@ -1,8 +1,9 @@
 """Shared harness of the registry-wide contract tests.
 
-Every ``test_*_contract.py`` module, ``test_degenerate_input.py`` and
-``test_oracle_registry.py`` runs each registered indicator against one class of
-input. They share three things, kept here so they cannot drift apart:
+Each registry-wide contract runs every registered indicator against one class
+of input. ``test_shift_contract.py`` uses this module; moving the older
+contract modules onto it is the rest of rmarcink's test/contract-harness
+branch. The contracts share three things, kept here so they cannot drift apart:
 
 * the data: :func:`spy` returns the last *bars* rows of ``SPY_D``;
 * the registry: :data:`INDICATORS`, :data:`OHLCV_INDICATORS`, :func:`inputs`

@@ -118,7 +118,6 @@ LEVEL_COLUMNS: dict[str, str] = {
 # Bars after which a zero-initialised filter state has died out on the data
 # below; the transient before them depends on the level.
 WARMUP_BARS: dict[str, int] = {
-    "ebsw": 100,
     "mama": 200,
     "ht_trendline": 250,
     "ht_dcperiod": 250,
