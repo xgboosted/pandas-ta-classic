@@ -795,6 +795,16 @@ class TestMomentum(TestCase):
             ),
         )
 
+    def test_stc_reads_nan_until_its_windows_hold_data(self):
+        # The recursion seeds 0.0 and held it through the warm-up, so STC read
+        # 0.0 from bar 0 while its own MACD column was still NaN. MACD starts at
+        # slow - 1 = 25, its 10-bar range at 34 (STCstoch), and STC's own window
+        # of real STCstoch values at 43; later values are the recursion's, unchanged.
+        result = pandas_ta.stc(self.close)
+        first = {column: int(result[column].notna().to_numpy().argmax()) for column in result.columns}
+        self.assertEqual(first, {"STC_10_12_26_0.5": 43, "STCmacd_10_12_26_0.5": 25, "STCstoch_10_12_26_0.5": 34})
+        self.assertFalse(result.iloc[43:].isna().any().any())
+
     def test_stc_short_series_through_kwargs_is_all_nan(self):
         # nan_on_short_input replaced only the declared Series parameters when
         # probing, so a short Series arriving through **kwargs kept the

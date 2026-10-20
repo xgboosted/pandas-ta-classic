@@ -1484,7 +1484,7 @@
   "stc": {
     "STC_10_12_26_0.5": {
       "last_value": 85.51701283,
-      "non_nan_count": 5241
+      "non_nan_count": 5198
     },
     "STCmacd_10_12_26_0.5": {
       "last_value": 6.44272055,
@@ -1492,7 +1492,7 @@
     },
     "STCstoch_10_12_26_0.5": {
       "last_value": 95.92991143,
-      "non_nan_count": 5241
+      "non_nan_count": 5207
     }
   },
   "td_seq": {
