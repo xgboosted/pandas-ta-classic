@@ -430,7 +430,11 @@ class TestZipImport(unittest.TestCase):
     def test_package_imports_from_a_zip_archive(self):
         """Category and the candle patterns are discovered through the import
         system: ``Path.iterdir`` / ``os.listdir`` raised FileNotFoundError when
-        the package was imported from a zip archive (zipimport)."""
+        the package was imported from a zip archive (zipimport).
+
+        The user cache directory is read-only here: numba put the cache of a
+        function imported from a zip there, ignoring NUMBA_CACHE_DIR, and the
+        first JIT call raised PermissionError."""
         import json
         import subprocess
         import sys
@@ -443,6 +447,8 @@ class TestZipImport(unittest.TestCase):
         package_dir = Path(pandas_ta_classic.__file__).parent
         with tempfile.TemporaryDirectory() as tmp:
             archive = Path(tmp, "pandas_ta_classic.zip")
+            read_only_cache = Path(tmp, "cache")
+            read_only_cache.mkdir(mode=0o555)
             with zipfile.ZipFile(archive, "w") as zf:
                 for path in package_dir.rglob("*"):
                     if path.is_file() and "__pycache__" not in path.parts:
@@ -465,7 +471,7 @@ class TestZipImport(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 cwd=tmp,
-                env={**os.environ, "PYTHONPATH": os.pathsep.join([str(archive), str(repo_root)])},
+                env={**os.environ, "PYTHONPATH": os.pathsep.join([str(archive), str(repo_root)]), "XDG_CACHE_HOME": str(read_only_cache)},
                 timeout=300,
                 check=False,  # the return code is asserted below, with stderr as context
             )
