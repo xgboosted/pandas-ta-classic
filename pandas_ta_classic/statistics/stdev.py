@@ -35,7 +35,7 @@ def stdev(
 
     # Calculate Result
     # TA-Lib cannot express a non-default ddof; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and ddof == 0:
+    if Imports["talib"] and mode_talib and ddof == 0 and min_periods == length:
         from talib import STDDEV
 
         stdev = STDDEV(close, length)

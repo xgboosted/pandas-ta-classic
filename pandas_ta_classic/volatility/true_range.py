@@ -37,7 +37,7 @@ def true_range(
     mode_talib = _bool_param(talib, False, "talib")
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and drift == 1:
         from talib import TRANGE
 
         true_range = TRANGE(high, low, close)

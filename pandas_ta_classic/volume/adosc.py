@@ -59,7 +59,7 @@ def adosc(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and open_ is None:
         from talib import ADOSC
 
         adosc = ADOSC(high, low, close, volume, fast, slow)

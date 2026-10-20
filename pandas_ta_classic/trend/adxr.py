@@ -41,7 +41,7 @@ def adxr(
 
     # Calculate Result
     # TA-Lib cannot express a non-default drift, mamode, scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100 and mamode == "rma" and drift == 1:
+    if Imports["talib"] and mode_talib and scalar == 100 and mamode == "rma" and drift == 1 and lensig == length:
         from talib import ADXR, MINUS_DI, PLUS_DI
 
         adxr_series = Series(ADXR(high, low, close, length), index=close.index)
