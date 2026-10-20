@@ -112,6 +112,26 @@ def stc(c, tclen=10, fast=12, slow=26, factor=0.5):
     return out
 
 
+def ebsw(c, duration=40, lower_band=10):
+    """Even Better Sinewave (ProRealCode "even-better-sinewave"), line by line; runs from barindex 11."""
+    n = len(c)
+    angle = ((360 * np.pi) / 180) / duration
+    alpha1 = (1 - np.sin(angle)) / np.cos(angle)
+    ang = np.sqrt(2) * np.pi / lower_band
+    a1 = np.exp(-ang)
+    b1 = 2 * a1 * np.cos(ang)
+    c2, c3 = b1, -a1 * a1
+    c1 = 1 - c2 - c3
+    hp, filt, out = np.zeros(n), np.zeros(n), np.full(n, np.nan)
+    for i in range(11, n):
+        hp[i] = 0.5 * (1 + alpha1) * (c[i] - c[i - 1]) + alpha1 * hp[i - 1]
+        filt[i] = c1 * (hp[i] + hp[i - 1]) / 2 + c2 * filt[i - 1] + c3 * filt[i - 2]
+        wave = (filt[i] + filt[i - 1] + filt[i - 2]) / 3
+        pwr = (filt[i] ** 2 + filt[i - 1] ** 2 + filt[i - 2] ** 2) / 3
+        out[i] = wave / np.sqrt(pwr)
+    return out
+
+
 def qqe(c, rsi_period=14, sf=5, q=4.236):
     """QQE (TradingView "QQE MT4" by Glaz): trailing line on the smoothed RSI."""
     wilders = rsi_period * 2 - 1
