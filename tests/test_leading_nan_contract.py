@@ -70,3 +70,47 @@ def test_leading_nan_run_does_not_change_the_result(name, pad, clean):
     x, y = got.to_numpy(float, na_value=np.nan), expected.to_numpy(float, na_value=np.nan)
     np.testing.assert_array_equal(np.isnan(x), np.isnan(y), err_msg=f"{name}: NaN pattern differs")
     np.testing.assert_allclose(x, y, rtol=1e-9, atol=1e-12, equal_nan=True, err_msg=name)
+
+
+# Columns that hold a value over bars with no data, pinned as strict xfails so a
+# change either way is noticed.
+_FLAG = "KEPT: a flag column; a comparison with NaN is False, so it reads 0 (no signal)"
+_NO_DATA_EXCEPTIONS = {
+    "amat": _FLAG,
+    "cpr": _FLAG + " (CPR_WIDTH_CLASS, CPR_POSITION)",
+    "decreasing": _FLAG,
+    "increasing": _FLAG,
+    "smc_sweep": _FLAG,
+    "cdl_doji": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
+    "cdl_pattern": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
+    "stc": "OPEN: the STC recursion seeds 0.0 and holds it while its range is undefined, so it reads 0.0 "
+    "through every warm-up, clean data included, as TradingView's nz(f1[1]) does",
+}
+
+
+def _columns_with_values(result: pd.DataFrame) -> list[str]:
+    return [str(c) for c in result.columns if pd.to_numeric(result[c], errors="coerce").notna().any()]
+
+
+@pytest.mark.parametrize("name", INDICATORS)
+def test_the_leading_nan_run_itself_reads_nan(name, clean, request):
+    """No value over the padded bars: mfi read 0.0 there, nvi and pvi 1000, wad and decay 0.0."""
+    exceptions = _NO_DATA_EXCEPTIONS | {"ichimoku": "KEPT: the Chikou span is close.shift(-kijun) and looks forward"}
+    if name in exceptions:
+        request.applymarker(pytest.mark.xfail(strict=True, reason=exceptions[name]))
+    pad = PADS[-1]
+    head = _call(name, _padded(clean, pad)).iloc[:pad]
+    assert not _columns_with_values(head), f"{name}: values over {pad} bars of no data in {_columns_with_values(head)[:3]}"
+
+
+@pytest.mark.parametrize("name", INDICATORS)
+def test_an_all_nan_input_reads_nan(name, clean, request):
+    """An input with no data reports no value.
+
+    ``skip_leading_nan`` passed all-NaN input through, so a recursion published
+    its seed: rsx 50.0, mfi, fisher, ebsw and psar 0.0, psar's af 0.02.
+    """
+    if name in _NO_DATA_EXCEPTIONS:
+        request.applymarker(pytest.mark.xfail(strict=True, reason=_NO_DATA_EXCEPTIONS[name]))
+    result = _call(name, clean * np.nan)
+    assert not _columns_with_values(result), f"{name}: values from all-NaN input in {_columns_with_values(result)[:3]}"

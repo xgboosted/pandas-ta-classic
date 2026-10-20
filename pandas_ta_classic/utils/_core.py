@@ -233,6 +233,24 @@ def leading_nan_rows(*series: Series) -> int:
     return int(hits[0]) if hits.size else finite.size
 
 
+def _all_nan_like(result: Any) -> Any:
+    """*result* with every value NaN, keeping its index, columns, name and category.
+
+    An input with no finite row has nothing to report; a recursion seeded from
+    the first bar had published its seed (rsx 50.0, mfi 0.0, nvi 1000) instead.
+    """
+    if result is None:
+        return None
+    if isinstance(result, Series):
+        empty: Series | DataFrame = Series(np.nan, index=result.index, name=result.name)
+    else:
+        empty = DataFrame(np.nan, index=result.index, columns=result.columns)
+    for attr in ("name", "category"):
+        if hasattr(result, attr):
+            setattr(empty, attr, getattr(result, attr))
+    return empty
+
+
 def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
     """Compute an indicator on the rows after a leading NaN run, then pad back.
 
@@ -241,8 +259,8 @@ def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
     the whole result came back NaN. The decorated function instead receives
     every Series argument trimmed to start at the first row where all of
     *names* are finite; its result is reindexed to the original index, with
-    ``name`` and ``category`` preserved. Input without a leading NaN run, or
-    that is entirely NaN, is passed through unchanged.
+    ``name`` and ``category`` preserved. Input without a leading NaN run is
+    passed through unchanged; input that is entirely NaN reads NaN throughout.
 
     With ``interior=True`` every row where one of *names* is not finite is
     skipped, not only the leading run, and reads NaN in the result. For a
@@ -263,13 +281,17 @@ def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
             rows: Any
             if interior:
                 finite = np.isfinite(np.vstack([s.to_numpy(dtype=float) for s in primary])).all(axis=0)
-                if finite.all() or not finite.any():
+                if finite.all():
                     return fn(*args, **kwargs)
+                if not finite.any():
+                    return _all_nan_like(fn(*args, **kwargs))
                 rows = np.flatnonzero(finite)
             else:
                 start = leading_nan_rows(*primary)
-                if not 0 < start < size:
+                if start == 0:
                     return fn(*args, **kwargs)
+                if start == size:
+                    return _all_nan_like(fn(*args, **kwargs))
                 rows = slice(start, None)
             for key, value in bound.arguments.items():
                 if isinstance(value, Series) and value.size == size:
