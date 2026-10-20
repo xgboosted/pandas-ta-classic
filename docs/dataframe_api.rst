@@ -260,7 +260,10 @@ Removed helpers
    0.9.0. Add a constant column directly (``df["0"] = 0``) and use
    ``ta.ALL_PATTERNS`` for the candle pattern names. ``ta.utils.get_time``
    and ``df.ta.exchange`` were removed in 0.9.0 as well; ``df.ta.last_run``
-   is a UTC ``datetime`` (see `last_run`_).
+   is a UTC ``datetime`` (see `last_run`_). Reading any removed name raises
+   ``AttributeError`` with what to use instead, so ``hasattr()`` is
+   ``False``; ``from pandas_ta_classic.utils import get_time`` gets Python's
+   plain ``ImportError``.
 
 chain
 ~~~~~
