@@ -78,11 +78,11 @@ _EXEMPT = {
 }
 
 
-def _build_frame() -> dict[str, pd.Series]:
+def _build_frame(rows: int = _N_ROWS) -> dict[str, pd.Series]:
     """A deterministic OHLCV frame long enough for every default window."""
     rng = np.random.default_rng(0)
-    base = 100 + np.cumsum(rng.normal(0, 1, _N_ROWS))
-    index = pd.date_range("2020-01-01", periods=_N_ROWS, freq="D")
+    base = 100 + np.cumsum(rng.normal(0, 1, rows))
+    index = pd.date_range("2020-01-01", periods=rows, freq="D")
     close = pd.Series(base, index=index)
     return {
         "open_": close - 0.5,
@@ -90,7 +90,7 @@ def _build_frame() -> dict[str, pd.Series]:
         "high": close + 1.0,
         "low": close - 1.0,
         "close": close,
-        "volume": pd.Series(rng.integers(1_000, 5_000, _N_ROWS).astype(float), index=index),
+        "volume": pd.Series(rng.integers(1_000, 5_000, rows).astype(float), index=index),
         "benchmark": close * 0.99,
         "series_a": close,
         "series_b": close.shift(1).bfill(),
@@ -106,6 +106,16 @@ def _build_frame() -> dict[str, pd.Series]:
 def frame() -> dict[str, pd.Series]:
     """The shared frame for the read-only sweeps."""
     return _build_frame()
+
+
+_LONG_ROWS = 1000
+
+
+@pytest.fixture(scope="module")
+def long_frame() -> dict[str, pd.Series]:
+    """Long enough for the warm-up of every option path (vfi's 130-bar window
+    smoothed by t3, kvo's slow line through t3)."""
+    return _build_frame(_LONG_ROWS)
 
 
 def _indicator_names() -> list[str]:
@@ -435,7 +445,7 @@ def _option_paths() -> list:
 
 @pytest.mark.parametrize("fill", [{"fillna": 0}, {"fill_method": "ffill"}, {"fill_method": "bfill"}], ids=["fillna", "ffill", "bfill"])
 @pytest.mark.parametrize(("name", "option"), _option_paths())
-def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: dict, fill: dict, frame: dict[str, pd.Series]) -> None:
+def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: dict, fill: dict, long_frame: dict[str, pd.Series]) -> None:
     """``f(option, fill)`` equals ``f(option)`` filled afterwards, on every option path.
 
     The sweeps above call each indicator with its defaults. The fill went wrong
@@ -446,12 +456,14 @@ def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: 
     band and turned it into band values.
     """
     try:
-        plain = output_columns(_results(name, frame, **option))
+        plain = output_columns(_results(name, long_frame, **option))
     except ValueError as error:
         if "mamode" in str(error):
             pytest.skip(f"{name} does not offer {option}")
         raise
-    filled = output_columns(_results(name, frame, **option, **fill))
+    if all(values.isna().all() for values in plain.values()):
+        pytest.skip(f"{name}({option}) reads NaN on every row of this frame (acos/asin: close outside [-1, 1])")
+    filled = output_columns(_results(name, long_frame, **option, **fill))
 
     assert sorted(filled) == sorted(plain), f"{name}({option}, {fill}) changed the columns"
     method = fill.get("fill_method")
@@ -464,14 +476,14 @@ def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: 
 
 
 @pytest.mark.parametrize(("name", "option"), [p for p in _option_paths() if "offset" not in p.values[1] and _accepts(p.values[0], "offset")])
-def test_offset_shifts_every_output_column_on_every_option_path(name: str, option: dict, frame: dict[str, pd.Series]) -> None:
+def test_offset_shifts_every_output_column_on_every_option_path(name: str, option: dict, long_frame: dict[str, pd.Series]) -> None:
     """``f(option, offset=N)`` equals ``f(option).shift(N)`` on the other option paths too.
 
     ``psar(talib=True)`` shifted the SAR before it split it into long and short
     against the unshifted close, so the offset moved bars between the two columns.
     """
     try:
-        _assert_offset_is_a_shift(name, frame, option)
+        _assert_offset_is_a_shift(name, long_frame, option)
     except ValueError as error:
         if "mamode" in str(error):
             pytest.skip(f"{name} does not offer {option}")
