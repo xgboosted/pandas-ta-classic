@@ -16,6 +16,7 @@ import pytest
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from tests.config import get_sample_data
+from tests.contracts import inputs
 
 pytestmark = pytest.mark.skipif(not ta.Imports["talib"], reason="needs TA-Lib")
 
@@ -98,3 +99,31 @@ def test_macdfix_keeps_its_signal_columns_on_the_talib_path():
     # Without the keyword, talib=True still uses TA-Lib -- which seeds its EMAs
     # differently, so the two paths must not agree there.
     assert not ta.macdfix(close, talib=True).equals(ta.macdfix(close, talib=False))
+
+
+# Columns whose first value TA-Lib publishes later than the native path, by design of
+# TA-Lib: the reason is part of the table so a change on either side shows up here.
+_LATER_ON_TALIB = {
+    "macd": ({"MACD_12_26_9"}, "TA-Lib holds the MACD line back until its signal line exists"),
+    "macdext": ({"MACDEXT_12_26_9"}, "TA-Lib holds the MACD line back until its signal line exists"),
+    "macdfix": ({"MACDFIX_9_9"}, "TA-Lib holds the MACD line back until its signal line exists"),
+    "mavp": ({"MAVP_2_30"}, "TA-Lib waits for maxperiod on every bar, whatever that bar's period"),
+    "psar": ({"PSARaf_0.02_0.2"}, "TA-Lib's SAR returns no acceleration factor; the column is NaN on that path"),
+    "stoch": ({"STOCHk_14_3_3"}, "TA-Lib holds %K back until %D exists"),
+    "stochf": ({"STOCHFk_5_3"}, "TA-Lib holds %K back until %D exists"),
+}
+
+
+@pytest.mark.parametrize("name", _talib_indicators())
+def test_native_and_talib_publish_from_the_same_bar(name):
+    """Native kama published its seed (the close of bar length-1) one bar before
+    TA-Lib's KAMA, which starts at bar length."""
+    frame = get_sample_data().iloc[:600]
+    func = _find_indicator_func(name)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        native = pd.DataFrame(func(**inputs(name, frame), talib=False))
+        talib = pd.DataFrame(func(**inputs(name, frame), talib=True))
+    assert list(native.columns) == list(talib.columns)
+    differ = {column for column in native if native[column].first_valid_index() != talib[column].first_valid_index()}
+    assert differ == _LATER_ON_TALIB.get(name, (set(), ""))[0], f"{name}: first value on another bar in {sorted(differ)}"
