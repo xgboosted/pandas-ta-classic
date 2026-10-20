@@ -41,7 +41,7 @@ def td_seq(
         return None
     offset = get_offset(offset)
     asint = _bool_param(asint, False, "asint")
-    show_all = kwargs.setdefault("show_all", True)
+    show_all = _bool_param(kwargs.pop("show_all", None), True, "show_all")
 
     def calc_td(series: Series, direction: str, show_all: bool):
         td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0
