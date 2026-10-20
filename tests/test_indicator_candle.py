@@ -45,6 +45,17 @@ class TestCandle(TestCase):
     def tearDown(self):
         pass
 
+    def test_every_pattern_column_is_float64(self):
+        # cdl_doji and cdl_inside returned int64 while the native patterns return
+        # float64, so cdl_pattern(name="all") mixed dtypes; doji's column turned
+        # int64 there once an int scalar stayed an int.
+        frame = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
+        self.assertEqual({str(t) for t in frame.dtypes}, {"float64"})
+        for func in (pandas_ta.cdl_doji, pandas_ta.cdl_inside):
+            for scalar in ({}, {"scalar": 100}, {"scalar": 100.0}) if func is pandas_ta.cdl_doji else ({},):
+                with self.subTest(func=func.__name__, **scalar):
+                    self.assertEqual(func(self.open, self.high, self.low, self.close, **scalar).dtype, "float64")
+
     def test_ha(self):
         assert_indicator_standard(
             self,

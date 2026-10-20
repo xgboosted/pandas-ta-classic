@@ -69,7 +69,9 @@ def cdl_doji(
         no_window = finite & (np.cumsum(finite) <= length)
         doji.iloc[no_window] = (body <= factor / 100 * hl_range).to_numpy()[no_window]
     if asint:
-        doji = scalar * doji.astype(int)
+        # float64, as every native pattern returns; an int scalar used to make this int64,
+        # so cdl_pattern's frame mixed one int64 column into float64 ones
+        doji = doji.astype(float) * scalar
 
     # Offset
     doji = apply_offset(doji, offset)

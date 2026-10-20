@@ -37,7 +37,8 @@ def cdl_inside(
     inside[finite.to_numpy()] = ((high[finite].diff() < 0) & (low[finite].diff() > 0)).to_numpy()
 
     if not asbool:
-        inside *= candle_color(open_, close)
+        # float64, as every native pattern returns
+        inside = (inside * candle_color(open_, close)).astype(float)
 
     # Offset
     inside = apply_offset(inside, offset)
