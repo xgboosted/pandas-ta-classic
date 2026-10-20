@@ -450,18 +450,19 @@ def test_trend_reset_is_removed(frame):
         ta.tsignals(trend, False, 1)
 
 
-# Boolean parameters declared with a True/False default in the signature were read by
-# truthiness too (xsignals(above=0) meant below, ichimoku(include_chikou=0) dropped the
-# Chikou column). Cases come from the signatures, not from the validation calls, so a
-# parameter that loses its _bool_param call still fails here.
+# Boolean parameters were read by truthiness too (xsignals(above=0) meant below,
+# ichimoku(include_chikou=0) dropped the Chikou column). Cases are the signature
+# parameters with a True/False default, in the signature or resolved from None by a
+# _bool_param call, so a parameter that loses its _bool_param call still fails here.
 def _signature_bool_cases():
     cases = []
     for name in sorted(i for v in ta.Category.values() for i in v):
         func = _find_indicator_func(name)
         if func is None:
             continue
+        resolved = _code_defaults(inspect.getsource(inspect.getmodule(inspect.unwrap(func))))
         for param in inspect.signature(func).parameters.values():
-            if isinstance(param.default, bool):
+            if isinstance(param.default, bool) or (param.default is None and isinstance(resolved.get(param.name), bool)):
                 cases.append((name, param.name))
     return cases
 
@@ -470,7 +471,7 @@ SIGNATURE_BOOL_CASES = _signature_bool_cases()
 
 
 def test_signature_bool_sweep_found_the_parameters():
-    assert len(SIGNATURE_BOOL_CASES) >= 10  # 11 before ichimoku's as_dataframe was removed
+    assert len(SIGNATURE_BOOL_CASES) >= 90  # 98 once None defaults resolved by _bool_param count too
 
 
 @pytest.mark.parametrize(("name", "param"), SIGNATURE_BOOL_CASES)
