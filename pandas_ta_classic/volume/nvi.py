@@ -47,6 +47,9 @@ def nvi(
     nvi.iloc[0] = initial
     nvi = nvi.cumsum()
 
+    # A bar whose input is missing has no value; the state carries across it.
+    nvi = nvi.mask((close.isna() | volume.isna()).to_numpy())
+
     # Offset
     nvi = apply_offset(nvi, offset)
 

@@ -40,6 +40,9 @@ def decay(
     tdf = DataFrame({"close": close, "diff": diff, "0": 0})
     ld = tdf.max(axis=1)
 
+    # A bar whose input is missing has no value; the state carries across it.
+    ld = ld.mask((close.isna()).to_numpy())
+
     # Offset
     ld = apply_offset(ld, offset)
 

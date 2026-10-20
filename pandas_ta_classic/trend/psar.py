@@ -153,6 +153,10 @@ def psar(
     _af = Series(af_arr, index=high.index)
     reversal = Series(reversal_arr, index=high.index)
 
+    # A bar whose input is missing has no value; the state carries across it.
+    missing = (high.isna() | low.isna()).to_numpy()
+    _af, long, short, reversal = (s.mask(missing) for s in (_af, long, short, reversal))
+
     # Offset
     _af, long, short, reversal = apply_offset([_af, long, short, reversal], offset)
 

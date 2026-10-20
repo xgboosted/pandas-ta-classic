@@ -27,6 +27,7 @@ def rma(
 
     # Calculate Result — SMA-seeded Wilder smoothing (matches TA-Lib)
     close = close.copy()
+    missing = close.isna()
     # Seed on the first `length` values after any leading NaN run, as ema()
     # does. Seeding on iloc[0:length] averaged whatever valid values the NaN
     # prefix left (chained input: dx, the DM series), so every value derived
@@ -41,6 +42,9 @@ def rma(
         close.iloc[: fv_pos + length - 1] = np.nan
         close.iloc[fv_pos + length - 1] = sma_nth
         rma = close.ewm(alpha=alpha, adjust=False).mean()
+        # ewm() writes its last average on a missing bar; the bar has no value
+        # (the recursion still carries its state across it)
+        rma = rma.mask(missing)
 
     # Offset
     rma = apply_offset(rma, offset)
