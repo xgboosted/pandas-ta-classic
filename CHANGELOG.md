@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.9.0] - 2026-10-21
 
 ### Changed
 * **Signature defaults are `None` everywhere**: `bbands(ddof=0)`, `cdl_doji(asint=True)`, `cdl_pattern(name="all")`, `cpr(method="classic", timeframe="daily", levels="standard", width_analysis=True, price_position=True, virgin_cpr=False)`, `dpo(centered=True)`, `ichimoku(include_chikou=True, append_span=False)` and `xsignals(above=True, long=True)` wrote their defaults into the signature, the only registered indicators that did. They now take `None`, which their existing validation call resolves to the same default, so passing `None` means "the default" for every parameter of every indicator; results are unchanged (all registered output hashes identically). `tests/test_parameter_validation.py` checks every registered signature.
