@@ -1,6 +1,7 @@
 # Schaff Trend Cycle (STC)
 from typing import Any
 
+import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ema import ema
@@ -190,6 +191,12 @@ Calculation:
     2nd Stochastic including filtering with results in the
     STC = Schaff Trend Cycle
 
+Warm-up:
+    STCstoch is NaN until the MACD/Osc. has a full tclength window, and STC
+    a further tclength - 1 bars, until its own window holds only STCstoch
+    values: bars 34 and 43 with the defaults. The recursion is seeded with
+    0.0 underneath, as in the source, so every later value is unchanged.
+
 Args:
     close (pd.Series): Series of 'close's, used for indexing Series, mandatory
     tclength (int): SchaffTC Signal-Line length.  Default: 10 (adjust to the half of cycle)
@@ -232,5 +239,14 @@ def schaff_tc(close: Series, xmacd: Series, tclength: int, factor: float) -> lis
         pf_range.to_numpy(dtype=float),
         factor,
     )
+
+    # The recursion seeds 0.0 and holds it until a range exists, as Schaff's
+    # script does; those bars have no data, so report NaN there and keep every
+    # later value. PF is real from the first defined MACD range on, STC once its
+    # own window holds only real PF values.
+    defined = np.flatnonzero(np.isfinite(xmacd_range.to_numpy(dtype=float)))
+    first = defined[0] if defined.size else len(pf_arr)
+    pf = pf.mask(np.arange(len(pf_arr)) < first)
+    pff_arr = np.where(np.arange(len(pff_arr)) < first + tclength - 1, np.nan, pff_arr)
 
     return [pff_arr, pf]

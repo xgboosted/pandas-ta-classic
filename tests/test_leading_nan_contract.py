@@ -83,8 +83,6 @@ _NO_DATA_EXCEPTIONS = {
     "smc_sweep": _FLAG,
     "cdl_doji": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
     "cdl_pattern": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
-    "stc": "OPEN: the STC recursion seeds 0.0 and holds it while its range is undefined, so it reads 0.0 "
-    "through every warm-up, clean data included, as TradingView's nz(f1[1]) does",
 }
 
 
