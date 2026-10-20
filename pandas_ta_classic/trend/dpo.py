@@ -12,7 +12,7 @@ from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_in
 def dpo(
     close: Series,
     length: int | None = None,
-    centered: bool = True,
+    centered: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:

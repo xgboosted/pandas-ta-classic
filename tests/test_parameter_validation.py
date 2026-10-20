@@ -499,3 +499,18 @@ def test_signature_bool_rejects_non_bool(name, param, frame):
 def test_helper_bool_options_reject_non_bool(call, message):
     with pytest.raises(ValueError, match=message):
         call()
+
+
+def test_signature_defaults_are_none():
+    # None selects the default, resolved by the validation call, so a caller can pass
+    # None to mean "the default" everywhere. bbands, cdl_doji, cdl_inside, cdl_pattern,
+    # cpr, dpo, ichimoku and xsignals wrote their defaults into the signature instead.
+    offenders = []
+    for name in sorted(i for v in ta.Category.values() for i in v):
+        func = _find_indicator_func(name)
+        if func is None:
+            continue
+        for param in inspect.signature(func).parameters.values():
+            if param.default is not inspect.Parameter.empty and param.default is not None:
+                offenders.append(f"{name}({param.name}={param.default!r})")
+    assert not offenders, offenders

@@ -17,9 +17,9 @@ def ichimoku(
     tenkan: int | None = None,
     kijun: int | None = None,
     senkou: int | None = None,
-    include_chikou: bool = True,
+    include_chikou: bool | None = None,
     offset: int | None = None,
-    append_span: bool = False,
+    append_span: bool | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""

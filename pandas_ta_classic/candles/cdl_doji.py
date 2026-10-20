@@ -23,7 +23,7 @@ def cdl_doji(
     length: int | None = None,
     factor: float | None = None,
     scalar: float | None = None,
-    asint: bool = True,
+    asint: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
