@@ -138,6 +138,10 @@ def stc(
     macd = Series(xmacd, index=close.index)
     stoch = Series(pf, index=close.index)
 
+    # A bar without a MACD value (a missing close) has no value; the smoothing carries across it.
+    missing = macd.isna().to_numpy()
+    stc, stoch = stc.mask(missing), stoch.mask(missing)
+
     # Offset
     stc, macd, stoch = apply_offset([stc, macd, stoch], offset)
 

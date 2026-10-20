@@ -115,6 +115,8 @@ def supertrend(
         index=close.index,
     )
 
+    # A bar whose input is missing has no value; the state carries across it.
+    df.iloc[(high.isna() | low.isna() | close.isna()).to_numpy()] = np.nan
     df.name = f"SUPERT{_props}"
     df.category = "overlap"
 

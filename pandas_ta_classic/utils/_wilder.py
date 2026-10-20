@@ -69,6 +69,8 @@ def wilder_smooth(raw: Series, length: int) -> Series:
 
     seed = float(np.nansum(arr[start : start + length - 1]))
     result = _wilder_smooth_nb(arr, length, seed, start)
+    # A missing input bar has no value; the smoothing carries its state across it.
+    result[~np.isfinite(arr) & (np.arange(n) >= start)] = np.nan
     return Series(result, index=raw.index)
 
 

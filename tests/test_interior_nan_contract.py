@@ -83,17 +83,11 @@ def test_one_missing_bar(name, frames):
 # Values taken from earlier bars by definition: the forward-shifted Ichimoku spans,
 # the previous period's pivots.
 FROM_EARLIER_BARS = {"cpr", "ichimoku"}
-# Found 2026-10-01 publishing at a fully missing bar, against the rule above; not
-# yet reviewed. Recursive smoothers carry their state through the gap, flags default
-# to 0 or 1 (increasing 0, cdl_doji 0). Each one either moves to
-# the NaN rule or gets a documented reason; do not add to this list.
-PUBLISHES_AT_THE_GAP = {
-    "aberration", "adx", "adxr", "amat", "aobv", "atr", "cdl_doji", "cdl_pattern", "cvi", "decay",
-    "dema", "dm", "dx", "efi", "ema", "hilo", "inertia", "kc", "kdj", "kvo", "macdext", "massi", "mfi",
-    "minus_dm", "mmar", "nvi", "plus_dm", "pmax", "ppo", "psar", "pvi", "pvo", "qqe", "rma", "rsi",
-    "rvi", "sarext", "smi", "stc", "stochrsi", "supertrend", "t3", "tema", "thermo", "trix", "trixh",
-    "tsi", "vfi", "wad", "zlma",
-}  # fmt: skip
+# A candle pattern reads 0 on a bar it cannot match, a missing one included, as
+# TA-Lib's do (#282). Every other indicator reads NaN there: the 48 that published
+# a carried or stale-state value (ema, rma and Wilder smoothing, the cumulative
+# volume indices, the SAR and supertrend state machines, ...) were fixed together.
+PUBLISHES_AT_THE_GAP = {"cdl_doji", "cdl_pattern"}
 
 
 @pytest.fixture(scope="module")

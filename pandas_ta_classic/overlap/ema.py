@@ -35,6 +35,7 @@ def ema(
 
         ema = EMA(close, length)
     else:
+        missing = close.isna()
         if sma:
             close = close.copy()
             # Find the first valid (non-NaN) position so the SMA seed is
@@ -54,6 +55,9 @@ def ema(
                 # single-window min_length check in verify_series cannot model.
                 close.iloc[:] = np.nan
         ema = close.ewm(span=length, adjust=adjust).mean()
+        # ewm() writes its last average on a missing bar; the bar has no value
+        # (the recursion still carries its state across it)
+        ema = ema.mask(missing)
 
     # Offset
     ema = apply_offset(ema, offset)

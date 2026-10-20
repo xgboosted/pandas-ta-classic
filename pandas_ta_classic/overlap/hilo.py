@@ -74,6 +74,10 @@ def hilo(
     long = Series(long_arr, index=close.index)
     short = Series(short_arr, index=close.index)
 
+    # A bar whose input is missing has no value; the state carries across it.
+    missing = (high.isna() | low.isna() | close.isna()).to_numpy()
+    hilo, long, short = (s.mask(missing) for s in (hilo, long, short))
+
     # Offset
     hilo, long, short = apply_offset([hilo, long, short], offset)
     hilo, long, short = apply_fill([hilo, long, short], **kwargs)

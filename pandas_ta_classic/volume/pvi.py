@@ -45,6 +45,9 @@ def pvi(
     pvi.iloc[0] = initial
     pvi = pvi.cumsum()
 
+    # A bar whose input is missing has no value; the state carries across it.
+    pvi = pvi.mask((close.isna() | volume.isna()).to_numpy())
+
     # Offset
     pvi = apply_offset(pvi, offset)
 

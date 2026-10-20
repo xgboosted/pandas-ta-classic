@@ -72,6 +72,9 @@ def mfi(
         denominator = psum + nsum
         mfi = (100 * psum / denominator).mask(denominator == 0, 0.0)
 
+    # A bar whose input is missing has no value; the state carries across it.
+    mfi = mfi.mask((high.isna() | low.isna() | close.isna() | volume.isna()).to_numpy())
+
     # Offset
     mfi = apply_offset(mfi, offset)
 

@@ -216,6 +216,9 @@ def sarext(
             offsetonreverse,
         )
 
+    # A bar whose input is missing has no value; the state carries across it.
+    sarext_ = sarext_.mask((high.isna() | low.isna()).to_numpy())
+
     # Offset
     sarext_ = apply_offset(sarext_, offset)
 
