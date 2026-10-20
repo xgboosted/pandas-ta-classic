@@ -149,6 +149,8 @@ def squeeze_pro(
         offset,
     )
 
+    # The detailed columns derive from the momentum before the fill (apply_fill fills in place).
+    momentum = squeeze.copy() if detailed else None
     (
         squeeze,
         squeeze_on_wide,
@@ -187,7 +189,7 @@ def squeeze_pro(
 
     # Detailed Squeeze Series
     if detailed:
-        _squeeze_detailed(df, squeeze, kwargs, prefix="SQZPRO_")
+        _squeeze_detailed(df, momentum, kwargs, prefix="SQZPRO_")
 
     return df
 

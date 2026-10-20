@@ -69,6 +69,9 @@ def _squeeze_detailed(df, squeeze_s, kwargs, prefix="SQZ_"):
     pos_dec *= squeeze_s
     neg_dec *= squeeze_s
     neg_inc *= squeeze_s
+    # The four carry only the positive or negative bars; put them on the full
+    # index before the fill, or the frame below adds the other bars back as NaN.
+    pos_inc, pos_dec, neg_dec, neg_inc = (s.reindex(squeeze_s.index) for s in (pos_inc, pos_dec, neg_dec, neg_inc))
 
     pos_inc.replace(0, np.nan, inplace=True)
     pos_dec.replace(0, np.nan, inplace=True)
@@ -166,6 +169,8 @@ def squeeze(
     # Offset
     squeeze, squeeze_on, squeeze_off, no_squeeze = apply_offset([squeeze, squeeze_on, squeeze_off, no_squeeze], offset)
 
+    # The detailed columns derive from the momentum before the fill (apply_fill fills in place).
+    momentum = squeeze.copy() if detailed else None
     squeeze, squeeze_on, squeeze_off, no_squeeze = apply_fill([squeeze, squeeze_on, squeeze_off, no_squeeze], **kwargs)
 
     # Name and Categorize it
@@ -186,7 +191,7 @@ def squeeze(
 
     # Detailed Squeeze Series
     if detailed:
-        _squeeze_detailed(df, squeeze, kwargs)
+        _squeeze_detailed(df, momentum, kwargs)
 
     return df
 
