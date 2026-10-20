@@ -156,6 +156,12 @@ Edge-Case Tests
 - ``test_scale_contract.py`` — for every registered indicator, prices scaled
   by ``1e-6`` and ``1e6`` leave each column unchanged or scale it by ``k`` or
   ``k**2``; an absolute constant hidden in a formula breaks this.
+- ``test_shift_contract.py`` — for every registered indicator, prices moved
+  by a constant (staying positive, crossing zero, all negative) leave each
+  column unchanged or move it by the same constant, so the indicator works
+  on negative prices; indicators relative to the price level by definition
+  (percent changes, log returns, ratios to the close) are listed with the
+  reason.
 - ``test_index_contract.py`` — for every registered indicator, the result
   keeps the input's length and index, ``offset`` is a plain shift of every
   column, ``fillna`` reaches every column, a repeated index label gives the
