@@ -37,6 +37,18 @@ A column the indicator requires that the DataFrame does not have raises
 ``KeyError`` listing the available columns; an optional one (``cpr``'s
 ``volume``) is simply left out.
 
+The *open* column is the exception: it is read only where the indicator
+requires it (``bop``, ``ha``, ``ohlc4``, the candle patterns, ...). ``ad``, ``adosc``, ``cmf`` and
+``psl`` take an optional ``open_`` that switches them to a variant built on
+``close - open``, and ``df.ta`` computes their classic form even when the
+DataFrame has an *open* column. Pass ``open="open"`` (or another column name)
+for the variant; ``ad`` then names its column ``ADo``:
+
+.. code-block:: python
+
+    df.ta.ad()             # AD:  classic, high-low-close
+    df.ta.ad(open="open")  # ADo: the open variant, as ta.ad(..., open_=df["open"])
+
 An argument the indicator requires and the DataFrame cannot supply raises
 ``ValueError`` naming it: ``df.ta.beta()`` without a ``benchmark``, and
 ``df.ta.long_run()``, ``short_run()``, ``tsignals()``, ``xsignals()`` or

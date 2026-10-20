@@ -612,7 +612,7 @@ def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, fra
 # passing fails, so the list cannot go stale. OPEN entries await a decision;
 # KEPT entries are decided and documented under "Zero Volume" in docs/indicators.rst.
 _X_OVER_ZERO_VOLUME = "KEPT: a bar that moved on no volume is a real division by zero and reads +-inf, as marketfi does"
-_ZERO_VOLUME_WINDOW_NAN = "OPEN: a window with no volume divides 0/0 and reads NaN; the convention would read 0.0"
+_ZERO_VOLUME_WINDOW_NAN = "KEPT: a window with no volume is 0/0 and reads NaN; 0.0 would report a balanced flow or an unchanged volume"
 _NO_VOLUME_NO_PRICE = "KEPT: a volume-weighted price over a window with no volume is undefined, so it reads NaN; 0.0 would be a price"
 _OPEN_FINDINGS: dict[tuple[str, str, str], str] = {
     ("inf", "emv", "zero_volume"): _X_OVER_ZERO_VOLUME,
