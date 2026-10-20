@@ -74,13 +74,7 @@ def test_leading_nan_run_does_not_change_the_result(name, pad, clean):
 
 # Columns that hold a value over bars with no data, pinned as strict xfails so a
 # change either way is noticed.
-_FLAG = "KEPT: a flag column; a comparison with NaN is False, so it reads 0 (no signal)"
 _NO_DATA_EXCEPTIONS = {
-    "amat": _FLAG,
-    "cpr": _FLAG + " (CPR_WIDTH_CLASS, CPR_POSITION)",
-    "decreasing": _FLAG,
-    "increasing": _FLAG,
-    "smc_sweep": _FLAG,
     "cdl_doji": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
     "cdl_pattern": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
 }

@@ -42,10 +42,6 @@ INDICATORS = sorted({name for names in ta.Category.values() for name in names} -
 # A premature value sits in the first few bars; further in it is a real result.
 LEAD = 5
 
-# int8 cannot hold NaN, so these two report 0 on the single bar before the first
-# completed period. Changing the dtype is a separate decision (see the CPR
-# section of docs/indicators.rst).
-FLAG_EXCEPTIONS = {("cpr", "CPR_POSITION"), ("cpr", "CPR_WIDTH_CLASS")}
 
 
 @pytest.fixture(scope="module")
@@ -125,8 +121,6 @@ def test_flags_only_where_there_is_a_value(name, frame):
         return  # nothing to compare a flag against
     undefined = np.all([np.isnan(series) for series in values.values()], axis=0)
     for col, series in flags.items():
-        if (name, col) in FLAG_EXCEPTIONS:
-            continue
         published = undefined & ~np.isnan(series)
         assert not published.any(), (
             f"{name}['{col}']: flag on {int(published.sum())} bar(s) {np.flatnonzero(published)[:8].tolist()} "

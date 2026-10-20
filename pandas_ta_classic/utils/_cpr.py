@@ -1,6 +1,5 @@
 # CPR Utility Functions
 
-import numpy as np
 from pandas import DataFrame, Series
 
 
@@ -75,14 +74,16 @@ def calculate_cpr_width(
         Tuple of (width, width_pct, width_class):
             width: Absolute width (TC - BC)
             width_pct: Percentage width relative to Pivot
-            width_class: Integer classification: -1 (narrow), 0 (medium), 1 (wide)
+            width_class: -1.0 (narrow), 0.0 (medium), 1.0 (wide); NaN where the width is unknown
     """
     width = tc - bc
     width_pct = (width / pivot) * 100
 
-    width_class = Series(0, index=width.index, dtype=np.int8)
-    width_class[width_pct < narrow_threshold] = -1
-    width_class[width_pct > wide_threshold] = 1
+    # float64, NaN where the width is unknown: as int8 it read 0 (medium) there
+    width_class = Series(0.0, index=width.index)
+    width_class[width_pct < narrow_threshold] = -1.0
+    width_class[width_pct > wide_threshold] = 1.0
+    width_class = width_class.where(width_pct.notna())
 
     return width, width_pct, width_class
 
@@ -96,12 +97,13 @@ def calculate_price_position(close: Series, tc: Series, bc: Series) -> Series:
         bc: Bottom Central series
 
     Returns:
-        Series with integer values: 1 (above TC), 0 (inside CPR), -1 (below BC)
+        Series: 1.0 (above TC), 0.0 (inside CPR), -1.0 (below BC); NaN where a level or the close is missing
     """
-    position = Series(0, index=close.index, dtype=np.int8)
-    position[close > tc] = 1
-    position[close < bc] = -1
-    return position
+    # float64, NaN where a level or the close is missing: as int8 it read 0 (inside) there
+    position = Series(0.0, index=close.index)
+    position[close > tc] = 1.0
+    position[close < bc] = -1.0
+    return position.where(close.notna() & tc.notna() & bc.notna())
 
 
 def detect_virgin_cpr(high: Series, low: Series, tc: Series, bc: Series, lookforward: int = 5) -> Series:

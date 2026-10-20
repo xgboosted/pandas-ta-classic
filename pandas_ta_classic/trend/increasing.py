@@ -42,16 +42,20 @@ def increasing(
     if strict:
         # Returns value as float64? Have to cast to bool
         increasing = close > close_.shift(drift)
+        known = close.notna() & close_.shift(drift).notna()
         for x in range(3, length + 1):
             increasing = increasing & (close.shift(x - (drift + 1)) > close_.shift(x - drift))
+            known &= close.shift(x - (drift + 1)).notna() & close_.shift(x - drift).notna()
 
         increasing.fillna(0, inplace=True)
         increasing = increasing.astype(bool)
     else:
         increasing = close_.diff(length) > 0
+        known = close_.diff(length).notna()
 
     if asint:
-        increasing = increasing.astype(int)
+        # 1.0 / 0.0, and NaN until the compared bars exist: it read 0 there
+        increasing = increasing.astype(float).where(known)
 
     # Offset
     increasing = apply_offset(increasing, offset)
@@ -88,7 +92,8 @@ Args:
     length (int): It's period. Default: 1
     strict (bool): If True, checks if the series is continuously increasing over the period. Default: False
     percent (float): Percent as an integer. Default: None
-    asint (bool): Returns as binary. Default: True
+    asint (bool): Return 1.0 / 0.0 (float64, NaN until the compared bars
+        exist) instead of booleans (False there). Default: True
     drift (int): The difference period. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
