@@ -36,7 +36,11 @@ def _validate_number(val: Any, default: Any, name: str, *, integer: bool, gt: fl
         kind = "an integer" if integer else "a number"
         requirement = f"{kind} {bounds}" if bounds else kind
         raise ValueError(f"{indicator}() {name} must be {requirement}, got {val!r}")
-    return int(val) if integer else float(val)
+    # A whole number keeps the type of an int default, so kc(scalar=2) and
+    # kc(scalar=2.0) name their columns KCLe_20_2 like kc() instead of KCLe_20_2.0.
+    if integer or (isinstance(default, int) and not isinstance(default, bool) and float(val).is_integer()):
+        return int(val)
+    return float(val)
 
 
 def _pos_int(val: Any, default: Any, name: str = "value", *, gt: float | None = 0, ge: float | None = None, lt: float | None = None) -> Any:
@@ -48,7 +52,12 @@ def _pos_int(val: Any, default: Any, name: str = "value", *, gt: float | None = 
 
 
 def _pos_float(val: Any, default: Any, name: str = "value", *, gt: float | None = 0, ge: float | None = None, lt: float | None = None) -> Any:
-    """Return ``float(val)``, *default* when *val* is None, or raise ValueError."""
+    """Return ``float(val)``, *default* when *val* is None, or raise ValueError.
+
+    A whole number is returned as ``int`` when *default* is an int, so passing the
+    default explicitly (``2`` or ``2.0`` for a default of ``2``) names the output
+    as the default does.
+    """
     return _validate_number(val, default, name, integer=False, gt=gt, ge=ge, lt=lt)
 
 
