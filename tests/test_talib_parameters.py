@@ -18,6 +18,7 @@ import pytest
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from tests.config import get_sample_data
+from tests.test_docstring_params import _accepted
 
 pytestmark = pytest.mark.skipif(not ta.Imports["talib"], reason="needs TA-Lib")
 
@@ -42,7 +43,8 @@ def _same(a, b):
 def _options(func):
     """The options of *func*: its keyword parameters, a price column it takes as an
     optional input (`ad(open_=...)` switches to the Open form), and the options its
-    module reads from ``**kwargs`` (`sma(min_periods=...)`), which the signature hides."""
+    module reads from ``**kwargs`` (`sma(min_periods=...)`), which the signature hides,
+    including those of the functions it hands its ``**kwargs`` to (`tema` -> `ema(adjust=...)`)."""
     params = inspect.signature(func).parameters
     found = {}
     for param, spec in params.items():
@@ -57,6 +59,8 @@ def _options(func):
     for param in re.findall(r'kwargs\.(?:get|pop|setdefault)\("(\w+)"', source):
         if param not in _SKIP and param not in found:
             found[param] = _CANDIDATES
+    for param in sorted(_accepted(func) - set(params) - _SKIP - set(found)):
+        found[param] = _CANDIDATES
     return found
 
 
