@@ -53,15 +53,7 @@ GAPS = {
 
 # (indicator, gap) pairs that break the contract today, as strict xfails: one
 # that starts passing fails, so the table cannot go stale.
-_FISHER_RECURSION = (
-    "OPEN DEFECT: fisher's recursion v = 0.66 * pos + 0.67 * v takes one NaN from high/low and "
-    "stays NaN for the rest of the series; close-only gaps never reach it because fisher reads no close"
-)
-OPEN_FINDINGS: dict[tuple[str, str], str] = {
-    ("fisher", "whole_bar"): _FISHER_RECURSION,
-    ("fisher", "five_bars"): _FISHER_RECURSION,
-    ("fisher", "high_low_only"): _FISHER_RECURSION,
-}
+OPEN_FINDINGS: dict[tuple[str, str], str] = {}
 
 
 @pytest.fixture(scope="module")

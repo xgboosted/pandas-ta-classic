@@ -31,7 +31,7 @@ def _fisher_loop(pos_arr, m, length):
 
 
 @nan_on_short_input
-@skip_leading_nan("high", "low")
+@skip_leading_nan("high", "low", interior=True)
 def fisher(
     high: Series,
     low: Series,
