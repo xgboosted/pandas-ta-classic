@@ -83,7 +83,7 @@ def dm(
 
     dmdf = DataFrame(data)
     dmdf.name = f"DM{_params}"
-    dmdf.category = "trend"
+    dmdf.category = "momentum"
 
     return dmdf
 
