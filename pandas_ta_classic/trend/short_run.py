@@ -31,9 +31,11 @@ def short_run(
         return None
 
     # Calculate Result
-    pt = decreasing(fast, length) & increasing(slow, length)  # potential top or top
-    bd = decreasing(fast, length) & decreasing(slow, length)  # fast and slow are decreasing
-    short_run = pt | bd
+    pt = decreasing(fast, length, asint=False) & increasing(slow, length, asint=False)  # potential top or top
+    bd = decreasing(fast, length, asint=False) & decreasing(slow, length, asint=False)  # fast and slow are decreasing
+    # NaN until both averages have `length` bars to compare: it read 0 there
+    known = fast.diff(length).notna() & slow.diff(length).notna()
+    short_run = (pt | bd).astype(float).where(known)
 
     # Offset
     short_run = apply_offset(short_run, offset)

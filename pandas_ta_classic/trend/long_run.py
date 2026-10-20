@@ -31,9 +31,11 @@ def long_run(
         return None
 
     # Calculate Result
-    pb = increasing(fast, length) & decreasing(slow, length)  # potential bottom or bottom
-    bi = increasing(fast, length) & increasing(slow, length)  # fast and slow are increasing
-    long_run = pb | bi
+    pb = increasing(fast, length, asint=False) & decreasing(slow, length, asint=False)  # potential bottom or bottom
+    bi = increasing(fast, length, asint=False) & increasing(slow, length, asint=False)  # fast and slow are increasing
+    # NaN until both averages have `length` bars to compare: it read 0 there
+    known = fast.diff(length).notna() & slow.diff(length).notna()
+    long_run = (pb | bi).astype(float).where(known)
 
     # Offset
     long_run = apply_offset(long_run, offset)

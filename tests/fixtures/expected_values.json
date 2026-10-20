@@ -330,13 +330,13 @@
   "decreasing": {
     "DEC_1": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5240
     }
   },
   "increasing": {
     "INC_1": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5240
     }
   },
   "chop": {
@@ -1602,11 +1602,11 @@
   "amat": {
     "AMATe_LR_8_21_2": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5219
     },
     "AMATe_SR_8_21_2": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5219
     }
   },
   "cksp": {
@@ -1658,11 +1658,11 @@
     },
     "CPR_WIDTH_CLASS": {
       "last_value": -1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5240
     },
     "CPR_POSITION": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5240
     }
   },
   "decay": {
@@ -1674,7 +1674,7 @@
   "long_run": {
     "LR_2": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5219
     }
   },
   "pmax": {
@@ -1686,7 +1686,7 @@
   "short_run": {
     "SR_2": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5219
     }
   },
   "ttm_trend": {
@@ -1718,11 +1718,11 @@
     },
     "AOBV_LR_2": {
       "last_value": 1.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5228
     },
     "AOBV_SR_2": {
       "last_value": 0.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5228
     }
   },
   "vfi": {
