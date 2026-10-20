@@ -25,3 +25,22 @@ def sub(
     result.name = "SUB"
     result.category = "math"
     return result
+
+
+sub.__doc__ = """Element-wise subtraction of two Series (TA-Lib: SUB)
+
+Calculation:
+    SUB = series_a - series_b
+
+Args:
+    series_a (pd.Series): The minuend
+    series_b (pd.Series): The subtrahend
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

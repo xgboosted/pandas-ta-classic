@@ -15,18 +15,7 @@ def minindex(
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
-    """Window-relative index of the Minimum value over *length* periods.
-
-    Named after TA-Lib's MININDEX, but the convention differs on purpose: this
-    returns the 0-based position of the minimum *within* the rolling window,
-    counted from its oldest bar: 0 is the bar ``length - 1`` bars back, and
-    ``length - 1`` is the current bar. On a tie the oldest bar wins, and a
-    window holding a NaN gives NaN. TA-Lib returns the absolute array index
-    instead, so at bar ``i`` (its position in the series)
-    ``talib = result + i - length + 1``, except on a tie, where TA-Lib may pick
-    a later bar. There is deliberately no ``talib`` passthrough, and neither
-    tulipy nor Tulip Indicators expose an equivalent.
-    """
+    """Window-relative index of the Minimum value over *length* periods."""
     length = _pos_int(length, 30, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
@@ -38,3 +27,29 @@ def minindex(
     result.name = f"MININDEX_{length}"
     result.category = "math"
     return result
+
+
+minindex.__doc__ = """Window-relative index of the Minimum value over *length* periods
+
+Named after TA-Lib's MININDEX, but the convention differs on purpose: this
+returns the 0-based position of the minimum *within* the rolling window,
+counted from its oldest bar: 0 is the bar ``length - 1`` bars back, and
+``length - 1`` is the current bar. On a tie the oldest bar wins, and a
+window holding a NaN gives NaN. TA-Lib returns the absolute array index
+instead, so at bar ``i`` (its position in the series)
+``talib = result + i - length + 1``, except on a tie, where TA-Lib may pick
+a later bar. There is deliberately no ``talib`` passthrough, and neither
+tulipy nor Tulip Indicators expose an equivalent.
+
+Args:
+    close (pd.Series): Series of input values
+    length (int): The window length. Default: 30
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

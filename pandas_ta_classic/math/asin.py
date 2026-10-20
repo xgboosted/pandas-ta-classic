@@ -20,3 +20,21 @@ def asin(close: Series, offset: int | None = None, **kwargs: Any) -> Series | No
     result.name = "ASIN"
     result.category = "math"
     return result
+
+
+asin.__doc__ = """Vector Trigonometric ASin (TA-Lib: ASIN)
+
+Calculation:
+    ASIN = arcsin(close), in radians
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

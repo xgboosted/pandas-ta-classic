@@ -20,3 +20,21 @@ def log10(close: Series, offset: int | None = None, **kwargs: Any) -> Series | N
     result.name = "LOG10"
     result.category = "math"
     return result
+
+
+log10.__doc__ = """Vector Log10 (TA-Lib: LOG10)
+
+Calculation:
+    LOG10 = log10(close)
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

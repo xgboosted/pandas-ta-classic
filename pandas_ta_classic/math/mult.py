@@ -25,3 +25,22 @@ def mult(
     result.name = "MULT"
     result.category = "math"
     return result
+
+
+mult.__doc__ = """Element-wise multiplication of two Series (TA-Lib: MULT)
+
+Calculation:
+    MULT = series_a * series_b
+
+Args:
+    series_a (pd.Series): The first factor
+    series_b (pd.Series): The second factor
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""
