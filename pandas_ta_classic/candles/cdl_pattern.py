@@ -123,7 +123,7 @@ def cdl_pattern(
     high: Series,
     low: Series,
     close: Series,
-    name: str | Sequence[str] = "all",
+    name: str | Sequence[str] | None = None,
     scalar: float | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -147,7 +147,7 @@ def cdl_pattern(
         "inside": cdl_inside,
     }
 
-    if name == "all":
+    if name is None or name == "all":
         name = ALL_PATTERNS
     if type(name) is str:
         name = [name]

@@ -49,7 +49,7 @@ def bbands(
     close: Series,
     length: int | None = None,
     std: float | None = None,
-    ddof: int = 0,
+    ddof: int | None = None,
     mamode: str | None = None,
     talib: bool | None = None,
     offset: int | None = None,

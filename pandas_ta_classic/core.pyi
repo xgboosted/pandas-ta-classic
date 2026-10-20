@@ -13,13 +13,13 @@ class AnalysisIndicators:
         length: int | None = None,
         factor: float | None = None,
         scalar: float | None = None,
-        asint: bool = True,
+        asint: bool | None = None,
         offset: int | None = None,
         **kwargs: Any,
     ) -> Series | None: ...
     def cdl_inside(self, asbool: bool | None = None, scalar: float | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def cdl_pattern(
-        self, name: str | Sequence[str] = 'all', scalar: float | None = None, offset: int | None = None, **kwargs: Any
+        self, name: str | Sequence[str] | None = None, scalar: float | None = None, offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def cdl_z(
         self, length: int | None = None, full: bool | None = None, ddof: int | None = None, offset: int | None = None, **kwargs: Any
@@ -375,9 +375,9 @@ class AnalysisIndicators:
         tenkan: int | None = None,
         kijun: int | None = None,
         senkou: int | None = None,
-        include_chikou: bool = True,
+        include_chikou: bool | None = None,
         offset: int | None = None,
-        append_span: bool = False,
+        append_span: bool | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
     def jma(self, length: float | None = None, phase: float | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
@@ -521,12 +521,12 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def cpr(
         self,
-        method: str = 'classic',
-        timeframe: str = 'daily',
-        levels: str = 'standard',
-        width_analysis: bool = True,
-        price_position: bool = True,
-        virgin_cpr: bool = False,
+        method: str | None = None,
+        timeframe: str | None = None,
+        levels: str | None = None,
+        width_analysis: bool | None = None,
+        price_position: bool | None = None,
+        virgin_cpr: bool | None = None,
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -543,7 +543,7 @@ class AnalysisIndicators:
         offset: int | None = None,
         **kwargs: Any,
     ) -> Series | None: ...
-    def dpo(self, length: int | None = None, centered: bool = True, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def dpo(self, length: int | None = None, centered: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def dx(
         self,
         length: int | None = None,
@@ -611,8 +611,8 @@ class AnalysisIndicators:
         signal: Series,
         xa: float,
         xb: float,
-        above: bool = True,
-        long: bool = True,
+        above: bool | None = None,
+        long: bool | None = None,
         asbool: bool | None = None,
         trade_offset: int | None = None,
         offset: int | None = None,
@@ -638,7 +638,7 @@ class AnalysisIndicators:
         self,
         length: int | None = None,
         std: float | None = None,
-        ddof: int = 0,
+        ddof: int | None = None,
         mamode: str | None = None,
         talib: bool | None = None,
         offset: int | None = None,
