@@ -11,10 +11,11 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
+@skip_leading_nan("close", "volume")
 def pvi(
     close: Series,
     volume: Series,

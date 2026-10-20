@@ -5,10 +5,11 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
+@skip_leading_nan("high", "low", "close")
 def wad(
     high: Series,
     low: Series,
