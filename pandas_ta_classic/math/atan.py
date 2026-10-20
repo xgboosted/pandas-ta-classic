@@ -20,3 +20,21 @@ def atan(close: Series, offset: int | None = None, **kwargs: Any) -> Series | No
     result.name = "ATAN"
     result.category = "math"
     return result
+
+
+atan.__doc__ = """Vector Trigonometric ATan (TA-Lib: ATAN)
+
+Calculation:
+    ATAN = arctan(close), in radians
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

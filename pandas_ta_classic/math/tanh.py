@@ -20,3 +20,21 @@ def tanh(close: Series, offset: int | None = None, **kwargs: Any) -> Series | No
     result.name = "TANH"
     result.category = "math"
     return result
+
+
+tanh.__doc__ = """Vector Trigonometric Tanh (TA-Lib: TANH)
+
+Calculation:
+    TANH = tanh(close)
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

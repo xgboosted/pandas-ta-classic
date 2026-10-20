@@ -25,3 +25,22 @@ def add(
     result.name = "ADD"
     result.category = "math"
     return result
+
+
+add.__doc__ = """Element-wise addition of two Series (TA-Lib: ADD)
+
+Calculation:
+    ADD = series_a + series_b
+
+Args:
+    series_a (pd.Series): The first addend
+    series_b (pd.Series): The second addend
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

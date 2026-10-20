@@ -20,3 +20,21 @@ def sin(close: Series, offset: int | None = None, **kwargs: Any) -> Series | Non
     result.name = "SIN"
     result.category = "math"
     return result
+
+
+sin.__doc__ = """Vector Trigonometric Sin (TA-Lib: SIN)
+
+Calculation:
+    SIN = sin(close), close in radians
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

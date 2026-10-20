@@ -33,3 +33,24 @@ def rolling_min(
     result.name = f"MIN_{length}"
     result.category = "math"
     return result
+
+
+rolling_min.__doc__ = """Rolling Minimum over *length* periods (TA-Lib: MIN)
+
+Calculation:
+    MIN = min(close, length)
+
+Args:
+    close (pd.Series): Series of input values
+    length (int): The window length. Default: 30
+    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
+        version. Default: False
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""

@@ -20,3 +20,21 @@ def acos(close: Series, offset: int | None = None, **kwargs: Any) -> Series | No
     result.name = "ACOS"
     result.category = "math"
     return result
+
+
+acos.__doc__ = """Vector Trigonometric ACos (TA-Lib: ACOS)
+
+Calculation:
+    ACOS = arccos(close), in radians
+
+Args:
+    close (pd.Series): Series of input values
+    offset (int): How many periods to offset the result. Default: 0
+
+Kwargs:
+    fillna (value, optional): pd.DataFrame.fillna(value)
+    fill_method (value, optional): Type of fill method
+
+Returns:
+    pd.Series: New feature generated.
+"""
