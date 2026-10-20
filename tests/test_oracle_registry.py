@@ -452,7 +452,9 @@ if _TALIB_08:
     KNOWN_DIFFERENCES[("willr", "malformed")] = (
         "TA-Lib 0.8 clamps WILLR to -100..0, so it reads 0.0 where malformed bars put the close above "
         "the window's highest high (12 bars); native and TA-Lib 0.7 compute the formula, which falls "
-        "outside -100..0 there and shows the bad bars"
+        "outside -100..0 there and shows the bad bars. Kept unclamped by maintainer decision: TA-Lib 0.8 "
+        "does not clamp STOCH or STOCHF, so clamping willr would split it from stochf, and clamping all four "
+        "would break STOCH/STOCHF parity"
     )
 else:
     KNOWN_DIFFERENCES[("stochrsi", "flat_block")] = _STOCHRSI_NOISE

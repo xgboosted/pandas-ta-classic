@@ -94,8 +94,8 @@ change is noticed:
 
 * ``emv`` and ``eom`` divide the bar's movement by its volume. A bar that moved
   on no volume reads ``+-inf`` in ``emv``, and ``eom`` (a 14-bar average of the
-  same ratio) reads NaN for every window that contains it. A bar that did not
-  move reads 0.0.
+  same ratio) reads NaN for every window that contains it. A bar with no range
+  reads 0.0; a bar with a range whose midpoint did not change reads NaN (0/0).
 * ``marketfi`` divides the bar's range by its volume and reads ``inf`` for a
   bar with a range and no volume.
 * ``cmf`` and ``vosc`` read NaN over a window with no volume at all (0/0).

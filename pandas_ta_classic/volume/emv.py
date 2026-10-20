@@ -86,8 +86,9 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Zero volume:
-    A bar that moved on no volume divides by zero and reads +-inf; see
-    "Zero Volume" in the indicator reference.
+    A bar that moved on no volume divides by zero and reads +-inf. A bar
+    with no range reads 0.0; a bar with a range whose midpoint did not
+    change reads NaN (0/0). See "Zero Volume" in the indicator reference.
 
 Returns:
     pd.Series
