@@ -17,6 +17,8 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
+from pandas_ta_classic.overlap.ma import _MA_DISPATCH
+from pandas_ta_classic.volatility.bbands import _MA_OPTIONS
 from tests.config import get_sample_data
 from tests.test_docstring_params import _accepted
 
@@ -128,3 +130,20 @@ def test_macdfix_keeps_its_signal_columns_on_the_talib_path():
     # Without the keyword, talib=True still uses TA-Lib -- which seeds its EMAs
     # differently, so the two paths must not agree there.
     assert not ta.macdfix(close, talib=True).equals(ta.macdfix(close, talib=False))
+
+
+def test_accessor_options_keep_the_talib_path():
+    """append/col_names/prefix come from the accessor, not for the moving average:
+    bbands counted them as MA options and left TA-Lib for every strategy() run."""
+    df = get_sample_data().iloc[:300].copy()
+    expected = ta.bbands(df.close, talib=True)
+    appended = df.ta.bbands(talib=True, append=True, prefix="X")
+    assert np.array_equal(appended.to_numpy(), expected.to_numpy(), equal_nan=True)
+    assert not np.array_equal(expected.to_numpy(), ta.bbands(df.close, talib=False).to_numpy(), equal_nan=True)
+
+
+def test_bbands_knows_every_ma_option():
+    """bbands leaves TA-Lib for these options only; one it does not list is ignored on that path."""
+    read = set().union(*(_accepted(func) for func in _MA_DISPATCH.values()))
+    internal = {"close", "source", "series", "depth", "length", "talib", "offset", "mamode", "fillna", "fill_method"}
+    assert read - internal == _MA_OPTIONS

@@ -16,6 +16,10 @@ from pandas_ta_classic.utils import (
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
 
+# Every option a moving average of ma() reads besides length; test_talib_parameters
+# checks the set against the MAs' signatures and **kwargs reads.
+_MA_OPTIONS = {"a", "adjust", "angle", "asc", "degrees", "drift", "intercept", "min_periods", "r", "slope", "sma", "tsf"}
+
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):
     """Compute Bollinger Bands without TA-Lib.
@@ -69,8 +73,11 @@ def bbands(
         return None
 
     # Calculate Result
-    # TA-Lib cannot express a non-default ddof; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and ddof == 0:
+    # TA-Lib cannot express a non-default ddof, nor an option for the moving
+    # average (min_periods, ema's adjust); run natively instead of ignoring it.
+    # The accessor's own options (append, col_names, prefix) are not for the MA.
+    ma_options = set(kwargs) & _MA_OPTIONS
+    if Imports["talib"] and mode_talib and ddof == 0 and not ma_options:
         from talib import BBANDS
 
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))
