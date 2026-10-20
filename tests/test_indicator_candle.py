@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.candles._cdl_math import CANDLE_DEFAULTS, CandleArrays, CandleSetting, RangeType, candle_average, candle_avg_period
-from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
+from tests.assertions import IndicatorSpec, assert_indicator_standard
 from tests.config import get_sample_data
 
 try:
@@ -91,9 +91,9 @@ class TestCandle(TestCase):
         self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
 
     def test_cdl_doji(self):
-        result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close, talib=False)
+        result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
         if HAS_TALIB:
-            assert_talib(self, result, talib.CDLDOJI(self.open, self.high, self.low, self.close))
+            np.testing.assert_array_equal(result.to_numpy(), talib.CDLDOJI(self.open, self.high, self.low, self.close))
         assert_indicator_standard(
             self,
             IndicatorSpec(
@@ -436,3 +436,112 @@ class TestCandleAtTheExactThreshold(TestCase):
             with self.subTest(pattern=name):
                 got = getattr(talib, talib_name)(*(np.array(x) for x in (open_, high, low, close)))
                 self.assertEqual(int(got[-1]), expected)
+
+
+class TestCdlDojiAtTheEdges(TestCase):
+    """`cdl_doji` follows CDLDOJI at exact ties, flat bars, malformed bars and short windows."""
+
+    @staticmethod
+    def _doji(open_, high, low, close, **kwargs):
+        return pandas_ta.cdl_doji(*(Series(x, dtype=float) for x in (open_, high, low, close)), **kwargs).to_numpy()
+
+    def test_flat_bars_are_doji(self):
+        # Range and body 0 compare as 0 <= 0.1 * 0, as in TA-Lib.
+        result = self._doji([5.0] * 12, [5.0] * 12, [5.0] * 12, [5.0] * 12)
+        np.testing.assert_array_equal(result, [0] * 10 + [100, 100])
+
+    def test_zero_body_is_doji_at_factor_zero(self):
+        # body 0 <= 0 * average, as in TA-Lib.
+        result = self._doji([1.0] * 11, [2.0] * 11, [0.0] * 11, [1.0] * 11, factor=0)
+        self.assertEqual(result[-1], 100)
+
+    def test_body_exactly_on_the_threshold(self):
+        # body == 0.1 * (sum / 10) with TA-Lib's left-to-right sum: a doji (<=).
+        # The old sma()-based threshold came out one unit in the last place lower
+        # and reported 0.
+        high = [1.76, 1.03, 1.82, 1.08, 1.24, 2.68, 0.76, 1.91, 0.34, 2.51, 1.1513]
+        low = [0.0] * 10 + [-1.0]
+        close = [0.0] * 10 + [0.15130000000000002]
+        result = self._doji([0.0] * 11, high, low, close)
+        self.assertEqual(result[-1], 100)
+        if HAS_TALIB:
+            self.assertEqual(talib.CDLDOJI(*(np.array(x) for x in ([0.0] * 11, high, low, close)))[-1], 100)
+
+    def test_malformed_bars_keep_a_negative_range(self):
+        # Ten bars with high < low have range -1 in TA-Lib, so bar 10's threshold
+        # is -0.1 and its body 0.05 is no doji. abs(high - low) made it +0.1 and
+        # reported 100.
+        args = ([0.0] * 11, [0.0] * 10 + [1.0], [1.0] * 10 + [0.0], [0.0] * 10 + [0.05])
+        self.assertEqual(self._doji(*args)[-1], 0)
+        if HAS_TALIB:
+            self.assertEqual(talib.CDLDOJI(*(np.array(x) for x in args))[-1], 0)
+
+    def test_all_nan_input_reads_zero(self):
+        # Every row is a NaN row, and a NaN row reports 0.
+        nan = [np.nan] * 15
+        np.testing.assert_array_equal(self._doji(nan, nan, nan, nan), [0] * 15)
+
+    def test_naive_only_fills_bars_without_a_window(self):
+        # Bar 10 has ten previous bars: average range 1.0, body 0.0004 is a doji.
+        # naive=True used to overwrite it too, with its own range 0.0005, and
+        # report 0. The first ten bars have no window and use their own range.
+        high = [1.0] * 10 + [0.0005, 1.0, 1.0]
+        close = [0.05] * 10 + [0.0004, 0.05, 0.05]
+        plain = self._doji([0.0] * 13, high, [0.0] * 13, close)
+        naive = self._doji([0.0] * 13, high, [0.0] * 13, close, naive=True)
+        np.testing.assert_array_equal(plain, [0] * 10 + [100, 100, 100])
+        np.testing.assert_array_equal(naive, [100] * 13)
+
+    def test_naive_counts_finite_bars(self):
+        # Two leading NaN rows: the window is complete only from bar 12, so
+        # naive fills bars 2..11 and leaves the NaN rows at 0.
+        nan2 = [np.nan] * 2
+        high = nan2 + [1.0] * 13
+        close = nan2 + [0.05] * 13
+        naive = self._doji(nan2 + [0.0] * 13, high, nan2 + [0.0] * 13, close, naive=True)
+        np.testing.assert_array_equal(naive, [0, 0] + [100] * 13)
+
+    def test_naive_leaves_bars_with_a_window_alone_after_an_inf_range(self):
+        # Finite prices whose range overflows (1e308 - -1e308 = inf) at bar 12
+        # make the running total inf, then NaN from bar 23 on. Those bars have a
+        # window, so naive must not fill them with the own-range fallback; it
+        # agrees with naive=False from bar 10.
+        high = [2.0] * 12 + [1e308] + [2.0] * 17
+        low = [0.0] * 12 + [-1e308] + [0.0] * 17
+        args = ([1.0] * 30, high, low, [1.05] * 30)
+        np.testing.assert_array_equal(self._doji(*args, naive=True)[10:], self._doji(*args)[10:])
+
+    def test_inf_row_is_dropped_like_a_nan_row(self):
+        # An inf high made sma() of the range NaN for every window holding it,
+        # so the next length bars read 0 whatever their body. It is now skipped,
+        # as run_pattern() skips it, and reports 0 like a NaN row.
+        def doji_with(value, **kwargs):
+            high = [2.0] * 12 + [value] + [2.0] * 17
+            return self._doji([1.0] * 30, high, [0.0] * 30, [1.05] * 30, **kwargs)
+
+        for kwargs in ({}, {"naive": True}):
+            with self.subTest(**kwargs):
+                for value in (np.inf, -np.inf):
+                    np.testing.assert_array_equal(doji_with(value, **kwargs), doji_with(np.nan, **kwargs))
+                self.assertEqual(doji_with(np.inf, **kwargs)[12], 0)
+                self.assertEqual(doji_with(np.inf, **kwargs)[-1], 100)
+
+    def test_inf_open_or_close_row_leaves_the_average(self):
+        # Bar 20 has an inf open or close but a finite range of 100. It is left
+        # out of the average like a NaN row, so bars 21+ average ranges of 2
+        # (threshold 0.2) and body 0.5 is no doji. TA-Lib keeps the range of 100
+        # in its average (threshold 1.18) and reports 100 there; the old code
+        # did the same.
+        for column in (0, 3):
+            with self.subTest(column=column):
+                ohlc = [[10.0] * 25, [11.0] * 25, [9.0] * 25, [10.5] * 25]
+                ohlc[1][20], ohlc[2][20] = 60.0, -40.0
+                ohlc[column][20] = np.inf
+                nan_row = [list(x) for x in ohlc]
+                nan_row[column][20] = np.nan
+                result = self._doji(*ohlc)
+                np.testing.assert_array_equal(result, self._doji(*nan_row))
+                np.testing.assert_array_equal(result[20:], [0] * 5)
+                if HAS_TALIB:
+                    np.testing.assert_array_equal(talib.CDLDOJI(*(np.array(x) for x in ohlc))[21:], [100] * 4)
+

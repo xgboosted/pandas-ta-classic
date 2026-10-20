@@ -1,9 +1,10 @@
 # Candle Doji (CDL_DOJI)
 from typing import Any
 
+import numpy as np
 from pandas import Series
 
-from pandas_ta_classic.overlap.sma import sma
+from pandas_ta_classic.candles._cdl_math import period_average
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -43,29 +44,30 @@ def cdl_doji(
         return None
 
     # Calculate Result
-    # TA-Lib averages the HL range of the *previous* ``length`` bars
-    # (excluding the current bar), so shift the SMA by 1.
-    # Both are only compared, never divided by, so they stay exact: an epsilon
-    # body failed `body <= 0.01 * factor * avg` on a window of flat bars, where
-    # TA-Lib's CDLDOJI (0 <= 0) reports a doji.
+    # TA-Lib's CDLDOJI: the body is compared with ``factor`` percent of the mean
+    # high-low range of the *previous* ``length`` bars, using TA-Lib's
+    # arithmetic (TA_CANDLEAVERAGE) so a body exactly on the threshold is judged
+    # as TA-Lib judges it. A flat bar has range and body 0, not epsilon, and is
+    # a doji (0 <= 0), as in TA-Lib.
     body = (close - open_).abs()
-    hl_range = (high - low).abs()
+    hl_range = high - low
     # Average the previous ``length`` finite bars, as if NaN rows were dropped:
     # a row resample() inserts for a missing session would otherwise leave the
     # next ``length`` averages NaN, and weekend gaps keep every average NaN.
-    finite = open_.notna() & high.notna() & low.notna() & close.notna()
-    hl_range_avg = sma(hl_range[finite], length)
-    if hl_range_avg is None:
-        return None
-    hl_range_avg = hl_range_avg.shift(1).reindex(close.index)
-    doji = body <= 0.01 * factor * hl_range_avg
+    # An inf row is dropped too, as in run_pattern(): inside the running total
+    # it would make every later average inf and then NaN (inf - inf).
+    finite = np.isfinite(np.vstack([s.to_numpy(dtype=float) for s in (open_, high, low, close)])).all(axis=0)
+    threshold = np.full(len(close), np.nan)
+    threshold[finite] = period_average(hl_range.to_numpy(dtype=float)[finite], length, factor / 100, 1.0, 0, length)
+    doji = body <= Series(threshold, index=close.index)
 
     if naive:
-        # sma(...).shift(1) produces NaN at indices 0..length (length+1 NaN),
-        # so the naive fallback must cover that full range. Use .to_numpy() on
-        # the RHS so pandas doesn't complain about mismatched slice lengths.
-        naive_vals = (body <= 0.01 * factor * hl_range).to_numpy()
-        doji.iloc[: length + 1] = naive_vals[: length + 1]
+        # Only bars without ``length`` previous finite bars -- the first
+        # ``length`` finite ones -- fall back to their own high-low range.
+        # Counted, not read off a NaN threshold: an inf range turns every
+        # later running total into NaN, and those bars do have a window.
+        no_window = finite & (np.cumsum(finite) <= length)
+        doji.iloc[no_window] = (body <= factor / 100 * hl_range).to_numpy()[no_window]
     if asint:
         doji = scalar * doji.astype(int)
 
@@ -83,22 +85,27 @@ def cdl_doji(
 
 cdl_doji.__doc__ = """Candle Type: Doji
 
-A candle body is Doji, when it's shorter than 10% of the
+A candle body is Doji, when it is no longer than 10% of the
 average of the 10 previous candles' high-low range.
 
 Sources:
-    TA-Lib: 96.56% Correlation
+    TA-Lib: CDLDOJI, bar for bar on finite input. Other ``length`` and
+    ``factor`` values match TA-Lib with its BodyDoji setting changed to
+    (HighLow, length, factor / 100). A row with a NaN or infinite price
+    reports 0 and is left out of the average, as in the other candle
+    patterns; TA-Lib keeps an infinite open or close row in its average.
 
 Calculation:
     Default values:
-        length=10, percent=10 (0.1), scalar=100
+        length=10, factor=10 (0.1), scalar=100
     ABS = Absolute Value
-    SMA = Simple Moving Average
+    TOTAL = running sum of HL_RANGE over the previous length bars,
+        seeded left to right and updated as TA-Lib does
 
     BODY = ABS(close - open)
-    HL_RANGE = ABS(high - low)
+    HL_RANGE = high - low
 
-    DOJI = scalar IF BODY < 0.01 * percent * SMA(HL_RANGE, length) ELSE 0
+    DOJI = scalar IF BODY <= (factor / 100) * (TOTAL / length) ELSE 0
 
 Args:
     open_ (pd.Series): Series of 'open's
@@ -111,9 +118,10 @@ Args:
     asint (bool): Keep results numerical instead of boolean. Default: True
 
 Kwargs:
-    naive (bool, optional): If True, prefills potential Doji less than
-        the length if less than a percentage of it's high-low range.
-        Default: False
+    naive (bool, optional): If True, the first ``length`` finite bars,
+        which have no window of previous bars, are compared with
+        ``factor`` percent of their own high-low range instead of
+        reporting 0. Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

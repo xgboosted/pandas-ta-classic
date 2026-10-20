@@ -155,11 +155,19 @@ def candle_average(ca: CandleArrays, setting: CandleSetting, lag: int, start_idx
         ValueError: if ``start_idx < lag + period``, which would read before
             the first candle.
     """
-    arr = ca._ranges[setting]
     range_type, period, factor = CANDLE_DEFAULTS[setting]
-    divisor = 2.0 if range_type == RangeType.Shadows else 1.0
     if start_idx < lag + period:
         raise ValueError(f"candle_average() start_idx must be >= lag + period ({lag + period}) for {setting.name}, got {start_idx}")
+    return period_average(ca._ranges[setting], period, factor, 2.0 if range_type == RangeType.Shadows else 1.0, lag, start_idx)
+
+
+def period_average(arr: np.ndarray, period: int, factor: float, divisor: float, lag: int, start_idx: int) -> np.ndarray:
+    """``TA_CANDLEAVERAGE`` arithmetic for an arbitrary *period* and *factor*.
+
+    The engine behind :func:`candle_average`, for patterns whose period and
+    factor are parameters rather than TA-Lib settings (``cdl_doji``). The caller
+    guarantees ``start_idx >= lag + period``.
+    """
     out = np.empty(len(arr))
     out[:start_idx] = np.nan
     if period == 0:

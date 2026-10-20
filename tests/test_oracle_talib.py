@@ -585,7 +585,7 @@ class TestTaLibCandleOracle(_SpyDataMixin, unittest.TestCase):
     (values ∈ {0, ±100}) over the last 2000 bars of the SPY daily series.
 
     Patterns excluded from this suite (not TA-Lib parity):
-      * cdl_doji   — custom SMA-threshold impl; TA-Lib uses HL-ratio only
+      * cdl_doji   — not a run_pattern implementation; compared in test_cdl_doji_oracle
       * cdl_inside — custom (not a TA-Lib pattern)
       * cdl_z      — statistical z-score utility, not a pattern
     """
@@ -694,6 +694,28 @@ class TestTaLibCandleOracle(_SpyDataMixin, unittest.TestCase):
                 self.assertIsNotNone(pt, f"{pt_name} returned None")
                 tl_arr = tl_fn(self.open, self.high, self.low, self.close, **kwargs)
                 self._compare_candle(pt, tl_arr, name=pt_name)
+
+    def test_cdl_doji_oracle(self):
+        """`cdl_doji` against CDLDOJI, at the defaults and with other lengths and factors.
+
+        `length` and `factor` map to TA-Lib's BodyDoji setting (HighLow, length,
+        factor / 100). TA-Lib keeps that setting process-wide, so it is restored
+        afterwards.
+        """
+        self._compare_candle(ta.cdl_doji(self.open, self.high, self.low, self.close), _tl.CDLDOJI(self.open, self.high, self.low, self.close), name="cdl_doji")
+        lib = getattr(_tl, "_ta_lib", None)
+        private_api = ("_ta_set_candle_settings", "_ta_restore_candle_default_settings", "CandleSettingType")
+        if lib is None or not all(hasattr(lib, name) for name in private_api):
+            self.skipTest("this TA-Lib build does not expose the candle-settings API")
+        high_low = 1  # TA_RangeType_HighLow
+        try:
+            for length, factor in ((10, 0), (3, 10), (25, 10), (10, 25), (7, 2.5)):
+                with self.subTest(length=length, factor=factor):
+                    lib._ta_set_candle_settings(lib.CandleSettingType.BodyDoji, high_low, length, factor / 100)
+                    pt = ta.cdl_doji(self.open, self.high, self.low, self.close, length=length, factor=factor)
+                    self._compare_candle(pt, _tl.CDLDOJI(self.open, self.high, self.low, self.close), name=f"cdl_doji({length}, {factor})")
+        finally:
+            lib._ta_restore_candle_default_settings(lib.CandleSettingType.AllCandleSettings)
 
 
 if __name__ == "__main__":
