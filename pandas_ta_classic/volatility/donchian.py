@@ -35,10 +35,10 @@ def donchian(
     upper = high.rolling(upper_length, min_periods=upper_min_periods).max()
     mid = 0.5 * (lower + upper)
 
-    lower, mid, upper = apply_fill([lower, mid, upper], **kwargs)
-
     # Offset
     lower, mid, upper = apply_offset([lower, mid, upper], offset)
+
+    lower, mid, upper = apply_fill([lower, mid, upper], **kwargs)
 
     # Name and Categorize it
     lower.name = f"DCL_{lower_length}_{upper_length}"
