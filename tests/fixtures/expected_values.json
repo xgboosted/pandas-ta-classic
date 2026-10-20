@@ -1324,11 +1324,11 @@
   "fisher": {
     "FISHERT_9_1": {
       "last_value": 4.28001376,
-      "non_nan_count": 5233
+      "non_nan_count": 5232
     },
     "FISHERTs_9_1": {
       "last_value": 3.89537224,
-      "non_nan_count": 5232
+      "non_nan_count": 5231
     }
   },
   "inertia": {
@@ -1364,7 +1364,7 @@
   "lrsi": {
     "LRSI_14": {
       "last_value": 100.0,
-      "non_nan_count": 5241
+      "non_nan_count": 5240
     }
   },
   "psl": {
@@ -1406,7 +1406,7 @@
   "rsx": {
     "RSX_14": {
       "last_value": 85.45272549,
-      "non_nan_count": 5228
+      "non_nan_count": 5214
     }
   },
   "rvgi": {
@@ -1770,7 +1770,7 @@
   "ebsw": {
     "EBSW_40_10": {
       "last_value": 0.99930303,
-      "non_nan_count": 5202
+      "non_nan_count": 5201
     }
   },
   "cdl_doji": {

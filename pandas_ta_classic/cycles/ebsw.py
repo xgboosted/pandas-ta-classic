@@ -13,8 +13,6 @@ from pandas_ta_classic.utils._njit import njit
 def _ebsw_nb(close, length, bars):
     m = close.size
     result = np.full(m, np.nan)
-    if length - 1 < m:
-        result[length - 1] = 0.0
 
     # HighPass and SuperSmoother coefficients are constant across bars
     alpha1 = (1 - np.sin(360 / length)) / np.cos(360 / length)

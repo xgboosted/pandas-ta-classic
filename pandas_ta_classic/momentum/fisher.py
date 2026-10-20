@@ -18,15 +18,16 @@ from pandas_ta_classic.utils._njit import njit
 @njit(cache=True)
 def _fisher_loop(pos_arr, m, length):
     result = np.full(m, np.nan)
-    result[length - 1] = 0.0
     v = 0.0
+    previous = 0.0  # the recursion's seed, as in the source; not a value of bar length - 1
     for i in range(length, m):
         v = 0.66 * pos_arr[i] + 0.67 * v
         if v < -0.99:
             v = -0.999
         elif v > 0.99:
             v = 0.999
-        result[i] = 0.5 * (np.log((1 + v) / (1 - v)) + result[i - 1])
+        previous = 0.5 * (np.log((1 + v) / (1 - v)) + previous)
+        result[i] = previous
     return result
 
 

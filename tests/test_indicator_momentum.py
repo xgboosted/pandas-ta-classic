@@ -1010,6 +1010,13 @@ class TestMomentum(TestCase):
             actual = pandas_ta.willr(self.high, self.low, self.close, length=length)
             self.assertLess(float((actual - expected).abs().max()), 1e-10)
 
+    def test_lrsi_has_no_value_on_its_seed_bar(self):
+        # Bar 0 seeds every Laguerre filter with the close itself, so it read 0/0 = 0.0
+        # on any data; the warm-up contract skips it, as 0 is also LRSI's lower bound.
+        result = pandas_ta.lrsi(self.close)
+        self.assertTrue(result.isna().iloc[0])
+        self.assertFalse(result.iloc[1:].isna().any())
+
     def test_lrsi(self):
         assert_indicator_standard(
             self,

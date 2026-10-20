@@ -62,7 +62,10 @@ def lrsi(
 
     denominator = cu + cd
     denominator = np.where(denominator == 0, 1, denominator)
-    lrsi = Series(100 * cu / denominator, index=close.index)
+    values = 100 * cu / denominator
+    # Bar 0 seeds every filter with the close itself, so cu = cd = 0: no value yet.
+    values[:1] = np.nan
+    lrsi = Series(values, index=close.index)
 
     # Offset
     lrsi = apply_offset(lrsi, offset)

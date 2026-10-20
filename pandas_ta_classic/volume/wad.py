@@ -44,6 +44,8 @@ def wad(
 
     ad_day[up_mask] = (close - trl)[up_mask]
     ad_day[dn_mask] = (close - trh)[dn_mask]
+    # The first bar has no previous close, so no accumulation; cumsum() skips it.
+    ad_day.iloc[:1] = np.nan
 
     wad_ = ad_day.cumsum()
 
