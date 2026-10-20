@@ -532,6 +532,22 @@ def test_a_bar_that_traded_at_one_price_on_no_volume_reads_zero() -> None:
     assert np.isinf(ranged).all(), "a real range on no volume is still a division by zero"
 
 
+def test_emv_on_no_volume_reads_zero_without_range_and_nan_without_movement() -> None:
+    """The two zero-volume bars documented under "Zero Volume" that are not inf.
+
+    A bar with no range reads 0.0: the range is a numerator factor. A bar with a
+    range whose midpoint did not change is 0/0 -- a zero distance over a zero
+    ``volume / range`` -- and reads NaN, not 0.0.
+    """
+    index = pd.date_range("2020-01-01", periods=3, freq="D")
+    high = pd.Series([11.0, 11.0, 10.0], index=index)
+    low = pd.Series([9.0, 9.0, 10.0], index=index)
+    volume = pd.Series([100.0, 0.0, 0.0], index=index)
+    result = ta.emv(high, low, volume)
+    assert np.isnan(result.iloc[1]), f"a ranged bar with an unchanged midpoint reads {result.iloc[1]}, expected NaN"
+    assert result.iloc[2] == 0.0, f"a bar with no range reads {result.iloc[2]}, expected 0.0"
+
+
 def test_a_flat_series_gives_bollinger_no_width_and_no_position(frames) -> None:
     """``BBB`` is a width, so 0.0 is its value; ``BBP``'s 0/0 takes the marker.
 
@@ -592,15 +608,17 @@ def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, fra
         assert not np.isinf(numeric).any(), f"{column}: {int(np.isinf(numeric).sum())} infinite values on the {label} frame"
 
 
-# Open findings of the zero-volume frame, pinned as strict xfails until each is
-# decided: one that starts passing fails, so the list cannot go stale.
-_X_OVER_ZERO_VOLUME = "OPEN: a bar that moved on no volume divides by zero volume and reads +-inf"
+# Findings of the zero-volume frame, pinned as strict xfails: one that starts
+# passing fails, so the list cannot go stale. OPEN entries await a decision;
+# KEPT entries are decided and documented under "Zero Volume" in docs/indicators.rst.
+_X_OVER_ZERO_VOLUME = "KEPT: a bar that moved on no volume is a real division by zero and reads +-inf, as marketfi does"
 _ZERO_VOLUME_WINDOW_NAN = "OPEN: a window with no volume divides 0/0 and reads NaN; the convention would read 0.0"
-_NO_VOLUME_NO_PRICE = "OPEN: a volume-weighted price over a window with no volume is undefined; NaN may be the right answer"
+_NO_VOLUME_NO_PRICE = "KEPT: a volume-weighted price over a window with no volume is undefined, so it reads NaN; 0.0 would be a price"
 _OPEN_FINDINGS: dict[tuple[str, str, str], str] = {
     ("inf", "emv", "zero_volume"): _X_OVER_ZERO_VOLUME,
     ("inf", "marketfi", "zero_volume"): "KEPT: a bar with a range and no volume reads inf, on purpose (marketfi entry in CHANGELOG.md)",
-    ("bleed", "eom", "zero_volume"): _X_OVER_ZERO_VOLUME + "; sma() turns the inf into NaN for 146 bars",
+    ("bleed", "eom", "zero_volume"): _X_OVER_ZERO_VOLUME
+    + "; sma() turns the inf into NaN for the 146 bars whose window holds one, and no others",
     ("bleed", "cmf", "zero_volume"): _ZERO_VOLUME_WINDOW_NAN,
     ("bleed", "vosc", "zero_volume"): _ZERO_VOLUME_WINDOW_NAN,
     ("bleed", "vwma", "zero_volume"): _NO_VOLUME_NO_PRICE,
