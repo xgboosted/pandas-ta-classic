@@ -24,6 +24,10 @@ def _kama_nb(sc, close, length):
         result[length - 1] = close[length - 1]
     for i in range(length, m):
         result[i] = sc[i] * close[i] + (1 - sc[i]) * result[i - 1]
+    # The seed is the close of bar length - 1, not an average: TA-Lib's KAMA
+    # starts one bar later, at bar length, where the first ratio exists.
+    if length - 1 < m:
+        result[length - 1] = np.nan
     return result
 
 
