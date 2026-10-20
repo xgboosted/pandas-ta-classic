@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import logging
 import os
 import sys
@@ -88,12 +89,12 @@ def _resolve(name):
     return None
 
 
-def _load_module(module_path, category_dir, added_paths):
+def _load_module(module_path, category_dir, added_paths, replaced_modules):
     """Load one indicator module from *module_path*; bind nothing.
 
-    The function (re)loads the Python file at *module_path* and returns its
-    name with the mandatory ``<name>`` and ``<name>_method`` callables;
-    :func:`import_dir` binds them once every file has loaded. A module that
+    The function executes the Python file at *module_path* as a new module and
+    returns its name with the mandatory ``<name>`` and ``<name>_method``
+    callables; :func:`import_dir` binds them once every file has loaded. A module that
     fails to import, lacks either callable, or whose name already resolves to
     another module (a stdlib or installed module, or a file of the same name
     in another category) raises ImportError.
@@ -104,6 +105,8 @@ def _load_module(module_path, category_dir, added_paths):
             :data:`sys.path` when not already present.
         added_paths (list): Collects the directories this call added to
             :data:`sys.path`, so :func:`import_dir` can take them back.
+        replaced_modules (list): Collects ``(name, previous sys.modules entry)``
+            for the same purpose.
     """
     module_name = splitext(basename(module_path))[0]
     if not module_name.isidentifier():
@@ -128,7 +131,23 @@ def _load_module(module_path, category_dir, added_paths):
         sys.path.append(category_dir)
         added_paths.append(category_dir)
 
-    module_functions = load_indicator_module(module_name)
+    # A new module object, not importlib.reload(): reload re-executes the live
+    # module in place, so a file refused later in the same import_dir left an
+    # indicator bound earlier half on the new code (its *_method looks the
+    # function up in the module at call time, the bound function stays old).
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"custom indicator '{module_path}' cannot be loaded as a module")
+    module = importlib.util.module_from_spec(spec)
+    # in sys.modules while it runs, as an import has it (dataclasses look the module up there)
+    replaced_modules.append((module_name, sys.modules.get(module_name)))
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as ex:
+        # user module code can raise anything
+        raise ImportError(f"Unable to load the custom indicator module '{module_name}': {ex}") from ex
+    module_functions = get_module_functions(module)
 
     fcn_callable = module_functions.get(module_name)
     fcn_method_callable = module_functions.get(f"{module_name}_method")
@@ -154,6 +173,7 @@ def import_dir(path, verbose=True):
     # Category, and the refused file's directory on sys.path.
     loaded = []
     added_paths: list[str] = []
+    replaced_modules: list = []
     try:
         for d in dirs:
             dirname = basename(d)
@@ -168,10 +188,16 @@ def import_dir(path, verbose=True):
                 continue
 
             for module in glob(abspath(join(path, dirname, "*.py"))):
-                loaded.append((module, dirname, *_load_module(module, d, added_paths)))
+                loaded.append((module, dirname, *_load_module(module, d, added_paths, replaced_modules)))
     except BaseException:
         for added in added_paths:
-            sys.path.remove(added)
+            if added in sys.path:
+                sys.path.remove(added)
+        for name, previous in reversed(replaced_modules):
+            if previous is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = previous
         raise
 
     for module, dirname, module_name, function, method in loaded:
@@ -188,6 +214,11 @@ def import_dir(path, verbose=True):
 
 import_dir.__doc__ = """
 Import a directory of custom indicators into pandas_ta_classic
+
+All or nothing: every module is loaded first, and they are bound only when
+none was refused. A refused file raises ImportError and leaves
+pandas_ta_classic, Category, sys.path and sys.modules as they were, including
+indicators bound by an earlier call.
 
 Args:
     path (str): Full path to your indicator tree
