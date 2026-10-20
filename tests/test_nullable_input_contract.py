@@ -15,24 +15,19 @@ value gives ``pd.NA`` in the nullable dtype.
 Indicators are discovered through ``ta.Category``, so new ones are covered.
 """
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
-from tests.test_leading_nan_contract import INDICATORS, _call
+from tests.contracts import OHLCV_INDICATORS as INDICATORS, call as _call, spy
 
 NA_ROW = 300
 
 
 @pytest.fixture(scope="module")
 def frames():
-    df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    df = df.iloc[-600:].astype(float)
+    df = spy(600).astype(float)
     nullable = df.astype({c: "Float64" for c in df.columns if c != "volume"} | {"volume": "Int64"})
     with_na, with_nan = nullable.copy(), df.copy()
     with_na.iloc[NA_ROW] = pd.NA

@@ -25,11 +25,11 @@ import pandas as pd
 
 from tests.assertions import golden_value_close as _approx_equal
 
-# The indicator set is imported rather than restated: test_indicator_values.py
-# already builds all 223 tracked results with the same parameters the
+# The indicator set is imported rather than restated: tracked_indicators.py
+# builds all 223 tracked results that test_indicator_values.py checks, with the same parameters the
 # generators use, and a second hand-maintained copy here had silently drifted
 # to a 43-entry subset, leaving 180 stored snapshots asserted by nothing.
-from tests.test_indicator_values import _compute_all, _load_data
+from tests.fixtures.tracked_indicators import compute_all as _compute_all, load_data as _load_data
 
 # ---------------------------------------------------------------------------
 # Load snapshots

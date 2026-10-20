@@ -24,7 +24,6 @@ Covered:
 """
 
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -32,15 +31,9 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic.utils._cpr import get_previous_period_ohlcv
+from tests.contracts import spy as _spy
 
-_SPY = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
 needs_talib = pytest.mark.skipif(not ta.Imports["talib"], reason="TA-Lib not installed")
-
-
-def _spy() -> pd.DataFrame:
-    df = pd.read_csv(_SPY, index_col="date", parse_dates=True).drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df
 
 
 # ---------------------------------------------------------------------------

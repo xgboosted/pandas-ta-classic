@@ -26,6 +26,7 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
+from tests.contracts import INDICATORS
 
 _ENTRY = re.compile(r"^\s{4}(\w+)\s*\(", re.MULTILINE)
 _SECTION = re.compile(r"\n(?=\w[\w ]*:\s*\n)")
@@ -74,9 +75,6 @@ def _accepted(fn) -> frozenset:
                 if inspect.isfunction(target) and target.__module__.startswith("pandas_ta_classic") and target is not fn:
                     names |= _accepted(target)
     return frozenset(names)
-
-
-INDICATORS = sorted(i for names in ta.Category.values() for i in names)
 
 
 @pytest.mark.parametrize("name", INDICATORS)

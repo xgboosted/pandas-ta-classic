@@ -1,9 +1,9 @@
 """Shared harness of the registry-wide contract tests.
 
 Each registry-wide contract runs every registered indicator against one class
-of input. ``test_shift_contract.py`` uses this module; moving the older
-contract modules onto it is the rest of rmarcink's test/contract-harness
-branch. The contracts share three things, kept here so they cannot drift apart:
+of input: every ``test_*_contract.py`` module, ``test_degenerate_input.py``
+and ``test_oracle_registry.py``, and the registry sweeps of the other test
+modules. They share these pieces, kept here so they cannot drift apart:
 
 * the data: :func:`spy` returns the last *bars* rows of ``SPY_D``;
 * the registry: :data:`INDICATORS`, :data:`OHLCV_INDICATORS`, :func:`inputs`
@@ -13,7 +13,8 @@ branch. The contracts share three things, kept here so they cannot drift apart:
   :data:`CUMULATIVE`, :data:`WHOLE_SERIES`, :data:`LOOKAHEAD`);
 * known exceptions: :func:`params` and :func:`pin` turn a table of
   ``{key: reason}`` into strict xfails, so an entry that starts passing fails
-  and the table cannot go stale.
+  and the table cannot go stale. They expect an ``AssertionError``: a known
+  entry that crashes with anything else fails instead of counting as expected.
 
 Every reason starts with one of :data:`REASON_PREFIXES`:
 
@@ -42,8 +43,7 @@ COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "vol
 INDICATORS = sorted({name for names in ta.Category.values() for name in names})
 # Not a function of one OHLCV frame: two-series math, signal helpers, a
 # required benchmark or periods series, the ma() dispatcher.
-NOT_OHLCV = {"add", "sub", "mult", "div", "above", "above_value", "below", "below_value", "cross", "cross_value"}
-NOT_OHLCV |= {"long_run", "short_run", "tsignals", "xsignals", "beta", "correl", "mavp", "ma"}
+NOT_OHLCV = {"add", "sub", "mult", "div", "long_run", "short_run", "tsignals", "xsignals", "beta", "correl", "mavp", "ma"}
 # vp returns price bins, not one row per bar.
 NOT_TIME_SERIES = {"vp"}
 OHLCV_INDICATORS = sorted(set(INDICATORS) - NOT_OHLCV - NOT_TIME_SERIES)
@@ -163,7 +163,7 @@ def code_defaults(source: str) -> dict:
 def _xfail(reason: str) -> pytest.MarkDecorator:
     if not reason.startswith(REASON_PREFIXES):
         raise ValueError(f"a known-exception reason must start with one of {REASON_PREFIXES}, got {reason!r}")
-    return pytest.mark.xfail(strict=True, reason=reason)
+    return pytest.mark.xfail(strict=True, raises=AssertionError, reason=reason)
 
 
 def params(
@@ -182,7 +182,10 @@ def params(
 
 
 def pin(request: pytest.FixtureRequest, known: Mapping[Hashable, str], key: Hashable) -> None:
-    """:func:`params` for a test whose parameters are built elsewhere: mark this run when *key* is known."""
+    """:func:`params` for a test whose parameters are built elsewhere: mark this run when *key* is known.
+
+    A reason without a valid prefix raises here, when the test runs, not at collection as with :func:`params`.
+    """
     reason = known.get(key)
     if reason:
         request.applymarker(_xfail(reason))

@@ -24,20 +24,11 @@ signals on the 20 bars before its average exists. ``squeeze``, ``squeeze_pro``
 and ``ttm_trend`` had the same defect, fixed in 0.9.0 before this module existed.
 """
 
-import inspect
-import warnings
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pytest
 
-import pandas_ta_classic as ta
-
-COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
-NOT_OHLCV = {"add", "sub", "mult", "div", "above", "above_value", "below", "below_value", "cross", "cross_value"}
-NOT_OHLCV |= {"long_run", "short_run", "tsignals", "xsignals", "beta", "correl", "mavp", "ma", "vp"}
-INDICATORS = sorted({name for names in ta.Category.values() for name in names} - NOT_OHLCV)
+from tests.contracts import OHLCV_INDICATORS as INDICATORS, call, spy
 
 # A premature value sits in the first few bars; further in it is a real result.
 LEAD = 5
@@ -46,21 +37,12 @@ LEAD = 5
 
 @pytest.fixture(scope="module")
 def frame():
-    df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df
+    return spy()
 
 
 def _call(name, df):
-    fn = getattr(ta, name)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        result = fn(**{p: df[c] for p, c in COLUMNS.items() if p in inspect.signature(fn).parameters})
-    if result is None:
-        return None
-    out = result.to_frame() if isinstance(result, pd.Series) else result
-    return out.apply(pd.to_numeric, errors="coerce")
+    out = call(name, df)
+    return None if out is None else out.apply(pd.to_numeric, errors="coerce")
 
 
 def _columns(name, df):

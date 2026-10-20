@@ -20,8 +20,9 @@ from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
+from tests.contracts import INDICATORS, code_defaults
 from tests.test_degenerate_input import _call
-from tests.test_docstring_defaults import _MODULES, _code_defaults
+from tests.test_docstring_defaults import _MODULES
 
 _GUARD = re.compile(r"_pos_(?:int|float)\((\w+),")
 _SERIES = ("open_", "high", "low", "close", "volume")
@@ -40,7 +41,7 @@ def _required_extras(name, frame):
 
 def _guarded_params():
     cases = []
-    for name in sorted(i for v in ta.Category.values() for i in v):
+    for name in INDICATORS:
         func = _find_indicator_func(name)
         if func is None:
             continue
@@ -100,7 +101,7 @@ def _explicit_default_cases():
     for module in _MODULES:
         if module.stem not in _REGISTERED:
             continue
-        for param, default in _code_defaults(module.read_text(encoding="utf-8")).items():
+        for param, default in code_defaults(module.read_text(encoding="utf-8")).items():
             if isinstance(default, (int, float)) and not isinstance(default, bool):
                 spellings = [int(default), float(default)] if float(default).is_integer() else [default]
                 cases += [(module.stem, param, value) for value in spellings]
@@ -341,7 +342,7 @@ _HELPER_FLAGS = _flags(inspect.getsource(attach_signals))
 
 def _bool_kwarg_cases():
     cases = []
-    for name in sorted(i for v in ta.Category.values() for i in v):
+    for name in INDICATORS:
         func = _find_indicator_func(name)
         if func is None:
             continue
@@ -390,7 +391,7 @@ def _fill_inputs(name, func, frame):
     return kwargs | _required_extras(name, frame)
 
 
-FILL_NAMES = sorted(i for v in ta.Category.values() for i in v if _find_indicator_func(i) is not None)
+FILL_NAMES = [i for i in INDICATORS if _find_indicator_func(i) is not None]
 
 
 @pytest.mark.parametrize("name", FILL_NAMES)
@@ -457,11 +458,11 @@ def test_trend_reset_is_removed(frame):
 # _bool_param call, so a parameter that loses its _bool_param call still fails here.
 def _signature_bool_cases():
     cases = []
-    for name in sorted(i for v in ta.Category.values() for i in v):
+    for name in INDICATORS:
         func = _find_indicator_func(name)
         if func is None:
             continue
-        resolved = _code_defaults(inspect.getsource(inspect.getmodule(inspect.unwrap(func))))
+        resolved = code_defaults(inspect.getsource(inspect.getmodule(inspect.unwrap(func))))
         for param in inspect.signature(func).parameters.values():
             if isinstance(param.default, bool) or (param.default is None and isinstance(resolved.get(param.name), bool)):
                 cases.append((name, param.name))

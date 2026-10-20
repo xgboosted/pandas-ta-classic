@@ -216,6 +216,15 @@ Edge-Case Tests
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
+``tests/contracts.py`` holds what they share: the ``SPY_D`` loader
+(``spy(bars)``), the registry (every indicator, the OHLCV ones), the call that
+feeds them and its keyword variants (``candidate_calls()``), the groups several
+contracts exempt for the same reason (elementwise math, running totals,
+whole-series fits, non-causal indicators), and ``params()`` / ``pin()``, which
+turn an exception table into strict xfails. A
+reason starts with ``OPEN:`` (a defect to fix), ``KEPT:`` (decided behaviour)
+or ``TALIB:`` (TA-Lib's difference, not ours); any other reason fails:
+``params()`` at collection, ``pin()`` when the test runs.
 
 **Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
 

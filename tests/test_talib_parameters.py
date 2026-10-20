@@ -21,7 +21,7 @@ from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from pandas_ta_classic.utils._core import _TAL_MA_TYPES
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 from tests.config import get_sample_data
-from tests.contracts import inputs
+from tests.contracts import INDICATORS, inputs
 from tests.test_docstring_params import _accepted
 
 pytestmark = pytest.mark.skipif(not ta.Imports["talib"], reason="needs TA-Lib")
@@ -33,7 +33,7 @@ _CANDIDATES = [2, 3, 7, 21, 0.5, 1.5, 50.0, "ema", "wma", "sma", True, False]
 
 
 def _talib_indicators():
-    return sorted(n for v in ta.Category.values() for n in v if "talib" in inspect.signature(_find_indicator_func(n)).parameters)
+    return [n for n in INDICATORS if "talib" in inspect.signature(_find_indicator_func(n)).parameters]
 
 
 def _same(a, b):
