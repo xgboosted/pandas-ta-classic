@@ -463,6 +463,21 @@ def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: 
     assert not changed, f"{name}({option}, {fill}) is not {name}({option}) filled afterwards for: {changed}"
 
 
+@pytest.mark.parametrize(("name", "option"), [p for p in _option_paths() if "offset" not in p.values[1] and _accepts(p.values[0], "offset")])
+def test_offset_shifts_every_output_column_on_every_option_path(name: str, option: dict, frame: dict[str, pd.Series]) -> None:
+    """``f(option, offset=N)`` equals ``f(option).shift(N)`` on the other option paths too.
+
+    ``psar(talib=True)`` shifted the SAR before it split it into long and short
+    against the unshifted close, so the offset moved bars between the two columns.
+    """
+    try:
+        _assert_offset_is_a_shift(name, frame, option)
+    except ValueError as error:
+        if "mamode" in str(error):
+            pytest.skip(f"{name} does not offer {option}")
+        raise
+
+
 @pytest.mark.parametrize(
     ("name", "foreign"),
     [
