@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, pad_positions
 
 
 @nan_on_short_input
@@ -131,16 +131,18 @@ def _ema_chain(close: Series, length: int, depth: int, **kwargs):
     """
     results = []
     feed = close
+    start = 0  # position of feed's first row in close
     for _ in range(depth):
         e = ema(close=feed, length=length, talib=False, **kwargs)
         if e is None:
             return None
-        # Each stage is fed a trimmed series, so reindex before handing it back:
-        # callers combine the stages arithmetically and expect close's index.
-        results.append(e.reindex(close.index))
+        # Each stage is fed a trimmed series, so pad it back before handing it
+        # back: callers combine the stages arithmetically and expect close's index.
+        results.append(pad_positions(e, close.index, np.arange(start, close.size)))
         # Strip leading NaN so the next EMA seeds at the right bar.
-        fvi = e.first_valid_index()
-        if fvi is None:
+        valid = e.notna().to_numpy()
+        if not valid.any():
             return results  # all-NaN — caller can check
-        feed = e.loc[fvi:]
+        start += int(valid.argmax())
+        feed = e.iloc[int(valid.argmax()) :]
     return results
