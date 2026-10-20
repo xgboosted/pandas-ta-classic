@@ -99,6 +99,11 @@ Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
+Zero volume:
+    A window with no volume is 0/0 and reads NaN: like a volume-weighted
+    price, a volume-weighted money flow is undefined where nothing traded.
+    See "Zero Volume" in the indicator reference.
+
 Returns:
     pd.Series: New feature generated.
 """

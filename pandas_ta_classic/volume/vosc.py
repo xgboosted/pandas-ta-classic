@@ -70,6 +70,10 @@ Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
+Zero volume:
+    A window with no volume is 0/0 and reads NaN: a percent change from
+    zero volume is undefined. See "Zero Volume" in the indicator reference.
+
 Returns:
     pd.Series: VOSC values.
 """

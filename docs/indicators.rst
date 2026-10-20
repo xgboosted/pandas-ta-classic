@@ -98,7 +98,10 @@ change is noticed:
   reads 0.0; a bar with a range whose midpoint did not change reads NaN (0/0).
 * ``marketfi`` divides the bar's range by its volume and reads ``inf`` for a
   bar with a range and no volume.
-* ``cmf`` and ``vosc`` read NaN over a window with no volume at all (0/0).
+* ``cmf`` and ``vosc`` read NaN over a window with no volume at all (0/0):
+  ``cmf`` is a volume-weighted money flow and ``vosc`` a percent change from
+  the volume average, and neither has a value where nothing traded. Reading
+  0.0 would report a balanced flow or an unchanged volume instead.
 * ``vwma``, ``vwap`` and ``vwmacd`` read NaN over a window with no volume: a
   volume-weighted price is undefined where nothing traded.
 
