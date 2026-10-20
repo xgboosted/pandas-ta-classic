@@ -99,15 +99,17 @@ def psar(
 
         sar = _SAR(high, low, acceleration=af0, maximum=max_af)
         sar_s = Series(sar, index=high.index)
-        sar_s = apply_offset(sar_s, offset)
         _params = f"_{af0}_{max_af}"
         # Split into long (below price) and short (above price) using close when
-        # available (matches native path convention), falling back to high.
+        # available (matches native path convention), falling back to high. The
+        # split compares bars of the same date, so it comes before the offset.
         ref = close if close is not None else high
         long = sar_s.where(sar_s < ref, other=np.nan)
         short = sar_s.where(sar_s >= ref, other=np.nan)
         _af_s = Series(np.nan, index=high.index)
         _rev_s = Series(0.0, index=high.index)
+        long, short, _af_s, _rev_s = apply_offset([long, short, _af_s, _rev_s], offset)
+        long, short, _af_s, _rev_s = apply_fill([long, short, _af_s, _rev_s], **kwargs)
         data = {
             f"PSARl{_params}": long,
             f"PSARs{_params}": short,
