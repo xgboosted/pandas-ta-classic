@@ -83,8 +83,8 @@ Using ``uv``:
     # Or install specific dependency groups:
     uv pip install -e ".[dev]"      # Development tools
     uv pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
-    uv pip install -e ".[optional]" # Optional features like TA-Lib
-    uv pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
+    uv pip install -e ".[optional]" # Optional runtime features (tqdm progress bars)
+    uv pip install -e ".[oracle]"   # Oracle parity lib: TA-Lib (tulipy values are frozen)
     uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 
 Using ``pip``:
@@ -102,8 +102,8 @@ Using ``pip``:
     # Or install specific dependency groups:
     pip install -e ".[dev]"      # Development tools
     pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
-    pip install -e ".[optional]" # Optional features like TA-Lib
-    pip install -e ".[oracle]"   # Oracle parity libs: TA-Lib + tulipy
+    pip install -e ".[optional]" # Optional runtime features (tqdm progress bars)
+    pip install -e ".[oracle]"   # Oracle parity lib: TA-Lib (tulipy values are frozen)
     pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
 
 .. note::
@@ -241,14 +241,20 @@ Using ``uv``:
     uv pip install backtrader
     uv pip install vectorbt
 
-    # For enhanced performance (optional — provides 6–230× speedups on hot-loop indicators)
+    # For enhanced performance (optional — 6–200× faster recursive indicators on 100,000-bar series)
     uv pip install pandas-ta-classic[performance]
 
     # Or install numba directly
     uv pip install numba
 
-    # Install all optional dependencies at once
+    # Progress bar for strategy() runs (tqdm)
     uv pip install pandas-ta-classic[optional]
+
+    # The three backtesting libraries above in one go
+    uv pip install pandas-ta-classic[backtest]
+
+    # Every extra (optional, oracle, dev, test, docs, performance)
+    uv pip install pandas-ta-classic[all]
 
 Using ``pip``:
 
@@ -262,14 +268,20 @@ Using ``pip``:
     pip install backtrader
     pip install vectorbt
     
-    # For enhanced performance (optional — provides 6–230× speedups on hot-loop indicators)
+    # For enhanced performance (optional — 6–200× faster recursive indicators on 100,000-bar series)
     pip install pandas-ta-classic[performance]
     
     # Or install numba directly
     pip install numba
     
-    # Install all optional dependencies at once
+    # Progress bar for strategy() runs (tqdm)
     pip install pandas-ta-classic[optional]
+
+    # The three backtesting libraries above in one go
+    pip install pandas-ta-classic[backtest]
+
+    # Every extra (optional, oracle, dev, test, docs, performance)
+    pip install pandas-ta-classic[all]
 
 Verification
 ------------

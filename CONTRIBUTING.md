@@ -48,7 +48,7 @@ We welcome contributions from the community! This document provides guidelines a
  uv pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
  uv pip install -e ".[docs]"         # Documentation dependencies
  uv pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
- uv pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
+ uv pip install -e ".[oracle]"       # Oracle parity lib: TA-Lib (tulipy values are frozen)
  uv pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  uv pip install -e ".[performance]"  # Numba acceleration
  ```
@@ -63,7 +63,7 @@ We welcome contributions from the community! This document provides guidelines a
  pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
  pip install -e ".[docs]"         # Documentation dependencies
  pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
- pip install -e ".[oracle]"       # Oracle parity libs: TA-Lib + tulipy
+ pip install -e ".[oracle]"       # Oracle parity lib: TA-Lib (tulipy values are frozen)
  pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  pip install -e ".[performance]"  # Numba acceleration
  ```
@@ -77,7 +77,7 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
-- The registry-driven contract tests (`test_lookahead.py`, `test_short_input_contract.py`, `test_leading_nan_contract.py`, `test_interior_nan_contract.py`, `test_warmup_contract.py`) run on every new indicator automatically and must pass; recursive indicators need `@skip_leading_nan(<series params>, interior=True)`
+- The registry-driven contract tests run on every new indicator automatically and must pass: `test_lookahead.py`, `test_short_input_contract.py`, `test_leading_nan_contract.py`, `test_interior_nan_contract.py`, `test_warmup_contract.py`, `test_shift_contract.py`, the data-problem contracts (`test_degenerate_input.py`, `test_data_gaps_contract.py`, `test_scale_contract.py`, `test_nullable_input_contract.py`), `test_index_contract.py`, the sweeps in `test_parameter_validation.py`, and `test_api_consistency.py` (a new deviation from the majority convention goes into its table with a reason). An indicator with a TA-Lib counterpart also needs a case in `tests/test_oracle_registry.py`. Recursive indicators need `@skip_leading_nan(<series params>, interior=True)`; AGENTS.md ("Adding a New Indicator", step 7) says what each contract checks
 - If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
@@ -106,9 +106,9 @@ pytest tests/ -v
 pytest tests/test_indicator_momentum.py -v
 
 # Specific test
-pytest tests/test_indicator_momentum.py::TestRSI::test_rsi -v
+pytest tests/test_indicator_momentum.py::TestMomentum::test_rsi -v
 
-# Oracle tests (requires TA-Lib + tulipy: pip install -e ".[oracle]")
+# Oracle tests (TA-Lib: pip install -e ".[oracle]"; tulipy values are frozen in tests/fixtures/)
 pytest tests/test_oracle_talib.py tests/test_oracle_tulipy.py -v
 
 # Property-based tests (Hypothesis)

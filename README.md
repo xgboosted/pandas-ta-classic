@@ -49,7 +49,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 - **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — TA-Lib is never used for CDL patterns
 - **Optional TA-Lib Acceleration**: Core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) use native implementations by default; pass `talib=True` to use TA-Lib
 - **Compatibility Scope Is Explicit**: Not every TA-Lib/tulipy function has a pandas-ta-classic counterpart. See the full per-indicator matrix for current coverage: `docs/indicator_support_matrix.rst`
-- **Optional Performance Boost**: Install `numba` for 6–230× speedups on hot-loop indicators (QQE, RSX, HWMA, SSF, PSAR, Supertrend, MCGD)
+- **Optional Performance Boost**: Install `numba` to compile the recursive loops (RSX, HWMA, MCGD, SSF, Supertrend, PSAR, QQE and others): 6–200× faster on 100,000-bar series (see below)
 - **Automatic Versioning**: Version management via git tags using setuptools-scm
 - **Modern Package Management**: Full support for both `uv` and `pip`
 - **Production Ready**: Stable status with comprehensive test coverage including property-based testing (Hypothesis)
@@ -153,7 +153,7 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 - **62 Native Candlestick Patterns** — all patterns natively implemented, no TA-Lib required
 - **284 Unique Indicators & Patterns** - 224 category indicators plus 62 CDL patterns via `cdl_pattern()`
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
-- **Optional Numba Acceleration** - 6–230× speedups via `pip install pandas-ta-classic[performance]`
+- **Optional Numba Acceleration** - 6–200× faster recursive indicators on long series via `pip install pandas-ta-classic[performance]`
 - **Strategy System** for bulk indicator processing, with opt-in multiprocessing
 - **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.<indicator>()`, e.g. `df.ta.rsi()`)
@@ -225,7 +225,7 @@ pip install tulipy && python tests/fixtures/generate_tulipy_oracle.py
 
 > **Note:** `test_oracle_talib.py` skips automatically (`@unittest.skipUnless`) when TA-Lib is not installed. `test_oracle_tulipy.py` runs on every Python version against the committed `tulipy_oracle.json` snapshot (skips only if that fixture is missing) — it does **not** require tulipy installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
 
-**Performance boost:** Install `numba` for 6–230× speedups on computation-heavy indicators:
+**Performance boost:** Install `numba` to compile the recursive indicators' loops. Measured with `tools/bench_indicators.py`, run with numba and with `NUMBA_DISABLE_JIT=1`: on 100,000 bars RSX is 200× faster, HWMA 67×, MCGD 55×, SSF 53×, Supertrend 32×, PSAR 18× and QQE 6×; on 5,000 bars the same indicators gain 2–80×. Both paths agree to 1e-12 relative (`tests/test_numba_parity.py`).
 - Using `uv`: `uv pip install pandas-ta-classic[performance]`
 - Using `pip`: `pip install pandas-ta-classic[performance]`
 

@@ -101,5 +101,6 @@ Kwargs:
     fill_method (value, optional): Type of fill method
 
 Returns:
-    pd.Series: 1 (Bullish Sweep), -1 (Bearish Sweep), 0 (None).
+    pd.Series: 1 (Bullish Sweep), -1 (Bearish Sweep), 0 (None); NaN until the
+        swing window exists and on a bar with a missing price.
 """

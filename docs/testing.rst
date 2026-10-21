@@ -108,7 +108,8 @@ Regression Tests
   indices spanning 50 to 5221 (the final bar) against stored snapshot data.
   Test methods are generated from ``regression_snapshots.json`` itself, so the
   asserted set cannot drift from the stored set.
-- ``test_regression_bugfixes.py`` — Pins ~12 documented fixes from CHANGELOG.
+- ``test_regression_bugfixes.py`` — Pins documented fixes from CHANGELOG
+  (33 test classes, 128 tests).
 - ``test_indicator_values.py`` — Golden fixture tests: checks last non-NaN
   values and per-column NaN counts against snapshots in ``tests/fixtures/``.
 
@@ -124,6 +125,18 @@ Edge-Case Tests
   ±Inf injection at mid-series positions, and mismatched OHLCV lengths.
 - ``test_nan_behaviour.py`` — NaN prefix warmup periods, minimum length
   requirements, boundary conditions.
+- ``test_lookahead.py`` — for every registered indicator, at its defaults
+  and with each boolean option flipped, the first ``K`` bars read the same
+  over ``K`` bars as over the whole series, on data that plants flat and
+  other pathological bars after the last cut point. The calls that look
+  forward on purpose (centred ``dpo``, the Ichimoku spans,
+  ``cpr(virgin_cpr=True)``, ``tos_stdevall``, ``vp``) are strict xfails;
+  ``lookahead=False`` turns the first three causal, and ``tos_stdevall`` and
+  ``vp``, which have no causal mode, decline it.
+- ``test_short_input_contract.py`` — for every registered indicator, input
+  shorter than its window returns an all-NaN result indexed like the input
+  and shaped like a normal one (it returned ``None`` before 0.9.0); an
+  indicator with no window, or a window the input fits, returns values.
 - ``test_leading_nan_contract.py`` — for every registered indicator, a
   leading NaN run (chained input) leaves the result on the real bars
   unchanged, the padded bars themselves read NaN, and an all-NaN input reads
@@ -470,13 +483,14 @@ papers), written without any package code.  ``tests/test_reference_ports.py``
 compares the package with them over the full SPY series, after the warm-up.
 They cover ``kst``, ``smi``, ``stc``, ``qqe``, ``squeeze_pro``,
 ``ttm_trend``, ``cksp``, ``vidya``, ``ichimoku``, ``squeeze``, ``supertrend``
-(direction), daily ``cpr``, ``vwap``, ``maxindex``, ``minindex`` and
-``minmaxindex``.  Four of these were wrong against
-their sources when first ported (``kst``, ``stc``, ``cksp``, ``ttm_trend``).
+(direction), daily ``cpr``, ``vwap``, ``maxindex``, ``minindex``,
+``minmaxindex``, ``vfi`` and ``ebsw``.  Six of these were wrong against
+their sources when first ported (``kst``, ``stc``, ``cksp``, ``ttm_trend``,
+``vfi``, ``ebsw``).
 
 Still regression-only, with no independent check of their values:
 ``aberration``, ``amat``, ``aobv``, ``brar``, ``cdl_inside``, ``cdl_z``,
-``ce``, ``cti``, ``decay``, ``dsp``, ``ebsw``, ``hilo``, ``hwc``, ``hwma``,
+``ce``, ``cti``, ``decay``, ``dsp``, ``hilo``, ``hwc``, ``hwma``,
 ``inertia``, ``jma``, ``kdj``, ``long_run``, ``lrsi``, ``mcgd``, ``mmar``,
 ``pmax``, ``psl``, ``rainbow``, ``rsx``, ``rvgi``, ``rvi_vol``,
 ``short_run``, ``ssf``, ``td_seq``, ``thermo``, ``tos_stdevall``, ``trixh``,
