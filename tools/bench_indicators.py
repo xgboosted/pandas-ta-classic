@@ -8,8 +8,8 @@ runs — slowest first, so bottlenecks surface on their own without any hard-cod
 list of "interesting" indicators.
 
 Numba matters: numba-accelerated indicators need ``pip install numba`` for their
-full speed; without it they fall back to plain Python loops. The banner prints
-whether numba is active so a run is never ambiguous.
+full speed; without it, or with ``NUMBA_DISABLE_JIT=1``, they run as plain Python
+loops. The banner prints which of the three applies so a run is never ambiguous.
 
 Usage::
 
@@ -36,13 +36,14 @@ import pandas as pd
 import pandas_ta_classic as ta
 
 
-def _numba_active() -> bool:
+def _numba_status() -> str:
     try:
-        import numba  # noqa: F401
-
-        return True
+        import numba
     except ImportError:
-        return False
+        return "ABSENT - @njit falls back to plain Python"
+    if numba.config.DISABLE_JIT:
+        return "DISABLED (NUMBA_DISABLE_JIT=1) - @njit runs as plain Python"
+    return "ACTIVE - JIT speedups apply"
 
 
 def all_indicator_names() -> list[str]:
@@ -162,8 +163,7 @@ def main(argv: list[str] | None = None) -> int:
 
     names = args.names or all_indicator_names()
 
-    numba = _numba_active()
-    print(f"numba: {'ACTIVE - JIT speedups apply' if numba else 'ABSENT - @njit falls back to plain Python'}")
+    print(f"numba: {_numba_status()}")
     print(f"rows: {args.rows}   repeats: {args.repeats}   indicators: {len(names)}\n")
 
     if args.profile is not None:
