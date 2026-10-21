@@ -29,7 +29,7 @@ Read costs scale with context size. Only read directories relevant to the task �
 | DataFrame accessor / API | `pandas_ta_classic/core.py` + `tests/test_accessor_api.py` + `tests/test_accessor_conformance.py` |
 | Utilities / helpers | `pandas_ta_classic/utils/` + `tests/test_utils.py` |
 | Math operators | `pandas_ta_classic/math/` + `tests/test_indicator_math.py` |
-| Testing infrastructure | `tests/config.py`, `tests/fixtures/`, `tests/assertions.py` |
+| Testing infrastructure | `tests/config.py`, `tests/fixtures/`, `tests/assertions.py`, `tests/contracts.py` (shared harness of the registry-wide contracts) |
 | CI / workflow | `.github/workflows/` only; add `AGENTS.md` if pipeline order changes |
 | Formatting / linting | `pyproject.toml` + the specific file under review |
 | Docs update | `docs/` + the specific doc file; `README.md`; `AGENTS.md` only if structure changes |
@@ -328,7 +328,7 @@ pytest tests/test_oracle_talib.py tests/test_oracle_tulipy.py -v
 pytest tests/test_indicator_momentum.py -v
 
 # Specific test
-pytest tests/test_indicator_momentum.py::TestRSI::test_rsi -v
+pytest tests/test_indicator_momentum.py::TestMomentum::test_rsi -v
 
 # Hypothesis property-based tests
 pytest tests/test_property_based.py -v
@@ -391,6 +391,7 @@ python -m build
 ├── tests/                            # Test suite
 │   ├── config.py
 │   ├── assertions.py
+│   ├── contracts.py                  # Shared harness of the registry-wide contract tests
 │   ├── fixtures/                     # expected_values.json, regression_snapshots.json, tulipy_oracle.json, exact_reference.py, reference_ports.py
 │   └── test_*.py                     # Indicator, accessor, strategy, utils tests
 └── examples/                         # Jupyter notebooks & sample data

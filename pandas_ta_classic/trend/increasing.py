@@ -75,8 +75,8 @@ increasing.__doc__ = """Increasing
 
 Returns True if the series is increasing over a period, False otherwise.
 If the kwarg 'strict' is True, it returns True if it is continuously increasing
-over the period. When using the kwarg 'asint', then it returns 1 for True
-or 0 for False.
+over the period. With 'asint' (the default) it returns 1.0 for True and 0.0
+for False as float64, NaN until the compared bars exist.
 
 Calculation:
     if strict:
@@ -85,7 +85,7 @@ Calculation:
         increasing = close.diff(length) > 0
 
     if asint:
-        increasing = increasing.astype(int)
+        increasing = increasing.astype(float)  # NaN until the compared bars exist
 
 Args:
     close (pd.Series): Series of 'close's

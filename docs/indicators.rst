@@ -82,6 +82,10 @@ pyarrow numeric dtypes such as ``double[pyarrow]`` and ``int64[pyarrow]``) is
 computed as float64, with ``pd.NA`` read as a missing bar (NaN). Results are
 the same as for the data in float64, dtype included: float64, not ``Float64``.
 As with any float64 data, ``Int64`` values beyond 2**53 lose precision.
+**float32 input** (and float16) is computed as float64 too, so the result is
+the float64 one, dtype included; it used to stay float32 and lose digits.
+numpy integer input is computed as numpy computes it, so integer-valued
+results (``ceil``, ``npround``, ...) keep ``int64``.
 ``tests/test_nullable_input_contract.py`` checks every registered indicator.
 
 Zero Volume

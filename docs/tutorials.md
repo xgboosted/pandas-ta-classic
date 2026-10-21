@@ -745,7 +745,7 @@ if 'CDL_HAMMER' in df.columns:
 # Bearish setups: bearish pattern + downtrend + overbought RSI
 if 'CDL_SHOOTINGSTAR' in df.columns:
  bearish_setup = (
- (df['CDL_SHOOTINGSTAR'] > 0) & # Shooting star detected
+ (df['CDL_SHOOTINGSTAR'] < 0) & # Shooting star detected (bearish: -100)
  downtrend & # In downtrend
  (df['RSI_14'] > 50) # RSI in upper half
  )

@@ -84,5 +84,6 @@ Example:
     lr = ta.long_run(fast_ma, slow_ma)
 
 Returns:
-    pd.Series: New feature generated (boolean).
+    pd.Series: 1.0 / 0.0 (float64), NaN until both averages have the
+        bars the comparison needs.
 """
