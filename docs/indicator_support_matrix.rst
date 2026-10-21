@@ -267,7 +267,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
      - momentum
      - yes
      - yes
-     - no
+     - yes
    * - vwmacd
      - momentum
      - yes
@@ -337,7 +337,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
      - volatility
      - yes
      - no
-     - no
+     - yes
    * - natr
      - volatility
      - yes
@@ -362,7 +362,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
      - volatility
      - yes
      - yes
-     - no
+     - yes
    * - ui
      - volatility
      - yes
