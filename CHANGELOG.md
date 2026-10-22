@@ -5,6 +5,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.9.0] - 2026-10-21
 
+### Upgrading from 0.8.x
+0.9.0 removes the silent fallbacks of earlier releases. Code that passed something the library could not use, and got a default or `None` back, now gets an exception, and results that were wrong now change. Check these first:
+
+1. **Invalid arguments raise** `ValueError` or `TypeError` instead of falling back to a default, and non-Series input raises `TypeError`.
+2. **Short input returns an all-NaN result instead of `None`**: replace `if result is None` with `if result.isna().all()`.
+3. **Removed APIs**: built-in data fetching (`df.ta.ticker()`, `ta.yf()`, `ta.av()`), `df.ta.constants()`, `df.ta.exchange`, `df.ta.to_utc`, `ta.non_zero_range` and Python 3.10. `ichimoku()` returns one DataFrame, and `vfi` takes `high` and `low`.
+4. **`df.ta.strategy()` runs serially** unless you set `cores` or pass an `executor`. An unknown strategy name, a malformed `exclude` or a wrong `col_names` raises.
+5. **Results change** around missing bars, on flat stretches and on warm-up bars; for the indicators corrected to their definition (`vfi`, `ebsw`, `kst`, `stc`, ...); and for the annualised performance metrics. Flag columns that can hold NaN are float64: test them with `== 1`, not `astype(bool)`.
+6. **Column names**: `dm` returns `PLUS_DM_14`/`MINUS_DM_14`, `er`'s signal columns are `ER_10_A_0_8`/`ER_10_B_0_2`, and a whole number passed for an int parameter no longer adds `.0`.
+
+Every entry marked **BREAKING** below changes results or starts raising for existing calls. The PR named in each entry has the details; the full per-fix notes, with measurements and the tests that pin each fix, are in the [detailed 0.9.0 changelog](https://github.com/xgboosted/pandas-ta-classic/blob/7b7a578bb163f4eb9893abc710f27b3162b5058f/CHANGELOG.md#090---2026-10-21).
+
 ### Changed
 * **BREAKING — invalid arguments raise instead of being replaced by a default** (#177, #180, #194, #196, #197, #203, #205, #224, #260, #262, #277): about 400 argument checks quietly substituted a default for a value they could not use: `ta.sma(close, length=0)` returned `SMA_10`, `talib=1` meant `False`, and `ma("emaa")` returned an EMA. `None` still selects the default. Any other invalid value raises `ValueError` naming the function you called and the argument, e.g. `ValueError: sma() length must be an integer > 0, got 0`. This covers:
   * numeric parameters (0, negative, NaN, bool, fractional), numeric options passed through `**kwargs` (`emv(divisor=0)`, `mmar(num_ribbons=-1)`, the signal thresholds `xa`/`xb`) and the candle `penetration`;
