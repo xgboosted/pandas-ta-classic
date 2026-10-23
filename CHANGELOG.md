@@ -10,7 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 1. **Invalid arguments raise** `ValueError` or `TypeError` instead of falling back to a default, and non-Series input raises `TypeError`.
 2. **Short input returns an all-NaN result instead of `None`**: replace `if result is None` with `if result.isna().all()` (`vp` and `tos_stdevall` with `lookahead=False` still return `None`).
-3. **Removed APIs**: Python 3.10, built-in data fetching (`df.ta.ticker()`, `ta.yf()`, `ta.av()`), `df.ta.constants()`, `df.ta.exchange`, `df.ta.to_utc`, `ta.non_zero_range`, and the parameters listed under Removed; a removed parameter raises `TypeError`. **Changed signatures**: `ichimoku()` returns one DataFrame, and `vfi` takes `high` and `low`.
+3. **Removed APIs**: Python 3.10, built-in data fetching (`df.ta.ticker()`, `ta.yf()`, `ta.av()`), `df.ta.constants()`, `df.ta.exchange`, `df.ta.to_utc`, `ta.non_zero_range`, and the parameters listed under Removed. Most removed parameters raise `TypeError`; `drift`, `pwma`/`swma` `asc` and `slope(vertical=...)` are still accepted and have no effect. **Changed signatures**: `ichimoku()` returns one DataFrame, and `vfi` takes `high` and `low`.
 4. **`df.ta.strategy()` runs serially** unless you set `cores` or pass an `executor`. An unknown strategy name, a malformed `exclude` or a wrong `col_names` raises, and so do custom indicators on worker processes.
 5. **Results change** around missing bars, on flat stretches and on warm-up bars; for the indicators corrected to their definition (`vfi`, `ebsw`, `kst`, `stc`, ...); and for the annualised performance metrics. Flag columns that can hold NaN are float64: test them with `== 1`, not `astype(bool)`.
 6. **Column names**: `dm` returns `PLUS_DM_14`/`MINUS_DM_14`, `er`'s signal columns are `ER_10_A_0_8`/`ER_10_B_0_2`, and a whole number passed for an int parameter no longer adds `.0`.
@@ -62,7 +62,7 @@ Every entry marked **BREAKING** below changes results or starts raising for exis
 * **BREAKING — `df.ta.strategy(chunksize=...)` and `ordered=...`** (#213): both steered the process pool that ordered stages replace; passing either raises `TypeError`.
 * **BREAKING — the `drift` parameter of `tsignals`, `cfo`, `inertia`, `kst`, `rsx`, `chop`, `accbands` and `kvo`** (#167, issue #138): deprecated in 0.8.32 and never used. Passing it still runs, because `drift` is a strategy-wide argument, and has no effect.
 * **BREAKING — `max_drawdown(all=...)` and `df.ta(version=...)`** (#205): renamed to `all_methods` and `show_version`; the old names raise `TypeError`.
-* **BREAKING — `tsignals(trend_reset=...)` and `xsignals(trend_reset=...)`** (#200): never read; passing it raises `TypeError`. `trade_offset` and `offset` are keyword-only.
+* **BREAKING — `tsignals(trend_reset=...)` and `xsignals(trend_reset=...)`** (#200, #215): never read; passing it raises `TypeError`. `trade_offset` and `offset` are keyword-only.
 * **BREAKING — `cpr(interval=...)`** (#209): never read; passing it raises `TypeError`. Positional arguments after it move up by one.
 * **BREAKING — `pwma(asc=...)` and `swma(asc=...)`** (#215): never read, since their weights are symmetric. A strategy-wide `asc` is still accepted. A positional call `pwma(close, 10, False)` now passes `False` as `offset` and raises.
 * **BREAKING — `combination(multichoose=...)`** (#169, #215): the alias of `repetition` was dropped in 0.8.32 without notice, so `multichoose=True` silently returned nCr. It now raises `TypeError`; use `repetition=True`.
@@ -102,7 +102,7 @@ Every entry marked **BREAKING** below changes results or starts raising for exis
   * `supertrend` ratcheted only the active band; it ratchets both, as the cited source does. The direction is unchanged (#208).
   * `cpr` weekly, monthly and intraday levels came from the wrong period, and every Monday read NaN (#208).
   * `cross(above=False)` and `cross_value(above=False)` fired on NaN and on ties (#208).
-  * `wma(asc=False)` and `fwma(asc=False)` returned the ascending result (#183).
+  * `wma(asc=False)` and `fwma(asc=False)` returned the ascending result (#169).
   * `fibonacci()` overflowed, so `fwma(length=91)` returned values around 1.3e21, `fwma(length=1475)` zeros and `length >= 1500` raised `OverflowError`; `fibonacci(0, zero=True, weighted=True)` returned the unweighted array (#226, #237).
   * `cdl_z(ddof=...)` changed only the column name; `zscore` now takes `ddof`, so a strategy-wide `ddof` changes its values (its column `ZS_{length}` does not name `ddof`), and `zscore(close, std=1)`, the documented default, no longer raises (#226).
   * `msw` used tulipy whenever it was installed, whose rounded pi moved results by up to 3e-4; the exact native formula is now the default and `tulipy=True` opts in (#201).
@@ -121,7 +121,7 @@ Every entry marked **BREAKING** below changes results or starts raising for exis
   * the result lost its `name` and `category`;
   * `macd`'s `xa`, `xb`, `xserie` and cross options reached only the histogram signals, and went unvalidated while `signal_indicators` was off;
   * `macdfix(talib=True, signal_indicators=True)` dropped the signal columns; that combination now runs natively.
-* **BREAKING — `talib=True` honours every parameter** (#181, #208): TA-Lib was called even when a parameter it cannot express was set, and that parameter was ignored: `scalar`, `drift`, `mamode` and `ddof` in 23 indicators, `uo`'s weights, and `stochrsi`'s `k`. Such calls now compute natively, so `rsi(close, scalar=50, talib=True)` equals the native result; calls at the defaults still use TA-Lib. `mama`'s limits must be below 1 on both paths, and `bbands`' `ddof` must lie in `[0, length)`.
+* **BREAKING — `talib=True` honours every parameter** (#181, #208): TA-Lib was called even when a parameter it cannot express was set, and that parameter was ignored: `scalar`, `drift`, `mamode` and `ddof` in 23 indicators, `uo`'s weights, and `stochrsi`'s `k` and `rsi_length`. Such calls now compute natively, so `rsi(close, scalar=50, talib=True)` equals the native result; calls at the defaults still use TA-Lib. `mama`'s limits must be below 1 on both paths, and `bbands`' `ddof` must lie in `[0, length)`.
 * **BREAKING — `df.ta` accessor fixes** (#206, #208, #209, #215, #225, #242):
   * a required argument the DataFrame cannot supply raises `ValueError` instead of returning `None` or the caller's whole DataFrame: `df.ta.long_run()` without `fast`/`slow`, `tsignals` without `trend`, `xsignals` without `signal`, and `beta`/`correl` without `benchmark` (also when called directly);
   * surplus positional arguments raise `TypeError` instead of being dropped (`df.ta.macd(12, 26, 9, False, 0, 7)`);
