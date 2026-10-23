@@ -252,7 +252,8 @@ Signal columns
 It appends threshold and comparison columns to the indicator and returns a
 ``DataFrame`` instead of a ``Series``:
 
-* ``xa`` / ``xb`` — upper and lower thresholds (80 / 20; ``macd`` uses 0 / ``None``).
+* ``xa`` / ``xb`` — upper and lower thresholds (80 / 20; ``er``, a ratio in [0, 1], uses
+  0.8 / 0.2; ``macd`` uses 0 / ``None``).
   ``None`` drops that side's column.
 * ``cross_values`` — ``True`` marks the bars that cross a threshold, ``False``
   flags every bar on one side of it. Default ``False``; ``macd`` defaults to
@@ -554,7 +555,7 @@ Volume analysis indicators:
 * *Price-Volume*: **pvol**
 * *Price Volume Rank*: **pvr**
 * *Price Volume Trend*: **pvt**
-* *Volume Flow Indicator*: **vfi**
+* *Volume Flow Indicator*: **vfi** (``vfi(high, low, close, volume)``, Katsanos' definition; it takes ``high`` and ``low`` since 0.9.0)
 * *Volume Oscillator*: **vosc**
 * *Volume Profile*: **vp**
 * *Williams Accumulation/Distribution*: **wad**
