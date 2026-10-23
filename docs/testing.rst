@@ -46,8 +46,12 @@ Accessor API Tests
 
 **Why:** Validate DataFrame accessor metadata and utilities: ``prefix``/``suffix``
 naming, ``indicators()`` discovery, and time range filtering.
+``test_accessor_conformance.py`` calls every registered indicator through
+``df.ta``: each returns a Series or DataFrame, and one whose required input the
+frame cannot supply (a benchmark, a ``fast``/``slow`` pair, a trend) raises.
 
-**Files:** ``test_accessor_api.py``, ``test_ext_assertions.py``.
+**Files:** ``test_accessor_api.py``, ``test_accessor_conformance.py``,
+``test_ext_assertions.py``.
 
 **Run:** ``python -m pytest tests/test_accessor_api.py -v``
 
@@ -80,10 +84,13 @@ For indicators neither library covers, ``test_reference_ports.py`` compares
 against independent ports of the cited definitions (see *Reference ports*
 below). ``test_adversarial_review_fixes.py`` pins the defects found by the
 2026-09 review, each against a loop reference, TA-Lib or a decision table.
+``test_talib_parameters.py`` checks that ``talib=True`` honours every
+parameter: a call with a value TA-Lib cannot express (``scalar``, ``drift``,
+``mamode``, ``ddof``, ``uo``'s weights) runs natively and equals ``talib=False``.
 
 **Files:** ``test_oracle_talib.py``, ``test_oracle_registry.py``,
 ``test_oracle_tulipy.py``, ``test_reference_ports.py``,
-``test_adversarial_review_fixes.py``.
+``test_adversarial_review_fixes.py``, ``test_talib_parameters.py``.
 
 **Run:** ``python -m pytest tests/test_oracle_talib.py -v``
 
@@ -242,9 +249,14 @@ Strategy Tests
 serial and parallel execution, and chained Custom Strategies, which run in
 ordered stages so the result does not depend on the core count.
 
-**Files:** ``test_strategy.py`` (part of the main suite).
+``test_strategy_execution.py`` runs the same strategies serially and on an
+executor and requires identical frames, and checks the ordered stages and the
+argument checks of ``strategy()``.
 
-**Run:** ``python -m pytest tests/test_strategy.py -v``
+**Files:** ``test_strategy.py`` (part of the main suite),
+``test_strategy_execution.py``.
+
+**Run:** ``python -m pytest tests/test_strategy.py tests/test_strategy_execution.py -v``
 
 
 Custom / Plugin Tests
@@ -330,9 +342,35 @@ Utility Tests
 
 **Files:** ``test_utils.py`` (``verify_series``, ``apply_offset``,
 ``apply_fill``, cross detection), ``test_utils_metrics.py`` (Sharpe ratio,
-drawdown, CAGR, Jensen's alpha).
+drawdown, CAGR, Jensen's alpha), ``test_lazy_core.py`` (lazy loading of the
+category subpackages and of top-level indicator names).
 
 **Run:** ``python -m pytest tests/test_utils.py -v``
+
+
+Repository Guards
+-----------------
+
+**Why:** Keep the rules in ``AGENTS.md`` true across the whole repository, not
+only in the code a PR touches.
+
+- ``test_no_fallbacks.py`` — each place that used to substitute a value, return
+  ``None`` or hide an error now raises (rule 1).
+- ``test_docstring_defaults.py`` — every ``Default:`` in an indicator docstring
+  equals the default the code applies (rule 8).
+- ``test_docstring_params.py`` — every parameter a docstring documents is one
+  the indicator reads.
+- ``test_assertions.py`` — the comparison helpers in ``tests/assertions.py``
+  fail on wrong results, so the tests built on them can fail.
+- ``test_no_invisible_characters.py`` — no tracked file holds an invisible or
+  confusable character that a diff or a grep would not show.
+- ``test_python_support_docs.py`` — the supported Python range in the docs and
+  ``requires-python`` match ``LATEST_PYTHON_VERSION`` in CI (rule 9).
+- ``test_changelog.py`` — each fragment in ``changelog.d/`` has a valid name, at
+  most 1,000 characters and the **BREAKING** form, and ``CHANGELOG.md`` keeps the
+  marker towncrier inserts after.
+
+**Run:** ``python -m pytest tests/test_no_fallbacks.py tests/test_changelog.py -v``
 
 
 Running All Tests

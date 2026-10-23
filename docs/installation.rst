@@ -82,7 +82,7 @@ Using ``uv``:
 
     # Or install specific dependency groups:
     uv pip install -e ".[dev]"      # Development tools
-    uv pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
+    uv pip install -e ".[test]"     # Testing: pytest, Hypothesis
     uv pip install -e ".[optional]" # Optional runtime features (tqdm progress bars)
     uv pip install -e ".[oracle]"   # Oracle parity lib: TA-Lib (tulipy values are frozen)
     uv pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader
@@ -101,7 +101,7 @@ Using ``pip``:
 
     # Or install specific dependency groups:
     pip install -e ".[dev]"      # Development tools
-    pip install -e ".[test]"     # Testing: pytest, Hypothesis, coverage, benchmarks
+    pip install -e ".[test]"     # Testing: pytest, Hypothesis
     pip install -e ".[optional]" # Optional runtime features (tqdm progress bars)
     pip install -e ".[oracle]"   # Oracle parity lib: TA-Lib (tulipy values are frozen)
     pip install -e ".[backtest]" # Backtesting: backtesting, vectorbt, backtrader

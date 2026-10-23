@@ -45,12 +45,13 @@ We welcome contributions from the community! This document provides guidelines a
  
  # Or install specific dependency groups as needed:
  uv pip install -e ".[dev]"          # Development dependencies
- uv pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
+ uv pip install -e ".[test]"         # Testing: pytest, Hypothesis
  uv pip install -e ".[docs]"         # Documentation dependencies
  uv pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  uv pip install -e ".[oracle]"       # Oracle parity lib: TA-Lib (tulipy values are frozen)
  uv pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  uv pip install -e ".[performance]"  # Numba acceleration
+ uv pip install -e ".[changelog]"    # towncrier, for the fragments in changelog.d/
  ```
  
  Using `pip`:
@@ -60,12 +61,13 @@ We welcome contributions from the community! This document provides guidelines a
  
  # Or install specific dependency groups as needed:
  pip install -e ".[dev]"          # Development dependencies
- pip install -e ".[test]"         # Testing: pytest, Hypothesis, coverage
+ pip install -e ".[test]"         # Testing: pytest, Hypothesis
  pip install -e ".[docs]"         # Documentation dependencies
  pip install -e ".[optional]"     # Optional runtime features (tqdm progress bars)
  pip install -e ".[oracle]"       # Oracle parity lib: TA-Lib (tulipy values are frozen)
  pip install -e ".[backtest]"  # Backtesting integrations: backtesting, backtrader, vectorbt
  pip install -e ".[performance]"  # Numba acceleration
+ pip install -e ".[changelog]"    # towncrier, for the fragments in changelog.d/
  ```
 
 ## How to Contribute
