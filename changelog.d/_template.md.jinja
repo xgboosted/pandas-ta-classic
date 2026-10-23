@@ -1,0 +1,15 @@
+{#- Renders one CHANGELOG.md section in the layout of the earlier ones:
+    "### <type>" headings, "* " bullets, the PR numbers after each entry. #}
+{% for section, _ in sections.items() %}
+{% for category, val in definitions.items() if category in sections[section] %}
+{% if not loop.first %}
+
+{% endif %}
+### {{ definitions[category]['name'] }}
+{% for text, values in sections[section][category].items() %}
+* {{ text }}{% if values %} ({{ values | join(", ") }}){% endif %}
+
+{% endfor %}
+{% endfor %}
+{% endfor %}
+{{ "\n" }}
