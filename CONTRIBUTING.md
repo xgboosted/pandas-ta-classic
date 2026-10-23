@@ -232,7 +232,7 @@ The full list, with what enforces each rule, is in the "Correctness Rules" secti
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
 - **Docstring `Default:` values match the code** (`tests/test_docstring_defaults.py` checks this).
-- **Deprecate in a released version before removing** (0.9.0 is the exception: it ships no deprecation, so its renames and removals raise at once), and mark any entry that changes results or starts raising as **BREAKING** in `CHANGELOG.md`.
+- **Deprecate in a released version before removing** (0.9.0 is the exception: it ships no deprecation, so its renames and removals raise at once), and start any changelog fragment that changes results or starts raising with **BREAKING**.
 - **Prove refactors change nothing**: compare hashed indicator output before and after.
 
 ### 5. Git Workflow
@@ -287,7 +287,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
  - [ ] `pytest tests/ -v` passes
  - [ ] Documentation updated (docstrings + `docs/` if behavior changed)
  - [ ] Type hints included on all new function signatures
- - [ ] CHANGELOG.md `[Unreleased]` section updated
+ - [ ] Changelog fragment `changelog.d/<PR number>.<type>.md` added (see [`changelog.d/README.md`](changelog.d/README.md)), or the `skip-changelog` label set
  - [ ] New indicator: entry added to `docs/indicators.rst`
 
 ## Version Management
@@ -311,7 +311,11 @@ pip install -e ".[dev]"  # reinstall to regenerate _version.py
 
 ### Creating a Release (maintainers only)
 
-1. Rename `[Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`
+1. Build the changelog section from the fragments, then edit it by hand where entries on one topic should be merged:
+   ```bash
+   towncrier build --version X.Y.Z --date YYYY-MM-DD
+   ```
+   It writes `## [X.Y.Z] - YYYY-MM-DD` into `CHANGELOG.md` and deletes the fragments. Write an upgrade summary first, if the release needs one, as `changelog.d/+<topic>.upgrading.md`. For 0.9.0 only, whose section was written by hand, move the generated entries into the existing `## [0.9.0]` section and delete the generated heading.
 2. Ensure CI is green: `pytest tests/ -v`
 3. Create an **annotated** tag and push:
    ```bash

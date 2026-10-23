@@ -1,20 +1,3 @@
-# Every PR appends bullets under the [Unreleased] heading, so any two open PRs
-# touch the same lines and conflict there by construction. `union` keeps both
-# sides instead of stopping the merge.
-#
-# It is not free. A PR that *edits* an existing bullet rather than appending a
-# new one gets both the old and the new line, which lands as a visible duplicate
-# instead of a conflict. Read the [Unreleased] section after merging anything
-# that rewrote existing entries.
-#
-# Only local git applies it. GitHub's merge button, and its mergeability check,
-# ignore custom merge drivers, so two open PRs that both add a bullet to the
-# same [Unreleased] subsection still conflict on GitHub once one of them lands
-# (#286 and #287 after #283). A local merge test therefore reports such a PR as
-# clean when GitHub will refuse it. Remedy: merge main into the PR branch
-# locally, where this rule applies, and push; or land the PR from a local merge.
-CHANGELOG.md merge=union
-
 # GitHub source archives (Download ZIP, /archive/<ref>.zip) have no .git, so
 # setuptools-scm reads the version from this file, which git archive fills in.
 .git_archival.txt export-subst

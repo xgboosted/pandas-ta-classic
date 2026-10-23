@@ -71,6 +71,11 @@ publish = [
     "setuptools-scm>=7.0.0",
 ]
 
+# Changelog fragments (changelog.d/) and the release-time build of CHANGELOG.md
+changelog = [
+    "towncrier>=26.9.0",
+]
+
 # Development tools (code quality, linting, building)
 dev = [
     # Include testing dependencies
@@ -79,9 +84,10 @@ dev = [
     # Include documentation dependencies  
     "pandas-ta-classic[docs]",
 
-    # Include lint and publish tools
+    # Include lint, publish and changelog tools
     "pandas-ta-classic[lint]",
     "pandas-ta-classic[publish]",
+    "pandas-ta-classic[changelog]",
     
     # Type checking and linting
     "mypy>=1.0.0",
@@ -207,6 +213,67 @@ packages = [
 write_to = "pandas_ta_classic/_version.py"
 # Default scheme: gives clean version on tags, next minor .devN after tags
 local_scheme = "no-local-version"  # Omit local version for clean releases
+
+[tool.towncrier]
+# Each PR adds changelog.d/<PR number>.<type>.md; `towncrier build` turns them
+# into a CHANGELOG.md section at release time. changelog.d/README.md has the rules,
+# tests/test_changelog.py checks the fragments.
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+template = "changelog.d/_template.md.jinja"
+title_format = "## [{version}] - {project_date}"
+issue_format = "#{issue}"
+issue_pattern = "\\d+"
+underlines = ["", "", ""]  # Markdown headings: no rst underline below the title
+
+# Keep a Changelog headings, in the order of the 0.9.0 section. A breaking change
+# goes under the type it belongs to and starts with **BREAKING** (AGENTS.md rule 13).
+[[tool.towncrier.type]]
+directory = "upgrading"
+name = "Upgrading"
+showcontent = true
+check = false  # written by the maintainer at release, as an orphan +name.upgrading.md
+
+[[tool.towncrier.type]]
+directory = "changed"
+name = "Changed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "added"
+name = "Added"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "deprecated"
+name = "Deprecated"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removed"
+name = "Removed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fixed"
+name = "Fixed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "performance"
+name = "Performance"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "dev"
+name = "Development"
+showcontent = true
 
 [tool.mypy]
 packages = ["pandas_ta_classic"]
