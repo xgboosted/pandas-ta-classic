@@ -17,3 +17,9 @@ updates:
   directory: "/"
   schedule:
     interval: "weekly"
+  # A workflow pin bump needs no changelog fragment (changelog.d/README.md).
+  # This list replaces Dependabot's default labels, so it repeats them.
+  labels:
+    - "dependencies"
+    - "github_actions"
+    - "skip-changelog"
