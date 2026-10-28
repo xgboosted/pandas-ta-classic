@@ -399,11 +399,13 @@ def _require_shared_index(indicator: str, sig: inspect.Signature, args: tuple, k
         if other.index is first.index or other.index.equals(first.index):
             continue
         if first.index.intersection(other.index).empty:
-            bound = sig.bind(*args, **kwargs).arguments
-            names = {id(v): k for k, v in bound.items()}
-            # an option read from **kwargs (xserie) sits in the bag under its own key
-            bag = next((p.name for p in sig.parameters.values() if p.kind is p.VAR_KEYWORD), None)
-            names |= {id(v): k for k, v in bound.get(bag, {}).items()}
+            names: dict[int, str] = {}
+            for key, value in sig.bind(*args, **kwargs).arguments.items():
+                if sig.parameters[key].kind is inspect.Parameter.VAR_KEYWORD:
+                    # an option read from **kwargs (xserie) sits in the bag under its own key
+                    names |= {id(v): k for k, v in value.items()}
+                else:
+                    names[id(value)] = key
             raise ValueError(
                 f"{indicator}() inputs share no index labels: {names.get(id(first), '?')} has {_describe_index(first.index)}, "
                 f"{names.get(id(other), '?')} has {_describe_index(other.index)}. Align them first, e.g. by taking both from one DataFrame."
