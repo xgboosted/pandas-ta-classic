@@ -559,15 +559,16 @@ def _other_index(frame, rows: str) -> Series:
 
 
 @pytest.mark.parametrize(
-    ("name", "key"),
+    ("name", "key", "rows"),
     [
-        pytest.param(*case, marks=pytest.mark.xfail(strict=True, raises=(AssertionError, pytest.fail.Exception), reason=_SERIES_KWARG_OPEN[case[0]]))
-        if case[0] in _SERIES_KWARG_OPEN
-        else case
+        # with no label in common the shared-index guard names the option for every indicator
+        pytest.param(*case, rows, marks=pytest.mark.xfail(strict=True, raises=(AssertionError, pytest.fail.Exception), reason=_SERIES_KWARG_OPEN[case[0]]))
+        if case[0] in _SERIES_KWARG_OPEN and rows != "disjoint"
+        else (*case, rows)
+        for rows in ("shorter", "shifted", "disjoint")
         for case in SERIES_KWARG_CASES
     ],
 )
-@pytest.mark.parametrize("rows", ["shorter", "shifted", "disjoint"])
 def test_series_kwarg_with_another_index_raises(name, key, rows, frame):
     func = _find_indicator_func(name)
     kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
