@@ -81,6 +81,7 @@ Args:
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
+    Any other keyword goes to the chosen moving average, e.g. adjust for 'ema'.
 
 Returns:
     pd.Series: New feature generated.
