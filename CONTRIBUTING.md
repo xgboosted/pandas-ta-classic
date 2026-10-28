@@ -319,12 +319,12 @@ pip install -e ".[dev]"  # reinstall to regenerate _version.py
    ```
    It writes `## [X.Y.Z] - YYYY-MM-DD` into `CHANGELOG.md` and deletes the fragments. Write an upgrade summary first, if the release needs one, as `changelog.d/+<topic>.upgrading.md`.
 2. Ensure CI is green: `pytest tests/ -v`
-3. Create an **annotated** tag and push:
+3. Create the GitHub release and its tag together, with the version's `CHANGELOG.md` section as the notes. Releases use lightweight tags (maintainer decision), and `gh release create` makes the tag on the release commit:
    ```bash
-   git tag -a X.Y.Z -m "X.Y.Z"
-   git push origin X.Y.Z
+   awk '/^## \[X\.Y\.Z\]/{f=1;next} /^## \[/{if(f)exit} f' CHANGELOG.md > notes.md
+   gh release create X.Y.Z --target <release commit> --title X.Y.Z --notes-file notes.md
    ```
-4. Draft a GitHub Release from that tag — publishing it triggers automated PyPI upload via CI.
+   Do not use GitHub's generated notes ("Generate release notes", `--generate-notes`): they list PRs and leave out the upgrade notes and the **BREAKING** entries. Publishing the release triggers the PyPI upload via CI.
 
 ## Roadmap
 
