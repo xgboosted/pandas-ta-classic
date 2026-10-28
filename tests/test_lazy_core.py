@@ -253,6 +253,8 @@ class TestModuleGetattr(unittest.TestCase):
             (pandas_ta_classic.candles, "CDL_PATTERN_NAMES", r"CDL_PATTERN_NAMES was removed in 0\.9\.0.*ta\.ALL_PATTERNS"),
             (pandas_ta_classic, "yf", r"ta\.yf\(\) " + fetching),
             (pandas_ta_classic, "av", r"ta\.av\(\) " + fetching),
+            (pandas_ta_classic.utils, "yf", r"ta\.yf\(\) " + fetching),
+            (pandas_ta_classic.utils, "av", r"ta\.av\(\) " + fetching),
             (pandas_ta_classic.utils, "data", r"pandas_ta_classic\.utils\.data " + fetching),
             (accessor, "ticker", r"df\.ta\.ticker\(\) " + fetching),
             (accessor, "constants", r"df\.ta\.constants\(\) was removed in 0\.9\.0.*df\['0'\] = 0"),
