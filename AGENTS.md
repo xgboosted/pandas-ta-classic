@@ -218,7 +218,7 @@ Not greppable, so check in review: **dead code** your change orphaned, and the *
 | `pypi-publish` | Builds wheel, twine check, publishes to PyPI (on release published only) |
 
 Triggers: `push` to main, `pull_request` to main, `release` published, `workflow_dispatch`.
-Additional workflows: `mirror.yml` syncs repository to Codeberg on every push + nightly; `changelog.yml` runs `towncrier check` on every PR and fails one that adds no fragment to `changelog.d/`, unless it carries the `skip-changelog` label.
+Additional workflows: `mirror.yml` syncs repository to Codeberg on every push except Dependabot's (those run without its token) + nightly; `changelog.yml` runs `towncrier check` on every PR and fails one that adds no fragment to `changelog.d/`, unless it carries the `skip-changelog` label.
 
 **Note:** CDL candlestick pattern tests (`test_indicator_candle.py`, `test_ext_indicator_candle.py`) run in `testing-core`; they need no TA-Lib.
 
