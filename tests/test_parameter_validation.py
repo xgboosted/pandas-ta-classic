@@ -553,6 +553,8 @@ def test_series_kwarg_sweep_found_the_options():
 def _other_index(frame, rows: str) -> Series:
     if rows == "shorter":
         return frame.close.iloc[200:]
+    if rows == "disjoint":
+        return frame.close.reset_index(drop=True)  # a RangeIndex next to close's DatetimeIndex: no label in common
     return frame.close.set_axis(frame.close.index + Timedelta(days=1))  # shares most labels with close, not all
 
 
@@ -565,14 +567,21 @@ def _other_index(frame, rows: str) -> Series:
         for case in SERIES_KWARG_CASES
     ],
 )
-@pytest.mark.parametrize("rows", ["shorter", "shifted"])
+@pytest.mark.parametrize("rows", ["shorter", "shifted", "disjoint"])
 def test_series_kwarg_with_another_index_raises(name, key, rows, frame):
     func = _find_indicator_func(name)
     kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
     partner = {"ma1": "ma2", "ma2": "ma1"}.get(key)
     extra = {partner: frame.close} if partner else {} if key == "osc" else {"signal_indicators": True}
     other = _other_index(frame, rows)
-    with pytest.raises(ValueError, match=rf"^{name}\(\) {key} must have the same index as close: {key} has {len(other)} rows"):
+    # No label in common is caught before the indicator runs, by the guard every
+    # indicator has (utils._core._require_shared_index); it named an option read
+    # from **kwargs "?".
+    if rows == "disjoint":
+        message = rf"^{name}\(\) inputs share no index labels: close has .*, {key} has RangeIndex"
+    else:
+        message = rf"^{name}\(\) {key} must have the same index as close: {key} has {len(other)} rows"
+    with pytest.raises(ValueError, match=message):
         func(**kwargs, **extra, **{key: other})
 
 
