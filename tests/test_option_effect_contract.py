@@ -34,8 +34,8 @@ INDEPENDENT_OF_MA = {
     ("stochf", "STOCHFk_5_3"): "KEPT: the raw fast %K; mamode smooths %D",
     ("thermo", "THERMO_20_2_0.5"): "KEPT: the raw thermometer; mamode smooths its signal line",
     ("tsi", "TSI_13_25_13"): "KEPT: the TSI line is double EMA by definition; mamode smooths the signal",
-    ("squeeze", "SQZ_NO"): "KEPT: with bb_length == kc_length both bands are symmetric around one midline, so 'no squeeze' is 0 on every bar",
-    ("squeeze_pro", "SQZPRO_NO"): "KEPT: with bb_length == kc_length both bands are symmetric around one midline, so 'no squeeze' is 0 on every bar",
+    ("squeeze", "SQZ_NO"): "KEPT: with bb_length == kc_length both bands are symmetric around one midline, so 'no squeeze' is 0 on every bar; only its warm-up follows the MA (dema, t3 start later)",
+    ("squeeze_pro", "SQZPRO_NO"): "KEPT: with bb_length == kc_length both bands are symmetric around one midline, so 'no squeeze' is 0 on every bar; only its warm-up follows the MA (dema, t3 start later)",
 }
 # indicator -> boolean parameter that only acts together with another one.
 DEPENDENT_FLAGS = {
@@ -87,9 +87,13 @@ def test_independent_columns_are_independent(name, column, frame):
 
 
 def test_qstick_forwards_the_options_of_its_ma(frame):
-    """qstick(ma="ema", adjust=True) handed adjust to ema() before qstick went through ma()."""
-    expected = ta.ema(frame.close - frame.open, length=10, adjust=True)
+    """qstick(ma="ema", adjust=True) handed adjust to ema() before qstick went through ma();
+    the fill and the offset stay with qstick, so each applies once."""
+    diff = frame.close - frame.open
+    expected = ta.ema(diff, length=10, adjust=True)
     assert np.allclose(ta.qstick(frame.open, frame.close, ma="ema", adjust=True), expected, equal_nan=True)
+    shifted = ta.ema(diff, length=10).shift(2).fillna(0)
+    assert np.array_equal(ta.qstick(frame.open, frame.close, ma="ema", offset=2, fillna=0), shifted)
 
 
 @pytest.mark.parametrize(("name", "flag"), params(BOOL_CASES, DEPENDENT_FLAGS, id=lambda row: "-".join(row)))
