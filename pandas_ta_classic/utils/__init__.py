@@ -116,7 +116,7 @@ __all__ = [
 # Python's plain ImportError: the import machinery drops the message.
 _DATA_FETCHING_REMOVED = (
     "was removed in 0.9.0 (deprecated in 0.8.32): data fetching is out of scope for a technical-analysis library. "
-    "Fetch OHLCV with yfinance or alpha-vantage directly and pass the DataFrame in; examples/fetch_market_data.py shows both"
+    "Fetch OHLCV with yfinance or alpha-vantage directly and pass the DataFrame in; examples/fetch_market_data.py in the project repository shows both"
 )
 _REMOVED_MESSAGES = {
     "non_zero_range": (
