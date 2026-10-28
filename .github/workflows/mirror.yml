@@ -7,6 +7,10 @@ on:
 
 jobs:
   mirror:
+    # A push by Dependabot runs without the repository's secrets, so it has no
+    # CODEBERG_TOKEN and `git push` fails with exit code 128 (#325). Its branch
+    # reaches Codeberg with the next push by anyone else or the nightly run.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
