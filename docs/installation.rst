@@ -46,6 +46,12 @@ Using ``pip``:
 
     pip install pandas-ta-classic
 
+.. note::
+   **Upgrading from 0.8.x:** 0.9.0 is a breaking release. Invalid arguments and
+   non-Series input now raise instead of falling back to a default, short input
+   returns an all-NaN result instead of ``None``, and some results and column
+   names change. Read `Upgrading from 0.8.x <https://github.com/xgboosted/pandas-ta-classic/blob/main/CHANGELOG.md#upgrading-from-08x>`_ before you upgrade.
+
 Latest Development Version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -111,7 +117,7 @@ Using ``pip``:
    
    - Full git repository with history and tags (not a shallow clone)
    - setuptools-scm is automatically installed as a build dependency
-   - Git tags determine the package version (e.g., ``0.3.36.dev1`` for development, ``0.3.35`` for releases)
+   - Git tags determine the package version (e.g., ``0.9.1.dev1`` for development, ``0.9.0`` for releases)
    - A GitHub source archive (``pip install https://github.com/xgboosted/pandas-ta-classic/archive/main.zip`` or *Download ZIP*) carries its version in ``.git_archival.txt``, which ``git archive`` fills in
    - A source copy with neither ``.git`` nor that file (for example a Docker ``COPY`` without ``.git``) fails to build with setuptools-scm's ``LookupError`` instead of installing as ``0.0.0``; include ``.git`` or set ``SETUPTOOLS_SCM_PRETEND_VERSION``
    - See the `Version Management section in CONTRIBUTING.md <https://github.com/xgboosted/pandas-ta-classic/blob/main/CONTRIBUTING.md#version-management>`_ for details

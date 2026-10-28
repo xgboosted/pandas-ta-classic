@@ -207,8 +207,8 @@ packages = [
 
 [tool.setuptools_scm]
 # Automatically determine version from git tags
-# Tagged releases: X.Y.Z (e.g., 0.3.34)
-# Commits after tag: X.Y.(Z+1).devN (e.g., 0.3.35.dev1, 0.3.35.dev2)
+# Tagged releases: X.Y.Z (e.g., 0.9.0)
+# Commits after tag: X.Y.(Z+1).devN (e.g., 0.9.1.dev1, 0.9.1.dev2)
 # This avoids .post0 on tagged commits while still tracking development versions
 write_to = "pandas_ta_classic/_version.py"
 # Default scheme: gives clean version on tags, next minor .devN after tags

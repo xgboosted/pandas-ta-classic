@@ -242,6 +242,8 @@ We welcome contributions! Please see our [contributing guidelines](https://githu
 
 For detailed information about changes, improvements, and new features, please see the [CHANGELOG.md](https://github.com/xgboosted/pandas-ta-classic/blob/main/CHANGELOG.md) file.
 
+**Upgrading from 0.8.x:** 0.9.0 is a breaking release. Invalid arguments and non-Series input now raise instead of falling back to a default, short input returns an all-NaN result instead of `None`, and some results and column names change. Read [Upgrading from 0.8.x](https://github.com/xgboosted/pandas-ta-classic/blob/main/CHANGELOG.md#upgrading-from-08x) before you upgrade.
+
 ## Sources
 
 [Original TA-LIB](http://ta-lib.org/) | [TradingView](http://www.tradingview.com) | [Sierra Chart](https://search.sierrachart.com/?Query=indicators&submitted=true) | [MQL5](https://www.mql5.com) | [FM Labs](https://www.fmlabs.com/reference/default.htm) | [Pro Real Code](https://www.prorealcode.com/prorealtime-indicators) | [User 42](https://user42.tuxfamily.org/chart/manual/index.html)

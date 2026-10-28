@@ -296,8 +296,8 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
 
 Versions are managed automatically via [setuptools-scm](https://github.com/pypa/setuptools-scm) from git tags. **Never manually edit version strings.**
 
-- Tagged commits produce a clean version (`0.4.0`)
-- Untagged commits produce a dev version (`0.4.1.dev3` = 3 commits after `0.4.0`)
+- Tagged commits produce a clean version (`0.9.0`)
+- Untagged commits produce a dev version (`0.9.1.dev3` = 3 commits after `0.9.0`)
 - Clone with full history — not a shallow clone — so setuptools-scm can find tags:
   ```bash
   git clone https://github.com/xgboosted/pandas-ta-classic.git
