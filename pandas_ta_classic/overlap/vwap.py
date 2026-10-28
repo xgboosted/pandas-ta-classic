@@ -30,7 +30,8 @@ def vwap(
     low = verify_series(low)
     close = verify_series(close)
     volume = verify_series(volume)
-    anchor = _str_param(anchor, "D", "anchor", lower=False).upper()
+    anchor_given = _str_param(anchor, "D", "anchor", lower=False)
+    anchor = anchor_given.upper()
     offset = get_offset(offset)
 
     if high is None or low is None or close is None or volume is None:
@@ -52,7 +53,10 @@ def vwap(
     # Periods follow the index's wall-clock calendar; dropping the time zone first
     # does what to_period() does anyway, without its warning on every call.
     wall_clock = wp.index.tz_localize(None) if wp.index.tz is not None else wp.index
-    periods = wall_clock.to_period(anchor)
+    try:
+        periods = wall_clock.to_period(anchor)
+    except ValueError as error:  # pandas' message names neither vwap() nor anchor
+        raise ValueError(f"vwap() anchor must be a pandas period frequency such as 'D', 'W' or 'M', got {anchor_given!r}") from error
     vwap = wp.groupby(periods, observed=True).cumsum()
     vwap /= volume.groupby(periods, observed=True).cumsum()
 
