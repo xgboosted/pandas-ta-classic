@@ -143,7 +143,7 @@ _REMOVED_MESSAGES = {
     "av": f"ta.av() {_DATA_FETCHING_REMOVED}",
     "ticker": f"df.ta.ticker() {_DATA_FETCHING_REMOVED}",
 }
-_REMOVED = {name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "data")}
+_REMOVED = {name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "data", "yf", "av")}
 
 
 def __getattr__(name: str) -> NoReturn:
