@@ -144,6 +144,15 @@ def test_accessor_options_keep_the_talib_path():
 
 def test_bbands_knows_every_ma_option():
     """bbands leaves TA-Lib for these options only; one it does not list is ignored on that path."""
-    read = set().union(*(_accepted(func) for func in _MA_DISPATCH.values()))
     internal = {"close", "source", "series", "depth", "length", "talib", "offset", "mamode", "fillna", "fill_method"}
-    assert read - internal == _MA_OPTIONS
+    read = {name: _accepted(func) - internal for name, func in _MA_DISPATCH.items()}
+    assert {name: options for name, options in read.items() if options} == _MA_OPTIONS
+
+
+def test_an_option_the_ma_does_not_read_keeps_the_talib_path():
+    """Only vidya reads drift, and strategy(drift=N) hands it to every indicator:
+    bbands(talib=True, drift=2) left TA-Lib although its SMA never reads drift."""
+    close = get_sample_data().close.iloc[:300]
+    expected = ta.bbands(close, talib=True)
+    assert np.array_equal(ta.bbands(close, talib=True, drift=2).to_numpy(), expected.to_numpy(), equal_nan=True)
+    assert not np.array_equal(expected.to_numpy(), ta.bbands(close, talib=False).to_numpy(), equal_nan=True)
