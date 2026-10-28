@@ -368,6 +368,18 @@ def test_bool_kwarg_rejects_non_bool(name, key, frame):
         func(**kwargs, **_required_extras(name, frame), **extra, **{key: "no"})
 
 
+@pytest.mark.parametrize(("name", "key"), BOOL_KWARG_CASES)
+def test_bool_kwarg_none_selects_the_default(name, key, frame):
+    """td_seq(show_all=None) returned the 6-9 columns: kwargs.setdefault kept the explicit None."""
+    func = _find_indicator_func(name)
+    kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
+    extra = {"signal_indicators": True} if key in _SIGNAL_GATED else {}
+    call = {**kwargs, **_required_extras(name, frame), **extra}
+    expected, result = func(**call), func(**call, **{key: None})
+    assert result.name == expected.name
+    assert result.equals(expected)
+
+
 METRIC_BOOL_CASES = [
     (name, param.name)
     for name, func in sorted(inspect.getmembers(_metrics, inspect.isfunction))
