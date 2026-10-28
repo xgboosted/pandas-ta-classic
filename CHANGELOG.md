@@ -6,7 +6,7 @@ New entries are written as fragments in `changelog.d/` (see its README) and adde
 
 <!-- towncrier release notes start -->
 
-## [0.9.0] - 2026-10-21
+## [0.9.0] - 2026-10-28
 
 ### Upgrading from 0.8.x
 0.9.0 removes the silent fallbacks of earlier releases. Code that passed something the library could not use, and got a default or `None` back, now gets an exception, and results that were wrong now change. Check these first:
@@ -157,6 +157,7 @@ Every entry marked **BREAKING** below changes results or starts raising for exis
 * **`docs/indicators.rst`** (#214, #265, #289, #291): new sections on missing values, zero volume (including why `cmf` and `vosc` read NaN where nothing traded) and signal columns, and on anchoring `vwap` sessions across midnight. `df.ta.ad()`, `adosc()`, `cmf()` and `psl()` document `open="open"`, which selects the variant built on `close - open`. The indicator support matrix is its own page in the sidebar instead of a hidden duplicate, and dead links are fixed.
 * **Examples run** (#175, #186, #268): 12 code examples in the docs, docstrings and example scripts that failed or showed a wrong result are fixed; among them `examples/backtrader_strategy.py`, which went short on every exit. The example notebooks run on pandas 3 and download data with yfinance directly.
 * **Docs follow the API** (#148, #166, #214, #217): `docs/strategies.rst` covers chained custom strategies and worker processes, `docs/installation.rst` the install extras and the version of source archives, `docs/quickstart.md` the `TypeError` for non-Series input; `deprecated::` directives name 0.8.32, and statements that were wrong (that indicators use TA-Lib by default, that `df.ta` lowercases column names) are corrected.
+* **The docs match 0.9.0** (#324): `docs/indicators.rst` gives `er`'s signal thresholds as 0.8/0.2 and `vfi`'s signature as `vfi(high, low, close, volume)`, and `docs/testing.rst` describes every test module.
 
 ### Development
 These change how the project is built and tested, not what the library computes.
@@ -166,6 +167,8 @@ These change how the project is built and tested, not what the library computes.
 * **Stricter tests**: `assert_talib` compares element by element instead of falling back to a correlation threshold; oracle tests that compared TA-Lib with itself, tests that could not fail and order-dependent or flaky tests are fixed; eight rarely firing candle patterns are tested on bars that trigger them. The suite fails on any warning raised from the package, and on invisible or confusable characters in tracked files.
 * **Make targets and tools**: `make test-all` runs pytest, as CI does (it ran `unittest discover` and skipped more than half the suite); the deprecated `make init` alias is removed, use `make install-dev`; `tools/bench_indicators.py` reports a disabled JIT instead of claiming numba is active.
 * **Contributor rules**: `AGENTS.md` and `CONTRIBUTING.md` gain the import conventions, a grep checklist and 19 correctness rules (no silent fallbacks, `talib=True` honours every parameter, prove refactors with output hashes, never mutate caller state, ...), and describe the PR, review and CHANGELOG workflow.
+* **Changelog entries are fragments** (#322): each PR adds `changelog.d/<PR number>.<type>.md` instead of editing `CHANGELOG.md`, and `towncrier build` writes them into the release's section. The `Changelog` check fails a PR that adds no fragment unless it has the `skip-changelog` label; `changelog.d/README.md` has the rules.
+* **No AI attribution** (#323): `AGENTS.md` now says that nothing an agent writes to the repository or to GitHub names an AI tool, model or session: no `Co-Authored-By:` trailer, session link or "Generated with" line.
 
 ## [0.8.32] - 2026-09-14
 

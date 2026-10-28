@@ -317,7 +317,7 @@ pip install -e ".[dev]"  # reinstall to regenerate _version.py
    ```bash
    towncrier build --version X.Y.Z --date YYYY-MM-DD
    ```
-   It writes `## [X.Y.Z] - YYYY-MM-DD` into `CHANGELOG.md` and deletes the fragments. Write an upgrade summary first, if the release needs one, as `changelog.d/+<topic>.upgrading.md`. For 0.9.0 only, whose section was written by hand, move the generated entries into the existing `## [0.9.0]` section and delete the generated heading.
+   It writes `## [X.Y.Z] - YYYY-MM-DD` into `CHANGELOG.md` and deletes the fragments. Write an upgrade summary first, if the release needs one, as `changelog.d/+<topic>.upgrading.md`.
 2. Ensure CI is green: `pytest tests/ -v`
 3. Create an **annotated** tag and push:
    ```bash
