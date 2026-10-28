@@ -49,7 +49,9 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from tests.assertions import output_columns
+from tests.contracts import candidate_calls
 
 _N_ROWS = 250
 
@@ -454,16 +456,9 @@ def _kwargs_bool_options(name: str) -> list[str]:
     return sorted(found - {"signal_indicators", "lookahead", "talib", "tulipy"})
 
 
-def _option_param(name: str, option: dict, id_: str):
-    return pytest.param(name, option, id=id_)
-
-
 def _option_paths() -> list:
     """Every non-default path the fill can take: an offset, each moving average
     a ``mamode`` accepts, the TA-Lib branch, and each boolean option flipped."""
-    from pandas_ta_classic.overlap.ma import _MA_DISPATCH
-    from tests.contracts import candidate_calls
-
     paths = []
     for name in _indicator_names():
         if name in _EXEMPT or not _takes_fill_kwargs(name):
@@ -474,8 +469,8 @@ def _option_paths() -> list:
             paths += [pytest.param(name, {"mamode": mode}, id=f"{name}-mamode-{mode}") for mode in sorted(_MA_DISPATCH)]
         if _accepts(name, "talib") and ta.Imports["talib"]:
             paths.append(pytest.param(name, {"talib": True}, id=f"{name}-talib"))
-        paths += [_option_param(name, call, f"{name}-{key}-{value}") for call in candidate_calls(name)[1:] for key, value in call.items()]
-        paths += [_option_param(name, {key: value}, f"{name}-{key}-{value}") for key in _kwargs_bool_options(name) for value in (True, False)]
+        paths += [pytest.param(name, call, id="-".join([name, *(f"{k}-{v}" for k, v in call.items())])) for call in candidate_calls(name)[1:]]
+        paths += [pytest.param(name, {key: value}, id=f"{name}-{key}-{value}") for key in _kwargs_bool_options(name) for value in (True, False)]
     return paths
 
 
@@ -499,7 +494,7 @@ def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: 
             pytest.skip(f"{name} does not offer {option}")
         raise
     assert plain, f"{name}({option}) returned nothing"
-    if all(values.isna().all() for values in plain.values()):
+    if name in {"acos", "asin"} and all(values.isna().all() for values in plain.values()):
         pytest.skip(f"{name}({option}) reads NaN on every row of this frame (acos/asin: close outside [-1, 1])")
     filled = output_columns(_results(name, long_frame, **option, **fill))
 
