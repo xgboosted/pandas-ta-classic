@@ -137,7 +137,7 @@ def main():
             "data_file": SAMPLE_CSV.name,
             "rows": len(c),
             "tail": _TAIL,
-            "note": "Frozen tulipy output (tail only); regenerate with generate_tulipy_oracle.py on CPython <3.12.",
+            "note": "Frozen tulipy output (tail only); regenerate with python -m tests.fixtures.generate_tulipy_oracle on CPython <3.12.",
         },
         "arrays": {k: _to_list(val) for k, val in oracle.items()},
     }
