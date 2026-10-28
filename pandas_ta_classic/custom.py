@@ -217,8 +217,9 @@ Import a directory of custom indicators into pandas_ta_classic
 
 All or nothing: every module is loaded first, and they are bound only when
 none was refused. A refused file raises ImportError and leaves
-pandas_ta_classic, Category, sys.path and sys.modules as they were, including
-indicators bound by an earlier call.
+pandas_ta_classic, Category, sys.path and the indicator modules in sys.modules
+as they were, including indicators bound by an earlier call. A module that a
+file imported itself stays loaded, as after any failed import.
 
 Args:
     path (str): Full path to your indicator tree
