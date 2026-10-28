@@ -1,6 +1,6 @@
 """A small whole-number parameter must not blank a column on long input.
 
-`kama(drift=2)` published nothing at all on 1000 bars: its efficiency
+`kama(drift=2)` published only its seed bar on 1000 bars: its efficiency
 ratio needs `length` price changes `drift` bars apart, the first of which
 does not exist until bar `drift`, and the recursion started at bar
 `length` from a NaN ratio, so the NaN rode it to the end. Every int
@@ -10,7 +10,6 @@ default call fills may not come back with at most one value.
 
 import inspect
 import typing
-import warnings
 
 import pandas as pd
 import pytest
@@ -47,14 +46,14 @@ def test_sweep_found_the_parameters():
 @pytest.mark.parametrize(("name", "param"), params(CASES, KNOWN, id=lambda row: "-".join(row)))
 def test_a_small_int_parameter_leaves_values(name, param, frame):
     func = getattr(ta, name)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        default = _frame(func(**inputs(name, frame)))
-        blank = []
-        for value in VALUES:
-            try:
-                result = _frame(func(**inputs(name, frame), **{param: value}))
-            except ValueError:  # outside the parameter's range (fast >= slow, ddof >= length, ...)
-                continue
-            blank += [f"{param}={value}: {c}" for c in result.columns if c in default and default[c].notna().any() and result[c].notna().sum() <= 1]
+    default = _frame(func(**inputs(name, frame)))
+    blank = []
+    for value in VALUES:
+        try:
+            result = _frame(func(**inputs(name, frame), **{param: value}))
+        except ValueError as error:  # outside the parameter's range (ddof >= length, poles not 2 or 3, ...)
+            if param not in str(error):
+                raise
+            continue
+        blank += [f"{param}={value}: {c}" for c in result.columns if c in default and default[c].notna().any() and result[c].notna().sum() <= 1]
     assert not blank, f"{name}: {blank}"
