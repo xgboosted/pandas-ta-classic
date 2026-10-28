@@ -474,6 +474,14 @@ def _option_paths() -> list:
     return paths
 
 
+def _skip_unoffered_mamode(name: str, option: dict, error: ValueError) -> None:
+    """Skip a mamode the indicator's own choices leave out (zlma offers 12 of ma()'s 17); re-raise anything else."""
+    mode = option.get("mamode")
+    if mode is not None and str(error).startswith(f"{name}() mamode must be one of") and str(error).endswith(f"got {mode!r}"):
+        pytest.skip(f"{name} does not offer {option}")
+    raise error
+
+
 @pytest.mark.parametrize("fill", [{"fillna": 0}, {"fill_method": "ffill"}, {"fill_method": "bfill"}], ids=["fillna", "ffill", "bfill"])
 @pytest.mark.parametrize(("name", "option"), _option_paths())
 def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: dict, fill: dict, long_frame: dict[str, pd.Series], request: pytest.FixtureRequest) -> None:
@@ -490,9 +498,7 @@ def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: 
     try:
         plain = output_columns(_results(name, long_frame, **option))
     except ValueError as error:
-        if "mamode" in str(error):
-            pytest.skip(f"{name} does not offer {option}")
-        raise
+        _skip_unoffered_mamode(name, option, error)
     assert plain, f"{name}({option}) returned nothing"
     if name in {"acos", "asin"} and all(values.isna().all() for values in plain.values()):
         pytest.skip(f"{name}({option}) reads NaN on every row of this frame (acos/asin: close outside [-1, 1])")
@@ -519,9 +525,7 @@ def test_offset_shifts_every_output_column_on_every_option_path(name: str, optio
     try:
         _assert_offset_is_a_shift(name, long_frame, option)
     except ValueError as error:
-        if "mamode" in str(error):
-            pytest.skip(f"{name} does not offer {option}")
-        raise
+        _skip_unoffered_mamode(name, option, error)
 
 
 @pytest.mark.parametrize(
