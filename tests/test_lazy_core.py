@@ -11,10 +11,7 @@ Covers:
     ``indicators()`` list matches ``Category`` union.
 """
 
-import importlib.metadata
 import os
-import re
-import sys
 import types
 import unittest
 from unittest import mock
@@ -403,29 +400,6 @@ def test_category_discovery_raises_when_it_finds_no_categories():
         _meta._build_category_dict()
 
 
-def _numba_cannot_cache_from_a_zip() -> bool:
-    """numba >= 0.62 fails to import an ``@njit(cache=True)`` module from a zip on Windows.
-
-    Its ``ZipCacheLocator`` joins the member path with ``str(Path(...))``, i.e. with
-    backslashes on Windows, while zip members use ``/``; since 0.62 the cache stamp
-    opens that member and raises KeyError. A numba bug, not one of this package:
-    https://github.com/numba/numba/issues/10889
-    """
-    if sys.platform != "win32" or os.environ.get("NUMBA_DISABLE_JIT") == "1":
-        return False
-    try:
-        version = importlib.metadata.version("numba")
-    except importlib.metadata.PackageNotFoundError:
-        return False
-    # "0.63.0rc1" and the like: compare the leading major.minor numbers only
-    major, minor = (int(part) for part in re.match(r"(\d+)\.(\d+)", version).groups())
-    return (major, minor) >= (0, 62)
-
-
-@unittest.skipIf(
-    _numba_cannot_cache_from_a_zip(),
-    "numba >= 0.62 cannot cache an @njit function imported from a zip on Windows (https://github.com/numba/numba/issues/10889)",
-)
 class TestZipImport(unittest.TestCase):
     def test_package_imports_from_a_zip_archive(self):
         """Category and the candle patterns are discovered through the import
