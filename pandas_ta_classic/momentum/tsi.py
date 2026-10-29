@@ -32,8 +32,6 @@ def tsi(
     fast = _pos_int(fast, 13, "fast")
     slow = _pos_int(slow, 25, "slow")
     signal = _pos_int(signal, 13, "signal")
-    # if slow < fast:
-    #     fast, slow = slow, fast
     scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, max(fast, slow))
     drift = get_drift(drift)

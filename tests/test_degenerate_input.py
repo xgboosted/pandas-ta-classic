@@ -1009,7 +1009,9 @@ def test_a_window_with_no_movement_closes_on_the_price_at_the_fast_rate(frame: d
     for i in np.flatnonzero(still.to_numpy()):
         if i <= _PROPERTY_LENGTH - 1:
             continue
-        expected = fast * close.iloc[i] + (1 - fast) * kama.iloc[i - 1]
+        # the first value recurses from the seed, the close of bar length - 1, which is not published
+        previous = close.iloc[i - 1] if i == _PROPERTY_LENGTH else kama.iloc[i - 1]
+        expected = fast * close.iloc[i] + (1 - fast) * previous
         assert kama.iloc[i] == pytest.approx(expected, rel=1e-12), f"bar {i}: {kama.iloc[i]!r}, expected {expected!r}"
 
 

@@ -48,10 +48,10 @@ def aroon(
         aroon_down *= 1 - (periods_from_ll / length)
         aroon_osc = aroon_up - aroon_down
 
-    aroon_up, aroon_down, aroon_osc = apply_fill([aroon_up, aroon_down, aroon_osc], **kwargs)
-
     # Offset
     aroon_up, aroon_down, aroon_osc = apply_offset([aroon_up, aroon_down, aroon_osc], offset)
+
+    aroon_up, aroon_down, aroon_osc = apply_fill([aroon_up, aroon_down, aroon_osc], **kwargs)
 
     # Name and Categorize it
     aroon_up.name = f"AROONU_{length}"

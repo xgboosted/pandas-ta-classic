@@ -584,7 +584,7 @@ def unsigned_differences(series: Series, amount: int | None = None, *, asint: bo
 
     Default Example:
     series   = Series([3, 2, 2, 1, 1, 5, 6, 6, 7, 5, 3]) and returns
-    postive  = Series([0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0])
+    positive = Series([0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     negative = Series([0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1])
     """
     _require_input(series, "unsigned_differences", "series")

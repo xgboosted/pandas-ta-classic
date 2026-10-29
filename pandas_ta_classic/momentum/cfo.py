@@ -21,7 +21,7 @@ def cfo(
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
-    """Indicator: Chande Forcast Oscillator (CFO)"""
+    """Indicator: Chande Forecast Oscillator (CFO)"""
     # Validate Arguments
     length = _pos_int(length, 9, "length")
     scalar = _number(scalar, 100, "scalar")
@@ -53,7 +53,7 @@ def cfo(
     return cfo
 
 
-cfo.__doc__ = """Chande Forcast Oscillator (CFO)
+cfo.__doc__ = """Chande Forecast Oscillator (CFO)
 
 The Forecast Oscillator calculates the percentage difference between the actual
 price and the Time Series Forecast (the endpoint of a linear regression line).

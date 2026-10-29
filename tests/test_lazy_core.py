@@ -11,10 +11,7 @@ Covers:
     ``indicators()`` list matches ``Category`` union.
 """
 
-import importlib.metadata
 import os
-import re
-import sys
 import types
 import unittest
 from unittest import mock
@@ -238,6 +235,43 @@ class TestModuleGetattr(unittest.TestCase):
         # which now use a UTC datetime; removed in 0.9.0.
         self.assertFalse(hasattr(pandas_ta_classic.utils, "get_time"))
 
+    def test_removed_names_name_their_replacement(self):
+        """A removed name answers with what to use instead, as non_zero_range does,
+        and stays an AttributeError so hasattr() and getattr(..., default) work."""
+        accessor = get_sample_data().ta
+        fetching = r"was removed in 0\.9\.0 \(deprecated in 0\.8\.32\): data fetching .*yfinance or alpha-vantage"
+        cases = [
+            (pandas_ta_classic, "non_zero_range", r"non_zero_range\(\) was removed in 0\.9\.0.*mask\(den == 0, 0\.0\)"),
+            (pandas_ta_classic.utils, "non_zero_range", r"non_zero_range\(\) was removed in 0\.9\.0.*mask\(den == 0, 0\.0\)"),
+            (pandas_ta_classic, "get_time", r"get_time\(\) was removed in 0\.9\.0.*datetime\.now\(timezone\.utc\)"),
+            (pandas_ta_classic.utils, "get_time", r"get_time\(\) was removed in 0\.9\.0.*datetime\.now\(timezone\.utc\)"),
+            (pandas_ta_classic, "EXCHANGE_TZ", r"EXCHANGE_TZ was removed in 0\.9\.0.*zoneinfo\.ZoneInfo"),
+            (pandas_ta_classic, "CDL_PATTERN_NAMES", r"CDL_PATTERN_NAMES was removed in 0\.9\.0.*ta\.ALL_PATTERNS"),
+            (pandas_ta_classic.candles, "CDL_PATTERN_NAMES", r"CDL_PATTERN_NAMES was removed in 0\.9\.0.*ta\.ALL_PATTERNS"),
+            (pandas_ta_classic, "yf", r"ta\.yf\(\) " + fetching),
+            (pandas_ta_classic, "av", r"ta\.av\(\) " + fetching),
+            (pandas_ta_classic.utils, "yf", r"ta\.yf\(\) " + fetching),
+            (pandas_ta_classic.utils, "av", r"ta\.av\(\) " + fetching),
+            (pandas_ta_classic.utils, "data", r"pandas_ta_classic\.utils\.data " + fetching),
+            (accessor, "ticker", r"df\.ta\.ticker\(\) " + fetching),
+            (accessor, "constants", r"df\.ta\.constants\(\) was removed in 0\.9\.0.*df\['0'\] = 0"),
+            (accessor, "exchange", r"df\.ta\.exchange was removed in 0\.9\.0"),
+            (accessor, "to_utc", r"df\.ta\.to_utc was removed in 0\.9\.0"),
+        ]
+        for owner, name, message in cases:
+            label = getattr(owner, "__name__", "df.ta")
+            with self.subTest(owner=label, name=name), self.assertRaisesRegex(AttributeError, message):
+                getattr(owner, name)
+            self.assertIsNone(getattr(owner, name, None))
+            self.assertFalse(hasattr(owner, name))
+        # A namespace answers only for the names it had; elsewhere the plain message stays.
+        for owner, name in ((pandas_ta_classic.utils, "EXCHANGE_TZ"), (pandas_ta_classic.utils, "CDL_PATTERN_NAMES"), (pandas_ta_classic, "data")):
+            with self.subTest(owner=owner.__name__, name=name), self.assertRaisesRegex(AttributeError, r"has no attribute"):
+                getattr(owner, name)
+        # `from ... import name` gets Python's own ImportError: the import machinery drops the message.
+        with self.assertRaisesRegex(ImportError, r"cannot import name 'get_time'"):
+            from pandas_ta_classic.utils import get_time  # noqa: F401
+
 class TestDirCompleteness(unittest.TestCase):
     def test_dir_includes_all_category_indicators(self):
         """dir(pandas_ta_classic) must include every indicator from Category."""
@@ -403,29 +437,6 @@ def test_category_discovery_raises_when_it_finds_no_categories():
         _meta._build_category_dict()
 
 
-def _numba_cannot_cache_from_a_zip() -> bool:
-    """numba >= 0.62 fails to import an ``@njit(cache=True)`` module from a zip on Windows.
-
-    Its ``ZipCacheLocator`` joins the member path with ``str(Path(...))``, i.e. with
-    backslashes on Windows, while zip members use ``/``; since 0.62 the cache stamp
-    opens that member and raises KeyError. A numba bug, not one of this package:
-    https://github.com/numba/numba/issues/10889
-    """
-    if sys.platform != "win32" or os.environ.get("NUMBA_DISABLE_JIT") == "1":
-        return False
-    try:
-        version = importlib.metadata.version("numba")
-    except importlib.metadata.PackageNotFoundError:
-        return False
-    # "0.63.0rc1" and the like: compare the leading major.minor numbers only
-    major, minor = (int(part) for part in re.match(r"(\d+)\.(\d+)", version).groups())
-    return (major, minor) >= (0, 62)
-
-
-@unittest.skipIf(
-    _numba_cannot_cache_from_a_zip(),
-    "numba >= 0.62 cannot cache an @njit function imported from a zip on Windows (https://github.com/numba/numba/issues/10889)",
-)
 class TestZipImport(unittest.TestCase):
     def test_package_imports_from_a_zip_archive(self):
         """Category and the candle patterns are discovered through the import

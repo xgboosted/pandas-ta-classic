@@ -106,8 +106,8 @@ def assert_none_guard(test_case, func, args, none_arg_idx=0, **kwargs):
 #
 # Native and TA-Lib results agree to rounding: measured over all 71
 # assert_talib calls on SPY_D, the worst column (`adosc`, whose values reach
-# 6e8) needs |actual - expected| <= 2e-10 * (1 + |expected|) with TA-Lib 0.8.0
-# (1.2e-10 with 0.7.1), 1.9% of TALIB_ATOL + TALIB_RTOL * |expected|.  That
+# 6e8) needs |actual - expected| <= 2e-10 * (1 + |expected|) with TA-Lib 0.8.2
+# (1.1e-10 with 0.7.1), 1.9% of TALIB_ATOL + TALIB_RTOL * |expected|.  That
 # leaves ~50x margin for other TA-Lib releases and BLAS builds in the CI matrix.
 # The absolute term carries the columns that cross zero, where a relative error
 # alone is unbounded. The most it has to cover beyond TALIB_RTOL * |expected| is

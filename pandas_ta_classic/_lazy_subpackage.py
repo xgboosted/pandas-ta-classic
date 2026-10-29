@@ -25,6 +25,7 @@ def install_lazy_subpackage(
     *,
     aliases: Mapping[str, str] | None = None,
     special: Mapping[str, tuple] | None = None,
+    removed: Mapping[str, str] | None = None,
 ) -> None:
     """Replace ``sys.modules[module_name]`` with a lazy-loading module.
 
@@ -43,10 +44,14 @@ def install_lazy_subpackage(
         the requested name. Used by ``candles`` so that ``ALL_PATTERNS``
         resolves to the ``ALL_PATTERNS`` attribute of
         ``candles/cdl_pattern.py``.
+    removed:
+        Mapping of a removed attribute name to the message its
+        ``AttributeError`` carries (what to use instead).
     """
 
     aliases_map: Mapping[str, str] = aliases or {}
     special_map: Mapping[str, tuple] = special or {}
+    removed_map: Mapping[str, str] = removed or {}
 
     from pandas_ta_classic._meta import Category
 
@@ -76,6 +81,8 @@ def install_lazy_subpackage(
 
         def __getattr__(self, name: str) -> Any:
             pkg = object.__getattribute__(self, "__name__")
+            if name in removed_map:
+                raise AttributeError(removed_map[name])
             if name not in _known_names:
                 raise AttributeError(f"module {pkg!r} has no attribute {name!r}")
             if name in special_map:
