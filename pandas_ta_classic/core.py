@@ -27,7 +27,7 @@ from pandas_ta_classic._indicator_loader import (
     _make_ta_wrapper,
 )
 from pandas_ta_classic._meta import _MATH_ALIASES, Category, Imports, version
-from pandas_ta_classic.utils import final_time, is_datetime_ordered, total_time
+from pandas_ta_classic.utils import _REMOVED_MESSAGES, final_time, is_datetime_ordered, total_time
 from pandas_ta_classic.utils._core import _bool_param, _pos_int
 from pandas_ta_classic.utils._time import TIME_RANGE_UNITS
 
@@ -52,6 +52,9 @@ _TO_UTC_REMOVED = (
 
 # What last_run writes into df.attrs: datetime.now(UTC).isoformat(), so +00:00.
 _UTC_ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?\+00:00")
+
+# Accessor methods removed in 0.9.0; their messages live in utils._REMOVED_MESSAGES.
+_ACCESSOR_REMOVED = frozenset({"constants", "ticker"})
 
 _EXCHANGE_REMOVED = (
     "df.ta.exchange was removed in 0.9.0: last_run is a UTC datetime now; convert it "
@@ -1191,6 +1194,8 @@ class AnalysisIndicators(PandasObject):
             descriptor = getattr(type(self), name, None)
             if descriptor is not None:
                 return descriptor.__get__(self, type(self))
+            if name in _ACCESSOR_REMOVED:
+                raise AttributeError(_REMOVED_MESSAGES[name])
             raise AttributeError(f"'AnalysisIndicators' object has no attribute '{name}'")
         wrapper = _make_ta_wrapper(func)
         wrapper.__name__ = name

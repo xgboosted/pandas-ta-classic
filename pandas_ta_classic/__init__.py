@@ -18,7 +18,7 @@ from pandas_ta_classic.core import (
     Strategy,
 )
 from pandas_ta_classic.utils import (
-    _REMOVED,
+    _REMOVED_MESSAGES,
     above,
     above_value,
     apply_fill,
@@ -153,6 +153,10 @@ def __dir__() -> list[str]:
     return sorted(names)
 
 
+# The removed names that lived at the top level (texts in utils._REMOVED_MESSAGES).
+_TOP_LEVEL_REMOVED = {name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "EXCHANGE_TZ", "CDL_PATTERN_NAMES", "yf", "av")}
+
+
 def __getattr__(name: str) -> Any:
     """Lazy-load indicator functions for direct module-level access (e.g. ta.rsi(...)).
 
@@ -224,7 +228,7 @@ def __getattr__(name: str) -> Any:
             setattr(sys.modules[__name__], name, mod)  # cache in module dict
             return mod
 
-    if name in _REMOVED:
-        raise AttributeError(_REMOVED[name])
+    if name in _TOP_LEVEL_REMOVED:
+        raise AttributeError(_TOP_LEVEL_REMOVED[name])
 
     raise AttributeError(f"module 'pandas_ta_classic' has no attribute '{name}'")
