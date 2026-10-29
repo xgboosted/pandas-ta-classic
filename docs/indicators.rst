@@ -229,7 +229,7 @@ Other candle indicators:
 * *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern. ``full=True`` switches the rolling window for an anchored (expanding) one
 
 .. note::
-   **TA-Lib and core indicators**: For 59 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
+   **TA-Lib and core indicators**: For 66 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
 
    .. code-block:: python
 
@@ -239,11 +239,15 @@ Other candle indicators:
        # Use TA-Lib implementation if installed
        ema = df.ta.ema(length=20, talib=True)
 
-       # Indicators with TA-Lib passthrough:
-       # ad, adosc, apo, aroon, atr, bbands, bop, cci, cmo, dema, dm,
-       # ema, hlc3, macd, mfi, midpoint, midprice, mom, natr, obv, ppo,
-       # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
-       # variance, wcp, willr, wma
+       # Indicators with TA-Lib passthrough (66):
+       # ad, adosc, adx, adxr, apo, aroon, atr, avgprice, bbands, bop,
+       # cci, cmo, dema, dm, dx, ema, hl2, hlc3, ht_dcperiod, ht_dcphase,
+       # ht_phasor, ht_sine, ht_trendline, ht_trendmode, kama, macd,
+       # macdext, macdfix, mama, mavp, medprice, mfi, midpoint, midprice,
+       # minus_dm, mom, natr, obv, ohlc4, plus_dm, ppo, psar, roc, rocp,
+       # rocr, rocr100, rolling_max, rolling_min, rolling_sum, rsi,
+       # sarext, sma, stdev, stoch, stochf, stochrsi, t3, tema, trima,
+       # true_range, typprice, uo, variance, wcp, willr, wma
 
    ``talib=True`` calls TA-Lib only while every parameter TA-Lib cannot
    express is at its default (``scalar``, ``drift``, ``mamode``, ``ddof``,
