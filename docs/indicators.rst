@@ -517,7 +517,7 @@ Trend identification and direction indicators:
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
 * *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; equals TA-Lib ``MINUS_DM``, which ``talib=True`` calls directly)
-* *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR``, which ``talib=True`` calls directly, with two exceptions: the first trend is seeded differently, so the opening bars differ, and native ``psar`` reverses only when the price crosses the stop, where ``SAR`` already reverses when the price touches it, so a flat run can delay a reversal)
+* *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR`` bar for bar, which ``talib=True`` calls directly; a price that touches the stop reverses the trend, so on a flat run the trend reverses on every bar)
 * *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; equals TA-Lib ``PLUS_DM``, which ``talib=True`` calls directly)
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick** (``ma`` selects any MA of ``help(ta.ma)``, default ``"sma"``; other keywords go to that MA)

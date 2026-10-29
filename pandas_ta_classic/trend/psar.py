@@ -35,24 +35,25 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
     for row in range(1, m):
         h_ = h_arr[row]
         l_ = l_arr[row]
+        # The stop may not pass the two bars before it. Bar 0 only seeds the
+        # stop, so bar 2 is bounded by bar 1 alone, as in TA-Lib's SAR.
+        prev2 = row - 2 if row >= 3 else row - 1
         if falling:
             _sar = sar + af * (ep - sar)
             if l_ < ep:
                 ep = l_
                 af = min(af + af0, max_af)
-            # Guard row==1: row-2 would be -1 (last element) without the clamp.
-            # Guard must be applied before reversal check to match TA-Lib behaviour:
-            # the guarded SAR (not the raw projected value) determines the reversal.
-            _sar = max(h_arr[row - 1], h_arr[max(0, row - 2)], _sar)
-            reverse = h_ > _sar
+            # The guarded SAR (not the raw projected value) determines the
+            # reversal, and touching it reverses, as in TA-Lib's SAR.
+            _sar = max(h_arr[row - 1], h_arr[prev2], _sar)
+            reverse = h_ >= _sar
         else:
             _sar = sar + af * (ep - sar)
             if h_ > ep:
                 ep = h_
                 af = min(af + af0, max_af)
-            # Guard row==1: row-2 would be -1 (last element) without the clamp.
-            _sar = min(l_arr[row - 1], l_arr[max(0, row - 2)], _sar)
-            reverse = l_ < _sar
+            _sar = min(l_arr[row - 1], l_arr[prev2], _sar)
+            reverse = l_ <= _sar
         if reverse:
             _sar = ep
             af = af0
@@ -199,7 +200,9 @@ Calculation:
     Default Inputs:
         af0=0.02, af=0.02, max_af=0.2
 
-    See Source links
+    See Source links. As in TA-Lib's SAR, the stop may not pass the two
+    previous bars (bar 2: bar 1 only, bar 0 seeds it), and a bar whose low
+    (long) or high (short) touches the stop reverses the trend.
 
 Args:
     high (pd.Series): Series of 'high's
