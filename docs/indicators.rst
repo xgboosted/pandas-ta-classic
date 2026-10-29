@@ -190,13 +190,13 @@ All 62 CDL patterns have native Python implementations. The dispatch order insid
 .. code-block:: python
 
     # All 62 patterns at once (native only, no TA-Lib needed)
-    df = df.ta.cdl_pattern(name="all")
+    patterns = df.ta.cdl_pattern(name="all")
 
     # Single pattern
-    df = df.ta.cdl_pattern(name="engulfing")
+    engulfing = df.ta.cdl_pattern(name="engulfing")
 
     # Multiple patterns
-    df = df.ta.cdl_pattern(name=["hammer", "morningstar", "engulfing"])
+    three = df.ta.cdl_pattern(name=["hammer", "morningstar", "engulfing"])
 
     # Dedicated accessor methods (only these two have them)
     result = df.ta.cdl_doji()

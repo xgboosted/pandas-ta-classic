@@ -132,7 +132,7 @@ df = pd.read_csv("path/to/symbol.csv")
 # OR fetch OHLCV with yfinance directly (pandas-ta-classic does not fetch data;
 # see examples/fetch_market_data.py):
 # import yfinance as yf
-# df = yf.download("AAPL", period="1y")
+# df = yf.download("AAPL", period="1y", multi_level_index=False)
 
 # Calculate indicators
 df.ta.sma(length=20, append=True) # Simple Moving Average

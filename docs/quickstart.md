@@ -140,8 +140,9 @@ import pandas as pd
 import pandas_ta_classic as ta
 import yfinance as yf
 
-# Download stock data
-df = yf.download("AAPL", start="2023-01-01", end="2024-01-01")
+# Download stock data. multi_level_index=False gives plain OHLCV columns;
+# yfinance's default two-level columns are not found by df.ta.
+df = yf.download("AAPL", start="2023-01-01", end="2024-01-01", multi_level_index=False)
 
 # Calculate indicators
 df.ta.sma(length=50, append=True)
@@ -347,8 +348,11 @@ my_strategy = ta.Strategy(
 df.ta.strategy(my_strategy)
 
 # Runs serially by default. On large frames (from roughly 100,000 rows)
-# hand it worker processes; see the Strategies guide.
-df.ta.strategy(my_strategy, cores=8)
+# hand it worker processes; see the Strategies guide. Worker processes
+# re-import a script, so a script calls it under this guard (without it,
+# strategy() raises RuntimeError).
+if __name__ == "__main__":
+    df.ta.strategy(my_strategy, cores=8)
 ```
 
 ### 3. Preprocess Data
@@ -480,7 +484,7 @@ Now that you've got the basics, explore more:
 | Custom strategy | `ta.Strategy(name="My", ta=[...])` |
 | List categories | `print(ta.Category)` |
 | Get help | `help(ta.sma)` |
-| Fetch data | `yf.download("AAPL")` (via yfinance; pandas-ta-classic does not fetch data) |
+| Fetch data | `yf.download("AAPL", multi_level_index=False)` (via yfinance; pandas-ta-classic does not fetch data) |
 
 ## Need Help?
 

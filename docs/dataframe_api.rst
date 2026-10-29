@@ -248,7 +248,7 @@ Fetching data
 
     import yfinance as yf
 
-    df = yf.download("AAPL", period="1y", interval="1d")
+    df = yf.download("AAPL", period="1y", interval="1d", multi_level_index=False)
     df.ta.rsi(append=True)
 
 Removed helpers

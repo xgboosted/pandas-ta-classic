@@ -43,8 +43,9 @@ import pandas_ta_classic as ta
 import yfinance as yf
 import matplotlib.pyplot as plt
 
-# Download data
-df = yf.download("AAPL", start="2023-01-01", end="2024-01-01")
+# Download data. multi_level_index=False gives plain "Open", "High", ...
+# columns; yfinance's default two-level columns are not found by df.ta.
+df = yf.download("AAPL", start="2023-01-01", end="2024-01-01", multi_level_index=False)
 print(f"Downloaded {len(df)} rows of data")
 ```
 
@@ -130,7 +131,7 @@ import pandas_ta_classic as ta
 import yfinance as yf
 
 # Download data
-df = yf.download("SPY", start="2023-01-01", end="2024-01-01")
+df = yf.download("SPY", start="2023-01-01", end="2024-01-01", multi_level_index=False)
 
 # Create custom strategy
 my_strategy = ta.Strategy(
@@ -240,7 +241,7 @@ import yfinance as yf
 import numpy as np
 
 # Get data and add indicators
-df = yf.download("AAPL", start="2022-01-01", end="2024-01-01")
+df = yf.download("AAPL", start="2022-01-01", end="2024-01-01", multi_level_index=False)
 df.ta.sma(length=20, append=True)
 df.ta.sma(length=50, append=True)
 
@@ -391,7 +392,7 @@ import vectorbt as vbt
 import yfinance as yf
 
 # Download data
-df = yf.download("AAPL", start="2022-01-01", end="2024-01-01")
+df = yf.download("AAPL", start="2022-01-01", end="2024-01-01", multi_level_index=False)
 ```
 
 ### Step 2: Calculate Indicators
@@ -479,9 +480,9 @@ import yfinance as yf
 
 # Download different timeframes
 ticker = "SPY"
-df_daily = yf.download(ticker, period="1y", interval="1d")
-df_hourly = yf.download(ticker, period="60d", interval="1h")
-df_5min = yf.download(ticker, period="5d", interval="5m")
+df_daily = yf.download(ticker, period="1y", interval="1d", multi_level_index=False)
+df_hourly = yf.download(ticker, period="60d", interval="1h", multi_level_index=False)
+df_5min = yf.download(ticker, period="5d", interval="5m", multi_level_index=False)
 
 print(f"Daily: {len(df_daily)} bars")
 print(f"Hourly: {len(df_hourly)} bars")
@@ -616,7 +617,7 @@ def trend_strength(high, low, close, length=14):
 import yfinance as yf
 
 # Download data
-df = yf.download("AAPL", period="6mo")
+df = yf.download("AAPL", period="6mo", multi_level_index=False)
 
 # Apply custom indicator
 trend_score = trend_strength(df['High'], df['Low'], df['Close'], length=14)
@@ -696,7 +697,7 @@ import pandas_ta_classic as ta
 import yfinance as yf
 
 # Download data
-df = yf.download("SPY", period="3mo")
+df = yf.download("SPY", period="3mo", multi_level_index=False)
 
 # Calculate baseline indicators
 df.ta.sma(length=50, append=True)
