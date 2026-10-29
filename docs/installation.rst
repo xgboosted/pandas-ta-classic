@@ -228,7 +228,7 @@ Or install both oracle libraries at once:
     # pip
     pip install pandas-ta-classic[oracle]
 
-``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
+The ``oracle`` extra needs TA-Lib ``>=0.8.3``: from that release on, TA-Lib's ``RSI`` reads the neutral 50 on a series that has not moved since its first bar, as native ``rsi`` does; older releases read ``0.0`` there. ``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
 
 Installing Optional Dependencies
 --------------------------------

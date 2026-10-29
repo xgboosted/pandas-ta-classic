@@ -305,7 +305,6 @@ _CONVENTION_CASES = [
     "marketfi",
     "massi",
     "pdist",
-    "qqe",
     "qstick",
     "rvgi",
     "rvi",
@@ -349,6 +348,21 @@ def test_flat_window_reads_zero_without_an_oracle(name: str, frames) -> None:
             continue
         finite = values.dropna()
         assert (finite == 0.0).all(), f"{column}: degenerate window reads {sorted(set(finite))[:5]}, expected 0.0"
+
+
+def test_rsi_and_qqe_read_the_neutral_50_on_a_flat_series(frames) -> None:
+    """With no gain and no loss since the first bar, rsi divides 0/0 and reads
+    its neutral midpoint, as TA-Lib >= 0.8.3 does (TA-Lib/ta-lib#480); it used
+    to read 0.0, an extreme oversold reading on a series that never moved.
+    qqe smooths that rsi, so its value columns read 50 too."""
+    close = frames["flat"]["close"]
+    assert (ta.rsi(close).dropna() == 50.0).all()
+    assert (ta.rsi(close, scalar=1).dropna() == 0.5).all()
+    for column, values in output_columns(ta.qqe(close)).items():
+        if _starts_with(column, _SPARSE_COLUMN_PREFIXES + _CATEGORICAL_COLUMN_PREFIXES):
+            continue
+        finite = values.dropna()
+        assert not finite.empty and (finite == 50.0).all(), f"{column}: flat series reads {sorted(set(finite))[:5]}, expected 50.0"
 
 
 # cdl_z(full=True) is anchored: its first bar has no deviation yet. hwc has no warm-up.

@@ -288,8 +288,18 @@ series ``willr`` reads ``0.0``, the top of its ``-100..0`` range, while
 .. code-block:: python
 
     flat = pd.Series([100.0] * 120)
-    ta.rsi(flat)                 # 14 NaN of warmup, then 0.0
     ta.willr(flat, flat, flat)   # 13 NaN of warmup, then 0.0
+
+``rsi`` is the exception: with no gain and no loss since the first bar it
+reads its neutral midpoint, 50 (``scalar / 2``), as TA-Lib does from 0.8.3 on
+(`TA-Lib/ta-lib#480 <https://github.com/TA-Lib/ta-lib/issues/480>`_). Before,
+it read ``0.0``, an extreme oversold reading on a series that never moved.
+``qqe``, which smooths ``rsi``, reads 50 there too. Once the price has moved,
+the averages stay positive, so a later flat run keeps the last value.
+
+.. code-block:: python
+
+    ta.rsi(flat)                 # 14 NaN of warmup, then 50.0
 
 Two indicators are deliberately left out, because their ``NaN`` means nothing
 happened rather than that a division failed:

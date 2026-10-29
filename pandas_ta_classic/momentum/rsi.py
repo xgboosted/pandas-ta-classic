@@ -48,10 +48,12 @@ def rsi(
         positive_avg = rma(positive, length=length)
         negative_avg = rma(negative, length=length)
 
-        # A window with no movement at all divides 0/0. TA-Lib reads 0.0 there;
-        # `denominator == 0` is False for the warmup NaN, which stays NaN.
+        # No gain and no loss since the first bar divides 0/0. That reads the
+        # neutral midpoint, as TA-Lib >= 0.8.3 does (TA-Lib/ta-lib#480); once a
+        # move has happened the Wilder averages stay positive. `denominator == 0`
+        # is False for the warmup NaN, which stays NaN.
         denominator = positive_avg + negative_avg.abs()
-        rsi = (scalar * positive_avg / denominator).mask(denominator == 0, 0.0)
+        rsi = (scalar * positive_avg / denominator).mask(denominator == 0, 0.5 * scalar)
 
     # Name it here: the signal columns take their names from it, and `.name`
     # survives the shift while a custom attribute such as `.category` does not.
@@ -84,6 +86,7 @@ Calculation:
     neg_avg = ABS(RMA(negative, length))
 
     RSI = scalar * pos_avg / (pos_avg + neg_avg)
+    RSI = scalar / 2 where pos_avg + neg_avg == 0 (no move since the first bar)
 
 Args:
     close (pd.Series): Series of 'close's
