@@ -86,7 +86,11 @@ below). ``test_adversarial_review_fixes.py`` pins the defects found by the
 2026-09 review, each against a loop reference, TA-Lib or a decision table.
 ``test_talib_parameters.py`` checks that ``talib=True`` honours every
 parameter: a call with a value TA-Lib cannot express (``scalar``, ``drift``,
-``mamode``, ``ddof``, ``uo``'s weights) runs natively and equals ``talib=False``.
+``mamode``, ``ddof``, ``min_periods``, ``uo``'s weights, an optional price
+input, an option read from ``**kwargs`` or handed on to another function)
+runs natively and equals ``talib=False`` value for value. It also checks that
+both paths publish each column's first value on the same bar, with TA-Lib's
+by-design exceptions listed with their reason.
 
 **Files:** ``test_oracle_talib.py``, ``test_oracle_registry.py``,
 ``test_oracle_tulipy.py``, ``test_reference_ports.py``,
@@ -187,6 +191,15 @@ Edge-Case Tests
   column, ``fillna`` reaches every column, a repeated index label gives the
   same values as a unique index (with and without a leading NaN run), and
   ``result.category`` names the category the indicator is registered under.
+  The ``offset`` and ``fillna`` checks run on every option path: each
+  ``mamode``, ``talib=True`` and each boolean option.
+- ``test_int_parameter_contract.py`` — for every registered indicator, each
+  whole-number parameter set to 2, 3 and 5 leaves values in every column the
+  default call fills.
+- ``test_option_effect_contract.py`` — for every registered indicator, each
+  MA choice changes every column it smooths, and each boolean parameter
+  changes the values or the column names when flipped, so an option that is
+  accepted but never read fails.
 - ``test_parameter_validation.py`` — besides rejecting invalid values, every
   numeric default of every registered indicator is passed explicitly, as an
   int and as a float, and must name the output as the default call does.
@@ -265,7 +278,10 @@ Custom / Plugin Tests
 **Why:** Verify the custom indicator registration system.
 
 **Files:** ``test_custom.py`` — ``ta.custom.bind()``, ``import_dir()``,
-module loading, and custom indicator discovery.
+module loading, and custom indicator discovery. ``import_dir()`` is all or
+nothing: a Hypothesis property checks that one refused file leaves
+``pandas_ta_classic``, ``Category``, ``sys.path`` and ``sys.modules`` as they
+were.
 
 **Run:** ``python -m pytest tests/test_custom.py -v``
 
