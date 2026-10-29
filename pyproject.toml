@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77.0", "setuptools-scm>=8.0", "wheel"]
+requires = ["setuptools>=84.2.1", "setuptools-scm>=10.3.4", "wheel>=0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -37,14 +37,16 @@ classifiers = [
 ]
 requires-python = ">=3.11"  # Minimum Python version; matches AGENTS.md's rolling 5-version window (LATEST-4..LATEST)
 dependencies = [
-    "numpy>=2.0.0",
-    "pandas>=2.0.0",
+    # numpy 2.4.6 is the newest release that still installs on Python 3.11,
+    # the requires-python floor; numpy 2.5 needs 3.12.
+    "numpy>=2.4.6",
+    "pandas>=3.1.0",
 ]
 
 [project.optional-dependencies]
 # Core optional runtime dependencies
 optional = [
-    "tqdm",
+    "tqdm>=4.70.1",
 ]
 
 # External oracle library for parity tests.
@@ -61,16 +63,16 @@ oracle = [
 
 # CI code quality tools
 lint = [
-    "ruff>=0.17.0",
-    "black>=26.5.1",
-    "mypy>=1.0.0",
+    "ruff>=0.17.3",
+    "black>=26.10.1",
+    "mypy>=2.4.1",
 ]
 
 # PyPI publishing tools
 publish = [
-    "build>=0.10.0",
-    "twine>=4.0.0",
-    "setuptools-scm>=7.0.0",
+    "build>=1.6.1",
+    "twine>=7.0.0",
+    "setuptools-scm>=10.3.4",
 ]
 
 # Changelog fragments (changelog.d/) and the release-time build of CHANGELOG.md
@@ -92,37 +94,38 @@ dev = [
     "pandas-ta-classic[changelog]",
     
     # Type checking and linting
-    "mypy>=1.0.0",
+    "mypy>=2.4.1",
 
     # Pre-commit hooks
-    "pre-commit>=3.0.0",
+    "pre-commit>=4.7.0",
 ]
 
 # Testing framework
 test = [
-    "pytest>=7.0.0",
-    "hypothesis>=6.0.0"
+    "pytest>=9.2.0",
+    "hypothesis>=6.170.13"
 ]
 
 # Documentation building
+# sphinx 9.0.4 is the newest release that still installs on Python 3.11.
 docs = [
-    "sphinx>=5.0.0",
-    "sphinx-rtd-theme>=1.0.0",
-    "myst-parser>=2.0.0",
-    "matplotlib",
-    "mplfinance"
+    "sphinx>=9.0.4",
+    "sphinx-rtd-theme>=3.1.0",
+    "myst-parser>=5.1.0",
+    "matplotlib>=3.11.2",
+    "mplfinance>=0.12.10b0"
 ]
 
 # Performance optimization
 performance = [
-    "numba>=0.58.0"
+    "numba>=0.68.1"
 ]
 
 # Backtesting integrations (docs/examples only — not imported by the library)
 backtest = [
-    "backtesting",
-    "vectorbt",
-    "backtrader"
+    "backtesting>=0.6.6",
+    "vectorbt>=1.2.0",
+    "backtrader>=1.9.78.123"
 ]
 
 # Complete environment with all features.

@@ -453,7 +453,7 @@ pip install --upgrade pandas-ta-classic
 **Solution:** TA-Lib is optional and only used for supported core indicators (candlestick patterns are native). Install TA-Lib separately:
 
 ```bash
-pip install "ta-lib>=0.6.8"
+pip install "ta-lib>=0.8.3"
 ```
 
 Binary wheels (v0.6.5+) bundle the C library — no separate TA-Lib C installation needed on any platform. Versions before 0.6.5 lack binary wheels and require manual C library setup.
