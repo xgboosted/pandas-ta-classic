@@ -124,16 +124,16 @@ class TestConstantInput(TestCase):
         self.assertFalse(valid.empty, "stdev on constant returned all-NaN")
         self.assertTrue((valid.abs() < 1e-10).all(), "stdev of constant series must be 0")
 
-    def test_rsi_constant_reads_zero(self):
-        """RSI on a constant series divides 0/0 and reads 0.0, as TA-Lib does.
+    def test_rsi_constant_reads_the_neutral_50(self):
+        """RSI on a constant series divides 0/0 and reads the neutral 50, as
+        TA-Lib >= 0.8.3 does (TA-Lib/ta-lib#480).
 
-        It used to be all-NaN. See tests/test_degenerate_input.py for the
-        convention and the sweep that applies it across the package.
+        It used to be all-NaN, then 0.0. See tests/test_degenerate_input.py.
         """
         result = ta.rsi(_CONST_C, length=14, talib=False)
         self.assertIsNotNone(result)
         self.assertEqual(int(result.isna().sum()), 14, "only the warmup is NaN")
-        self.assertTrue((result.dropna() == 0.0).all(), "rsi of a constant series reads 0.0")
+        self.assertTrue((result.dropna() == 50.0).all(), "rsi of a constant series reads 50.0")
 
     def test_atr_constant_returns_valid(self):
         """ATR on constant H/L/C should not crash and must produce finite values."""
