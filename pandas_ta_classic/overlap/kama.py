@@ -63,7 +63,7 @@ def kama(
 
     # Calculate Result
     # TA-Lib cannot express a non-default drift; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and drift == 1:
+    if Imports["talib"] and mode_talib and fast == 2 and slow == 30 and drift == 1:
         from talib import KAMA as _KAMA
 
         kama = Series(_KAMA(close, timeperiod=length), index=close.index)

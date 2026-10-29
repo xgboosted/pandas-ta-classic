@@ -210,9 +210,13 @@ Args:
     offset (int): How many periods to offset the result.  Default: 0
 
 Kwargs:
-    ma1: 1st moving average provided externally (mandatory in conjuction with ma2)
-    ma2: 2nd moving average provided externally (mandatory in conjuction with ma1)
-    osc: an externally feeded osillator
+    ma1 (pd.Series): 1st moving average provided externally (mandatory in
+        conjunction with ma2). ma1 - ma2 is aligned by index label between
+        the two only; the difference is then read bar for bar against close.
+    ma2 (pd.Series): 2nd moving average provided externally (mandatory in
+        conjunction with ma1).
+    osc (pd.Series): An external oscillator; overrides ma1/ma2. Read bar
+        for bar against close; its index is not compared with close's.
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

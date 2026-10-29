@@ -33,7 +33,7 @@ def willr(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and min_periods == length:
         from talib import WILLR
 
         willr = WILLR(high, low, close, length)

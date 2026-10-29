@@ -37,7 +37,7 @@ def ad(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and open_ is None:
         from talib import AD
 
         ad = AD(high, low, close, volume)

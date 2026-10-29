@@ -5,9 +5,8 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.mom import mom
-from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.overlap.sma import sma
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.decreasing import decreasing
 from pandas_ta_classic.trend.increasing import increasing
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, unsigned_differences, verify_series
@@ -34,6 +33,17 @@ def _squeeze_simplify_columns(df, n=3):
     return [c.split("_")[0][n - 1 : n] for c in df.columns]
 
 
+def _squeeze_use_tr(use_tr, kwargs, caller):
+    """Resolve the True Range flag: ``use_tr`` from the signature, or ``tr``, the
+    name the docstring has always listed under Kwargs. Passing both raises."""
+    tr = kwargs.pop("tr", None)
+    if use_tr is not None and tr is not None:
+        raise TypeError(f"{caller}() got both use_tr and tr; pass use_tr")
+    if tr is not None:
+        return _bool_param(tr, True, "tr", caller=caller)
+    return _bool_param(use_tr, True, "use_tr", caller=caller)
+
+
 def _squeeze_momentum(close, high, low, kch_b, mom_length, mom_smooth, kc_length, mamode, lazybear):
     """Compute the squeeze momentum series (lazybear or standard path)."""
     if lazybear:
@@ -42,9 +52,7 @@ def _squeeze_momentum(close, high, low, kch_b, mom_length, mom_smooth, kc_length
         avg_ = 0.25 * (highest_high + lowest_low) + 0.5 * kch_b
         return linreg(close - avg_, length=kc_length)
     momo = mom(close, length=mom_length)
-    if mamode.lower() == "ema":
-        return ema(momo, length=mom_smooth)
-    return sma(momo, length=mom_smooth)
+    return ma(mamode, momo, length=mom_smooth)
 
 
 def _squeeze_detailed(df, squeeze_s, kwargs, prefix="SQZ_"):
@@ -126,11 +134,11 @@ def squeeze(
     if high is None or low is None or close is None:
         return None
 
-    use_tr = kwargs.setdefault("tr", True)
+    use_tr = _squeeze_use_tr(use_tr, kwargs, "squeeze")
     asint = _bool_param(kwargs.pop("asint", None), True, "asint")
     detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")
     lazybear = _bool_param(kwargs.pop("lazybear", None), False, "lazybear")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
 
     # Calculate Result
     bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
@@ -217,8 +225,7 @@ Calculation:
     BB = Bollinger Bands
     KC = Keltner Channels
     MOM = Momentum
-    SMA = Simple Moving Average
-    EMA = Exponential Moving Average
+    MA = the moving average mamode selects, see help(ta.ma)
     TR = True Range
 
     RANGE = TR(high, low, close) if using_tr else high - low
@@ -232,10 +239,7 @@ Calculation:
         SQZ = linreg(close - AVG, kc_length)
     else:
         MOMO = MOM(close, mom_length)
-        if mamode == "ema":
-            SQZ = EMA(MOMO, mom_smooth)
-        else:
-            SQZ = EMA(momo, mom_smooth)
+        SQZ = MA(mamode, MOMO, mom_smooth)
 
     SQZ_ON  = (BB_LOW > KC_LOW) and (BB_HIGH < KC_HIGH)
     SQZ_OFF = (BB_LOW < KC_LOW) and (BB_HIGH > KC_HIGH)
@@ -251,14 +255,15 @@ Args:
     kc_scalar (float): Keltner Channel scalar. Default: 1.5
     mom_length (int): Momentum Period. Default: 12
     mom_smooth (int): Smoothing Period of Momentum. Default: 6
-    mamode (str): Only "ema" or "sma". Default: "sma"
+    use_tr (bool): Use True Range for Keltner Channels. Default: True
+    mamode (str): The MA of the bands and of the momentum smoothing.
+        See ``help(ta.ma)``. Default: "sma"
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
-    tr (value, optional): Use True Range for Keltner Channels. Default: True
+    tr (value, optional): Older name of ``use_tr``; passing both raises.
     asint (value, optional): Flags as numbers (1.0/0.0) instead of bool; NaN on
         warm-up bars, where the bands do not exist yet. Default: True
-    mamode (value, optional): Which MA to use. Default: "sma"
     lazybear (value, optional): Use LazyBear's TradingView implementation.
         Default: False
     detailed (value, optional): Return additional variations of SQZ for
