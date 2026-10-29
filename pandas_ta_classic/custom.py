@@ -243,7 +243,7 @@ designated indicators directory like this:
 
 >>> import_dir(ta_dir)
 
-If your custom indicator(s) loaded succesfully then it should behave exactly
+If your custom indicator(s) loaded successfully then it should behave exactly
 like all other native indicators in pandas_ta_classic, including help functions.
 """
 
