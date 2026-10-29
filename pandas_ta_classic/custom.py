@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import logging
 import os
 import sys
@@ -88,23 +89,24 @@ def _resolve(name):
     return None
 
 
-def _load_and_bind_module(module_path, dirname, category_dir, verbose):
-    """Load one indicator module from *module_path* and bind it to
-    ``pandas_ta_classic``.
+def _load_module(module_path, category_dir, added_paths, replaced_modules):
+    """Load one indicator module from *module_path*; bind nothing.
 
-    The function (re)loads the Python file at *module_path*, looks up the
-    mandatory ``<name>`` and ``<name>_method`` callables, registers the
-    indicator in the appropriate category, and binds it via :func:`bind`.
-    A module that fails to import, lacks either callable, or whose name
-    already resolves to another module (a stdlib or installed module, or a
-    file of the same name in another category) raises ImportError.
+    The function executes the Python file at *module_path* as a new module and
+    returns its name with the mandatory ``<name>`` and ``<name>_method``
+    callables; :func:`import_dir` binds them once every file has loaded. A module that
+    fails to import, lacks either callable, or whose name already resolves to
+    another module (a stdlib or installed module, or a file of the same name
+    in another category) raises ImportError.
 
     Args:
         module_path (str): Absolute path to the ``.py`` file to load.
-        dirname (str): Category sub-directory name (e.g. ``"trend"``).
         category_dir (str): Absolute path to the category directory; added to
             :data:`sys.path` when not already present.
-        verbose (bool): Whether to emit info-level log messages on success.
+        added_paths (list): Collects the directories this call added to
+            :data:`sys.path`, so :func:`import_dir` can take them back.
+        replaced_modules (list): Collects ``(name, previous sys.modules entry)``
+            for the same purpose.
     """
     module_name = splitext(basename(module_path))[0]
     if not module_name.isidentifier():
@@ -127,8 +129,25 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
 
     if category_dir not in sys.path:
         sys.path.append(category_dir)
+        added_paths.append(category_dir)
 
-    module_functions = load_indicator_module(module_name)
+    # A new module object, not importlib.reload(): reload re-executes the live
+    # module in place, so a file refused later in the same import_dir left an
+    # indicator bound earlier half on the new code (its *_method looks the
+    # function up in the module at call time, the bound function stays old).
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"custom indicator '{module_path}' cannot be loaded as a module")
+    module = importlib.util.module_from_spec(spec)
+    # in sys.modules while it runs, as an import has it (dataclasses look the module up there)
+    replaced_modules.append((module_name, sys.modules.get(module_name)))
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as ex:
+        # user module code can raise anything
+        raise ImportError(f"Unable to load the custom indicator module '{module_name}': {ex}") from ex
+    module_functions = get_module_functions(module)
 
     fcn_callable = module_functions.get(module_name)
     fcn_method_callable = module_functions.get(f"{module_name}_method")
@@ -137,16 +156,7 @@ def _load_and_bind_module(module_path, dirname, category_dir, verbose):
         if found is None:
             raise ImportError(f"custom indicator module '{module_path}' has no function named '{required}'")
 
-    if module_name not in pandas_ta_classic.Category[dirname]:
-        pandas_ta_classic.Category[dirname].append(module_name)
-
-    bind(module_name, fcn_callable, fcn_method_callable)
-    if verbose:
-        logger.info(
-            "Successfully imported the custom indicator '%s' into category '%s'.",
-            module_path,
-            dirname,
-        )
+    return module_name, fcn_callable, fcn_method_callable
 
 
 def import_dir(path, verbose=True):
@@ -158,26 +168,58 @@ def import_dir(path, verbose=True):
     # list the contents of the directory
     dirs = glob(abspath(join(path, "*")))
 
-    # traverse full directory, importing all modules found there
-    for d in dirs:
-        dirname = basename(d)
+    # Load every module first and bind only when all of them loaded: binding as
+    # it went left the modules before a refused file bound and listed in
+    # Category, and the refused file's directory on sys.path.
+    loaded = []
+    added_paths: list[str] = []
+    replaced_modules: list = []
+    try:
+        for d in dirs:
+            dirname = basename(d)
 
-        # only look in directories which are valid pandas_ta_classic categories
-        if dirname not in [*pandas_ta_classic.Category]:
-            if verbose:
-                logger.info(
-                    "Skipping the sub-directory '%s' since it's not a valid pandas_ta_classic category.",
-                    dirname,
-                )
-            continue
+            # only look in directories which are valid pandas_ta_classic categories
+            if dirname not in [*pandas_ta_classic.Category]:
+                if verbose:
+                    logger.info(
+                        "Skipping the sub-directory '%s' since it's not a valid pandas_ta_classic category.",
+                        dirname,
+                    )
+                continue
 
-        # for each module found in that category (directory), load and bind
-        for module in glob(abspath(join(path, dirname, "*.py"))):
-            _load_and_bind_module(module, dirname, d, verbose)
+            for module in glob(abspath(join(path, dirname, "*.py"))):
+                loaded.append((module, dirname, *_load_module(module, d, added_paths, replaced_modules)))
+    except BaseException:
+        for added in added_paths:
+            if added in sys.path:
+                sys.path.remove(added)
+        for name, previous in reversed(replaced_modules):
+            if previous is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = previous
+        raise
+
+    for module, dirname, module_name, function, method in loaded:
+        if module_name not in pandas_ta_classic.Category[dirname]:
+            pandas_ta_classic.Category[dirname].append(module_name)
+        bind(module_name, function, method)
+        if verbose:
+            logger.info(
+                "Successfully imported the custom indicator '%s' into category '%s'.",
+                module,
+                dirname,
+            )
 
 
 import_dir.__doc__ = """
 Import a directory of custom indicators into pandas_ta_classic
+
+All or nothing: every module is loaded first, and they are bound only when
+none was refused. A refused file raises ImportError and leaves
+pandas_ta_classic, Category, sys.path and the indicator modules in sys.modules
+as they were, including indicators bound by an earlier call. A module that a
+file imported itself stays loaded, as after any failed import.
 
 Args:
     path (str): Full path to your indicator tree

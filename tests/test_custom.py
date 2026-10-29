@@ -6,6 +6,10 @@ import tempfile
 import types
 from unittest import TestCase
 
+import pandas as pd
+import pytest
+from hypothesis import given, settings, strategies as st
+
 import pandas_ta_classic
 from pandas_ta_classic import AnalysisIndicators
 from pandas_ta_classic.custom import (
@@ -265,7 +269,9 @@ class TestCustom(TestCase):
         try:
             with self.assertRaisesRegex(ImportError, rf"cannot be imported as '{name}': that name already resolves to .*{name}\.py"):
                 import_dir(base, verbose=False)
-            self.assertEqual(sum(name in names for names in pandas_ta_classic.Category.values()), 1)
+            # and import_dir binds neither: it binds only when every file loaded
+            self.assertEqual(sum(name in names for names in pandas_ta_classic.Category.values()), 0)
+            self.assertFalse(hasattr(pandas_ta_classic, name))
         finally:
             self._unload(name, *cat_dirs)
 
@@ -322,3 +328,69 @@ class TestCustom(TestCase):
             self.assertEqual(getattr(pandas_ta_classic, name)(10), 3000)
         finally:
             self._unload(name, cat_dir)
+
+
+# import_dir() bound each module as it went, so a refused file left every module
+# before it bound and listed in Category. Whatever the directory holds, a refusal
+# must leave pandas_ta_classic as it was, including an indicator an earlier call
+# bound: reloading its edited file in place left ta.<name> on the old function and
+# df.ta.<name>() on the new one.
+_BAD_FILES = {
+    "no_function": "def unrelated(close):\n    return close\n",
+    "no_method": "def {name}(close, **kwargs):\n    return close\n",
+    "raises": "raise RuntimeError('boom')\n",
+    "stdlib_name": None,  # a valid indicator named after a stdlib module
+}
+_atomic_counter = iter(range(10**9))
+
+
+@settings(max_examples=40, deadline=None)
+@given(
+    good=st.lists(st.sampled_from(["momentum", "trend", "volume"]), min_size=1, max_size=4),
+    bad_category=st.sampled_from(["momentum", "trend", "volume"]),
+    bad_kind=st.sampled_from(sorted(_BAD_FILES)),
+    prebound=st.booleans(),
+)
+def test_import_dir_binds_nothing_when_one_file_is_refused(good, bad_category, bad_kind, prebound):
+    run = next(_atomic_counter)
+    names = [f"_test_atomic_{run}_{i}_" for i in range(len(good))]
+    bad = "statistics" if bad_kind == "stdlib_name" else f"_test_atomic_{run}_bad_"
+    old = f"_test_atomic_{run}_old_"
+    frame = pd.DataFrame({"close": [10.0, 10.0]})
+    path_before = list(sys.path)
+    with tempfile.TemporaryDirectory(prefix="pta_atomic_") as base:
+        try:
+            if prebound:  # bound by an earlier call, then edited
+                TestCustom._write_indicator(os.path.join(base, "momentum"), old, 2)
+                import_dir(base, verbose=False)
+                TestCustom._write_indicator(os.path.join(base, "momentum"), old, 300)
+                importlib.invalidate_caches()
+            category_before = {k: list(v) for k, v in pandas_ta_classic.Category.items()}
+            path_bound = list(sys.path)
+            old_module = sys.modules.get(old)
+            for name, category in zip(names, good, strict=True):
+                TestCustom._write_indicator(os.path.join(base, category), name, 2)
+            if bad_kind == "stdlib_name":
+                TestCustom._write_indicator(os.path.join(base, bad_category), bad, 2)
+            else:
+                os.makedirs(os.path.join(base, bad_category), exist_ok=True)
+                with open(os.path.join(base, bad_category, f"{bad}.py"), "w") as f:
+                    f.write(_BAD_FILES[bad_kind].format(name=bad))
+            importlib.invalidate_caches()
+
+            with pytest.raises(ImportError, match=bad):
+                import_dir(base, verbose=False)
+
+            bound = [n for n in names if hasattr(pandas_ta_classic, n) or hasattr(AnalysisIndicators, n)]
+            assert not bound, f"bound before the refusal: {bound}"
+            assert {k: list(v) for k, v in pandas_ta_classic.Category.items()} == category_before
+            assert sys.path == path_bound
+            assert not [n for n in [*names, bad] if n in sys.modules and n != "statistics"], "left in sys.modules"
+            assert sys.modules.get(old) is old_module
+            if prebound:
+                assert getattr(pandas_ta_classic, old)(frame.close).iloc[0] == 20
+                assert getattr(frame.ta, old)().iloc[0] == 20, "the accessor runs the edited module"
+        finally:
+            for name in [*names, old] + ([] if bad == "statistics" else [bad]):
+                TestCustom._unload(name)
+            sys.path[:] = path_before
