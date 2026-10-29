@@ -13,7 +13,7 @@ import re
 
 import numpy as np
 import pytest
-from pandas import Series
+from pandas import Series, Timedelta
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
@@ -514,3 +514,80 @@ def test_signature_defaults_are_none():
             if param.default is not inspect.Parameter.empty and param.default is not None:
                 offenders.append(f"{name}({param.name}={param.default!r})")
     assert not offenders, offenders
+
+
+# Series options read from **kwargs (the signal helpers' xserie, stc's ma1/ma2/osc)
+# with another index than close failed inside pandas ("Can only compare
+# identically-labeled Series objects", "Length of values (100) does not match length
+# of index (300)"), a message that names neither the indicator nor the option. The
+# options are read off each docstring's Kwargs section; macdfix only names the xserie
+# options it forwards to macd() in prose.
+_SERIES_KWARG = re.compile(r"^\s+(\w+) \((?:pd\.)?Series", re.MULTILINE)
+_STC_OPEN = (
+    "OPEN: stc's rule is undecided: a shorter ma1 next to a full ma2 is aligned by label, an osc shorter than the "
+    "window reads all-NaN (test_stc_short_series_through_kwargs_is_all_nan), a shifted osc is used bar for bar"
+)
+_MACDFIX_OPEN = "OPEN: macdfix hands its signal options to macd(), whose errors name macd() (so do xa and cross_series)"
+_SERIES_KWARG_OPEN = {"stc": _STC_OPEN, "macdfix": _MACDFIX_OPEN}
+
+
+def _series_kwarg_cases():
+    cases = [("macdfix", "xserie")]
+    for name in sorted(i for v in ta.Category.values() for i in v):
+        func = _find_indicator_func(name)
+        doc = func.__doc__ or ""
+        if "Kwargs:" in doc:
+            params = inspect.signature(func).parameters
+            cases += [(name, key) for key in _SERIES_KWARG.findall(doc.split("Kwargs:", 1)[1]) if key not in params]
+    return cases
+
+
+SERIES_KWARG_CASES = _series_kwarg_cases()
+
+
+def test_series_kwarg_sweep_found_the_options():
+    signals = {(name, key) for name in ("er", "macd", "rsi", "rsx") for key in ("xserie", "xserie_a", "xserie_b")}
+    assert set(SERIES_KWARG_CASES) == signals | {("macdfix", "xserie"), ("stc", "ma1"), ("stc", "ma2"), ("stc", "osc")}
+
+
+def _other_index(frame, rows: str) -> Series:
+    if rows == "shorter":
+        return frame.close.iloc[200:]
+    if rows == "disjoint":
+        return frame.close.reset_index(drop=True)  # a RangeIndex next to close's DatetimeIndex: no label in common
+    return frame.close.set_axis(frame.close.index + Timedelta(days=1))  # shares most labels with close, not all
+
+
+@pytest.mark.parametrize(
+    ("name", "key", "rows"),
+    [
+        # with no label in common the shared-index guard names the option for every indicator
+        pytest.param(*case, rows, marks=pytest.mark.xfail(strict=True, raises=(AssertionError, pytest.fail.Exception), reason=_SERIES_KWARG_OPEN[case[0]]))
+        if case[0] in _SERIES_KWARG_OPEN and rows != "disjoint"
+        else (*case, rows)
+        for rows in ("shorter", "shifted", "disjoint")
+        for case in SERIES_KWARG_CASES
+    ],
+)
+def test_series_kwarg_with_another_index_raises(name, key, rows, frame):
+    func = _find_indicator_func(name)
+    kwargs = {p: frame[p.rstrip("_")] for p in inspect.signature(func).parameters if p in _SERIES}
+    partner = {"ma1": "ma2", "ma2": "ma1"}.get(key)
+    extra = {partner: frame.close} if partner else {} if key == "osc" else {"signal_indicators": True}
+    other = _other_index(frame, rows)
+    # No label in common is caught before the indicator runs, by the guard every
+    # indicator has (utils._core._require_shared_index); it named an option read
+    # from **kwargs "?".
+    if rows == "disjoint":
+        message = rf"^{name}\(\) inputs share no index labels: close has .*, {key} has RangeIndex"
+    else:
+        message = rf"^{name}\(\) {key} must have the same index as close: {key} has {len(other)} rows"
+    with pytest.raises(ValueError, match=message):
+        func(**kwargs, **extra, **{key: other})
+
+
+@pytest.mark.parametrize(("name", "key"), [case for case in SERIES_KWARG_CASES if case[0] != "stc"])
+def test_series_signal_option_is_not_checked_while_the_signals_are_off(name, key, frame):
+    """Without signal_indicators the option is not read, as before: nothing to raise for."""
+    func = _find_indicator_func(name)
+    assert func(frame.close).equals(func(frame.close, **{key: _other_index(frame, "shorter")}))

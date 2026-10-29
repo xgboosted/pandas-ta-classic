@@ -5,7 +5,7 @@ from typing import Any
 
 from pandas import DataFrame, Series, concat
 
-from ._core import _bool_param, _pos_int, _require_input, apply_fill, apply_offset, get_offset, verify_series
+from ._core import _bool_param, _describe_index, _pos_int, _require_input, apply_fill, apply_offset, get_offset, verify_series
 from ._math import _zero_small
 
 
@@ -251,6 +251,17 @@ def signals(
 
     if xb is not None:
         _add_scalar_threshold_signals(df, indicator, xb, cross_values, False, offset)
+
+    # The signals compare bar for bar; another index failed inside pandas
+    # ("Can only compare identically-labeled Series objects"). xserie is read
+    # only for the side that has no series of its own.
+    used = (("xserie", xserie if xserie_a is None or xserie_b is None else None), ("xserie_a", xserie_a), ("xserie_b", xserie_b))
+    for label, value in used:
+        if isinstance(value, Series) and not value.index.equals(indicator.index):
+            raise ValueError(
+                f"{indicator_name}() {label} must have the same index as close: {label} has {len(value)} rows "
+                f"({_describe_index(value.index)}), close has {len(indicator)} ({_describe_index(indicator.index)})"
+            )
 
     # xserie is the default value for both xserie_a and xserie_b
     if xserie_a is None:
