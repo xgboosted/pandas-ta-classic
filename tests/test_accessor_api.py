@@ -19,17 +19,13 @@ from contextlib import redirect_stdout
 from datetime import UTC, datetime
 from io import StringIO
 from multiprocessing import cpu_count
-from unittest import TestCase, skipIf
+from unittest import TestCase
 
 import numpy as np
 import pandas as pd
 
 import pandas_ta_classic
 from tests.config import get_sample_data
-
-# pandas 3 removed accessor caching; pandas 2 still caches df.ta on the
-# instance.  Only the premise test below depends on which one is installed.
-_PANDAS_MAJOR = int(pd.__version__.split(".")[0])
 
 
 class TestAccessorHelperClassification(TestCase):
@@ -232,25 +228,13 @@ class TestAccessorSettablePropertiesPersist(TestCase):
     pandas 3 dropped accessor caching, so ``df.ta`` builds a fresh
     AnalysisIndicators every time.  State kept on the instance is discarded
     the moment it is assigned; it has to live on the DataFrame.
-
-    The requirement is version independent — storing the state on the
-    DataFrame is correct whether or not the accessor happens to be cached —
-    so every test here runs on both pandas 2 and 3.  Only the premise test
-    below observes the caching behaviour itself, and that does differ.
     """
 
     def setUp(self):
         self.df = get_sample_data()
 
-    @skipIf(_PANDAS_MAJOR < 3, "pandas 2 still caches the accessor on the instance")
     def test_accessor_is_rebuilt_per_access(self):
-        """The premise these tests guard against, on pandas 3.
-
-        pandas 2 returns the cached accessor, so ``df.ta is df.ta`` there.
-        That is why this one assertion is gated while the persistence tests
-        are not: the bug they cover is invisible under caching but the fix
-        must hold either way.
-        """
+        """The premise these tests guard against."""
         self.assertIsNot(self.df.ta, self.df.ta)
 
     def test_cores_persists(self):

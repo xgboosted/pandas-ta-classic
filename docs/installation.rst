@@ -173,20 +173,22 @@ Installation
 
 Binary wheels (v0.6.5+) bundle the TA-Lib C library — no separate C library
 setup needed. Versions before 0.6.5 lack binary wheels and require manual C library
-installation. We require ``>=0.6.8`` so ``pip install ta-lib`` works out of
-the box on Linux, macOS, and Windows (x86\_64, arm64):
+installation. We require ``>=0.8.3``: its binary wheels work out of the box on
+Linux, macOS, and Windows (x86\_64, arm64), and from 0.8.3 on TA-Lib's ``RSI``
+reads the neutral 50 on a series that has not moved since its first bar, as
+native ``rsi`` does (older releases read ``0.0`` there):
 
 Using ``uv``:
 
 .. code-block:: bash
 
-    uv pip install "ta-lib>=0.6.8"
+    uv pip install "ta-lib>=0.8.3"
 
 Using ``pip``:
 
 .. code-block:: bash
 
-    pip install "ta-lib>=0.6.8"
+    pip install "ta-lib>=0.8.3"
 
 If your platform is not covered by binary wheels, or you prefer a source build, install the `TA-Lib C library <https://ta-lib.org/install/>`_ first. For Conda users:
 
@@ -228,7 +230,7 @@ Or install both oracle libraries at once:
     # pip
     pip install pandas-ta-classic[oracle]
 
-The ``oracle`` extra needs TA-Lib ``>=0.8.3``: from that release on, TA-Lib's ``RSI`` reads the neutral 50 on a series that has not moved since its first bar, as native ``rsi`` does; older releases read ``0.0`` there. ``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
+``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
 
 Installing Optional Dependencies
 --------------------------------
