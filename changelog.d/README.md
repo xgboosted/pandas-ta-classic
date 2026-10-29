@@ -7,8 +7,10 @@ touch the same file, so the changelog cannot conflict between open PRs.
 
 ## Name
 
-`<PR number>.<type>.md`, for example `321.fixed.md`. Open the PR first, then
-add the fragment under its number in the next push. A PR with two separate
+`<PR number>.<type>.md`, for example `321.fixed.md`. Open the PR as a draft,
+add the fragment under its number in the next push, then mark the PR ready for
+review. The `Changelog` check skips while the PR is a draft and runs when it is
+marked ready, so it never fails on the fragment the PR number did not allow yet. A PR with two separate
 entries of one type adds `321.fixed.md` and `321.fixed.1.md`.
 
 | Type          | Heading       | For                                                       |
@@ -44,7 +46,7 @@ An entry that changes results or starts raising for existing calls starts with
 If a later PR makes an unreleased entry untrue, that PR edits the entry's
 fragment. `tests/test_changelog.py` checks the names, the length and the
 **BREAKING** form. A PR that no reader of the changelog needs to know about (a
-typo, a version pin, a test refactor) gets the `skip-changelog` label, and the
-`Changelog` check then skips (Dependabot sets the label on its workflow pin
-updates); a change contributors must know about (a new CI
+typo, a version pin, a test refactor) gets the `skip-changelog` label while it
+is still a draft, and the `Changelog` check then skips (Dependabot sets the
+label on its workflow pin updates); a change contributors must know about (a new CI
 job, a new rule) is a `dev` fragment.
