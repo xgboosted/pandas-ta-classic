@@ -245,6 +245,13 @@ Other candle indicators:
        # roc, rsi, sma, stdev, t3, tema, trima, true_range, uo,
        # variance, wcp, willr, wma
 
+   ``talib=True`` calls TA-Lib only while every parameter TA-Lib cannot
+   express is at its default (``scalar``, ``drift``, ``mamode``, ``ddof``,
+   ``min_periods``, ``kama``'s ``fast``/``slow``, ``ema``'s ``adjust``/``sma``,
+   ``cci``'s ``c``, an ``open_`` for ``ad``/``adosc``, ...). Any other value
+   runs the native implementation, so the result never silently ignores a
+   parameter.
+
 Signal columns
 --------------
 
@@ -259,7 +266,9 @@ It appends threshold and comparison columns to the indicator and returns a
   flags every bar on one side of it. Default ``False``; ``macd`` defaults to
   crossings for the histogram and levels for the MACD line.
 * ``xserie`` — comparison series, used for both directions unless ``xserie_a``
-  (above) or ``xserie_b`` (below) is given. Default ``None``.
+  (above) or ``xserie_b`` (below) is given. Default ``None``. A comparison
+  series must have the same index as ``close``; another index raises
+  ``ValueError`` naming the option.
 * ``cross_series`` — ``True`` (the default) marks crossings of those series,
   ``False`` flags every bar on one side of them.
 
@@ -394,8 +403,8 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Slope*: **slope**
 * *Smart Money Concept Liquidity Sweep*: **smc_sweep** (returns +1 bullish sweep, -1 bearish sweep, 0 none; length=15, wick_mult=1.5)
 * *SMI Ergodic*: **smi**
-* *Squeeze*: **squeeze** (Default is John Carter's. Enable Lazybear's with ``lazybear=True``)
-* *Squeeze Pro*: **squeeze_pro**
+* *Squeeze*: **squeeze** (Default is John Carter's. Enable Lazybear's with ``lazybear=True``. ``mamode`` selects the moving average of the bands and of the momentum smoothing, any MA of ``help(ta.ma)``; ``use_tr=False`` uses the high-low range instead of the True Range, ``tr`` is its older name)
+* *Squeeze Pro*: **squeeze_pro** (``mamode`` and ``use_tr`` as for ``squeeze``)
 * *Stochastic Oscillator*: **stoch**
 * *Stochastic Fast*: **stochf**
 * *Stochastic RSI*: **stochrsi**
@@ -425,7 +434,7 @@ Moving averages and trend-following indicators:
 * *Holt-Winter Moving Average*: **hwma**
 * *Ichimoku Kinkō Hyō*: **ichimoku** (``ta.ichimoku()`` returns a single DataFrame of the known-period columns; ``append_span=True`` appends the forward-looking Span rows. The legacy ``(visible, span)`` tuple and the ``as_dataframe`` parameter were removed in 0.9.0; passing ``as_dataframe`` raises ``TypeError``. The DataFrame Extension Method ``df.ta.ichimoku()`` returns the same single DataFrame. ``lookahead=False`` drops the Chikou Span Column)
 * *Jurik Moving Average*: **jma**
-* *Kaufman's Adaptive Moving Average*: **kama**
+* *Kaufman's Adaptive Moving Average*: **kama** (first value on bar ``length``, as TA-Lib's ``KAMA``; with ``drift`` > 1 it starts at the first bar that has an efficiency ratio)
 * *Linear Regression*: **linreg**
 * *Linear Regression Angle*: **linregangle** (angle in degrees of the linear regression slope)
 * *Linear Regression Intercept*: **linregintercept** (y-intercept of the linear regression line)
@@ -511,7 +520,7 @@ Trend identification and direction indicators:
 * *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR``, which ``talib=True`` calls directly)
 * *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; equals TA-Lib ``PLUS_DM``, which ``talib=True`` calls directly)
 * *Price Max*: **pmax**
-* *Q Stick*: **qstick**
+* *Q Stick*: **qstick** (``ma`` selects any MA of ``help(ta.ma)``, default ``"sma"``; other keywords go to that MA)
 * *Parabolic SAR Extended*: **sarext** (positive while long, negative while short, as TA-Lib ``SAREXT``, which it equals for every parameter)
 * *Short Run*: **short_run**
 * *Trend Signals*: **tsignals**

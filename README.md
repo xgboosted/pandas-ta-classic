@@ -215,10 +215,10 @@ Installing oracle libraries:
 ```bash
 # uv
 uv pip install pandas-ta-classic[oracle] # installs TA-Lib (the live oracle)
-uv pip install TA-Lib # TA-Lib only (also enables acceleration backend)
+uv pip install "TA-Lib>=0.8.3" # TA-Lib only (also enables acceleration backend)
 # pip
 pip install pandas-ta-classic[oracle] # installs TA-Lib (the live oracle)
-pip install TA-Lib # TA-Lib only (also enables acceleration backend)
+pip install "TA-Lib>=0.8.3" # TA-Lib only (also enables acceleration backend)
 # tulipy is only needed to regenerate the frozen oracle snapshot (CPython <3.12):
 pip install tulipy && python tests/fixtures/generate_tulipy_oracle.py
 ```
