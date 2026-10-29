@@ -214,6 +214,12 @@ def _cols(result, *prefixes: str) -> Columns:
     return picked
 
 
+def _psar_stop(b) -> Columns:
+    """psar's long and short stops combined: the single SAR line TA-Lib returns."""
+    long_, short = _cols(ta.psar(b.high, b.low, b.close), "PSARl_", "PSARs_")
+    return [long_.combine_first(short)]
+
+
 T = talib
 ORACLE: dict[str, Case] = {
     # overlap
@@ -302,6 +308,9 @@ ORACLE: dict[str, Case] = {
     "plus_dm": Case(lambda b: [ta.plus_dm(b.high, b.low, 14)], lambda b: [T.PLUS_DM(b.high, b.low, 14)]),
     "minus_dm": Case(lambda b: [ta.minus_dm(b.high, b.low, 14)], lambda b: [T.MINUS_DM(b.high, b.low, 14)]),
     "sarext": Case(lambda b: [ta.sarext(b.high, b.low)], lambda b: [T.SAREXT(b.high, b.low)]),
+    # The two seed the first trend differently; they agree from bar 9 on real
+    # data and from bar 24 once the opening bars have no range.
+    "psar": Case(_psar_stop, lambda b: [T.SAR(b.high, b.low)], settle=24),
     # volatility
     "atr": Case(lambda b: [ta.atr(b.high, b.low, b.close, 14)], lambda b: [T.ATR(b.high, b.low, b.close, 14)]),
     "natr": Case(lambda b: [ta.natr(b.high, b.low, b.close, 14)], lambda b: [T.NATR(b.high, b.low, b.close, 14)]),
@@ -361,7 +370,6 @@ for _name, _fn in _TRANSFORMS.items():
 # the same function, so a value comparison would test the wrong thing.
 NO_ORACLE = {
     "ma": "a dispatcher; every MA it reaches has its own case",
-    "psar": "PSAR splits SAR into long/short columns by trend; compared in test_oracle_talib.py",
 }
 
 
@@ -447,6 +455,11 @@ KNOWN_DIFFERENCES: dict[tuple[str, str], str] = {
     ("ht_trendmode", "flat_block"): _HILBERT_ON_A_CONSTANT,
     ("mama", "flat_block"): _HILBERT_ON_A_CONSTANT,
     ("mama", "planted"): _HILBERT_ON_A_CONSTANT,
+    ("psar", "planted"): (
+        "on a flat run the long stop climbs to the low; TA-Lib's SAR reverses when the low touches the "
+        "stop (low <= SAR, bar 109), native psar holds the stop at the low and reverses only once the "
+        "low falls below it, so the two differ until the next reversal (bars 109-125)"
+    ),
 }
 if _TALIB_08:
     KNOWN_DIFFERENCES[("willr", "malformed")] = (

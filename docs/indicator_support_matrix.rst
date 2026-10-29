@@ -811,7 +811,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - psar
      - trend
      - yes
-     - no
+     - yes
      - yes
    * - qstick
      - trend
