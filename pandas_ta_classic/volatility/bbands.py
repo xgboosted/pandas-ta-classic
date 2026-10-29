@@ -67,6 +67,9 @@ def bbands(
 
     if close is None:
         return None
+    # The fill is for bbands' own output; the inner moving average must not fill
+    # its warm-up, or a dema/hma/t3/tema/zlma mid turns that warm-up into band values.
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
 
     # Calculate Result
     # TA-Lib cannot express a non-default ddof; run natively instead of ignoring it
@@ -102,7 +105,7 @@ def bbands(
     # Offset
     lower, mid, upper, bandwidth, percent = apply_offset([lower, mid, upper, bandwidth, percent], offset)
 
-    lower, mid, upper, bandwidth, percent = apply_fill([lower, mid, upper, bandwidth, percent], **kwargs)
+    lower, mid, upper, bandwidth, percent = apply_fill([lower, mid, upper, bandwidth, percent], **fill_kwargs)
 
     # Name and Categorize it
     lower.name = f"BBL_{length}_{std}"

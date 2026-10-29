@@ -42,13 +42,16 @@ indicators built a column the fill had already passed.
 from __future__ import annotations
 
 import inspect
+import re
 
 import numpy as np
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from tests.assertions import output_columns
+from tests.contracts import candidate_calls
 
 _N_ROWS = 250
 
@@ -78,11 +81,11 @@ _EXEMPT = {
 }
 
 
-def _build_frame() -> dict[str, pd.Series]:
+def _build_frame(rows: int = _N_ROWS) -> dict[str, pd.Series]:
     """A deterministic OHLCV frame long enough for every default window."""
     rng = np.random.default_rng(0)
-    base = 100 + np.cumsum(rng.normal(0, 1, _N_ROWS))
-    index = pd.date_range("2020-01-01", periods=_N_ROWS, freq="D")
+    base = 100 + np.cumsum(rng.normal(0, 1, rows))
+    index = pd.date_range("2020-01-01", periods=rows, freq="D")
     close = pd.Series(base, index=index)
     return {
         "open_": close - 0.5,
@@ -90,7 +93,7 @@ def _build_frame() -> dict[str, pd.Series]:
         "high": close + 1.0,
         "low": close - 1.0,
         "close": close,
-        "volume": pd.Series(rng.integers(1_000, 5_000, _N_ROWS).astype(float), index=index),
+        "volume": pd.Series(rng.integers(1_000, 5_000, rows).astype(float), index=index),
         "benchmark": close * 0.99,
         "series_a": close,
         "series_b": close.shift(1).bfill(),
@@ -106,6 +109,16 @@ def _build_frame() -> dict[str, pd.Series]:
 def frame() -> dict[str, pd.Series]:
     """The shared frame for the read-only sweeps."""
     return _build_frame()
+
+
+_LONG_ROWS = 1000
+
+
+@pytest.fixture(scope="module")
+def long_frame() -> dict[str, pd.Series]:
+    """Long enough for the warm-up of every option path (vfi's 130-bar window
+    smoothed by t3, kvo's slow line through t3)."""
+    return _build_frame(_LONG_ROWS)
 
 
 def _indicator_names() -> list[str]:
@@ -413,6 +426,106 @@ def test_fillna_reaches_every_output_column_of_an_option_path(name: str, option:
 
     wrong = {column: int(values.isna().sum()) for column, values in filled.items() if values.isna().any()}
     assert not wrong, f"{name}({option}, fillna=0) left NaN in {wrong}"
+
+
+# Boolean options an indicator reads from **kwargs, e.g.
+# `detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")` or
+# `kwargs.setdefault("asmode", False)`: invisible to the signature scan.
+_KWARGS_BOOL = re.compile(r'_bool_param\(kwargs\.(?:pop|get)\("(\w+)"|kwargs\.setdefault\("(\w+)", (?:True|False)\)')
+
+# Known exceptions, keyed (indicator, option, value, check); check is the fill
+# ("fillna", "ffill", "bfill") or "offset". Strict: a fixed entry fails until removed.
+_APPEND_SPAN = "OPEN: append_span=True appends the future-dated span rows after the fill and the offset; whether those reach them is undecided"
+_OPTION_PATH_FINDINGS = {
+    **{("ichimoku", "append_span", True, check): _APPEND_SPAN for check in ("fillna", "ffill", "offset")},
+}
+
+
+def _pin_option_path(request: pytest.FixtureRequest, name: str, option: dict, check: str) -> None:
+    for key, value in option.items():
+        reason = _OPTION_PATH_FINDINGS.get((name, key, value, check))
+        if reason:
+            request.applymarker(pytest.mark.xfail(strict=True, raises=AssertionError, reason=reason))
+
+
+def _kwargs_bool_options(name: str) -> list[str]:
+    """Boolean options *name* reads from ``**kwargs``; signal_indicators and
+    lookahead have sweeps of their own (above, and test_lookahead.py)."""
+    source = inspect.getsource(inspect.getmodule(inspect.unwrap(getattr(ta, name))))
+    found = {a or b for a, b in _KWARGS_BOOL.findall(source)}
+    return sorted(found - {"signal_indicators", "lookahead", "talib", "tulipy"})
+
+
+def _option_paths() -> list:
+    """Every non-default path the fill can take: an offset, each moving average
+    a ``mamode`` accepts, the TA-Lib branch, and each boolean option flipped."""
+    paths = []
+    for name in _indicator_names():
+        if name in _EXEMPT or not _takes_fill_kwargs(name):
+            continue
+        if _accepts(name, "offset"):
+            paths.append(pytest.param(name, {"offset": _OFFSET}, id=f"{name}-offset"))
+        if _accepts(name, "mamode") and name != "mavp":  # mavp's mamode is TA-Lib's integer enum
+            paths += [pytest.param(name, {"mamode": mode}, id=f"{name}-mamode-{mode}") for mode in sorted(_MA_DISPATCH)]
+        if _accepts(name, "talib") and ta.Imports["talib"]:
+            paths.append(pytest.param(name, {"talib": True}, id=f"{name}-talib"))
+        paths += [pytest.param(name, call, id="-".join([name, *(f"{k}-{v}" for k, v in call.items())])) for call in candidate_calls(name)[1:]]
+        paths += [pytest.param(name, {key: value}, id=f"{name}-{key}-{value}") for key in _kwargs_bool_options(name) for value in (True, False)]
+    return paths
+
+
+def _skip_unoffered_mamode(name: str, option: dict, error: ValueError) -> None:
+    """Skip a mamode the indicator's own choices leave out (zlma offers 12 of ma()'s 17); re-raise anything else."""
+    mode = option.get("mamode")
+    if mode is not None and str(error).startswith(f"{name}() mamode must be one of") and str(error).endswith(f"got {mode!r}"):
+        pytest.skip(f"{name} does not offer {option}")
+    raise error
+
+
+@pytest.mark.parametrize("fill", [{"fillna": 0}, {"fill_method": "ffill"}, {"fill_method": "bfill"}], ids=["fillna", "ffill", "bfill"])
+@pytest.mark.parametrize(("name", "option"), _option_paths())
+def test_fill_equals_filling_the_result_on_every_option_path(name: str, option: dict, fill: dict, long_frame: dict[str, pd.Series], request: pytest.FixtureRequest) -> None:
+    """``f(option, fill)`` equals ``f(option)`` filled afterwards, on every option path.
+
+    The sweeps above call each indicator with its defaults. The fill went wrong
+    only on other paths: ``aroon`` and ``donchian`` filled before the offset, so
+    ``fillna`` left the ``offset`` rows ``NaN``; ``psar(talib=True)`` returned
+    from its TA-Lib branch without filling; ``bbands`` passed ``fillna`` to its
+    inner ``dema``/``hma``/``zlma``/..., which filled the warm-up of the middle
+    band and turned it into band values.
+    """
+    _pin_option_path(request, name, option, fill.get("fill_method", "fillna"))
+    try:
+        plain = output_columns(_results(name, long_frame, **option))
+    except ValueError as error:
+        _skip_unoffered_mamode(name, option, error)
+    assert plain, f"{name}({option}) returned nothing"
+    if name in {"acos", "asin"} and all(values.isna().all() for values in plain.values()):
+        pytest.skip(f"{name}({option}) reads NaN on every row of this frame (acos/asin: close outside [-1, 1])")
+    filled = output_columns(_results(name, long_frame, **option, **fill))
+
+    assert sorted(filled) == sorted(plain), f"{name}({option}, {fill}) changed the columns"
+    method = fill.get("fill_method")
+    changed = []
+    for column, values in plain.items():
+        expected = values.fillna(0) if method is None else getattr(values, method)()
+        if not np.array_equal(filled[column].to_numpy(dtype=float), expected.to_numpy(dtype=float), equal_nan=True):
+            changed.append(column)
+    assert not changed, f"{name}({option}, {fill}) is not {name}({option}) filled afterwards for: {changed}"
+
+
+@pytest.mark.parametrize(("name", "option"), [p for p in _option_paths() if "offset" not in p.values[1] and _accepts(p.values[0], "offset")])
+def test_offset_shifts_every_output_column_on_every_option_path(name: str, option: dict, long_frame: dict[str, pd.Series], request: pytest.FixtureRequest) -> None:
+    """``f(option, offset=N)`` equals ``f(option).shift(N)`` on the other option paths too.
+
+    ``psar(talib=True)`` shifted the SAR before it split it into long and short
+    against the unshifted close, so the offset moved bars between the two columns.
+    """
+    _pin_option_path(request, name, option, "offset")
+    try:
+        _assert_offset_is_a_shift(name, long_frame, option)
+    except ValueError as error:
+        _skip_unoffered_mamode(name, option, error)
 
 
 @pytest.mark.parametrize(
