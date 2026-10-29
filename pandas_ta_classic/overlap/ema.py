@@ -30,7 +30,7 @@ def ema(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and not adjust and sma:
         from talib import EMA
 
         ema = EMA(close, length)

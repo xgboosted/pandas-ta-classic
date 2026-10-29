@@ -28,12 +28,15 @@ def t3(
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mode_talib = _bool_param(talib, False, "talib")
+    # ema's options, forwarded to every ema() of the chain; TA-Lib cannot express them
+    adjust = _bool_param(kwargs.get("adjust"), False, "adjust")
+    seed_sma = _bool_param(kwargs.get("sma"), True, "sma")
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and not adjust and seed_sma:
         from talib import T3
 
         t3 = T3(close, length, a)

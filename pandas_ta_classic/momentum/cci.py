@@ -36,7 +36,7 @@ def cci(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and c == 0.015:
         from talib import CCI
 
         cci = CCI(high, low, close, length)
