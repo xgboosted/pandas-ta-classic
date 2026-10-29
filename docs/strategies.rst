@@ -149,6 +149,7 @@ costs 0.5 to 1.7 seconds, so on a single DataFrame it only pays from roughly
 .. code-block:: python
 
     # Per call, or per frame. strategy() opens the pool and closes it again.
+    # In a script, call it under if __name__ == "__main__": (see below).
     df.ta.strategy(cores=8)
     df.ta.cores = 8
 

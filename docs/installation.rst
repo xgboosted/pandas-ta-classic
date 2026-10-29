@@ -165,7 +165,7 @@ TA-Lib has a **dual role**: acceleration backend for core indicators (opt-in via
         ema = df.ta.ema(length=20, talib=True)
 
         # CDL patterns — always native, talib= kwarg has no effect here
-        df = df.ta.cdl_pattern(name="engulfing")       # native
+        engulfing = df.ta.cdl_pattern(name="engulfing")  # native
         result = df.ta.cdl_pattern(name="hammer")      # native
 
 Installation
