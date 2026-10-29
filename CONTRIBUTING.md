@@ -281,6 +281,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
  ```bash
  git push origin feat/new-indicator
  ```
+ Open the PR as a **draft**. Add the changelog fragment under the PR's number (or ask for the `skip-changelog` label), then mark the PR **Ready for review**. The `Changelog` check skips drafts, so it does not fail before the fragment can exist.
 
 5. **PR Requirements**
  - [ ] `black --check --diff pandas_ta_classic/` passes (EXIT=0)

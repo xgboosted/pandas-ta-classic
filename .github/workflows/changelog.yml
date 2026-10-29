@@ -4,17 +4,22 @@ name: Changelog
 # This check fails a PR that adds none, unless the PR carries the
 # `skip-changelog` label. It is its own workflow so that adding or removing the
 # label re-runs only this check, not the whole CI pipeline.
+#
+# A fragment is named after its PR number, so a PR opens without one. The PR
+# opens as a draft, gets its fragment or label, then is marked ready: the check
+# skips while the PR is a draft and runs on ready_for_review, so the first run
+# does not fail on a fragment that cannot exist yet.
 "on":
   pull_request:
     branches: [ main ]
-    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+    types: [ opened, synchronize, reopened, labeled, unlabeled, ready_for_review ]
 
 permissions:
   contents: read
 
 jobs:
   fragment:
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+    if: ${{ !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
     runs-on: ubuntu-latest
 
     steps:
