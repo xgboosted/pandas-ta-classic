@@ -40,17 +40,11 @@ RTOL = 1e-6
 
 # (indicator, scale) pairs that break the contract today, as strict xfails: one
 # that starts passing fails, so the table cannot go stale.
-# Both absolute constants are kept on purpose, for parity with the reference
-# implementation; at small prices they decide the result.
-_ABSOLUTE_THRESHOLD = "KEPT: an absolute constant binds at small prices -- {}"
 _BOUNDARY_ROUNDING = (
     "CDL_HIGHWAVE: scaling rounds a comparison that sits exactly on its threshold to the other side "
     "on 1-2 bars; TA-Lib's CDLHIGHWAVE flips the same bars"
 )
-OPEN_FINDINGS: dict[tuple[str, str], str] = {
-    ("fisher", "tiny"): _ABSOLUTE_THRESHOLD.format("hlr[hlr < 0.001] = 0.001 floors the range of hl2, as TradingView's ta.fisher does"),
-    ("msw", "tiny"): _ABSOLUTE_THRESHOLD.format("`if abs(rp) > 0.001` decides the phase, as in Tulip Indicators' msw (checked by the tulipy oracle)"),
-}
+OPEN_FINDINGS: dict[tuple[str, str], str] = {}
 # Columns compared nowhere, with the reason; the rest of their indicator still is.
 BOUNDARY_COLUMNS = {"CDL_HIGHWAVE": _BOUNDARY_ROUNDING}
 
