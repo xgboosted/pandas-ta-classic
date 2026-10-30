@@ -272,6 +272,8 @@ ORACLE: dict[str, Case] = {
         lambda b: _cols(ta.macdfix(b.close, signal=9), "MACDFIX_", "MACDFIXs_", "MACDFIXh_"), lambda b: list(T.MACD(b.close, 12, 26, 9)), settle=200
     ),
     "mom": Case(lambda b: [ta.mom(b.close, 10)], lambda b: [T.MOM(b.close, 10)]),
+    # The previous bar's TSF is the forecast for this bar, as in TA-Lib and Tulip (#344).
+    "fosc": Case(lambda b: [ta.fosc(b.close, 14)], lambda b: [T.FOSC(b.close, 14)]),
     "roc": Case(lambda b: [ta.roc(b.close, 10)], lambda b: [T.ROC(b.close, 10)]),
     "rocp": Case(lambda b: [ta.rocp(b.close, 10)], lambda b: [T.ROCP(b.close, 10)]),
     "rocr": Case(lambda b: [ta.rocr(b.close, 10)], lambda b: [T.ROCR(b.close, 10)]),
@@ -308,6 +310,8 @@ ORACLE: dict[str, Case] = {
     "plus_dm": Case(lambda b: [ta.plus_dm(b.high, b.low, 14)], lambda b: [T.PLUS_DM(b.high, b.low, 14)]),
     "minus_dm": Case(lambda b: [ta.minus_dm(b.high, b.low, 14)], lambda b: [T.MINUS_DM(b.high, b.low, 14)]),
     "sarext": Case(lambda b: [ta.sarext(b.high, b.low)], lambda b: [T.SAREXT(b.high, b.low)]),
+    # DPO is TA-Lib's causal form: the price length // 2 + 1 bars ago less the SMA (#344).
+    "dpo": Case(lambda b: [ta.dpo(b.close, 20, centered=False)], lambda b: [T.DPO(b.close, 20)]),
     "psar": Case(_psar_stop, lambda b: [T.SAR(b.high, b.low)]),
     # volatility
     "atr": Case(lambda b: [ta.atr(b.high, b.low, b.close, 14)], lambda b: [T.ATR(b.high, b.low, b.close, 14)]),
@@ -329,6 +333,9 @@ ORACLE: dict[str, Case] = {
     ),
     "mfi": Case(lambda b: [ta.mfi(b.high, b.low, b.close, b.volume, 14)], lambda b: [T.MFI(b.high, b.low, b.close, b.volume, 14)]),
     "obv": Case(lambda b: [ta.obv(b.close, b.volume)], lambda b: [T.OBV(b.close, b.volume)]),
+    "pvt": Case(lambda b: [ta.pvt(b.close, b.volume)], lambda b: [T.PVT(b.close, b.volume)]),
+    "nvi": Case(lambda b: [ta.nvi(b.close, b.volume)], lambda b: [T.NVI(b.close, b.volume)]),
+    "pvi": Case(lambda b: [ta.pvi(b.close, b.volume)], lambda b: [T.PVI(b.close, b.volume)]),
     # cycles
     "ht_dcperiod": Case(lambda b: [ta.ht_dcperiod(b.close)], lambda b: [T.HT_DCPERIOD(b.close)]),
     "ht_dcphase": Case(lambda b: [ta.ht_dcphase(b.close)], lambda b: [T.HT_DCPHASE(b.close)]),

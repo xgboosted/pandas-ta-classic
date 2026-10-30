@@ -7,13 +7,14 @@ from pandas import Series
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, degenerate_div, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _number, _pos_int, _positive_inputs, _str_param, degenerate_div, nan_on_short_input
 
 # The source fixes the volatility window at 30 bars, independent of `length`.
 _VINTER_LENGTH = 30
 
 
 @nan_on_short_input
+@_positive_inputs("high", "low", "close")
 def vfi(
     high: Series,
     low: Series,
@@ -84,7 +85,7 @@ def vfi(
     vfi = apply_fill(vfi, **kwargs)
 
     # Name and Categorize it
-    vfi.name = f"VFI_{length}"
+    vfi.name = f"VFI_{length}" + _name_tokens(("coef", coef, 0.2), ("vcoef", vcoef, 2.5))
     vfi.category = "volume"
 
     return vfi

@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
 
 from .variance import variance
 
@@ -51,7 +51,7 @@ def stdev(
     stdev = apply_fill(stdev, **kwargs)
 
     # Name & Category
-    stdev.name = f"STDEV_{length}"
+    stdev.name = f"STDEV_{length}" + _name_tokens(("ddof", ddof, 0))
     stdev.category = "statistics"
 
     return stdev

@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _nan_where_not_positive, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -46,6 +46,8 @@ def accbands(
     hl_ratio *= c
     _lower = low * (1 - hl_ratio)
     _upper = high * (1 + hl_ratio)
+    # The bands are a percentage of the price: NaN where high + low is at or below zero, with one warning (#345)
+    _lower, _upper = _nan_where_not_positive("accbands", high + low, _lower, _upper)
 
     lower = ma(mamode, _lower, length=length)
     if lower is None:
@@ -63,15 +65,16 @@ def accbands(
     lower, mid, upper = apply_fill([lower, mid, upper], **kwargs)
 
     # Name and Categorize it
-    lower.name = f"ACCBL_{length}"
-    mid.name = f"ACCBM_{length}"
-    upper.name = f"ACCBU_{length}"
+    _props = f"_{length}" + _name_tokens(("c", c, 4))
+    lower.name = f"ACCBL{_props}"
+    mid.name = f"ACCBM{_props}"
+    upper.name = f"ACCBU{_props}"
     mid.category = upper.category = lower.category = "volatility"
 
     # Prepare DataFrame to return
     data = {lower.name: lower, mid.name: mid, upper.name: upper}
     accbandsdf = DataFrame(data)
-    accbandsdf.name = f"ACCBANDS_{length}"
+    accbandsdf.name = f"ACCBANDS{_props}"
     accbandsdf.category = mid.category
 
     return accbandsdf

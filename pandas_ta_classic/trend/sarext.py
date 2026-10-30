@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _number, _pos_float, _positive_inputs, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -152,6 +152,7 @@ def _sarext_native_result(
 
 
 @nan_on_short_input
+@_positive_inputs("high", "low")
 @skip_leading_nan("high", "low")
 def sarext(
     high: Series,
@@ -225,7 +226,16 @@ def sarext(
     sarext_ = apply_fill(sarext_, **kwargs)
 
     # Name and Categorize it
-    sarext_.name = "SAREXT"
+    sarext_.name = "SAREXT" + _name_tokens(
+        ("startvalue", startvalue, 0.0),
+        ("offsetonreverse", offsetonreverse, 0.0),
+        ("accelerationinitlong", af0_long, 0.02),
+        ("accelerationlong", af_long, 0.02),
+        ("accelerationmaxlong", max_af_long, 0.2),
+        ("accelerationinitshort", af0_short, 0.02),
+        ("accelerationshort", af_short, 0.02),
+        ("accelerationmaxshort", max_af_short, 0.2),
+    )
     sarext_.category = "trend"
 
     return sarext_

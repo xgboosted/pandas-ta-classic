@@ -56,6 +56,8 @@ Before implementing:
 
 Fallbacks hide failures and produce silently wrong results. If a function can't do its job with the inputs it received, it raises — always. No hardcoded defaults, no swallowed exceptions, no plausible-looking return values on error.
 
+**Exception (maintainer decision, #345): a price at or below zero.** Negative prices are valid data, so an indicator that is relative to the price level does not raise: it reads NaN on those bars and raises one `UserWarning` naming itself and the number of bars, and a recursion restarts after them, as after missing bars. Apply `@_positive_inputs("close", ...)` below `@nan_on_short_input` (so it wraps `skip_leading_nan`), or `_nan_where_not_positive(...)` for a percent column inside an additive indicator (`utils/_core.py`). The indicators it applies to are `LEVEL_IS_THE_ANSWER` and `LEVEL_COLUMN_OWNERS` in `tests/test_shift_contract.py`; a new level-dependent indicator joins that table and gets the decorator.
+
 ### Simplicity First
 
 **Minimum code that solves the problem. Nothing speculative.**

@@ -58,14 +58,15 @@ def fisher(
     highest_hl2 = hl2_.rolling(length).max()
     lowest_hl2 = hl2_.rolling(length).min()
 
-    # The floor below already keeps a flat window off a zero divisor.
+    # TradingView floors the range at 0.001 in price units, which decided the
+    # result at small prices (#346). A window whose range is a float residue of
+    # its price level is flat instead, and puts the price in the middle (0.0).
     hlr = highest_hl2 - lowest_hl2
-    hlr[hlr < 0.001] = 0.001
-
-    hl_range = hlr
+    level = np.maximum(highest_hl2.abs(), lowest_hl2.abs())
+    flat = hlr <= 1e-12 * level
     m = high.size
 
-    pos_arr = ((hl2_ - lowest_hl2) / hl_range - 0.5).to_numpy()
+    pos_arr = ((hl2_ - lowest_hl2) / hlr.mask(flat) - 0.5).mask(flat, 0.0).to_numpy()
     fisher_arr = _fisher_loop(pos_arr, m, length)
     fisher = Series(fisher_arr, index=high.index)
     signalma = fisher.shift(signal)
@@ -96,6 +97,11 @@ Attempts to identify significant price reversals by normalizing prices over a
 user-specified number of periods. A reversal signal is suggested when the the
 two lines cross.
 
+TradingView floors the range of hl2 at 0.001 in price units, so its result
+depends on the price unit. Here a window whose range is at most 1e-12 of its
+price level is flat and puts the price in the middle of the range (position
+0.0); every other window uses its exact range.
+
 Sources:
     TradingView (Correlation >99%)
 
@@ -107,9 +113,8 @@ Calculation:
     LHL2 = HL2.rolling(length).min()
 
     HLR = HHL2 - LHL2
-    HLR[HLR < 0.001] = 0.001
-
     position = ((HL2 - LHL2) / HLR) - 0.5
+    position = 0.0 where HLR <= 1e-12 * max(|HHL2|, |LHL2|) (a flat window)
 
     v = 0
     m = high.size

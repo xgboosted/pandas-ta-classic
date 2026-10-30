@@ -262,8 +262,9 @@ def _custom_kinds(kinds: list[str]) -> list[str]:
     """The *kinds* whose df.ta method was bound by user code (custom.import_dir, custom.bind).
 
     A worker process is a fresh interpreter that never ran that code, so it
-    either has no such method or, for a custom module that reuses a built-in
-    name (trend/sma.py), would silently run the built-in one instead.
+    either has no such method or, for a method set directly under a built-in
+    name (custom.bind() and import_dir() refuse one), would silently run the
+    built-in one instead.
 
     The test is the method's module, so a method built with the package's own
     private wrapper helpers counts as built-in and is not caught here.
@@ -900,7 +901,9 @@ class AnalysisIndicators(PandasObject):
         """The function behind df.ta.<name>."""
         # custom.import_dir() binds its function onto the package and lists the
         # name in Category, but the loader only knows the package's own modules,
-        # so strategy("all") raised "unknown indicator" once one was loaded.
+        # so strategy("all") raised "unknown indicator" once one was loaded. A
+        # package attribute set directly under a built-in name takes precedence
+        # too (custom.bind() and import_dir() refuse one).
         bound = vars(pandas_ta_classic).get(name)
         func = bound if callable(bound) else _find_indicator_func(name)
         if func is None:

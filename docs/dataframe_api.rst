@@ -29,6 +29,15 @@ You explicitly define the input columns and take care of the output.
     # Chaining indicators
     ema10_ohlc4 = ta.ema(ta.ohlc4(df["Open"], df["High"], df["Low"], df["Close"]), length=10)
 
+Names carry the main parameters in a fixed order (``DCL_10_15``). A parameter
+that changes the values but has no place in that order is added as a labelled
+token when it is not at its default: ``_<name><value>``, the parameter name
+without underscores, a bool as 0 or 1 and a float in its shortest form. So
+``ta.zscore(close, ddof=0)`` is ``ZS_30_ddof0`` while ``ta.zscore(close)``
+stays ``ZS_30``, and ``ta.dpo(close, centered=False)`` is ``DPO_20_centered0``:
+two calls that give different values never share a column name. ``scalar``,
+``drift``, ``asint`` and ``asbool`` are left out of names on purpose.
+
 DataFrame Extension
 ~~~~~~~~~~~~~~~~~~~
 

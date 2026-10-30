@@ -1,4 +1,5 @@
 # Squeeze Pro (SQUEEZE_PRO)
+import warnings
 from typing import Any
 
 from pandas import DataFrame, Series
@@ -7,7 +8,7 @@ from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simplify_columns, _squeeze_use_tr
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
@@ -61,7 +62,11 @@ def squeeze_pro(
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
 
     # Calculate Result
-    bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
+    # Only the bands are read here; bbands' warning about a non-positive middle
+    # line concerns its bandwidth column, which this indicator does not return (#345).
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=r"bbands\(\) reads NaN", category=UserWarning)
+        bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
     kch_wide = kc(
         high,
         low,
@@ -169,15 +174,26 @@ def squeeze_pro(
     # Name and Categorize it
     _props = "" if use_tr else "hlr"
     _props += f"_{bb_length}_{bb_std}_{kc_length}_{kc_scalar_wide}_{kc_scalar_normal}_{kc_scalar_narrow}"
+    _props += _name_tokens(("mom_length", mom_length, 12), ("mom_smooth", mom_smooth, 6))
     squeeze.name = f"SQZPRO{_props}"
 
+    # The flags compare the bands with the channels, so their settings name them too.
+    _flags = _name_tokens(
+        ("bb_length", bb_length, 20),
+        ("bb_std", bb_std, 2.0),
+        ("kc_length", kc_length, 20),
+        ("kc_scalar_wide", kc_scalar_wide, 2),
+        ("kc_scalar_normal", kc_scalar_normal, 1.5),
+        ("kc_scalar_narrow", kc_scalar_narrow, 1),
+        ("use_tr", use_tr, True),
+    )
     data = {
         squeeze.name: squeeze,
-        "SQZPRO_ON_WIDE": squeeze_on_wide,
-        "SQZPRO_ON_NORMAL": squeeze_on_normal,
-        "SQZPRO_ON_NARROW": squeeze_on_narrow,
-        "SQZPRO_OFF": squeeze_off_wide,
-        "SQZPRO_NO": no_squeeze,
+        f"SQZPRO_ON_WIDE{_flags}": squeeze_on_wide,
+        f"SQZPRO_ON_NORMAL{_flags}": squeeze_on_normal,
+        f"SQZPRO_ON_NARROW{_flags}": squeeze_on_narrow,
+        f"SQZPRO_OFF{_flags}": squeeze_off_wide,
+        f"SQZPRO_NO{_flags}": no_squeeze,
     }
     df = DataFrame(data)
     df.name = squeeze.name

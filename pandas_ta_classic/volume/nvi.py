@@ -11,10 +11,11 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 @skip_leading_nan("close", "volume")
 def nvi(
     close: Series,
@@ -42,10 +43,13 @@ def nvi(
     # labels, and realigning it against roc_ rebuilds the index -- which in
     # pandas clears DatetimeIndex.freq on the caller's own index object, so
     # df.ta.nvi() silently unset df.index.freq even with append=False.
-    nvi = signed_volume.where(signed_volume < 0).abs() * roc_
-    nvi.fillna(0, inplace=True)
-    nvi.iloc[0] = initial
-    nvi = nvi.cumsum()
+    # Each falling-volume bar multiplies the index by 1 + its rate of change, as
+    # in TA-Lib's NVI and Fosback's definition; adding the percent change made
+    # it another series (#344).
+    factor = 1 + signed_volume.where(signed_volume < 0).abs() * roc_ / 100
+    factor = factor.fillna(1.0)
+    factor.iloc[0] = 1.0
+    nvi = initial * factor.cumprod()
 
     # A bar whose input is missing has no value; the state carries across it.
     nvi = nvi.mask((close.isna() | volume.isna()).to_numpy())
@@ -56,7 +60,7 @@ def nvi(
     nvi = apply_fill(nvi, **kwargs)
 
     # Name and Categorize it
-    nvi.name = f"NVI_{length}"
+    nvi.name = f"NVI_{length}" + _name_tokens(("initial", initial, 1000))
     nvi.category = "volume"
 
     return nvi
@@ -78,10 +82,11 @@ Calculation:
 
     roc = ROC(close, length)
     signed_volume = signed_series(volume, initial=1)
-    nvi = signed_volume.where(signed_volume < 0).abs() * roc_
-    nvi.fillna(0, inplace=True)
-    nvi.iloc[0]= initial
-    nvi = nvi.cumsum()
+    factor = 1 + signed_volume.where(signed_volume < 0).abs() * roc / 100
+    factor = factor.fillna(1); factor.iloc[0] = 1
+    nvi = initial * factor.cumprod()
+
+    Multiplicative, as in Fosback's definition and TA-Lib's NVI.
 
 Args:
     close (pd.Series): Series of 'close's

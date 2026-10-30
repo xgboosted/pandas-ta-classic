@@ -119,9 +119,10 @@ class TestVolatility(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "BBANDS_5_2.0")
 
+        # A non-default ddof changes the values, so it is in the name (#343)
         result = pandas_ta.bbands(self.close, ddof=1)
         self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "BBANDS_5_2.0")
+        self.assertEqual(result.name, "BBANDS_5_2.0_ddof1")
 
         assert_indicator_standard(
             self,

@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -73,7 +73,7 @@ def lrsi(
     lrsi = apply_fill(lrsi, **kwargs)
 
     # Name and Categorize it
-    lrsi.name = f"LRSI_{length}"
+    lrsi.name = f"LRSI_{length}" + _name_tokens(("gamma", gamma, 0.5))
     lrsi.category = "momentum"
 
     return lrsi

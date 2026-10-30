@@ -151,6 +151,12 @@ def ohlcv_dataframe(draw, min_size: int = 20, max_size: int = 200):
     # Ensure high >= low and close in range
     df["high"] = np.maximum(df["high"], df[["open", "close"]].max(axis=1))
     df["low"] = np.minimum(df["low"], df[["open", "close"]].min(axis=1))
+    # Real prices are positive, and a walk of 200 steps of -2 from 100 reaches -300.
+    # Lift the frame so its lowest price is 1: a shift keeps every bar-to-bar
+    # difference, and a level-dependent indicator reads NaN and warns at or below
+    # zero (#345), which is not what these tests are about.
+    prices = ["open", "high", "low", "close"]
+    df[prices] += max(0.0, 1.0 - float(df[prices].min().min()))
     return df
 
 
@@ -565,7 +571,8 @@ class TestSignalGaps(TestCase):
     @staticmethod
     def _check(result: pd.DataFrame, without_gaps: pd.DataFrame, is_observed: np.ndarray) -> None:
         np.testing.assert_array_equal(result.to_numpy()[is_observed], without_gaps.to_numpy())
-        assert (result["TS_Trades"].to_numpy()[~is_observed] == 0).all()
+        # TS_Trades, by position: a non-default above/long adds its token to the name (#343)
+        assert (result.iloc[:, 1].to_numpy()[~is_observed] == 0).all()
 
     # Gaps after the first bar: a leading NaN run means "no position yet" and,
     # unchanged, gives an entry on the first known uptrend bar.

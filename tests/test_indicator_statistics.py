@@ -255,8 +255,9 @@ class TestStatistics(TestCase):
         self.assertTrue(default.equals(sample), "the default must stay ddof=1")
         ratio = (population / sample).dropna()
         np.testing.assert_allclose(ratio.to_numpy(), np.sqrt(length / (length - 1)), rtol=1e-12)
-        # The name carries length only; cdl_z is what puts ddof in its columns.
-        self.assertEqual(population.name, f"ZS_{length}")
+        # A non-default ddof changes the values, so it is in the name (#343); the default keeps ZS_30.
+        self.assertEqual(population.name, f"ZS_{length}_ddof0")
+        self.assertEqual(sample.name, f"ZS_{length}")
 
         # ddof must leave a positive divisor, so it stays below length.
         with self.assertRaisesRegex(ValueError, r"zscore\(\) ddof must be an integer >= 0 and < 30"):

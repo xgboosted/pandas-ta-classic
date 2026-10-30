@@ -9,7 +9,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
 
 
 def _reject_trend_reset(indicator: str, kwargs: dict) -> None:
@@ -57,11 +57,12 @@ def tsignals(
         entries = entries.astype(bool)
         exits = exits.astype(bool)
 
+    _props = _name_tokens(("trade_offset", trade_offset, 0))
     data = {
-        "TS_Trends": trends,
-        "TS_Trades": trades,
-        "TS_Entries": entries,
-        "TS_Exits": exits,
+        f"TS_Trends{_props}": trends,
+        f"TS_Trades{_props}": trades,
+        f"TS_Entries{_props}": entries,
+        f"TS_Exits{_props}": exits,
     }
     df = DataFrame(data, index=trends.index)
 

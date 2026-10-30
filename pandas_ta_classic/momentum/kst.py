@@ -9,12 +9,13 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _positive_inputs, nan_on_short_input
 
 from .roc import roc
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 def kst(
     close: Series,
     roc1: int | None = None,
@@ -65,7 +66,17 @@ def kst(
 
     # Name and Categorize it
     kst.name = f"KST_{roc1}_{roc2}_{roc3}_{roc4}_{sma1}_{sma2}_{sma3}_{sma4}"
-    kst_signal.name = f"KSTs_{signal}"
+    # The signal line smooths the KST line, so its periods name it too.
+    kst_signal.name = f"KSTs_{signal}" + _name_tokens(
+        ("roc1", roc1, 10),
+        ("roc2", roc2, 15),
+        ("roc3", roc3, 20),
+        ("roc4", roc4, 30),
+        ("sma1", sma1, 10),
+        ("sma2", sma2, 10),
+        ("sma3", sma3, 10),
+        ("sma4", sma4, 15),
+    )
     kst.category = kst_signal.category = "momentum"
 
     # Prepare DataFrame to return

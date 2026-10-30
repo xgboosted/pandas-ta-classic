@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
@@ -33,7 +33,7 @@ def apo(
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow))
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")
 
@@ -41,9 +41,10 @@ def apo(
         return None
 
     # Calculate Result
-    # TA-Lib cannot express an option the chosen MA reads (ema's adjust, ...); run natively
+    # TA-Lib has no hma, rma, zlma, ..., nor an option the chosen MA reads (ema's
+    # adjust, ...); run natively instead of failing in tal_ma() or ignoring it
     ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
-    if Imports["talib"] and mode_talib and not ma_kwargs:
+    if Imports["talib"] and mode_talib and mamode in _TAL_MA_TYPES and not ma_kwargs:
         from talib import APO
 
         apo = APO(close, fast, slow, tal_ma(mamode))
