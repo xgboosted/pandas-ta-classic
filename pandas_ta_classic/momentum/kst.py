@@ -9,12 +9,13 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, nan_on_short_input
 
 from .roc import roc
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 def kst(
     close: Series,
     roc1: int | None = None,

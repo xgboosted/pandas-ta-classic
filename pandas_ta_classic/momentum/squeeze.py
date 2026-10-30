@@ -1,4 +1,5 @@
 # Squeeze (SQUEEZE)
+import warnings
 from typing import Any
 
 import numpy as np
@@ -141,7 +142,11 @@ def squeeze(
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
 
     # Calculate Result
-    bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
+    # Only the bands are read here; bbands' warning about a non-positive middle
+    # line concerns its bandwidth column, which this indicator does not return (#345).
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=r"bbands\(\) reads NaN", category=UserWarning)
+        bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
     kch = kc(high, low, close, length=kc_length, scalar=kc_scalar, mamode=mamode, tr=use_tr)
     if bbd is None or kch is None:
         return None

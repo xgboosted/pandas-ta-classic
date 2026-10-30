@@ -1,4 +1,3 @@
-import importlib
 import importlib.util
 import logging
 import os
@@ -12,19 +11,50 @@ from pandas_ta_classic import AnalysisIndicators
 
 logger = logging.getLogger(__name__)
 
+# The names bind() has bound. Binding one again (an edited file imported again)
+# is allowed; any other name the package or df.ta already has is refused.
+_BOUND: set[str] = set()
+
+
+def _taken_by(name):
+    """What *name* already is in pandas_ta_classic or on df.ta, or None when it is free.
+
+    A custom file named like a built-in indicator replaced ta.rsi, df.ta.rsi()
+    and rsi in strategy() without a word, while stochrsi and ta.momentum.rsi
+    kept the built-in; one named Category.py replaced ta.Category and made
+    import_dir() fail halfway (#342).
+    """
+    if name in _BOUND:
+        return None
+    if any(name in names for names in pandas_ta_classic.Category.values()):
+        return "a built-in indicator"
+    if hasattr(pandas_ta_classic, name):
+        return "an attribute of pandas_ta_classic"
+    if hasattr(AnalysisIndicators, name):
+        return "an attribute of df.ta"
+    return None
+
 
 def bind(function_name, function, method):
     """
     Helper function to bind the function and class method defined in a custom
     indicator module to the active pandas_ta_classic instance.
 
+    A name that pandas_ta_classic or df.ta already has (a built-in indicator,
+    Category, strategy, ...) raises ValueError, unless an earlier bind() bound
+    it, so an edited indicator can be bound again.
+
     Args:
         function_name (str): The name of the indicator within pandas_ta_classic
         function (fcn): The indicator function
         method (fcn): The class method corresponding to the passed function
     """
+    taken = _taken_by(function_name)
+    if taken is not None:
+        raise ValueError(f"bind() function_name {function_name!r} is already {taken}; give the custom indicator a name of its own")
     setattr(pandas_ta_classic, function_name, function)
     setattr(AnalysisIndicators, function_name, method)
+    _BOUND.add(function_name)
 
 
 def create_dir(path, create_categories=True, verbose=True):
@@ -126,6 +156,12 @@ def _load_module(module_path, category_dir, added_paths, replaced_modules):
                 f"custom indicator '{module_path}' cannot be imported as '{module_name}': that name already resolves to "
                 f"{origin or spec}. Rename the file and its two functions."
             )
+    taken = _taken_by(module_name)
+    if taken is not None:
+        raise ImportError(
+            f"custom indicator '{module_path}' cannot be bound as '{module_name}': that name is already {taken}. "
+            "Rename the file and its two functions."
+        )
 
     if category_dir not in sys.path:
         sys.path.append(category_dir)
@@ -201,9 +237,10 @@ def import_dir(path, verbose=True):
         raise
 
     for module, dirname, module_name, function, method in loaded:
+        # bind() first: it reads Category to tell a built-in name from a free one.
+        bind(module_name, function, method)
         if module_name not in pandas_ta_classic.Category[dirname]:
             pandas_ta_classic.Category[dirname].append(module_name)
-        bind(module_name, function, method)
         if verbose:
             logger.info(
                 "Successfully imported the custom indicator '%s' into category '%s'.",
@@ -254,8 +291,10 @@ sub-folders for all available indicator categories, e.g.:
 ones from pandas_ta_classic core module and modifying them.
 
 IMPORTANT: Each custom indicator needs a unique name, which must not be the
-name of a stdlib or installed module either (import_dir raises ImportError
-otherwise), and must have both
+name of a built-in indicator, of anything else pandas_ta_classic or df.ta
+already has (Category, strategy, ...), or of a stdlib or installed module
+(import_dir raises ImportError otherwise; an indicator that an earlier
+import_dir bound may be imported again), and must have both
 a) a function named exactly as the module, e.g. 'ni' if the module is ni.py
 b) a matching method used by AnalysisIndicators named as the module but
    ending with '_method'. E.g. 'ni_method'
@@ -288,27 +327,3 @@ designated indicators directory like this:
 If your custom indicator(s) loaded successfully then it should behave exactly
 like all other native indicators in pandas_ta_classic, including help functions.
 """
-
-
-def load_indicator_module(name):
-    """
-     Helper function to (re)load an indicator module.
-
-    Returns:
-        dict: module functions mapping
-        {
-            "func1_name": func1,
-            "func2_name": func2,...
-        }
-
-    """
-    # load module
-    try:
-        module = importlib.import_module(name)
-    except Exception as ex:
-        # user module code can raise anything; this used to sys.exit(1) and kill the caller's interpreter
-        raise ImportError(f"Unable to load the custom indicator module '{name}': {ex}") from ex
-
-    # reload to refresh previously loaded module
-    module = importlib.reload(module)
-    return get_module_functions(module)

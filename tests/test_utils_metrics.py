@@ -101,13 +101,14 @@ class TestUtilityMetrics(TestCase):
         self.assertEqual(with_nan, pandas_ta.utils.volatility(self.close))
 
     def test_drawdown(self):
-        result = pandas_ta.drawdown(self.pctret)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "DD")
-
-        result = pandas_ta.drawdown(self.logret)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "DD")
+        # A return series is not a price: its percent and log drawdown read NaN
+        # where it is at or below zero, with one warning (#345).
+        for returns in (self.pctret, self.logret):
+            with self.assertWarnsRegex(UserWarning, r"^drawdown\(\) reads NaN on \d+ bar\(s\) whose price is at or below zero"):
+                result = pandas_ta.drawdown(returns)
+            self.assertIsInstance(result, DataFrame)
+            self.assertEqual(result.name, "DD")
+            self.assertTrue(result["DD_PCT"][returns <= 0].isna().all())
 
     def test_jensens_alpha(self):
         bench_return = self.pctret.sample(n=self.close.shape[0], random_state=1)

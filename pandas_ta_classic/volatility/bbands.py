@@ -14,7 +14,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _nan_where_not_positive, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):
@@ -59,7 +59,7 @@ def bbands(
     # Validate arguments
     length = _pos_int(length, 5, "length", gt=1)
     std = _pos_float(std, 2.0, "std")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
@@ -73,11 +73,11 @@ def bbands(
 
     # Calculate Result
     # TA-Lib cannot express a non-default ddof, nor an option the chosen moving
-    # average reads (sma's min_periods, ema's adjust); run natively instead of
-    # ignoring it.
+    # average reads (sma's min_periods, ema's adjust), nor hma, rma, zlma, ...;
+    # run natively instead of ignoring it or failing in tal_ma().
     # The accessor's own options (append, col_names, prefix) are not for the MA.
     ma_options = set(kwargs) & _MA_OPTIONS.get(mamode, frozenset())
-    if Imports["talib"] and mode_talib and ddof == 0 and not ma_options:
+    if Imports["talib"] and mode_talib and ddof == 0 and not ma_options and mamode in _TAL_MA_TYPES:
         from talib import BBANDS
 
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))
@@ -104,6 +104,8 @@ def bbands(
     # before the width and percent divide on it.
     ulr = ulr.where(~degenerate_zero(ulr), 0.0)
     bandwidth = 100 * ulr / mid
+    # A percent of the middle line: NaN where it is at or below zero, with one warning (#345)
+    (bandwidth,) = _nan_where_not_positive("bbands", mid, bandwidth)
     percent = ((close - lower) / ulr.where(ulr != 0)).mask(ulr == 0, 0.0)
 
     # Offset

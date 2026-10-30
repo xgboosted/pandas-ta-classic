@@ -234,7 +234,7 @@ The full list, with what enforces each rule, is in the "Correctness Rules" secti
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
 - **Docstring `Default:` values match the code** (`tests/test_docstring_defaults.py` checks this).
-- **Deprecate in a released version before removing** (0.9.0 is the exception: it ships no deprecation, so its renames and removals raise at once), and start any changelog fragment that changes results or starts raising with **BREAKING**.
+- **Remove or rename at once, with no deprecation step:** a removed or renamed parameter raises `TypeError` naming it, a removed attribute raises `AttributeError` naming its replacement (AGENTS.md rule 11). Start any changelog fragment that changes results or starts raising with **BREAKING**.
 - **Prove refactors change nothing**: compare hashed indicator output before and after.
 
 ### 5. Git Workflow
