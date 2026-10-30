@@ -23,18 +23,24 @@ def dema(
     length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
+    # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
+    fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mode_talib = _bool_param(talib, False, "talib")
+    # ema's options, forwarded to both ema() of the chain, as tema does; TA-Lib
+    # cannot express them. dema accepted and ignored them (#340).
+    adjust = _bool_param(kwargs.get("adjust"), False, "adjust")
+    seed_sma = _bool_param(kwargs.get("sma"), True, "sma")
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and mode_talib and not adjust and seed_sma:
         from talib import DEMA
 
         dema = DEMA(close, length)
     else:
-        emas = _ema_chain(close, length, 2)
+        emas = _ema_chain(close, length, 2, **kwargs)
         if emas is None or len(emas) < 2:
             return None
         ema1, ema2 = emas[0], emas[1]
@@ -42,7 +48,7 @@ def dema(
 
     # Offset
     dema = apply_offset(dema, offset)
-    dema = apply_fill(dema, **kwargs)
+    dema = apply_fill(dema, **fill_kwargs)
 
     # Name & Category
     dema.name = f"DEMA_{length}"
@@ -76,6 +82,8 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
+    adjust (bool): ema's adjust, for both EMAs. Default: False
+    sma (bool): ema's sma seed, for both EMAs. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

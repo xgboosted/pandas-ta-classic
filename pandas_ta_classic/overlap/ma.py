@@ -46,6 +46,25 @@ _MA_DISPATCH = {
     "zlma": zlma,
 }
 
+# The options each moving average of ma() reads besides length, for the indicators
+# that hand them on to the MA they smooth with (bbands, kc, apo, ppo);
+# test_talib_parameters checks them against the MAs' signatures and **kwargs reads. Per MA, because a
+# strategy-wide drift reaches every indicator and only vidya reads it.
+_MA_OPTIONS = {
+    "dema": frozenset({"adjust", "sma"}),
+    "ema": frozenset({"adjust", "sma"}),
+    "fwma": frozenset({"asc"}),
+    "linreg": frozenset({"angle", "degrees", "intercept", "r", "slope", "tsf"}),
+    "midpoint": frozenset({"min_periods"}),
+    "pwma": frozenset({"asc"}),
+    "sma": frozenset({"min_periods"}),
+    "swma": frozenset({"asc"}),
+    "t3": frozenset({"a", "adjust", "sma"}),
+    "tema": frozenset({"adjust", "sma"}),
+    "vidya": frozenset({"drift"}),
+    "wma": frozenset({"asc"}),
+}
+
 
 @nan_on_short_input
 def ma(name: str | None = None, source: Series | None = None, **kwargs: Any) -> Series | None:
