@@ -46,8 +46,8 @@ def msw(
         sine_arr, lead_arr = _msw_native(np.array(close, dtype=float), period)
 
     # A window holding a missing bar has no phase, on either path: the DFT sums
-    # turn NaN, `abs(rp) > 0.001` reads False and the fallback invented a phase
-    # of +-pi, publishing sine -1.0 and lead -0.707 for every such window.
+    # turn NaN, and tulipy's `abs(rp) > 0.001` reads False there, so its fallback
+    # invented a phase of +-pi, publishing sine -1.0 and lead -0.707.
     gap = np.isnan(close.to_numpy(dtype=float))
     if gap.any():
         in_window = np.convolve(gap, np.ones(period), "full")[: gap.size] > 0
@@ -94,10 +94,14 @@ def _msw_native(arr: np.ndarray, period: int, pi: float = np.pi):
         rp = float(np.dot(window, cos_arr))
         ip = float(np.dot(window, sin_arr))
 
-        if abs(rp) > 0.001:
+        # Tulip's `abs(rp) > 0.001` test decided the phase in price units, so at
+        # small prices it bound on most bars, and its fallback of +-pi is a
+        # quarter-turn off the limit of arctan(ip / rp), +-pi/2 (#346). Only an
+        # exact zero needs the limit; every other rp keeps Tulip's arithmetic.
+        if rp != 0.0:
             phase = np.arctan(ip / rp)
         else:
-            phase = (tpi / 2.0) * (-1.0 if ip < 0 else 1.0)
+            phase = (pi / 2.0) * (-1.0 if ip < 0 else 1.0)
 
         if rp < 0.0:
             phase += pi
@@ -131,7 +135,9 @@ Args:
 
 Kwargs:
     tulipy (bool): Use tulipy's msw when it is installed. tulipy truncates pi to
-        3.1415926, so values differ from the default by up to 3e-4. Default: False
+        3.1415926, so values differ from the default by up to 3e-4, and it keeps
+        Tulip's absolute 0.001 test on the real part of the DFT, which decides
+        the phase at small prices. Default: False
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 
