@@ -54,6 +54,11 @@ class TestCustom(TestCase):
         mod = types.ModuleType("empty")
         self.assertEqual(get_module_functions(mod), {})
 
+    def test_load_indicator_module_is_removed(self):
+        """It (re)loaded a module with importlib.reload(); import_dir() stopped
+        calling it when it began loading each file as a new module (#334)."""
+        self.assertFalse(hasattr(pandas_ta_classic.custom, "load_indicator_module"))
+
     # ------------------------------------------------------------------
     # create_dir
     # ------------------------------------------------------------------
