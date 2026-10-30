@@ -54,7 +54,7 @@ class TestTulipyOracle(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-        df.drop(columns=["Unnamed: 0"], errors="ignore", inplace=True)
+        df = df.drop(columns=["Unnamed: 0"], errors="ignore")
         df.columns = df.columns.str.lower()
         cls.idx = df.index
         cls.open = df["open"]
@@ -82,16 +82,20 @@ class TestTulipyOracle(unittest.TestCase):
         """Return the frozen tulipy array for *name*."""
         return self.oracle[name]
 
-    def _compare(self, pt_series, tp_arr, tol=1e-6, name=""):
+    def _compare(self, pt_series, tp_arr, tol=1e-6, name="", known=()):
         """Assert max abs diff <= tol on the last 2000 common bars.
 
         The frozen oracle array is tail-trimmed; align it to the tail of the
-        full date index before comparing.
+        full date index before comparing. *known* holds the positions of bars
+        that differ by design; each must still differ, so the list cannot go stale.
         """
         arr = np.asarray(tp_arr)
         tp_s = pd.Series(arr, index=self.idx[-len(arr) :])
         both = pt_series.dropna().index.intersection(tp_s.index)
         self.assertGreater(len(both), 50, f"{name}: too few common non-NaN values ({len(both)})")
+        for label in self.idx[list(known)]:
+            self.assertGreater(abs(pt_series.loc[label] - tp_s.loc[label]), tol, f"{name}: known difference at {label} is gone")
+        both = both.difference(self.idx[list(known)])
         tail = both[-min(2000, len(both)) :]
         diff = np.abs(pt_series.loc[tail].values - tp_s.loc[tail].values)
         self.assertLess(diff.max(), tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}")
@@ -264,19 +268,9 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_fosc(self):
-        # FOSC implementations differ by design; enforce that divergence remains
-        # measurable so we do not silently claim oracle equality.
-        pt = ta.fosc(self.close, length=14)
-        tp_arr = self._oracle("fosc")
-        tp_s = pd.Series(np.asarray(tp_arr), index=self.idx[-len(tp_arr) :])
-        both = pt.dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"FOSC: too few common values ({len(both)})")
-        diff = np.abs(pt.loc[both].values - tp_s.loc[both].values)
-        self.assertGreater(
-            diff.max(),
-            0.1,
-            f"FOSC: expected divergence not observed (max={diff.max():.4e})",
-        )
+        # Tulip forecasts this bar with the previous bar's TSF, as TA-Lib does; fosc
+        # used the same bar's TSF, which made it equal cfo, until #344.
+        self._compare(ta.fosc(self.close, length=14), self._oracle("fosc"), name="FOSC")
 
     def test_trix(self):
         # EMA-seed divergence results in ~6.2e-3 diff; converges over the full
@@ -437,7 +431,7 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_fosc_stat(self):
-        # Same expected divergence as test_fosc; separate test kept for grouping.
+        # The same comparison as test_fosc; separate test kept for grouping.
         self.test_fosc()
 
     # ------------------------------------------------------------------
@@ -456,22 +450,29 @@ class TestTulipyOracle(unittest.TestCase):
     # Market Swing Wave (MSW / Mesa Sine Wave)
     # ------------------------------------------------------------------
 
+    # Tulip decides the phase with `abs(rp) > 0.001`, in price units, and falls
+    # back to +-pi; native msw uses the limit of arctan(ip / rp) instead (#346).
+    # On SPY_D, |rp| <= 0.001 on these two bars only (rp = -4.5e-4 and -2.8e-4).
+    _MSW_THRESHOLD_BARS = (3793, 4208)
+
     def test_msw_sine(self):
         # tulipy truncates pi to 3.1415926, so the exact native formula differs from the
         # oracle by up to ~3e-4 (not numpy drift, as this comment used to say).
         pt = ta.msw(self.close, period=5)
-        self._compare(pt.iloc[:, 0], self._oracle("msw_sine"), tol=1e-3, name="MSW_sine")
+        self._compare(pt.iloc[:, 0], self._oracle("msw_sine"), tol=1e-3, name="MSW_sine", known=self._MSW_THRESHOLD_BARS)
 
     def test_msw_lead(self):
         pt = ta.msw(self.close, period=5)
-        self._compare(pt.iloc[:, 1], self._oracle("msw_lead"), tol=1e-3, name="MSW_lead")
+        self._compare(pt.iloc[:, 1], self._oracle("msw_lead"), tol=1e-3, name="MSW_lead", known=self._MSW_THRESHOLD_BARS)
 
     def test_msw_divergence_is_tulipys_pi(self):
-        """With tulipy's pi constant the native loop reproduces the oracle exactly."""
+        """With tulipy's pi constant the native loop reproduces the oracle exactly,
+        except where Tulip's absolute threshold decides the phase."""
         msw_module = importlib.import_module("pandas_ta_classic.cycles.msw")
         sine, lead = msw_module._msw_native(self.close.to_numpy(dtype=float), 5, pi=3.1415926)
-        self._compare(pd.Series(sine, index=self.close.index), self._oracle("msw_sine"), tol=1e-12, name="MSW_sine_tulipy_pi")
-        self._compare(pd.Series(lead, index=self.close.index), self._oracle("msw_lead"), tol=1e-12, name="MSW_lead_tulipy_pi")
+        known = self._MSW_THRESHOLD_BARS
+        self._compare(pd.Series(sine, index=self.close.index), self._oracle("msw_sine"), tol=1e-12, name="MSW_sine_tulipy_pi", known=known)
+        self._compare(pd.Series(lead, index=self.close.index), self._oracle("msw_lead"), tol=1e-12, name="MSW_lead_tulipy_pi", known=known)
 
     # ------------------------------------------------------------------
     # New indicators (added with tulipy wrapper layer)

@@ -253,7 +253,7 @@ Other candle indicators:
 * *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern. ``full=True`` switches the rolling window for an anchored (expanding) one
 
 .. note::
-   **TA-Lib and core indicators**: For 66 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
+   **TA-Lib and core indicators**: For 72 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
 
    .. code-block:: python
 
@@ -263,15 +263,17 @@ Other candle indicators:
        # Use TA-Lib implementation if installed
        ema = df.ta.ema(length=20, talib=True)
 
-       # Indicators with TA-Lib passthrough (66):
+       # Indicators with TA-Lib passthrough (72):
        # ad, adosc, adx, adxr, apo, aroon, atr, avgprice, bbands, bop,
-       # cci, cmo, dema, dm, dx, ema, hl2, hlc3, ht_dcperiod, ht_dcphase,
-       # ht_phasor, ht_sine, ht_trendline, ht_trendmode, kama, macd,
-       # macdext, macdfix, mama, mavp, medprice, mfi, midpoint, midprice,
-       # minus_dm, mom, natr, obv, ohlc4, plus_dm, ppo, psar, roc, rocp,
-       # rocr, rocr100, rolling_max, rolling_min, rolling_sum, rsi,
-       # sarext, sma, stdev, stoch, stochf, stochrsi, t3, tema, trima,
-       # true_range, typprice, uo, variance, wcp, willr, wma
+       # cci, cmo, dema, dm, dx, ema, hl2, hlc3, ht_dcperiod,
+       # ht_dcphase, ht_phasor, ht_sine, ht_trendline, ht_trendmode,
+       # kama, linreg, linregangle, linregintercept, linregslope, macd,
+       # macdext, macdfix, mama, mavp, medprice, mfi, midpoint,
+       # midprice, minus_dm, mom, natr, obv, ohlc4, plus_dm, ppo, psar,
+       # roc, rocp, rocr, rocr100, rolling_max, rolling_min,
+       # rolling_sum, rsi, sarext, sma, stdev, stoch, stochf, stochrsi,
+       # t3, tema, trima, trix, true_range, tsf, typprice, uo, variance,
+       # wcp, willr, wma
 
    ``talib=True`` calls TA-Lib only while every parameter TA-Lib cannot
    express is at its default (``scalar``, ``drift``, ``mamode``, ``ddof``,
@@ -405,7 +407,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Efficiency Ratio*: **er**
 * *Elder Ray Index*: **eri**
 * *Fisher Transform*: **fisher**
-* *Forecast Oscillator*: **fosc**
+* *Forecast Oscillator*: **fosc** (the close against the previous bar's TSF, as TA-Lib ``FOSC``; ``cfo`` uses the same bar's TSF)
 * *Inertia*: **inertia**
 * *KDJ*: **kdj**
 * *KST Oscillator*: **kst**
@@ -539,7 +541,7 @@ Trend identification and direction indicators:
 * *Central Pivot Range*: **cpr** (pivot methods ``classic``, ``camarilla``, ``fibonacci``, ``woodie``; ``timeframe`` ``daily`` uses the previous bar, ``intraday``/``weekly``/``monthly`` the last completed calendar day, week or month)
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
-* *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
+* *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering; the uncentered line equals TA-Lib ``DPO``, the price ``length // 2 + 1`` bars ago less the SMA)
 * *Directional Index*: **dx**
 * *Exponential Decay*: **edecay** (multiplicative exponential decay; equivalent to tulipy ``edecay``)
 * *Increasing*: **increasing**
@@ -596,12 +598,12 @@ Volume analysis indicators:
 * *Klinger Volume Oscillator*: **kvo**
 * *Market Facilitation Index*: **marketfi**
 * *Money Flow Index*: **mfi**
-* *Negative Volume Index*: **nvi**
+* *Negative Volume Index*: **nvi** (multiplicative, from ``initial``, as TA-Lib ``NVI``)
 * *On-Balance Volume*: **obv**
-* *Positive Volume Index*: **pvi**
+* *Positive Volume Index*: **pvi** (multiplicative, from ``initial``, as TA-Lib ``PVI``)
 * *Price-Volume*: **pvol**
 * *Price Volume Rank*: **pvr**
-* *Price Volume Trend*: **pvt**
+* *Price Volume Trend*: **pvt** (the fractional change times volume, accumulated, as TA-Lib ``PVT``)
 * *Volume Flow Indicator*: **vfi** (``vfi(high, low, close, volume)``, Katsanos' definition; it takes ``high`` and ``low`` since 0.9.0)
 * *Volume Oscillator*: **vosc**
 * *Volume Profile*: **vp**

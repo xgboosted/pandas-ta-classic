@@ -47,7 +47,7 @@ def _to_list(arr):
 
 def main():
     df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df.drop(columns=["Unnamed: 0"], errors="ignore", inplace=True)
+    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
     df.columns = df.columns.str.lower()
     o = df["open"].to_numpy(dtype=np.float64)
     h = df["high"].to_numpy(dtype=np.float64)

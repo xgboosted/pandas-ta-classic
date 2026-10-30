@@ -54,6 +54,11 @@ class TestCustom(TestCase):
         mod = types.ModuleType("empty")
         self.assertEqual(get_module_functions(mod), {})
 
+    def test_load_indicator_module_is_removed(self):
+        """It (re)loaded a module with importlib.reload(); import_dir() stopped
+        calling it when it began loading each file as a new module (#334)."""
+        self.assertFalse(hasattr(pandas_ta_classic.custom, "load_indicator_module"))
+
     # ------------------------------------------------------------------
     # create_dir
     # ------------------------------------------------------------------
@@ -105,10 +110,7 @@ class TestCustom(TestCase):
             self.assertIs(getattr(pandas_ta_classic, func_name), _dummy_func)
             self.assertTrue(hasattr(AnalysisIndicators, func_name))
         finally:
-            if hasattr(pandas_ta_classic, func_name):
-                delattr(pandas_ta_classic, func_name)
-            if hasattr(AnalysisIndicators, func_name):
-                delattr(AnalysisIndicators, func_name)
+            self._unload(func_name)
 
     # ------------------------------------------------------------------
     # import_dir
@@ -145,14 +147,7 @@ class TestCustom(TestCase):
             self.assertTrue(hasattr(pandas_ta_classic, func_name))
             self.assertIn(func_name, pandas_ta_classic.Category["momentum"])
         finally:
-            if hasattr(pandas_ta_classic, func_name):
-                delattr(pandas_ta_classic, func_name)
-            if hasattr(AnalysisIndicators, func_name):
-                delattr(AnalysisIndicators, func_name)
-            if func_name in pandas_ta_classic.Category.get("momentum", []):
-                pandas_ta_classic.Category["momentum"].remove(func_name)
-            if cat_dir in sys.path:
-                sys.path.remove(cat_dir)
+            self._unload(func_name, cat_dir)
             if func_name in sys.modules:
                 del sys.modules[func_name]
 
@@ -239,6 +234,47 @@ class TestCustom(TestCase):
             if cat_dir in sys.path:
                 sys.path.remove(cat_dir)
         sys.modules.pop(name, None)
+        pandas_ta_classic.custom._BOUND.discard(name)
+
+    def test_import_dir_refuses_a_name_the_package_already_has(self):
+        """momentum/rsi.py replaced ta.rsi, df.ta.rsi() and rsi in strategy() without a
+        word, while stochrsi kept the built-in; Category.py replaced ta.Category and
+        made import_dir() fail halfway (#342)."""
+        rsi, category = pandas_ta_classic.rsi, pandas_ta_classic.Category
+        for name, owner in (("rsi", "a built-in indicator"), ("Category", "an attribute of pandas_ta_classic"), ("strategy", "an attribute of df.ta")):
+            base = tempfile.mkdtemp(dir=self.tmpdir)
+            cat_dir = os.path.join(base, "momentum")
+            self._write_indicator(cat_dir, name, 2)
+            with self.subTest(name=name), self.assertRaisesRegex(ImportError, rf"cannot be bound as '{name}': that name is already {owner}\. Rename"):
+                import_dir(base, verbose=False)
+            self.assertNotIn(cat_dir, sys.path)
+        self.assertIs(pandas_ta_classic.rsi, rsi)
+        self.assertIs(pandas_ta_classic.Category, category)
+        self.assertEqual(pandas_ta_classic.Category["momentum"].count("rsi"), 1)
+
+    def test_bind_refuses_a_name_the_package_already_has(self):
+        def _dummy(close):
+            return close
+
+        for name, owner in (("sma", "a built-in indicator"), ("Category", "an attribute of pandas_ta_classic"), ("cores", "an attribute of df.ta")):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, rf"^bind\(\) function_name '{name}' is already {owner}"):
+                bind(name, _dummy, _dummy)
+        self.assertIsNot(pandas_ta_classic.sma, _dummy)
+
+    def test_a_name_bind_bound_can_be_bound_again(self):
+        def _first(close):
+            return close
+
+        def _second(close):
+            return close * 2
+
+        name = "_test_bind_twice_"
+        try:
+            bind(name, _first, _first)
+            bind(name, _second, _second)
+            self.assertIs(getattr(pandas_ta_classic, name), _second)
+        finally:
+            self._unload(name)
 
     def test_import_dir_rejects_a_stdlib_module_name(self):
         # trend/statistics.py used to reload the stdlib statistics module and then

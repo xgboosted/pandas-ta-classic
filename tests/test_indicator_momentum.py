@@ -55,7 +55,7 @@ class TestMomentum(TestCase):
 
         # Test a non-datetime64 index
         original = self.data.copy()
-        original.reset_index(inplace=True)
+        original = original.reset_index()
         result = original.ta.datetime_ordered
         self.assertFalse(result)
 
@@ -805,20 +805,14 @@ class TestMomentum(TestCase):
         self.assertEqual(first, {"STC_10_12_26_0.5": 43, "STCmacd_10_12_26_0.5": 25, "STCstoch_10_12_26_0.5": 34})
         self.assertFalse(result.iloc[43:].isna().any().any())
 
-    def test_stc_short_series_through_kwargs_is_all_nan(self):
-        # nan_on_short_input replaced only the declared Series parameters when
-        # probing, so a short Series arriving through **kwargs kept the
-        # caller's rows in the probe: it failed for the same reason the real
-        # call did and None came back instead of an all-NaN frame.
-        columns = list(pandas_ta.stc(self.close).columns)
+    def test_stc_short_series_through_kwargs_raises(self):
+        # A series shorter than close does not share its index: it used to read
+        # all-NaN here, a longer one failed inside pandas, and a shifted one was
+        # aligned by label in one column and by position in the others (#341).
         ma1, ma2 = pandas_ta.ema(self.close, length=12), pandas_ta.ema(self.close, length=26)
-        for kwargs in ({"osc": (ma1 - ma2).iloc[:5]}, {"ma1": ma1.iloc[:5], "ma2": ma2.iloc[:5]}):
-            with self.subTest(kwargs=sorted(kwargs)):
-                short = pandas_ta.stc(self.close, **kwargs)
-                self.assertIsInstance(short, DataFrame)
-                self.assertEqual(list(short.columns), columns)
-                self.assertEqual(len(short), len(self.close))
-                self.assertTrue(short.isna().all().all())
+        for kwargs, key in (({"osc": (ma1 - ma2).iloc[:5]}, "osc"), ({"ma1": ma1.iloc[:5], "ma2": ma2.iloc[:5]}, "ma1")):
+            with self.subTest(kwargs=sorted(kwargs)), self.assertRaisesRegex(ValueError, rf"^stc\(\) {key} must have the same index as close: {key} has 5 rows"):
+                pandas_ta.stc(self.close, **kwargs)
 
     def test_stc_external_series(self):
         traditional = pandas_ta.stc(self.close)
