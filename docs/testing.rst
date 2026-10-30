@@ -412,8 +412,9 @@ Running All Tests
 
 **Warnings are errors.** ``[tool.pytest.ini_options] filterwarnings`` in
 ``pyproject.toml`` turns any ``UserWarning``, ``DeprecationWarning`` or
-``FutureWarning`` raised from ``pandas_ta_classic`` into a test failure. 0.9.0
-ships no deprecation, and a deprecated pandas or numpy call made from the
+``FutureWarning`` raised from ``pandas_ta_classic`` into a test failure. The
+package ships no deprecation warnings (a removal raises at once), and a
+deprecated pandas or numpy call made from the
 package (such as pandas 3's ``Pandas4Warning``) fails CI instead of reaching
 users. A test that expects a warning asserts it with ``pytest.warns``.
 
