@@ -657,9 +657,13 @@ class TestImportDirWithWorkers(TestCase):
         for target in (pandas_ta, pandas_ta.AnalysisIndicators):
             if hasattr(target, self.NAME):
                 delattr(target, self.NAME)
+        for names in pandas_ta.Category.values():
+            if self.NAME in names:
+                names.remove(self.NAME)
         if cat_dir in sys.path:
             sys.path.remove(cat_dir)
         sys.modules.pop(self.NAME, None)
+        pandas_ta.custom._BOUND.discard(self.NAME)
 
     def test_workers_raise_and_a_serial_run_computes_it(self):
         with self.assertRaisesRegex(ValueError, rf"custom indicators \['{self.NAME}'\]"):
