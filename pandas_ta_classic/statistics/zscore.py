@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_zero, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -56,7 +56,7 @@ def zscore(
     zscore = apply_fill(zscore, **kwargs)
 
     # Name & Category
-    zscore.name = f"ZS_{length}"
+    zscore.name = f"ZS_{length}" + _name_tokens(("std", std, 1), ("ddof", ddof, 1))
     zscore.category = "statistics"
 
     return zscore

@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -59,7 +59,7 @@ def mcgd(
     mcg_ds = apply_fill(mcg_ds, **kwargs)
 
     # Name & Category
-    mcg_ds.name = f"MCGD_{length}"
+    mcg_ds.name = f"MCGD_{length}" + _name_tokens(("c", c, 1))
     mcg_ds.category = "overlap"
 
     return mcg_ds

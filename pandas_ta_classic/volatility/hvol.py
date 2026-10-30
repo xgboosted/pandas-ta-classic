@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
@@ -38,7 +38,7 @@ def hvol(
     hvol_ = apply_fill(hvol_, **kwargs)
 
     # Name and Categorize it
-    hvol_.name = f"HVOL_{length}"
+    hvol_.name = f"HVOL_{length}" + _name_tokens(("annualization", annualization, 252))
     hvol_.category = "volatility"
 
     return hvol_

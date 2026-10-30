@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
 
 from .midprice import midprice
 
@@ -62,8 +62,8 @@ def ichimoku(
     tenkan_sen, kijun_sen, span_a, span_b, chikou_span = apply_fill([tenkan_sen, kijun_sen, span_a, span_b, chikou_span], **kwargs)
 
     # Name and Categorize it
-    span_a.name = f"ISA_{tenkan}"
-    span_b.name = f"ISB_{kijun}"
+    span_a.name = f"ISA_{tenkan}" + _name_tokens(("kijun", kijun, 26))
+    span_b.name = f"ISB_{kijun}" + _name_tokens(("senkou", senkou, 52))
     tenkan_sen.name = f"ITS_{tenkan}"
     kijun_sen.name = f"IKS_{kijun}"
     chikou_span.name = f"ICS_{kijun}"

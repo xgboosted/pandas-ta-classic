@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -54,7 +54,7 @@ def entropy(
     entropy = apply_fill(entropy, **kwargs)
 
     # Name & Category
-    entropy.name = f"ENTP_{length}"
+    entropy.name = f"ENTP_{length}" + _name_tokens(("base", base, 2.0))
     entropy.category = "statistics"
 
     return entropy

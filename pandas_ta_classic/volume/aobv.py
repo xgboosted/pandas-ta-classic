@@ -7,7 +7,7 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _str_param, nan_on_short_input, skip_leading_nan
 
 from .obv import obv
 
@@ -80,8 +80,9 @@ def aobv(
         f"OBV_max_{max_lookback}": obv_max,
         f"OBV{_mode}_{fast}": maf,
         f"OBV{_mode}_{slow}": mas,
-        f"AOBV_LR_{run_length}": obv_long,
-        f"AOBV_SR_{run_length}": obv_short,
+        # The runs compare the fast and the slow MA, so their periods name them too.
+        f"AOBV_LR_{run_length}" + _name_tokens(("fast", fast, 4), ("slow", slow, 12)): obv_long,
+        f"AOBV_SR_{run_length}" + _name_tokens(("fast", fast, 4), ("slow", slow, 12)): obv_short,
     }
     aobvdf = DataFrame(data)
 

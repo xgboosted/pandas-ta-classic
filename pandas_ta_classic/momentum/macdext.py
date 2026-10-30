@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
 
 # TA-Lib MA type integer → string kind for the native path. KAMA (6) and
 # MAMA (7) have no native equivalent here; they need TA-Lib.
@@ -97,7 +97,9 @@ def macdext(
     macd_series, signal_series, histogram_series = apply_fill([macd_series, signal_series, histogram_series], **kwargs)
 
     # Name and Categorize
-    _params = f"_{fast}_{slow}_{signal}"
+    _params = f"_{fast}_{slow}_{signal}" + _name_tokens(
+        ("fastmatype", fastmatype, 1), ("slowmatype", slowmatype, 1), ("signalmatype", signalmatype, 1)
+    )
     macd_series.name = f"MACDEXT{_params}"
     signal_series.name = f"MACDEXTs{_params}"
     histogram_series.name = f"MACDEXTh{_params}"

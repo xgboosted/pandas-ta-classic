@@ -571,7 +571,8 @@ class TestSignalGaps(TestCase):
     @staticmethod
     def _check(result: pd.DataFrame, without_gaps: pd.DataFrame, is_observed: np.ndarray) -> None:
         np.testing.assert_array_equal(result.to_numpy()[is_observed], without_gaps.to_numpy())
-        assert (result["TS_Trades"].to_numpy()[~is_observed] == 0).all()
+        # TS_Trades, by position: a non-default above/long adds its token to the name (#343)
+        assert (result.iloc[:, 1].to_numpy()[~is_observed] == 0).all()
 
     # Gaps after the first bar: a leading NaN run means "no position yet" and,
     # unchanged, gives an entry on the first known uptrend bar.

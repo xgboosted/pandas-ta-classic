@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -38,7 +38,7 @@ def _hwc_loop(c_arr, m, na, nb, nc, nd, scalar):
     return result_arr, upper_arr, lower_arr
 
 
-def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval):
+def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval, _props):
     """Assemble and name the HWC result DataFrame.
 
     Args:
@@ -48,24 +48,25 @@ def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval):
         width_s (Series | None): Channel width (only when *channel_eval* is True).
         pctwidth_s (Series | None): Percent width (only when *channel_eval* is True).
         channel_eval (bool): Whether to include width / pctwidth columns.
+        _props (str): Name tokens of the non-default smoothing factors.
 
     Returns:
         DataFrame: Named HWC result frame.
     """
-    hwc_s.name = "HWM"
-    upper_s.name = "HWU"
-    lower_s.name = "HWL"
+    hwc_s.name = f"HWM{_props}"
+    upper_s.name = f"HWU{_props}"
+    lower_s.name = f"HWL{_props}"
     hwc_s.category = upper_s.category = lower_s.category = "volatility"
 
     data = {hwc_s.name: hwc_s, upper_s.name: upper_s, lower_s.name: lower_s}
     if channel_eval:
-        width_s.name = "HWW"
-        pctwidth_s.name = "HWPCT"
+        width_s.name = f"HWW{_props}"
+        pctwidth_s.name = f"HWPCT{_props}"
         data[width_s.name] = width_s
         data[pctwidth_s.name] = pctwidth_s
 
     df = DataFrame(data)
-    df.name = "HWC"
+    df.name = f"HWC{_props}"
     df.category = hwc_s.category
     return df
 
@@ -128,7 +129,8 @@ def hwc(
     if channel_eval:
         hwc_width, hwc_pctwidth = apply_fill([hwc_width, hwc_pctwidth], **kwargs)
 
-    return _hwc_build_df(hwc_s, hwc_upper, hwc_lower, hwc_width, hwc_pctwidth, channel_eval)
+    _props = _name_tokens(("na", na, 0.2), ("nb", nb, 0.1), ("nc", nc, 0.1), ("nd", nd, 0.1))
+    return _hwc_build_df(hwc_s, hwc_upper, hwc_lower, hwc_width, hwc_pctwidth, channel_eval, _props)
 
 
 hwc.__doc__ = """HWC (Holt-Winter Channel)

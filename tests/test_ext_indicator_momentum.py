@@ -224,11 +224,12 @@ class TestMomentumExtension(TestCase):
             ["SQZ_20_2.0_20_1.5", "SQZ_ON", "SQZ_OFF", "SQZ_NO"],
         )
 
+        # The flags of the high-low range carry its token, so they no longer overwrite the default ones (#343)
         self.data.ta.squeeze(tr=False, append=True)
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(
             list(self.data.columns[-4:]),
-            ["SQZ_ON", "SQZ_OFF", "SQZ_NO", "SQZhlr_20_2.0_20_1.5"],
+            ["SQZhlr_20_2.0_20_1.5", "SQZ_ON_usetr0", "SQZ_OFF_usetr0", "SQZ_NO_usetr0"],
         )
 
     def test_squeeze_pro_ext(self):
@@ -244,10 +245,10 @@ class TestMomentumExtension(TestCase):
         self.assertEqual(
             list(self.data.columns[-4:]),
             [
-                "SQZPRO_ON_NARROW",
-                "SQZPRO_OFF",
-                "SQZPRO_NO",
-                "SQZPROhlr_20_2.0_20_2_1.5_1",
+                "SQZPRO_ON_NORMAL_usetr0",
+                "SQZPRO_ON_NARROW_usetr0",
+                "SQZPRO_OFF_usetr0",
+                "SQZPRO_NO_usetr0",
             ],
         )
 

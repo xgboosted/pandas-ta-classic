@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, nan_on_short_input
 from pandas_ta_classic.utils._signals import _require_number, cross_value
 
 from .tsignals import _reject_trend_reset, tsignals
@@ -73,6 +73,7 @@ def xsignals(
 
     # Offset handled by tsignals
     df = apply_fill(df, **kwargs)
+    df.columns = [f"{column}{_name_tokens(('above', above, True), ('long', long, True))}" for column in df.columns]
 
     # Name & Category
     df.name = "XS"

@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -35,7 +35,7 @@ def stderr(
     stderr_ = apply_fill(stderr_, **kwargs)
 
     # Name and Categorize it
-    stderr_.name = f"STDERR_{length}"
+    stderr_.name = f"STDERR_{length}" + _name_tokens(("ddof", ddof, 1))
     stderr_.category = "statistics"
 
     return stderr_

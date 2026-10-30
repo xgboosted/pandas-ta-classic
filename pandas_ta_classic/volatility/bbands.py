@@ -14,7 +14,16 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _nan_where_not_positive, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import (
+    _TAL_MA_TYPES,
+    _bool_param,
+    _name_tokens,
+    _nan_where_not_positive,
+    _pos_float,
+    _pos_int,
+    _str_param,
+    nan_on_short_input,
+)
 
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):
@@ -114,11 +123,12 @@ def bbands(
     lower, mid, upper, bandwidth, percent = apply_fill([lower, mid, upper, bandwidth, percent], **fill_kwargs)
 
     # Name and Categorize it
-    lower.name = f"BBL_{length}_{std}"
-    mid.name = f"BBM_{length}_{std}"
-    upper.name = f"BBU_{length}_{std}"
-    bandwidth.name = f"BBB_{length}_{std}"
-    percent.name = f"BBP_{length}_{std}"
+    _props = f"_{length}_{std}" + _name_tokens(("ddof", ddof, 0))
+    lower.name = f"BBL{_props}"
+    mid.name = f"BBM{_props}"
+    upper.name = f"BBU{_props}"
+    bandwidth.name = f"BBB{_props}"
+    percent.name = f"BBP{_props}"
     upper.category = lower.category = "volatility"
     mid.category = bandwidth.category = upper.category
 
@@ -131,7 +141,7 @@ def bbands(
         percent.name: percent,
     }
     bbandsdf = DataFrame(data)
-    bbandsdf.name = f"BBANDS_{length}_{std}"
+    bbandsdf.name = f"BBANDS{_props}"
     bbandsdf.category = mid.category
 
     return bbandsdf

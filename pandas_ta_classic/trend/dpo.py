@@ -5,7 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -47,7 +47,7 @@ def dpo(
     dpo = apply_fill(dpo, **kwargs)
 
     # Name and Categorize it
-    dpo.name = f"DPO_{length}"
+    dpo.name = f"DPO_{length}" + _name_tokens(("centered", centered, True))
     dpo.category = "trend"
 
     return dpo
