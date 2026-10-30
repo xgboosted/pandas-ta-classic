@@ -203,6 +203,16 @@ Edge-Case Tests
 - ``test_parameter_validation.py`` — besides rejecting invalid values, every
   numeric default of every registered indicator is passed explicitly, as an
   int and as a float, and must name the output as the default call does.
+- ``test_parameter_name_contract.py`` — for every registered indicator, each
+  parameter that changes the values, set off its default, changes the column
+  names too, so two such calls never share a column; the parameters left out
+  of names on purpose (``scalar``, ``drift``, ``asint``, ...) are skips with
+  the reason.
+- ``test_keyword_table.py`` — every registered indicator raises
+  ``TypeError`` for a keyword it does not accept, and the table of accepted
+  keywords in ``pandas_ta_classic/utils/_keywords.py`` matches what each
+  indicator reads from ``**kwargs`` or hands on; ``df.ta``, ``Strategy``
+  entries and ``strategy()`` are covered too.
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
@@ -278,7 +288,9 @@ Custom / Plugin Tests
 **Why:** Verify the custom indicator registration system.
 
 **Files:** ``test_custom.py`` — ``ta.custom.bind()``, ``import_dir()``,
-module loading, and custom indicator discovery. ``import_dir()`` is all or
+module loading, and custom indicator discovery. Both refuse a name the
+package already has, so a custom indicator never replaces a built-in one.
+``import_dir()`` is all or
 nothing: a Hypothesis property checks that one refused file leaves
 ``pandas_ta_classic``, ``Category``, ``sys.path`` and ``sys.modules`` as they
 were.
@@ -500,8 +512,8 @@ rounding.
 
 Measured across all 423 tracked columns the worst native-vs-golden
 disagreement needs a relative term of 3.6e-15, so ``GOLDEN_RTOL`` keeps nine
-orders of margin for platform and BLAS differences across the 3.11–3.15 CI
-matrix.  Snapshot checkpoints use at most 29 % of the budget.
+orders of margin for platform and BLAS differences across the Python versions
+of the CI matrix.  Snapshot checkpoints use at most 29 % of the budget.
 
 This replaced a flat ``REL_TOL = 1e-4``, which was ~10 orders looser than the
 data required.  Concretely: perturbing the kurtosis excess-adjustment constant

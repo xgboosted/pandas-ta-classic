@@ -27,11 +27,13 @@ A trend is `True` when the condition holds, `False` otherwise. Any boolean expre
 
 ```python
 signals = df.ta.tsignals(trend(df), asbool=True, trade_offset=1)
-# signals columns: TS_Trends, TS_Trades, TS_Entries, TS_Exits
+# signals columns: TS_Trends_tradeoffset1, TS_Trades_tradeoffset1,
+#                   TS_Entries_tradeoffset1, TS_Exits_tradeoffset1
 ```
 
 - `asbool=True` — returns boolean arrays, which is what `vbt.Portfolio.from_signals()` expects.
 - `trade_offset=1` — shifts entries/exits by one bar to avoid look-ahead bias in backtesting. Use `0` for live signals.
+- A `trade_offset` other than the default `0` is part of the column names (`_tradeoffset1`), like every parameter that changes the values.
 
 **Step 3 — Run the backtest:**
 
@@ -42,8 +44,8 @@ vbt.settings.portfolio["slippage"] = 0.0025
 
 pf = vbt.Portfolio.from_signals(
     df["Close"],
-    entries=signals.TS_Entries,
-    exits=signals.TS_Exits,
+    entries=signals.TS_Entries_tradeoffset1,
+    exits=signals.TS_Exits_tradeoffset1,
 )
 
 print(pf.stats())
