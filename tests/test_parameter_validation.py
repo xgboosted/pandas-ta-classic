@@ -349,7 +349,10 @@ def _bool_kwarg_cases():
         source = inspect.getsource(inspect.getmodule(inspect.unwrap(func)))
         keys = _flags(source) | (_HELPER_FLAGS if "attach_signals(" in source else set())
         cases += [(name, key) for key in sorted(keys - _NOT_FLAGS)]
-    return cases
+    # squeeze and squeeze_pro read `tr` through _squeeze_use_tr(), which the scrape
+    # cannot see: kwargs.pop("tr", None) is handed to _bool_param on a later line.
+    cases += [("squeeze", "tr"), ("squeeze_pro", "tr")]
+    return sorted(cases)
 
 
 BOOL_KWARG_CASES = _bool_kwarg_cases()
