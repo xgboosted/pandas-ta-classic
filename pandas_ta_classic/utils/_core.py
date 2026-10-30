@@ -520,6 +520,64 @@ def degenerate_zero(x: Any, *, atol: float = 1e-12) -> Any:
     return np.isclose(x, 0, atol=atol)
 
 
+def _warn_not_positive(indicator: str, bars: int) -> None:
+    """Warn once that *indicator* read NaN on *bars* bars whose level is at or below zero."""
+    if bars:
+        warnings.warn(
+            f"{indicator}() reads NaN on {bars} bar(s) whose price is at or below zero: it is defined for positive prices only",
+            UserWarning,
+            stacklevel=2,
+        )
+
+
+def _positive_inputs(*names: str) -> Callable:
+    """Set the bars at or below zero of the *names* inputs to NaN, with one warning.
+
+    For an indicator that is relative to the price level (a percent change, a
+    ratio, a logarithm): at a price at or below zero it has no meaning, and
+    used to return a flipped sign or a value that explodes near zero, without
+    a word (#345). Such a bar is treated like a missing one. Applied outside
+    ``skip_leading_nan``, so a recursion skips it and restarts after it, as
+    after any missing bar. The warning counts the bars of the input with the
+    most non-positive values, and names the indicator.
+    """
+
+    def decorator(fn: Callable) -> Callable:
+        sig = inspect.signature(fn)
+
+        @functools.wraps(fn)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            bound = sig.bind_partial(*args, **kwargs)
+            bars = 0
+            for name in names:
+                value = bound.arguments.get(name)
+                if isinstance(value, Series) and is_numeric_dtype(value.dtype):
+                    bad = (value <= 0).to_numpy(dtype=bool, na_value=False)
+                    if bad.any():
+                        bars = max(bars, int(bad.sum()))
+                        bound.arguments[name] = value.mask(bad)
+            if not bars:
+                return fn(*args, **kwargs)
+            _warn_not_positive(fn.__name__, bars)
+            return fn(*bound.args, **bound.kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def _nan_where_not_positive(indicator: str, level: Series, *columns: Series) -> list[Series]:
+    """*columns* set to NaN where *level* is at or below zero, and one warning.
+
+    For a percent column inside an otherwise additive indicator (a band width
+    over its middle line, a drawdown over its running high): the other columns
+    keep their values.
+    """
+    bad = (level <= 0).to_numpy()
+    _warn_not_positive(indicator, int(bad.sum()))
+    return [c.mask(bad) for c in columns]
+
+
 def recent_maximum_index(x: Series) -> int:
     _require_input(x, "recent_maximum_index", "x")
     return int(np.argmax(x[::-1]))

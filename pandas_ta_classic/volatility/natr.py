@@ -11,12 +11,13 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _positive_inputs, _str_param, nan_on_short_input
 
 from .atr import atr
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 def natr(
     high: Series,
     low: Series,

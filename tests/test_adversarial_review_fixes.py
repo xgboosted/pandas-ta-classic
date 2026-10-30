@@ -121,7 +121,9 @@ _SAREXT_CASES = {
 
 def _random_walk_hl(seed: int, n: int = 5000) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    c = 100 + np.cumsum(rng.normal(0, 1, n))
+    # From 200, not 100: seed 0's walk fell to -11.85, and sarext reads NaN, with a
+    # warning, where high or low is at or below zero (#345). A shift changes no SAR step.
+    c = 200 + np.cumsum(rng.normal(0, 1, n))
     o = np.r_[c[0], c[:-1]]
     return pd.DataFrame({"high": np.maximum(o, c) + rng.random(n), "low": np.minimum(o, c) - rng.random(n)})
 

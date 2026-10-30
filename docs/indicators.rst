@@ -111,6 +111,30 @@ change is noticed:
 
 Drop or fill zero-volume bars before computing these if a value is needed.
 
+Prices at or Below Zero
+-----------------------
+
+Negative and zero prices are real data: crude oil futures in April 2020,
+power prices, back-adjusted continuous futures and spreads. Indicators built
+from differences, ranges and averages work on them unchanged.
+
+An indicator that is relative to the price level -- a percent change, a ratio
+or a logarithm, such as ``roc``, ``ppo``, ``natr``, ``log_return`` or ``mcgd``
+-- has no meaning at a price at or below zero. It reads ``NaN`` on those bars
+and raises one ``UserWarning`` that names the indicator and the number of
+bars. The bars are treated like missing ones, so the values come back after
+them. A percent column inside an otherwise additive indicator reads ``NaN``
+where its own level is at or below zero, and the other columns keep their
+values: ``bbands``' ``BBB`` (its middle line), ``accbands``' bands
+(``high + low``), ``cpr``'s width percentage (the pivot) and ``drawdown``'s
+``DD_PCT`` and ``DD_LOG`` (the close).
+
+.. code-block:: python
+
+    spread = pd.Series([1.5, 0.8, -0.4, 0.6, 1.1])
+    ta.roc(spread, length=1)   # UserWarning: roc() reads NaN on 1 bar(s) ...
+    # [nan, -46.7, nan, nan, 83.3]: bar 3 needs bar 2, as after a missing bar
+
 Lookahead Bias and Causality
 -----------------------------
 

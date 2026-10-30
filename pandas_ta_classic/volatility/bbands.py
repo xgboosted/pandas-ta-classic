@@ -14,7 +14,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _nan_where_not_positive, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 # The options each moving average of ma() reads besides length; test_talib_parameters
 # checks them against the MAs' signatures and **kwargs reads. Per MA, because a
@@ -121,6 +121,8 @@ def bbands(
     # before the width and percent divide on it.
     ulr = ulr.where(~degenerate_zero(ulr), 0.0)
     bandwidth = 100 * ulr / mid
+    # A percent of the middle line: NaN where it is at or below zero, with one warning (#345)
+    (bandwidth,) = _nan_where_not_positive("bbands", mid, bandwidth)
     percent = ((close - lower) / ulr.where(ulr != 0)).mask(ulr == 0, 0.0)
 
     # Offset
