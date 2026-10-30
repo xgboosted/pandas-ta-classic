@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _nan_where_not_positive, _number, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._cpr import (
     calculate_cpr_width,
     calculate_price_position,
@@ -149,6 +149,10 @@ def cpr(
             pivot,
             narrow_threshold=_number(kwargs.pop("width_narrow", None), 0.5, "width_narrow", ge=0),
             wide_threshold=_number(kwargs.pop("width_wide", None), 1.5, "width_wide", ge=0),
+        )
+        # A percent of the pivot: NaN where it is at or below zero, with one warning (#345)
+        pivot_result["width_pct"], pivot_result["width_class"] = _nan_where_not_positive(
+            "cpr", pivot, pivot_result["width_pct"], pivot_result["width_class"]
         )
     if price_position:
         pivot_result["position"] = calculate_price_position(close, tc, bc)

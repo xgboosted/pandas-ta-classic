@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _describe_index, _pos_float, _pos_int, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -67,11 +67,22 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
         if value is not False and not isinstance(value, Series):
             raise ValueError(f"stc() {name} must be False or a Series, got {type(value).__name__}")
 
+    def _same_index(name, value):
+        # Read bar for bar against close. Another index was aligned by label in
+        # ma1 - ma2 but by position in the smoothing, so one result mixed both, or
+        # pandas failed with "Length of values" (#341).
+        if not value.index.equals(close.index):
+            raise ValueError(
+                f"stc() {name} must have the same index as close: {name} has {len(value)} rows "
+                f"({_describe_index(value.index)}), close has {len(close)} ({_describe_index(close.index)})"
+            )
+
     # osc overrides ma1/ma2, so it is tested first: the previous
     # ``... and not osc`` guard evaluated a Series in a boolean context and
     # raised "The truth value of a Series is ambiguous" for that documented
     # combination.
     if isinstance(osc, Series):
+        _same_index("osc", osc)
         osc = verify_series(osc, _length)
         if osc is None:
             return None
@@ -84,6 +95,8 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
         raise ValueError(f"stc() got {given} without {missing}; pass both external moving averages or neither")
 
     if isinstance(ma1, Series) and isinstance(ma2, Series):
+        _same_index("ma1", ma1)
+        _same_index("ma2", ma2)
         ma1 = verify_series(ma1, _length)
         ma2 = verify_series(ma2, _length)
         if ma1 is None or ma2 is None:
@@ -211,12 +224,12 @@ Args:
 
 Kwargs:
     ma1 (pd.Series): 1st moving average provided externally (mandatory in
-        conjunction with ma2). ma1 - ma2 is aligned by index label between
-        the two only; the difference is then read bar for bar against close.
+        conjunction with ma2). Must have close's index.
     ma2 (pd.Series): 2nd moving average provided externally (mandatory in
-        conjunction with ma1).
-    osc (pd.Series): An external oscillator; overrides ma1/ma2. Read bar
-        for bar against close; its index is not compared with close's.
+        conjunction with ma1). Must have close's index.
+    osc (pd.Series): An external oscillator; overrides ma1/ma2. Must have
+        close's index.
+    Another index raises ValueError naming the option.
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

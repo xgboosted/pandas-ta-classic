@@ -11,10 +11,11 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 def pvt(
     close: Series,
     volume: Series,
@@ -32,7 +33,8 @@ def pvt(
     offset = get_offset(offset)
 
     # Calculate Result
-    roc_ = roc(close=close, length=drift)
+    # The fractional change, as in TA-Lib's PVT; a percent made it 100 times larger (#344).
+    roc_ = roc(close=close, length=drift, scalar=1)
     if roc_ is None:
         # Fewer rows than drift: there is no rate of change to accumulate.
         return None
@@ -62,8 +64,8 @@ Sources:
 Calculation:
     Default Inputs:
         drift=1
-    ROC = Rate of Change
-    pv = ROC(close, drift) * volume
+    ROC = Rate of Change, as a fraction (scalar=1), as in TA-Lib's PVT
+    pv = ROC(close, drift, scalar=1) * volume
     PVT = pv.cumsum()
 
 Args:

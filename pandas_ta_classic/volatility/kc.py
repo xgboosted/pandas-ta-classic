@@ -3,7 +3,7 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _MA_OPTIONS, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -46,10 +46,13 @@ def kc(
     # through true_range(). non_zero_range() reported an epsilon-wide channel.
     range_ = true_range(high, low, close) if use_tr else high - low
 
-    basis = ma(mamode, close, length=length)
+    # The options the chosen MA reads (ema's adjust and sma, sma's min_periods, ...)
+    # go to both MAs, as in bbands; kc accepted and ignored them (#340).
+    ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
+    basis = ma(mamode, close, length=length, **ma_kwargs)
     if basis is None:
         return None
-    band = ma(mamode, range_, length=length)
+    band = ma(mamode, range_, length=length, **ma_kwargs)
     if band is None:
         return None
 
@@ -121,6 +124,8 @@ Kwargs:
         high - low as it's range calculation. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
+    Any option the chosen MA reads (adjust and sma for 'ema', min_periods
+    for 'sma', ...) goes to the basis and the band MA.
 
 Returns:
     pd.DataFrame: lower, basis, upper columns.

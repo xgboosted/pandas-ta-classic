@@ -198,7 +198,8 @@ def test_behaviour_fixes_from_the_same_sweep():
     # mamode is validated through ma()
     with pytest.raises(ValueError, match=r"mamode must be a non-empty string"):
         ta.apo(close, mamode=123)
-    with pytest.raises(ValueError, match=r"ma\(\) name must be one of"):
+    # and named after the indicator the user called, on both paths
+    with pytest.raises(ValueError, match=r"apo\(\) mamode must be one of"):
         ta.apo(close, mamode="foo")
     # tos_stdevall: a bad stds used to become [1, 2, 3]
     with pytest.raises(ValueError, match=r"stds must be a non-empty list"):
@@ -523,12 +524,8 @@ def test_signature_defaults_are_none():
 # options are read off each docstring's Kwargs section; macdfix only names the xserie
 # options it forwards to macd() in prose.
 _SERIES_KWARG = re.compile(r"^\s+(\w+) \((?:pd\.)?Series", re.MULTILINE)
-_STC_OPEN = (
-    "OPEN: stc's rule is undecided: a shorter ma1 next to a full ma2 is aligned by label, an osc shorter than the "
-    "window reads all-NaN (test_stc_short_series_through_kwargs_is_all_nan), a shifted osc is used bar for bar"
-)
 _MACDFIX_OPEN = "OPEN: macdfix hands its signal options to macd(), whose errors name macd() (so do xa and cross_series)"
-_SERIES_KWARG_OPEN = {"stc": _STC_OPEN, "macdfix": _MACDFIX_OPEN}
+_SERIES_KWARG_OPEN = {"macdfix": _MACDFIX_OPEN}
 
 
 def _series_kwarg_cases():

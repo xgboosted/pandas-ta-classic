@@ -13,10 +13,11 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
+@_positive_inputs("high", "low", "close")
 @skip_leading_nan("high", "low", "close", "volume")
 def mfi(
     high: Series,

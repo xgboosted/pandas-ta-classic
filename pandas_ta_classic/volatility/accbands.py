@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _nan_where_not_positive, _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -49,6 +49,8 @@ def accbands(
     hl_ratio *= c
     _lower = low * (1 - hl_ratio)
     _upper = high * (1 + hl_ratio)
+    # The bands are a percentage of the price: NaN where high + low is at or below zero, with one warning (#345)
+    _lower, _upper = _nan_where_not_positive("accbands", high + low, _lower, _upper)
 
     lower = ma(mamode, _lower, length=length)
     if lower is None:

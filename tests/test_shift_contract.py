@@ -33,18 +33,20 @@ What the contract leaves out, with the reason:
 - ``contracts.BOUNDARY_COLUMNS``: columns whose threshold comparison rounds to
   the other side when the prices move, shared with ``test_scale_contract.py``.
 
-What the contract does not settle: what a level-dependent indicator should do
-at a price at or below zero -- raise, or return NaN and say so. Today
-``mcgd`` and ``drawdown``'s ``DD_LOG`` turn NaN without a warning, and
-``log_return``, ``hvol``, ``avolume`` and ``vfi`` raise only numpy's
-``RuntimeWarning``. That is an open decision, so nothing here pins it; the
-xfails above only say these indicators are outside the additive contract.
+What a level-dependent indicator does at a price at or below zero (#345): it
+reads NaN on those bars and raises one ``UserWarning`` naming itself and the
+number of bars, as if the bars were missing, so a recursion such as ``mcgd``
+restarts after them. A level column (``LEVEL_COLUMN_OWNERS``) reads NaN where
+its own level, such as ``bbands``' middle line, is at or below zero, and the
+other columns keep the additive contract. ``test_a_non_positive_level_reads_nan_with_one_warning``
+checks that rule on the two shifts that reach zero.
 
 Indicators are discovered through ``ta.Category``.
 """
 
 from __future__ import annotations
 
+import re
 import warnings
 from functools import cache
 
@@ -115,6 +117,15 @@ LEVEL_COLUMNS: dict[str, str] = {
     "DD_PCT": "drawdown as a fraction of the running high: " + _PERCENT,
     "DD_LOG": "log of the running high over the price: " + _LOG,
 }
+# The indicators that own a LEVEL_COLUMNS column, with those columns (#345).
+LEVEL_COLUMN_OWNERS: dict[str, list[str]] = {
+    "accbands": ["ACCBL_", "ACCBU_"],
+    "bbands": ["BBB_"],
+    "cpr": ["CPR_WIDTH_PCT", "CPR_WIDTH_CLASS"],
+    "drawdown": ["DD_PCT", "DD_LOG"],
+}
+# The one warning a level-dependent indicator raises at a price at or below zero (#345).
+_LEVEL_WARNING = r"^(\w+)\(\) reads NaN on (\d+) bar\(s\) whose price is at or below zero"
 # Bars after which a zero-initialised filter state has died out on the data
 # below; the transient before them depends on the level.
 WARMUP_BARS: dict[str, int] = {
@@ -146,11 +157,12 @@ def _shift(shift: str, df: pd.DataFrame) -> float:
 
 
 def _call(name: str, df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
-    """The indicator's output on ``df`` and the RuntimeWarnings it raised."""
+    """The indicator's output on ``df`` and the RuntimeWarnings and level warnings it raised."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always", RuntimeWarning)
+        warnings.filterwarnings("always", message=_LEVEL_WARNING, category=UserWarning)
         result = getattr(ta, name)(**inputs(name, df))
-    runtime = sorted({str(w.message) for w in caught if issubclass(w.category, RuntimeWarning)})
+    runtime = sorted({str(w.message) for w in caught if issubclass(w.category, (RuntimeWarning, UserWarning))})
     return (result.to_frame() if isinstance(result, pd.Series) else result), runtime
 
 
@@ -185,7 +197,10 @@ def _broken(name: str, df: pd.DataFrame, shift: str, *, columns: list[str] | Non
     moved_df = df.copy()
     moved_df[PRICES] += d
     moved, runtime = _call(name, moved_df)
-    broken = [f"RuntimeWarning {runtime}"] if runtime else []
+    # A level warning is the rule where a level reaches zero, and a defect anywhere else.
+    expected = shift != "positive" and (name in LEVEL_IS_THE_ANSWER or name in LEVEL_COLUMN_OWNERS)
+    runtime = [w for w in runtime if not (expected and re.match(_LEVEL_WARNING, w))]
+    broken = [f"warning {runtime}"] if runtime else []
     assert list(moved.columns) == list(base.columns), f"{name}: columns {list(moved.columns)} after a shift, {list(base.columns)} before"
     for column in columns if columns is not None else [c for c in base.columns if _compared(c)]:
         b = base[column].to_numpy(float, na_value=np.nan)[skip:]
@@ -220,6 +235,58 @@ def test_level_columns_still_depend_on_the_level(prefix: str, spy: pd.DataFrame)
 def test_warmup_transient_depends_on_the_level(name: str, spy: pd.DataFrame) -> None:
     """Keep ``WARMUP_BARS`` honest: without the cut, the start-up transient breaks the contract."""
     assert any(_broken(name, spy, shift, skip=0) for shift in SHIFTS), f"{name} ignores the price level from the first bar; drop it from WARMUP_BARS"
+
+
+@pytest.mark.parametrize("shift", ["crossing_zero", "all_negative"])
+@pytest.mark.parametrize("name", sorted(set(LEVEL_IS_THE_ANSWER) | set(LEVEL_COLUMN_OWNERS)))
+def test_a_non_positive_level_reads_nan_with_one_warning(name: str, shift: str, spy: pd.DataFrame) -> None:
+    """At a price at or below zero a level-dependent value has no meaning: it read a
+    flipped sign, exploded near zero or turned NaN without a word, and mcgd lost 4739
+    of 5241 bars (#345). It reads NaN on those bars, with one warning naming the
+    indicator, and a recursion restarts after them."""
+    moved_df = spy.copy()
+    moved_df[PRICES] += _shift(shift, spy)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.filterwarnings("always", message=_LEVEL_WARNING, category=UserWarning)
+        result = getattr(ta, name)(**inputs(name, moved_df))
+    level = [m for w in caught if (m := re.match(_LEVEL_WARNING, str(w.message)))]
+    assert len(level) == 1 and level[0].group(1) == name and int(level[0].group(2)) > 0, [str(w.message) for w in caught]
+    frame = result.to_frame() if isinstance(result, pd.Series) else result
+    prefixes = LEVEL_COLUMN_OWNERS.get(name)
+    columns = [c for c in frame.columns if prefixes is None or any(c.startswith(p) for p in prefixes)]
+    assert columns, f"{name}: no level column in {list(frame.columns)}"
+    for column in columns:
+        values = frame[column].to_numpy(float, na_value=np.nan)
+        assert not np.isinf(values).any(), f"{name} {column}: inf"
+        if shift == "all_negative":
+            assert np.isnan(values).all(), f"{name} {column}: {int(np.isfinite(values).sum())} values where every price is negative"
+
+
+@pytest.mark.parametrize("name", sorted(set(LEVEL_IS_THE_ANSWER) | set(LEVEL_COLUMN_OWNERS)))
+def test_a_non_positive_block_is_skipped_like_missing_bars(name: str, spy: pd.DataFrame) -> None:
+    """Bars 300-349 pushed below zero read NaN in an indicator relative to the price
+    (a level column reads NaN where its own level is non-positive), and the values
+    come back after them: a recursion such as mcgd or ht_trendmode restarts, as after
+    missing bars, instead of carrying the bad block to the end."""
+    df = spy.copy()
+    df.loc[df.index[300:350], PRICES] -= float(spy["high"].max()) + 100.0
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=_LEVEL_WARNING, category=UserWarning)
+        result = getattr(ta, name)(**inputs(name, df))
+    frame = result.to_frame() if isinstance(result, pd.Series) else result
+    prefixes = LEVEL_COLUMN_OWNERS.get(name)
+    for column in [c for c in frame.columns if prefixes is None or any(c.startswith(p) for p in prefixes)]:
+        values = frame[column].to_numpy(float, na_value=np.nan)
+        if prefixes is None:
+            assert np.isnan(values[300:350]).all(), f"{name} {column}: values on bars whose price is below zero"
+        assert np.isfinite(values[350:]).sum() >= 400, f"{name} {column}: {int(np.isfinite(values[350:]).sum())} values on the 650 bars after the block"
+
+
+def test_level_column_owners_are_complete(spy: pd.DataFrame) -> None:
+    owners = {name for name in INDICATORS if name not in LEVEL_IS_THE_ANSWER for c in _base(name).columns if any(c.startswith(p) for p in LEVEL_COLUMNS)}
+    # squeeze and squeeze_pro call bbands for its bands only; they return no level column.
+    assert owners == set(LEVEL_COLUMN_OWNERS)
+    assert sorted(p for ps in LEVEL_COLUMN_OWNERS.values() for p in ps) == sorted(LEVEL_COLUMNS)
 
 
 def test_exemption_tables_name_registered_indicators() -> None:

@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import _nan_where_not_positive, nan_on_short_input
 
 
 @nan_on_short_input
@@ -25,6 +25,8 @@ def drawdown(close: Series, offset: int | None = None, **kwargs: Any) -> DataFra
     # A local errstate, not np.seterr: the global setting leaked if anything raised.
     with np.errstate(divide="ignore", invalid="ignore"):
         dd_log = np.log(max_close) - np.log(close)
+    # Both are relative to the price: NaN where it is at or below zero, with one warning (#345)
+    dd_pct, dd_log = _nan_where_not_positive("drawdown", close, dd_pct, dd_log)
 
     # Offset
     dd, dd_pct, dd_log = apply_offset([dd, dd_pct, dd_log], offset)

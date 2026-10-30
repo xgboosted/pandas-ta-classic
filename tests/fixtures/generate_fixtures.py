@@ -86,7 +86,7 @@ _DATA_PATH = Path(__file__).parent.parent.parent / "examples" / "data" / "SPY_D.
 
 def _load() -> pd.DataFrame:
     df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df.drop(columns=["Unnamed: 0"], inplace=True, errors="ignore")
+    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
     df.columns = df.columns.str.lower()
     return df
 
@@ -292,20 +292,14 @@ def _indicators(df: pd.DataFrame) -> list[tuple[str, object]]:
     _kvo_line = _kvo_fast - _kvo_slow
     _kvo_sig = talib.EMA(_kvo_line, 13)
 
-    # oracle: TA-Lib ROC + pure cumsum
-    # NVI: initial=1000, accumulate ROC(close,1) only when volume decreases
-    # PVI: initial=1000, accumulate ROC(close,1) only when volume increases
-    # PVT: cumsum(ROC(close,1) * volume)
-    _roc1 = talib.ROC(cv, 1)
-    _vol_down_nvi = np.concatenate([[False], vv[1:] < vv[:-1]])
-    _nvi_contr = np.where(_vol_down_nvi, np.where(np.isnan(_roc1), 0.0, _roc1), 0.0)
-    _nvi_contr[0] = 1000.0
-    _nvi_ref = np.cumsum(_nvi_contr)
-    _vol_up_pvi = np.concatenate([[False], vv[1:] > vv[:-1]])
-    _pvi_contr = np.where(_vol_up_pvi, np.where(np.isnan(_roc1), 0.0, _roc1), 0.0)
-    _pvi_contr[0] = 1000.0
-    _pvi_ref = np.cumsum(_pvi_contr)
-    _pvt_ref = np.nancumsum(_roc1 * vv)
+    # oracle: TA-Lib NVI, PVI and PVT (TA-Lib >= 0.8.1). NVI and PVI multiply by
+    # 1 + the fractional change on falling (NVI) or rising (PVI) volume, from 1000;
+    # PVT accumulates the fractional change times volume. PVT reads 0.0 on bar 0,
+    # where this package has no change yet and reads NaN; the count comes from the
+    # package's own output (third element), so only the values are TA-Lib's.
+    _nvi_ref = talib.NVI(cv, vv)
+    _pvi_ref = talib.PVI(cv, vv)
+    _pvt_ref = talib.PVT(cv, vv)
 
     # oracle: pure arithmetic (4-way comparison)
     # PVR: 1=c↑v↑, 2=c↑v↓, 3=c↓v↑, 4=c↓v↓

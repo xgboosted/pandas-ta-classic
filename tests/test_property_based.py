@@ -151,6 +151,12 @@ def ohlcv_dataframe(draw, min_size: int = 20, max_size: int = 200):
     # Ensure high >= low and close in range
     df["high"] = np.maximum(df["high"], df[["open", "close"]].max(axis=1))
     df["low"] = np.minimum(df["low"], df[["open", "close"]].min(axis=1))
+    # Real prices are positive, and a walk of 200 steps of -2 from 100 reaches -300.
+    # Lift the frame so its lowest price is 1: a shift keeps every bar-to-bar
+    # difference, and a level-dependent indicator reads NaN and warns at or below
+    # zero (#345), which is not what these tests are about.
+    prices = ["open", "high", "low", "close"]
+    df[prices] += max(0.0, 1.0 - float(df[prices].min().min()))
     return df
 
 
