@@ -520,6 +520,25 @@ def degenerate_zero(x: Any, *, atol: float = 1e-12) -> Any:
     return np.isclose(x, 0, atol=atol)
 
 
+def _name_tokens(*params: tuple[str, Any, Any]) -> str:
+    """``_<name><value>`` for each ``(name, value, default)`` whose value is not the default.
+
+    A parameter that changes the values goes into the column name when it is
+    not at its default, so two calls that differ only in it no longer produce
+    the same column and overwrite each other on append (#343). Default calls
+    keep their names. The parameter name drops its underscores, since ``_``
+    separates the parts of a column name; a bool reads 0 or 1 and a float its
+    shortest form (``0.75``, ``2``).
+    """
+    tokens = []
+    for name, value, default in params:
+        if value == default:
+            continue
+        text = str(int(value)) if isinstance(value, bool) else f"{value:g}" if isinstance(value, float) else str(value)
+        tokens.append(f"_{name.replace('_', '')}{text}")
+    return "".join(tokens)
+
+
 def recent_maximum_index(x: Series) -> int:
     _require_input(x, "recent_maximum_index", "x")
     return int(np.argmax(x[::-1]))

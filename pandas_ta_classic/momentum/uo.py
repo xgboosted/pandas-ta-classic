@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, nan_on_short_input
 
 
 def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):
@@ -109,7 +109,7 @@ def uo(
     uo = apply_fill(uo, **kwargs)
 
     # Name and Categorize it
-    uo.name = f"UO_{fast}_{medium}_{slow}"
+    uo.name = f"UO_{fast}_{medium}_{slow}" + _name_tokens(("fast_w", fast_w, 4.0), ("medium_w", medium_w, 2.0), ("slow_w", slow_w, 1.0))
     uo.category = "momentum"
 
     return uo

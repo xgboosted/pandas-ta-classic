@@ -386,7 +386,9 @@ class TestMomentum(TestCase):
         # SMA-based should give different values
         result_sma = pandas_ta.macdext(self.close, fastmatype=0, slowmatype=0, signalmatype=0, talib=False)
         self.assertIsInstance(result_sma, DataFrame)
-        self.assertFalse(result["MACDEXT_12_26_9"].equals(result_sma["MACDEXT_12_26_9"]))
+        # Non-default MA types change the values, so they are in the name (#343)
+        self.assertEqual(result_sma.columns[0], "MACDEXT_12_26_9_fastmatype0_slowmatype0_signalmatype0")
+        self.assertFalse(result["MACDEXT_12_26_9"].equals(result_sma.iloc[:, 0]))
         if HAS_TALIB:
             result_tal = pandas_ta.macdext(self.close)
             self.assertIsInstance(result_tal, DataFrame)

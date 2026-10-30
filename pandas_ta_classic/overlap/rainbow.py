@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _name_tokens, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
@@ -33,7 +33,7 @@ def rainbow(
 
     for i in range(1, num_ribbons + 1):
         current_sma = sma(prev_sma, length=length)
-        ribbons[f"RAINBOW_{i}"] = current_sma
+        ribbons[f"RAINBOW_{i}" + _name_tokens(("length", length, 2))] = current_sma
         prev_sma = current_sma
 
     # Create DataFrame

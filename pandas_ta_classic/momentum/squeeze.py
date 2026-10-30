@@ -10,7 +10,7 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.decreasing import decreasing
 from pandas_ta_classic.trend.increasing import increasing
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
@@ -185,13 +185,19 @@ def squeeze(
     _props = "" if use_tr else "hlr"
     _props += f"_{bb_length}_{bb_std}_{kc_length}_{kc_scalar}"
     _props += "_LB" if lazybear else ""
+    # The periods of the momentum; lazybear smooths with kc_length instead.
+    _props += "" if lazybear else _name_tokens(("mom_length", mom_length, 12), ("mom_smooth", mom_smooth, 6))
     squeeze.name = f"SQZ{_props}"
 
+    # The flags compare the bands with the channels, so their settings name them too.
+    _flags = _name_tokens(
+        ("bb_length", bb_length, 20), ("bb_std", bb_std, 2.0), ("kc_length", kc_length, 20), ("kc_scalar", kc_scalar, 1.5), ("use_tr", use_tr, True)
+    )
     data = {
         squeeze.name: squeeze,
-        "SQZ_ON": squeeze_on,
-        "SQZ_OFF": squeeze_off,
-        "SQZ_NO": no_squeeze,
+        f"SQZ_ON{_flags}": squeeze_on,
+        f"SQZ_OFF{_flags}": squeeze_off,
+        f"SQZ_NO{_flags}": no_squeeze,
     }
     df = DataFrame(data)
     df.name = squeeze.name

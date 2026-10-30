@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _sliding_weighted_ma, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, _sliding_weighted_ma, nan_on_short_input
 
 
 @nan_on_short_input
@@ -42,7 +42,7 @@ def fwma(
     fwma = apply_fill(fwma, **kwargs)
 
     # Name & Category
-    fwma.name = f"FWMA_{length}"
+    fwma.name = f"FWMA_{length}" + _name_tokens(("asc", asc, True))
     fwma.category = "overlap"
 
     return fwma
