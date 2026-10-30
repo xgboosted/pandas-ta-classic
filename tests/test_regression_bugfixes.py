@@ -1731,15 +1731,17 @@ class TestDriftParameterRemoved(TestCase):
             with self.subTest(name=name):
                 self.assertNotIn("drift", [a.arg for a in methods[name].args.args])
 
-    def test_drift_keyword_has_no_effect_and_no_warning(self):
-        import warnings
-
+    def test_drift_keyword_raises(self):
+        """Absorbed until #340: strategy(drift=N) now hands drift only to the
+        indicators that accept it, so a direct drift= raises like any unknown keyword."""
         for name in self.NAMES:
-            with self.subTest(name=name):
-                with warnings.catch_warnings():
-                    warnings.simplefilter("error", DeprecationWarning)
-                    with_drift = self._call(name, drift=3)
-                pd.testing.assert_frame_equal(pd.DataFrame(with_drift), pd.DataFrame(self._call(name)))
+            with self.subTest(name=name), self.assertRaisesRegex(TypeError, rf"^{name}\(\) got an unexpected keyword argument 'drift'$"):
+                self._call(name, drift=3)
+
+    def test_a_strategy_wide_drift_skips_them(self):
+        df = get_sample_data().iloc[:300].copy()
+        df.ta.strategy(ta.Strategy("drift", ta=[{"kind": "cfo"}, {"kind": "rsi"}]), drift=2)
+        self.assertIn("CFO_9", df.columns)
 
 
 # ---------------------------------------------------------------------------

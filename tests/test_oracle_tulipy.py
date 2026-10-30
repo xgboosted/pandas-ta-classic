@@ -445,11 +445,11 @@ class TestTulipyOracle(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_fisher_val(self):
-        pt = ta.fisher(self.high, self.low, length=9, talib=False)
+        pt = ta.fisher(self.high, self.low, length=9)
         self._compare(pt.iloc[:, 0], self._oracle("fisher_val"), name="FISHER_val")
 
     def test_fisher_sig(self):
-        pt = ta.fisher(self.high, self.low, length=9, talib=False)
+        pt = ta.fisher(self.high, self.low, length=9)
         self._compare(pt.iloc[:, 1], self._oracle("fisher_sig"), name="FISHER_sig")
 
     # ------------------------------------------------------------------
@@ -487,7 +487,7 @@ class TestTulipyOracle(unittest.TestCase):
     def test_emv(self):
         # tulipy emv takes no period argument; computes a single-bar EMV value
         self._compare(
-            ta.emv(self.high, self.low, self.vol, length=14),
+            ta.emv(self.high, self.low, self.vol),
             self._oracle("emv"),
             name="EMV",
         )

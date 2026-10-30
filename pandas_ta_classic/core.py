@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 import re
-from collections.abc import Hashable, Iterator
+from collections.abc import Callable, Hashable, Iterator
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from contextlib import contextmanager
@@ -20,9 +20,11 @@ from pandas.core.base import PandasObject
 
 import pandas_ta_classic
 from pandas_ta_classic._indicator_loader import (
+    _ACCESSOR_KEYWORDS,
     _COLUMN_KWARG_KEYS,
     _COLUMN_PARAM_TO_COL_KEY,
     _DEFAULT_COLUMN_NAMES,
+    _accessor_keywords,
     _find_indicator_func,
     _make_ta_wrapper,
 )
@@ -893,17 +895,21 @@ class AnalysisIndicators(PandasObject):
             raise ValueError(f"{caller}() exclude has unknown indicator name(s): {unknown}")
         return list(exclude)
 
-    def _missing_required_column(self, name: str, kwargs: dict) -> bool:
-        """True when indicator *name* needs a column (no default) that the DataFrame does not have."""
+    @staticmethod
+    def _indicator_function(name: str) -> Callable:
+        """The function behind df.ta.<name>."""
         # custom.import_dir() binds its function onto the package and lists the
         # name in Category, but the loader only knows the package's own modules,
-        # so strategy("all") raised "unknown indicator" once one was loaded. The
-        # package attribute is also what replaces a built-in of the same name.
+        # so strategy("all") raised "unknown indicator" once one was loaded.
         bound = vars(pandas_ta_classic).get(name)
         func = bound if callable(bound) else _find_indicator_func(name)
         if func is None:
             raise ValueError(f"unknown indicator {name!r}")
-        sig = inspect.signature(func)
+        return func
+
+    def _missing_required_column(self, name: str, kwargs: dict) -> bool:
+        """True when indicator *name* needs a column (no default) that the DataFrame does not have."""
+        sig = inspect.signature(self._indicator_function(name))
         for param, spec in sig.parameters.items():
             col_key = _COLUMN_PARAM_TO_COL_KEY.get(param)
             if col_key is None or spec.default is not inspect.Parameter.empty:
@@ -1009,8 +1015,9 @@ class AnalysisIndicators(PandasObject):
                 raises.
             name (str): Not a selector: the first positional argument picks
                 "all", a category or a Strategy. Like any other keyword, name
-                is passed to every indicator the run calls; it is the moving
-                average ma() dispatches to, so ma runs only when name is given.
+                reaches every indicator in the run that accepts it; it is the
+                moving average ma() dispatches to, so ma runs only when name is
+                given.
                 Default: None
             timed (bool): Show the process time of the strategy().
                 Default: False
@@ -1034,8 +1041,8 @@ class AnalysisIndicators(PandasObject):
         # not have two limits, or strategy(cores=10000) opens 10000 processes
         # where df.ta.cores = 10000 gives cpu_count().
         cores = min(_pos_int(kwargs.pop("cores", None), self.cores, "cores", gt=None, ge=0), cpu_count())
-        # Removed in 0.9.0 with the Pool they steered. strategy() broadcasts
-        # unknown keywords to the indicators, whose **kwargs would swallow them.
+        # Removed in 0.9.0 with the Pool they steered. Named here so the error says
+        # what replaced them, not only that no indicator accepts them.
         for removed in ("chunksize", "ordered"):
             if removed in kwargs:
                 raise TypeError(
@@ -1121,9 +1128,24 @@ class AnalysisIndicators(PandasObject):
             for position, ind in enumerate(ta):
                 if ind["kind"] not in known:
                     raise ValueError(f"Strategy {name!r} entry {position}: {ind['kind']!r} is not an indicator")
-            tasks = [(i, ind["kind"], _strategy_params(ind), {**ind, **kwargs}) for i, ind in enumerate(ta)]
+            entries = [(ind["kind"], _strategy_params(ind), {k: v for k, v in ind.items() if k not in ("kind", "params")}) for ind in ta]
         else:
-            tasks = [(i, ind, (), dict(kwargs)) for i, ind in enumerate(ta)]
+            entries = [(ind, (), {}) for ind in ta]
+        # Each indicator gets only the strategy-wide keywords it accepts, so
+        # strategy("momentum", length=7) reaches every indicator with a length and
+        # no other. An entry's own keywords all reach it, and an unknown one raises
+        # there. A strategy-wide keyword that no indicator accepts is a typo.
+        tasks = []
+        used: set = set()
+        for i, (kind, params, entry_kwargs) in enumerate(entries):
+            # A custom indicator follows its own code: it gets them all, as before.
+            accepted = None if _custom_kinds([kind]) else _accessor_keywords(self._indicator_function(kind), {**entry_kwargs, **kwargs})
+            shared = {k: v for k, v in kwargs.items() if accepted is None or k in accepted}
+            used.update(shared)
+            tasks.append((i, kind, params, {**entry_kwargs, **shared}))
+        unused = sorted(set(kwargs) - used - _ACCESSOR_KEYWORDS)
+        if unused:
+            raise TypeError(f"strategy() got keyword arguments that no indicator in {name!r} accepts: {', '.join(repr(k) for k in unused)}")
 
         # A daemonic worker cannot start children of its own ('daemonic
         # processes are not allowed to have children'), so a strategy() inside

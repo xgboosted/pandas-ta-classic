@@ -4,7 +4,6 @@ from unittest import TestCase
 
 import numpy as np
 from pandas import DataFrame, Series
-from pandas.testing import assert_series_equal
 
 import pandas_ta_classic as pandas_ta
 from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
@@ -72,8 +71,6 @@ class TestOverlap(TestCase):
     def test_ema(self):
         if HAS_TALIB:
             expected = talib.EMA(self.close, 10)
-            result_presma = pandas_ta.ema(self.close, presma=False)
-            assert_talib(self, result_presma, expected)
             result_talib_false = pandas_ta.ema(self.close, talib=False)
             assert_talib(self, result_talib_false, expected)
         assert_indicator_standard(
@@ -604,11 +601,12 @@ class TestOverlap(TestCase):
             with self.subTest(name=name):
                 fn = getattr(pandas_ta, name)
                 self.assertFalse(fn(close, 10, asc=False).equals(fn(close, 10)))
-        for name in ("pwma", "swma"):  # symmetric weights: asc was removed, a strategy-wide one is ignored
+        for name in ("pwma", "swma"):  # symmetric weights: asc was removed; strategy() hands it only to wma and fwma
             with self.subTest(name=name):
                 fn = getattr(pandas_ta, name)
                 self.assertNotIn("asc", inspect.signature(fn).parameters)
-                assert_series_equal(fn(close, 10, asc=False), fn(close, 10))
+                with self.assertRaisesRegex(TypeError, rf"^{name}\(\) got an unexpected keyword argument 'asc'$"):
+                    fn(close, 10, asc=False)
 
     def test_wma(self):
         result = pandas_ta.wma(self.close, talib=False)

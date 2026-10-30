@@ -537,20 +537,20 @@ def test_offset_shifts_every_output_column_on_every_option_path(name: str, optio
         ("md", {"min_periods": 5}),
     ],
 )
-def test_delegating_wrappers_forward_only_the_fill(name: str, foreign: dict, frame: dict[str, pd.Series]) -> None:
-    """A wrapper passes ``fillna``/``fill_method`` on, and nothing else.
+def test_delegating_wrappers_reject_the_delegates_options(name: str, foreign: dict, frame: dict[str, pd.Series]) -> None:
+    """A wrapper passes ``fillna``/``fill_method`` on, and rejects its delegate's options.
 
     Forwarding all of ``**kwargs`` let the delegate's own options through:
     ``linregintercept(slope=True)`` returned the slope, ``linregslope(slope=False)``
     raised ``TypeError`` from inside ``linreg()``, and ``md(min_periods=5)``
-    changed MD's warmup although ``md`` has no such option.
+    changed MD's warmup although ``md`` has no such option. Then they were
+    ignored; now the wrapper names the option it does not accept (#340).
     """
-    plain = output_columns(_results(name, frame))
-    other = output_columns(_results(name, frame, **foreign))
-
-    assert sorted(other) == sorted(plain), f"{name}({foreign}) changed the output columns: {sorted(other)} != {sorted(plain)}"
-    for column, values in plain.items():
-        pd.testing.assert_series_equal(other[column], values, obj=f"{name}({foreign}) {column}")
+    (option,) = foreign
+    with pytest.raises(TypeError, match=rf"^{name}\(\) got an unexpected keyword argument '{option}'$"):
+        _results(name, frame, **foreign)
+    filled = output_columns(_results(name, frame, fillna=0.0))
+    assert all(not values.isna().any() for values in filled.values()), f"{name}(fillna=0.0) left NaN"
 
 
 def _input_state(series: pd.Series) -> dict:

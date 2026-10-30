@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from pandas_ta_classic._meta import _MATH_ALIASES, Category
+from pandas_ta_classic.utils._keywords import accepted_keywords
 
 # Maps function param name → DataFrame column key
 _COLUMN_PARAM_TO_COL_KEY: dict[str, str] = {
@@ -25,6 +26,10 @@ _SERIES_COLUMN_PARAMS: dict[str, tuple] = {
 }
 
 _ALWAYS_FETCH: frozenset[str] = frozenset({"close", "high", "low", "volume"})
+
+# The keywords of df.ta itself, read by AnalysisIndicators._post_process; the
+# indicator never sees them.
+_ACCESSOR_KEYWORDS: frozenset[str] = frozenset({"append", "col_names", "col_numbers", "delimiter", "prefix", "suffix", "verbose"})
 
 # Every kwarg key a caller can use to point an indicator at a column, and the
 # column names used when no such kwarg is given.  Derived from the maps above
@@ -51,6 +56,21 @@ def _find_indicator_func(name: str) -> Callable | None:
     if func is None:
         raise AttributeError(f"module 'pandas_ta_classic.{cat}.{canonical}' has no attribute '{canonical}'")
     return func
+
+
+def _accessor_keywords(func: Callable, kwargs: dict[str, Any]) -> frozenset[str] | None:
+    """Every keyword df.ta.<func> accepts when called with *kwargs*.
+
+    The indicator's own keywords, with each Series parameter replaced by the
+    keys that name its column, plus df.ta's own. None for a custom indicator
+    that takes ``**kwargs``: its own code decides.
+    """
+    accepted = accepted_keywords(func, kwargs)
+    if accepted is None:
+        return None
+    columns = {_COLUMN_PARAM_TO_COL_KEY[name] for name in accepted & _COLUMN_PARAM_TO_COL_KEY.keys()}
+    columns.update(alias for name in accepted & _SERIES_COLUMN_PARAMS.keys() for alias in _SERIES_COLUMN_PARAMS[name][0])
+    return (accepted - _COLUMN_PARAM_TO_COL_KEY.keys() - _SERIES_COLUMN_PARAMS.keys()) | columns | _ACCESSOR_KEYWORDS
 
 
 def _make_ta_wrapper(func: Callable) -> Callable:
@@ -159,7 +179,7 @@ def _make_ta_wrapper(func: Callable) -> Callable:
                 f"df.ta.{func.__name__}() requires {named}; {'it has' if len(missing) == 1 else 'they have'} no default and the DataFrame cannot supply "
                 f"{'it' if len(missing) == 1 else 'them'}"
             )
-        result = func(**call_kwargs, **kwargs)
+        result = func(**call_kwargs, **{key: value for key, value in kwargs.items() if key not in _ACCESSOR_KEYWORDS})
         return self._post_process(result, **kwargs)
 
     # Rewrite __signature__: drop col params (they come from the DataFrame),

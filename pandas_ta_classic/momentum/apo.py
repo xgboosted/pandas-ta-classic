@@ -4,7 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import _MA_OPTIONS, ma
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -13,6 +13,7 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
 @nan_on_short_input

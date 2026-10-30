@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
 
 
 @nan_on_short_input
@@ -36,10 +36,6 @@ def thermo(
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    # ``asint`` is absorbed for strategy-broadcast compatibility.  The signal
-    # columns are always float now (NaN must survive on the warm-up bars), so
-    # its value no longer changes the dtype.
-    _bool_param(kwargs.pop("asint", None), True, "asint")
 
     if high is None or low is None:
         return None
@@ -69,8 +65,7 @@ def thermo(
 
     # Binary output, useful for signals.  float in both branches: NaN must
     # survive on the warm-up bars, so the flags cannot stay bool (``asint=False``
-    # used to leave them object dtype) or int.  ``asint`` is still accepted but
-    # no longer changes the dtype.
+    # used to leave them object dtype) or int, so ``asint`` was removed.
     thermo_long = thermo_long.astype(float)
     thermo_short = thermo_short.astype(float)
 
@@ -142,6 +137,9 @@ Kwargs:
 
 Returns:
     pd.DataFrame: thermo, thermo_ma, thermo_long, thermo_short columns.
-        The two signal columns are float (0.0/1.0/NaN) regardless of ``asint``:
-        NaN must survive until thermo_ma exists.
+        The two signal columns are float (0.0/1.0/NaN): NaN must survive
+        until thermo_ma exists.
+
+Note: ``asint`` was removed in 0.10.0. The signal columns had to stay float, so
+it no longer changed anything; passing it raises TypeError.
 """
