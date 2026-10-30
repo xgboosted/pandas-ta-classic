@@ -198,7 +198,8 @@ def test_behaviour_fixes_from_the_same_sweep():
     # mamode is validated through ma()
     with pytest.raises(ValueError, match=r"mamode must be a non-empty string"):
         ta.apo(close, mamode=123)
-    with pytest.raises(ValueError, match=r"ma\(\) name must be one of"):
+    # and named after the indicator the user called, on both paths
+    with pytest.raises(ValueError, match=r"apo\(\) mamode must be one of"):
         ta.apo(close, mamode="foo")
     # tos_stdevall: a bad stds used to become [1, 2, 3]
     with pytest.raises(ValueError, match=r"stds must be a non-empty list"):

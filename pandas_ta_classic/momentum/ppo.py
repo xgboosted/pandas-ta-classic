@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _number, _pos_int, _str_param, nan_on_short_input
 
 
 def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
@@ -22,8 +22,9 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
         tuple[Series, Series, Series] | None: ``(ppo_s, histogram, signalma)``
         or *None* if any intermediate result is unavailable.
     """
-    # TA-Lib cannot express a non-default scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100:
+    # TA-Lib cannot express a non-default scalar, nor hma, rma, zlma, ...; run
+    # natively instead of ignoring the one or failing in tal_ma() on the other
+    if Imports["talib"] and mode_talib and scalar == 100 and mamode in _TAL_MA_TYPES:
         from talib import PPO
 
         ppo_s = PPO(close, fast, slow, tal_ma(mamode))
@@ -62,7 +63,7 @@ def ppo(
     slow = _pos_int(slow, 26, "slow")
     signal = _pos_int(signal, 9, "signal")
     scalar = _number(scalar, 100, "scalar")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     if slow < fast:
         fast, slow = slow, fast
     close = verify_series(close, max(fast, slow, signal))

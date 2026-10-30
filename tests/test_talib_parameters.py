@@ -18,6 +18,7 @@ import pytest
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.overlap.ma import _MA_DISPATCH
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES
 from pandas_ta_classic.volatility.bbands import _MA_OPTIONS
 from tests.config import get_sample_data
 from tests.contracts import inputs
@@ -185,3 +186,28 @@ def test_an_option_the_ma_does_not_read_keeps_the_talib_path():
     expected = ta.bbands(close, talib=True)
     assert np.array_equal(ta.bbands(close, talib=True, drift=2).to_numpy(), expected.to_numpy(), equal_nan=True)
     assert not np.array_equal(expected.to_numpy(), ta.bbands(close, talib=False).to_numpy(), equal_nan=True)
+
+
+# Indicators that hand mamode to TA-Lib's MA_Type enum (utils.tal_ma).
+_TAL_MA_INDICATORS = ("apo", "bbands", "ppo")
+
+
+@pytest.mark.parametrize("talib", [False, True])
+@pytest.mark.parametrize("mamode", sorted(set(_TAL_MA_TYPES) - set(_MA_DISPATCH)))
+@pytest.mark.parametrize("name", _TAL_MA_INDICATORS)
+def test_a_mamode_ma_lacks_raises_on_both_paths(name, mamode, talib):
+    """talib=True handed kama and mama to TA-Lib, while the native path refused
+    them in ma(); both paths accept the same values (AGENTS.md rule 6)."""
+    close = get_sample_data().close.iloc[:300]
+    with pytest.raises(ValueError, match=rf"^{name}\(\) mamode must be one of .*got '{mamode}'$"):
+        getattr(ta, name)(close, mamode=mamode, talib=talib)
+
+
+@pytest.mark.parametrize("mamode", sorted(set(_MA_DISPATCH) - set(_TAL_MA_TYPES)))
+@pytest.mark.parametrize("name", _TAL_MA_INDICATORS)
+def test_a_mamode_talib_lacks_runs_natively(name, mamode):
+    """talib=True with hma, rma, zlma, ... raised from tal_ma(); TA-Lib cannot
+    express that MA, so the call computes natively, as for any other parameter."""
+    close = get_sample_data().close.iloc[:300]
+    func = getattr(ta, name)
+    assert _same(func(close, mamode=mamode, talib=True), func(close, mamode=mamode, talib=False))
