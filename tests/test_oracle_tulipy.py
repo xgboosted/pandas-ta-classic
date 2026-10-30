@@ -54,7 +54,7 @@ class TestTulipyOracle(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-        df.drop(columns=["Unnamed: 0"], errors="ignore", inplace=True)
+        df = df.drop(columns=["Unnamed: 0"], errors="ignore")
         df.columns = df.columns.str.lower()
         cls.idx = df.index
         cls.open = df["open"]

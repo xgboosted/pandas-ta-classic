@@ -86,7 +86,7 @@ _DATA_PATH = Path(__file__).parent.parent.parent / "examples" / "data" / "SPY_D.
 
 def _load() -> pd.DataFrame:
     df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df.drop(columns=["Unnamed: 0"], inplace=True, errors="ignore")
+    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
     df.columns = df.columns.str.lower()
     return df
 
