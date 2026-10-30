@@ -427,13 +427,13 @@
   },
   "nvi": {
     "NVI_1": {
-      "last_value": 1538.32227414,
+      "last_value": 185592.09234057,
       "non_nan_count": 5241
     }
   },
   "pvi": {
     "PVI_1": {
-      "last_value": 597.86467164,
+      "last_value": 13.93439442,
       "non_nan_count": 5241
     }
   },
@@ -445,7 +445,7 @@
   },
   "pvt": {
     "PVT": {
-      "last_value": -44026206885.840126,
+      "last_value": -440262068.85840136,
       "non_nan_count": 5240
     }
   },

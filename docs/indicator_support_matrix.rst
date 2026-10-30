@@ -91,7 +91,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - fosc
      - momentum
      - yes
-     - no
+     - yes
      - yes
    * - inertia
      - momentum
@@ -771,7 +771,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - dpo
      - trend
      - yes
-     - no
+     - yes
      - yes
    * - dx
      - trend
@@ -931,7 +931,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - nvi
      - volume
      - yes
-     - no
+     - yes
      - yes
    * - obv
      - volume
@@ -941,7 +941,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - pvi
      - volume
      - yes
-     - no
+     - yes
      - yes
    * - pvol
      - volume
@@ -956,7 +956,7 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
    * - pvt
      - volume
      - yes
-     - no
+     - yes
      - no
    * - vfi
      - volume

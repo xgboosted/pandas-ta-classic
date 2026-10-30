@@ -268,19 +268,9 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_fosc(self):
-        # FOSC implementations differ by design; enforce that divergence remains
-        # measurable so we do not silently claim oracle equality.
-        pt = ta.fosc(self.close, length=14)
-        tp_arr = self._oracle("fosc")
-        tp_s = pd.Series(np.asarray(tp_arr), index=self.idx[-len(tp_arr) :])
-        both = pt.dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"FOSC: too few common values ({len(both)})")
-        diff = np.abs(pt.loc[both].values - tp_s.loc[both].values)
-        self.assertGreater(
-            diff.max(),
-            0.1,
-            f"FOSC: expected divergence not observed (max={diff.max():.4e})",
-        )
+        # Tulip forecasts this bar with the previous bar's TSF, as TA-Lib does; fosc
+        # used the same bar's TSF, which made it equal cfo, until #344.
+        self._compare(ta.fosc(self.close, length=14), self._oracle("fosc"), name="FOSC")
 
     def test_trix(self):
         # EMA-seed divergence results in ~6.2e-3 diff; converges over the full
@@ -441,7 +431,7 @@ class TestTulipyOracle(unittest.TestCase):
         )
 
     def test_fosc_stat(self):
-        # Same expected divergence as test_fosc; separate test kept for grouping.
+        # The same comparison as test_fosc; separate test kept for grouping.
         self.test_fosc()
 
     # ------------------------------------------------------------------

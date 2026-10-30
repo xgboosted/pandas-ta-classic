@@ -34,9 +34,12 @@ def dpo(
     if ma is None:
         return None
 
-    dpo = close - ma.shift(t)
+    # The price t bars ago less the SMA, as in TA-Lib's DPO; the centered line
+    # is the same line moved back t bars. The causal form used to be
+    # close - ma.shift(t), another quantity (#344).
+    dpo = close.shift(t) - ma
     if centered:
-        dpo = (close.shift(t) - ma).shift(-t)
+        dpo = dpo.shift(-t)
 
     # Offset
     dpo = apply_offset(dpo, offset)

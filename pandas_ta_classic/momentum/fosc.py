@@ -25,10 +25,13 @@ def fosc(
         return None
 
     # Calculate Result
-    # Forecast = linear regression value at last bar + 1 step ahead (TSF)
+    # The forecast for this bar is the previous bar's TSF (its regression line
+    # one step ahead), as in TA-Lib's FOSC and Tulip's fosc. The same bar's TSF
+    # made fosc equal cfo (#344).
     forecast = linreg(close, length=length, tsf=True)
     if forecast is None:
         return None
+    forecast = forecast.shift(1)
 
     fosc_ = 100 * (close - forecast) / close
 
@@ -51,9 +54,11 @@ close price and the Time Series Forecast (linear regression projected one step
 ahead). Positive values suggest price above forecast (bullish), negative
 values suggest price below forecast (bearish).
 
-FOSC = 100 * (Close - TSF[n]) / Close
+FOSC = 100 * (Close - TSF.shift(1)) / Close
 
-Where TSF = Time Series Forecast (Linear Regression + 1 step ahead projection)
+Where TSF = Time Series Forecast (Linear Regression + 1 step ahead projection).
+The previous bar's TSF is the forecast for this bar, as in TA-Lib's FOSC and
+Tulip's fosc. With the same bar's TSF, fosc equalled cfo.
 
 Sources:
     Tushar Chande, "The New Technical Trader", 1994
