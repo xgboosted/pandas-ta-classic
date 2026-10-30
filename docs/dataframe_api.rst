@@ -38,6 +38,15 @@ stays ``ZS_30``, and ``ta.dpo(close, centered=False)`` is ``DPO_20_centered0``:
 two calls that give different values never share a column name. ``scalar``,
 ``drift``, ``asint`` and ``asbool`` are left out of names on purpose.
 
+An indicator raises ``TypeError`` for a keyword it does not accept, so a
+misspelled option (``ta.rsi(close, lenght=7)``) is an error, not the default
+result. It accepts its own parameters, ``fillna`` and ``fill_method``, the
+options it reads from ``**kwargs``, and the options of the moving average it uses
+(``ta.bbands(close, mamode="ema", adjust=False)``). ``df.ta`` adds its own
+keywords (``append``, ``prefix``, ``suffix``, ``col_names``, ...), and
+``strategy()`` passes each indicator only the keywords it accepts (see
+:doc:`strategies`).
+
 DataFrame Extension
 ~~~~~~~~~~~~~~~~~~~
 
