@@ -1,4 +1,5 @@
 # Squeeze Pro (SQUEEZE_PRO)
+import warnings
 from typing import Any
 
 from pandas import DataFrame, Series
@@ -61,7 +62,11 @@ def squeeze_pro(
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
 
     # Calculate Result
-    bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
+    # Only the bands are read here; bbands' warning about a non-positive middle
+    # line concerns its bandwidth column, which this indicator does not return (#345).
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=r"bbands\(\) reads NaN", category=UserWarning)
+        bbd = bbands(close, length=bb_length, std=bb_std, mamode=mamode)
     kch_wide = kc(
         high,
         low,

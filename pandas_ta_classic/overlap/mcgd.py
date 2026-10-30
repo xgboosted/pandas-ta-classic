@@ -5,7 +5,7 @@ import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -16,7 +16,9 @@ def _mcgd_loop(c_arr, n, c, length):
     for i in range(1, n):
         if result[i - 1] != 0:
             denom = c * length * (c_arr[i] / result[i - 1]) ** 4
-            denom = max(denom, 1e-10)
+            # At most the whole way to the price: below 1 the step overshot it,
+            # and near zero the old 1e-10 floor sent the line to inf (#345).
+            denom = max(denom, 1.0)
             result[i] = result[i - 1] + (c_arr[i] - result[i - 1]) / denom
         else:
             result[i] = c_arr[i]
@@ -24,6 +26,7 @@ def _mcgd_loop(c_arr, n, c, length):
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 @skip_leading_nan("close", interior=True)
 def mcgd(
     close: Series,
@@ -81,12 +84,12 @@ Calculation:
         offset=0
         c=1
 
-    def mcg_(series):
-        denom = (constant * length * (series.iloc[1] / series.iloc[0]) ** 4)
-        series.iloc[1] = (series.iloc[0] + ((series.iloc[1] - series.iloc[0]) / denom))
-        return series.iloc[1]
-    mcg_cell = close[0:].rolling(2, min_periods=2).apply(mcg_, raw=False)
-    mcg_ds = pd.concat([close[:1], mcg_cell[1:]])
+    MD[0] = close[0]
+    denom = max(c * length * (close[i] / MD[i - 1]) ** 4, 1)
+    MD[i] = MD[i - 1] + (close[i] - MD[i - 1]) / denom
+
+    The bound of 1 keeps a step from passing the price. A close at or below
+    zero reads NaN, with one warning, and the line restarts after it.
 
 Args:
     close (pd.Series): Series of 'close's

@@ -10,10 +10,11 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
+@_positive_inputs("close")
 def pvol(
     close: Series,
     volume: Series,
