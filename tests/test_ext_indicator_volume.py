@@ -54,7 +54,7 @@ class TestVolumeExtension(TestCase):
             ],
         )
         # Remove "OBV" so it does not interfere with test_obv_ext()
-        self.data.drop("OBV", axis=1, inplace=True)
+        del self.data["OBV"]  # the frame is shared by the class, so in place
 
     def test_cmf_ext(self):
         self.data.ta.cmf(append=True)
