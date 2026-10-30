@@ -40,10 +40,13 @@ def pvi(
     # where(), not signed_volume[signed_volume > 0]: see the note in nvi.py --
     # realigning the subset rebuilds the index and clears DatetimeIndex.freq on
     # the caller's own index object.
-    pvi = roc(close=close, length=length) * signed_volume.where(signed_volume > 0).abs()
-    pvi.fillna(0, inplace=True)
-    pvi.iloc[0] = initial
-    pvi = pvi.cumsum()
+    # Each rising-volume bar multiplies the index by 1 + its rate of change, as
+    # in TA-Lib's PVI and Fosback's definition; adding the percent change made
+    # it another series (#344).
+    factor = 1 + roc(close=close, length=length) * signed_volume.where(signed_volume > 0).abs() / 100
+    factor = factor.fillna(1.0)
+    factor.iloc[0] = 1.0
+    pvi = initial * factor.cumprod()
 
     # A bar whose input is missing has no value; the state carries across it.
     pvi = pvi.mask((close.isna() | volume.isna()).to_numpy())
@@ -76,10 +79,11 @@ Calculation:
 
     roc = ROC(close, length)
     signed_volume = signed_series(volume, initial=1)
-    pvi = signed_volume.where(signed_volume > 0).abs() * roc_
-    pvi.fillna(0, inplace=True)
-    pvi.iloc[0]= initial
-    pvi = pvi.cumsum()
+    factor = 1 + signed_volume.where(signed_volume > 0).abs() * roc / 100
+    factor = factor.fillna(1); factor.iloc[0] = 1
+    pvi = initial * factor.cumprod()
+
+    Multiplicative, as in Fosback's definition and TA-Lib's PVI.
 
 Args:
     close (pd.Series): Series of 'close's

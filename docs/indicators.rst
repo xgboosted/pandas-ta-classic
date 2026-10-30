@@ -381,7 +381,7 @@ Momentum and oscillator indicators for measuring the speed of price changes:
 * *Efficiency Ratio*: **er**
 * *Elder Ray Index*: **eri**
 * *Fisher Transform*: **fisher**
-* *Forecast Oscillator*: **fosc**
+* *Forecast Oscillator*: **fosc** (the close against the previous bar's TSF, as TA-Lib ``FOSC``; ``cfo`` uses the same bar's TSF)
 * *Inertia*: **inertia**
 * *KDJ*: **kdj**
 * *KST Oscillator*: **kst**
@@ -515,7 +515,7 @@ Trend identification and direction indicators:
 * *Central Pivot Range*: **cpr** (pivot methods ``classic``, ``camarilla``, ``fibonacci``, ``woodie``; ``timeframe`` ``daily`` uses the previous bar, ``intraday``/``weekly``/``monthly`` the last completed calendar day, week or month)
 * *Decay*: **decay** (Formally: **linear_decay**)
 * *Decreasing*: **decreasing**
-* *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering)
+* *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering; the uncentered line equals TA-Lib ``DPO``, the price ``length // 2 + 1`` bars ago less the SMA)
 * *Directional Index*: **dx**
 * *Exponential Decay*: **edecay** (multiplicative exponential decay; equivalent to tulipy ``edecay``)
 * *Increasing*: **increasing**
@@ -572,12 +572,12 @@ Volume analysis indicators:
 * *Klinger Volume Oscillator*: **kvo**
 * *Market Facilitation Index*: **marketfi**
 * *Money Flow Index*: **mfi**
-* *Negative Volume Index*: **nvi**
+* *Negative Volume Index*: **nvi** (multiplicative, from ``initial``, as TA-Lib ``NVI``)
 * *On-Balance Volume*: **obv**
-* *Positive Volume Index*: **pvi**
+* *Positive Volume Index*: **pvi** (multiplicative, from ``initial``, as TA-Lib ``PVI``)
 * *Price-Volume*: **pvol**
 * *Price Volume Rank*: **pvr**
-* *Price Volume Trend*: **pvt**
+* *Price Volume Trend*: **pvt** (the fractional change times volume, accumulated, as TA-Lib ``PVT``)
 * *Volume Flow Indicator*: **vfi** (``vfi(high, low, close, volume)``, Katsanos' definition; it takes ``high`` and ``low`` since 0.9.0)
 * *Volume Oscillator*: **vosc**
 * *Volume Profile*: **vp**
