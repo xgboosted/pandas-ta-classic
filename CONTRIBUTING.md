@@ -79,7 +79,7 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
-- The registry-driven contract tests run on every new indicator automatically and must pass: `test_lookahead.py`, `test_short_input_contract.py`, `test_leading_nan_contract.py`, `test_interior_nan_contract.py`, `test_warmup_contract.py`, `test_shift_contract.py`, the data-problem contracts (`test_degenerate_input.py`, `test_data_gaps_contract.py`, `test_scale_contract.py`, `test_nullable_input_contract.py`), `test_index_contract.py`, `test_int_parameter_contract.py`, `test_option_effect_contract.py`, the sweeps in `test_parameter_validation.py`, `test_parameter_name_contract.py`, `tests/test_keyword_table.py` (an option the indicator reads from `**kwargs` goes into `_KWARGS_OPTIONS` in `pandas_ta_classic/utils/_keywords.py`), and `test_api_consistency.py` (a new deviation from the majority convention goes into its table with a reason). An indicator with a TA-Lib counterpart also needs a case in `tests/test_oracle_registry.py`. Recursive indicators need `@skip_leading_nan(<series params>, interior=True)`; AGENTS.md ("Adding a New Indicator", step 7) says what each contract checks
+- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options in `_KWARGS_OPTIONS`, and a reason for any new deviation in `test_api_consistency.py`'s table
 - If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
@@ -297,8 +297,8 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
 
 Versions are managed automatically via [setuptools-scm](https://github.com/pypa/setuptools-scm) from git tags. **Never manually edit version strings.**
 
-- Tagged commits produce a clean version (`0.9.0`)
-- Untagged commits produce a dev version (`0.9.1.dev3` = 3 commits after `0.9.0`)
+- A tagged commit produces a clean version (`X.Y.Z`)
+- An untagged commit produces a dev version (`X.Y.(Z+1).devN`, N commits after the tag `X.Y.Z`)
 - Clone with full history — not a shallow clone — so setuptools-scm can find tags:
   ```bash
   git clone https://github.com/xgboosted/pandas-ta-classic.git

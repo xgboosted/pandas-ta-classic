@@ -512,8 +512,8 @@ rounding.
 
 Measured across all 423 tracked columns the worst native-vs-golden
 disagreement needs a relative term of 3.6e-15, so ``GOLDEN_RTOL`` keeps nine
-orders of margin for platform and BLAS differences across the 3.11–3.15 CI
-matrix.  Snapshot checkpoints use at most 29 % of the budget.
+orders of margin for platform and BLAS differences across the Python versions
+of the CI matrix.  Snapshot checkpoints use at most 29 % of the budget.
 
 This replaced a flat ``REL_TOL = 1e-4``, which was ~10 orders looser than the
 data required.  Concretely: perturbing the kurtosis excess-adjustment constant
