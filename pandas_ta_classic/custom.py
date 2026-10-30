@@ -1,4 +1,3 @@
-import importlib
 import importlib.util
 import logging
 import os
@@ -288,27 +287,3 @@ designated indicators directory like this:
 If your custom indicator(s) loaded successfully then it should behave exactly
 like all other native indicators in pandas_ta_classic, including help functions.
 """
-
-
-def load_indicator_module(name):
-    """
-     Helper function to (re)load an indicator module.
-
-    Returns:
-        dict: module functions mapping
-        {
-            "func1_name": func1,
-            "func2_name": func2,...
-        }
-
-    """
-    # load module
-    try:
-        module = importlib.import_module(name)
-    except Exception as ex:
-        # user module code can raise anything; this used to sys.exit(1) and kill the caller's interpreter
-        raise ImportError(f"Unable to load the custom indicator module '{name}': {ex}") from ex
-
-    # reload to refresh previously loaded module
-    module = importlib.reload(module)
-    return get_module_functions(module)

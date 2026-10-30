@@ -199,7 +199,7 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 | Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
 |------|--------------------------|----------------------|
 | CDL patterns (62) | Native Python — always used | Still native — TA-Lib **never** used for patterns |
-| Core indicators (66) | Native Python (default) | TA-Lib available via `talib=True` |
+| Core indicators (72) | Native Python (default) | TA-Lib available via `talib=True` |
 
 ```python
 # CDL patterns — always native, no TA-Lib needed
