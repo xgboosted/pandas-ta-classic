@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _MA_OPTIONS, ma
 from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -15,23 +15,6 @@ from pandas_ta_classic.utils import (
     verify_series,
 )
 from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
-
-# The options each moving average of ma() reads besides length; test_talib_parameters
-# checks them against the MAs' signatures and **kwargs reads. Per MA, because a
-# strategy-wide drift reaches every indicator and only vidya reads it.
-_MA_OPTIONS = {
-    "ema": frozenset({"adjust", "sma"}),
-    "fwma": frozenset({"asc"}),
-    "linreg": frozenset({"angle", "degrees", "intercept", "r", "slope", "tsf"}),
-    "midpoint": frozenset({"min_periods"}),
-    "pwma": frozenset({"asc"}),
-    "sma": frozenset({"min_periods"}),
-    "swma": frozenset({"asc"}),
-    "t3": frozenset({"a", "adjust", "sma"}),
-    "tema": frozenset({"adjust", "sma"}),
-    "vidya": frozenset({"drift"}),
-    "wma": frozenset({"asc"}),
-}
 
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):

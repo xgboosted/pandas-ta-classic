@@ -127,3 +127,15 @@ def test_an_unknown_ma_names_the_function_called(call, message, frame):
     """qstick(ma="bogus") used to return an SMA; squeeze's error named bbands' ma()."""
     with pytest.raises(ValueError, match=message):
         call(frame.iloc[-300:])
+
+
+@pytest.mark.parametrize("option", [{"adjust": True}, {"sma": False}])
+def test_ema_options_reach_the_ema_of_dema_kc_apo_and_ppo(option, frame):
+    """dema, kc, apo and ppo accepted ema's adjust and sma and returned the default
+    result; they now hand them on to their EMAs, as tema and qstick do (#340)."""
+    close = frame.close
+    e12, e26 = ta.ema(close, length=12, **option), ta.ema(close, length=26, **option)
+    assert np.allclose(ta.apo(close, mamode="ema", **option), e12 - e26, equal_nan=True)
+    assert np.allclose(ta.ppo(close, mamode="ema", **option).iloc[:, 0], 100 * (e12 - e26) / e26, equal_nan=True)
+    assert np.allclose(ta.kc(frame.high, frame.low, close, **option).iloc[:, 1], ta.ema(close, length=20, **option), equal_nan=True)
+    assert not np.allclose(ta.dema(close, **option), ta.dema(close), equal_nan=True)

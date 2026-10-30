@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _MA_OPTIONS, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -15,23 +15,24 @@ from pandas_ta_classic.utils import (
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
 
 
-def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib):
+def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwargs):
     """Compute PPO, histogram and signal line.
 
     Returns:
         tuple[Series, Series, Series] | None: ``(ppo_s, histogram, signalma)``
         or *None* if any intermediate result is unavailable.
     """
-    # TA-Lib cannot express a non-default scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100:
+    # TA-Lib cannot express a non-default scalar, nor an option the chosen MA reads
+    # (ema's adjust, ...); run natively instead of ignoring it
+    if Imports["talib"] and mode_talib and scalar == 100 and not ma_kwargs:
         from talib import PPO
 
         ppo_s = PPO(close, fast, slow, tal_ma(mamode))
     else:
-        fastma = ma(mamode, close, length=fast)
+        fastma = ma(mamode, close, length=fast, **ma_kwargs)
         if fastma is None:
             return None
-        slowma = ma(mamode, close, length=slow)
+        slowma = ma(mamode, close, length=slow, **ma_kwargs)
         if slowma is None:
             return None
         ppo_s = scalar * (fastma - slowma)
@@ -73,7 +74,10 @@ def ppo(
         return None
 
     # Calculate Result
-    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib)
+    # The options the chosen MA reads go to its fast and slow MA, as in bbands;
+    # ppo accepted and ignored them (#340). The signal line stays TA-Lib's EMA.
+    ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
+    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwargs)
     if result is None:
         return None
     ppo_s, histogram, signalma = result
@@ -131,6 +135,9 @@ Args:
 Kwargs:
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
+    Any option the chosen MA reads (adjust and sma for 'ema', min_periods
+    for 'sma', ...) goes to its fast and slow MA, and with talib=True runs
+    natively.
 
 Returns:
     pd.DataFrame: ppo, histogram, signal columns

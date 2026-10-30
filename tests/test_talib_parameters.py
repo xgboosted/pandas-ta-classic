@@ -17,8 +17,7 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
-from pandas_ta_classic.overlap.ma import _MA_DISPATCH
-from pandas_ta_classic.volatility.bbands import _MA_OPTIONS
+from pandas_ta_classic.overlap.ma import _MA_DISPATCH, _MA_OPTIONS
 from tests.config import get_sample_data
 from tests.contracts import inputs
 from tests.test_docstring_params import _accepted
