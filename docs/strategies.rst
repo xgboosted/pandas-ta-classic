@@ -55,7 +55,11 @@ Categorical Strategies
     df.ta.strategy("overlap", length=42)  # Override all Overlap 'length' attributes
 
 .. note::
-   Keyword arguments passed to ``strategy()`` reach every indicator in the run.
+   Keyword arguments passed to ``strategy()`` reach every indicator in the run
+   that accepts them, and no other: ``length=42`` changes each indicator that
+   has a ``length``. Since 0.10.0 a keyword that no indicator in the run accepts
+   raises ``TypeError``, as a misspelled keyword does in a direct call or in a
+   ``Strategy`` entry.
    Since 0.9.0 an indicator raises ``ValueError`` for a value it cannot use
    (for example ``ebsw`` needs ``length > 38``) instead of silently using its
    default, so exclude such indicators: ``df.ta.strategy("All", length=10, exclude=["ebsw"])``.

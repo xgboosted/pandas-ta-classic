@@ -248,7 +248,7 @@ ORACLE: dict[str, Case] = {
     "hlc3": Case(lambda b: [ta.hlc3(b.high, b.low, b.close)], lambda b: [T.TYPPRICE(b.high, b.low, b.close)]),
     "wcp": Case(lambda b: [ta.wcp(b.high, b.low, b.close)], lambda b: [T.WCLPRICE(b.high, b.low, b.close)]),
     "mavp": Case(
-        lambda b: [ta.mavp(b.close, pd.Series(10.0, index=b.close.index), min_period=2, max_period=30)],
+        lambda b: [ta.mavp(b.close, pd.Series(10.0, index=b.close.index))],
         lambda b: [T.MAVP(b.close, np.full(b.close.size, 10.0), 2, 30, 0)],
     ),
     # momentum

@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import _MA_OPTIONS, ma
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import (
     apply_fill,
@@ -24,6 +24,7 @@ from pandas_ta_classic.utils._core import (
     _str_param,
     nan_on_short_input,
 )
+from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
 def _bbands_native(close, length, std, ddof, mamode, kwargs):

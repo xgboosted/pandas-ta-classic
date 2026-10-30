@@ -17,8 +17,9 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
-from pandas_ta_classic.overlap.ma import _MA_DISPATCH, _MA_OPTIONS
+from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from pandas_ta_classic.utils._core import _TAL_MA_TYPES
+from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 from tests.config import get_sample_data
 from tests.contracts import inputs
 from tests.test_docstring_params import _accepted
@@ -173,18 +174,19 @@ def test_accessor_options_keep_the_talib_path():
 
 def test_bbands_knows_every_ma_option():
     """bbands leaves TA-Lib for these options only; one it does not list is ignored on that path."""
-    internal = {"close", "source", "series", "depth", "length", "talib", "offset", "mamode", "fillna", "fill_method"}
+    internal = {"close", "source", "series", "depth", "length", "talib", "offset", "fillna", "fill_method"}
     read = {name: _accepted(func) - internal for name, func in _MA_DISPATCH.items()}
     assert {name: options for name, options in read.items() if options} == _MA_OPTIONS
 
 
-def test_an_option_the_ma_does_not_read_keeps_the_talib_path():
-    """Only vidya reads drift, and strategy(drift=N) hands it to every indicator:
-    bbands(talib=True, drift=2) left TA-Lib although its SMA never reads drift."""
+def test_an_option_the_ma_does_not_read_raises():
+    """Only vidya reads drift: bbands(talib=True, drift=2) left TA-Lib although its
+    SMA never reads drift, then ignored it. strategy(drift=N) now hands drift only
+    to the indicators that accept it, so the direct call can raise."""
     close = get_sample_data().close.iloc[:300]
-    expected = ta.bbands(close, talib=True)
-    assert np.array_equal(ta.bbands(close, talib=True, drift=2).to_numpy(), expected.to_numpy(), equal_nan=True)
-    assert not np.array_equal(expected.to_numpy(), ta.bbands(close, talib=False).to_numpy(), equal_nan=True)
+    with pytest.raises(TypeError, match=r"^bbands\(\) got an unexpected keyword argument 'drift'$"):
+        ta.bbands(close, talib=True, drift=2)
+    assert ta.bbands(close, mamode="vidya", drift=2) is not None
 
 
 # Indicators that hand mamode to TA-Lib's MA_Type enum (utils.tal_ma).

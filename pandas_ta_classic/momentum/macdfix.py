@@ -30,10 +30,6 @@ def macdfix(
     if close is None:
         return None
 
-    # Remove fast/slow from kwargs to avoid duplicate keyword argument errors
-    kwargs.pop("fast", None)
-    kwargs.pop("slow", None)
-
     # The offset and the fill are applied once, below, to whichever branch ran.
     # macd() would otherwise apply them a second time on the native path.
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}

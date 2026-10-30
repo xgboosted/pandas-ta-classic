@@ -50,9 +50,6 @@ def adosc(
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    # A strategy-wide length (df.ta.strategy(..., length=N)) has no meaning here: the
-    # windows are fast/slow. Drop it rather than forward it to apply_fill.
-    kwargs.pop("length", None)
     mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None or volume is None:

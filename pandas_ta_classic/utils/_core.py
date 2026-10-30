@@ -14,6 +14,8 @@ from pandas import DataFrame, DatetimeIndex, Index, RangeIndex, Series, date_ran
 from pandas.api.extensions import ExtensionDtype
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
 
+from pandas_ta_classic.utils._keywords import _is_package_indicator, check_keywords, static_keywords
+
 logger = logging.getLogger(__name__)
 
 
@@ -431,11 +433,16 @@ def nan_on_short_input(fn: Callable) -> Callable:
     reproduces (a required input missing) stays None.
     """
     sig = inspect.signature(fn)
+    # The keyword check runs here because this is the one place that knows a call is
+    # the caller's own and not an inner call; a custom indicator is not checked.
+    static = static_keywords(fn) if _is_package_indicator(fn) else None
 
     @functools.wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         if _OUTER_INDICATOR.get() is not None:
             return fn(*args, **kwargs)
+        if static is not None:
+            check_keywords(fn, static, sig, args, kwargs)
         token = _OUTER_INDICATOR.set(fn.__name__)
         try:
             # An empty Series is shorter than any window, but indicators that read

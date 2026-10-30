@@ -25,9 +25,6 @@ def pwma(
     length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    # A strategy-wide asc (df.ta.strategy(..., asc=False)) is meant for wma/fwma; these
-    # weights are symmetric, so it has no meaning here. Drop it rather than forward it to apply_fill.
-    kwargs.pop("asc", None)
 
     if close is None:
         return None
@@ -80,5 +77,6 @@ Returns:
     pd.Series: New feature generated.
 
 Note: ``asc`` was removed in 0.9.0. The weights are symmetric, so it never
-changed the result; a strategy-wide ``asc`` is ignored.
+changed the result. Passing it raises TypeError; strategy() hands a
+strategy-wide ``asc`` to wma and fwma only.
 """
