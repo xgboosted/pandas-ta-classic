@@ -213,6 +213,7 @@ def optimal_leverage(
 
     >>> result = ta.optimal_leverage(close, benchmark_rate=0.0, log=False)
     """
+    log = _bool_param(log, False, "log")
     close = verify_series(close)
     if close is None:
         return np.nan
@@ -293,6 +294,8 @@ def sharpe_ratio(
 
     >>> result = ta.sharpe_ratio(close, benchmark_rate=0.0, log=False)
     """
+    log = _bool_param(log, False, "log")
+    use_cagr = _bool_param(use_cagr, False, "use_cagr")
     close = verify_series(close)
     if close is None:
         return np.nan
@@ -324,6 +327,7 @@ def sortino_ratio(close: Series, benchmark_rate: float = 0.0, log: bool = False)
 
     >>> result = ta.sortino_ratio(close, benchmark_rate=0.0, log=False)
     """
+    log = _bool_param(log, False, "log")
     close = verify_series(close)
     if close is None:
         return np.nan
@@ -365,6 +369,8 @@ def volatility(
 
     >>> result = ta.utils.volatility(close, tf="years", returns=False, log=False, **kwargs)
     """
+    returns = _bool_param(returns, False, "returns")
+    log = _bool_param(log, False, "log")
     close = verify_series(close)
     if close is None:
         return np.nan

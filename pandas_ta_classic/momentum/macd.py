@@ -76,7 +76,7 @@ def macd(
     if close is None:
         return None
 
-    as_mode = kwargs.setdefault("asmode", False)
+    as_mode = _bool_param(kwargs.pop("asmode", None), False, "asmode")
 
     # Calculate Result
     if Imports["talib"] and mode_talib:
@@ -215,7 +215,7 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
-    asmode (value, optional): When True, enables AS version of MACD.
+    asmode (bool, optional): When True, enables AS version of MACD.
         Default: False
     signal_indicators (bool): When True, threshold and comparison signal
         columns for both the MACD line and the histogram are appended. The
