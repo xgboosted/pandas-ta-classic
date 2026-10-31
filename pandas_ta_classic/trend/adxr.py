@@ -4,6 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.adx import adx
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
@@ -28,7 +29,7 @@ def adxr(
     length = _pos_int(length, 14, "length")
     lensig = _pos_int(lensig, length, "lensig")
     scalar = _number(scalar, 100, "scalar")
-    mamode = _str_param(mamode, "rma", "mamode")
+    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     drift = get_drift(drift)
     high = verify_series(high, length)
     low = verify_series(low, length)

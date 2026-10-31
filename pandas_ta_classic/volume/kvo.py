@@ -35,7 +35,7 @@ def kvo(
     slow = _pos_int(slow, 55, "slow")
     _windows_in_order("kvo", fast=fast, slow=slow)
     signal = _pos_int(signal, 13, "signal")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _length = max(fast, slow, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

@@ -28,7 +28,7 @@ def accbands(
     # Validate arguments
     length = _pos_int(length, 20, "length")
     c = _pos_float(c, 4, "c")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

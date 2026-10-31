@@ -51,7 +51,7 @@ def hilo(
     # Validate Arguments
     high_length = _pos_int(high_length, 13, "high_length")
     low_length = _pos_int(low_length, 21, "low_length")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     _length = max(high_length, low_length)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

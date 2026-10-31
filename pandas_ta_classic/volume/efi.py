@@ -27,7 +27,7 @@ def efi(
     """Indicator: Elder's Force Index (EFI)"""
     # Validate arguments
     length = _pos_int(length, 13, "length")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     drift = get_drift(drift)

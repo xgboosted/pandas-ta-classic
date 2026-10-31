@@ -32,7 +32,7 @@ def aobv(
     max_lookback = _pos_int(max_lookback, 2, "max_lookback")
     min_lookback = _pos_int(min_lookback, 2, "min_lookback")
     _windows_in_order("aobv", fast=fast, slow=slow)
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)

@@ -27,7 +27,7 @@ def amat(
     slow = _pos_int(slow, 21, "slow")
     _windows_in_order("amat", fast=fast, slow=slow)
     lookback = _pos_int(lookback, 2, "lookback")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values

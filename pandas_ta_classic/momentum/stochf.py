@@ -61,7 +61,7 @@ def stochf(
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:

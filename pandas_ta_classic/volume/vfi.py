@@ -32,7 +32,7 @@ def vfi(
     length = _pos_int(length, 130, "length")
     coef = _number(coef, 0.2, "coef")
     vcoef = _number(vcoef, 2.5, "vcoef")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _length = max(length, _VINTER_LENGTH) + 1
     high = verify_series(high, _length)
     low = verify_series(low, _length)

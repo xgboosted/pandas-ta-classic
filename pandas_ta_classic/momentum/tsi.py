@@ -39,7 +39,7 @@ def tsi(
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
 
     if close is None:
         return None

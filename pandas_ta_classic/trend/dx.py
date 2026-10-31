@@ -33,7 +33,7 @@ def dx(
     # Validate Arguments
     length = _pos_int(length, 14, "length")
     scalar = _pos_float(scalar, 100, "scalar")
-    mamode = _str_param(mamode, "rma", "mamode")
+    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

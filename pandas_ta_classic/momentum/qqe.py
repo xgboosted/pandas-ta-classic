@@ -84,7 +84,7 @@ def qqe(
     smooth = _pos_int(smooth, 5, "smooth")
     factor = _number(factor, 4.236, "factor")
     wilders_length = 2 * length - 1
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     close = verify_series(close, max(length, smooth, wilders_length))
     drift = get_drift(drift)
     offset = get_offset(offset)

@@ -4,6 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic import Imports
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -33,7 +34,7 @@ def natr(
     """Indicator: Normalized Average True Range (NATR)"""
     # Validate arguments
     length = _pos_int(length, 14, "length")
-    mamode = _str_param(mamode, "rma", "mamode")
+    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     scalar = _number(scalar, 100, "scalar")
     high = verify_series(high, length)
     low = verify_series(low, length)

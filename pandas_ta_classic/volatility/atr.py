@@ -32,7 +32,7 @@ def atr(
     """Indicator: Average True Range (ATR)"""
     # Validate arguments
     length = _pos_int(length, 14, "length")
-    mamode = _str_param(mamode, "rma", "mamode")
+    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
