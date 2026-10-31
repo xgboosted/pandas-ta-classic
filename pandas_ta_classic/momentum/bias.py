@@ -20,7 +20,7 @@ def bias(
     """Indicator: Bias (BIAS)"""
     # Validate Arguments
     length = _pos_int(length, 26, "length")
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     close = verify_series(close, length)
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values

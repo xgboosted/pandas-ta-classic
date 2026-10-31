@@ -62,7 +62,7 @@ def pmax(
     # Validate arguments
     length = _pos_int(length, 10, "length")
     multiplier = _pos_float(multiplier, 3.0, "multiplier")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

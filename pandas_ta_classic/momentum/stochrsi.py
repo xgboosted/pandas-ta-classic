@@ -65,7 +65,7 @@ def stochrsi(
     d = _pos_int(d, 3, "d")
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
-    mamode = _str_param(mamode, "sma", "mamode")
+    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:

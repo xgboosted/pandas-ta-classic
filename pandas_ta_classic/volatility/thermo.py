@@ -31,7 +31,7 @@ def thermo(
     length = _pos_int(length, 20, "length")
     long = _pos_float(long, 2, "long")
     short = _pos_float(short, 0.5, "short")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     drift = get_drift(drift)

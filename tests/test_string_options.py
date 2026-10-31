@@ -20,34 +20,7 @@ CASES = [
     for param, spec in inspect.signature(getattr(ta, name)).parameters.items()
     if spec.annotation is str or str in typing.get_args(spec.annotation)
 ]
-_MAMODE = "OPEN: ma() validates the name, so the error names ma() and its parameter 'name', not the indicator and mamode"
-KNOWN = {
-    ("accbands", "mamode"): _MAMODE,
-    ("adx", "mamode"): _MAMODE,
-    ("adxr", "mamode"): _MAMODE,
-    ("amat", "mamode"): _MAMODE,
-    ("aobv", "mamode"): _MAMODE,
-    ("atr", "mamode"): _MAMODE,
-    ("bias", "mamode"): _MAMODE,
-    ("ce", "mamode"): _MAMODE,
-    ("dm", "mamode"): _MAMODE,
-    ("dx", "mamode"): _MAMODE,
-    ("efi", "mamode"): _MAMODE,
-    ("hilo", "mamode"): _MAMODE,
-    ("inertia", "mamode"): _MAMODE,
-    ("kc", "mamode"): _MAMODE,
-    ("kvo", "mamode"): _MAMODE,
-    ("natr", "mamode"): _MAMODE,
-    ("pmax", "mamode"): _MAMODE,
-    ("qqe", "mamode"): _MAMODE,
-    ("rvi", "mamode"): _MAMODE,
-    ("stoch", "mamode"): _MAMODE,
-    ("stochf", "mamode"): _MAMODE,
-    ("stochrsi", "mamode"): _MAMODE,
-    ("thermo", "mamode"): _MAMODE,
-    ("tsi", "mamode"): _MAMODE,
-    ("vfi", "mamode"): _MAMODE,
-}
+KNOWN: dict = {}
 
 
 @pytest.fixture(scope="module")
@@ -63,6 +36,13 @@ def test_sweep_found_the_options():
 def test_unknown_string_option_names_the_indicator(name, param, frame):
     with pytest.raises(ValueError, match=rf"^{name}\(\) {param}\b"):
         getattr(ta, name)(**inputs(name, frame), **{param: "bogus"})
+
+
+@pytest.mark.parametrize("metric", ["downside_deviation", "volatility"])
+def test_unknown_metric_tf_names_the_metric(metric, frame):
+    """The tf check lived in total_time(), so the error named total_time() (#372's note)."""
+    with pytest.raises(ValueError, match=rf"^{metric}\(\) tf must be one of .*got 'bogus'$"):
+        getattr(ta.utils, metric)(frame.close.pct_change().dropna() if metric == "downside_deviation" else frame.close, tf="bogus")
 
 
 def test_vwap_anchor_error_shows_the_value_passed(frame):

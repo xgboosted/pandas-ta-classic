@@ -10,14 +10,17 @@ from pandas_ta_classic.performance.percent_return import percent_return
 
 from ._core import _bool_param, _pos_int, _str_param, verify_series
 from ._math import linear_regression
-from ._time import total_time
+from ._time import TIME_RANGE_UNITS, total_time
 
 
 def _span(series: Series, tf: str, caller: str) -> float:
     """total_time() for a metric that divides by it: a span of 0 raises naming *caller*.
 
     One row, or rows sharing one timestamp, raised a bare ZeroDivisionError.
+    An unknown *tf* is checked here, so the error names *caller*, not total_time().
     """
+    if tf not in TIME_RANGE_UNITS:
+        raise ValueError(f"{caller}() tf must be one of {list(TIME_RANGE_UNITS)}, got {tf!r}")
     span = total_time(series, tf)
     if span == 0:
         raise ValueError(f"{caller}() needs at least two distinct timestamps; the index spans 0 {tf}")

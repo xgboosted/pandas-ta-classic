@@ -37,7 +37,7 @@ def adx(
     # Validate Arguments
     length = _pos_int(length, 14, "length")
     lensig = _pos_int(lensig, length, "lensig")
-    mamode = _str_param(mamode, "rma", "mamode")
+    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     scalar = _number(scalar, 100, "scalar")
     high = verify_series(high, length)
     low = verify_series(low, length)

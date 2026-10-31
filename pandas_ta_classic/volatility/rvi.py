@@ -79,7 +79,7 @@ def rvi(
     thirds = _bool_param(thirds, False, "thirds")
     if refined and thirds:
         raise ValueError("rvi() refined and thirds are alternative modes; pass at most one")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

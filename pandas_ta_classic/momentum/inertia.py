@@ -4,6 +4,7 @@ from typing import Any
 from pandas import Series
 
 from pandas_ta_classic.overlap.linreg import linreg
+from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -80,7 +81,7 @@ def inertia(
     thirds = _bool_param(thirds, False, "thirds")
     if refined and thirds:
         raise ValueError("inertia() refined and thirds are alternative modes; pass at most one")
-    mamode = _str_param(mamode, "ema", "mamode")
+    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _length = max(length, rvi_length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
