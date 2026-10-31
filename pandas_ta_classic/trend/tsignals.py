@@ -13,7 +13,7 @@ from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, n
 
 
 def _reject_trend_reset(indicator: str, kwargs: dict) -> None:
-    """trend_reset was documented but never read; it is removed (AGENTS.md rule 11 exception).
+    """trend_reset was documented but never read; it is removed and rejected by name (AGENTS.md rules 4 and 11).
 
     **kwargs would otherwise swallow it silently.
     """

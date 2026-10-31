@@ -213,6 +213,11 @@ Edge-Case Tests
   keywords in ``pandas_ta_classic/utils/_keywords.py`` matches what each
   indicator reads from ``**kwargs`` or hands on; ``df.ta``, ``Strategy``
   entries and ``strategy()`` are covered too.
+- ``test_string_options.py`` — every ``str`` parameter of every registered
+  indicator, set to an unknown value, raises ``ValueError`` naming the
+  indicator and the parameter, not an inner function such as ``ma()``;
+  ``downside_deviation()`` and ``volatility()`` name themselves for an
+  unknown ``tf``.
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
@@ -403,6 +408,9 @@ only in the code a PR touches.
   confusable character that a diff or a grep would not show.
 - ``test_python_support_docs.py`` — the supported Python range in the docs and
   ``requires-python`` match ``LATEST_PYTHON_VERSION`` in CI (rule 9).
+- ``test_docs_facts.py`` — every indicator, pattern, category and TA-Lib count,
+  every dependency floor and the list of contract tests that the tracked docs
+  state match the registry and ``pyproject.toml`` (rule 9).
 - ``test_changelog.py`` — each fragment in ``changelog.d/`` has a valid name, at
   most 1,000 characters and the **BREAKING** form, and ``CHANGELOG.md`` keeps the
   marker towncrier inserts after.

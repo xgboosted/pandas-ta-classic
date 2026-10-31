@@ -475,7 +475,7 @@ def test_strategy_skips_vwap_without_datetime_index(frame):
 
 
 def test_trend_reset_is_removed(frame):
-    """trend_reset was documented as ending a trend but never read (AGENTS rule 4, rule 11 exception)."""
+    """trend_reset was documented as ending a trend but never read; removed and rejected by name (AGENTS rules 4 and 11)."""
     trend = (frame.close > frame.open).astype(int)
     for call, name in (
         (lambda: ta.tsignals(trend, trend_reset=1), "tsignals"),
