@@ -10,7 +10,9 @@ touch the same file, so the changelog cannot conflict between open PRs.
 `<PR number>.<type>.md`, for example `321.fixed.md`. Open the PR as a draft,
 add the fragment under its number in the next push, then mark the PR ready for
 review. The `Changelog` check skips while the PR is a draft and runs when it is
-marked ready, so it never fails on the fragment the PR number did not allow yet. A PR with two separate
+marked ready, so it never fails on the fragment the PR number did not allow yet. Mark it ready only once GitHub
+shows the fragment commit as the PR head: marked earlier, the check runs on the
+commit before the fragment and fails. A PR with two separate
 entries of one type adds `321.fixed.md` and `321.fixed.1.md`.
 
 | Type          | Heading       | For                                                       |
