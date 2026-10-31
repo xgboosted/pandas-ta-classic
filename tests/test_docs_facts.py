@@ -10,6 +10,7 @@ AGENTS.md and docs/testing.rst, and all three copies once missed a new one.
 
 import inspect
 import re
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -20,8 +21,11 @@ from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS = sorted([ROOT / "AGENTS.md", ROOT / "README.md", ROOT / "CONTRIBUTING.md", *(ROOT / "docs").rglob("*.rst"), *(ROOT / "docs").rglob("*.md")])
-DOCS = [path for path in DOCS if "_build" not in path.parts]
+# The tracked files only: a local draft or build output under docs/ is not documentation.
+_TRACKED = subprocess.run(
+    ["git", "ls-files", "AGENTS.md", "README.md", "CONTRIBUTING.md", "docs/*.rst", "docs/*.md"], cwd=ROOT, capture_output=True, text=True, check=True
+).stdout.split()
+DOCS = [ROOT / name for name in sorted(_TRACKED)]
 
 INDICATORS = sorted({name for names in ta.Category.values() for name in names})
 TALIB = [n for n in INDICATORS if n not in ta.Category["candles"] and "talib" in inspect.signature(_find_indicator_func(n)).parameters]
