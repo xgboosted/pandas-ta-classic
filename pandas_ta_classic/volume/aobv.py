@@ -7,7 +7,7 @@ from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _str_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _str_param, _windows_in_order, nan_on_short_input, skip_leading_nan
 
 from .obv import obv
 
@@ -31,8 +31,7 @@ def aobv(
     slow = _pos_int(slow, 12, "slow")
     max_lookback = _pos_int(max_lookback, 2, "max_lookback")
     min_lookback = _pos_int(min_lookback, 2, "min_lookback")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("aobv", fast=fast, slow=slow)
     mamode = _str_param(mamode, "ema", "mamode")
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
@@ -115,7 +114,7 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
-    fast (int): Fast MA period. Default: 4
+    fast (int): Fast MA period. At most slow. Default: 4
     slow (int): Slow MA period. Default: 12
     max_lookback (int): Max lookback period. Default: 2
     min_lookback (int): Min lookback period. Default: 2

@@ -21,7 +21,7 @@ from pandas_ta_classic.utils import _metrics
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS, code_defaults
+from tests.contracts import INDICATORS, code_defaults, inputs, spy
 from tests.test_degenerate_input import _call
 from tests.test_docstring_defaults import _MODULES
 
@@ -625,3 +625,45 @@ def test_series_signal_option_is_not_checked_while_the_signals_are_off(name, key
     """Without signal_indicators the option is not read, as before: nothing to raise for."""
     func = _find_indicator_func(name)
     assert func(frame.close).equals(func(frame.close, **{key: _other_index(frame, "shorter")}))
+
+
+# fast/slow are windows everywhere but here, where they are the two series to compare.
+_FAST_SLOW_SERIES = {"long_run", "short_run"}
+FAST_SLOW = [n for n in INDICATORS if {"fast", "slow"} <= set(inspect.signature(getattr(ta, n)).parameters) and n not in _FAST_SLOW_SERIES]
+
+
+def test_the_fast_slow_set_is_the_nineteen_of_374():
+    assert len(FAST_SLOW) == 19, FAST_SLOW
+
+
+@pytest.mark.parametrize("name", FAST_SLOW)
+def test_fast_above_slow_raises(name):
+    """Twelve indicators swapped fast > slow without a word and seven computed it
+    as given (#374); all 19 now raise, naming the indicator and both values."""
+    df = spy(300)
+    func = getattr(ta, name)
+    order = "fast <= medium <= slow" if name == "uo" else "fast <= slow"
+    with pytest.raises(ValueError, match=rf"^{name}\(\) needs {order}, got fast=30, "):
+        func(**inputs(name, df), fast=30, slow=10)
+
+
+@pytest.mark.parametrize("name", FAST_SLOW)
+def test_equal_fast_and_slow_are_allowed(name):
+    df = spy(300)
+    extra = {"medium": 10} if name == "uo" else {}
+    assert getattr(ta, name)(**inputs(name, df), fast=10, slow=10, **extra) is not None
+
+
+def test_a_slow_below_the_default_fast_raises_on_both_paths():
+    """macd(slow=10) was swapped into MACD_10_12_9; TA-Lib's MACD swaps internally too."""
+    close = spy(300).close
+    with pytest.raises(ValueError, match=r"^macd\(\) needs fast <= slow, got fast=12, slow=10$"):
+        ta.macd(close, slow=10)
+    with pytest.raises(ValueError, match=r"^macd\(\) needs fast <= slow, got fast=30, slow=10$"):
+        ta.macd(close, fast=30, slow=10, talib=True)
+
+
+def test_uo_needs_its_three_windows_in_order():
+    df = spy(300)
+    with pytest.raises(ValueError, match=r"^uo\(\) needs fast <= medium <= slow, got fast=7, medium=30, slow=28$"):
+        ta.uo(df.high, df.low, df.close, medium=30)

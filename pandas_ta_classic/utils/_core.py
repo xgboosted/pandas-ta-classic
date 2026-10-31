@@ -1,6 +1,7 @@
 import contextvars
 import functools
 import inspect
+import itertools
 import logging
 import math
 import sys
@@ -489,6 +490,20 @@ def nan_on_short_input(fn: Callable) -> Callable:
             _OUTER_INDICATOR.reset(token)
 
     return wrapper
+
+
+def _windows_in_order(indicator: str, **windows: int) -> None:
+    """Raise ValueError unless the *windows* (``fast=12, slow=26``) are in order, each at most the next.
+
+    Twelve indicators swapped a fast window above its slow one without a word,
+    and seven computed the inverted pair as given (#374); every one now names
+    the indicator and the values instead. Equal windows are allowed.
+    """
+    values = list(windows.values())
+    if any(a > b for a, b in itertools.pairwise(values)):
+        order = " <= ".join(windows)
+        got = ", ".join(f"{name}={value}" for name, value in windows.items())
+        raise ValueError(f"{indicator}() needs {order}, got {got}")
 
 
 def degenerate_div(numerator: Series, denominator: Series) -> Series:

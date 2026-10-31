@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _windows_in_order, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._signals import _require_number
 
@@ -67,8 +67,7 @@ def macd(
     fast = _pos_int(fast, 12, "fast")
     slow = _pos_int(slow, 26, "slow")
     signal = _pos_int(signal, 9, "signal")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("macd", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")
@@ -207,7 +206,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    fast (int): The short period. Default: 12
+    fast (int): The short period. At most slow. Default: 12
     slow (int): The long period. Default: 26
     signal (int): The signal period. Default: 9
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib

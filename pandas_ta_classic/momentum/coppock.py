@@ -5,7 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.wma import wma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, _windows_in_order, nan_on_short_input
 
 from .roc import roc
 
@@ -25,6 +25,7 @@ def coppock(
     length = _pos_int(length, 10, "length")
     fast = _pos_int(fast, 11, "fast")
     slow = _pos_int(slow, 14, "slow")
+    _windows_in_order("coppock", fast=fast, slow=slow)
     close = verify_series(close, max(length, fast, slow))
     offset = get_offset(offset)
 
@@ -73,7 +74,7 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): WMA period. Default: 10
-    fast (int): Fast ROC period. Default: 11
+    fast (int): Fast ROC period. At most slow. Default: 11
     slow (int): Slow ROC period. Default: 14
     offset (int): How many periods to offset the result. Default: 0
 

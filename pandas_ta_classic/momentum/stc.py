@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _describe_index, _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _describe_index, _pos_float, _pos_int, _windows_in_order, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -125,8 +125,7 @@ def stc(
     fast = _pos_int(fast, 12, "fast")
     slow = _pos_int(slow, 26, "slow")
     factor = _pos_float(factor, 0.5, "factor")
-    if slow < fast:  # mandatory condition, but might be confusing
-        fast, slow = slow, fast
+    _windows_in_order("stc", fast=fast, slow=slow)
     _length = max(tclength, fast, slow)
     close = verify_series(close, _length)
     offset = get_offset(offset)
@@ -217,7 +216,7 @@ Warm-up:
 Args:
     close (pd.Series): Series of 'close's, used for indexing Series, mandatory
     tclength (int): SchaffTC Signal-Line length.  Default: 10 (adjust to the half of cycle)
-    fast (int): The short period.   Default: 12
+    fast (int): The short period. At most slow.   Default: 12
     slow (int): The long period.   Default: 26
     factor (float): smoothing factor for last stoch. calculation.   Default: 0.5
     offset (int): How many periods to offset the result.  Default: 0

@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, _windows_in_order, nan_on_short_input
 
 # TA-Lib MA type integer → string kind for the native path. KAMA (6) and
 # MAMA (7) have no native equivalent here; they need TA-Lib.
@@ -47,8 +47,7 @@ def macdext(
     fastmatype = _pos_int(fastmatype, 1, "fastmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
     slowmatype = _pos_int(slowmatype, 1, "slowmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
     signalmatype = _pos_int(signalmatype, 1, "signalmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("macdext", fast=fast, slow=slow)
     close = verify_series(close, slow + signal)
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")
@@ -133,7 +132,7 @@ Sources:
 
 Args:
     close (pd.Series): Close price series.
-    fast (int): Fast period. Default: 12.
+    fast (int): Fast period. At most slow. Default: 12.
     slow (int): Slow period. Default: 26.
     signal (int): Signal period. Default: 9.
     fastmatype (int): MA type for fast line. Default: 1 (EMA).

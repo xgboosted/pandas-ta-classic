@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, _windows_in_order, nan_on_short_input
 
 
 def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):
@@ -82,6 +82,7 @@ def uo(
     medium = _pos_int(medium, 14, "medium")
     medium_w = _pos_float(medium_w, 2.0, "medium_w")
     slow = _pos_int(slow, 28, "slow")
+    _windows_in_order("uo", fast=fast, medium=medium, slow=slow)
     slow_w = _pos_float(slow_w, 1.0, "slow_w")
     _length = max(fast, medium, slow)
     high = verify_series(high, _length)
@@ -145,7 +146,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    fast (int): The Fast %K period. Default: 7
+    fast (int): The Fast %K period. At most medium, which is at most slow. Default: 7
     medium (int): The Slow %K period. Default: 14
     slow (int): The Slow %D period. Default: 28
     fast_w (float): The Fast %K period. Default: 4.0

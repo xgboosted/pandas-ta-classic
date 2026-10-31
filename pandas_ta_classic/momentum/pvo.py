@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _number, _pos_int, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
@@ -24,8 +24,7 @@ def pvo(
     slow = _pos_int(slow, 26, "slow")
     signal = _pos_int(signal, 9, "signal")
     scalar = _number(scalar, 100, "scalar")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("pvo", fast=fast, slow=slow)
     volume = verify_series(volume, max(fast, slow, signal))
     offset = get_offset(offset)
 
@@ -79,7 +78,7 @@ Calculation:
 
 Args:
     volume (pd.Series): Series of 'volume's
-    fast (int): The short period. Default: 12
+    fast (int): The short period. At most slow. Default: 12
     slow (int): The long period. Default: 26
     signal (int): The signal period. Default: 9
     scalar (float): How much to magnify. Default: 100

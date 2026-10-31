@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _pos_int, _str_param, _windows_in_order, nan_on_short_input
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
@@ -30,8 +30,7 @@ def apo(
     # Validate Arguments
     fast = _pos_int(fast, 12, "fast")
     slow = _pos_int(slow, 26, "slow")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("apo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow))
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     offset = get_offset(offset)
@@ -86,7 +85,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    fast (int): The short period. Default: 12
+    fast (int): The short period. At most slow. Default: 12
     slow (int): The long period. Default: 26
     mamode (str): See ```help(ta.ma)```. Default: 'sma'
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
