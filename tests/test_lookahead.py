@@ -35,7 +35,6 @@ Run:
 """
 
 import inspect
-import typing
 from pathlib import Path
 
 import numpy as np
@@ -43,19 +42,13 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from tests.contracts import COLUMNS, INDICATORS, candidate_calls
 
 # Number of bars in the synthetic frame, and the prefix lengths compared
 # against it.  Two cuts so both a short and a long history are exercised.
 BARS = 400
 CUTS = (100, 250)
 CUT = CUTS[-1]
-
-# Boolean parameters the keyword sweep leaves alone.
-SKIP_BOOL_KWARGS = {
-    # selects a different implementation altogether, and whether TA-Lib is
-    # installed varies by environment
-    "talib",
-}
 
 # Why a given call is expected to report values that depend on later bars.
 # The predicate reads the keywords of the call, so a keyword that switches the
@@ -153,33 +146,6 @@ EXTRA_ARGS = {
 }
 
 
-def indicator_names() -> list[str]:
-    return sorted({name for names in ta.Category.values() for name in names})
-
-
-def boolean_kwargs(name: str) -> list[str]:
-    """Names of the boolean parameters of indicator *name*."""
-    func = getattr(ta, name, None)
-    if func is None:
-        return []
-    try:
-        signature = inspect.signature(func)
-    except (TypeError, ValueError):
-        return []
-
-    found = []
-    for parameter_name, parameter in signature.parameters.items():
-        if parameter_name in SKIP_BOOL_KWARGS:
-            continue
-        annotation = parameter.annotation
-        if annotation is inspect.Parameter.empty:
-            continue
-        optional_of = typing.get_args(annotation)
-        if annotation is bool or (bool in optional_of and type(None) in optional_of):
-            found.append(parameter_name)
-    return found
-
-
 def lookahead_reason(name: str, kwargs: dict):
     """Why this exact call is expected to look forward, or None."""
     rule = LOOKAHEAD_RULES.get(name)
@@ -187,11 +153,6 @@ def lookahead_reason(name: str, kwargs: dict):
         return None
     applies, reason = rule
     return reason if applies(kwargs) else None
-
-
-def candidate_calls(name: str) -> list[dict]:
-    """The default call plus each boolean keyword of *name* flipped on its own."""
-    return [{}] + [{keyword: value} for keyword in boolean_kwargs(name) for value in (True, False)]
 
 
 def first_non_causal_call(name: str) -> dict:
@@ -218,10 +179,8 @@ def has_causal_mode(name: str) -> bool:
 def sweep_cases():
     """Every (indicator, kwargs) call the sweep evaluates, marked where due."""
     cases = []
-    for name in indicator_names():
-        calls = [{}]
-        calls += [{keyword: value} for keyword in boolean_kwargs(name) for value in (True, False)]
-        for kwargs in calls:
+    for name in INDICATORS:
+        for kwargs in candidate_calls(name):
             identifier = name + ("".join(f"[{k}={v}]" for k, v in kwargs.items()))
             reason = lookahead_reason(name, kwargs)
             marks = [pytest.mark.xfail(reason=reason, strict=True)] if reason else []
@@ -274,9 +233,6 @@ def frames():
     return df, {cut: df.head(cut).copy() for cut in CUTS}
 
 
-_COLUMN_FOR_PARAM = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
-
-
 def direct_call(source: pd.DataFrame, name: str, kwargs: dict):
     """Call the plain indicator function, bypassing the DataFrame accessor.
 
@@ -285,7 +241,7 @@ def direct_call(source: pd.DataFrame, name: str, kwargs: dict):
     None contract can be observed.
     """
     func = getattr(ta, name)
-    columns = {p: source[c] for p, c in _COLUMN_FOR_PARAM.items() if p in inspect.signature(func).parameters}
+    columns = {p: source[c] for p, c in COLUMNS.items() if p in inspect.signature(func).parameters}
     return func(**columns, **kwargs)
 
 

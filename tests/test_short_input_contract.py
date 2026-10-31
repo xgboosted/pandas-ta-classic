@@ -31,6 +31,7 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from tests.contracts import INDICATORS
 
 _N_SHORT = 3
 _N_LONG = 400
@@ -370,9 +371,7 @@ def test_tables_cover_every_indicator() -> None:
     A new indicator fails this test until someone decides which contract it
     follows -- that decision is the point.
     """
-    discovered = {
-        name for names in ta.Category.values() for name in names if callable(getattr(ta, name, None)) and not inspect.isclass(getattr(ta, name))
-    }
+    discovered = set(INDICATORS)
     classified = RETURNS_ALL_NAN | RETURNS_SERIES | _EXCLUDED
     unclassified = discovered - classified
     assert not unclassified, "unclassified indicator(s): " f"{sorted(unclassified)} -- add each to RETURNS_ALL_NAN or RETURNS_SERIES"

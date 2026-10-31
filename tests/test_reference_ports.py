@@ -16,13 +16,13 @@ their docstrings described the result as "how many bars back", which it is not.
 Warm-up bars are skipped, where seed conventions differ between sources.
 """
 
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from tests import contracts
 from tests.fixtures import reference_ports as ref
 
 WARMUP = 300
@@ -30,10 +30,7 @@ WARMUP = 300
 
 @pytest.fixture(scope="module")
 def spy():
-    df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df
+    return contracts.spy()
 
 
 def _close(got, expected, atol):

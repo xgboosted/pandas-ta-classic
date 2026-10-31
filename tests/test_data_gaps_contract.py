@@ -27,20 +27,14 @@ decided rather than a defect goes into a table here, with the reason.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pytest
 
-from tests.test_leading_nan_contract import INDICATORS, _call as _frame
+from tests.contracts import CUMULATIVE, LOOKAHEAD, OHLCV_INDICATORS as INDICATORS, WHOLE_SERIES, params, spy, values as _call
 
 GAP = 600
 TAIL = 200  # compared bars at the end, 700+ bars after the gap
-CUMULATIVE = {"ad", "aobv", "nvi", "obv", "pvi", "pvt", "wad"}
-WHOLE_SERIES = {"tos_stdevall"}
-# Non-causal by design (see test_lookahead.py): bars before a gap depend on later bars.
-LOOKAHEAD = {"dpo", "ichimoku", "tos_stdevall"}
 # Anchored to calendar periods, so the timestamps are input.
 TIME_BASED = {"vwap", "cpr"}
 
@@ -58,25 +52,14 @@ OPEN_FINDINGS: dict[tuple[str, str], str] = {}
 
 @pytest.fixture(scope="module")
 def clean() -> pd.DataFrame:
-    df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df.iloc[-1500:]
-
-
-def _call(name: str, df: pd.DataFrame) -> np.ndarray:
-    return _frame(name, df).to_numpy(float, na_value=np.nan)
+    return spy(1500)
 
 
 def _params(gaps):
-    for gap in gaps:
-        for name in INDICATORS:
-            reason = OPEN_FINDINGS.get((name, gap))
-            marks = [pytest.mark.xfail(strict=True, reason=reason)] if reason else []
-            yield pytest.param(name, gap, marks=marks, id=f"{name}-{gap}")
+    return params([(name, gap) for gap in gaps for name in INDICATORS], OPEN_FINDINGS)
 
 
-@pytest.mark.parametrize(("name", "gap"), list(_params(GAPS)))
+@pytest.mark.parametrize(("name", "gap"), _params(GAPS))
 def test_an_interior_gap_is_forgotten(name: str, gap: str, clean: pd.DataFrame) -> None:
     rows, columns = GAPS[gap]
     gapped = clean.copy()
@@ -93,7 +76,7 @@ def test_an_interior_gap_is_forgotten(name: str, gap: str, clean: pd.DataFrame) 
     np.testing.assert_allclose(tail_after, tail_before, rtol=1e-6, atol=1e-9, equal_nan=True, err_msg=f"{name}: did not recover from the gap")
 
 
-@pytest.mark.parametrize(("name", "gap"), list(_params(["last_bar"])))
+@pytest.mark.parametrize(("name", "gap"), _params(["last_bar"]))
 def test_a_missing_last_bar_changes_no_earlier_bar(name: str, gap: str, clean: pd.DataFrame) -> None:
     lagging = clean.copy()
     lagging.iloc[-1] = np.nan
@@ -103,7 +86,7 @@ def test_a_missing_last_bar_changes_no_earlier_bar(name: str, gap: str, clean: p
         np.testing.assert_array_equal(after[:-1], before[:-1], err_msg=f"{name}: a missing newest bar changed history")
 
 
-@pytest.mark.parametrize(("name", "gap"), list(_params(["calendar"])))
+@pytest.mark.parametrize(("name", "gap"), _params(["calendar"]))
 def test_bar_based_indicators_ignore_the_calendar(name: str, gap: str, clean: pd.DataFrame) -> None:
     """The same bars under a gappy calendar give the same numbers.
 

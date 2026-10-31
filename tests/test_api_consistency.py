@@ -53,7 +53,7 @@ import pytest
 
 import pandas_ta_classic as ta
 from tests.config import get_sample_data
-from tests.test_docstring_defaults import _code_defaults
+from tests.contracts import code_defaults as _code_defaults
 
 PACKAGE = Path(ta.__file__).parent
 COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}

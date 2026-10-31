@@ -21,45 +21,23 @@ recursive indicators (``macd``, ``kama``, ``jma``, ``mama``, the six ``ht_*``,
 """
 
 import inspect
-import warnings
-from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from tests.contracts import COLUMNS, CUMULATIVE, LOOKAHEAD, OHLCV_INDICATORS as INDICATORS, WHOLE_SERIES, params, spy, values as _call
 
 GAP = 600
 TAIL = 200  # compared bars at the end, 700+ bars after the gap
-COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
-NOT_OHLCV = {"add", "sub", "mult", "div", "above", "above_value", "below", "below_value", "cross", "cross_value"}
-NOT_OHLCV |= {"long_run", "short_run", "tsignals", "xsignals", "beta", "correl", "mavp", "ma", "vp"}
-CUMULATIVE = {"ad", "aobv", "nvi", "obv", "pvi", "pvt", "wad"}
-WHOLE_SERIES = {"tos_stdevall"}
-# Non-causal by design (see test_lookahead.py): bars before the gap depend on later bars.
-LOOKAHEAD = {"dpo", "ichimoku", "tos_stdevall"}
-INDICATORS = sorted({name for names in ta.Category.values() for name in names} - NOT_OHLCV)
 
 
 @pytest.fixture(scope="module")
 def frames():
-    df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    clean = df.iloc[-1500:]
+    clean = spy(1500)
     gapped = clean.copy()
     gapped.iloc[GAP, gapped.columns.get_loc("close")] = np.nan
     return clean, gapped
-
-
-def _call(name, df):
-    fn = getattr(ta, name)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        result = fn(**{p: df[c] for p, c in COLUMNS.items() if p in inspect.signature(fn).parameters})
-    frame = result.to_frame() if isinstance(result, pd.Series) else result
-    return frame.to_numpy(float, na_value=np.nan)
 
 
 @pytest.mark.parametrize("name", INDICATORS)
@@ -88,6 +66,10 @@ FROM_EARLIER_BARS = {"cpr", "ichimoku"}
 # a carried or stale-state value (ema, rma and Wilder smoothing, the cumulative
 # volume indices, the SAR and supertrend state machines, ...) were fixed together.
 PUBLISHES_AT_THE_GAP = {"cdl_doji", "cdl_pattern"}
+AT_THE_GAP = {
+    **{name: "KEPT: takes its value from earlier bars by definition" for name in FROM_EARLIER_BARS},
+    **{name: "KEPT: a candle pattern reads 0 on a bar it cannot match, as TA-Lib's do (#282)" for name in PUBLISHES_AT_THE_GAP},
+}
 
 
 @pytest.fixture(scope="module")
@@ -98,14 +80,10 @@ def bar_gapped(frames):
     return gapped
 
 
-@pytest.mark.parametrize("name", INDICATORS)
+@pytest.mark.parametrize("name", params([(name,) for name in INDICATORS], AT_THE_GAP, key=lambda row: row[0]))
 def test_a_missing_bar_reads_nan(name, bar_gapped):
     at_gap = _call(name, bar_gapped)[GAP]
-    published = bool(np.isfinite(at_gap).any())
-    if name in FROM_EARLIER_BARS | PUBLISHES_AT_THE_GAP:
-        assert published, f"{name}: reads NaN at the missing bar now; drop it from its exemption list"
-    else:
-        assert not published, f"{name}: publishes {at_gap[np.isfinite(at_gap)][:4]} at a bar whose every input is missing"
+    assert not np.isfinite(at_gap).any(), f"{name}: publishes {at_gap[np.isfinite(at_gap)][:4]} at a bar whose every input is missing"
 
 
 # The same rule for one missing column: an indicator that reads the close alone has
@@ -114,11 +92,7 @@ def test_a_missing_bar_reads_nan(name, bar_gapped):
 CLOSE_ONLY = [name for name in INDICATORS if [p for p in COLUMNS if p in inspect.signature(getattr(ta, name)).parameters] == ["close"]]
 
 
-@pytest.mark.parametrize("name", CLOSE_ONLY)
+@pytest.mark.parametrize("name", params([(name,) for name in CLOSE_ONLY], AT_THE_GAP, key=lambda row: row[0]))
 def test_a_missing_close_reads_nan_where_it_is_the_only_input(name, frames):
     at_gap = _call(name, frames[1])[GAP]
-    published = bool(np.isfinite(at_gap).any())
-    if name in FROM_EARLIER_BARS | PUBLISHES_AT_THE_GAP:
-        assert published, f"{name}: reads NaN at the missing close now; drop it from its exemption list"
-    else:
-        assert not published, f"{name}: publishes {at_gap[np.isfinite(at_gap)][:4]} where its only input is missing"
+    assert not np.isfinite(at_gap).any(), f"{name}: publishes {at_gap[np.isfinite(at_gap)][:4]} where its only input is missing"

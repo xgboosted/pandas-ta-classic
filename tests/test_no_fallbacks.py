@@ -17,16 +17,14 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic.utils import df_year_to_date, is_datetime_ordered
+from tests import contracts
 
 logging.getLogger("pandas_ta_classic").setLevel(logging.CRITICAL)
 
 
 @pytest.fixture
 def spy():
-    df = pd.read_csv(Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df.iloc[-300:].copy()
+    return contracts.spy(300)
 
 
 # --- A: a different computation or a made-up value ---------------------------

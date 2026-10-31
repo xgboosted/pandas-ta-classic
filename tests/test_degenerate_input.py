@@ -52,7 +52,7 @@ from hypothesis.extra.numpy import arrays
 
 import pandas_ta_classic as ta
 from tests.assertions import output_columns
-from tests.test_lookahead import candidate_calls
+from tests.contracts import INDICATORS, candidate_calls, pin
 
 try:
     import talib
@@ -470,14 +470,10 @@ _NO_SIGNAL_ON_FLAT_INPUT = {"hilo", "td_seq"}
 _REAL_DIVISION_BY_ZERO = {"brar", "chop"}
 
 
-def _indicator_names() -> list[str]:
-    return sorted({n for names in ta.Category.values() for n in names if callable(getattr(ta, n, None)) and not inspect.isclass(getattr(ta, n))})
-
-
 # The default call plus each boolean keyword flipped on its own: a guard added on
 # the default path misses an option path with its own division -- the default-only
 # sweep let ``cdl_z(full=True)`` and ``hwc(channel_eval=True)`` stay all NaN.
-_FLAT_SERIES_CALLS = [(n, kwargs) for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT for kwargs in candidate_calls(n)]
+_FLAT_SERIES_CALLS = [(n, kwargs) for n in INDICATORS if n not in _NO_SIGNAL_ON_FLAT_INPUT for kwargs in candidate_calls(n)]
 
 
 @pytest.mark.parametrize(("name", "kwargs"), _FLAT_SERIES_CALLS, ids=[f"{n}-{k}" if k else n for n, k in _FLAT_SERIES_CALLS])
@@ -604,7 +600,7 @@ def test_a_window_with_range_but_no_movement_is_not_marked() -> None:
 
 
 @pytest.mark.parametrize("label", ["flat", *sorted(_DEGENERATE_FRAMES)])
-@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT and n not in _REAL_DIVISION_BY_ZERO])
+@pytest.mark.parametrize("name", [n for n in INDICATORS if n not in _NO_SIGNAL_ON_FLAT_INPUT and n not in _REAL_DIVISION_BY_ZERO])
 def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, frames, request) -> None:
     """The marker for a degenerate window is 0.0, never an infinity.
 
@@ -613,7 +609,7 @@ def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, fra
     reads as a real and enormous value and passes every NaN check above. Both
     `chop` (log of HH - LL) and `vhf` (non_zero_range in the numerator) did.
     """
-    _pin_open_finding(request, "inf", name, label)
+    pin(request, _KNOWN_EXCEPTIONS, ("inf", name, label))
     result = _call(name, frames[label])
     if result is None:
         pytest.skip(f"{name} returns None for this input")
@@ -628,7 +624,7 @@ def test_no_column_is_infinite_on_a_degenerate_window(name: str, label: str, fra
 _X_OVER_ZERO_VOLUME = "KEPT: a bar that moved on no volume is a real division by zero and reads +-inf, as marketfi does"
 _ZERO_VOLUME_WINDOW_NAN = "KEPT: a window with no volume is 0/0 and reads NaN; 0.0 would report a balanced flow or an unchanged volume"
 _NO_VOLUME_NO_PRICE = "KEPT: a volume-weighted price over a window with no volume is undefined, so it reads NaN; 0.0 would be a price"
-_OPEN_FINDINGS: dict[tuple[str, str, str], str] = {
+_KNOWN_EXCEPTIONS: dict[tuple[str, str, str], str] = {
     ("inf", "emv", "zero_volume"): _X_OVER_ZERO_VOLUME,
     ("inf", "marketfi", "zero_volume"): "KEPT: a bar with a range and no volume reads inf, on purpose (marketfi entry in CHANGELOG.md)",
     ("bleed", "eom", "zero_volume"): _X_OVER_ZERO_VOLUME
@@ -639,12 +635,6 @@ _OPEN_FINDINGS: dict[tuple[str, str, str], str] = {
     ("bleed", "vwap", "zero_volume"): _NO_VOLUME_NO_PRICE,
     ("bleed", "vwmacd", "zero_volume"): _NO_VOLUME_NO_PRICE,
 }
-
-
-def _pin_open_finding(request, check: str, name: str, label: str) -> None:
-    reason = _OPEN_FINDINGS.get((check, name, label))
-    if reason:
-        request.applymarker(pytest.mark.xfail(strict=True, reason=reason))
 
 
 # An unguarded divider multiplies by 1/epsilon = 4.5e15. A legitimate blow-up
@@ -664,7 +654,7 @@ def _finite_max(values: pd.Series) -> float | None:
 
 
 @pytest.mark.parametrize("label", sorted(_DEGENERATE_FRAMES))
-@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
+@pytest.mark.parametrize("name", [n for n in INDICATORS if n not in _NO_SIGNAL_ON_FLAT_INPUT])
 def test_a_degenerate_window_does_not_inflate_the_output(name: str, label: str, frames) -> None:
     """A degenerate window may not answer beyond the scale of the same data.
 
@@ -705,7 +695,7 @@ def _interior_nan(values: pd.Series) -> int | None:
 
 
 @pytest.mark.parametrize("label", sorted(_DEGENERATE_FRAMES))
-@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _NO_SIGNAL_ON_FLAT_INPUT])
+@pytest.mark.parametrize("name", [n for n in INDICATORS if n not in _NO_SIGNAL_ON_FLAT_INPUT])
 def test_a_degenerate_window_does_not_bleed_nan(name: str, label: str, frames, request) -> None:
     """A flat run costs no bar beyond itself.
 
@@ -718,7 +708,7 @@ def test_a_degenerate_window_does_not_bleed_nan(name: str, label: str, frames, r
     centres its SMA and ``ichimoku`` shifts its Chikou span back, so both carry
     trailing NaN by design on any input, and only an *increase* is a bleed.
     """
-    _pin_open_finding(request, "bleed", name, label)
+    pin(request, _KNOWN_EXCEPTIONS, ("bleed", name, label))
     result = _call(name, frames[label])
     control = _call(name, frames[f"{label}:control"])
     if result is None or control is None:
@@ -1073,7 +1063,7 @@ _RESIDUE_NOT_EPSILON = {"cpr", "ht_phasor", "stochrsi"}
 
 
 @pytest.mark.parametrize("label", ["flat", "block", "no_range"])
-@pytest.mark.parametrize("name", [n for n in _indicator_names() if n not in _RESIDUE_NOT_EPSILON])
+@pytest.mark.parametrize("name", [n for n in INDICATORS if n not in _RESIDUE_NOT_EPSILON])
 def test_no_column_carries_an_epsilon_scale_value(name: str, label: str, frames) -> None:
     """Registry-wide: a degenerate window answers 0.0 or a real value, never ~1e-16.
 

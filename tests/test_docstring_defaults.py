@@ -15,27 +15,10 @@ from pathlib import Path
 import pytest
 
 import pandas_ta_classic
+from tests.contracts import code_defaults as _code_defaults
 
-_HELPERS = {"_pos_int", "_pos_float", "_number", "_bool_param", "_str_param"}
 _PACKAGE = Path(pandas_ta_classic.__file__).parent
 _MODULES = sorted(p for p in _PACKAGE.glob("*/*.py") if not p.name.startswith("_") and p.parent.name != "utils")
-
-
-def _code_defaults(source: str) -> dict:
-    found = {}
-    for node in ast.walk(ast.parse(source)):
-        if not (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)):
-            continue
-        call = node.value
-        name = call.func.id if isinstance(call.func, ast.Name) else getattr(call.func, "attr", None)
-        if name in _HELPERS and len(call.args) >= 2 and isinstance(call.args[0], ast.Name):
-            try:
-                found.setdefault(call.args[0].id, ast.literal_eval(call.args[1]))
-            except ValueError:  # computed defaults (e.g. lensig defaults to length)
-                pass
-        elif name == "get_drift" and call.args and isinstance(call.args[0], ast.Name):
-            found.setdefault(call.args[0].id, 1)
-    return found
 
 
 def _doc_defaults(source: str) -> dict:
