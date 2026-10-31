@@ -47,6 +47,12 @@ keywords (``append``, ``prefix``, ``suffix``, ``col_names``, ...), and
 ``strategy()`` passes each indicator only the keywords it accepts (see
 :doc:`strategies`).
 
+A value the indicator cannot use raises ``ValueError`` naming the indicator,
+the parameter and the value, as it does for an unknown ``mamode``. Windows that
+come as a pair must be in order: ``fast`` at most ``slow`` in every indicator
+that takes both (``ta.macd(close, fast=30, slow=10)`` raises), and
+``fast <= medium <= slow`` in ``uo``.
+
 DataFrame Extension
 ~~~~~~~~~~~~~~~~~~~
 

@@ -63,6 +63,9 @@ Categorical Strategies
    Since 0.9.0 an indicator raises ``ValueError`` for a value it cannot use
    (for example ``ebsw`` needs ``length > 38``) instead of silently using its
    default, so exclude such indicators: ``df.ta.strategy("All", length=10, exclude=["ebsw"])``.
+   The same holds for windows that must be in order: ``uo`` needs
+   ``fast <= medium <= slow`` and its default ``medium`` is 14, so
+   ``df.ta.strategy("All", fast=5, slow=10, exclude=["uo"])``.
 
 .. note::
    ``strategy()`` accepts ``"all"``, a category name or a ``Strategy``; any
