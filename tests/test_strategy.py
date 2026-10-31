@@ -108,7 +108,8 @@ class TestStrategyMethods(TestCase):
         # so exclude it rather than let the default be substituted silently.
         self.data.ta.strategy(self.category, length=10, exclude=["ebsw"], verbose=verbose, timed=strategy_timed)
         self.data.ta.strategy(self.category, length=50, verbose=verbose, timed=strategy_timed)
-        self.data.ta.strategy(self.category, fast=5, slow=10, verbose=verbose, timed=strategy_timed)
+        # uo's default medium (14) is above slow=10, and its windows must be in order (#374).
+        self.data.ta.strategy(self.category, fast=5, slow=10, exclude=["uo"], verbose=verbose, timed=strategy_timed)
         self.category = "All Multiruns with diff Args"  # Rename for Speed Table
 
     def test_worker_columns_carry_only_reachable_columns(self):

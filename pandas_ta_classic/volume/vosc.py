@@ -5,7 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
@@ -20,8 +20,7 @@ def vosc(
     # Validate Arguments
     fast = _pos_int(fast, 14, "fast")
     slow = _pos_int(slow, 28, "slow")
-    if fast > slow:
-        fast, slow = slow, fast
+    _windows_in_order("vosc", fast=fast, slow=slow)
     volume = verify_series(volume, slow)
     offset = get_offset(offset)
 
@@ -62,7 +61,7 @@ Sources:
 
 Args:
     volume (pd.Series): Volume series.
-    fast (int): Fast SMA period. Default: 14
+    fast (int): Fast SMA period. At most slow. Default: 14
     slow (int): Slow SMA period. Default: 28
     offset (int): Result offset. Default: 0
 

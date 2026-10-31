@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
@@ -26,8 +26,7 @@ def massi(
     # Validate arguments
     fast = _pos_int(fast, 9, "fast")
     slow = _pos_int(slow, 25, "slow")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("massi", fast=fast, slow=slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -89,7 +88,7 @@ Calculation:
 Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
-    fast (int): The short period. Default: 9
+    fast (int): The short period. At most slow. Default: 9
     slow (int): The long period. Default: 25
     offset (int): How many periods to offset the result. Default: 0
 

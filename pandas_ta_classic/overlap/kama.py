@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _windows_in_order, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -53,6 +53,7 @@ def kama(
     length = _pos_int(length, 10, "length")
     fast = _pos_int(fast, 2, "fast")
     slow = _pos_int(slow, 30, "slow")
+    _windows_in_order("kama", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, length))
     drift = get_drift(drift)
     offset = get_offset(offset)
@@ -120,7 +121,7 @@ Calculation:
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 10
-    fast (int): Fast MA period. Default: 2
+    fast (int): Fast MA period. At most slow. Default: 2
     slow (int): Slow MA period. Default: 30
     drift (int): The difference period. Default: 1
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib

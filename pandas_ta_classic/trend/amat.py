@@ -5,7 +5,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _str_param, _windows_in_order, nan_on_short_input
 
 from .long_run import long_run
 from .short_run import short_run
@@ -25,6 +25,7 @@ def amat(
     # Validate Arguments
     fast = _pos_int(fast, 8, "fast")
     slow = _pos_int(slow, 21, "slow")
+    _windows_in_order("amat", fast=fast, slow=slow)
     lookback = _pos_int(lookback, 2, "lookback")
     mamode = _str_param(mamode, "ema", "mamode")
     close = verify_series(close, max(fast, slow, lookback))
@@ -88,7 +89,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    fast (int): Fast MA period. Default: 8
+    fast (int): Fast MA period. At most slow. Default: 8
     slow (int): Slow MA period. Default: 21
     lookback (int): Lookback period for trend detection. Default: 2
     mamode (str): See ```help(ta.ma)```. Default: 'ema'

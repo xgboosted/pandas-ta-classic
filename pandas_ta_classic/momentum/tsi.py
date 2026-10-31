@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
@@ -31,6 +31,7 @@ def tsi(
     # Validate Arguments
     fast = _pos_int(fast, 13, "fast")
     slow = _pos_int(slow, 25, "slow")
+    _windows_in_order("tsi", fast=fast, slow=slow)
     signal = _pos_int(signal, 13, "signal")
     scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, max(fast, slow))
@@ -112,7 +113,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    fast (int): The short period. Default: 13
+    fast (int): The short period. At most slow. Default: 13
     slow (int): The long period. Default: 25
     signal (int): The signal period. Default: 13
     scalar (float): How much to magnify. Default: 100

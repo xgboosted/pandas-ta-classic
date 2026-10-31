@@ -842,8 +842,9 @@ class TestMomentum(TestCase):
             with self.assertRaises(ValueError):
                 pandas_ta.stc(self.close, **kwargs)
 
-        # slow < fast is swapped, so the pair is order independent.
-        self.assertTrue(pandas_ta.stc(self.close, fast=26, slow=12).equals(traditional))
+        # slow < fast was swapped silently; it raises now (#374).
+        with self.assertRaisesRegex(ValueError, r"^stc\(\) needs fast <= slow, got fast=26, slow=12$"):
+            pandas_ta.stc(self.close, fast=26, slow=12)
 
     def test_stoch(self):
         # TV Correlation

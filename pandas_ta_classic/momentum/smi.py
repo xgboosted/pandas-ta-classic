@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _number, _pos_int, _windows_in_order, nan_on_short_input
 
 from .tsi import tsi
 
@@ -24,8 +24,7 @@ def smi(
     fast = _pos_int(fast, 5, "fast")
     slow = _pos_int(slow, 20, "slow")
     signal = _pos_int(signal, 5, "signal")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("smi", fast=fast, slow=slow)
     scalar = _number(scalar, 1, "scalar")
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
@@ -90,7 +89,7 @@ Calculation:
 
 Args:
     close (pd.Series): Series of 'close's
-    fast (int): The short period. Default: 5
+    fast (int): The short period. At most slow. Default: 5
     slow (int): The long period. Default: 20
     signal (int): The signal period. Default: 5
     scalar (float): How much to magnify. Default: 1

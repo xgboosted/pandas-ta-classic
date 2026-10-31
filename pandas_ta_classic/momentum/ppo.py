@@ -12,7 +12,16 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _number, _pos_int, _positive_inputs, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import (
+    _TAL_MA_TYPES,
+    _bool_param,
+    _number,
+    _pos_int,
+    _positive_inputs,
+    _str_param,
+    _windows_in_order,
+    nan_on_short_input,
+)
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
@@ -66,8 +75,7 @@ def ppo(
     signal = _pos_int(signal, 9, "signal")
     scalar = _number(scalar, 100, "scalar")
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("ppo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")
@@ -125,7 +133,7 @@ Calculation:
 
 Args:
     close(pandas.Series): Series of 'close's
-    fast(int): The short period. Default: 12
+    fast(int): The short period. At most slow. Default: 12
     slow(int): The long period. Default: 26
     signal(int): The signal period. Default: 9
     scalar (float): How much to magnify. Default: 100

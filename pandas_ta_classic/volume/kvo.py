@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _on_valid_rows, _pos_int, _str_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _on_valid_rows, _pos_int, _str_param, _windows_in_order, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -33,6 +33,7 @@ def kvo(
     # Validate arguments
     fast = _pos_int(fast, 34, "fast")
     slow = _pos_int(slow, 55, "slow")
+    _windows_in_order("kvo", fast=fast, slow=slow)
     signal = _pos_int(signal, 13, "signal")
     mamode = _str_param(mamode, "ema", "mamode")
     _length = max(fast, slow, signal)
@@ -101,7 +102,7 @@ Args:
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
     volume (pd.Series): Series of 'volume's
-    fast (int): The fast period. Default: 34
+    fast (int): The fast period. At most slow. Default: 34
     slow (int): The slow period. Default: 55
     signal (int): The signal period. Default: 13
     mamode (str): See ```help(ta.ma)```. Default: 'ema'

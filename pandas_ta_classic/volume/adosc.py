@@ -6,7 +6,7 @@ from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _bool_param, _pos_int, _windows_in_order, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 from .ad import ad
@@ -44,6 +44,7 @@ def adosc(
     # Validate Arguments
     fast = _pos_int(fast, 3, "fast")
     slow = _pos_int(slow, 10, "slow")
+    _windows_in_order("adosc", fast=fast, slow=slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -107,7 +108,7 @@ Args:
     close (pd.Series): Series of 'close's
     open_ (pd.Series): Series of 'open's
     volume (pd.Series): Series of 'volume's
-    fast (int): The short period. Default: 3
+    fast (int): The short period. At most slow. Default: 3
     slow (int): The long period. Default: 10
     talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
         version. Default: False

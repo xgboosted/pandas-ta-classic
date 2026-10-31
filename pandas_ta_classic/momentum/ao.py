@@ -5,7 +5,7 @@ from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import _pos_int, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
@@ -21,8 +21,7 @@ def ao(
     # Validate Arguments
     fast = _pos_int(fast, 5, "fast")
     slow = _pos_int(slow, 34, "slow")
-    if slow < fast:
-        fast, slow = slow, fast
+    _windows_in_order("ao", fast=fast, slow=slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -70,7 +69,7 @@ Calculation:
 Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
-    fast (int): The short period. Default: 5
+    fast (int): The short period. At most slow. Default: 5
     slow (int): The long period. Default: 34
     offset (int): How many periods to offset the result. Default: 0
 
