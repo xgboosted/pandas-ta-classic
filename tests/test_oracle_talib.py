@@ -504,7 +504,7 @@ class TestTaLibOracle(_SpyDataMixin, unittest.TestCase):
 
     def test_psar(self):
         """PSARl (long stop) combined with PSARs (short stop) matches TA-Lib SAR."""
-        pt_df = ta.psar(self.high, self.low, self.close, talib=False)
+        pt_df = ta.psar(self.high, self.low, self.close)
         pt_long = pt_df.filter(regex=r"^PSARl").iloc[:, 0]
         pt_short = pt_df.filter(regex=r"^PSARs").iloc[:, 0]
         pt = pt_long.combine_first(pt_short)
