@@ -264,6 +264,10 @@ class TestUtilityMetrics(TestCase):
         self.assertEqual(pandas_ta.utils.sharpe_ratio(self.close, period=None), pandas_ta.utils.sharpe_ratio(self.close))
         self.assertEqual(pandas_ta.utils.optimal_leverage(self.close, capital=None), pandas_ta.utils.optimal_leverage(self.close))
         for name, series in (("sharpe_ratio", self.close), ("sortino_ratio", self.close), ("optimal_leverage", self.close), ("downside_deviation", returns)):
+            with self.subTest(name=name, benchmark_rate=None):
+                func = getattr(pandas_ta.utils, name)
+                self.assertEqual(func(series, benchmark_rate=None), func(series))
+        for name, series in (("sharpe_ratio", self.close), ("sortino_ratio", self.close), ("optimal_leverage", self.close), ("downside_deviation", returns)):
             with self.subTest(name=name):
                 self.assertTrue(np.isfinite(getattr(pandas_ta.utils, name)(series, benchmark_rate=-0.02)))
 
