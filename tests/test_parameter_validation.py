@@ -19,6 +19,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils import _metrics
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, code_defaults, inputs, spy
@@ -266,6 +267,37 @@ def test_values_the_old_guards_replaced_are_now_honoured():
     assert ta.increasing(_F.close, percent=150).name == "INCp_1_1.5"  # 150 used to switch percent mode off
     assert ta.sma(_F.close, min_periods=0).notna().all()
     assert ta.jma(_F.close, phase=0.0).name == "JMA_7_0"
+
+
+# Every option that sets a window's minimum observations, with the length it belongs to.
+_MIN_PERIODS = sorted(
+    (name, key, key.replace("min_periods", "length") if key != "min_periods" else "length")
+    for name, keys in _KWARGS_OPTIONS.items()
+    for key in keys
+    if key.endswith("min_periods")
+)
+# These compute their windows in NumPy, where a window of 0 observations has no value:
+# min_periods=0 made mad, median, stdev and variance publish NaN on the last bar and quantile raise IndexError.
+_MIN_PERIODS_FROM_ONE = {"kurtosis", "mad", "median", "quantile", "skew", "stdev", "variance"}
+
+
+def test_min_periods_sweep_found_the_options():
+    assert {name for name, _, _ in _MIN_PERIODS} >= {"sma", "willr", "donchian", "beta", "mad"} | _MIN_PERIODS_FROM_ONE
+    assert len(_MIN_PERIODS) == 17
+
+
+@pytest.mark.parametrize(("name", "key", "length"), _MIN_PERIODS, ids=[f"{n}-{k}" for n, k, _ in _MIN_PERIODS])
+def test_min_periods_above_length_names_the_indicator(name, key, length, frame):
+    # sma, willr, beta, ... raised pandas' "min_periods 6 must be <= window 5";
+    # mad, median, quantile, stdev and variance used length instead without a word.
+    with pytest.raises(ValueError, match=rf"^{name}\(\) {key} must be an integer >= [01] and < 6, got 6$"):
+        getattr(ta, name)(**inputs(name, frame), **{length: 5, key: 6})
+
+
+@pytest.mark.parametrize("name", sorted(_MIN_PERIODS_FROM_ONE))
+def test_min_periods_zero_raises_where_a_window_needs_a_value(name, frame):
+    with pytest.raises(ValueError, match=rf"^{name}\(\) min_periods must be an integer >= 1 and < 6, got 0$"):
+        getattr(ta, name)(**inputs(name, frame), length=5, min_periods=0)
 
 
 def test_strategy_params_must_be_a_tuple():
