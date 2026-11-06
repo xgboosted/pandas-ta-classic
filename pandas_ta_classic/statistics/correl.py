@@ -18,7 +18,7 @@ def correl(
     """Indicator: Pearson Correlation Coefficient"""
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)
-    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
+    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     # See beta(): not given at all is a caller error, too short is not.
     if benchmark is None:
