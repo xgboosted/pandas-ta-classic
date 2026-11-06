@@ -289,7 +289,7 @@ def test_strategy_params_must_be_a_tuple():
         *[
             (
                 lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1),
-                rf"cdl_{n}\(\) penetration must be a number >= 0, got -1",
+                r"cdl_pattern\(\) penetration must be a number >= 0, got -1",
             )
             for n in ("eveningstar", "morningstar", "darkcloudcover", "mathold", "abandonedbaby", "eveningdojistar", "morningdojistar")
         ],
@@ -562,8 +562,6 @@ def test_signature_defaults_are_none():
 # options are read off each docstring's Kwargs section; macdfix only names the xserie
 # options it forwards to macd() in prose.
 _SERIES_KWARG = re.compile(r"^\s+(\w+) \((?:pd\.)?Series", re.MULTILINE)
-_MACDFIX_OPEN = "OPEN: macdfix hands its signal options to macd(), whose errors name macd() (so do xa and cross_series)"
-_SERIES_KWARG_OPEN = {"macdfix": _MACDFIX_OPEN}
 
 
 def _series_kwarg_cases():
@@ -595,14 +593,7 @@ def _other_index(frame, rows: str) -> Series:
 
 @pytest.mark.parametrize(
     ("name", "key", "rows"),
-    [
-        # with no label in common the shared-index guard names the option for every indicator
-        pytest.param(*case, rows, marks=pytest.mark.xfail(strict=True, raises=(AssertionError, pytest.fail.Exception), reason=_SERIES_KWARG_OPEN[case[0]]))
-        if case[0] in _SERIES_KWARG_OPEN and rows != "disjoint"
-        else (*case, rows)
-        for rows in ("shorter", "shifted", "disjoint")
-        for case in SERIES_KWARG_CASES
-    ],
+    [(*case, rows) for rows in ("shorter", "shifted", "disjoint") for case in SERIES_KWARG_CASES],
 )
 def test_series_kwarg_with_another_index_raises(name, key, rows, frame):
     func = _find_indicator_func(name)
@@ -682,7 +673,7 @@ def _option_cases():
         cases += [(name, {}, option) for option in sorted(options)]
         if "mamode" in params:
             for mamode in ta.ma():
-                cases += [(name, {"mamode": mamode}, option) for option in sorted(_MA_OPTIONS.get(mamode, ()))]
+                cases += [(name, {"mamode": mamode}, option) for option in sorted(_MA_OPTIONS.get(mamode, set()) - {"mamode"})]
     return cases
 
 
@@ -691,7 +682,7 @@ _OPTION_CASES = _option_cases()
 
 def test_option_name_sweep_found_the_forwarded_options():
     assert ("apo", {"mamode": "ema"}, "adjust") in _OPTION_CASES and ("trix", {}, "sma") in _OPTION_CASES
-    assert len(_OPTION_CASES) > 1500
+    assert len(_OPTION_CASES) > 1400
 
 
 @pytest.mark.parametrize(
@@ -704,6 +695,8 @@ def test_an_invalid_option_names_the_function_called(name, extra, option, frame)
     aobv(talib="yes") named obv(): the option was validated by the function it was handed to."""
     try:
         getattr(ta, name)(**inputs(name, frame), **extra, **{option: "yes"})
+    except TypeError as error:  # an option it does not take with this mamode, or a removed one
+        assert str(error).startswith(f"{name}() "), str(error)
     except ValueError as error:
         if f" {option} " in str(error):
             assert str(error).startswith(f"{name}() "), str(error)

@@ -5,14 +5,14 @@ from typing import Any
 
 from pandas import DataFrame, Series, concat
 
-from ._core import _bool_param, _describe_index, _pos_int, _require_input, apply_fill, apply_offset, get_offset, verify_series
+from ._core import _OUTER_INDICATOR, _bool_param, _describe_index, _pos_int, _require_input, apply_fill, apply_offset, get_offset, verify_series
 from ._math import _zero_small
 
 
 def _require_number(value: Any, label: str) -> None:
     """Raise ValueError naming the caller unless *value* is a finite real number (numpy numbers included, bools not)."""
     if not (isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)):
-        caller = sys._getframe(1).f_code.co_name
+        caller = _OUTER_INDICATOR.get() or sys._getframe(1).f_code.co_name
         raise ValueError(f"{caller}() {label} must be a number, got {value!r}")
 
 
@@ -239,7 +239,7 @@ def signals(
     # names the column (RSI_14_A_70).
     # The indicator that asked for signals: the frame above, unless a helper
     # calls on its behalf and names it (attach_signals).
-    indicator_name = caller or sys._getframe(1).f_code.co_name
+    indicator_name = _OUTER_INDICATOR.get() or caller or sys._getframe(1).f_code.co_name
     for label, value in (("xa", xa), ("xb", xb)):
         if value is not None and not (isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)):
             raise ValueError(f"{indicator_name}() {label} must be a number, got {value!r}")
@@ -305,7 +305,7 @@ def attach_signals(
     rather than this helper. ``indicator.name`` cannot serve: it is a column
     name (``RSI_14``), not a function name.
     """
-    caller = sys._getframe(1).f_code.co_name
+    caller = _OUTER_INDICATOR.get() or sys._getframe(1).f_code.co_name
     signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators", caller=caller)
 
     # Read and validate every signal option regardless of signal_indicators: a
