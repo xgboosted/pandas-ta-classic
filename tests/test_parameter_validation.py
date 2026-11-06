@@ -19,6 +19,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils import _metrics
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS, _MA_OPTIONS
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, code_defaults, inputs, spy
@@ -667,3 +668,42 @@ def test_uo_needs_its_three_windows_in_order():
     df = spy(300)
     with pytest.raises(ValueError, match=r"^uo\(\) needs fast <= medium <= slow, got fast=7, medium=30, slow=28$"):
         ta.uo(df.high, df.low, df.close, medium=30)
+
+
+def _option_cases():
+    """(indicator, extra kwargs, option) for every parameter, every option read from **kwargs, and every
+    option of every moving average an indicator can choose: the cases where an inner call may validate it."""
+    cases = []
+    for name in INDICATORS:
+        params = inspect.signature(getattr(ta, name)).parameters
+        series = set(inputs(name, spy(50)))
+        options = {p for p in params if p not in series and params[p].kind is not inspect.Parameter.VAR_KEYWORD}
+        options |= set(_KWARGS_OPTIONS.get(name, ())) - {"fillna", "fill_method"}
+        cases += [(name, {}, option) for option in sorted(options)]
+        if "mamode" in params:
+            for mamode in ta.ma():
+                cases += [(name, {"mamode": mamode}, option) for option in sorted(_MA_OPTIONS.get(mamode, ()))]
+    return cases
+
+
+_OPTION_CASES = _option_cases()
+
+
+def test_option_name_sweep_found_the_forwarded_options():
+    assert ("apo", {"mamode": "ema"}, "adjust") in _OPTION_CASES and ("trix", {}, "sma") in _OPTION_CASES
+    assert len(_OPTION_CASES) > 1500
+
+
+@pytest.mark.parametrize(
+    ("name", "extra", "option"),
+    _OPTION_CASES,
+    ids=[f"{n}-{'-'.join(e.values())}-{o}".replace("--", "-") for n, e, o in _OPTION_CASES],
+)
+def test_an_invalid_option_names_the_function_called(name, extra, option, frame):
+    """apo(adjust="yes") raised "ema() adjust must be True or False", trix(sma="yes") named ema(),
+    aobv(talib="yes") named obv(): the option was validated by the function it was handed to."""
+    try:
+        getattr(ta, name)(**inputs(name, frame), **extra, **{option: "yes"})
+    except ValueError as error:
+        if f" {option} " in str(error):
+            assert str(error).startswith(f"{name}() "), str(error)
