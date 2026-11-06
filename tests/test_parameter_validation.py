@@ -672,6 +672,8 @@ def _option_cases():
         options = {p for p in params if p not in series and params[p].kind is not inspect.Parameter.VAR_KEYWORD}
         options |= set(_KWARGS_OPTIONS.get(name, ())) - {"fillna", "fill_method"}
         cases += [(name, {}, option) for option in sorted(options)]
+        # the xserie options are read only when the signals are on
+        cases += [(name, {"signal_indicators": True}, option) for option in sorted(options) if option.startswith("xserie")]
         if "mamode" in params:
             for mamode in ta.ma():
                 # only the options this indicator accepts with this mamode: any other raises TypeError up front
@@ -692,11 +694,12 @@ def test_option_name_sweep_found_the_forwarded_options():
 @pytest.mark.parametrize(
     ("name", "extra", "option"),
     _OPTION_CASES,
-    ids=[f"{n}-{'-'.join(e.values())}-{o}".replace("--", "-") for n, e, o in _OPTION_CASES],
+    ids=[f"{n}-{'-'.join(map(str, e.values()))}-{o}".replace("--", "-") for n, e, o in _OPTION_CASES],
 )
 def test_an_invalid_option_names_the_function_called(name, extra, option, frame):
     """apo(adjust="yes") raised "ema() adjust must be True or False", trix(sma="yes") named ema(),
-    aobv(talib="yes") named obv(): the option was validated by the function it was handed to."""
+    aobv(talib="yes") named obv(), rsi(xserie="yes", signal_indicators=True) named _add_series_signals():
+    the option was validated by the function it was handed to."""
     try:
         getattr(ta, name)(**inputs(name, frame), **extra, **{option: "yes"})
     except TypeError as error:  # an option it does not take with this mamode, or a removed one
