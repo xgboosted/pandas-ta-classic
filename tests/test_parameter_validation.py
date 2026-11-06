@@ -10,6 +10,7 @@ returned ``SMA_10``. Every such guard now goes through ``_pos_int`` /
 
 import inspect
 import re
+import typing
 
 import numpy as np
 import pytest
@@ -19,7 +20,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils import _metrics
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
-from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS, _MA_OPTIONS
+from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS, _MA_OPTIONS, accepted_keywords
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, code_defaults, inputs, spy
@@ -673,7 +674,10 @@ def _option_cases():
         cases += [(name, {}, option) for option in sorted(options)]
         if "mamode" in params:
             for mamode in ta.ma():
-                cases += [(name, {"mamode": mamode}, option) for option in sorted(_MA_OPTIONS.get(mamode, set()) - {"mamode"})]
+                # only the options this indicator accepts with this mamode: any other raises TypeError up front
+                accepted = accepted_keywords(getattr(ta, name), {"mamode": mamode})
+                forwarded = (_MA_OPTIONS.get(mamode, frozenset()) & accepted) - {"mamode"}
+                cases += [(name, {"mamode": mamode}, option) for option in sorted(forwarded)]
     return cases
 
 
@@ -682,7 +686,7 @@ _OPTION_CASES = _option_cases()
 
 def test_option_name_sweep_found_the_forwarded_options():
     assert ("apo", {"mamode": "ema"}, "adjust") in _OPTION_CASES and ("trix", {}, "sma") in _OPTION_CASES
-    assert len(_OPTION_CASES) > 1400
+    assert len(_OPTION_CASES) > 950
 
 
 @pytest.mark.parametrize(
@@ -700,3 +704,23 @@ def test_an_invalid_option_names_the_function_called(name, extra, option, frame)
     except ValueError as error:
         if f" {option} " in str(error):
             assert str(error).startswith(f"{name}() "), str(error)
+
+
+def _int_parameter_cases():
+    return [
+        (name, param)
+        for name in INDICATORS
+        for param, spec in inspect.signature(getattr(ta, name)).parameters.items()
+        if param != "offset" and (spec.annotation is int or int in typing.get_args(spec.annotation))
+    ]
+
+
+@pytest.mark.parametrize(("name", "param"), _int_parameter_cases(), ids=lambda v: v if isinstance(v, str) else None)
+@pytest.mark.parametrize("value", [0, 1])
+def test_a_small_int_parameter_error_names_that_parameter(name, param, value, frame):
+    """inertia(rvi_length=1) raised "inertia() length must be an integer > 1": rvi() needs length > 1,
+    inertia checked rvi_length only for > 0, and the error named inertia's own length."""
+    try:
+        getattr(ta, name)(**inputs(name, frame), **{param: value})
+    except ValueError as error:
+        assert re.search(rf"\b{param}\b", str(error)), str(error)
