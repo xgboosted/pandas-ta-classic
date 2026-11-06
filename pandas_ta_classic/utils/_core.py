@@ -760,7 +760,8 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
             return series.astype(np.float64)
         return series
     if series is not None:
-        indicator = sys._getframe(1).f_code.co_name  # the indicator that called verify_series
+        # the indicator the user called; outside any indicator call, the function that called verify_series
+        indicator = _OUTER_INDICATOR.get() or sys._getframe(1).f_code.co_name
         raise TypeError(
             f"{indicator}() expected a pandas Series but got {type(series).__name__}. "
             "Pass a Series, e.g. df['close'] rather than df['close'].values."
