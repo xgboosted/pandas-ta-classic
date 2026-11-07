@@ -139,6 +139,8 @@ def squeeze(
     asint = _bool_param(kwargs.pop("asint", None), True, "asint")
     detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")
     lazybear = _bool_param(kwargs.pop("lazybear", None), False, "lazybear")
+    if lazybear and kc_length < 2:  # its momentum is a linreg over kc_length, a line through one point
+        raise ValueError(f"squeeze() kc_length must be an integer > 1 with lazybear=True, got {kc_length}")
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
 
     # Calculate Result

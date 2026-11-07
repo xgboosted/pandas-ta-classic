@@ -74,7 +74,7 @@ def inertia(
 ) -> Series | None:
     """Indicator: Inertia (INERTIA)"""
     # Validate Arguments
-    length = _pos_int(length, 20, "length")
+    length = _pos_int(length, 20, "length", gt=1)
     rvi_length = _pos_int(rvi_length, 14, "rvi_length")
     scalar = _pos_float(scalar, 100, "scalar")
     refined = _bool_param(refined, False, "refined")
