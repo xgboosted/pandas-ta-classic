@@ -667,3 +667,31 @@ def test_uo_needs_its_three_windows_in_order():
     df = spy(300)
     with pytest.raises(ValueError, match=r"^uo\(\) needs fast <= medium <= slow, got fast=7, medium=30, slow=28$"):
         ta.uo(df.high, df.low, df.close, medium=30)
+
+
+LINE_FITS = ("cfo", "cti", "fosc", "inertia", "linreg", "linregangle", "linregintercept", "linregslope", "po", "tsf")
+
+
+@pytest.mark.parametrize("name", LINE_FITS)
+def test_a_line_through_one_point_raises(name):
+    """linreg(length=1) fit a line through one point: 0/0 on every bar, a RuntimeWarning and an
+    empty column. Every indicator that hands its length to linreg rejects it, naming itself."""
+    df = spy(300)
+    with pytest.raises(ValueError, match=rf"^{name}\(\) length must be an integer > 1, got 1$"):
+        getattr(ta, name)(**inputs(name, df), length=1)
+
+
+@pytest.mark.parametrize("name", LINE_FITS)
+def test_a_line_through_two_points_is_computed(name):
+    df = spy(300)
+    with np.errstate(divide="raise", invalid="raise"):  # a 0/0 raises instead of warning
+        result = getattr(ta, name)(**inputs(name, df), length=2)
+    assert result.notna().to_numpy().any()
+
+
+def test_squeeze_lazybear_rejects_a_one_bar_keltner_length():
+    """squeeze(lazybear=True) smooths its momentum with linreg over kc_length."""
+    df = spy(300)
+    with pytest.raises(ValueError, match=r"^squeeze\(\) kc_length must be an integer > 1 with lazybear=True, got 1$"):
+        ta.squeeze(df.high, df.low, df.close, kc_length=1, lazybear=True)
+    assert ta.squeeze(df.high, df.low, df.close, kc_length=1).notna().to_numpy().any()
