@@ -675,7 +675,8 @@ LINE_FITS = ("cfo", "cti", "fosc", "inertia", "linreg", "linregangle", "linregin
 @pytest.mark.parametrize("name", LINE_FITS)
 def test_a_line_through_one_point_raises(name):
     """linreg(length=1) fit a line through one point: 0/0 on every bar, a RuntimeWarning and an
-    empty column. Every indicator that hands its length to linreg rejects it, naming itself."""
+    empty column. linreg and the nine indicators that call it with their own length reject it,
+    naming themselves."""
     df = spy(300)
     with pytest.raises(ValueError, match=rf"^{name}\(\) length must be an integer > 1, got 1$"):
         getattr(ta, name)(**inputs(name, df), length=1)
@@ -692,6 +693,6 @@ def test_a_line_through_two_points_is_computed(name):
 def test_squeeze_lazybear_rejects_a_one_bar_keltner_length():
     """squeeze(lazybear=True) smooths its momentum with linreg over kc_length."""
     df = spy(300)
-    with pytest.raises(ValueError, match=r"^squeeze\(\) kc_length must be an integer > 1 with lazybear=True, got 1$"):
+    with pytest.raises(ValueError, match=r"^squeeze\(\) kc_length must be an integer > 1, got 1$"):
         ta.squeeze(df.high, df.low, df.close, kc_length=1, lazybear=True)
     assert ta.squeeze(df.high, df.low, df.close, kc_length=1).notna().to_numpy().any()
