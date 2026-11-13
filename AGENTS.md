@@ -421,8 +421,7 @@ python -m build
 │   ├── snapshots/                    # frozen outputs of the package itself (snapshots, golden values)
 │   ├── api/                          # df.ta accessor, strategies, custom indicators, lazy loading
 │   ├── utils/                        # pandas_ta_classic.utils helpers
-│   ├── meta/                         # docs, changelog, docstrings, the test helpers
-│   └── test_*.py                     # regression_bugfixes, adversarial_review_fixes, integration_e2e (to be dissolved)
+│   └── meta/                         # docs, changelog, docstrings, packaging, the test helpers
 └── examples/                         # Jupyter notebooks & sample data
 ```
 

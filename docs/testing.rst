@@ -10,7 +10,7 @@ contracts; the package's ``__init__.py`` is their shared harness),
 ``oracle/`` (comparisons with an independent implementation),
 ``snapshots/`` (frozen outputs of the package itself), ``api/`` (the ``df.ta``
 accessor, strategies, custom indicators), ``utils/`` and ``meta/`` (docs,
-changelog, docstrings, the test helpers).
+changelog, docstrings, packaging, the test helpers).
 
 .. contents::
    :local:
@@ -91,9 +91,7 @@ reason in ``NO_ORACLE``; known differences are strict xfails in
 
 For indicators neither library covers, ``test_reference_ports.py`` compares
 against independent ports of the cited definitions (see *Reference ports*
-below). ``test_adversarial_review_fixes.py`` pins the defects found by the
-2026-09 review, each against a loop reference, TA-Lib or a decision table.
-``test_talib_parameters.py`` checks that ``talib=True`` honours every
+below). ``test_talib_parameters.py`` checks that ``talib=True`` honours every
 parameter: a call with a value TA-Lib cannot express (``scalar``, ``drift``,
 ``mamode``, ``ddof``, ``min_periods``, ``uo``'s weights, an optional price
 input, an option read from ``**kwargs`` or handed on to another function)
@@ -103,7 +101,7 @@ by-design exceptions listed with their reason.
 
 **Files:** ``test_oracle_talib.py``, ``test_oracle_registry.py``,
 ``test_oracle_tulipy.py``, ``test_reference_ports.py``,
-``test_adversarial_review_fixes.py``, ``test_talib_parameters.py``.
+``test_talib_parameters.py``.
 
 **Run:** ``python -m pytest tests/oracle/test_oracle_talib.py -v``
 
@@ -128,8 +126,9 @@ Regression Tests
   indices spanning 50 to 5221 (the final bar) against stored snapshot data.
   Test methods are generated from ``regression_snapshots.json`` itself, so the
   asserted set cannot drift from the stored set.
-- ``test_regression_bugfixes.py`` — Pins documented fixes from CHANGELOG
-  (33 test classes, 128 tests).
+- A fixed defect is pinned by a test in the module of the indicator, contract
+  or helper it concerns (for example ``TestWilderSeeding`` in
+  ``indicators/test_overlap.py``), not in a module of its own.
 - ``test_golden_values.py`` — Golden fixture tests: checks last non-NaN
   values and per-column NaN counts against snapshots in ``tests/fixtures/``.
 
@@ -271,18 +270,6 @@ Each table carries a status: ``OPEN:`` for a defect or an undecided question,
 status, and a failure names the status of every row it reports.
 
 **Run:** ``python -m pytest tests/contracts/test_api_consistency.py -v``
-
-
-Integration / E2E Tests
------------------------
-
-**Why:** Exercise full workflows end-to-end.
-
-**Files:** ``test_integration_e2e.py`` — Multi-indicator chaining,
-Strategy execution with ``df.ta.strategy()``, plugin binding, and
-category-strategy runs.
-
-**Run:** ``python -m pytest tests/test_integration_e2e.py -v``
 
 
 Fluent API Tests
@@ -430,6 +417,8 @@ only in the code a PR touches.
 - ``test_changelog.py`` — each fragment in ``changelog.d/`` has a valid name, at
   most 1,000 characters and the **BREAKING** form, and ``CHANGELOG.md`` keeps the
   marker towncrier inserts after.
+- ``test_packaging.py`` — the package ships the PEP 561 ``py.typed`` marker next
+  to ``core.pyi``, so a consumer's mypy reads the stub.
 
 **Run:** ``python -m pytest tests/contracts/test_no_fallbacks.py tests/meta/test_changelog.py -v``
 
