@@ -33,7 +33,7 @@ def squeeze_pro(
 ) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ) PRO"""
     # Validate arguments
-    bb_length = _pos_int(bb_length, 20, "bb_length")
+    bb_length = _pos_int(bb_length, 20, "bb_length", gt=1)  # bbands() needs length > 1
     bb_std = _pos_float(bb_std, 2.0, "bb_std")
     kc_length = _pos_int(kc_length, 20, "kc_length")
     kc_scalar_wide = _pos_float(kc_scalar_wide, 2, "kc_scalar_wide")

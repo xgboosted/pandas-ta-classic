@@ -34,7 +34,9 @@ def _validate_number(val: Any, default: Any, name: str, *, integer: bool, gt: fl
     valid = valid and (not integer or float(val).is_integer())
     valid = valid and (gt is None or val > gt) and (ge is None or val >= ge) and (lt is None or val < lt)
     if not valid:
-        indicator = sys._getframe(2).f_code.co_name  # the indicator that called _pos_int/_pos_float
+        # the indicator the user called, not an inner one the value was handed to (apo -> ema);
+        # outside any indicator call, the function that called _pos_int/_pos_float
+        indicator = _OUTER_INDICATOR.get() or sys._getframe(2).f_code.co_name
         bounds = " and ".join(f"{op} {bound}" for op, bound in ((">", gt), (">=", ge), ("<", lt)) if bound is not None)
         kind = "an integer" if integer else "a number"
         requirement = f"{kind} {bounds}" if bounds else kind
@@ -153,14 +155,16 @@ def _bool_param(val: Any, default: bool, name: str, *, caller: str | None = None
     ``bool(x) if isinstance(x, bool) else default`` turned ``talib=1`` into
     False and ``asint=0`` into True without a word.
 
-    *caller* names the indicator in the message when a shared helper validates
-    on its behalf, since the frame above is then the helper.
+    The message names the indicator the user called (``apo() adjust ...``, not
+    ``ema()``, which apo handed it to). Outside any indicator call, *caller* names
+    the function when a shared helper validates on its behalf, since the frame
+    above is then the helper.
     """
     if val is None:
         return default
     if isinstance(val, (bool, np.bool_)):
         return bool(val)
-    indicator = caller or sys._getframe(1).f_code.co_name
+    indicator = _OUTER_INDICATOR.get() or caller or sys._getframe(1).f_code.co_name
     raise ValueError(f"{indicator}() {name} must be True or False, got {val!r}")
 
 
@@ -170,7 +174,7 @@ def _str_param(val: Any, default: str, name: str, *, choices: Any = None, lower:
     *caller* names the indicator in the message when a shared helper validates
     on its behalf, as for :func:`_bool_param`.
     """
-    indicator = caller or sys._getframe(1).f_code.co_name
+    indicator = _OUTER_INDICATOR.get() or caller or sys._getframe(1).f_code.co_name
     if val is None:
         return default
     if not isinstance(val, str) or not val:
@@ -316,8 +320,9 @@ def skip_leading_nan(*names: str, interior: bool = False) -> Callable:
 # Name of the outermost nan_on_short_input call, None outside any indicator:
 # only the outermost indicator call converts a short-input None into an all-NaN
 # result, so indicators calling each other internally keep seeing None and their
-# early returns still work. apply_fill names it in its errors, because the user
-# passed fill_method to that indicator, not to the inner one that applies it.
+# early returns still work. apply_fill and the parameter checks (_pos_int, _bool_param,
+# _str_param, ...) name it in their errors, because the user passed the option to that
+# indicator, not to the inner one that applies it.
 _OUTER_INDICATOR: contextvars.ContextVar[str | None] = contextvars.ContextVar("pandas_ta_classic_outer_indicator", default=None)
 _PROBE_ROWS = 1000
 _PROBE_MAX_ROWS = 50_000
@@ -755,7 +760,8 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
             return series.astype(np.float64)
         return series
     if series is not None:
-        indicator = sys._getframe(1).f_code.co_name  # the indicator that called verify_series
+        # the indicator the user called; outside any indicator call, the function that called verify_series
+        indicator = _OUTER_INDICATOR.get() or sys._getframe(1).f_code.co_name
         raise TypeError(
             f"{indicator}() expected a pandas Series but got {type(series).__name__}. "
             "Pass a Series, e.g. df['close'] rather than df['close'].values."

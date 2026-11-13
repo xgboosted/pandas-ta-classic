@@ -75,7 +75,7 @@ def inertia(
     """Indicator: Inertia (INERTIA)"""
     # Validate Arguments
     length = _pos_int(length, 20, "length")
-    rvi_length = _pos_int(rvi_length, 14, "rvi_length")
+    rvi_length = _pos_int(rvi_length, 14, "rvi_length", gt=1)  # rvi() needs length > 1
     scalar = _pos_float(scalar, 100, "scalar")
     refined = _bool_param(refined, False, "refined")
     thirds = _bool_param(thirds, False, "thirds")
