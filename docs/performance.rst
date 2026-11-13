@@ -41,6 +41,15 @@ the data. ``sharpe_ratio`` and ``optimal_leverage`` instead annualise by a
 fixed ``period`` of bars per year, ``252`` by default (trading days); pass
 another ``period`` for other bar sizes.
 
+Invalid input
+~~~~~~~~~~~~~
+
+A metric raises ``ValueError`` naming itself rather than return NaN: for a
+series passed as ``None``, for a ``close`` with a missing value (drop or fill
+it first), and for a ``period``, ``benchmark_rate`` or ``capital`` that is not
+a finite number in range (``period`` and ``capital`` above 0,
+``downside_deviation``'s ``benchmark_rate`` above -1).
+
 Backtesting
 -----------
 

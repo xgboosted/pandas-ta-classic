@@ -8,7 +8,7 @@ from pandas_ta_classic.performance.drawdown import drawdown
 from pandas_ta_classic.performance.log_return import log_return
 from pandas_ta_classic.performance.percent_return import percent_return
 
-from ._core import _bool_param, _pos_int, _str_param, verify_series
+from ._core import _bool_param, _number, _pos_float, _pos_int, _require_input, _str_param, verify_series
 from ._math import linear_regression
 from ._time import TIME_RANGE_UNITS, total_time
 
@@ -33,11 +33,16 @@ def cagr(close: Series) -> float:
     Args:
         close (pd.Series): Series of 'close's
 
+    Raises:
+        ValueError: ``close`` is None or contains NaN.
+
     >>> result = ta.cagr(df.close)
     """
+    _require_input(close, "cagr", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"cagr() close has {gaps} missing value(s); fill or drop them first")
     start, end = close.iloc[0], close.iloc[-1]
     return ((end / start) ** (1 / _span(close, "years", "cagr"))) - 1
 
@@ -52,13 +57,18 @@ def calmar_ratio(close: Series, method: str = "percent", years: int = 3) -> floa
             Default: 'percent'
         years (int): The positive number of years to use. Default: 3
 
+    Raises:
+        ValueError: ``close`` is None or contains NaN.
+
     >>> result = ta.calmar_ratio(close, method="percent", years=3)
     """
     method = _str_param(method, "percent", "method", choices={"dollar", "percent", "log"})
     years = _pos_int(years, 3, "years")
+    _require_input(close, "calmar_ratio", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"calmar_ratio() close has {gaps} missing value(s); fill or drop them first")
 
     n_years_ago = close.index[-1] - Timedelta(days=365.25 * years)
     close = close[close.index > n_years_ago]
@@ -83,13 +93,14 @@ def downside_deviation(returns: Series, benchmark_rate: float = 0.0, tf: str = "
         not counted.
 
     Raises:
-        ValueError: ``returns`` has a NaN inside it or fewer than 2 values.
+        ValueError: ``returns`` is None, has a NaN inside it or fewer than 2
+            values; ``benchmark_rate`` is not a finite number above -1.
 
     >>> result = ta.downside_deviation(returns, benchmark_rate=0.0, tf="years")
     """
+    benchmark_rate = _number(benchmark_rate, 0.0, "benchmark_rate", gt=-1)
+    _require_input(returns, "downside_deviation", "returns")
     returns = verify_series(returns)
-    if returns is None:
-        return np.nan
     # The sum of squares skipped NaN while the divisor counted it, so the
     # leading NaN of pct_change gave the population formula, a clean series the
     # sample one, and a gap inside a smaller value without a word.
@@ -120,12 +131,16 @@ def jensens_alpha(returns: Series, benchmark_returns: Series) -> float:
         returns (pd.Series): Series of 'returns's
         benchmark_returns (pd.Series): Series of 'benchmark_returns's
 
+    Raises:
+        ValueError: ``returns`` or ``benchmark_returns`` is None, has a NaN
+            inside it, or the two have fewer than 3 bars in common.
+
     >>> result = ta.jensens_alpha(returns, benchmark_returns)
     """
+    _require_input(returns, "jensens_alpha", "returns")
+    _require_input(benchmark_returns, "jensens_alpha", "benchmark_returns")
     returns = verify_series(returns)
     benchmark_returns = verify_series(benchmark_returns)
-    if returns is None or benchmark_returns is None:
-        return np.nan
 
     # A leading NaN run (the first bar of pct_change) is not data; a NaN inside
     # either series is missing data, which used to be filled by interpolation.
@@ -146,11 +161,16 @@ def log_max_drawdown(close: Series) -> float:
     Args:
         close (pd.Series): Series of 'close's
 
+    Raises:
+        ValueError: ``close`` is None or contains NaN.
+
     >>> result = ta.log_max_drawdown(close)
     """
+    _require_input(close, "log_max_drawdown", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"log_max_drawdown() close has {gaps} missing value(s); fill or drop them first")
     log_return = np.log(close.iloc[-1]) - np.log(close.iloc[0])
     return log_return - max_drawdown(close, method="log")
 
@@ -169,6 +189,9 @@ def max_drawdown(
         all_methods (bool): If True, it returns all three methods as a dict.
             Default: False
 
+    Raises:
+        ValueError: ``close`` is None or contains NaN.
+
     Note: the ``all`` alias of ``all_methods`` was removed in 0.9.0; passing it
     raises TypeError.
 
@@ -176,9 +199,11 @@ def max_drawdown(
     """
     method = _str_param(method, "dollar", "method", choices={"dollar", "percent", "log"})
     all_methods = _bool_param(all_methods, False, "all_methods")
+    _require_input(close, "max_drawdown", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
+    gaps = int(close.isna().sum())
+    if gaps:
+        raise ValueError(f"max_drawdown() close has {gaps} missing value(s); fill or drop them first")
     max_dd = drawdown(close).max()
 
     max_dd_ = {
@@ -212,14 +237,18 @@ def optimal_leverage(
         capital (float): Capital to scale the optimal leverage by. Default: 1.0
 
     Raises:
-        ValueError: ``close`` contains NaN.
+        ValueError: ``close`` is None or contains NaN; ``period`` or
+            ``capital`` is not a finite number above 0; ``benchmark_rate`` is
+            not a finite number.
 
     >>> result = ta.optimal_leverage(close, benchmark_rate=0.0, log=False)
     """
     log = _bool_param(log, False, "log")
+    period = _pos_float(period, RATE["TRADING_DAYS_PER_YEAR"], "period")
+    benchmark_rate = _number(benchmark_rate, 0.0, "benchmark_rate")
+    capital = _pos_float(capital, 1.0, "capital")
+    _require_input(close, "optimal_leverage", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
     # A missing close dropped two returns from the mean and the deviation
     # without a word (1.6553 -> 1.6613 on the sample data for one gap).
     gaps = int(close.isna().sum())
@@ -249,13 +278,12 @@ def pure_profit_score(close: Series) -> float:
         float: correlation of ``close`` with time times its CAGR; 0 for a flat series.
 
     Raises:
-        ValueError: ``close`` has fewer than 3 bars or contains NaN.
+        ValueError: ``close`` is None, has fewer than 3 bars or contains NaN.
 
     >>> result = ta.pure_profit_score(df.close)
     """
+    _require_input(close, "pure_profit_score", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
     # Checked here as well so the error names the function the caller used.
     if close.size < 3:
         raise ValueError(f"pure_profit_score() needs at least 3 bars, got {close.size}")
@@ -293,15 +321,17 @@ def sharpe_ratio(
             Default: RATE["TRADING_DAYS_PER_YEAR"] (currently 252)
 
     Raises:
-        ValueError: ``close`` contains NaN.
+        ValueError: ``close`` is None or contains NaN; ``period`` is not a
+            finite number above 0; ``benchmark_rate`` is not a finite number.
 
     >>> result = ta.sharpe_ratio(close, benchmark_rate=0.0, log=False)
     """
     log = _bool_param(log, False, "log")
     use_cagr = _bool_param(use_cagr, False, "use_cagr")
+    period = _pos_float(period, RATE["TRADING_DAYS_PER_YEAR"], "period")
+    benchmark_rate = _number(benchmark_rate, 0.0, "benchmark_rate")
+    _require_input(close, "sharpe_ratio", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
     # A missing close dropped two returns from the mean and the deviation
     # without a word (0.3293 -> 0.3305 on the sample data for one gap).
     gaps = int(close.isna().sum())
@@ -326,14 +356,15 @@ def sortino_ratio(close: Series, benchmark_rate: float = 0.0, log: bool = False)
             percent_return. Default: False
 
     Raises:
-        ValueError: ``close`` contains NaN.
+        ValueError: ``close`` is None or contains NaN; ``benchmark_rate`` is
+            not a finite number.
 
     >>> result = ta.sortino_ratio(close, benchmark_rate=0.0, log=False)
     """
     log = _bool_param(log, False, "log")
+    benchmark_rate = _number(benchmark_rate, 0.0, "benchmark_rate")
+    _require_input(close, "sortino_ratio", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
     # Checked here so the error names the function the caller used.
     gaps = int(close.isna().sum())
     if gaps:
@@ -365,7 +396,7 @@ def volatility(
             percent_return. Default: False
 
     Raises:
-        ValueError: ``close`` contains NaN; with ``returns=True``, the returns
+        ValueError: ``close`` is None or contains NaN; with ``returns=True``, the returns
             have a NaN inside them or fewer than 2 values. A leading or
             trailing NaN run of returns (the first bar of a percent return) is
             not counted.
@@ -374,9 +405,8 @@ def volatility(
     """
     returns = _bool_param(returns, False, "returns")
     log = _bool_param(log, False, "log")
+    _require_input(close, "volatility", "close")
     close = verify_series(close)
-    if close is None:
-        return np.nan
 
     # The deviation skipped NaN while the periods per year counted it: the
     # first bar of a computed return is always NaN, and a gap inside dropped
