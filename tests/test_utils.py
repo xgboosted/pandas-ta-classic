@@ -229,6 +229,9 @@ class TestUtilities(TestCase):
         # A non-number is not a percent rather than a TypeError.
         self.assertFalse(self.utils.is_percent("50"))
         self.assertFalse(self.utils.is_percent(None))
+        # bool is an int subclass: True used to read as 1, a percent.
+        self.assertFalse(self.utils.is_percent(True))
+        self.assertFalse(self.utils.is_percent(False))
 
     def test_unsigned_differences_default(self):
         # the docstring's example; without asint the flags stay float, even for an int series
