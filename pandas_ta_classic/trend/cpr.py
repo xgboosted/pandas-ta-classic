@@ -96,6 +96,10 @@ def cpr(
     width_analysis = _bool_param(width_analysis, True, "width_analysis")
     price_position = _bool_param(price_position, True, "price_position")
     virgin_cpr = _bool_param(virgin_cpr, False, "virgin_cpr")
+    # Validated whether or not their feature is on: a bad value is a caller error either way (#393)
+    width_narrow = _number(kwargs.pop("width_narrow", None), 0.5, "width_narrow", ge=0)
+    width_wide = _number(kwargs.pop("width_wide", None), 1.5, "width_wide", ge=0)
+    virgin_lookforward = _pos_int(kwargs.pop("virgin_lookforward", None), 5, "virgin_lookforward")
     if "interval" in kwargs:
         # Removed without a deprecation step because it never had an effect
         # (AGENTS.md rule 11). **kwargs would otherwise swallow it silently.
@@ -147,8 +151,8 @@ def cpr(
             tc,
             bc,
             pivot,
-            narrow_threshold=_number(kwargs.pop("width_narrow", None), 0.5, "width_narrow", ge=0),
-            wide_threshold=_number(kwargs.pop("width_wide", None), 1.5, "width_wide", ge=0),
+            narrow_threshold=width_narrow,
+            wide_threshold=width_wide,
         )
         # A percent of the pivot: NaN where it is at or below zero, with one warning (#345)
         pivot_result["width_pct"], pivot_result["width_class"] = _nan_where_not_positive(
@@ -157,9 +161,7 @@ def cpr(
     if price_position:
         pivot_result["position"] = calculate_price_position(close, tc, bc)
     if virgin_cpr:
-        pivot_result["virgin"] = detect_virgin_cpr(
-            high, low, tc, bc, lookforward=_pos_int(kwargs.pop("virgin_lookforward", None), 5, "virgin_lookforward")
-        )
+        pivot_result["virgin"] = detect_virgin_cpr(high, low, tc, bc, lookforward=virgin_lookforward)
 
     _cpr_offset_and_fill(pivot_result, offset, **kwargs)
     return _cpr_build_dataframe(pivot_result, levels, width_analysis, price_position, virgin_cpr)
