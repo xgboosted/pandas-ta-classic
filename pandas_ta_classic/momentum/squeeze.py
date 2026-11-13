@@ -120,7 +120,7 @@ def squeeze(
 ) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ)"""
     # Validate arguments
-    bb_length = _pos_int(bb_length, 20, "bb_length")
+    bb_length = _pos_int(bb_length, 20, "bb_length", gt=1)  # bbands() needs length > 1
     bb_std = _pos_float(bb_std, 2.0, "bb_std")
     lazybear = _bool_param(kwargs.pop("lazybear", None), False, "lazybear")
     # lazybear's momentum is a linreg over kc_length, which needs two points

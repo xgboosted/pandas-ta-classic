@@ -177,7 +177,8 @@ results = cerebro.run()
 strat = results[0]
 
 print(f"Final value:   ${cerebro.broker.getvalue():,.2f}")
-print(f"Sharpe ratio:  {strat.analyzers.sharpe.get_analysis().get('sharperatio', float('nan')):.2f}")
+sharpe = strat.analyzers.sharpe.get_analysis()['sharperatio']  # None when backtrader cannot compute one
+print(f"Sharpe ratio:  {sharpe if sharpe is not None else float('nan'):.2f}")
 print(f"Max drawdown:  {strat.analyzers.drawdown.get_analysis().max.drawdown:.2f}%")
 print(f"Total return:  {strat.analyzers.returns.get_analysis()['rtot'] * 100:.2f}%")
 ```

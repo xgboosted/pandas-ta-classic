@@ -203,6 +203,12 @@ Edge-Case Tests
 - ``test_parameter_validation.py`` — besides rejecting invalid values, every
   numeric default of every registered indicator is passed explicitly, as an
   int and as a float, and must name the output as the default call does.
+  Every parameter and every option an indicator reads or hands on (its MA
+  options for each ``mamode`` included), set to an invalid value, raises an
+  error that names the indicator the user called, not the inner function
+  the value was handed to; an error for an int parameter of 0 or 1 names
+  that parameter; and every ``*min_periods`` option above its ``length`` raises naming the
+  indicator.
 - ``test_parameter_name_contract.py`` — for every registered indicator, each
   parameter that changes the values, set off its default, changes the column
   names too, so two such calls never share a column; the parameters left out
@@ -221,8 +227,10 @@ Edge-Case Tests
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
-``tests/contracts.py`` holds what they share: the ``SPY_D`` loader
-(``spy(bars)``), the registry (every indicator, the OHLCV ones), the call that
+``tests/contracts.py`` holds what they share: the last ``bars`` rows of
+``SPY_D`` (``spy(bars)``, read through ``tests/config.py``'s
+``get_sample_data()``, the one loader every test and fixture generator uses),
+the registry (every indicator, the OHLCV ones), the call that
 feeds them and its keyword variants (``candidate_calls()``), the groups several
 contracts exempt for the same reason (elementwise math, running totals,
 whole-series fits, non-causal indicators), and ``params()`` / ``pin()``, which

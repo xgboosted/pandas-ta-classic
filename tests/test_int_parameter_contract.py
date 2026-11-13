@@ -25,9 +25,7 @@ CASES = [
     for param, spec in inspect.signature(getattr(ta, name)).parameters.items()
     if param != "offset" and (spec.annotation is int or int in typing.get_args(spec.annotation))
 ]
-KNOWN = {
-    ("vidya", "drift"): "OPEN: the CMO starts at bar length + drift - 1, the SMA seed sits at bar length - 1; where to seed is undecided",
-}
+KNOWN: dict[tuple[str, str], str] = {}
 
 
 @pytest.fixture(scope="module")

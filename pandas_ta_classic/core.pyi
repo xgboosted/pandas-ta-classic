@@ -576,13 +576,7 @@ class AnalysisIndicators:
         self, length: int | None = None, multiplier: float | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
     def psar(
-        self,
-        af0: float | None = None,
-        af: float | None = None,
-        max_af: float | None = None,
-        talib: bool | None = None,
-        offset: int | None = None,
-        **kwargs: Any,
+        self, af0: float | None = None, af: float | None = None, max_af: float | None = None, offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def qstick(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def sarext(

@@ -316,7 +316,8 @@ class TestAccessorSettablePropertiesPersist(TestCase):
             "2026-10-17T10:00:00+02:00",  # an offset, but not UTC
         ):
             self.df.attrs["_ta_last_run"] = stamp
-            with self.subTest(stamp=stamp), self.assertRaisesRegex(ValueError, r"df.ta.last_run: .* not a UTC ISO timestamp \(a frame saved by 0.8.x"):
+            # repr: pytest-xdist cannot send a datetime subTest parameter back to the controller
+            with self.subTest(stamp=repr(stamp)), self.assertRaisesRegex(ValueError, r"df.ta.last_run: .* not a UTC ISO timestamp \(a frame saved by 0.8.x"):
                 _ = self.df.ta.last_run
         self.df.ta(kind="sma", length=10)  # overwrites it
         self.assertIs(self.df.ta.last_run.tzinfo, UTC)

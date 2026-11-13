@@ -10,6 +10,7 @@ returned ``SMA_10``. Every such guard now goes through ``_pos_int`` /
 
 import inspect
 import re
+import typing
 
 import numpy as np
 import pytest
@@ -19,6 +20,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils import _metrics
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
+from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS, _MA_OPTIONS, accepted_keywords
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, code_defaults, inputs, spy
@@ -246,8 +248,8 @@ _F = get_sample_data().iloc[:300]
         (lambda: ta.percent_return(_F.close, cumulative=0), r"percent_return\(\) cumulative must be True or False"),
         (lambda: ta.wma(_F.close, asc="False"), r"wma\(\) asc must be True or False"),
         (lambda: ta.fwma(_F.close, asc=0), r"fwma\(\) asc must be True or False"),
-        (lambda: ta.sma(_F.close, min_periods=2.7), r"sma\(\) min_periods must be an integer >= 0, got 2.7"),
-        (lambda: ta.donchian(_F.high, _F.low, upper_min_periods=1.5), r"donchian\(\) upper_min_periods must be an integer >= 0"),
+        (lambda: ta.sma(_F.close, min_periods=2.7), r"sma\(\) min_periods must be an integer >= 0 and < 11, got 2.7"),
+        (lambda: ta.donchian(_F.high, _F.low, upper_min_periods=1.5), r"donchian\(\) upper_min_periods must be an integer >= 0 and < 21"),
         (lambda: ta.utils.fibonacci(n=-1), r"fibonacci\(\) n must be an integer >= 0, got -1"),
         (lambda: ta.utils.symmetric_triangle(n=-4), r"symmetric_triangle\(\) n must be an integer > 0, got -4"),
         (lambda: ta.utils.symmetric_triangle(n=0), r"symmetric_triangle\(\) n must be an integer > 0, got 0"),
@@ -266,6 +268,37 @@ def test_values_the_old_guards_replaced_are_now_honoured():
     assert ta.increasing(_F.close, percent=150).name == "INCp_1_1.5"  # 150 used to switch percent mode off
     assert ta.sma(_F.close, min_periods=0).notna().all()
     assert ta.jma(_F.close, phase=0.0).name == "JMA_7_0"
+
+
+# Every option that sets a window's minimum observations, with the length it belongs to.
+_MIN_PERIODS = sorted(
+    (name, key, key.replace("min_periods", "length") if key != "min_periods" else "length")
+    for name, keys in _KWARGS_OPTIONS.items()
+    for key in keys
+    if key.endswith("min_periods")
+)
+# These compute their windows in NumPy, where a window of 0 observations has no value:
+# min_periods=0 made mad, median, stdev and variance publish NaN on the last bar and quantile raise IndexError.
+_MIN_PERIODS_FROM_ONE = {"kurtosis", "mad", "median", "quantile", "skew", "stdev", "variance"}
+
+
+def test_min_periods_sweep_found_the_options():
+    assert {name for name, _, _ in _MIN_PERIODS} >= {"sma", "willr", "donchian", "beta", "mad"} | _MIN_PERIODS_FROM_ONE
+    assert len(_MIN_PERIODS) == 17
+
+
+@pytest.mark.parametrize(("name", "key", "length"), _MIN_PERIODS, ids=[f"{n}-{k}" for n, k, _ in _MIN_PERIODS])
+def test_min_periods_above_length_names_the_indicator(name, key, length, frame):
+    # sma, willr, beta, ... raised pandas' "min_periods 6 must be <= window 5";
+    # mad, median, quantile, stdev and variance used length instead without a word.
+    with pytest.raises(ValueError, match=rf"^{name}\(\) {key} must be an integer >= [01] and < 6, got 6$"):
+        getattr(ta, name)(**inputs(name, frame), **{length: 5, key: 6})
+
+
+@pytest.mark.parametrize("name", sorted(_MIN_PERIODS_FROM_ONE))
+def test_min_periods_zero_raises_where_a_window_needs_a_value(name, frame):
+    with pytest.raises(ValueError, match=rf"^{name}\(\) min_periods must be an integer >= 1 and < 6, got 0$"):
+        getattr(ta, name)(**inputs(name, frame), length=5, min_periods=0)
 
 
 def test_strategy_params_must_be_a_tuple():
@@ -288,7 +321,7 @@ def test_strategy_params_must_be_a_tuple():
         *[
             (
                 lambda n=n: ta.cdl_pattern(_F.open, _F.high, _F.low, _F.close, name=n, penetration=-1),
-                rf"cdl_{n}\(\) penetration must be a number >= 0, got -1",
+                r"cdl_pattern\(\) penetration must be a number >= 0, got -1",
             )
             for n in ("eveningstar", "morningstar", "darkcloudcover", "mathold", "abandonedbaby", "eveningdojistar", "morningdojistar")
         ],
@@ -561,8 +594,6 @@ def test_signature_defaults_are_none():
 # options are read off each docstring's Kwargs section; macdfix only names the xserie
 # options it forwards to macd() in prose.
 _SERIES_KWARG = re.compile(r"^\s+(\w+) \((?:pd\.)?Series", re.MULTILINE)
-_MACDFIX_OPEN = "OPEN: macdfix hands its signal options to macd(), whose errors name macd() (so do xa and cross_series)"
-_SERIES_KWARG_OPEN = {"macdfix": _MACDFIX_OPEN}
 
 
 def _series_kwarg_cases():
@@ -594,14 +625,7 @@ def _other_index(frame, rows: str) -> Series:
 
 @pytest.mark.parametrize(
     ("name", "key", "rows"),
-    [
-        # with no label in common the shared-index guard names the option for every indicator
-        pytest.param(*case, rows, marks=pytest.mark.xfail(strict=True, raises=(AssertionError, pytest.fail.Exception), reason=_SERIES_KWARG_OPEN[case[0]]))
-        if case[0] in _SERIES_KWARG_OPEN and rows != "disjoint"
-        else (*case, rows)
-        for rows in ("shorter", "shifted", "disjoint")
-        for case in SERIES_KWARG_CASES
-    ],
+    [(*case, rows) for rows in ("shorter", "shifted", "disjoint") for case in SERIES_KWARG_CASES],
 )
 def test_series_kwarg_with_another_index_raises(name, key, rows, frame):
     func = _find_indicator_func(name)
@@ -667,6 +691,73 @@ def test_uo_needs_its_three_windows_in_order():
     df = spy(300)
     with pytest.raises(ValueError, match=r"^uo\(\) needs fast <= medium <= slow, got fast=7, medium=30, slow=28$"):
         ta.uo(df.high, df.low, df.close, medium=30)
+
+
+def _option_cases():
+    """(indicator, extra kwargs, option) for every parameter, every option read from **kwargs, and every
+    option of every moving average an indicator can choose: the cases where an inner call may validate it."""
+    cases = []
+    for name in INDICATORS:
+        params = inspect.signature(getattr(ta, name)).parameters
+        series = set(inputs(name, spy(50)))
+        options = {p for p in params if p not in series and params[p].kind is not inspect.Parameter.VAR_KEYWORD}
+        options |= set(_KWARGS_OPTIONS.get(name, ())) - {"fillna", "fill_method"}
+        cases += [(name, {}, option) for option in sorted(options)]
+        # the xserie options are read only when the signals are on
+        cases += [(name, {"signal_indicators": True}, option) for option in sorted(options) if option.startswith("xserie")]
+        if "mamode" in params:
+            for mamode in ta.ma():
+                # only the options this indicator accepts with this mamode: any other raises TypeError up front
+                accepted = accepted_keywords(getattr(ta, name), {"mamode": mamode})
+                forwarded = (_MA_OPTIONS.get(mamode, frozenset()) & accepted) - {"mamode"}
+                cases += [(name, {"mamode": mamode}, option) for option in sorted(forwarded)]
+    return cases
+
+
+_OPTION_CASES = _option_cases()
+
+
+def test_option_name_sweep_found_the_forwarded_options():
+    assert ("apo", {"mamode": "ema"}, "adjust") in _OPTION_CASES and ("trix", {}, "sma") in _OPTION_CASES
+    assert len(_OPTION_CASES) > 950
+
+
+@pytest.mark.parametrize(
+    ("name", "extra", "option"),
+    _OPTION_CASES,
+    ids=[f"{n}-{'-'.join(map(str, e.values()))}-{o}".replace("--", "-") for n, e, o in _OPTION_CASES],
+)
+def test_an_invalid_option_names_the_function_called(name, extra, option, frame):
+    """apo(adjust="yes") raised "ema() adjust must be True or False", trix(sma="yes") named ema(),
+    aobv(talib="yes") named obv(), rsi(xserie="yes", signal_indicators=True) named _add_series_signals():
+    the option was validated by the function it was handed to."""
+    try:
+        getattr(ta, name)(**inputs(name, frame), **extra, **{option: "yes"})
+    except TypeError as error:  # an option it does not take with this mamode, or a removed one
+        assert str(error).startswith(f"{name}() "), str(error)
+    except ValueError as error:
+        if f" {option} " in str(error):
+            assert str(error).startswith(f"{name}() "), str(error)
+
+
+def _int_parameter_cases():
+    return [
+        (name, param)
+        for name in INDICATORS
+        for param, spec in inspect.signature(getattr(ta, name)).parameters.items()
+        if param != "offset" and (spec.annotation is int or int in typing.get_args(spec.annotation))
+    ]
+
+
+@pytest.mark.parametrize(("name", "param"), _int_parameter_cases(), ids=lambda v: v if isinstance(v, str) else None)
+@pytest.mark.parametrize("value", [0, 1])
+def test_a_small_int_parameter_error_names_that_parameter(name, param, value, frame):
+    """inertia(rvi_length=1) raised "inertia() length must be an integer > 1": rvi() needs length > 1,
+    inertia checked rvi_length only for > 0, and the error named inertia's own length."""
+    try:
+        getattr(ta, name)(**inputs(name, frame), **{param: value})
+    except ValueError as error:
+        assert re.search(rf"\b{param}\b", str(error)), str(error)
 
 
 LINE_FITS = ("cfo", "cti", "fosc", "inertia", "linreg", "linregangle", "linregintercept", "linregslope", "po", "tsf")

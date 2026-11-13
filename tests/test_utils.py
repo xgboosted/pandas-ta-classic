@@ -229,6 +229,9 @@ class TestUtilities(TestCase):
         # A non-number is not a percent rather than a TypeError.
         self.assertFalse(self.utils.is_percent("50"))
         self.assertFalse(self.utils.is_percent(None))
+        # bool is an int subclass: True used to read as 1, a percent.
+        self.assertFalse(self.utils.is_percent(True))
+        self.assertFalse(self.utils.is_percent(False))
 
     def test_unsigned_differences_default(self):
         # the docstring's example; without asint the flags stay float, even for an int series
@@ -1008,8 +1011,20 @@ class TestRequiredUtilityInputs(TestCase):
         """Every public utility is either in the table below or exempt, so a new one cannot be missed."""
         s = Series(np.linspace(10.0, 20.0, 30), index=pd.date_range("2020-01-01", periods=30, freq="D"))
         df = DataFrame({"close": s})
+        # The metrics need a series that falls as well as rises (a drawdown, a downside).
+        wave = s * (1 + 0.05 * np.sin(np.arange(30)))
         # A valid call for each utility with required inputs; each input in turn is replaced by None.
         valid_calls = {
+            "cagr": {"close": wave},
+            "calmar_ratio": {"close": wave},
+            "downside_deviation": {"returns": wave.pct_change()},
+            "jensens_alpha": {"returns": wave.pct_change(), "benchmark_returns": s.pct_change()},
+            "log_max_drawdown": {"close": wave},
+            "max_drawdown": {"close": wave},
+            "optimal_leverage": {"close": wave},
+            "pure_profit_score": {"close": wave},
+            "sharpe_ratio": {"close": wave},
+            "sortino_ratio": {"close": wave},
             "candle_color": {"open_": s, "close": s},
             "degenerate_div": {"numerator": s, "denominator": s},
             "degenerate_zero": {"x": s},
@@ -1044,10 +1059,6 @@ class TestRequiredUtilityInputs(TestCase):
             # None in, None out: an indicator's missing optional input flows through.
             "apply_fill", "apply_offset", "verify_series", "above", "above_value", "below", "below_value",
             "cross", "cross_value", "crossover", "lag",
-            # Answer NaN, pinned by test_metrics_return_nan_for_a_missing_series (as does
-            # utils.volatility, which is re-exported but kept out of __all__ on purpose).
-            "cagr", "calmar_ratio", "downside_deviation", "jensens_alpha", "log_max_drawdown", "max_drawdown",
-            "optimal_leverage", "pure_profit_score", "sharpe_ratio", "sortino_ratio",
         }  # fmt: skip
         public = {name for name in pandas_ta.utils.__all__ if inspect.isfunction(getattr(pandas_ta.utils, name))}
         self.assertEqual(public - exempt, set(valid_calls), "add the new utility to valid_calls or to exempt, with the reason")

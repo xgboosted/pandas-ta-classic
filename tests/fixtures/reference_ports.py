@@ -245,17 +245,20 @@ def vwap(high, low, close, volume, keys):
     return out
 
 
-def vidya(c, length=14):
-    """VIDYA (Chande) with CMO over `length` bars, seeded with the SMA of the first `length` closes."""
-    d = np.r_[np.nan, np.diff(c)]
+def vidya(c, length=14, drift=1):
+    """VIDYA (Chande) with CMO over `length` price changes `drift` bars apart, seeded on the bar before the
+    first CMO with the SMA of the `length` closes that end there (the first `length` closes for drift=1)."""
+    d = np.full(len(c), np.nan)
+    d[drift:] = c[drift:] - c[:-drift]
     up, dn = np.where(d > 0, d, 0.0), np.where(d < 0, -d, 0.0)
-    up[0] = dn[0] = np.nan
+    up[:drift] = dn[:drift] = np.nan
     su, sd = rolling(up, length, np.sum), rolling(dn, length, np.sum)
     k = np.abs((su - sd) / (su + sd))
     a = 2 / (length + 1)
     out = np.full(len(c), np.nan)
-    out[length - 1] = np.mean(c[:length])
-    for i in range(length, len(c)):
+    seed = length + drift - 2
+    out[seed] = np.mean(c[seed - length + 1 : seed + 1])
+    for i in range(seed + 1, len(c)):
         out[i] = a * k[i] * c[i] + (1 - a * k[i]) * out[i - 1]
     return out
 

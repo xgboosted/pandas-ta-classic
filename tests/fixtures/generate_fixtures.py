@@ -66,6 +66,7 @@ except ImportError:
     _HAS_TULIPY = False
 
 import pandas_ta_classic as ta
+from tests.config import get_sample_data
 from tests.fixtures.exact_reference import (
     rolling_beta,
     rolling_entropy,
@@ -77,19 +78,6 @@ from tests.fixtures.exact_reference import (
     rolling_ui,
     rolling_zscore,
 )
-
-# ---------------------------------------------------------------------------
-# Load sample data
-# ---------------------------------------------------------------------------
-_DATA_PATH = Path(__file__).parent.parent.parent / "examples" / "data" / "SPY_D.csv"
-
-
-def _load() -> pd.DataFrame:
-    df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df
-
 
 # ---------------------------------------------------------------------------
 # Indicator definitions
@@ -1271,7 +1259,7 @@ def _serialise(value_ref, count_ref=None) -> dict:
 
 
 def generate() -> None:
-    df = _load()
+    df = get_sample_data()
     out_path = Path(__file__).parent / "expected_values.json"
 
     # Merge-mode: load existing fixtures (if any) so optional-dependency keys

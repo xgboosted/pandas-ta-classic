@@ -54,7 +54,7 @@ optional = [
 # oracle values are frozen in tests/fixtures/tulipy_oracle.json and compared on
 # every Python version with no tulipy install. To regenerate that snapshot,
 # install tulipy manually on CPython <3.12 and run
-# tests/fixtures/generate_tulipy_oracle.py.
+# python -m tests.fixtures.generate_tulipy_oracle from the repository root.
 # TA-Lib >= 0.8.3: native rsi reads the neutral 50 on a flat start, as TA-Lib
 # does from 0.8.3 on (TA-Lib/ta-lib#480); older TA-Lib reads 0.0 there.
 oracle = [

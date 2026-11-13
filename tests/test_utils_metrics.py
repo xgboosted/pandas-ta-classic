@@ -223,27 +223,53 @@ class TestUtilityMetrics(TestCase):
         nearest = pandas_ta.utils.volatility(self.close, "years", nearest_day=True)
         self.assertGreaterEqual(nearest, yearly)
 
-    def test_metrics_return_nan_for_a_missing_series(self):
-        # verify_series(None) means "this optional argument was not given"; the
-        # metrics answer with NaN rather than raising, and none of them is
-        # reachable as an indicator, so nothing else pins this path.
-        one_arg = [
-            pandas_ta.utils.cagr,
-            pandas_ta.utils.calmar_ratio,
-            pandas_ta.utils.downside_deviation,
-            pandas_ta.utils.log_max_drawdown,
-            pandas_ta.utils.max_drawdown,
-            pandas_ta.utils.optimal_leverage,
-            pandas_ta.utils.pure_profit_score,
-            pandas_ta.utils.sharpe_ratio,
-            pandas_ta.utils.sortino_ratio,
-            pandas_ta.utils.volatility,
-        ]
-        for func in one_arg:
-            with self.subTest(func=func.__name__):
-                self.assertTrue(np.isnan(func(None)))
-        self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(None, None)))
-        self.assertTrue(np.isnan(pandas_ta.utils.jensens_alpha(self.pctret, None)))
+    def test_volatility_names_a_missing_close(self):
+        # The other metrics are in test_every_utility_names_a_required_input_passed_as_none;
+        # volatility is kept out of utils.__all__, so that sweep does not see it. All of them
+        # answered None with NaN, a sentinel AGENTS.md rule 1 rules out for utils/_metrics.py.
+        with self.assertRaisesRegex(ValueError, r"^volatility\(\) requires 'close', got None$"):
+            pandas_ta.utils.volatility(None)
+
+    def test_close_metrics_reject_missing_close(self):
+        # A NaN on the first or last bar made cagr and log_max_drawdown read NaN (and
+        # calmar_ratio for the last bar); one inside, or max_drawdown's anywhere, was
+        # skipped without a word. The other close metrics already raised for any NaN.
+        for position in (0, 2000, -1):
+            gappy = self.close.copy()
+            gappy.iloc[position] = np.nan
+            for name in ("cagr", "calmar_ratio", "log_max_drawdown", "max_drawdown"):
+                with self.subTest(name=name, position=position), self.assertRaisesRegex(ValueError, rf"^{name}\(\) close has 1 missing value"):
+                    getattr(pandas_ta.utils, name)(gappy)
+
+    def test_metrics_reject_invalid_numbers(self):
+        # period -5, 0 or NaN read NaN and True counted as 1; benchmark_rate NaN or inf read
+        # NaN or -inf (downside_deviation 0.0 for NaN); capital NaN, 0 or negative passed.
+        returns = self.close.pct_change()
+        cases = {
+            "optimal_leverage": (self.close, {"period": (-5, 0, np.nan, True, "x"), "benchmark_rate": (np.nan, np.inf, "x"), "capital": (0, -1, np.nan)}),
+            "sharpe_ratio": (self.close, {"period": (-5, 0, np.nan, True, "x"), "benchmark_rate": (np.nan, np.inf, "x")}),
+            "sortino_ratio": (self.close, {"benchmark_rate": (np.nan, np.inf, "x")}),
+            # (1 + rate) ** (1 / n) has no real value for a rate at or below -1
+            "downside_deviation": (returns, {"benchmark_rate": (np.nan, np.inf, "x", -1, -2)}),
+        }  # fmt: skip
+        for name, (series, params) in cases.items():
+            for param, values in params.items():
+                for value in values:
+                    with self.subTest(name=name, param=param, value=value), self.assertRaisesRegex(ValueError, rf"^{name}\(\) {param} "):
+                        getattr(pandas_ta.utils, name)(series, **{param: value})
+
+    def test_metrics_accept_valid_numbers(self):
+        # A negative benchmark rate is a real rate; None selects the default.
+        returns = self.close.pct_change()
+        self.assertEqual(pandas_ta.utils.sharpe_ratio(self.close, period=None), pandas_ta.utils.sharpe_ratio(self.close))
+        self.assertEqual(pandas_ta.utils.optimal_leverage(self.close, capital=None), pandas_ta.utils.optimal_leverage(self.close))
+        for name, series in (("sharpe_ratio", self.close), ("sortino_ratio", self.close), ("optimal_leverage", self.close), ("downside_deviation", returns)):
+            with self.subTest(name=name, benchmark_rate=None):
+                func = getattr(pandas_ta.utils, name)
+                self.assertEqual(func(series, benchmark_rate=None), func(series))
+        for name, series in (("sharpe_ratio", self.close), ("sortino_ratio", self.close), ("optimal_leverage", self.close), ("downside_deviation", returns)):
+            with self.subTest(name=name):
+                self.assertTrue(np.isfinite(getattr(pandas_ta.utils, name)(series, benchmark_rate=-0.02)))
 
     def test_metrics_need_a_time_span(self):
         # They divide by total_time(): a span of 0 raised a bare ZeroDivisionError,

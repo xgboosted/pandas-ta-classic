@@ -54,7 +54,7 @@ def variance(
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)
     ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
-    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
+    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=1, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
     mode_talib = _bool_param(talib, False, "talib")

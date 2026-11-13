@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 import pandas_ta_classic
+from pandas_ta_classic.utils._keywords import _EMA as _EMA_KEYWORDS, _KWARGS_OPTIONS
 from tests.contracts import code_defaults as _code_defaults
 
 _PACKAGE = Path(pandas_ta_classic.__file__).parent
@@ -44,3 +45,24 @@ def test_sweep_compares_a_meaningful_number_of_defaults():
     sources = (m.read_text(encoding="utf-8") for m in _MODULES)
     compared = sum(len(_doc_defaults(source).keys() & _code_defaults(source).keys()) for source in sources)
     assert compared > 300
+
+
+_EMA = _PACKAGE / "overlap" / "ema.py"
+# The keyword table lists every indicator that hands ema's options on through
+# **kwargs (tests/test_keyword_table.py keeps it in step with the code).
+_EMA_FORWARDERS = [m for m in _MODULES if m != _EMA and _KWARGS_OPTIONS.get(m.stem, frozenset()) >= _EMA_KEYWORDS]
+
+
+def test_ema_forwarders_found():
+    assert {m.stem for m in _EMA_FORWARDERS} == {"dema", "massi", "t3", "tema", "trix", "tsi"}
+
+
+@pytest.mark.parametrize("module", _EMA_FORWARDERS, ids=lambda p: p.stem)
+def test_ema_forwarders_document_the_ema_options(module):
+    """An indicator that hands **kwargs to its ema() calls takes ema's own options,
+    so it documents them with ema's defaults. t3 and tema documented adjust with
+    the wrong default (True) and left sma out; massi, trix and tsi documented
+    neither."""
+    options = {k: v for k, v in _code_defaults(_EMA.read_text(encoding="utf-8")).items() if k not in ("length", "talib")}
+    doc = _doc_defaults(module.read_text(encoding="utf-8"))
+    assert {k: doc.get(k) for k in options} == options

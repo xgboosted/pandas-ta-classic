@@ -137,11 +137,11 @@ Traditional unit test pattern:
 
 ```python
 def test_indicator_name():
- """Test indicator_name with normal inputs."""
- data = pd.Series(range(100), dtype=float)
- result = indicator_name(data)
- assert result is not None
- assert len(result) == len(data)
+    """Test indicator_name with normal inputs."""
+    data = pd.Series(range(100), dtype=float)
+    result = indicator_name(data)
+    assert result is not None
+    assert len(result) == len(data)
 ```
 
 Property-based test pattern (Hypothesis):
@@ -168,25 +168,25 @@ See ``tests/test_property_based.py`` and ``docs/testing.rst`` for the full strat
 #### Docstring Format
 ```python
 def indicator_name(close: pd.Series, length: int | None = None) -> pd.Series:
- """
- Brief description of the indicator.
+    """
+    Brief description of the indicator.
  
- Longer description if needed, including mathematical formula
- or algorithm explanation.
+    Longer description if needed, including mathematical formula
+    or algorithm explanation.
  
- Args:
- close (pd.Series): Series of closing prices
- length (int | None): Lookback period. Defaults to None (resolved internally, typically 20).
+    Args:
+    close (pd.Series): Series of closing prices
+    length (int | None): Lookback period. Defaults to None (resolved internally, typically 20).
  
- Returns:
- pd.Series: Calculated indicator values
+    Returns:
+    pd.Series: Calculated indicator values
  
- Example:
- >>> import pandas as pd
- >>> import pandas_ta_classic as ta
- >>> data = pd.read_csv('data.csv')
- >>> result = ta.indicator_name(data['close'])
- """
+    Example:
+    >>> import pandas as pd
+    >>> import pandas_ta_classic as ta
+    >>> data = pd.read_csv('data.csv')
+    >>> result = ta.indicator_name(data['close'])
+    """
 ```
 
 #### README Updates
