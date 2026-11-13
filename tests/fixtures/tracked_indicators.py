@@ -3,21 +3,9 @@ against ``expected_values.json`` and ``test_regression.py`` against
 ``regression_snapshots.json``, computed on ``SPY_D``.
 """
 
-from pathlib import Path
-
 import pandas as pd
 
 import pandas_ta_classic as ta
-
-_DATA_PATH = Path(__file__).parent.parent.parent / "examples" / "data" / "SPY_D.csv"
-
-
-def load_data() -> pd.DataFrame:
-    df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
-    return df
-
 
 # ---------------------------------------------------------------------------
 # Helper — recompute every indicator from the same definitions used in

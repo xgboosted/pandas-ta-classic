@@ -15,7 +15,6 @@ left as silent failures.
 """
 
 import unittest
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -28,8 +27,7 @@ except ImportError:
     TALIB_AVAILABLE = False
 
 import pandas_ta_classic as ta
-
-_DATA_PATH = Path(__file__).parent.parent / "examples" / "data" / "SPY_D.csv"
+from tests.config import get_sample_data
 
 
 class _SpyDataMixin:
@@ -37,9 +35,7 @@ class _SpyDataMixin:
 
     @classmethod
     def setUpClass(cls):
-        df = pd.read_csv(_DATA_PATH, index_col="date", parse_dates=True)
-        df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-        df.columns = df.columns.str.lower()
+        df = get_sample_data()
         cls.idx = df.index
         cls.open = df["open"]
         cls.high = df["high"]

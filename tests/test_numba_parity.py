@@ -12,7 +12,6 @@ Floating-point reassociation in compiled code allows ulp-level differences
 Skipped when numba is not installed; the ``testing-numba`` CI job installs it.
 """
 
-import inspect
 import os
 import subprocess
 import sys
@@ -20,33 +19,24 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import pytest
 
 pytest.importorskip("numba")
 
 import pandas_ta_classic as ta
+from tests.contracts import INDICATORS, NOT_OHLCV, call, spy
 
 ROOT = Path(__file__).parent.parent
-COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
-# Not a function of one OHLCV frame: two-series math, signal helpers, a required
-# benchmark or periods series, and the ma() dispatcher.
-SKIP = {"add", "sub", "mult", "div", "above", "above_value", "below", "below_value", "cross", "cross_value"}
-SKIP |= {"long_run", "short_run", "tsignals", "xsignals", "beta", "correl", "mavp", "ma"}
 
 
 def compute_all() -> dict:
     """Every indicator and candle pattern at defaults, flattened to float arrays."""
-    df = pd.read_csv(ROOT / "examples" / "data" / "SPY_D.csv", index_col="date", parse_dates=True)
-    df = df.drop(columns=["Unnamed: 0"], errors="ignore")
-    df.columns = df.columns.str.lower()
+    df = spy()
     out = {}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        for name in sorted({i for names in ta.Category.values() for i in names} - SKIP):
-            fn = getattr(ta, name)
-            result = fn(**{p: df[c] for p, c in COLUMNS.items() if p in inspect.signature(fn).parameters})
-            frame = result.to_frame() if isinstance(result, pd.Series) else result
+        for name in sorted(set(INDICATORS) - NOT_OHLCV):
+            frame = call(name, df)
             for col in frame.columns:
                 out[f"{name}:{col}"] = frame[col].to_numpy(float, na_value=np.nan)
         for pattern in ta.ALL_PATTERNS:
