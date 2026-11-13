@@ -454,7 +454,7 @@ class TestShortWindowHardening(TestCase):
     guard blocks every route found while probing (oversized single and multi
     window arguments, every mamode, the accessor and strategy paths, NaN-prefixed
     input, and chained calls). They are hardened regardless, because the ema
-    seeding bug (fix 20) was equally unreachable until someone worked out which
+    seeding bug (TestEmaSeedBounds in indicators/test_overlap.py) was equally unreachable until someone worked out which
     composition of indicators exposed it -- min_length models a single window,
     while real lookback is compositional.
 

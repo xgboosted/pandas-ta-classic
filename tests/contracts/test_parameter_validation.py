@@ -801,13 +801,13 @@ def test_a_one_bar_window_handed_to_linreg_raises_naming_the_indicator_called():
 
 
 class TestDriftParameterRemoved(TestCase):
-    """Fix 29 (issue #138): drift is removed, not just ignored.
+    """Issue #138: drift is removed, not just ignored.
 
     tsignals used trends.diff(drift), so drift != 1 compared each bar with the
     trend state drift bars back and produced wrong entries and exits. #129 made
     it a deprecated no-op on tsignals and on cfo, inertia, kst, rsx, chop,
     accbands and kvo, which accepted it but never used it. Removing it must not
-    reintroduce any effect: a drift= keyword now falls into **kwargs.
+    reintroduce any effect: a drift= keyword now raises TypeError.
     """
 
     NAMES = ("tsignals", "cfo", "inertia", "kst", "rsx", "chop", "accbands", "kvo")

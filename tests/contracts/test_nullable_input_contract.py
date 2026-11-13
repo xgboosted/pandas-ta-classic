@@ -140,7 +140,7 @@ def test_narrow_float_input_matches_float64(dtype, frames):
 
 
 # ---------------------------------------------------------------------------
-# flat bars and integer prices
+# flat bars and integer prices: flat bars on int64 prices read like float ones
 # ---------------------------------------------------------------------------
 
 

@@ -762,9 +762,6 @@ class TestTrend(TestCase):
         self.assertEqual(result["TS_Exits"].tolist(), [0, 0, 0, 0, 0, 1, 0])
 
 
-needs_talib = pytest.mark.skipif(not pandas_ta.Imports["talib"], reason="TA-Lib not installed")
-
-
 # ---------------------------------------------------------------------------
 # edecay is multiplicative decay floored at close (not additive)
 # ---------------------------------------------------------------------------
@@ -837,12 +834,12 @@ class TestEdecayFormula(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# psar — invalid optional close returns None (not crash)
+# psar — an invalid optional close raises TypeError instead of crashing
 # ---------------------------------------------------------------------------
 
 
 class TestPsarCloseNoneGuard(TestCase):
-    """psar() optional close None guard: invalid close → None, not AttributeError."""
+    """psar() rejects an invalid optional close with TypeError, not AttributeError."""
 
     @classmethod
     def setUpClass(cls):
@@ -863,7 +860,11 @@ class TestPsarCloseNoneGuard(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# cpr previous-period levels
+# cpr previous-period levels: every bar reads the last completed calendar
+# period before its own (weekly and monthly were two periods stale, then read
+# their own period on its last day; intraday was NaN every Monday).
+# Found by the 2026-09-24 review; the expected values come from a loop
+# reference, TA-Lib or a hand decision table, never from this package.
 # ---------------------------------------------------------------------------
 
 
@@ -888,17 +889,9 @@ def _previous_period_reference(df: pd.DataFrame, keys: list) -> np.ndarray:
 
 
 _BDAYS = pd.bdate_range("2024-01-01", "2024-06-28")
-
-
 _SESSIONS = pd.DatetimeIndex([d + pd.Timedelta(hours=9, minutes=30) + pd.Timedelta(minutes=5 * k) for d in pd.bdate_range("2024-03-04", periods=12) for k in range(78)])
-
-
 _WEEK = lambda t: t.isocalendar()[:2]
-
-
 _MONTH = lambda t: (t.year, t.month)
-
-
 _DAY = lambda t: t.date()
 
 
@@ -932,9 +925,11 @@ def test_cpr_weekly_pivot_on_spy():
 
 
 # ---------------------------------------------------------------------------
-# sarext native vs TA-Lib, every parameter
+# sarext native vs TA-Lib, every parameter, not only the defaults
+# (offsetonreverse, startvalue and the long acceleration factors diverged).
 # ---------------------------------------------------------------------------
 
+needs_talib = pytest.mark.skipif(not pandas_ta.Imports["talib"], reason="TA-Lib not installed")
 
 _SAREXT_CASES = {
     "defaults": {},
@@ -969,7 +964,8 @@ def test_sarext_native_matches_talib(kwargs, data):
 
 
 # ---------------------------------------------------------------------------
-# cpr interval removal
+# cpr interval removal: interval= was accepted and never read; passing it
+# raises TypeError instead of being swallowed by **kwargs.
 # ---------------------------------------------------------------------------
 
 

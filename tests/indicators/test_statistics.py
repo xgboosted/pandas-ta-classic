@@ -371,7 +371,7 @@ class TestZscoreColumnName(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# stdev min_periods
+# stdev forwards min_periods to variance
 # ---------------------------------------------------------------------------
 
 

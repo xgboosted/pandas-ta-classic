@@ -563,7 +563,7 @@ class TestCdlDojiAtTheEdges(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# cdl_z full=True is an anchored (expanding) Z Score
+# cdl_z full=True is an anchored (expanding) Z Score (issue #149 follow-up)
 #
 # The previous implementation set the window to close.size -- so only the final
 # bar had a value -- and then back-filled, which copied that single value onto

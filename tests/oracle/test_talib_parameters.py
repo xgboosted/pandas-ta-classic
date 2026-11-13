@@ -213,15 +213,12 @@ def test_a_mamode_talib_lacks_runs_natively(name, mamode):
     assert _same(func(close, mamode=mamode, talib=True), func(close, mamode=mamode, talib=False))
 
 
-needs_talib = pytest.mark.skipif(not ta.Imports["talib"], reason="TA-Lib not installed")
-
-
 # ---------------------------------------------------------------------------
-# stochrsi TA-Lib path honours k and rsi_length
+# stochrsi TA-Lib path honours k and rsi_length: talib=True uses TA-Lib only
+# when it can express them, so it equals the native result.
 # ---------------------------------------------------------------------------
 
 
-@needs_talib
 @pytest.mark.parametrize("kwargs", [{}, {"rsi_length": 7}, {"k": 1}, {"k": 1, "rsi_length": 7}], ids=["defaults", "rsi_length", "k1", "k1-rsi_length"])
 def test_stochrsi_talib_path_matches_native(kwargs):
     close = _spy().close

@@ -392,12 +392,12 @@ class TestEmvDivisorDefault(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# ad — required-arg None guard added
+# ad — None on a missing required input, TypeError on an invalid open_
 # ---------------------------------------------------------------------------
 
 
 class TestAdNoneGuard(TestCase):
-    """ad() returns None gracefully on invalid inputs instead of crashing."""
+    """ad() returns None on a missing required input and rejects an invalid open_."""
 
     @classmethod
     def setUpClass(cls):
@@ -445,12 +445,12 @@ class TestAdNoneGuard(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# cmf — invalid optional open_ returns None (not crash)
+# cmf — an invalid optional open_ raises TypeError instead of crashing
 # ---------------------------------------------------------------------------
 
 
 class TestCmfNoneGuard(TestCase):
-    """cmf() returns None gracefully on invalid optional open_."""
+    """cmf() rejects an invalid optional open_ with TypeError."""
 
     @classmethod
     def setUpClass(cls):

@@ -611,7 +611,8 @@ class TestIsDatetimeOrdered(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# df.ta.adjusted naming a missing column
+# df.ta.adjusted naming a missing column raises instead of silently using
+# close; an explicitly named column still works.
 # ---------------------------------------------------------------------------
 
 
