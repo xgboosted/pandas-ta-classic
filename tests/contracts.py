@@ -141,6 +141,21 @@ def candidate_calls(name: str) -> list[dict]:
 _DEFAULT_HELPERS = {"_pos_int", "_pos_float", "_number", "_bool_param", "_str_param"}
 
 
+def _kwargs_read(node: ast.expr) -> str | None:
+    """The key of ``kwargs.pop("key", ...)`` / ``kwargs.get("key", ...)``, else None."""
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr in ("pop", "get")
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "kwargs"
+        and node.args
+        and isinstance(node.args[0], ast.Constant)
+    ):
+        return node.args[0].value
+    return None
+
+
 def code_defaults(source: str) -> dict:
     """{parameter: default} read from the validation calls in an indicator's *source*
     (``length = _pos_int(length, 10, "length")`` gives ``{"length": 10}``)."""
@@ -154,6 +169,12 @@ def code_defaults(source: str) -> dict:
             try:
                 found.setdefault(call.args[0].id, ast.literal_eval(call.args[1]))
             except ValueError:  # computed defaults (e.g. lensig defaults to length)
+                pass
+        elif name in _DEFAULT_HELPERS and len(call.args) >= 2 and _kwargs_read(call.args[0]):
+            # an option read from **kwargs: _bool_param(kwargs.pop("adjust", None), False, "adjust")
+            try:
+                found.setdefault(_kwargs_read(call.args[0]), ast.literal_eval(call.args[1]))
+            except ValueError:
                 pass
         elif name == "get_drift" and call.args and isinstance(call.args[0], ast.Name):
             found.setdefault(call.args[0].id, 1)
