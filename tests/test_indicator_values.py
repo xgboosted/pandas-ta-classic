@@ -18,7 +18,8 @@ from unittest import TestCase
 import pandas as pd
 
 from tests.assertions import golden_value_close as _approx_equal
-from tests.fixtures.tracked_indicators import compute_all as _compute_all, load_data as _load_data
+from tests.config import get_sample_data
+from tests.fixtures.tracked_indicators import compute_all as _compute_all
 
 # ---------------------------------------------------------------------------
 # Load fixtures & sample data
@@ -46,7 +47,7 @@ class TestIndicatorValues(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.df = _load_data()
+        cls.df = get_sample_data()
         cls.results = _compute_all(cls.df)
 
     @classmethod

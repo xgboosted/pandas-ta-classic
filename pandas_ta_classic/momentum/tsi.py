@@ -123,6 +123,10 @@ Args:
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:
+    adjust (bool, optional): Forwarded to each ema() of the TSI line, not
+        to the signal MA. Default: False
+    sma (bool, optional): Forwarded to each ema() of the TSI line: seed it
+        with an SMA. Default: True
     fillna (value, optional): pd.DataFrame.fillna(value)
     fill_method (value, optional): Type of fill method
 

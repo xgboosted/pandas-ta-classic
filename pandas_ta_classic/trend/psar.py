@@ -4,7 +4,6 @@ from typing import Any
 import numpy as np
 from pandas import DataFrame, Series
 
-from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,7 +11,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -78,7 +77,6 @@ def psar(
     af0: float | None = None,
     af: float | None = None,
     max_af: float | None = None,
-    talib: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
@@ -90,37 +88,9 @@ def psar(
     af0 = _pos_float(af0, af, "af0")
     max_af = _pos_float(max_af, 0.2, "max_af")
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None
-
-    if Imports["talib"] and mode_talib:
-        from talib import SAR as _SAR
-
-        sar = _SAR(high, low, acceleration=af0, maximum=max_af)
-        sar_s = Series(sar, index=high.index)
-        _params = f"_{af0}_{max_af}"
-        # Split into long (below price) and short (above price) using close when
-        # available (matches native path convention), falling back to high. The
-        # split compares bars of the same date, so it comes before the offset.
-        ref = close if close is not None else high
-        long = sar_s.where(sar_s < ref, other=np.nan)
-        short = sar_s.where(sar_s >= ref, other=np.nan)
-        _af_s = Series(np.nan, index=high.index)
-        _rev_s = Series(0.0, index=high.index)
-        long, short, _af_s, _rev_s = apply_offset([long, short, _af_s, _rev_s], offset)
-        long, short, _af_s, _rev_s = apply_fill([long, short, _af_s, _rev_s], **kwargs)
-        data = {
-            f"PSARl{_params}": long,
-            f"PSARs{_params}": short,
-            f"PSARaf{_params}": _af_s,
-            f"PSARr{_params}": _rev_s,
-        }
-        psardf = DataFrame(data)
-        psardf.name = f"PSAR{_params}"
-        psardf.category = "trend"
-        return psardf
 
     # Falling if the first NaN -DM is positive
     falling = _psar_falling(high.iloc[:2], low.iloc[:2]) if len(high) > 1 else False
@@ -211,8 +181,6 @@ Args:
     af0 (float): Initial Acceleration Factor. Default: 0.02
     af (float): Acceleration Factor. Default: 0.02
     max_af (float): Maximum Acceleration Factor. Default: 0.2
-    talib (bool): If TA Lib is installed and talib is True, Returns the TA Lib
-        version (SAR only, long/short/af/reversal columns not available). Default: False
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

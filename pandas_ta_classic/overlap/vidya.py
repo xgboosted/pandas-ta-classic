@@ -16,8 +16,8 @@ from pandas_ta_classic.utils._njit import njit
 
 
 @njit(cache=True)
-def _vidya_loop(c_arr, cmo_arr, out, length, alpha):
-    for i in range(length, out.shape[0]):
+def _vidya_loop(c_arr, cmo_arr, out, start, alpha):
+    for i in range(start, out.shape[0]):
         out[i] = alpha * cmo_arr[i] * c_arr[i] + out[i - 1] * (1 - alpha * cmo_arr[i])
     return out
 
@@ -34,8 +34,8 @@ def vidya(
     """Indicator: Variable Index Dynamic Average (VIDYA)"""
     # Validate Arguments
     length = _pos_int(length, 14, "length")
-    close = verify_series(close, length)
     drift = get_drift(drift)
+    close = verify_series(close, length + drift - 1)
     offset = get_offset(offset)
 
     if close is None:
@@ -63,9 +63,13 @@ def vidya(
     m = close.size
     alpha = 2 / (length + 1)
     abs_cmo = _cmo(close, length, drift).abs()
+    # The first CMO needs length price changes drift bars apart: bar length + drift - 1.
+    # The SMA seed sits on the bar before it (bar length - 1 for drift=1); seeded at
+    # bar length - 1 for any drift, the recursion carried a NaN CMO to the end.
+    seed = length + drift - 2
     vidya_arr = np.full(m, np.nan)
-    vidya_arr[length - 1] = close.iloc[:length].mean()  # SMA seed
-    vidya_arr = _vidya_loop(close.to_numpy(dtype=float), abs_cmo.to_numpy(dtype=float), vidya_arr, length, alpha)
+    vidya_arr[seed] = close.iloc[seed - length + 1 : seed + 1].mean()
+    vidya_arr = _vidya_loop(close.to_numpy(dtype=float), abs_cmo.to_numpy(dtype=float), vidya_arr, seed + 1, alpha)
     vidya = Series(vidya_arr, index=close.index)
 
     # Offset
@@ -102,12 +106,13 @@ Calculation:
     mom = close.diff(drift)
     CMO = (sum(up moves, length) - sum(down moves, length)) / (sum of both)
     k = abs(CMO)
-    VIDYA[length - 1] = SMA(close, length)          # seed
+    VIDYA[length + drift - 2] = SMA(close, length)  # seed, the bar before the first CMO
     VIDYA = alpha * k * close + (1 - alpha * k) * VIDYA[-1]
 
 Args:
     close (pd.Series): Series of 'close's
     length (int): It's period. Default: 14
+    drift (int): The difference period of the CMO. Default: 1
     offset (int): How many periods to offset the result. Default: 0
 
 Kwargs:

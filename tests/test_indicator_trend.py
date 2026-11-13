@@ -586,6 +586,14 @@ class TestTrend(TestCase):
             ),
         )
 
+    def test_psar_rejects_talib(self):
+        """TA-Lib's SAR returns the stop alone: psar(talib=True) built PSARaf as NaN on
+        every bar and PSARr as 0.0, which hid 521 reversals on SPY_D. The native stop
+        equals SAR bar for bar, so psar has no talib parameter, and passing one raises."""
+        for value in (True, False):
+            with self.assertRaisesRegex(TypeError, "talib"):
+                pandas_ta.psar(self.high, self.low, self.close, talib=value)
+
     def test_psar(self):
         result = pandas_ta.psar(self.high, self.low)
         if HAS_TALIB:

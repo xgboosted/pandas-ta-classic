@@ -37,7 +37,8 @@ import pandas as pd
 
 # Re-use the same indicator compute function from generate_fixtures to stay
 # in sync with the full set of 43 tracked indicators.
-from tests.fixtures.generate_fixtures import _indicators, _load
+from tests.config import get_sample_data
+from tests.fixtures.generate_fixtures import _indicators
 
 # ---------------------------------------------------------------------------
 # Snapshot configuration
@@ -100,7 +101,7 @@ def _snapshots_for(result) -> dict[str, dict[str, float | None]]:
 
 
 def generate() -> None:
-    df = _load()
+    df = get_sample_data()
     indicators = _indicators(df)
 
     # Merge-mode: load existing snapshots (if any) so optional-dependency keys

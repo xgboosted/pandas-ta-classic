@@ -159,6 +159,16 @@ def test_vidya(spy):
     _close(got, expected, 1e-9)
 
 
+@pytest.mark.parametrize("drift", [2, 3])
+def test_vidya_drift(spy, drift):
+    # drift=2 published only the seed bar: the recursion started at bar length, before the first CMO.
+    got = ta.vidya(spy.close, drift=drift).to_numpy(float)
+    expected = ref.vidya(spy.close.to_numpy(float), drift=drift)
+    np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
+    _close(got, expected, 1e-9)
+    assert np.isfinite(got).sum() == len(got) - (14 + drift - 2)
+
+
 def test_vfi(spy):
     # The snapshot this replaces was 0.0 on every bar: the cutoff was coef * close.
     got = ta.vfi(spy.high, spy.low, spy.close, spy.volume).to_numpy(float)

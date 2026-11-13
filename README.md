@@ -199,7 +199,7 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 | Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
 |------|--------------------------|----------------------|
 | CDL patterns (62) | Native Python — always used | Still native — TA-Lib **never** used for patterns |
-| Core indicators (72) | Native Python (default) | TA-Lib available via `talib=True` |
+| Core indicators (71) | Native Python (default) | TA-Lib available via `talib=True` |
 
 ```python
 # CDL patterns — always native, no TA-Lib needed
@@ -220,7 +220,7 @@ uv pip install "TA-Lib>=0.8.3" # TA-Lib only (also enables acceleration backend)
 pip install pandas-ta-classic[oracle] # installs TA-Lib (the live oracle)
 pip install "TA-Lib>=0.8.3" # TA-Lib only (also enables acceleration backend)
 # tulipy is only needed to regenerate the frozen oracle snapshot (CPython <3.12):
-pip install tulipy && python tests/fixtures/generate_tulipy_oracle.py
+pip install tulipy && python -m tests.fixtures.generate_tulipy_oracle
 ```
 
 > **Note:** `test_oracle_talib.py` skips automatically (`@unittest.skipUnless`) when TA-Lib is not installed. `test_oracle_tulipy.py` runs on every Python version against the committed `tulipy_oracle.json` snapshot (skips only if that fixture is missing) — it does **not** require tulipy installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
