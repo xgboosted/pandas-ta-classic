@@ -59,7 +59,8 @@ naming, ``indicators()`` discovery, and time range filtering.
 frame cannot supply (a benchmark, a ``fast``/``slow`` pair, a trend) raises.
 
 **Files:** ``test_accessor_api.py``, ``test_accessor_conformance.py``,
-``test_accessor_values.py``.
+``test_accessor_values.py``, ``test_lazy_loading.py`` (lazy loading of the
+category subpackages and of top-level indicator names).
 
 **Run:** ``python -m pytest tests/api/test_accessor_api.py -v``
 
@@ -115,7 +116,7 @@ return type, non-NaN row count, value finiteness, and mathematical bounds.
 
 **Files:** ``test_native_values.py``.
 
-**Run:** ``python -m pytest tests/snapshots/test_native_values.py -v``
+**Run:** ``python -m pytest tests/indicators/test_native_values.py -v``
 
 
 Regression Tests
@@ -400,8 +401,7 @@ Utility Tests
 
 **Files:** ``test_utils.py`` (``verify_series``, ``apply_offset``,
 ``apply_fill``, cross detection), ``test_utils_metrics.py`` (Sharpe ratio,
-drawdown, CAGR, Jensen's alpha), ``test_lazy_loading.py`` (lazy loading of the
-category subpackages and of top-level indicator names).
+drawdown, CAGR, Jensen's alpha).
 
 **Run:** ``python -m pytest tests/utils/test_utils.py -v``
 

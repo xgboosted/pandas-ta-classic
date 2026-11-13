@@ -1,7 +1,7 @@
 """
 Priority 6 — Deeper assertions for the DataFrame extension API.
 
-The existing ``test_ext_indicator_*`` files only verify that calling
+The ``api/test_accessor_<category>.py`` files only verify that calling
 ``df.ta.<indicator>(append=True)`` (a) leaves the frame as a DataFrame and
 (b) appends the expected column name.  They do NOT check that the appended
 column contains any meaningful data.

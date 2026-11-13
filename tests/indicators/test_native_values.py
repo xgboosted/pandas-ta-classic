@@ -2,7 +2,7 @@
 Priority 5 — Numerical coverage for purely-native indicators.
 
 These indicators have no TA-Lib alternative (talib= parameter absent) so the
-existing test_indicator_* files only check type and column name. This file
+existing ``indicators/test_<category>.py`` files only check type and column name. This file
 adds three extra assertions for each one:
 
   1. result is not None
