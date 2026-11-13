@@ -787,3 +787,13 @@ def test_squeeze_lazybear_rejects_a_one_bar_keltner_length():
     with pytest.raises(ValueError, match=r"^squeeze\(\) kc_length must be an integer > 1, got 1$"):
         ta.squeeze(df.high, df.low, df.close, kc_length=1, lazybear=True)
     assert ta.squeeze(df.high, df.low, df.close, kc_length=1).notna().to_numpy().any()
+
+
+def test_a_one_bar_window_handed_to_linreg_raises_naming_the_indicator_called():
+    """kc(mamode="linreg", length=1) and qstick(ma="linreg", length=1) handed a one-bar window to linreg:
+    0/0 on every bar. linreg's bound now rejects it, and the error names the indicator called."""
+    df = spy(300)
+    with pytest.raises(ValueError, match=r"^kc\(\) length must be an integer > 1, got 1$"):
+        ta.kc(df.high, df.low, df.close, mamode="linreg", length=1)
+    with pytest.raises(ValueError, match=r"^qstick\(\) length must be an integer > 1, got 1$"):
+        ta.qstick(df.open, df.close, ma="linreg", length=1)
