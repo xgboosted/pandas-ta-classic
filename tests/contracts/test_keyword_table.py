@@ -24,7 +24,7 @@ from pandas_ta_classic.overlap.ma import _MA_DISPATCH, ma as _ma
 from pandas_ta_classic.utils._keywords import _FILL, _KWARGS_OPTIONS, _MA_CHOICE, _MA_OPTIONS, _MA_TALIB, _PATTERN_OPTIONS, choice_keywords
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, inputs
-from tests.test_docstring_params import _KWARG_READ, _is_kwargs, _resolve
+from tests.meta.test_docstring_params import _KWARG_READ, _is_kwargs, _resolve
 
 
 @functools.cache

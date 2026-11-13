@@ -9,10 +9,10 @@ is still NaN are stored as null and skipped.
 
 This catches algorithm regressions that only affect the interior of the
 series (e.g. EMA initialisation, window boundary handling) — complementing
-test_indicator_values.py which checks only the last value and non-NaN count.
+test_golden_values.py which checks only the last value and non-NaN count.
 
 Run the full suite:
-    python -m unittest tests/test_regression.py
+    python -m unittest tests/snapshots/test_snapshots.py
 """
 
 import json
@@ -26,7 +26,7 @@ import pandas as pd
 from tests.assertions import golden_value_close as _approx_equal
 
 # The indicator set is imported rather than restated: tracked_indicators.py
-# builds all 223 tracked results that test_indicator_values.py checks, with the same parameters the
+# builds all 223 tracked results that test_golden_values.py checks, with the same parameters the
 # generators use, and a second hand-maintained copy here had silently drifted
 # to a 43-entry subset, leaving 180 stored snapshots asserted by nothing.
 from tests.config import get_sample_data
@@ -36,14 +36,14 @@ from tests.fixtures.tracked_indicators import compute_all as _compute_all
 # Load snapshots
 # ---------------------------------------------------------------------------
 
-_SNAP_PATH = Path(__file__).parent / "fixtures" / "regression_snapshots.json"
+_SNAP_PATH = Path(__file__).parents[1] / "fixtures" / "regression_snapshots.json"
 with open(_SNAP_PATH) as _fh:
     _SNAPSHOTS: dict[str, dict] = json.load(_fh)
 
 # ---------------------------------------------------------------------------
 # Test class
 #
-# Tolerance is shared with test_indicator_values.py: snapshots carry the same
+# Tolerance is shared with test_golden_values.py: snapshots carry the same
 # round(v, 8) quantisation, so the same floor applies.
 # ---------------------------------------------------------------------------
 

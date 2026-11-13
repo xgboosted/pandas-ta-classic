@@ -25,7 +25,7 @@ from tests.fixtures.tracked_indicators import compute_all as _compute_all
 # Load fixtures & sample data
 # ---------------------------------------------------------------------------
 
-_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "expected_values.json"
+_FIXTURE_PATH = Path(__file__).parents[1] / "fixtures" / "expected_values.json"
 with open(_FIXTURE_PATH) as _fh:
     _FIXTURES: dict[str, dict] = json.load(_fh)
 

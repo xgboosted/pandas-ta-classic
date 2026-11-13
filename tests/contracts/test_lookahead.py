@@ -31,7 +31,7 @@ stale in either direction: an unmarked call that leaks fails, and a marked call
 that has become causal fails as XPASS until its rule is narrowed or dropped.
 
 Run:
-    pytest tests/test_lookahead.py
+    pytest tests/contracts/test_lookahead.py
 """
 
 import inspect
@@ -355,7 +355,7 @@ def test_accessor_appends_nothing_when_declining(frames, name):
 
 # --- the exemptions have to reach the reader too ----------------------------
 
-DOCS = Path(__file__).resolve().parent.parent / "docs" / "indicators.rst"
+DOCS = Path(__file__).resolve().parents[2] / "docs" / "indicators.rst"
 
 
 @pytest.mark.parametrize("name", sorted(LOOKAHEAD_RULES))

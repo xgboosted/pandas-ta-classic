@@ -58,7 +58,7 @@ def cmo(
             neg_ = negative.rolling(length).sum()
 
         # A window with no movement at all divides 0/0. TA-Lib reads 0.0 there;
-        # see tests/test_degenerate_input.py.
+        # see tests/contracts/test_degenerate_input.py.
         denominator = pos_ + neg_
         cmo = (scalar * (pos_ - neg_) / denominator).mask(denominator == 0, 0.0)
 

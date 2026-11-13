@@ -49,7 +49,7 @@ def test_sweep_compares_a_meaningful_number_of_defaults():
 
 _EMA = _PACKAGE / "overlap" / "ema.py"
 # The keyword table lists every indicator that hands ema's options on through
-# **kwargs (tests/test_keyword_table.py keeps it in step with the code).
+# **kwargs (tests/contracts/test_keyword_table.py keeps it in step with the code).
 _EMA_FORWARDERS = [m for m in _MODULES if m != _EMA and _KWARGS_OPTIONS.get(m.stem, frozenset()) >= _EMA_KEYWORDS]
 
 

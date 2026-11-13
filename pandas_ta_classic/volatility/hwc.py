@@ -114,7 +114,7 @@ def hwc(
         pct_arr = np.full(m, np.nan, dtype=float)
         np.divide(numer, denom, out=pct_arr, where=denom != 0.0)
         # A channel with no width around a close on it is a degenerate window:
-        # 0.0, the convention of tests/test_degenerate_input.py. A close off a
+        # 0.0, the convention of tests/contracts/test_degenerate_input.py. A close off a
         # zero-width channel (the warm-up bars, before any variance) stays NaN.
         pct_arr[(denom == 0.0) & (numer == 0.0)] = 0.0
         hwc_pctwidth = Series(pct_arr, index=close.index)

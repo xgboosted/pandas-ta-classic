@@ -42,7 +42,7 @@ def zscore(
         window_std = windows.std(axis=1, ddof=ddof)
         # A window with zero variance divides 0/0. TA-Lib reads 0.0 for the
         # degenerate case throughout, and this follows it; see
-        # tests/test_degenerate_input.py. degenerate_zero, not ``== 0``, so a
+        # tests/contracts/test_degenerate_input.py. degenerate_zero, not ``== 0``, so a
         # flat 0.3's ~1e-17 std residue is still recognised as flat.
         denominator = std * window_std
         with np.errstate(divide="ignore", invalid="ignore"):

@@ -342,7 +342,7 @@ class TestCategoryAttrAccess(unittest.TestCase):
             [sys.executable, "-c", script],
             capture_output=True,
             text=True,
-            cwd=str(Path(__file__).resolve().parents[1]),
+            cwd=str(Path(__file__).resolve().parents[2]),
             check=False,  # the return code is asserted below, with stderr as context
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
@@ -476,7 +476,7 @@ class TestZipImport(unittest.TestCase):
             # The archive comes first on PYTHONPATH, the checkout second for
             # tests.config. cwd is the temp dir: with -c, sys.path[0] is the cwd,
             # and the checkout there would shadow the archive.
-            repo_root = Path(__file__).resolve().parents[1]
+            repo_root = Path(__file__).resolve().parents[2]
             result = subprocess.run(
                 [sys.executable, "-c", script],
                 capture_output=True,

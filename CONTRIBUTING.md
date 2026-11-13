@@ -79,8 +79,8 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
-- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options in `_KWARGS_OPTIONS`, and a reason for any new deviation in `test_api_consistency.py`'s table
-- If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/test_reference_ports.py`
+- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/oracle/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options in `_KWARGS_OPTIONS`, and a reason for any new deviation in `test_api_consistency.py`'s table
+- If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/oracle/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
 > **Note:** The library uses **dynamic category discovery** via `_build_category_dict()` in `_meta.py`. When you add a new indicator file to any category folder (e.g., `pandas_ta_classic/momentum/new_indicator.py`), it will automatically be detected and included in the `Category` dictionary. Just ensure your file is in the correct category folder!
@@ -105,22 +105,22 @@ We welcome contributions from the community! This document provides guidelines a
 pytest tests/ -v
 
 # Single test module (fastest feedback)
-pytest tests/test_indicator_momentum.py -v
+pytest tests/indicators/test_momentum.py -v
 
 # Specific test
-pytest tests/test_indicator_momentum.py::TestMomentum::test_rsi -v
+pytest tests/indicators/test_momentum.py::TestMomentum::test_rsi -v
 
 # Oracle tests (TA-Lib: pip install -e ".[oracle]"; tulipy values are frozen in tests/fixtures/)
-pytest tests/test_oracle_talib.py tests/test_oracle_tulipy.py -v
+pytest tests/oracle/test_oracle_talib.py tests/oracle/test_oracle_tulipy.py -v
 
 # Property-based tests (Hypothesis)
-pytest tests/test_property_based.py -v
+pytest tests/indicators/test_property_based.py -v
 
 # Show Hypothesis input distribution statistics
-pytest tests/test_property_based.py -v --hypothesis-show-statistics
+pytest tests/indicators/test_property_based.py -v --hypothesis-show-statistics
 
 # Use CI-optimized profile (more examples, longer deadline)
-pytest tests/test_property_based.py -v --hypothesis-profile=ci
+pytest tests/indicators/test_property_based.py -v --hypothesis-profile=ci
 
 # Run with coverage
 pytest --cov=pandas_ta_classic --cov-report=html
@@ -129,7 +129,7 @@ pytest --cov=pandas_ta_classic --cov-report=html
 #### Writing Tests
 - Use descriptive test names
 - Test both normal and edge cases
-- Include property-based tests for complex functions (see `tests/test_property_based.py` for examples)
+- Include property-based tests for complex functions (see `tests/indicators/test_property_based.py` for examples)
 
 #### Test Structure
 
@@ -161,7 +161,7 @@ def test_my_indicator_invariant(s, length):
     assert str(length) in result.name
 ```
 
-See ``tests/test_property_based.py`` and ``docs/testing.rst`` for the full strategy catalog.
+See ``tests/indicators/test_property_based.py`` and ``docs/testing.rst`` for the full strategy catalog.
 
 ### 3. Documentation
 
@@ -233,7 +233,7 @@ The full list, with what enforces each rule, is in the "Correctness Rules" secti
 - **No silent fallbacks.** Validate arguments with `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `_windows_in_order` (a `fast`/`slow` pair), `get_drift` and `get_offset`; `None` means the default and anything invalid raises `ValueError`. Applies to utility functions too (`utils/_metrics.py`, `utils/_math.py`): raise rather than return a sentinel (`np.nan`, `{}`).
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
-- **Docstring `Default:` values match the code** (`tests/test_docstring_defaults.py` checks this).
+- **Docstring `Default:` values match the code** (`tests/meta/test_docstring_defaults.py` checks this).
 - **Remove or rename at once, with no deprecation step:** a removed or renamed parameter raises `TypeError` naming it, a removed attribute raises `AttributeError` naming its replacement (AGENTS.md rule 11). Start any changelog fragment that changes results or starts raising with **BREAKING**.
 - **Prove refactors change nothing**: compare hashed indicator output before and after.
 
@@ -273,7 +273,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
 3. **Commit Changes**
  ```bash
  # Stage specific files — avoid `git add .` to prevent accidentally including secrets or large files
- git add pandas_ta_classic/momentum/my_indicator.py tests/test_indicator_momentum.py
+ git add pandas_ta_classic/momentum/my_indicator.py tests/indicators/test_momentum.py
  git commit -m "feat(momentum): add new RSI variant"
  ```
 

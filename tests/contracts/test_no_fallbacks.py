@@ -70,7 +70,7 @@ def test_version_is_not_made_up_when_the_package_is_missing():
         "m.version = missing\n"
         "import pandas_ta_classic\n"
     )
-    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=Path(__file__).parent.parent, check=False)
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=Path(__file__).parents[2], check=False)
     assert result.returncode != 0 and "PackageNotFoundError" in result.stderr  # it used to report "0.0.0"
 
 

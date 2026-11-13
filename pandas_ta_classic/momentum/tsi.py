@@ -63,7 +63,7 @@ def tsi(
 
     # A series that never moves smooths to 0 on both sides, so this divides
     # 0/0. It reads 0.0, the convention TA-Lib applies for a degenerate
-    # window; see tests/test_degenerate_input.py.
+    # window; see tests/contracts/test_degenerate_input.py.
     tsi = (scalar * fast_slow_ema / abs_fast_slow_ema).mask(abs_fast_slow_ema == 0, 0.0)
     tsi_signal = ma(mamode, tsi, length=signal)
     if tsi_signal is None:

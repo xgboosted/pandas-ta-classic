@@ -225,7 +225,7 @@ pip install tulipy && python -m tests.fixtures.generate_tulipy_oracle
 
 > **Note:** `test_oracle_talib.py` skips automatically (`@unittest.skipUnless`) when TA-Lib is not installed. `test_oracle_tulipy.py` runs on every Python version against the committed `tulipy_oracle.json` snapshot (skips only if that fixture is missing) — it does **not** require tulipy installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
 
-**Performance boost:** Install `numba` to compile the recursive indicators' loops. Measured with `tools/bench_indicators.py`, run with numba and with `NUMBA_DISABLE_JIT=1`: on 100,000 bars RSX is 200× faster, HWMA 67×, MCGD 55×, SSF 53×, Supertrend 32×, PSAR 18× and QQE 6×; on 5,000 bars the same indicators gain 2–80×. Both paths agree to 1e-12 relative (`tests/test_numba_parity.py`).
+**Performance boost:** Install `numba` to compile the recursive indicators' loops. Measured with `tools/bench_indicators.py`, run with numba and with `NUMBA_DISABLE_JIT=1`: on 100,000 bars RSX is 200× faster, HWMA 67×, MCGD 55×, SSF 53×, Supertrend 32×, PSAR 18× and QQE 6×; on 5,000 bars the same indicators gain 2–80×. Both paths agree to 1e-12 relative (`tests/indicators/test_numba_parity.py`).
 - Using `uv`: `uv pip install pandas-ta-classic[performance]`
 - Using `pip`: `pip install pandas-ta-classic[performance]`
 

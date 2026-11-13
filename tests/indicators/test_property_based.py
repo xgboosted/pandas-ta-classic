@@ -19,9 +19,9 @@ zero, negative) at controlled rates to probe boundary behaviour.
 
 Running
 -------
-    python -m pytest tests/test_property_based.py -v
-    python -m pytest tests/test_property_based.py -v --hypothesis-show-statistics
-    python -m pytest tests/test_property_based.py -v --hypothesis-profile=ci
+    python -m pytest tests/indicators/test_property_based.py -v
+    python -m pytest tests/indicators/test_property_based.py -v --hypothesis-show-statistics
+    python -m pytest tests/indicators/test_property_based.py -v --hypothesis-profile=ci
 """
 
 import math

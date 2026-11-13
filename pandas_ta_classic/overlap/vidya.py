@@ -55,7 +55,7 @@ def vidya(
         neg_sum = negative.rolling(n).sum()
         # A window with no movement at all divides 0/0, and the NaN then rides
         # the vidya recursion forward over every later bar. TA-Lib's CMO reads
-        # 0.0 for that window; see tests/test_degenerate_input.py.
+        # 0.0 for that window; see tests/contracts/test_degenerate_input.py.
         denominator = pos_sum + neg_sum
         return ((pos_sum - neg_sum) / denominator).mask(denominator == 0, 0.0)
 

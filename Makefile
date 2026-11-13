@@ -65,16 +65,16 @@ test-ext:
 	$(PYTHON) -m unittest discover -s tests -p "test_ext_indicator_*.py" -v
 
 test-metrics:
-	$(PYTHON) -m unittest tests.test_utils_metrics -v
+	$(PYTHON) -m unittest tests.utils.test_utils_metrics -v
 
 test-strats:
-	$(PYTHON) -m unittest tests.test_strategy -v
+	$(PYTHON) -m unittest tests.api.test_strategy -v
 
 test-ta:
 	$(PYTHON) -m unittest discover -s tests -p "test_indicator_*.py" -v
 
 test-utils:
-	$(PYTHON) -m unittest tests.test_utils -v
+	$(PYTHON) -m unittest tests.utils.test_utils -v
 
 # Regenerate JSON fixture files from TA-Lib oracle + native code.
 # Deliberate step only — run after an INTENTIONAL algorithm change and review

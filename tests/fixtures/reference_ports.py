@@ -6,7 +6,7 @@ Before these ports, the indicators below were "regression-only": their
 expected values were snapshots of this package's own output, which guard
 against change but cannot show that the numbers are right. Each function here
 is a plain-loop transcription of the definition the indicator cites, written
-without any pandas_ta_classic code, so ``tests/test_reference_ports.py`` can
+without any pandas_ta_classic code, so ``tests/oracle/test_reference_ports.py`` can
 compare the package against it.
 
 Pine conventions are followed where a TradingView script is the source:

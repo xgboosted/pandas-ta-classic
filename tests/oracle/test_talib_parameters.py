@@ -22,7 +22,7 @@ from pandas_ta_classic.utils._core import _TAL_MA_TYPES
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, inputs
-from tests.test_docstring_params import _accepted
+from tests.meta.test_docstring_params import _accepted
 
 pytestmark = pytest.mark.skipif(not ta.Imports["talib"], reason="needs TA-Lib")
 

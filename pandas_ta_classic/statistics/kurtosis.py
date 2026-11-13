@@ -55,7 +55,7 @@ def kurtosis(
         result = numer / denom - adj
     # A window with zero variance has m2 == 0, so the division is 0/0. It reads
     # 0.0, the convention TA-Lib applies throughout for a degenerate window;
-    # see tests/test_degenerate_input.py. degenerate_zero catches the ~1e-33
+    # see tests/contracts/test_degenerate_input.py. degenerate_zero catches the ~1e-33
     # residue a flat 0.3 leaves in m2. Masking on m2 rather than denom avoids
     # reading 0.0 for every window narrower than four bars as well, where the
     # formula is undefined rather than degenerate.

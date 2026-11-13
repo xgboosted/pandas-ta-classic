@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LATEST = int(re.search(r'LATEST_PYTHON_VERSION: "3\.(\d+)"', (ROOT / ".github/workflows/ci.yml").read_text()).group(1))
 LOW, HIGH = f"3.{LATEST - 4}", f"3.{LATEST}"
 WINDOW = f"{LOW}\N{EN DASH}{HIGH}"  # the docs write the range with an en dash

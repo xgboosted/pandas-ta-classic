@@ -755,7 +755,7 @@ def verify_series(series: Series, min_length: float | None = None) -> Series | N
             return Series(series.to_numpy(dtype=float, na_value=np.nan), index=series.index, name=series.name)
         # float32/float16 input computes in float64 too: the result stayed float32 in
         # 54 indicators, mixed with float64 in 4 more, and lost digits on the way.
-        # numpy integers are left alone (tests/test_nullable_input_contract.py).
+        # numpy integers are left alone (tests/contracts/test_nullable_input_contract.py).
         if series.dtype.kind == "f" and series.dtype != np.float64:
             return series.astype(np.float64)
         return series

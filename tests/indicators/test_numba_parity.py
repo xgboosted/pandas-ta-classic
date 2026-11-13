@@ -26,7 +26,7 @@ pytest.importorskip("numba")
 import pandas_ta_classic as ta
 from tests.contracts import INDICATORS, NOT_OHLCV, call, spy
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parents[2]
 
 
 def compute_all() -> dict:
@@ -48,7 +48,7 @@ def compute_all() -> dict:
 def test_jit_matches_pure_python(tmp_path):
     target = tmp_path / "nojit.npz"
     # python -c puts the working directory (the repo root) on sys.path
-    script = f"import numpy as np; from tests.test_numba_parity import compute_all; np.savez({str(target)!r}, **compute_all())"
+    script = f"import numpy as np; from tests.indicators.test_numba_parity import compute_all; np.savez({str(target)!r}, **compute_all())"
     env = {**os.environ, "NUMBA_DISABLE_JIT": "1"}
     subprocess.run([sys.executable, "-c", script], check=True, env=env, cwd=ROOT)
     nojit = dict(np.load(target))

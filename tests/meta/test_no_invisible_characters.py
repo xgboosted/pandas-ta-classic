@@ -37,7 +37,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 # Invisible, or visually identical to an ASCII character.
 FORBIDDEN = {

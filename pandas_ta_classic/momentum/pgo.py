@@ -37,7 +37,7 @@ def pgo(
     pgo = close - sma(close, length)
     # A window with no true range divides 0/0: the close never moved, so it sits
     # on its own average. It reads 0.0, the convention TA-Lib applies for a
-    # degenerate window; see tests/test_degenerate_input.py.
+    # degenerate window; see tests/contracts/test_degenerate_input.py.
     smoothed_atr = ema(_atr, length)
     pgo /= smoothed_atr
     pgo = pgo.mask(smoothed_atr == 0, 0.0)
