@@ -4,6 +4,14 @@ Testing
 **Pandas TA Classic** uses a multi-layered testing strategy to ensure
 indicator correctness, robustness, and reliability.
 
+The test modules are grouped in ``tests/`` by the question they answer:
+``indicators/`` (what each indicator computes), ``contracts/`` (registry-wide
+contracts; the package's ``__init__.py`` is their shared harness),
+``oracle/`` (comparisons with an independent implementation),
+``snapshots/`` (frozen outputs of the package itself), ``api/`` (the ``df.ta``
+accessor, strategies, custom indicators), ``utils/`` and ``meta/`` (docs,
+changelog, docstrings, the test helpers).
+
 .. contents::
    :local:
    :depth: 1

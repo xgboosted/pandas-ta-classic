@@ -255,8 +255,8 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 
 1. Create `pandas_ta_classic/<category>/<indicator>.py`
 2. Follow existing indicator template in same category
-3. Add test in appropriate `tests/test_indicator_<category>.py` or `tests/test_ext_indicator_<category>.py`
-   (overlap uses `test_accessor_overlap.py`; candles has no ext test file)
+3. Add test in appropriate `tests/indicators/test_<category>.py` or `tests/api/test_accessor_<category>.py`
+   (math has no accessor test file)
 4. Add entry to `docs/indicators.rst`
 5. Add a changelog fragment `changelog.d/<PR number>.added.md` describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed
@@ -414,9 +414,15 @@ python -m build
 ├── tests/                            # Test suite
 │   ├── config.py
 │   ├── assertions.py
-│   ├── contracts.py                  # Shared harness of the registry-wide contract tests
 │   ├── fixtures/                     # expected_values.json, regression_snapshots.json, tulipy_oracle.json, exact_reference.py, reference_ports.py
-│   └── test_*.py                     # Indicator, accessor, strategy, utils tests
+│   ├── indicators/                   # test_<category>.py: what each indicator computes; edge cases, properties, numba parity
+│   ├── contracts/                    # registry-wide contracts; __init__.py is their shared harness
+│   ├── oracle/                       # TA-Lib, frozen tulipy output, reference ports
+│   ├── snapshots/                    # frozen outputs of the package itself (snapshots, golden values)
+│   ├── api/                          # df.ta accessor, strategies, custom indicators, lazy loading
+│   ├── utils/                        # pandas_ta_classic.utils helpers
+│   ├── meta/                         # docs, changelog, docstrings, the test helpers
+│   └── test_*.py                     # regression_bugfixes, adversarial_review_fixes, integration_e2e (to be dissolved)
 └── examples/                         # Jupyter notebooks & sample data
 ```
 
