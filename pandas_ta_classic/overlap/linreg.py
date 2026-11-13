@@ -98,7 +98,7 @@ def linreg(
 ) -> Series | None:
     """Indicator: Linear Regression"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
+    length = _pos_int(length, 14, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
     angle = _bool_param(kwargs.pop("angle", None), False, "angle")

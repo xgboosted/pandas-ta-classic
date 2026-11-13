@@ -21,7 +21,7 @@ def linregintercept(
     The y-intercept of the linear regression line.
     TA-Lib name: LINEARREG_INTERCEPT.
     """
-    length = _pos_int(length, 14, "length")
+    length = _pos_int(length, 14, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

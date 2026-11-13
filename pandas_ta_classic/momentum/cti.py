@@ -16,7 +16,7 @@ def cti(
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Correlation Trend Indicator"""
-    length = _pos_int(length, 12, "length")
+    length = _pos_int(length, 12, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

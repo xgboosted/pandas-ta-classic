@@ -24,7 +24,7 @@ def cfo(
 ) -> Series | None:
     """Indicator: Chande Forecast Oscillator (CFO)"""
     # Validate Arguments
-    length = _pos_int(length, 9, "length")
+    length = _pos_int(length, 9, "length", gt=1)
     scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
