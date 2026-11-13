@@ -83,7 +83,9 @@ def run(fast_length: int = 10, slow_length: int = 20) -> None:
     strat = results[0]
     print(f"Final portfolio:    ${cerebro.broker.getvalue():,.2f}")
 
-    sharpe = strat.analyzers.sharpe.get_analysis().get('sharperatio', float('nan'))
+    sharpe = strat.analyzers.sharpe.get_analysis()['sharperatio']
+    if sharpe is None:  # backtrader stores None when it cannot compute one (no trades, too few returns)
+        sharpe = float('nan')
     dd = strat.analyzers.drawdown.get_analysis().max.drawdown
     ret = strat.analyzers.returns.get_analysis()['rtot'] * 100
 

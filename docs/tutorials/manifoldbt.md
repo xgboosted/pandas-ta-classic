@@ -95,6 +95,7 @@ signals['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
 Engine expressions compose on top of an exo column like any other series, so a volatility filter can be written against it directly:
 
 ```python
+trend = exo('pandas_ta', 'macd') > exo('pandas_ta', 'macd_signal')
 wide = exo('pandas_ta', 'atr') > exo('pandas_ta', 'atr').rolling_mean(50)
 position = when(trend, when(wide, lit(0.5), lit(1.0)), lit(0.0))
 ```
