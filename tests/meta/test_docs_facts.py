@@ -20,7 +20,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.candles.cdl_pattern import ALL_PATTERNS
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 # The tracked files only: a local draft or build output under docs/ is not documentation.
 _TRACKED = subprocess.run(
     ["git", "ls-files", "AGENTS.md", "README.md", "CONTRIBUTING.md", "docs/*.rst", "docs/*.md"], cwd=ROOT, capture_output=True, text=True, check=True
@@ -85,5 +85,5 @@ def test_every_stated_floor_matches_pyproject(package):
 @pytest.mark.parametrize("doc", ["AGENTS.md", "docs/testing.rst"])
 def test_every_contract_test_is_listed(doc):
     text = (ROOT / doc).read_text(encoding="utf-8")
-    missing = sorted(path.name for path in (ROOT / "tests").glob("test_*_contract.py") if path.name not in text)
+    missing = sorted(path.name for path in (ROOT / "tests" / "contracts").glob("test_*_contract.py") if path.name not in text)
     assert not missing, f"{doc} does not name {missing}"

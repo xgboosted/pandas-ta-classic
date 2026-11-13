@@ -1,5 +1,5 @@
-"""The tracked indicator set: every result ``test_indicator_values.py`` checks
-against ``expected_values.json`` and ``test_regression.py`` against
+"""The tracked indicator set: every result ``test_golden_values.py`` checks
+against ``expected_values.json`` and ``test_snapshots.py`` against
 ``regression_snapshots.json``, computed on ``SPY_D``.
 """
 

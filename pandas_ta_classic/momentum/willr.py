@@ -50,7 +50,7 @@ def willr(
         # epsilon denominator would read -100 here instead, because of the
         # affine term: 100 * (0/eps - 1). That is a real %R value -- bar 72 of
         # a series with a flat block from bar 60 genuinely reads -100 -- so it
-        # cannot double as the marker. See tests/test_degenerate_input.py.
+        # cannot double as the marker. See tests/contracts/test_degenerate_input.py.
         window_range = highest_high - lowest_low
         willr = 100 * ((close - lowest_low) / window_range.where(window_range != 0) - 1)
         willr = willr.mask(window_range == 0, 0.0)

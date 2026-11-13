@@ -140,8 +140,8 @@ jobs:
     - name: Run core tests (exclude oracle suites)
       run: |
         python -m pytest tests/ \
-          --ignore=tests/test_oracle_talib.py \
-          --ignore=tests/test_oracle_tulipy.py -v
+          --ignore=tests/oracle/test_oracle_talib.py \
+          --ignore=tests/oracle/test_oracle_tulipy.py -v
 
     - name: Verify package import
       run: |
@@ -174,8 +174,8 @@ jobs:
     - name: Run core tests with the JIT path (includes the JIT vs pure-Python parity test)
       run: |
         python -m pytest tests/ \
-          --ignore=tests/test_oracle_talib.py \
-          --ignore=tests/test_oracle_tulipy.py -v
+          --ignore=tests/oracle/test_oracle_talib.py \
+          --ignore=tests/oracle/test_oracle_tulipy.py -v
 
   # Job 5: Oracle Testing - Run talib/tulipy parity tests on all supported Python versions
   testing-oracle:
@@ -214,7 +214,7 @@ jobs:
 
     - name: Run oracle test suites (talib + tulipy)
       run: |
-        python -m pytest tests/test_oracle_talib.py tests/test_oracle_tulipy.py -v
+        python -m pytest tests/oracle/test_oracle_talib.py tests/oracle/test_oracle_tulipy.py -v
 
   # Job 6: Documentation - Build and deploy documentation (independent deployment)
   documentation:

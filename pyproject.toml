@@ -185,7 +185,7 @@ line-length = 150
 # banned-from rejects `from numpy import x`, so numpy is always reached through
 # `np.`. RUF001-003/PLE2502 reject characters that are invisible or ambiguous
 # with ASCII in strings, docstrings and comments (the hand-written
-# tests/test_no_invisible_characters.py scan covers non-Python files).
+# tests/meta/test_no_invisible_characters.py scan covers non-Python files).
 extend-select = ["ICN", "RUF001", "RUF002", "RUF003", "PLE2502"]
 
 [tool.ruff.lint.isort]
@@ -224,7 +224,7 @@ local_scheme = "no-local-version"  # Omit local version for clean releases
 [tool.towncrier]
 # Each PR adds changelog.d/<PR number>.<type>.md; `towncrier build` turns them
 # into a CHANGELOG.md section at release time. changelog.d/README.md has the rules,
-# tests/test_changelog.py checks the fragments.
+# tests/meta/test_changelog.py checks the fragments.
 directory = "changelog.d"
 filename = "CHANGELOG.md"
 start_string = "<!-- towncrier release notes start -->\n"

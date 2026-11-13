@@ -41,7 +41,7 @@ import pandas as pd
 import pandas_ta_classic as ta
 from tests.config import get_sample_data
 
-_HERE = Path(__file__).parent
+_HERE = Path(__file__).parents[1]
 _ORACLE_PATH = _HERE / "fixtures" / "tulipy_oracle.json"
 
 ORACLE_AVAILABLE = _ORACLE_PATH.is_file()

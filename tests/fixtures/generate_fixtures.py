@@ -1,5 +1,5 @@
 """
-Generate golden fixture values for test_indicator_values.py.
+Generate golden fixture values for test_golden_values.py.
 
 Run this script manually — and ONLY — when indicator algorithms are
 intentionally changed:

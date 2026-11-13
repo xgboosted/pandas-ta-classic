@@ -69,7 +69,7 @@ def mfi(
         nsum = negative_flow.rolling(length).sum()
         # A window with no price movement has no money flow in either
         # direction, so this divides 0/0. TA-Lib reads 0.0 there; see
-        # tests/test_degenerate_input.py.
+        # tests/contracts/test_degenerate_input.py.
         denominator = psum + nsum
         mfi = (100 * psum / denominator).mask(denominator == 0, 0.0)
 

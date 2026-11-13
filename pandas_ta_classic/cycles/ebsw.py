@@ -102,7 +102,7 @@ Written by rengel8 for Pandas TA based on a publication at 'prorealcode.com' and
 a book by J.F.Ehlers.
 
 It follows the prorealcode listing line by line, which
-tests/test_reference_ports.py checks: its recursion starts at bar 11 and the
+tests/oracle/test_reference_ports.py checks: its recursion starts at bar 11 and the
 result is published from bar ``length``.
 
 

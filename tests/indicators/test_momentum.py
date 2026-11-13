@@ -988,7 +988,7 @@ class TestMomentum(TestCase):
         # marker for a degenerate window, which this package follows
         # throughout. -100 cannot double as the marker: it is a real %R value
         # for a bar sitting at the low of a real range. See
-        # tests/test_degenerate_input.py.
+        # tests/contracts/test_degenerate_input.py.
         self.assertEqual(int(result.isna().sum()), length - 1)
         self.assertTrue((result.dropna() == 0.0).all())
 

@@ -41,11 +41,11 @@ Missing Values
 **A leading NaN run is not data.** Chained input (one indicator's output fed
 into another) starts with a NaN warm-up run. Every indicator returns the same
 values on the real bars as it would on the series without that run, and NaN on
-the run itself. ``tests/test_leading_nan_contract.py`` checks every registered
+the run itself. ``tests/contracts/test_leading_nan_contract.py`` checks every registered
 indicator.
 
 **A missing bar inside the series** (a NaN in any input) is handled in one of
-three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
+three ways, pinned per indicator by ``tests/contracts/test_interior_nan_contract.py``:
 
 * **Recovers** (every indicator not listed below): the result is NaN near the
   gap and, once the gap has left every window and recursion, equals the result
@@ -67,11 +67,11 @@ three ways, pinned per indicator by ``tests/test_interior_nan_contract.py``:
 No indicator publishes a value it could not compute: a result is either
 computed from the available bars or NaN. This also holds on the warm-up bars at
 the start of the series, and for the direction and flag columns that describe
-them — ``tests/test_warmup_contract.py`` checks both for every registered
+them — ``tests/contracts/test_warmup_contract.py`` checks both for every registered
 indicator and every column it returns, ``CPR_POSITION`` and ``CPR_WIDTH_CLASS``
 included (float64, NaN before the first completed period).
 
-``tests/test_data_gaps_contract.py`` extends the missing-bar contract to a
+``tests/contracts/test_data_gaps_contract.py`` extends the missing-bar contract to a
 whole missing bar, a five-bar outage, a bar missing only its volume or only its
 high and low, a missing newest bar, and a calendar with missing days: an
 indicator that counts bars gives the same numbers whatever the timestamps.
@@ -86,14 +86,14 @@ As with any float64 data, ``Int64`` values beyond 2**53 lose precision.
 the float64 one, dtype included; it used to stay float32 and lose digits.
 numpy integer input is computed as numpy computes it, so integer-valued
 results (``ceil``, ``npround``, ...) keep ``int64``.
-``tests/test_nullable_input_contract.py`` checks every registered indicator.
+``tests/contracts/test_nullable_input_contract.py`` checks every registered indicator.
 
 Zero Volume
 -----------
 
 A session with no volume -- a halt, an illiquid instrument, a feed that writes
 0 for "unknown" -- leaves the volume dividers without a value to divide by.
-What each one does, pinned in ``tests/test_degenerate_input.py`` so that any
+What each one does, pinned in ``tests/contracts/test_degenerate_input.py`` so that any
 change is noticed:
 
 * ``emv`` and ``eom`` divide the bar's movement by its volume. A bar that moved
@@ -187,7 +187,7 @@ generators. Using one to drive entries or exits will inflate backtest results.
    ``df.ta.strategy("all", lookahead=False)`` produces a set of columns you can
    actually backtest — the non-causal ones are simply absent.
 
-This list is enforced, not just documented. ``tests/test_lookahead.py`` evaluates
+This list is enforced, not just documented. ``tests/contracts/test_lookahead.py`` evaluates
 every registered indicator over the full series and over two shorter prefixes and
 requires the shared bars to match exactly. The calls above are marked
 ``xfail(strict=True)``, so the list cannot drift: an unlisted indicator that

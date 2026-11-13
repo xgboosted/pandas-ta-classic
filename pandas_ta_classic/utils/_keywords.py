@@ -8,7 +8,7 @@ raises ``TypeError`` for any other name.
 An indicator accepts its signature, ``fillna``/``fill_method``, the options
 below that it reads from ``**kwargs`` or hands on to an inner function, and,
 when it computes with a moving average or a candle pattern chosen by a
-parameter, that choice's own options. ``tests/test_keyword_table.py`` keeps
+parameter, that choice's own options. ``tests/contracts/test_keyword_table.py`` keeps
 the tables in step with the code.
 
 Only the package's own indicators are checked: an indicator loaded with

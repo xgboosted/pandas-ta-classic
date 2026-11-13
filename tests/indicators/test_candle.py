@@ -283,7 +283,7 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
     """Fourteen patterns on bars built to satisfy their conditions, plus the six
     two-sided ones mirrored to fire the opposite sign.
 
-    `tests/test_oracle_talib.py` compares 59 patterns against TA-Lib over the
+    `tests/oracle/test_oracle_talib.py` compares 59 patterns against TA-Lib over the
     last 2000 bars of SPY_D and they agree on every bar -- but eight of them
     return 0 for all 2000 rows, so that agreement said nothing about the branch
     that emits the signal, and six more fire between one and four times, resting
@@ -299,7 +299,7 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
 
     def _native(self, name):
         # `ta.cdl_kicking` is the submodule; the callable of the same name lives
-        # inside it, as `tests/test_oracle_talib.py` resolves it too.
+        # inside it, as `tests/oracle/test_oracle_talib.py` resolves it too.
         return getattr(getattr(pandas_ta, name), name)
 
     def test_each_pattern_fires_on_its_own_bars(self):

@@ -24,8 +24,8 @@ from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS, _MA_OPTIONS, acce
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
 from tests.contracts import INDICATORS, code_defaults, inputs, spy
-from tests.test_degenerate_input import _call
-from tests.test_docstring_defaults import _MODULES
+from tests.contracts.test_degenerate_input import _call
+from tests.meta.test_docstring_defaults import _MODULES
 
 _GUARD = re.compile(r"_pos_(?:int|float)\((\w+),")
 _SERIES = ("open_", "high", "low", "close", "volume")

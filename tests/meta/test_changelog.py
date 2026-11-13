@@ -16,7 +16,7 @@ import tomllib
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 CHANGELOG = ROOT / "CHANGELOG.md"
 TOWNCRIER = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["towncrier"]
 FRAGMENTS = ROOT / TOWNCRIER["directory"]

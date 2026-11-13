@@ -11,7 +11,7 @@ TestConstantInput
     Constant price series exercises degenerate arithmetic:
     - sma returns the constant value for all valid rows
     - stdev returns 0 for all valid rows
-    - rsi reads 0.0 (no gains or losses, so 0/0; see tests/test_degenerate_input.py)
+    - rsi reads 0.0 (no gains or losses, so 0/0; see tests/contracts/test_degenerate_input.py)
 
 TestInfInInput
     A single ±Inf value inserted mid-series must not crash any indicator.
@@ -128,7 +128,7 @@ class TestConstantInput(TestCase):
         """RSI on a constant series divides 0/0 and reads the neutral 50, as
         TA-Lib >= 0.8.3 does (TA-Lib/ta-lib#480).
 
-        It used to be all-NaN, then 0.0. See tests/test_degenerate_input.py.
+        It used to be all-NaN, then 0.0. See tests/contracts/test_degenerate_input.py.
         """
         result = ta.rsi(_CONST_C, length=14, talib=False)
         self.assertIsNotNone(result)

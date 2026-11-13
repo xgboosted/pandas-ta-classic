@@ -39,7 +39,7 @@ def vhf(
     movement = diff.rolling(length).sum()
     # A window with neither movement nor range divides 0/0 and reads 0.0, the
     # convention TA-Lib applies throughout for a degenerate window; see
-    # tests/test_degenerate_input.py. non_zero_range() cannot mark it here,
+    # tests/contracts/test_degenerate_input.py. non_zero_range() cannot mark it here,
     # because the zero is in the numerator: it substituted an epsilon for
     # HCP - LCP and returned eps / 0 == inf.
     #

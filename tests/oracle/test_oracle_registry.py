@@ -38,7 +38,7 @@ from tests.contracts import params, spy
 
 talib = pytest.importorskip("talib")
 
-_ROOT = Path(__file__).parent.parent
+_ROOT = Path(__file__).parents[2]
 _N = 400
 
 
