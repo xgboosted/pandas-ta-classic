@@ -203,6 +203,12 @@ Edge-Case Tests
 - ``test_parameter_validation.py`` — besides rejecting invalid values, every
   numeric default of every registered indicator is passed explicitly, as an
   int and as a float, and must name the output as the default call does.
+  Every parameter and every option an indicator reads or hands on (its MA
+  options for each ``mamode`` included), set to an invalid value, raises an
+  error that names the indicator the user called, not the inner function
+  the value was handed to; an error for an int parameter of 0 or 1 names
+  that parameter; and every ``*min_periods`` option above its ``length`` raises naming the
+  indicator.
 - ``test_parameter_name_contract.py`` — for every registered indicator, each
   parameter that changes the values, set off its default, changes the column
   names too, so two such calls never share a column; the parameters left out

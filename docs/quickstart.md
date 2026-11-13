@@ -28,11 +28,11 @@ import pandas_ta_classic as ta
 
 # Create sample data
 df = pd.DataFrame({
- 'open': [100, 101, 102, 103, 104],
- 'high': [105, 106, 107, 108, 109],
- 'low': [99, 100, 101, 102, 103],
- 'close': [104, 105, 106, 107, 108],
- 'volume': [1000, 1100, 1200, 1300, 1400]
+    'open': [100, 101, 102, 103, 104],
+    'high': [105, 106, 107, 108, 109],
+    'low': [99, 100, 101, 102, 103],
+    'close': [104, 105, 106, 107, 108],
+    'volume': [1000, 1100, 1200, 1300, 1400]
 })
 
 # Calculate a Simple Moving Average
@@ -84,14 +84,14 @@ df.ta.strategy(ta.CommonStrategy)
 
 # Or create your own custom strategy
 my_strategy = ta.Strategy(
- name="MyStrategy",
- ta=[
- {"kind": "sma", "length": 20},
- {"kind": "sma", "length": 50},
- {"kind": "rsi", "length": 14},
- {"kind": "macd", "fast": 12, "slow": 26, "signal": 9},
- {"kind": "bbands", "length": 20},
- ]
+    name="MyStrategy",
+    ta=[
+    {"kind": "sma", "length": 20},
+    {"kind": "sma", "length": 50},
+    {"kind": "rsi", "length": 14},
+    {"kind": "macd", "fast": 12, "slow": 26, "signal": 9},
+    {"kind": "bbands", "length": 20},
+    ]
 )
 
 # Run your strategy
@@ -337,13 +337,13 @@ df.ta.strategy(ta.CommonStrategy)
 
 ```python
 my_strategy = ta.Strategy(
- name="FastStrategy",
- ta=[
- {"kind": "sma", "length": 20},
- {"kind": "ema", "length": 20},
- {"kind": "rsi", "length": 14},
- {"kind": "macd"},
- ]
+    name="FastStrategy",
+    ta=[
+        {"kind": "sma", "length": 20},
+        {"kind": "ema", "length": 20},
+        {"kind": "rsi", "length": 14},
+        {"kind": "macd"},
+    ],
 )
 df.ta.strategy(my_strategy)
 
@@ -411,7 +411,7 @@ print(len(df)) # Should be > indicator length
 
 # Example: SMA(20) needs at least 20 data points
 if len(df) >= 20:
- df.ta.sma(length=20, append=True)
+    df.ta.sma(length=20, append=True)
 ```
 
 ### Issue: "All NaN values" after resampling
