@@ -253,7 +253,7 @@ Other candle indicators:
 * *Z Score*: **cdl_z** — ``df.ta.cdl_z()`` — Z-score normalisation of candle bodies, not a CDL pattern. ``full=True`` switches the rolling window for an anchored (expanding) one
 
 .. note::
-   **TA-Lib and core indicators**: For 72 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
+   **TA-Lib and core indicators**: For 71 non-candle indicators (``ema``, ``sma``, ``rsi``, ``macd``, ``obv``, ``atr``, and others), the native implementation is used **by default**. TA-Lib is opt-in. Pass ``talib=True`` to use TA-Lib's implementation:
 
    .. code-block:: python
 
@@ -263,13 +263,13 @@ Other candle indicators:
        # Use TA-Lib implementation if installed
        ema = df.ta.ema(length=20, talib=True)
 
-       # Indicators with TA-Lib passthrough (72):
+       # Indicators with TA-Lib passthrough (71):
        # ad, adosc, adx, adxr, apo, aroon, atr, avgprice, bbands, bop,
        # cci, cmo, dema, dm, dx, ema, hl2, hlc3, ht_dcperiod,
        # ht_dcphase, ht_phasor, ht_sine, ht_trendline, ht_trendmode,
        # kama, linreg, linregangle, linregintercept, linregslope, macd,
        # macdext, macdfix, mama, mavp, medprice, mfi, midpoint,
-       # midprice, minus_dm, mom, natr, obv, ohlc4, plus_dm, ppo, psar,
+       # midprice, minus_dm, mom, natr, obv, ohlc4, plus_dm, ppo,
        # roc, rocp, rocr, rocr100, rolling_max, rolling_min,
        # rolling_sum, rsi, sarext, sma, stdev, stoch, stochf, stochrsi,
        # t3, tema, trima, trix, true_range, tsf, typprice, uo, variance,
@@ -547,7 +547,7 @@ Trend identification and direction indicators:
 * *Increasing*: **increasing**
 * *Long Run*: **long_run**
 * *Minus Directional Movement*: **minus_dm** (raw Wilder-smoothed −DM before ATR normalisation; equals TA-Lib ``MINUS_DM``, which ``talib=True`` calls directly)
-* *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR`` bar for bar, which ``talib=True`` calls directly; a price that touches the stop reverses the trend, so on a flat run the trend reverses on every bar)
+* *Parabolic Stop and Reverse*: **psar** (the long and short stops combined equal TA-Lib ``SAR`` bar for bar, so psar has no ``talib`` parameter: ``SAR`` returns neither the acceleration factor nor the reversal column. The ``talib`` parameter was removed in 0.10.0; passing it raises ``TypeError``; a price that touches the stop reverses the trend, so on a flat run the trend reverses on every bar)
 * *Plus Directional Movement*: **plus_dm** (raw Wilder-smoothed +DM before ATR normalisation; equals TA-Lib ``PLUS_DM``, which ``talib=True`` calls directly)
 * *Price Max*: **pmax**
 * *Q Stick*: **qstick** (``ma`` selects any MA of ``help(ta.ma)``, default ``"sma"``; other keywords go to that MA)

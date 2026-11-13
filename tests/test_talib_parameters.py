@@ -141,7 +141,6 @@ _LATER_ON_TALIB = {
     "macdext": ({"MACDEXT_12_26_9"}, "TA-Lib holds the MACD line back until its signal line exists"),
     "macdfix": ({"MACDFIX_9_9"}, "TA-Lib holds the MACD line back until its signal line exists"),
     "mavp": ({"MAVP_2_30"}, "TA-Lib waits for maxperiod on every bar, whatever that bar's period"),
-    "psar": ({"PSARaf_0.02_0.2"}, "TA-Lib's SAR returns no acceleration factor; the column is NaN on that path"),
     "stoch": ({"STOCHk_14_3_3"}, "TA-Lib holds %K back until %D exists"),
     "stochf": ({"STOCHFk_5_3"}, "TA-Lib holds %K back until %D exists"),
 }
