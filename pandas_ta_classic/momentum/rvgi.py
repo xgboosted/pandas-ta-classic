@@ -51,7 +51,7 @@ def rvgi(
     denominator = swma(high_low_range, length=swma_length).rolling(length).sum()
 
     # A window with no range at all reads 0.0, the convention TA-Lib applies for
-    # a degenerate window; see tests/test_degenerate_input.py. On consistent OHLC
+    # a degenerate window; see tests/contracts/test_degenerate_input.py. On consistent OHLC
     # the numerator vanishes with the divisor, because high == low forces
     # open == close; a malformed bar leaves it alive, and 0.0 is the marker there
     # too rather than eps/eps == 1.0, RVGI's most bullish reading.

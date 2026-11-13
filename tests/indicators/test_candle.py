@@ -1,0 +1,831 @@
+import warnings
+from unittest import TestCase, skipIf, skipUnless
+
+import numpy as np
+import pandas as pd
+from pandas import DataFrame, Series
+
+import pandas_ta_classic as pandas_ta
+from pandas_ta_classic.candles._cdl_math import CANDLE_DEFAULTS, CandleArrays, CandleSetting, RangeType, candle_average, candle_avg_period
+from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard
+from tests.config import get_sample_data
+
+try:
+    import talib
+
+    HAS_TALIB = True
+except ImportError:
+    HAS_TALIB = False
+
+
+class TestCandle(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.data = get_sample_data()
+        cls.data.columns = cls.data.columns.str.lower()
+        cls.open = cls.data["open"]
+        cls.high = cls.data["high"]
+        cls.low = cls.data["low"]
+        cls.close = cls.data["close"]
+        if "volume" in cls.data.columns:
+            cls.volume = cls.data["volume"]
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.open
+        del cls.high
+        del cls.low
+        del cls.close
+        if hasattr(cls, "volume"):
+            del cls.volume
+        del cls.data
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_every_pattern_column_is_float64(self):
+        # cdl_doji and cdl_inside returned int64 while the native patterns return
+        # float64, so cdl_pattern(name="all") mixed dtypes; doji's column turned
+        # int64 there once an int scalar stayed an int.
+        frame = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
+        self.assertEqual({str(t) for t in frame.dtypes}, {"float64"})
+        for func in (pandas_ta.cdl_doji, pandas_ta.cdl_inside):
+            for scalar in ({}, {"scalar": 100}, {"scalar": 100.0}) if func is pandas_ta.cdl_doji else ({},):
+                with self.subTest(func=func.__name__, **scalar):
+                    self.assertEqual(func(self.open, self.high, self.low, self.close, **scalar).dtype, "float64")
+
+    def test_ha(self):
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.ha,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="Heikin-Ashi",
+                expected_type=DataFrame,
+                expected_columns=["HA_open", "HA_high", "HA_low", "HA_close"],
+                none_arg_idx=0,
+            ),
+        )
+
+    def test_cdl_pattern(self):
+        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
+        self.assertIsInstance(result, DataFrame)
+        self.assertEqual(len(result.columns), len(pandas_ta.ALL_PATTERNS))
+
+        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="doji")
+        self.assertIsInstance(result, DataFrame)
+
+        result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=["doji", "inside"])
+        self.assertIsInstance(result, DataFrame)
+
+        # An empty selection has nothing to build a frame from.
+        self.assertIsNone(pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=[]))
+
+    def test_every_listed_pattern_has_an_implementation(self):
+        """ALL_PATTERNS is hand-maintained; the modules are discovered.
+
+        cdl_pattern() rejects a name in neither list, so a drift between the two
+        would leave a listed pattern with no branch to run. The TA-Lib fallback
+        that used to absorb that was dead code: every listed pattern is native.
+        """
+        from pandas_ta_classic.candles.cdl_pattern import (
+            _NATIVE_PATTERNS,
+            ALL_PATTERNS,
+            cdl_doji,
+            cdl_inside,
+        )
+
+        implemented = set(_NATIVE_PATTERNS) | {"doji", "inside"}
+        self.assertEqual(set(ALL_PATTERNS), implemented)
+        self.assertEqual(len(ALL_PATTERNS), len(set(ALL_PATTERNS)))
+        self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
+
+    def test_cdl_doji(self):
+        result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
+        if HAS_TALIB:
+            np.testing.assert_array_equal(result.to_numpy(), talib.CDLDOJI(self.open, self.high, self.low, self.close))
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cdl_doji,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CDL_DOJI_10_0.1",
+                expected_type=Series,
+                none_arg_idx=0,
+            ),
+        )
+
+    def test_cdl_inside(self):
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cdl_inside,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CDL_INSIDE",
+                expected_type=Series,
+                none_arg_idx=0,
+            ),
+        )
+
+        result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close, asbool=True)
+        self.assertIsInstance(result, Series)
+        self.assertEqual(result.name, "CDL_INSIDE")
+
+    def test_cdl_z(self):
+        assert_indicator_standard(
+            self,
+            IndicatorSpec(
+                func=pandas_ta.cdl_z,
+                args=[self.open, self.high, self.low, self.close],
+                expected_name="CDL_Z_30_1",
+                expected_type=DataFrame,
+                expected_columns=[
+                    "open_Z_30_1",
+                    "high_Z_30_1",
+                    "low_Z_30_1",
+                    "close_Z_30_1",
+                ],
+                none_arg_idx=0,
+            ),
+        )
+
+    def test_cdl_z_ddof_changes_the_values(self):
+        """ddof was validated and named the columns but had no numeric effect.
+
+        zscore() had no such parameter, so the forwarded value landed in
+        **kwargs and was dropped; ddof=0 and ddof=1 were bit-identical.
+        """
+        args = (self.open, self.high, self.low, self.close)
+        sample = pandas_ta.cdl_z(*args, ddof=1)
+        population = pandas_ta.cdl_z(*args, ddof=0)
+
+        self.assertEqual(list(population.columns), ["open_Z_30_0", "high_Z_30_0", "low_Z_30_0", "close_Z_30_0"])
+        self.assertGreater(float(np.nanmax(np.abs(population.to_numpy() - sample.to_numpy()))), 0.0)
+        # The default is still the sample deviation.
+        np.testing.assert_array_equal(pandas_ta.cdl_z(*args).to_numpy(), sample.to_numpy())
+
+        # full=True is anchored and takes no ddof, so it keeps its own suffix.
+        self.assertEqual(list(pandas_ta.cdl_z(*args, full=True).columns), ["open_Za", "high_Za", "low_Za", "close_Za"])
+
+
+# Sixteen calm bars: real body 0.5, high-low range 10. They set the rolling
+# averages the pattern conditions compare against -- BodyLong and BodyShort at
+# 0.5, BodyDoji and ShadowVeryShort at 0.1 * 10 = 1.0 -- so the pattern bars
+# below are long, short or shadowless against a known threshold.
+_CALM_BARS = 16
+
+
+def _pattern_frame(bars: list[tuple[float, float, float, float]]) -> dict[str, Series]:
+    """The calm run followed by *bars*, as ``(open, high, low, close)`` Series."""
+    rows = [(100.0 if i % 2 == 0 else 100.5, 105.0, 95.0, 100.5 if i % 2 == 0 else 100.0) for i in range(_CALM_BARS)]
+    rows.extend(bars)
+    columns = list(zip(*rows, strict=True))
+    return {name: Series(values, dtype=float) for name, values in zip(("open", "high", "low", "close"), columns, strict=True)}
+
+
+# Fourteen patterns whose signal branch the oracle suite never ran: eight do not
+# occur once in the 5241 bars of SPY_D, so the comparison against TA-Lib only ever
+# proved that both sides agree on "no signal", and six fire between one and four
+# times, resting it on a handful of rows. Each entry is the shortest run of bars
+# that satisfies the pattern's conditions, built from its own condition block (a
+# random search supplied the starting point for some of the eight) and reduced by
+# hand to round numbers; the signal lands on the last bar. Frozen literals --
+# nothing is searched at test time.
+# (name, TA-Lib name, kwargs, bars as (open, high, low, close), expected signal)
+_PATTERN_CASES = [
+    # long black, long lower shadow, no upper shadow / smaller black opening inside the 1st, holding above its low / small black marubozu
+    #   engulfed by the 2nd
+    ("cdl_3starsinsouth", "CDL3STARSINSOUTH", {}, [(120, 120, 95, 110), (115, 116, 100, 108), (105.3, 105.4, 104.9, 105)], 100),
+    # long black / doji gapping down, shadows clear of the 1st / long white gapping back up over the doji
+    ("cdl_abandonedbaby", "CDLABANDONEDBABY", {"penetration": 0.3}, [(120, 120, 110, 110), (105, 105.2, 104.8, 105), (106, 118, 106, 118)], 100),
+    # long white / white gapping up / higher high and low / higher again / black closing inside the gap
+    (
+        "cdl_breakaway",
+        "CDLBREAKAWAY",
+        {},
+        [(110, 120, 110, 120), (125, 128, 124, 127), (127, 130, 126, 129), (129, 133, 128, 132), (132, 133, 121, 122)],
+        -100,
+    ),
+    # black marubozu / black marubozu / black gapping down, upper shadow back into the 2nd body / black engulfing the 3rd, shadows included
+    ("cdl_concealbabyswall", "CDLCONCEALBABYSWALL", {}, [(120, 120, 110, 110), (110, 110, 100, 100), (95, 101, 89, 90), (99, 102, 85, 88)], 100),
+    # white marubozu / black marubozu gapping down below it
+    ("cdl_kicking", "CDLKICKING", {}, [(100, 110, 100, 110), (97, 97, 85, 85)], -100),
+    # white marubozu, body 12 / black marubozu, body 10 -- the *first* marubozu is
+    # longer, so the signal is the opposite of cdl_kicking's: that is what tells
+    # the two apart, and the shared bars of cdl_kicking would not.
+    ("cdl_kickingbylength", "CDLKICKINGBYLENGTH", {}, [(100, 112, 100, 112), (97, 97, 87, 87)], 100),
+    # long white / small black gapping up / reaction day holding above half the 1st body / lower again, still holding / white closing above
+    #   every reaction high
+    (
+        "cdl_mathold",
+        "CDLMATHOLD",
+        {"penetration": 0.5},
+        [(110, 121, 110, 120), (122, 122.5, 121.5, 121.7), (119.3, 119.6, 118.8, 119), (118.6, 119, 118, 118.4), (119, 124, 119, 124)],
+        100,
+    ),
+    # long white / three small black bars falling inside its range / long white closing above the 1st close
+    (
+        "cdl_risefall3methods",
+        "CDLRISEFALL3METHODS",
+        {},
+        [(110, 121, 109, 120), (119.8, 120, 119.3, 119.5), (119.3, 119.5, 118.8, 119), (118.8, 119, 118.3, 118.5), (119, 131, 119, 131)],
+        100,
+    ),
+    # long white marubozu / black gapping up over the 1st body / black opening inside the 2nd body, closing inside the 1st
+    ("cdl_2crows", "CDL2CROWS", {}, [(100, 110, 100, 110), (118, 119, 112, 112), (116, 116.5, 104, 105)], -100),
+    # prior white, high above the 1st crow's close / 1st crow: black, no lower shadow / 2nd crow opens inside the 1st body / 3rd crow opens
+    #   inside the 2nd body, closes lowest
+    ("cdl_3blackcrows", "CDL3BLACKCROWS", {}, [(100, 120, 100, 120), (118, 118, 112, 112), (116, 116, 106, 106), (110, 110, 100, 100)], -100),
+    # 1st soldier: white marubozu, no upper shadow / 2nd opens inside the 1st body, body not far shorter / 3rd opens inside the 2nd body,
+    #   highest close
+    ("cdl_3whitesoldiers", "CDL3WHITESOLDIERS", {}, [(100, 110, 100, 110), (105, 118, 105, 118), (115, 128, 115, 128)], 100),
+    # 1st crow: black marubozu / 2nd opens exactly at the 1st close -- "identical" / 3rd opens exactly at the 2nd close, closes lowest
+    ("cdl_identical3crows", "CDLIDENTICAL3CROWS", {}, [(120, 120, 110, 110), (110, 110, 100, 100), (100, 100, 90, 90)], -100),
+    # 1st white / 2nd white opens inside the 1st body, closes higher / 3rd white opens inside the 2nd body, closes higher / black engulfing
+    #   all three: opens above, closes below
+    ("cdl_3linestrike", "CDL3LINESTRIKE", {}, [(100, 110, 100, 110), (105, 115, 105, 115), (110, 120, 110, 120), (122, 122, 95, 95)], 100),
+    # black; its close is the sandwich level / white trading entirely above that close / black closing back at the level
+    ("cdl_sticksandwich", "CDLSTICKSANDWICH", {}, [(110, 110, 100, 100), (105, 115, 105, 115), (112, 112, 99, 100)], 100),
+    # The six two-sided patterns above are mirrored -- p -> 200 - p, high and
+    # low swapped -- so the opposite-sign branch fires too. Each is the same
+    # case upside down, and native matches TA-Lib on every bar.
+    # long white / doji gapping up, shadows clear of the 1st / long black gapping back down over the doji
+    ("cdl_abandonedbaby", "CDLABANDONEDBABY", {"penetration": 0.3}, [(80, 90, 80, 90), (95, 95.2, 94.8, 95), (94, 94, 82, 82)], -100),
+    # long black / black gapping down / lower high and low / lower again / white closing inside the gap
+    (
+        "cdl_breakaway",
+        "CDLBREAKAWAY",
+        {},
+        [(90, 90, 80, 80), (75, 76, 72, 73), (73, 74, 70, 71), (71, 72, 67, 68), (68, 79, 67, 78)],
+        100,
+    ),
+    # black marubozu / white marubozu gapping up above it
+    ("cdl_kicking", "CDLKICKING", {}, [(100, 100, 90, 90), (103, 115, 103, 115)], 100),
+    # black marubozu, body 12 / white marubozu, body 10 -- the *first* is longer
+    ("cdl_kickingbylength", "CDLKICKINGBYLENGTH", {}, [(100, 100, 88, 88), (103, 113, 103, 113)], -100),
+    # long black / three small white bars rising inside its range / long black closing below the 1st close
+    (
+        "cdl_risefall3methods",
+        "CDLRISEFALL3METHODS",
+        {},
+        [(90, 91, 79, 80), (80.2, 80.7, 80, 80.5), (80.7, 81.2, 80.5, 81), (81.2, 81.7, 81, 81.5), (81, 81, 69, 69)],
+        -100,
+    ),
+    # 1st black / 2nd black opens inside the 1st body, closes lower / 3rd black opens inside the 2nd body, closes lower / white engulfing
+    #   all three: opens below, closes above
+    ("cdl_3linestrike", "CDL3LINESTRIKE", {}, [(100, 100, 90, 90), (95, 95, 85, 85), (90, 90, 80, 80), (78, 105, 78, 105)], -100),
+]
+
+
+class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
+    """Fourteen patterns on bars built to satisfy their conditions, plus the six
+    two-sided ones mirrored to fire the opposite sign.
+
+    `tests/oracle/test_oracle_talib.py` compares 59 patterns against TA-Lib over the
+    last 2000 bars of SPY_D and they agree on every bar -- but eight of them
+    return 0 for all 2000 rows, so that agreement said nothing about the branch
+    that emits the signal, and six more fire between one and four times, resting
+    the comparison on a handful of rows. The bars are frozen literals, not a
+    search at test time: each run was built from the pattern's own condition
+    block (a random search supplied the starting point for some of the eight)
+    and then reduced to round numbers that still satisfy every clause.
+    """
+
+    def _frame(self, bars):
+        frame = _pattern_frame(bars)
+        return frame["open"], frame["high"], frame["low"], frame["close"]
+
+    def _native(self, name):
+        # `ta.cdl_kicking` is the submodule; the callable of the same name lives
+        # inside it, as `tests/oracle/test_oracle_talib.py` resolves it too.
+        return getattr(getattr(pandas_ta, name), name)
+
+    def test_each_pattern_fires_on_its_own_bars(self):
+        """The native implementation reports the signal on the last bar."""
+        for name, _talib_name, kwargs, bars, expected in _PATTERN_CASES:
+            with self.subTest(pattern=name):
+                result = self._native(name)(*self._frame(bars), **kwargs)
+                self.assertIsInstance(result, Series)
+                self.assertEqual(int(result.iloc[-1]), expected)
+                # Nothing else in the frame may fire, or the case would not pin
+                # down which bars produced the signal.
+                self.assertEqual(int(result.iloc[:-1].abs().sum()), 0)
+
+    @skipUnless(HAS_TALIB, "TA-Lib is not installed")
+    def test_each_pattern_matches_talib_on_its_own_bars(self):
+        """Bar for bar, including the signal itself.
+
+        The comparison calls `talib.<name>` directly, which needs TA-Lib
+        installed; the `cdl_*` functions have no `talib` parameter to fall back.
+        """
+        for name, talib_name, kwargs, bars, _expected in _PATTERN_CASES:
+            with self.subTest(pattern=name):
+                open_, high, low, close = self._frame(bars)
+                native = self._native(name)(open_, high, low, close, **kwargs)
+                expected = getattr(talib, talib_name)(open_, high, low, close, **kwargs)
+                np.testing.assert_array_equal(native.to_numpy(dtype=float), np.asarray(expected, dtype=float), err_msg=f"{name} differs from TA-Lib")
+
+
+class TestCandleAverage(TestCase):
+    """`candle_average` against a plain port of TA-Lib's candle-average macros.
+
+    TA-Lib seeds ``PeriodTotal`` left to right from 0, compares each candle with
+    ``TA_CANDLEAVERAGE = factor * (total / period) / divisor`` and then updates
+    ``total += range[i - lag] - range[trail - lag]``. The helper must reproduce
+    that bit for bit, or a candle that lands exactly on the threshold is judged
+    differently from TA-Lib.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # Bodies and shadows spread over many orders of magnitude, with opens
+        # near zero so the ranges keep their full mantissa. On price-like bars
+        # the ranges sit on one grid, sums are exact and a helper that adds in
+        # another order or rearranges the formula would still pass.
+        rng = np.random.default_rng(7)
+        n = 3000
+        open_ = rng.normal(0, 1e-3, n)
+        close = open_ + rng.lognormal(0, 3, n) * rng.choice([-1.0, 1.0], n)
+        high = np.maximum(open_, close) + rng.lognormal(0, 3, n)
+        low = np.minimum(open_, close) - rng.lognormal(0, 3, n)
+        cls.ca = CandleArrays(open_, high, low, close)
+
+    @staticmethod
+    def _talib_macros(arr, setting, lag, start_idx):
+        range_type, period, factor = CANDLE_DEFAULTS[setting]
+        divisor = 2.0 if range_type == RangeType.Shadows else 1.0
+        out = np.full(len(arr), np.nan)
+        total = 0.0
+        trail = start_idx - period
+        for j in range(trail, start_idx):
+            total += arr[j - lag]
+        for i in range(start_idx, len(arr)):
+            out[i] = factor * (total / period if period != 0 else arr[i - lag]) / divisor
+            total += arr[i - lag] - arr[trail - lag]
+            trail += 1
+        return out
+
+    def test_bit_identical_to_talib_macros(self):
+        for setting in CandleSetting:
+            period = candle_avg_period(setting)
+            for lag in range(5):
+                for extra in (0, 3, 7):
+                    with self.subTest(setting=setting.name, lag=lag, extra=extra):
+                        start_idx = period + lag + extra
+                        got = candle_average(self.ca, setting, lag, start_idx)
+                        want = self._talib_macros(self.ca._ranges[setting], setting, lag, start_idx)
+                        self.assertTrue(np.isnan(got[:start_idx]).all())
+                        np.testing.assert_array_equal(got[start_idx:].view(np.int64), want[start_idx:].view(np.int64))
+
+    def test_the_data_tells_each_part_of_the_arithmetic_apart(self):
+        """Guards the test above: on this data a pairwise seed alone, and the old
+        formula alone, must each give different thresholds from TA-Lib's."""
+        seed_differs = formula_differs = 0
+        for setting in CandleSetting:
+            range_type, period, factor = CANDLE_DEFAULTS[setting]
+            if period == 0:
+                continue
+            divisor = 2.0 if range_type == RangeType.Shadows else 1.0
+            arr = self.ca._ranges[setting]
+            for first in range(len(arr) - period):  # every window of the setting's length
+                window = arr[first : first + period]
+                sequential = 0.0
+                for value in window:
+                    sequential += value
+                want = factor * (sequential / period) / divisor
+                seed_differs += int(factor * (float(window.sum()) / period) / divisor != want)
+                formula_differs += int(factor / (period * divisor) * sequential != want)
+        self.assertGreater(seed_differs, 0)
+        self.assertGreater(formula_differs, 0)
+
+    def test_start_before_the_first_window_raises(self):
+        period = candle_avg_period(CandleSetting.BodyLong)
+        with self.assertRaisesRegex(ValueError, r"candle_average\(\) start_idx must be >= lag \+ period"):
+            candle_average(self.ca, CandleSetting.BodyLong, 2, period + 1)
+        with self.assertRaisesRegex(ValueError, "start_idx"):
+            candle_average(self.ca, CandleSetting.ShadowLong, 3, 2)
+
+
+# A candle exactly on a pattern's threshold, built so that TA-Lib's arithmetic
+# and the one used before 0.9.0 (pairwise seed, factor / (period * divisor) * total)
+# land on different sides of it. The expected value is what TA-Lib 0.7.1 and 0.8.2 return.
+_THRESHOLD_CASES = [
+    # BodyDoji (HighLow): the body equals TA-Lib's doji threshold, so it is a doji (body <= threshold).
+    (
+        "cdl_longleggeddoji",
+        "CDLLONGLEGGEDDOJI",
+        [0.0] * 11,
+        [0.35, 0.79, 2.42, 1.79, 0.37, 1.36, 1.49, 0.56, 2.23, 0.43, 5.1179],
+        [0.0] * 10 + [-5.0],
+        [0.0] * 10 + [0.1179],
+        100,
+    ),
+    # ShadowShort (Shadows, halved): the upper shadow equals TA-Lib's threshold, so it is not short (shadow < threshold).
+    (
+        "cdl_shortline",
+        "CDLSHORTLINE",
+        [0.0] * 11,
+        [3.48, 1.01, 3.38, 1.9700000000000002, 2.21, 2.85, 3.28, 2.8600000000000003, 2.34, 2.66, 0.6514999999999999],
+        [0.0] * 11,
+        [1.33, 0.91, 1.82, 0.6, 1.52, 1.81, 0.84, 1.84, 1.81, 0.53, 0.0],
+        0,
+    ),
+]
+
+
+class TestCandleAtTheExactThreshold(TestCase):
+    def test_native_decides_as_talib(self):
+        for name, _talib_name, open_, high, low, close, expected in _THRESHOLD_CASES:
+            with self.subTest(pattern=name):
+                result = getattr(getattr(pandas_ta, name), name)(*(Series(x) for x in (open_, high, low, close)))
+                self.assertEqual(int(result.iloc[-1]), expected)
+
+    @skipUnless(HAS_TALIB, "TA-Lib is not installed")
+    def test_expected_values_are_talibs(self):
+        for name, talib_name, open_, high, low, close, expected in _THRESHOLD_CASES:
+            with self.subTest(pattern=name):
+                got = getattr(talib, talib_name)(*(np.array(x) for x in (open_, high, low, close)))
+                self.assertEqual(int(got[-1]), expected)
+
+
+class TestCdlDojiAtTheEdges(TestCase):
+    """`cdl_doji` follows CDLDOJI at exact ties, flat bars, malformed bars and short windows."""
+
+    @staticmethod
+    def _doji(open_, high, low, close, **kwargs):
+        return pandas_ta.cdl_doji(*(Series(x, dtype=float) for x in (open_, high, low, close)), **kwargs).to_numpy()
+
+    def test_flat_bars_are_doji(self):
+        # Range and body 0 compare as 0 <= 0.1 * 0, as in TA-Lib.
+        result = self._doji([5.0] * 12, [5.0] * 12, [5.0] * 12, [5.0] * 12)
+        np.testing.assert_array_equal(result, [0] * 10 + [100, 100])
+
+    def test_zero_body_is_doji_at_factor_zero(self):
+        # body 0 <= 0 * average, as in TA-Lib.
+        result = self._doji([1.0] * 11, [2.0] * 11, [0.0] * 11, [1.0] * 11, factor=0)
+        self.assertEqual(result[-1], 100)
+
+    def test_body_exactly_on_the_threshold(self):
+        # body == 0.1 * (sum / 10) with TA-Lib's left-to-right sum: a doji (<=).
+        # The old sma()-based threshold came out one unit in the last place lower
+        # and reported 0.
+        high = [1.76, 1.03, 1.82, 1.08, 1.24, 2.68, 0.76, 1.91, 0.34, 2.51, 1.1513]
+        low = [0.0] * 10 + [-1.0]
+        close = [0.0] * 10 + [0.15130000000000002]
+        result = self._doji([0.0] * 11, high, low, close)
+        self.assertEqual(result[-1], 100)
+        if HAS_TALIB:
+            self.assertEqual(talib.CDLDOJI(*(np.array(x) for x in ([0.0] * 11, high, low, close)))[-1], 100)
+
+    def test_malformed_bars_keep_a_negative_range(self):
+        # Ten bars with high < low have range -1 in TA-Lib, so bar 10's threshold
+        # is -0.1 and its body 0.05 is no doji. abs(high - low) made it +0.1 and
+        # reported 100.
+        args = ([0.0] * 11, [0.0] * 10 + [1.0], [1.0] * 10 + [0.0], [0.0] * 10 + [0.05])
+        self.assertEqual(self._doji(*args)[-1], 0)
+        if HAS_TALIB:
+            self.assertEqual(talib.CDLDOJI(*(np.array(x) for x in args))[-1], 0)
+
+    def test_all_nan_input_reads_zero(self):
+        # Every row is a NaN row, and a NaN row reports 0.
+        nan = [np.nan] * 15
+        np.testing.assert_array_equal(self._doji(nan, nan, nan, nan), [0] * 15)
+
+    def test_naive_only_fills_bars_without_a_window(self):
+        # Bar 10 has ten previous bars: average range 1.0, body 0.0004 is a doji.
+        # naive=True used to overwrite it too, with its own range 0.0005, and
+        # report 0. The first ten bars have no window and use their own range.
+        high = [1.0] * 10 + [0.0005, 1.0, 1.0]
+        close = [0.05] * 10 + [0.0004, 0.05, 0.05]
+        plain = self._doji([0.0] * 13, high, [0.0] * 13, close)
+        naive = self._doji([0.0] * 13, high, [0.0] * 13, close, naive=True)
+        np.testing.assert_array_equal(plain, [0] * 10 + [100, 100, 100])
+        np.testing.assert_array_equal(naive, [100] * 13)
+
+    def test_naive_counts_finite_bars(self):
+        # Two leading NaN rows: the window is complete only from bar 12, so
+        # naive fills bars 2..11 and leaves the NaN rows at 0.
+        nan2 = [np.nan] * 2
+        high = nan2 + [1.0] * 13
+        close = nan2 + [0.05] * 13
+        naive = self._doji(nan2 + [0.0] * 13, high, nan2 + [0.0] * 13, close, naive=True)
+        np.testing.assert_array_equal(naive, [0, 0] + [100] * 13)
+
+    def test_naive_leaves_bars_with_a_window_alone_after_an_inf_range(self):
+        # Finite prices whose range overflows (1e308 - -1e308 = inf) at bar 12
+        # make the running total inf, then NaN from bar 23 on. Those bars have a
+        # window, so naive must not fill them with the own-range fallback; it
+        # agrees with naive=False from bar 10.
+        high = [2.0] * 12 + [1e308] + [2.0] * 17
+        low = [0.0] * 12 + [-1e308] + [0.0] * 17
+        args = ([1.0] * 30, high, low, [1.05] * 30)
+        # inf - inf is NaN by design; without numba, numpy scalars used to warn about it
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            np.testing.assert_array_equal(self._doji(*args, naive=True)[10:], self._doji(*args)[10:])
+
+    def test_inf_row_is_dropped_like_a_nan_row(self):
+        # An inf high made sma() of the range NaN for every window holding it,
+        # so the next length bars read 0 whatever their body. It is now skipped,
+        # as run_pattern() skips it, and reports 0 like a NaN row.
+        def doji_with(value, **kwargs):
+            high = [2.0] * 12 + [value] + [2.0] * 17
+            return self._doji([1.0] * 30, high, [0.0] * 30, [1.05] * 30, **kwargs)
+
+        for kwargs in ({}, {"naive": True}):
+            with self.subTest(**kwargs):
+                for value in (np.inf, -np.inf):
+                    np.testing.assert_array_equal(doji_with(value, **kwargs), doji_with(np.nan, **kwargs))
+                self.assertEqual(doji_with(np.inf, **kwargs)[12], 0)
+                self.assertEqual(doji_with(np.inf, **kwargs)[-1], 100)
+
+    def test_inf_open_or_close_row_leaves_the_average(self):
+        # Bar 20 has an inf open or close but a finite range of 100. It is left
+        # out of the average like a NaN row, so bars 21+ average ranges of 2
+        # (threshold 0.2) and body 0.5 is no doji. TA-Lib keeps the range of 100
+        # in its average (threshold 1.18) and reports 100 there; the old code
+        # did the same.
+        for column in (0, 3):
+            with self.subTest(column=column):
+                ohlc = [[10.0] * 25, [11.0] * 25, [9.0] * 25, [10.5] * 25]
+                ohlc[1][20], ohlc[2][20] = 60.0, -40.0
+                ohlc[column][20] = np.inf
+                nan_row = [list(x) for x in ohlc]
+                nan_row[column][20] = np.nan
+                result = self._doji(*ohlc)
+                np.testing.assert_array_equal(result, self._doji(*nan_row))
+                np.testing.assert_array_equal(result[20:], [0] * 5)
+                if HAS_TALIB:
+                    np.testing.assert_array_equal(talib.CDLDOJI(*(np.array(x) for x in ohlc))[21:], [100] * 4)
+
+
+# ---------------------------------------------------------------------------
+# cdl_z full=True is an anchored (expanding) Z Score (issue #149 follow-up)
+#
+# The previous implementation set the window to close.size -- so only the final
+# bar had a value -- and then back-filled, which copied that single value onto
+# every earlier row. The column was constant and built entirely out of future
+# data. full=True now standardises each bar against bars 0..t only.
+# ---------------------------------------------------------------------------
+
+
+class TestCdlZAnchored(TestCase):
+    """cdl_z(full=True) must be an anchored Z Score, not a back-filled constant."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.full = pandas_ta.cdl_z(
+            cls.df["open"],
+            cls.df["high"],
+            cls.df["low"],
+            cls.df["close"],
+            full=True,
+        )
+        cls.open_col = next(c for c in cls.full.columns if "open" in c.lower())
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+        del cls.full
+
+    def test_cdlz_full_true_returns_dataframe(self):
+        self.assertIsInstance(self.full, pd.DataFrame)
+
+    def test_cdlz_full_true_only_first_bar_is_nan(self):
+        """One bar cannot have a standard deviation; every later bar must."""
+        self.assertEqual(1, self.full[self.open_col].isna().sum())
+        self.assertTrue(np.isnan(self.full[self.open_col].iloc[0]))
+
+    def test_cdlz_full_true_is_not_constant(self):
+        """The bfill bug produced one repeated value for the whole column."""
+        self.assertGreater(self.full[self.open_col].dropna().nunique(), 1)
+
+    def test_cdlz_full_true_matches_expanding_zscore(self):
+        open_ = self.df["open"]
+        expanding = open_.expanding(min_periods=2)
+        expected = (open_ - expanding.mean()) / expanding.std(ddof=1)
+        pd.testing.assert_series_equal(
+            self.full[self.open_col],
+            expected,
+            check_names=False,
+        )
+
+    def test_cdlz_full_true_does_not_use_future_bars(self):
+        """Values for the first K bars must not change when more bars arrive."""
+        cut = len(self.df) // 2
+        head = self.df.head(cut)
+        prefix = pandas_ta.cdl_z(head["open"], head["high"], head["low"], head["close"], full=True)
+        pd.testing.assert_frame_equal(self.full.iloc[:cut], prefix)
+
+    def test_cdlz_full_false_has_leading_nans(self):
+        """cdl_z(full=False) must have leading NaN values (warmup period)."""
+        length = 30
+        result = pandas_ta.cdl_z(
+            self.df["open"],
+            self.df["high"],
+            self.df["low"],
+            self.df["close"],
+            full=False,
+            length=length,
+        )
+        self.assertIsNotNone(result)
+        open_col = next(c for c in result.columns if "open" in c.lower())
+        nan_count = result[open_col].isna().sum()
+        self.assertGreater(
+            nan_count,
+            0,
+            "cdl_z(full=False) must have leading NaN values in warmup period",
+        )
+
+
+# ---------------------------------------------------------------------------
+# cdl_pattern None-check on pta_patterns results
+# ---------------------------------------------------------------------------
+
+
+class TestCdlPatternShortInput(TestCase):
+    """cdl_pattern() dereferenced `.name` on a sub-pattern result without checking it.
+
+    `cdl_doji` has a default length of 10, so on a short frame it returns None
+    and the aggregation raised `AttributeError: 'NoneType' object has no
+    attribute 'name'`. The native-pattern branch already had this guard.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data()
+        cls.open_ = df["open"].iloc[:3]
+        cls.high = df["high"].iloc[:3]
+        cls.low = df["low"].iloc[:3]
+        cls.close = df["close"].iloc[:3]
+
+    def test_short_input_does_not_raise(self):
+        """Short input returns a result instead of raising."""
+        result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close)
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_uncomputable_subpattern_is_skipped(self):
+        """doji needs 10 rows, so its column is absent rather than fatal."""
+        result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close)
+        self.assertNotIn("CDL_DOJI_10", result.columns)
+        self.assertIn("CDL_INSIDE", result.columns)
+
+    def test_named_uncomputable_pattern_returns_none(self):
+        """Asking only for a pattern that cannot be computed yields None."""
+        result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close, name="doji")
+        assert_all_nan(self, result)
+
+    def test_accessor_path_does_not_raise(self):
+        """The same call through df.ta.cdl_pattern() is fixed as well."""
+        df = pd.DataFrame(
+            {
+                "open": self.open_,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+            }
+        )
+        result = df.ta.cdl_pattern()
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# candle_color NaN handling
+# ---------------------------------------------------------------------------
+
+
+class TestCandleColorNanInput(TestCase):
+    """candle_color() did `close.copy().astype(int)`, which raises on NaN.
+
+    pandas cannot cast NaN to int, so `IntCastingNaNError` propagated out of
+    cdl_inside and cdl_pattern for any input carrying a NaN -- which is what
+    every chained indicator produces.
+    """
+
+    def test_clean_input_keeps_int_dtype(self):
+        """Fully defined input keeps the historical integer dtype."""
+        open_ = pd.Series([1.0, 2.0, 3.0])
+        close = pd.Series([2.0, 1.0, 3.0])
+        result = pandas_ta.candle_color(open_, close)
+        self.assertEqual(result.dtype, np.dtype("int64"))
+        self.assertEqual(result.tolist(), [1, -1, 1])
+
+    def test_nan_yields_nan_not_a_colour(self):
+        """An undefined candle is NaN, not silently classified as bearish."""
+        open_ = pd.Series([1.0, 2.0, 3.0])
+        close = pd.Series([2.0, np.nan, 3.0])
+        result = pandas_ta.candle_color(open_, close)
+        self.assertTrue(np.isnan(result.iloc[1]))
+        self.assertEqual(result.iloc[0], 1.0)
+        self.assertEqual(result.iloc[2], 1.0)
+
+    def test_cdl_inside_with_nan_does_not_raise(self):
+        """cdl_inside previously raised IntCastingNaNError."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        close.iloc[50] = np.nan
+        result = pandas_ta.cdl_inside(close, close + 1, close - 1, close)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_cdl_pattern_with_nan_does_not_raise(self):
+        """The aggregation path is fixed as well."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        close.iloc[50] = np.nan
+        result = pandas_ta.cdl_pattern(close - 0.5, close + 1, close - 1, close)
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_asbool_path_unaffected(self):
+        """asbool=True never calls candle_color."""
+        close = pd.Series(np.arange(1.0, 51.0))
+        result = pandas_ta.cdl_inside(close - 0.5, close + 1, close - 1, close, asbool=True)
+        self.assertEqual(result.dtype, np.dtype("bool"))
+
+
+# ---------------------------------------------------------------------------
+# run_pattern skips a leading NaN run
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternNanPrefix(TestCase):
+    """Native candle patterns reported 0 everywhere after a NaN prefix.
+
+    run_pattern built its running body/shadow averages from index 0, so a
+    NaN prefix -- what chained input always has -- made every later average
+    NaN, every comparison False, and every signal 0. With a 30-bar prefix on
+    600 SPY bars, 33 of 62 cdl_pattern columns were all-zero (CDL_3INSIDE: 0
+    signals vs TA-Lib's 10).
+    """
+
+    PREFIX = 30
+
+    @classmethod
+    def setUpClass(cls):
+        data = get_sample_data().iloc[:600].reset_index(drop=True)
+        cls.prefixed = data.copy()
+        cls.prefixed.iloc[: cls.PREFIX] = np.nan
+        cls.trimmed = data.iloc[cls.PREFIX :].reset_index(drop=True)
+
+    def _patterns(self, frame):
+        return pandas_ta.cdl_pattern(frame["open"], frame["high"], frame["low"], frame["close"])
+
+    def test_prefix_result_equals_trimmed_result(self):
+        """Past the prefix, every pattern matches the run on the trimmed series."""
+        with_prefix = self._patterns(self.prefixed).iloc[self.PREFIX :].reset_index(drop=True)
+        without = self._patterns(self.trimmed)
+        for col in without.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(with_prefix[col].to_numpy(), without[col].to_numpy())
+
+    def test_prefix_does_not_silence_patterns(self):
+        """A pattern that fires on the trimmed series still fires with the prefix."""
+        with_prefix = self._patterns(self.prefixed)
+        self.assertGreater(int((with_prefix["CDL_3INSIDE"] != 0).sum()), 0)
+
+    @skipIf(not pandas_ta.Imports["talib"], "TA-Lib not installed")
+    def test_prefix_matches_talib(self):
+        """TA-Lib skips the NaN prefix; the native patterns must agree bar for bar."""
+        import talib
+
+        ohlc = [self.prefixed[k].to_numpy() for k in ("open", "high", "low", "close")]
+        native = self._patterns(self.prefixed)
+        for name in ("3INSIDE", "BELTHOLD", "CLOSINGMARUBOZU", "ENGULFING", "HAMMER"):
+            with self.subTest(pattern=name):
+                np.testing.assert_array_equal(native[f"CDL_{name}"].to_numpy(), getattr(talib, f"CDL{name}")(*ohlc).astype(float))
+
+
+# ---------------------------------------------------------------------------
+# candle patterns went silent after a NaN row inside the series
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternsSkipNanRows(TestCase):
+    """A NaN row inside the series poisoned the running body/shadow averages.
+
+    On a weekday feed resampled to calendar days, 41 of 62 patterns never fired
+    (1,260 signals fell to 119). Patterns are now detected on the finite bars,
+    as if the NaN rows had been dropped, and report 0 on the NaN rows.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        daily = get_sample_data().iloc[-400:]
+        cls.gapped = daily.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last"})
+        cls.dropped = cls.gapped.dropna()
+
+    def _all(self, df):
+        return pandas_ta.cdl_pattern(df.open, df.high, df.low, df.close, name="all")
+
+    def test_gapped_equals_dropna_on_finite_rows(self):
+        self.assertGreater(len(self.gapped), len(self.dropped))
+        gapped, dropped = self._all(self.gapped), self._all(self.dropped)
+        self.assertEqual(list(gapped.columns), list(dropped.columns))
+        for col in dropped.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(gapped.loc[self.dropped.index, col].to_numpy(float), dropped[col].to_numpy(float))
+
+    def test_nan_rows_report_no_pattern(self):
+        nan_rows = self._all(self.gapped).loc[self.gapped.close.isna()]
+        self.assertFalse((nan_rows.fillna(0) != 0).any().any())

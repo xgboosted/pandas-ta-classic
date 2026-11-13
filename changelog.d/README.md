@@ -46,7 +46,7 @@ An entry that changes results or starts raising for existing calls starts with
 ```
 
 If a later PR makes an unreleased entry untrue, that PR edits the entry's
-fragment. `tests/test_changelog.py` checks the names, the length and the
+fragment. `tests/meta/test_changelog.py` checks the names, the length and the
 **BREAKING** form. A PR that no reader of the changelog needs to know about (a
 typo, a version pin, a test refactor) gets the `skip-changelog` label while it
 is still a draft, and the `Changelog` check then skips (Dependabot sets the

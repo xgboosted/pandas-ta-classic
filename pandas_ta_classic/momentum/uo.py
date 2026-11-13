@@ -45,7 +45,7 @@ def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, d
 
     # A window with no true range has no buying pressure either, so each of
     # these divides 0/0. TA-Lib reads 0.0 there; see
-    # tests/test_degenerate_input.py.
+    # tests/contracts/test_degenerate_input.py.
     def _pressure(length: int):
         denominator = tr.rolling(length).sum()
         return (bp.rolling(length).sum() / denominator).mask(denominator == 0, 0.0)

@@ -4,6 +4,14 @@ Testing
 **Pandas TA Classic** uses a multi-layered testing strategy to ensure
 indicator correctness, robustness, and reliability.
 
+The test modules are grouped in ``tests/`` by the question they answer:
+``indicators/`` (what each indicator computes), ``contracts/`` (registry-wide
+contracts; the package's ``__init__.py`` is their shared harness),
+``oracle/`` (comparisons with an independent implementation),
+``snapshots/`` (frozen outputs of the package itself), ``api/`` (the ``df.ta``
+accessor, strategies, custom indicators), ``utils/`` and ``meta/`` (docs,
+changelog, docstrings, packaging, the test helpers).
+
 .. contents::
    :local:
    :depth: 1
@@ -14,16 +22,16 @@ Unit Tests
 
 **Why:** Verify individual indicators produce correct values for known inputs.
 
-**Files:** ``test_indicator_candle.py``, ``test_indicator_cycles.py``,
-``test_indicator_momentum.py``, ``test_indicator_overlap.py``,
-``test_indicator_performance.py``, ``test_indicator_statistics.py``,
-``test_indicator_trend.py``, ``test_indicator_volatility.py``,
-``test_indicator_volume.py``, ``test_indicator_math.py``.
+**Files:** ``test_candle.py``, ``test_cycles.py``,
+``test_momentum.py``, ``test_overlap.py``,
+``test_performance.py``, ``test_statistics.py``,
+``test_trend.py``, ``test_volatility.py``,
+``test_volume.py``, ``test_math.py``.
 
 Uses ``IndicatorSpec``-based assertions (``assert_indicator_standard``)
 against real market data from ``SPY_D.csv``.
 
-**Run:** ``python -m unittest tests.test_indicator_momentum -v``
+**Run:** ``python -m unittest tests.indicators.test_momentum -v``
 
 
 Extension API Tests
@@ -32,13 +40,13 @@ Extension API Tests
 **Why:** Confirm indicators work correctly through the ``df.ta`` DataFrame
 accessor with ``append=True``.
 
-**Files:** ``test_ext_indicator_candle.py``, ``test_ext_indicator_cycles.py``,
-``test_ext_indicator_momentum.py``, ``test_ext_indicator_overlap_ext.py``,
-``test_ext_indicator_performance.py``, ``test_ext_indicator_statistics.py``,
-``test_ext_indicator_trend.py``, ``test_ext_indicator_volatility.py``,
-``test_ext_indicator_volume.py``.
+**Files:** ``test_accessor_candle.py``, ``test_accessor_cycles.py``,
+``test_accessor_momentum.py``, ``test_accessor_overlap.py``,
+``test_accessor_performance.py``, ``test_accessor_statistics.py``,
+``test_accessor_trend.py``, ``test_accessor_volatility.py``,
+``test_accessor_volume.py``.
 
-**Run:** ``python -m pytest tests/test_ext_indicator_momentum.py -v``
+**Run:** ``python -m pytest tests/api/test_accessor_momentum.py -v``
 
 
 Accessor API Tests
@@ -51,9 +59,10 @@ naming, ``indicators()`` discovery, and time range filtering.
 frame cannot supply (a benchmark, a ``fast``/``slow`` pair, a trend) raises.
 
 **Files:** ``test_accessor_api.py``, ``test_accessor_conformance.py``,
-``test_ext_assertions.py``.
+``test_accessor_values.py``, ``test_lazy_loading.py`` (lazy loading of the
+category subpackages and of top-level indicator names).
 
-**Run:** ``python -m pytest tests/test_accessor_api.py -v``
+**Run:** ``python -m pytest tests/api/test_accessor_api.py -v``
 
 
 Oracle / Comparison Tests
@@ -82,9 +91,7 @@ reason in ``NO_ORACLE``; known differences are strict xfails in
 
 For indicators neither library covers, ``test_reference_ports.py`` compares
 against independent ports of the cited definitions (see *Reference ports*
-below). ``test_adversarial_review_fixes.py`` pins the defects found by the
-2026-09 review, each against a loop reference, TA-Lib or a decision table.
-``test_talib_parameters.py`` checks that ``talib=True`` honours every
+below). ``test_talib_parameters.py`` checks that ``talib=True`` honours every
 parameter: a call with a value TA-Lib cannot express (``scalar``, ``drift``,
 ``mamode``, ``ddof``, ``min_periods``, ``uo``'s weights, an optional price
 input, an option read from ``**kwargs`` or handed on to another function)
@@ -94,9 +101,9 @@ by-design exceptions listed with their reason.
 
 **Files:** ``test_oracle_talib.py``, ``test_oracle_registry.py``,
 ``test_oracle_tulipy.py``, ``test_reference_ports.py``,
-``test_adversarial_review_fixes.py``, ``test_talib_parameters.py``.
+``test_talib_parameters.py``.
 
-**Run:** ``python -m pytest tests/test_oracle_talib.py -v``
+**Run:** ``python -m pytest tests/oracle/test_oracle_talib.py -v``
 
 
 Native Indicator Tests
@@ -105,9 +112,9 @@ Native Indicator Tests
 **Why:** Cover indicators that have no TA-Lib alternative, validating
 return type, non-NaN row count, value finiteness, and mathematical bounds.
 
-**Files:** ``test_native_indicators.py``.
+**Files:** ``test_native_values.py``.
 
-**Run:** ``python -m pytest tests/test_native_indicators.py -v``
+**Run:** ``python -m pytest tests/indicators/test_native_values.py -v``
 
 
 Regression Tests
@@ -115,16 +122,17 @@ Regression Tests
 
 **Why:** Prevent reintroduction of known bugs and catch silent value drift.
 
-- ``test_regression.py`` — Spot-checks all 223 tracked indicators at 24 fixed
+- ``test_snapshots.py`` — Spot-checks all 223 tracked indicators at 24 fixed
   indices spanning 50 to 5221 (the final bar) against stored snapshot data.
   Test methods are generated from ``regression_snapshots.json`` itself, so the
   asserted set cannot drift from the stored set.
-- ``test_regression_bugfixes.py`` — Pins documented fixes from CHANGELOG
-  (33 test classes, 128 tests).
-- ``test_indicator_values.py`` — Golden fixture tests: checks last non-NaN
+- A fixed defect is pinned by a test in the module of the indicator, contract
+  or helper it concerns (for example ``TestWilderSeeding`` in
+  ``indicators/test_overlap.py``), not in a module of its own.
+- ``test_golden_values.py`` — Golden fixture tests: checks last non-NaN
   values and per-column NaN counts against snapshots in ``tests/fixtures/``.
 
-**Run:** ``python -m pytest tests/test_regression.py -v``
+**Run:** ``python -m pytest tests/snapshots/test_snapshots.py -v``
 
 
 Edge-Case Tests
@@ -132,7 +140,7 @@ Edge-Case Tests
 
 **Why:** Verify indicators don't crash on degenerate inputs.
 
-- ``test_indicator_edge_cases.py`` — All-NaN series, constant-price series,
+- ``test_edge_cases.py`` — All-NaN series, constant-price series,
   ±Inf injection at mid-series positions, and mismatched OHLCV lengths.
 - ``test_nan_behaviour.py`` — NaN prefix warmup periods, minimum length
   requirements, boundary conditions.
@@ -227,7 +235,7 @@ Edge-Case Tests
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
-``tests/contracts.py`` holds what they share: the last ``bars`` rows of
+``tests/contracts/__init__.py`` holds what they share: the last ``bars`` rows of
 ``SPY_D`` (``spy(bars)``, read through ``tests/config.py``'s
 ``get_sample_data()``, the one loader every test and fixture generator uses),
 the registry (every indicator, the OHLCV ones), the call that
@@ -239,7 +247,7 @@ reason starts with ``OPEN:`` (a defect to fix), ``KEPT:`` (decided behaviour)
 or ``TALIB:`` (TA-Lib's difference, not ours); any other reason fails:
 ``params()`` at collection, ``pin()`` when the test runs.
 
-**Run:** ``python -m pytest tests/test_indicator_edge_cases.py -v``
+**Run:** ``python -m pytest tests/indicators/test_edge_cases.py -v``
 
 
 API Consistency Map
@@ -261,19 +269,7 @@ Each table carries a status: ``OPEN:`` for a defect or an undecided question,
 ``KEPT:`` for a decided exception; single rows can override their table's
 status, and a failure names the status of every row it reports.
 
-**Run:** ``python -m pytest tests/test_api_consistency.py -v``
-
-
-Integration / E2E Tests
------------------------
-
-**Why:** Exercise full workflows end-to-end.
-
-**Files:** ``test_integration_e2e.py`` — Multi-indicator chaining,
-Strategy execution with ``df.ta.strategy()``, plugin binding, and
-category-strategy runs.
-
-**Run:** ``python -m pytest tests/test_integration_e2e.py -v``
+**Run:** ``python -m pytest tests/contracts/test_api_consistency.py -v``
 
 
 Fluent API Tests
@@ -284,7 +280,7 @@ Fluent API Tests
 **Files:** ``test_fluent_chaining.py`` — Chained indicator calls,
 auto-append behaviour, ``unchain()``.
 
-**Run:** ``python -m pytest tests/test_fluent_chaining.py -v``
+**Run:** ``python -m pytest tests/api/test_fluent_chaining.py -v``
 
 
 Strategy Tests
@@ -301,7 +297,7 @@ argument checks of ``strategy()``.
 **Files:** ``test_strategy.py`` (part of the main suite),
 ``test_strategy_execution.py``.
 
-**Run:** ``python -m pytest tests/test_strategy.py tests/test_strategy_execution.py -v``
+**Run:** ``python -m pytest tests/api/test_strategy.py tests/api/test_strategy_execution.py -v``
 
 
 Custom / Plugin Tests
@@ -317,7 +313,7 @@ nothing: a Hypothesis property checks that one refused file leaves
 ``pandas_ta_classic``, ``Category``, ``sys.path`` and ``sys.modules`` as they
 were.
 
-**Run:** ``python -m pytest tests/test_custom.py -v``
+**Run:** ``python -m pytest tests/api/test_custom.py -v``
 
 
 Property-Based Tests
@@ -354,9 +350,9 @@ boundary violations.
 
 .. code-block:: bash
 
-   python -m pytest tests/test_property_based.py -v
-   python -m pytest tests/test_property_based.py -v --hypothesis-show-statistics
-   python -m pytest tests/test_property_based.py -v --hypothesis-profile=ci
+   python -m pytest tests/indicators/test_property_based.py -v
+   python -m pytest tests/indicators/test_property_based.py -v --hypothesis-show-statistics
+   python -m pytest tests/indicators/test_property_based.py -v --hypothesis-profile=ci
 
 **Adding property tests for a new indicator:**
 
@@ -384,7 +380,7 @@ Python otherwise, so users with the ``performance`` extra run different code.
 the two paths (1e-12 relative). It skips without numba; the CI job
 ``testing-numba`` installs it.
 
-**Run:** ``python -m pytest tests/test_numba_parity.py -v``
+**Run:** ``python -m pytest tests/indicators/test_numba_parity.py -v``
 
 
 Utility Tests
@@ -392,10 +388,9 @@ Utility Tests
 
 **Files:** ``test_utils.py`` (``verify_series``, ``apply_offset``,
 ``apply_fill``, cross detection), ``test_utils_metrics.py`` (Sharpe ratio,
-drawdown, CAGR, Jensen's alpha), ``test_lazy_core.py`` (lazy loading of the
-category subpackages and of top-level indicator names).
+drawdown, CAGR, Jensen's alpha).
 
-**Run:** ``python -m pytest tests/test_utils.py -v``
+**Run:** ``python -m pytest tests/utils/test_utils.py -v``
 
 
 Repository Guards
@@ -422,8 +417,10 @@ only in the code a PR touches.
 - ``test_changelog.py`` — each fragment in ``changelog.d/`` has a valid name, at
   most 1,000 characters and the **BREAKING** form, and ``CHANGELOG.md`` keeps the
   marker towncrier inserts after.
+- ``test_packaging.py`` — the package ships the PEP 561 ``py.typed`` marker next
+  to ``core.pyi``, so a consumer's mypy reads the stub.
 
-**Run:** ``python -m pytest tests/test_no_fallbacks.py tests/test_changelog.py -v``
+**Run:** ``python -m pytest tests/contracts/test_no_fallbacks.py tests/meta/test_changelog.py -v``
 
 
 Running All Tests
@@ -484,7 +481,7 @@ during a test run destroys both:
 from the code under test, a bug simply becomes the new expectation and the
 test passes.  This is not hypothetical — with regeneration enabled, changing
 the kurtosis excess-adjustment constant from ``3.0`` to ``2.9`` (a ~5 %
-error) still passed ``test_regression.py``, and a 7 % error injected into
+error) still passed ``test_snapshots.py``, and a 7 % error injected into
 ``psl`` passed every fixture test, because both JSON files were silently
 rewritten first.
 
@@ -510,7 +507,7 @@ The result is the mathematically correct value for the input data, identical
 on every platform and dependency version, and still derived independently of
 the code under test.
 
-``tests/test_exact_reference.py`` guards that module — CI would otherwise
+``tests/oracle/test_exact_reference.py`` guards that module — CI would otherwise
 never execute it, since it only runs during ``make fixtures``.  Its
 comparison against ``pandas`` rolling is a deliberately loose smoke test
 (``atol=1e-4``, ``rtol=1e-3``), sized to clear pandas' own divergence from
@@ -520,7 +517,7 @@ series.  It must never be tightened into an equality check.
 Comparison tolerance
 ~~~~~~~~~~~~~~~~~~~~
 
-``test_indicator_values.py`` and ``test_regression.py`` share one criterion,
+``test_golden_values.py`` and ``test_snapshots.py`` share one criterion,
 defined in ``tests/assertions.py``::
 
     |actual - golden| <= GOLDEN_ATOL + GOLDEN_RTOL * |golden|
@@ -549,7 +546,7 @@ Snapshot coverage
 ~~~~~~~~~~~~~~~~~
 
 ``regression_snapshots.json`` stores all 223 tracked indicators, but
-``test_regression.py`` used to assert a hand-written list of 43 — the other
+``test_snapshots.py`` used to assert a hand-written list of 43 — the other
 180 were generated and never checked.  That gap covered 55 of the 57
 indicators which have no independent oracle and are therefore protected by
 their snapshot alone.  Test methods are now generated from the snapshot keys,
@@ -559,7 +556,7 @@ Indicators whose output is shorter than the input (``vp`` aggregates into 10
 volume bins, ``tos_stdevall`` into 30) have every checkpoint past the end of
 their result.  Those store ``null`` and are asserted to stay out of range,
 which makes the checkpoint a length-regression check; their values are
-covered by ``test_indicator_values.py`` instead.
+covered by ``test_golden_values.py`` instead.
 
 Note what a snapshot can and cannot do.  It is taken from this package's own
 output, so it detects *change*, never *correctness*.  The fix is a
@@ -571,7 +568,7 @@ Reference ports
 
 ``tests/fixtures/reference_ports.py`` holds plain-loop ports of cited
 definitions (TradingView built-ins and scripts, ProRealCode, the original
-papers), written without any package code.  ``tests/test_reference_ports.py``
+papers), written without any package code.  ``tests/oracle/test_reference_ports.py``
 compares the package with them over the full SPY series, after the warm-up.
 They cover ``kst``, ``smi``, ``stc``, ``qqe``, ``squeeze_pro``,
 ``ttm_trend``, ``cksp``, ``vidya``, ``ichimoku``, ``squeeze``, ``supertrend``

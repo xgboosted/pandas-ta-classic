@@ -42,7 +42,7 @@ def massi(
     # window with no range at all summed to `slow` -- 25 by default, an entirely
     # ordinary MASSI reading and indistinguishable from one. Exact zeros divide
     # 0/0, and the window reads 0.0 instead: the convention TA-Lib applies for a
-    # degenerate window; see tests/test_degenerate_input.py. The divisor alone
+    # degenerate window; see tests/contracts/test_degenerate_input.py. The divisor alone
     # carries the mask, because an EMA of non-negative ranges is zero only where
     # every range feeding it is.
     high_low_range = high - low

@@ -70,7 +70,7 @@ def vfi(
     vcp = Series(vcp, index=close.index)
 
     # A flat series has no flow and, with no volume, no average: 0/0 reads 0.0
-    # (tests/test_degenerate_input.py); any other zero average is a real
+    # (tests/contracts/test_degenerate_input.py); any other zero average is a real
     # division by zero.
     vfi = degenerate_div(vcp.rolling(length).sum(), vave)
 

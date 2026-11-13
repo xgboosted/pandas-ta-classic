@@ -34,7 +34,7 @@ def marketfi(
     # The range is the numerator, so non_zero_range() only ever reported
     # movement a flat bar did not make: eps / volume. A bar that traded at one
     # price on no volume divides 0/0 and reads 0.0, the convention TA-Lib
-    # applies for a degenerate window; see tests/test_degenerate_input.py. A
+    # applies for a degenerate window; see tests/contracts/test_degenerate_input.py. A
     # real range on no volume is still a division by zero, as it was.
     high_low_range = high - low
     marketfi_ = (high_low_range / volume).mask((volume == 0) & (high_low_range == 0), 0.0)

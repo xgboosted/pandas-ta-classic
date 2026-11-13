@@ -1,5 +1,5 @@
 """
-Generate regression snapshot values for test_regression.py.
+Generate regression snapshot values for test_snapshots.py.
 
 Run this script manually — and ONLY — after intentional algorithm changes:
 
@@ -24,7 +24,7 @@ by the test.  Spacing is tighter near the warmup edge, where initialisation
 bugs live, and then even across the rest of the series.  SPY_D.csv has 5222
 rows, so the last checkpoint is its final bar — the previous set stopped at
 3000 and left the final 2221 rows checked only by the endpoint assertion in
-test_indicator_values.py.
+test_golden_values.py.
 """
 
 from __future__ import annotations

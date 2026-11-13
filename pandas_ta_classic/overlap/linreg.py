@@ -78,7 +78,7 @@ def _linreg_output(
         # leaves a ~1e-15 residue for a flat 0.3. Clamp to >= 0, then mask on
         # the variance, not on rd -- rd is its square root (~1e-6), too large
         # for the tolerance. A degenerate window reads 0.0, TA-Lib's marker;
-        # see tests/test_degenerate_input.py. cti() is a wrapper for this path.
+        # see tests/contracts/test_degenerate_input.py. cti() is a wrapper for this path.
         disc = np.maximum(length * y2_sums - y_sums**2, 0.0)
         rd = (divisor * disc) ** 0.5
         with np.errstate(divide="ignore", invalid="ignore"):
