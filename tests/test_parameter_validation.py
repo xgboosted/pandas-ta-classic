@@ -343,6 +343,23 @@ def test_strategy_params_must_be_a_tuple():
         (lambda: ta.macd(_F.close, xb=np.inf), r"macd\(\) xb must be a number, got inf"),
         (lambda: ta.macd(_F.close, cross_values="yes"), r"macd\(\) cross_values"),
         (lambda: ta.macd(_F.close, cross_series=1), r"macd\(\) cross_series"),
+        # Likewise a bad cpr option when its feature is off (#393).
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_lookforward="yes"),
+            r"cpr\(\) virgin_lookforward must be an integer > 0, got 'yes'",
+        ),
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, virgin_cpr=True, lookahead=False, virgin_lookforward=0),
+            r"cpr\(\) virgin_lookforward must be an integer > 0, got 0",
+        ),
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_analysis=False, width_narrow=-1),
+            r"cpr\(\) width_narrow must be a number >= 0, got -1",
+        ),
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_analysis=False, width_wide="x"),
+            r"cpr\(\) width_wide must be a number >= 0, got 'x'",
+        ),
     ],
 )
 def test_unvalidated_kwargs_raise(call, message):
