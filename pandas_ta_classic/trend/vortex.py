@@ -28,7 +28,7 @@ def vortex(
     """Indicator: Vortex"""
     # Validate arguments
     length = _pos_int(length, 14, "length")
-    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
+    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0, lt=length + 1)
     _length = max(length, min_periods)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

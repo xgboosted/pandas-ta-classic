@@ -19,7 +19,7 @@ def beta(
     """Indicator: Beta"""
     # Validate Arguments
     length = _pos_int(length, 30, "length", gt=1)
-    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0)
+    min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     # Not given at all is a caller error, like mavp's 'periods': returning None
     # made df.ta.beta() indistinguishable from a short-input result. A
