@@ -1,11 +1,15 @@
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
+import pytest
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
+from pandas_ta_classic.utils._cpr import get_previous_period_ohlcv
 from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard, assert_talib
 from tests.config import get_sample_data
+from tests.contracts import spy as _spy
 
 try:
     import talib
@@ -756,3 +760,222 @@ class TestTrend(TestCase):
         self.assertEqual(result["TS_Trends"].tolist(), [0, 0, 0, 1, 1, 0, 0])
         self.assertEqual(result["TS_Entries"].tolist(), [0, 0, 0, 1, 0, 0, 0])
         self.assertEqual(result["TS_Exits"].tolist(), [0, 0, 0, 0, 0, 1, 0])
+
+
+needs_talib = pytest.mark.skipif(not pandas_ta.Imports["talib"], reason="TA-Lib not installed")
+
+
+# ---------------------------------------------------------------------------
+# edecay is multiplicative decay floored at close (not additive)
+# ---------------------------------------------------------------------------
+
+
+class TestEdecayFormula(TestCase):
+    """edecay uses multiplicative exp decay: result[i] = max(close[i], prev * exp(-1/n))."""
+
+    def test_edecay_decays_after_spike(self):
+        """After a spike, edecay must decay exponentially, not stay flat."""
+        length = 5
+        # Flat series then a spike: value should decay after the spike
+        close = pd.Series([100.0] * 10 + [200.0] + [100.0] * 10)
+        result = pandas_ta.edecay(close, length=length)
+        self.assertIsNotNone(result)
+
+        # Indices 11-13: decay path still > 100 floor (floor takes over at ~14)
+        post_spike = result.iloc[11:14].values
+        self.assertTrue(
+            (post_spike > 100.0).all(),
+            "edecay must stay above floor (close) right after spike",
+        )
+        self.assertTrue(
+            (post_spike < 200.0).all(),
+            "edecay must decay below spike peak",
+        )
+
+    def test_edecay_decay_rate_matches_formula(self):
+        """Decay rate must match exp(-1/length) when close is below decay path."""
+        import math
+
+        length = 5
+        factor = math.exp(-1.0 / length)
+        # Spike then flat low floor — ensures decay path dominates
+        close_vals = [10.0] * 5 + [1000.0] + [10.0] * 20
+        close = pd.Series(close_vals)
+        result = pandas_ta.edecay(close, length=length)
+
+        # Two consecutive decaying bars: ratio must equal factor
+        i = 6  # first bar after spike where decay path > close
+        j = 7
+        # Assert preconditions explicitly so a broken edecay can't silently pass
+        self.assertGreater(
+            result.iloc[i],
+            10.0,
+            f"Precondition failed: result[{i}]={result.iloc[i]:.4f} must be > 10.0 " "(decay path not yet floored at close)",
+        )
+        self.assertGreater(
+            result.iloc[j],
+            10.0,
+            f"Precondition failed: result[{j}]={result.iloc[j]:.4f} must be > 10.0 " "(decay path not yet floored at close)",
+        )
+        ratio = result.iloc[j] / result.iloc[i]
+        self.assertAlmostEqual(
+            ratio,
+            factor,
+            places=6,
+            msg=f"edecay ratio {ratio:.6f} must equal exp(-1/{length})={factor:.6f}",
+        )
+
+    def test_edecay_never_below_close(self):
+        """edecay result must always be >= close (floored at close)."""
+        close = pd.Series([50.0 + i % 20 for i in range(50)], dtype=float)
+        result = pandas_ta.edecay(close, length=5)
+        mask = result.notna()
+        self.assertTrue(
+            (result[mask].values >= close[mask].values - 1e-9).all(),
+            "edecay must never fall below close (floor at close)",
+        )
+
+
+# ---------------------------------------------------------------------------
+# psar — invalid optional close returns None (not crash)
+# ---------------------------------------------------------------------------
+
+
+class TestPsarCloseNoneGuard(TestCase):
+    """psar() optional close None guard: invalid close → None, not AttributeError."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+
+    def test_invalid_close_list_raises(self):
+        """A plain list as close is rejected by verify_series (issue #145)."""
+        bad_close = list(self.high.values)
+        with self.assertRaisesRegex(TypeError, r"psar\(\) expected a pandas Series but got list"):
+            pandas_ta.psar(high=self.high, low=self.low, close=bad_close)
+
+    def test_valid_call_without_close_returns_dataframe(self):
+        """Normal call without close returns a DataFrame."""
+        result = pandas_ta.psar(high=self.high, low=self.low)
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# cpr previous-period levels
+# ---------------------------------------------------------------------------
+
+
+def _ramp(index: pd.DatetimeIndex) -> pd.DataFrame:
+    c = np.arange(len(index), dtype=float)
+    return pd.DataFrame({"open": c, "high": c + 0.5, "low": c - 0.5, "close": c, "volume": 1.0}, index=index)
+
+
+def _previous_period_reference(df: pd.DataFrame, keys: list) -> np.ndarray:
+    """Loop reference: first/max/min/last/sum of the previous observed period."""
+    order = list(dict.fromkeys(keys))
+    rows = {k: df[[x == k for x in keys]] for k in order}
+    out = []
+    for k in keys:
+        j = order.index(k)
+        if j == 0:
+            out.append([np.nan] * 5)
+            continue
+        p = rows[order[j - 1]]
+        out.append([p.open.iloc[0], p.high.max(), p.low.min(), p.close.iloc[-1], p.volume.sum()])
+    return np.array(out)
+
+
+_BDAYS = pd.bdate_range("2024-01-01", "2024-06-28")
+
+
+_SESSIONS = pd.DatetimeIndex([d + pd.Timedelta(hours=9, minutes=30) + pd.Timedelta(minutes=5 * k) for d in pd.bdate_range("2024-03-04", periods=12) for k in range(78)])
+
+
+_WEEK = lambda t: t.isocalendar()[:2]
+
+
+_MONTH = lambda t: (t.year, t.month)
+
+
+_DAY = lambda t: t.date()
+
+
+@pytest.mark.parametrize(
+    "index, timeframe, key",
+    [
+        pytest.param(_BDAYS, "weekly", _WEEK, id="weekly-weekday-bars"),
+        pytest.param(pd.date_range("2024-01-01", "2024-06-30", freq="D"), "weekly", _WEEK, id="weekly-7-day-bars"),
+        pytest.param(pd.date_range("2024-01-01", "2024-03-31 23:00", freq="h"), "weekly", _WEEK, id="weekly-hourly-24-7"),
+        pytest.param(_BDAYS.drop(pd.bdate_range("2024-03-25", "2024-03-29")), "weekly", _WEEK, id="weekly-missing-week"),
+        pytest.param(_BDAYS, "monthly", _MONTH, id="monthly-weekday-bars"),
+        pytest.param(pd.date_range("2024-01-01", "2024-03-31 23:00", freq="h"), "monthly", _MONTH, id="monthly-hourly-24-7"),
+        pytest.param(_SESSIONS, "intraday", _DAY, id="intraday-incl-mondays"),
+        pytest.param(_SESSIONS.tz_localize("America/New_York"), "intraday", _DAY, id="intraday-tz-aware"),
+    ],
+)
+def test_cpr_previous_period_is_last_completed_period(index, timeframe, key):
+    df = _ramp(index)
+    got = get_previous_period_ohlcv(df, timeframe)[["prev_open", "prev_high", "prev_low", "prev_close", "prev_volume"]].to_numpy(float)
+    expected = _previous_period_reference(df, [key(t) for t in df.index])
+    np.testing.assert_allclose(got, expected, equal_nan=True)
+
+
+def test_cpr_weekly_pivot_on_spy():
+    d = _spy().iloc[-400:]
+    week = d.index.to_period("W-SUN")
+    prev = d.groupby(week).agg(high=("high", "max"), low=("low", "min"), close=("close", "last")).shift(1).reindex(week).set_axis(d.index)
+    expected = (prev.high + prev.low + prev.close) / 3
+    got = pandas_ta.cpr(d.open, d.high, d.low, d.close, timeframe="weekly")["CPR_PIVOT"]
+    pd.testing.assert_series_equal(got, expected, check_names=False)
+
+
+# ---------------------------------------------------------------------------
+# sarext native vs TA-Lib, every parameter
+# ---------------------------------------------------------------------------
+
+
+_SAREXT_CASES = {
+    "defaults": {},
+    "offsetonreverse": {"offsetonreverse": 0.01},
+    "startvalue-long": {"startvalue": 100.0},
+    "startvalue-short": {"startvalue": -150.0},
+    "long-acceleration": {"accelerationinitlong": 0.01, "accelerationlong": 0.03, "accelerationmaxlong": 0.25},
+    "short-acceleration": {"accelerationinitshort": 0.04, "accelerationshort": 0.01, "accelerationmaxshort": 0.1},
+    "init-above-max": {"accelerationinitlong": 0.5, "accelerationmaxlong": 0.2, "accelerationshort": 0.5, "accelerationmaxshort": 0.3},
+}
+
+
+def _random_walk_hl(seed: int, n: int = 5000) -> pd.DataFrame:
+    rng = np.random.default_rng(seed)
+    # From 200, not 100: seed 0's walk fell to -11.85, and sarext reads NaN, with a
+    # warning, where high or low is at or below zero (#345). A shift changes no SAR step.
+    c = 200 + np.cumsum(rng.normal(0, 1, n))
+    o = np.r_[c[0], c[:-1]]
+    return pd.DataFrame({"high": np.maximum(o, c) + rng.random(n), "low": np.minimum(o, c) - rng.random(n)})
+
+
+@needs_talib
+@pytest.mark.parametrize("kwargs", list(_SAREXT_CASES.values()), ids=list(_SAREXT_CASES))
+@pytest.mark.parametrize("data", ["spy", "walk0", "walk3"])
+def test_sarext_native_matches_talib(kwargs, data):
+    import talib
+
+    d = _spy() if data == "spy" else _random_walk_hl(int(data[-1]))
+    got = pandas_ta.sarext(d.high, d.low, talib=False, **kwargs).to_numpy(float)
+    expected = talib.SAREXT(d.high.to_numpy(float), d.low.to_numpy(float), **kwargs)
+    np.testing.assert_allclose(got, expected, rtol=0, atol=1e-10, equal_nan=True)
+
+
+# ---------------------------------------------------------------------------
+# cpr interval removal
+# ---------------------------------------------------------------------------
+
+
+def test_cpr_interval_is_rejected():
+    d = _spy().iloc[-200:]
+    with pytest.raises(TypeError, match="interval"):
+        pandas_ta.cpr(d.open, d.high, d.low, d.close, timeframe="weekly", interval="1d")
+    with pytest.raises(TypeError, match="interval"):
+        d.copy().ta.cpr(timeframe="weekly", interval="1d")

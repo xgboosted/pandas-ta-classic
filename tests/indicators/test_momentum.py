@@ -1,9 +1,11 @@
 from unittest import TestCase, mock
 
+import numpy as np
+import pandas as pd
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
-from tests.assertions import IndicatorSpec, assert_indicator_standard, assert_talib
+from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard, assert_talib
 from tests.config import get_sample_data
 
 try:
@@ -1065,3 +1067,240 @@ class TestMomentum(TestCase):
                 none_arg_idx=0,
             ),
         )
+
+
+# ---------------------------------------------------------------------------
+# QQE column count (was 3, now >= 6 including QQEb_l, QQEb_s, QQEd)
+# ---------------------------------------------------------------------------
+
+
+class TestQqeColumnCount(TestCase):
+    """QQE returns >= 6 columns including the 3 new band/direction columns."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.close = cls.df["close"]
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+        del cls.close
+
+    def _result(self):
+        return pandas_ta.qqe(self.close)
+
+    def test_qqe_returns_dataframe(self):
+        self.assertIsInstance(self._result(), pd.DataFrame)
+
+    def test_qqe_column_count_gte_6(self):
+        """QQE must return >= 6 columns (was 3 before the fix)."""
+        result = self._result()
+        self.assertGreaterEqual(
+            len(result.columns),
+            6,
+            f"QQE must return >=6 columns; got {len(result.columns)}: {list(result.columns)}",
+        )
+
+    def test_qqe_long_band_column_present(self):
+        cols = list(self._result().columns)
+        self.assertTrue(
+            any("QQEb_l" in c for c in cols),
+            f"QQE missing 'QQEb_l' long-band column. Got: {cols}",
+        )
+
+    def test_qqe_short_band_column_present(self):
+        cols = list(self._result().columns)
+        self.assertTrue(
+            any("QQEb_s" in c for c in cols),
+            f"QQE missing 'QQEb_s' short-band column. Got: {cols}",
+        )
+
+    def test_qqe_direction_column_present(self):
+        cols = list(self._result().columns)
+        self.assertTrue(
+            any("QQEd" in c for c in cols),
+            f"QQE missing 'QQEd' direction column. Got: {cols}",
+        )
+
+    def test_qqe_direction_values_binary(self):
+        """QQEd must contain only +1.0 or -1.0 after the warmup period."""
+        result = self._result()
+        trend_col = next(c for c in result.columns if "QQEd" in c)
+        vals = result[trend_col].dropna()
+        unique_vals = set(vals.unique())
+        self.assertTrue(
+            unique_vals.issubset({1.0, -1.0}),
+            f"QQEd must contain only {{+1, -1}}, got: {unique_vals}",
+        )
+
+
+# ---------------------------------------------------------------------------
+# rvgi returns 3 columns including the histogram column (RVGIh_*)
+# ---------------------------------------------------------------------------
+
+
+class TestRvgiHistogram(TestCase):
+    """rvgi() must return 3 columns: RVGI, Signal, and Histogram."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+
+    def _result(self):
+        return pandas_ta.rvgi(self.df["open"], self.df["high"], self.df["low"], self.df["close"])
+
+    def test_rvgi_returns_dataframe(self):
+        self.assertIsInstance(self._result(), pd.DataFrame)
+
+    def test_rvgi_column_count_is_3(self):
+        """rvgi must return exactly 3 columns (rvgi, signal, histogram)."""
+        result = self._result()
+        self.assertEqual(
+            len(result.columns),
+            3,
+            f"rvgi must return 3 columns; got {len(result.columns)}: {list(result.columns)}",
+        )
+
+    def test_rvgi_histogram_column_present(self):
+        """rvgi result must contain a histogram column named RVGIh_*."""
+        result = self._result()
+        hist_cols = [c for c in result.columns if c.startswith("RVGIh")]
+        self.assertTrue(
+            len(hist_cols) == 1,
+            f"rvgi must contain exactly one 'RVGIh_*' column; got: {list(result.columns)}",
+        )
+
+    def test_rvgi_histogram_equals_rvgi_minus_signal(self):
+        """Histogram column must equal RVGI minus Signal."""
+        result = self._result()
+        rvgi_col = next(c for c in result.columns if c.startswith("RVGI_"))
+        sig_col = next(c for c in result.columns if c.startswith("RVGIs"))
+        hist_col = next(c for c in result.columns if c.startswith("RVGIh"))
+        mask = result[rvgi_col].notna() & result[sig_col].notna() & result[hist_col].notna()
+        np.testing.assert_allclose(
+            result.loc[mask, hist_col].values,
+            (result.loc[mask, rvgi_col] - result.loc[mask, sig_col]).values,
+            rtol=1e-6,
+            err_msg="RVGIh must equal RVGI - RVGIs",
+        )
+
+
+# ---------------------------------------------------------------------------
+# psl open_ branch — verify_series(open_) returning None must propagate
+# ---------------------------------------------------------------------------
+
+
+class TestPslNoneGuard(TestCase):
+    """psl(close, open_=too_short_series) must return None, not crash."""
+
+    def test_psl_open_non_series_raises(self):
+        """A non-Series open_ is rejected by verify_series, not used or crashed on.
+
+        Before the fix psl proceeded past a rejected open_ and crashed. Since
+        issue #145 verify_series raises TypeError for non-Series input.
+        """
+        close = pd.Series([float(i) for i in range(15)])
+        open_bad = [99.0] * 15
+        with self.assertRaisesRegex(TypeError, r"psl\(\) expected a pandas Series but got list"):
+            pandas_ta.psl(close, open_=open_bad)
+
+    def test_psl_valid_open_returns_series(self):
+        """psl with valid open_ must return a Series named PSL_{length}."""
+        n = 20
+        close = pd.Series([100.0 + i * 0.5 for i in range(n)])
+        open_ = pd.Series([99.5 + i * 0.5 for i in range(n)])
+        result = pandas_ta.psl(close, open_=open_, length=12)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, pd.Series)
+        self.assertTrue(result.name.startswith("PSL_"))
+
+    def test_psl_no_open_uses_diff(self):
+        """psl without open_ must still return a valid Series."""
+        close = pd.Series([100.0 + i for i in range(20)])
+        result = pandas_ta.psl(close, length=12)
+        self.assertIsNotNone(result)
+        self.assertGreater(result.notna().sum(), 0)
+
+
+# ---------------------------------------------------------------------------
+# dm short-input guard
+# ---------------------------------------------------------------------------
+
+
+class TestDmShortInputGuard(TestCase):
+    """dm() passed no min_length to verify_series, so its guard never fired.
+
+    Every comparable indicator (adx, plus_dm, minus_dm) returns None when the
+    input is shorter than `length`; dm returned a DataFrame computed from too
+    few rows.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data()
+        cls.high = df["high"]
+        cls.low = df["low"]
+
+    def test_short_input_returns_none(self):
+        """Fewer rows than the default length of 14 → None."""
+        result = pandas_ta.dm(self.high.iloc[:3], self.low.iloc[:3])
+        assert_all_nan(self, result)
+
+    def test_short_input_matches_sibling_indicators(self):
+        """dm agrees with plus_dm/minus_dm/adx on the same short input."""
+        high, low = self.high.iloc[:3], self.low.iloc[:3]
+        assert_all_nan(self, pandas_ta.dm(high, low))
+        assert_all_nan(self, pandas_ta.plus_dm(high, low))
+        assert_all_nan(self, pandas_ta.minus_dm(high, low))
+
+    def test_explicit_length_still_guarded(self):
+        """An explicit length longer than the input is guarded too."""
+        assert_all_nan(self, pandas_ta.dm(self.high.iloc[:10], self.low.iloc[:10], length=20))
+
+    def test_sufficient_input_still_returns_dataframe(self):
+        """Normal-length input is unaffected."""
+        result = pandas_ta.dm(self.high, self.low)
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# macd signal options reached only the histogram signals
+# ---------------------------------------------------------------------------
+
+
+class TestMacdSignalOptionsApplyToBothLines(TestCase):
+    """The first signals() call popped xa/xb/xserie/cross_series from kwargs.
+
+    The second call, for the MACD line, then read the defaults, so
+    macd(signal_indicators=True, xa=1) produced MACD_12_26_9_A_0.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.close = get_sample_data().close.iloc[:400]
+
+    def _signal_columns(self, **kwargs):
+        return list(pandas_ta.macd(self.close, signal_indicators=True, **kwargs).columns[3:])
+
+    def test_defaults_unchanged(self):
+        self.assertEqual(self._signal_columns(), ["MACDh_12_26_9_XA_0", "MACDh_12_26_9_XB_0", "MACD_12_26_9_A_0"])
+
+    def test_thresholds_reach_the_macd_line(self):
+        columns = self._signal_columns(xa=1, xb=-1)
+        self.assertIn("MACD_12_26_9_A_1", columns)
+        self.assertIn("MACD_12_26_9_B_-1", columns)
+        self.assertNotIn("MACD_12_26_9_A_0", columns)
+
+    def test_series_reaches_the_macd_line(self):
+        xserie = self.close.rolling(5).mean() - self.close.rolling(20).mean()
+        self.assertIn("MACD_12_26_9_XA_close", self._signal_columns(xserie=xserie))
+        self.assertIn("MACD_12_26_9_A_close", self._signal_columns(xserie=xserie, cross_series=False))
+
+    def test_flags_are_validated(self):
+        with self.assertRaisesRegex(ValueError, r"macd\(\) cross_values must be True or False"):
+            pandas_ta.macd(self.close, signal_indicators=True, cross_values="no")

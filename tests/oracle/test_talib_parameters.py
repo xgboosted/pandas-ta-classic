@@ -21,7 +21,7 @@ from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from pandas_ta_classic.utils._core import _TAL_MA_TYPES
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS, inputs
+from tests.contracts import INDICATORS, inputs, spy as _spy
 from tests.meta.test_docstring_params import _accepted
 
 pytestmark = pytest.mark.skipif(not ta.Imports["talib"], reason="needs TA-Lib")
@@ -211,3 +211,25 @@ def test_a_mamode_talib_lacks_runs_natively(name, mamode):
     close = get_sample_data().close.iloc[:300]
     func = getattr(ta, name)
     assert _same(func(close, mamode=mamode, talib=True), func(close, mamode=mamode, talib=False))
+
+
+needs_talib = pytest.mark.skipif(not ta.Imports["talib"], reason="TA-Lib not installed")
+
+
+# ---------------------------------------------------------------------------
+# stochrsi TA-Lib path honours k and rsi_length
+# ---------------------------------------------------------------------------
+
+
+@needs_talib
+@pytest.mark.parametrize("kwargs", [{}, {"rsi_length": 7}, {"k": 1}, {"k": 1, "rsi_length": 7}], ids=["defaults", "rsi_length", "k1", "k1-rsi_length"])
+def test_stochrsi_talib_path_matches_native(kwargs):
+    close = _spy().close
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        fast, native = ta.stochrsi(close, talib=True, **kwargs), ta.stochrsi(close, talib=False, **kwargs)
+    for col in range(2):
+        a, b = fast.iloc[:, col].to_numpy(float), native.iloc[:, col].to_numpy(float)
+        both = np.isfinite(a) & np.isfinite(b)
+        assert both.sum() > 5000
+        np.testing.assert_allclose(a[both], b[both], rtol=0, atol=1e-9)

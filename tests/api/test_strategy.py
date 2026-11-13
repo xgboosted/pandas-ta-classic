@@ -9,6 +9,7 @@ from multiprocessing import cpu_count
 from time import perf_counter
 from unittest import TestCase, mock
 
+import pandas as pd
 from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
@@ -718,3 +719,78 @@ class TestCategoryStrategyWithCustomIndicators(TestCase):
             ohlc.ta.cores = 0
             ohlc.ta.strategy("overlap")
         self.assertNotIn("SMA_10", ohlc.columns)
+
+
+# ---------------------------------------------------------------------------
+# Strategy workflow
+# ---------------------------------------------------------------------------
+
+
+class TestCustomStrategyWorkflow(TestCase):
+    """End-to-end Strategy workflow using the Strategy dataclass."""
+
+    def setUp(self):
+        self.df = get_sample_data()
+
+    def tearDown(self):
+        del self.df
+
+    def test_custom_strategy_appends_columns(self):
+        """A named custom Strategy appends all configured indicator columns."""
+        strategy = pandas_ta.Strategy(
+            name="e2e_test_strategy",
+            ta=[
+                {"kind": "sma", "length": 10},
+                {"kind": "ema", "length": 10},
+                {"kind": "rsi", "length": 14},
+            ],
+        )
+        self.df.ta.strategy(strategy)
+        self.assertIn("SMA_10", self.df.columns)
+        self.assertIn("EMA_10", self.df.columns)
+        self.assertIn("RSI_14", self.df.columns)
+
+    def test_category_strategy_momentum_appends_columns(self):
+        """Running the 'momentum' category strategy appends multiple columns."""
+        before = len(self.df.columns)
+        self.df.ta.cores = 0  # serial execution — stable in test environment
+        self.df.ta.strategy("momentum")
+        self.assertGreater(
+            len(self.df.columns),
+            before,
+            "momentum strategy must add at least one column",
+        )
+
+    def test_strategy_with_prefix_kwarg(self):
+        """prefix kwarg in a strategy indicator entry is honoured."""
+        strategy = pandas_ta.Strategy(
+            name="prefix_test",
+            ta=[{"kind": "sma", "length": 10, "prefix": "E2E"}],
+        )
+        self.df.ta.strategy(strategy)
+        prefixed = [c for c in self.df.columns if c.startswith("E2E_")]
+        self.assertGreater(len(prefixed), 0, "Prefix kwarg must produce E2E_ columns")
+
+    def test_kind_dispatch_via_call(self):
+        """df.ta(kind='sma') dispatches to sma and returns a Series."""
+        result = self.df.ta(kind="sma", length=20)
+        self.assertIsInstance(result, pd.Series)
+        self.assertGreater(result.notna().sum(), 0)
+
+    def test_kind_dispatch_case_insensitive(self):
+        """df.ta(kind=...) is case-insensitive (e.g. 'SMA' == 'sma')."""
+        lower = self.df.ta(kind="sma", length=10)
+        upper = self.df.ta(kind="SMA", length=10)
+        self.assertIsNotNone(lower)
+        self.assertIsNotNone(upper)
+        pd.testing.assert_series_equal(lower, upper)
+
+    def test_strategy_returns_dataframe_when_requested(self):
+        """strategy(returns=True) must return the updated DataFrame."""
+        strategy = pandas_ta.Strategy(
+            name="returns_test",
+            ta=[{"kind": "sma", "length": 10}],
+        )
+        result = self.df.ta.strategy(strategy, returns=True)
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertIn("SMA_10", result.columns)

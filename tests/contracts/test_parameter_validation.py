@@ -11,6 +11,7 @@ returned ``SMA_10``. Every such guard now goes through ``_pos_int`` /
 import inspect
 import re
 import typing
+from unittest import TestCase
 
 import numpy as np
 import pytest
@@ -797,3 +798,54 @@ def test_a_one_bar_window_handed_to_linreg_raises_naming_the_indicator_called():
         ta.kc(df.high, df.low, df.close, mamode="linreg", length=1)
     with pytest.raises(ValueError, match=r"^qstick\(\) length must be an integer > 1, got 1$"):
         ta.qstick(df.open, df.close, ma="linreg", length=1)
+
+
+class TestDriftParameterRemoved(TestCase):
+    """Fix 29 (issue #138): drift is removed, not just ignored.
+
+    tsignals used trends.diff(drift), so drift != 1 compared each bar with the
+    trend state drift bars back and produced wrong entries and exits. #129 made
+    it a deprecated no-op on tsignals and on cfo, inertia, kst, rsx, chop,
+    accbands and kvo, which accepted it but never used it. Removing it must not
+    reintroduce any effect: a drift= keyword now falls into **kwargs.
+    """
+
+    NAMES = ("tsignals", "cfo", "inertia", "kst", "rsx", "chop", "accbands", "kvo")
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data().iloc[:300]
+        cls.columns = {c: df[c] for c in ("open", "high", "low", "close", "volume")}
+        cls.columns["trend"] = (df.close > df.close.rolling(20).mean()).astype(int)
+
+    def _call(self, name, **kwargs):
+        func = getattr(ta, name)
+        series = {p: self.columns[p] for p in inspect.signature(func).parameters if p in self.columns}
+        return func(**series, **kwargs)
+
+    def test_signatures_have_no_drift(self):
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                self.assertNotIn("drift", inspect.signature(getattr(ta, name)).parameters)
+
+    def test_accessor_stubs_have_no_drift(self):
+        import ast
+        from pathlib import Path
+
+        stub = ast.parse(Path(ta.__file__).with_name("core.pyi").read_text(encoding="utf-8"))
+        methods = {n.name: n for n in ast.walk(stub) if isinstance(n, ast.FunctionDef)}
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                self.assertNotIn("drift", [a.arg for a in methods[name].args.args])
+
+    def test_drift_keyword_raises(self):
+        """Absorbed until #340: strategy(drift=N) now hands drift only to the
+        indicators that accept it, so a direct drift= raises like any unknown keyword."""
+        for name in self.NAMES:
+            with self.subTest(name=name), self.assertRaisesRegex(TypeError, rf"^{name}\(\) got an unexpected keyword argument 'drift'$"):
+                self._call(name, drift=3)
+
+    def test_a_strategy_wide_drift_skips_them(self):
+        df = get_sample_data().iloc[:300].copy()
+        df.ta.strategy(ta.Strategy("drift", ta=[{"kind": "cfo"}, {"kind": "rsi"}]), drift=2)
+        self.assertIn("CFO_9", df.columns)

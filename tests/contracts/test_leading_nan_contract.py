@@ -12,10 +12,15 @@ still filling, and ``obv`` was offset by the first bar's volume.
 Indicators are discovered through ``ta.Category``, so new ones are covered.
 """
 
+import inspect
+from unittest import TestCase
+
 import numpy as np
 import pandas as pd
 import pytest
 
+import pandas_ta_classic as ta
+from tests.config import get_sample_data
 from tests.contracts import OHLCV_INDICATORS as INDICATORS, call as _call, spy
 
 # 1 is what diff(), shift(1) and returns hand on; 40 covers a long indicator warm-up.
@@ -82,3 +87,53 @@ def test_an_all_nan_input_reads_nan(name, clean, request):
         request.applymarker(pytest.mark.xfail(strict=True, reason=_NO_DATA_EXCEPTIONS[name]))
     result = _call(name, clean * np.nan)
     assert not _columns_with_values(result), f"{name}: values from all-NaN input in {_columns_with_values(result)[:3]}"
+
+
+# ---------------------------------------------------------------------------
+# indicators that went all-NaN on a leading NaN run
+# ---------------------------------------------------------------------------
+
+
+class TestLeadingNanRun(TestCase):
+    """Recursive indicators seeded from bar 0 returned all-NaN on chained input.
+
+    A 30-bar NaN prefix -- what any indicator's output starts with -- made
+    adosc, fisher, hwc, hwma, jma, kama, lrsi, macd, macdfix, mama, mcgd,
+    ssf, tos_stdevall and vidya return NaN for every bar. mfi instead read the
+    run as zero money flow and reported values from incomplete windows.
+    """
+
+    PREFIX = 30
+    NAMES = ("adosc", "fisher", "hwc", "hwma", "jma", "kama", "lrsi", "macd", "macdfix", "mama", "mcgd", "mfi", "ssf", "tos_stdevall", "vidya")
+
+    @classmethod
+    def setUpClass(cls):
+        data = get_sample_data().iloc[:600].reset_index(drop=True)
+        cls.prefixed = data.copy()
+        cls.prefixed.iloc[: cls.PREFIX] = np.nan
+        cls.trimmed = data.iloc[cls.PREFIX :].reset_index(drop=True)
+
+    def _call(self, name, frame):
+        fn = getattr(ta, name)
+        params = inspect.signature(fn).parameters
+        cols = {p: frame["open" if p == "open_" else p] for p in ("high", "low", "close", "volume") if p in params}
+        return fn(**cols)
+
+    def test_prefix_result_equals_trimmed_result(self):
+        for name in self.NAMES:
+            with self.subTest(indicator=name):
+                with_prefix = np.asarray(self._call(name, self.prefixed), dtype=float)[self.PREFIX :]
+                without = np.asarray(self._call(name, self.trimmed), dtype=float)
+                self.assertTrue(np.isfinite(with_prefix).any(), f"{name} is still all-NaN")
+                np.testing.assert_allclose(with_prefix, without, rtol=1e-12, atol=1e-12, equal_nan=True)
+
+    def test_result_keeps_index_name_and_category(self):
+        result = ta.macd(self.prefixed["close"])
+        self.assertTrue(result.index.equals(self.prefixed.index))
+        self.assertEqual(result.name, "MACD_12_26_9")
+        self.assertEqual(result.category, "momentum")
+
+    def test_accessor_signature_unchanged(self):
+        """The decorator must keep inspect.signature, which the df.ta wrapper builds on."""
+        self.assertEqual(list(inspect.signature(ta.macd).parameters)[:4], ["close", "fast", "slow", "signal"])
+        self.assertEqual(self.prefixed.ta.macd().shape, (600, 3))

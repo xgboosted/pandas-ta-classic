@@ -23,9 +23,11 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import pandas_ta_classic
 from tests.config import get_sample_data
+from tests.contracts import spy as _spy
 
 
 class TestAccessorHelperClassification(TestCase):
@@ -606,3 +608,22 @@ class TestIsDatetimeOrdered(TestCase):
     def test_non_datetime_index_returns_false(self):
         df = pd.DataFrame({"close": [1, 2, 3]}, index=[0, 1, 2])
         self.assertFalse(df.ta.datetime_ordered)
+
+
+# ---------------------------------------------------------------------------
+# df.ta.adjusted naming a missing column
+# ---------------------------------------------------------------------------
+
+
+def test_adjusted_missing_column_raises_and_explicit_column_works():
+    df = _spy().iloc[-300:].copy()
+    df["adj_close"] = df.close * 0.5
+    df.ta.adjusted = "adj_close"
+    pd.testing.assert_series_equal(df.ta.sma(), pandas_ta_classic.sma(df.adj_close))
+    subset = df[["open", "high", "low", "close", "volume"]]  # inherits _ta_adjusted through df.attrs
+    for call in (subset.ta.sma, subset.ta.ichimoku, lambda: subset.ta.ma("ema")):
+        with pytest.raises(KeyError, match="adj_close"):
+            call()
+    pd.testing.assert_series_equal(subset.ta.sma(close="close"), pandas_ta_classic.sma(subset.close))
+    subset.ta.adjusted = None
+    pd.testing.assert_series_equal(subset.ta.sma(), pandas_ta_classic.sma(subset.close))

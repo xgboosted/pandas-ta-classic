@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 import tempfile
+import textwrap
 import types
 from unittest import TestCase
 
@@ -11,13 +12,14 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 import pandas_ta_classic
-from pandas_ta_classic import AnalysisIndicators
+from pandas_ta_classic import AnalysisIndicators, custom
 from pandas_ta_classic.custom import (
     bind,
     create_dir,
     get_module_functions,
     import_dir,
 )
+from tests.config import get_sample_data
 
 
 class TestCustom(TestCase):
@@ -430,3 +432,168 @@ def test_import_dir_binds_nothing_when_one_file_is_refused(good, bad_category, b
             for name in [*names, old] + ([] if bad == "statistics" else [bad]):
                 TestCustom._unload(name)
             sys.path[:] = path_before
+
+
+# ---------------------------------------------------------------------------
+# Plugin registration via custom.bind()
+# ---------------------------------------------------------------------------
+
+
+class TestPluginBindRegistration(TestCase):
+    """custom.bind() registers a custom indicator accessible from df.ta."""
+
+    _BIND_NAME = "_e2e_test_custom_ind"
+
+    def setUp(self):
+        self.df = get_sample_data()
+
+    def tearDown(self):
+        if hasattr(pandas_ta_classic, self._BIND_NAME):
+            delattr(pandas_ta_classic, self._BIND_NAME)
+        if hasattr(AnalysisIndicators, self._BIND_NAME):
+            delattr(AnalysisIndicators, self._BIND_NAME)
+        del self.df
+
+    def _make_custom_pair(self):
+        """Returns (function, method) for a trivial 'double close' indicator."""
+
+        def _fn(close, length=None, offset=None, **kwargs):
+            result = close * 2.0
+            result.name = "DOUBLE_CLOSE"
+            return result
+
+        def _method(self_acc, length=None, offset=None, **kwargs):
+            close = self_acc._get_column(kwargs.pop("close", "close"))
+            result = _fn(close, length=length, offset=offset, **kwargs)
+            return self_acc._post_process(result, **kwargs)
+
+        return _fn, _method
+
+    def test_bind_adds_function_to_ta_module(self):
+        """After bind(), ta.<name> must be callable."""
+        fn, method = self._make_custom_pair()
+        custom.bind(self._BIND_NAME, fn, method)
+        self.assertTrue(hasattr(pandas_ta_classic, self._BIND_NAME))
+        self.assertTrue(callable(getattr(pandas_ta_classic, self._BIND_NAME)))
+
+    def test_bind_accessor_returns_valid_series(self):
+        """After bind(), df.ta.<name>() must return a non-empty Series."""
+        fn, method = self._make_custom_pair()
+        custom.bind(self._BIND_NAME, fn, method)
+        result = getattr(self.df.ta, self._BIND_NAME)()
+        self.assertIsInstance(result, pd.Series)
+        self.assertGreater(result.notna().sum(), 0)
+
+    def test_bind_result_equals_direct_call(self):
+        """df.ta.<name>() must return the same values as calling the function directly."""
+        fn, method = self._make_custom_pair()
+        custom.bind(self._BIND_NAME, fn, method)
+
+        direct = fn(self.df["close"])
+        via_accessor = getattr(self.df.ta, self._BIND_NAME)()
+
+        pd.testing.assert_series_equal(
+            direct.reset_index(drop=True),
+            via_accessor.reset_index(drop=True),
+        )
+
+    def test_bind_append_adds_column(self):
+        """After bind(), df.ta.<name>(append=True) appends the column to df."""
+        fn, method = self._make_custom_pair()
+        custom.bind(self._BIND_NAME, fn, method)
+
+        before = len(self.df.columns)
+        getattr(self.df.ta, self._BIND_NAME)(append=True)
+        self.assertGreater(len(self.df.columns), before)
+        self.assertIn("DOUBLE_CLOSE", self.df.columns)
+
+
+# ---------------------------------------------------------------------------
+# import_dir() loads a custom indicator from a temp directory
+# ---------------------------------------------------------------------------
+
+
+class TestImportDirPlugin(TestCase):
+    """import_dir() discovers and binds a custom indicator module from disk."""
+
+    _IND_NAME = "_e2e_import_dir_ind"
+
+    def setUp(self):
+        self.df = get_sample_data()
+        self._tmpdir = tempfile.TemporaryDirectory()
+        self._tmppath = self._tmpdir.name
+
+    def tearDown(self):
+        # Remove sys.path and global bindings introduced by import_dir
+        cat_dir = os.path.join(self._tmppath, "overlap")
+        if cat_dir in sys.path:
+            sys.path.remove(cat_dir)
+        if self._IND_NAME in sys.modules:
+            del sys.modules[self._IND_NAME]
+        if hasattr(pandas_ta_classic, self._IND_NAME):
+            delattr(pandas_ta_classic, self._IND_NAME)
+        if hasattr(AnalysisIndicators, self._IND_NAME):
+            delattr(AnalysisIndicators, self._IND_NAME)
+        if self._IND_NAME in pandas_ta_classic.Category.get("overlap", []):
+            pandas_ta_classic.Category["overlap"].remove(self._IND_NAME)
+        self._tmpdir.cleanup()
+        del self.df
+
+    def _write_module(self):
+        """Write a minimal indicator .py file to <tmppath>/overlap/."""
+        overlap_dir = os.path.join(self._tmppath, "overlap")
+        os.makedirs(overlap_dir, exist_ok=True)
+        module_path = os.path.join(overlap_dir, f"{self._IND_NAME}.py")
+        src = textwrap.dedent(f"""\
+            def {self._IND_NAME}(close, length=None, offset=None, **kwargs):
+                result = close.rolling(2).mean()
+                result.name = "IMPORT_DIR_IND"
+                return result
+
+            def {self._IND_NAME}_method(self, length=None, offset=None, **kwargs):
+                close = self._get_column(kwargs.pop("close", "close"))
+                result = {self._IND_NAME}(close, length=length, offset=offset, **kwargs)
+                return self._post_process(result, **kwargs)
+            """)
+        with open(module_path, "w") as fh:
+            fh.write(src)
+        return module_path
+
+    def test_import_dir_binds_function_to_ta(self):
+        """After import_dir(), ta.<name> must exist and be callable."""
+        self._write_module()
+        custom.import_dir(self._tmppath, verbose=False)
+        self.assertTrue(
+            hasattr(pandas_ta_classic, self._IND_NAME),
+            f"ta.{self._IND_NAME} must exist after import_dir()",
+        )
+        self.assertTrue(callable(getattr(pandas_ta_classic, self._IND_NAME)))
+
+    def test_import_dir_accessor_method_works(self):
+        """After import_dir(), df.ta.<name>() must return a valid Series."""
+        self._write_module()
+        custom.import_dir(self._tmppath, verbose=False)
+        result = getattr(self.df.ta, self._IND_NAME)()
+        self.assertIsInstance(result, pd.Series)
+        self.assertGreater(result.notna().sum(), 0)
+
+    def test_import_dir_registers_in_category(self):
+        """After import_dir(), the indicator must appear in Category['overlap']."""
+        self._write_module()
+        custom.import_dir(self._tmppath, verbose=False)
+        self.assertIn(
+            self._IND_NAME,
+            pandas_ta_classic.Category.get("overlap", []),
+            f"{self._IND_NAME} must be in Category['overlap'] after import_dir()",
+        )
+
+    def test_import_dir_skips_invalid_category_dir(self):
+        """import_dir() must silently skip subdirectories that are not valid categories."""
+        # Create a non-category subdirectory alongside the valid one
+        bad_dir = os.path.join(self._tmppath, "not_a_category")
+        os.makedirs(bad_dir, exist_ok=True)
+        self._write_module()
+        # Must not raise
+        custom.import_dir(self._tmppath, verbose=False)
+        # The indicator in 'overlap' must still be bound
+        self.assertTrue(hasattr(pandas_ta_classic, self._IND_NAME))

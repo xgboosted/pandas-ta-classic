@@ -1,12 +1,13 @@
 import warnings
-from unittest import TestCase, skipUnless
+from unittest import TestCase, skipIf, skipUnless
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.candles._cdl_math import CANDLE_DEFAULTS, CandleArrays, CandleSetting, RangeType, candle_average, candle_avg_period
-from tests.assertions import IndicatorSpec, assert_indicator_standard
+from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard
 from tests.config import get_sample_data
 
 try:
@@ -560,3 +561,271 @@ class TestCdlDojiAtTheEdges(TestCase):
                 if HAS_TALIB:
                     np.testing.assert_array_equal(talib.CDLDOJI(*(np.array(x) for x in ohlc))[21:], [100] * 4)
 
+
+# ---------------------------------------------------------------------------
+# cdl_z full=True is an anchored (expanding) Z Score
+#
+# The previous implementation set the window to close.size -- so only the final
+# bar had a value -- and then back-filled, which copied that single value onto
+# every earlier row. The column was constant and built entirely out of future
+# data. full=True now standardises each bar against bars 0..t only.
+# ---------------------------------------------------------------------------
+
+
+class TestCdlZAnchored(TestCase):
+    """cdl_z(full=True) must be an anchored Z Score, not a back-filled constant."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.full = pandas_ta.cdl_z(
+            cls.df["open"],
+            cls.df["high"],
+            cls.df["low"],
+            cls.df["close"],
+            full=True,
+        )
+        cls.open_col = next(c for c in cls.full.columns if "open" in c.lower())
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+        del cls.full
+
+    def test_cdlz_full_true_returns_dataframe(self):
+        self.assertIsInstance(self.full, pd.DataFrame)
+
+    def test_cdlz_full_true_only_first_bar_is_nan(self):
+        """One bar cannot have a standard deviation; every later bar must."""
+        self.assertEqual(1, self.full[self.open_col].isna().sum())
+        self.assertTrue(np.isnan(self.full[self.open_col].iloc[0]))
+
+    def test_cdlz_full_true_is_not_constant(self):
+        """The bfill bug produced one repeated value for the whole column."""
+        self.assertGreater(self.full[self.open_col].dropna().nunique(), 1)
+
+    def test_cdlz_full_true_matches_expanding_zscore(self):
+        open_ = self.df["open"]
+        expanding = open_.expanding(min_periods=2)
+        expected = (open_ - expanding.mean()) / expanding.std(ddof=1)
+        pd.testing.assert_series_equal(
+            self.full[self.open_col],
+            expected,
+            check_names=False,
+        )
+
+    def test_cdlz_full_true_does_not_use_future_bars(self):
+        """Values for the first K bars must not change when more bars arrive."""
+        cut = len(self.df) // 2
+        head = self.df.head(cut)
+        prefix = pandas_ta.cdl_z(head["open"], head["high"], head["low"], head["close"], full=True)
+        pd.testing.assert_frame_equal(self.full.iloc[:cut], prefix)
+
+    def test_cdlz_full_false_has_leading_nans(self):
+        """cdl_z(full=False) must have leading NaN values (warmup period)."""
+        length = 30
+        result = pandas_ta.cdl_z(
+            self.df["open"],
+            self.df["high"],
+            self.df["low"],
+            self.df["close"],
+            full=False,
+            length=length,
+        )
+        self.assertIsNotNone(result)
+        open_col = next(c for c in result.columns if "open" in c.lower())
+        nan_count = result[open_col].isna().sum()
+        self.assertGreater(
+            nan_count,
+            0,
+            "cdl_z(full=False) must have leading NaN values in warmup period",
+        )
+
+
+# ---------------------------------------------------------------------------
+# cdl_pattern None-check on pta_patterns results
+# ---------------------------------------------------------------------------
+
+
+class TestCdlPatternShortInput(TestCase):
+    """cdl_pattern() dereferenced `.name` on a sub-pattern result without checking it.
+
+    `cdl_doji` has a default length of 10, so on a short frame it returns None
+    and the aggregation raised `AttributeError: 'NoneType' object has no
+    attribute 'name'`. The native-pattern branch already had this guard.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        df = get_sample_data()
+        cls.open_ = df["open"].iloc[:3]
+        cls.high = df["high"].iloc[:3]
+        cls.low = df["low"].iloc[:3]
+        cls.close = df["close"].iloc[:3]
+
+    def test_short_input_does_not_raise(self):
+        """Short input returns a result instead of raising."""
+        result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close)
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_uncomputable_subpattern_is_skipped(self):
+        """doji needs 10 rows, so its column is absent rather than fatal."""
+        result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close)
+        self.assertNotIn("CDL_DOJI_10", result.columns)
+        self.assertIn("CDL_INSIDE", result.columns)
+
+    def test_named_uncomputable_pattern_returns_none(self):
+        """Asking only for a pattern that cannot be computed yields None."""
+        result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close, name="doji")
+        assert_all_nan(self, result)
+
+    def test_accessor_path_does_not_raise(self):
+        """The same call through df.ta.cdl_pattern() is fixed as well."""
+        df = pd.DataFrame(
+            {
+                "open": self.open_,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+            }
+        )
+        result = df.ta.cdl_pattern()
+        self.assertIsInstance(result, pd.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# candle_color NaN handling
+# ---------------------------------------------------------------------------
+
+
+class TestCandleColorNanInput(TestCase):
+    """candle_color() did `close.copy().astype(int)`, which raises on NaN.
+
+    pandas cannot cast NaN to int, so `IntCastingNaNError` propagated out of
+    cdl_inside and cdl_pattern for any input carrying a NaN -- which is what
+    every chained indicator produces.
+    """
+
+    def test_clean_input_keeps_int_dtype(self):
+        """Fully defined input keeps the historical integer dtype."""
+        open_ = pd.Series([1.0, 2.0, 3.0])
+        close = pd.Series([2.0, 1.0, 3.0])
+        result = pandas_ta.candle_color(open_, close)
+        self.assertEqual(result.dtype, np.dtype("int64"))
+        self.assertEqual(result.tolist(), [1, -1, 1])
+
+    def test_nan_yields_nan_not_a_colour(self):
+        """An undefined candle is NaN, not silently classified as bearish."""
+        open_ = pd.Series([1.0, 2.0, 3.0])
+        close = pd.Series([2.0, np.nan, 3.0])
+        result = pandas_ta.candle_color(open_, close)
+        self.assertTrue(np.isnan(result.iloc[1]))
+        self.assertEqual(result.iloc[0], 1.0)
+        self.assertEqual(result.iloc[2], 1.0)
+
+    def test_cdl_inside_with_nan_does_not_raise(self):
+        """cdl_inside previously raised IntCastingNaNError."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        close.iloc[50] = np.nan
+        result = pandas_ta.cdl_inside(close, close + 1, close - 1, close)
+        self.assertIsInstance(result, pd.Series)
+
+    def test_cdl_pattern_with_nan_does_not_raise(self):
+        """The aggregation path is fixed as well."""
+        close = pd.Series(np.arange(1.0, 201.0))
+        close.iloc[50] = np.nan
+        result = pandas_ta.cdl_pattern(close - 0.5, close + 1, close - 1, close)
+        self.assertIsInstance(result, pd.DataFrame)
+
+    def test_asbool_path_unaffected(self):
+        """asbool=True never calls candle_color."""
+        close = pd.Series(np.arange(1.0, 51.0))
+        result = pandas_ta.cdl_inside(close - 0.5, close + 1, close - 1, close, asbool=True)
+        self.assertEqual(result.dtype, np.dtype("bool"))
+
+
+# ---------------------------------------------------------------------------
+# run_pattern skips a leading NaN run
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternNanPrefix(TestCase):
+    """Native candle patterns reported 0 everywhere after a NaN prefix.
+
+    run_pattern built its running body/shadow averages from index 0, so a
+    NaN prefix -- what chained input always has -- made every later average
+    NaN, every comparison False, and every signal 0. With a 30-bar prefix on
+    600 SPY bars, 33 of 62 cdl_pattern columns were all-zero (CDL_3INSIDE: 0
+    signals vs TA-Lib's 10).
+    """
+
+    PREFIX = 30
+
+    @classmethod
+    def setUpClass(cls):
+        data = get_sample_data().iloc[:600].reset_index(drop=True)
+        cls.prefixed = data.copy()
+        cls.prefixed.iloc[: cls.PREFIX] = np.nan
+        cls.trimmed = data.iloc[cls.PREFIX :].reset_index(drop=True)
+
+    def _patterns(self, frame):
+        return pandas_ta.cdl_pattern(frame["open"], frame["high"], frame["low"], frame["close"])
+
+    def test_prefix_result_equals_trimmed_result(self):
+        """Past the prefix, every pattern matches the run on the trimmed series."""
+        with_prefix = self._patterns(self.prefixed).iloc[self.PREFIX :].reset_index(drop=True)
+        without = self._patterns(self.trimmed)
+        for col in without.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(with_prefix[col].to_numpy(), without[col].to_numpy())
+
+    def test_prefix_does_not_silence_patterns(self):
+        """A pattern that fires on the trimmed series still fires with the prefix."""
+        with_prefix = self._patterns(self.prefixed)
+        self.assertGreater(int((with_prefix["CDL_3INSIDE"] != 0).sum()), 0)
+
+    @skipIf(not pandas_ta.Imports["talib"], "TA-Lib not installed")
+    def test_prefix_matches_talib(self):
+        """TA-Lib skips the NaN prefix; the native patterns must agree bar for bar."""
+        import talib
+
+        ohlc = [self.prefixed[k].to_numpy() for k in ("open", "high", "low", "close")]
+        native = self._patterns(self.prefixed)
+        for name in ("3INSIDE", "BELTHOLD", "CLOSINGMARUBOZU", "ENGULFING", "HAMMER"):
+            with self.subTest(pattern=name):
+                np.testing.assert_array_equal(native[f"CDL_{name}"].to_numpy(), getattr(talib, f"CDL{name}")(*ohlc).astype(float))
+
+
+# ---------------------------------------------------------------------------
+# candle patterns went silent after a NaN row inside the series
+# ---------------------------------------------------------------------------
+
+
+class TestCandlePatternsSkipNanRows(TestCase):
+    """A NaN row inside the series poisoned the running body/shadow averages.
+
+    On a weekday feed resampled to calendar days, 41 of 62 patterns never fired
+    (1,260 signals fell to 119). Patterns are now detected on the finite bars,
+    as if the NaN rows had been dropped, and report 0 on the NaN rows.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        daily = get_sample_data().iloc[-400:]
+        cls.gapped = daily.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last"})
+        cls.dropped = cls.gapped.dropna()
+
+    def _all(self, df):
+        return pandas_ta.cdl_pattern(df.open, df.high, df.low, df.close, name="all")
+
+    def test_gapped_equals_dropna_on_finite_rows(self):
+        self.assertGreater(len(self.gapped), len(self.dropped))
+        gapped, dropped = self._all(self.gapped), self._all(self.dropped)
+        self.assertEqual(list(gapped.columns), list(dropped.columns))
+        for col in dropped.columns:
+            with self.subTest(pattern=col):
+                np.testing.assert_array_equal(gapped.loc[self.dropped.index, col].to_numpy(float), dropped[col].to_numpy(float))
+
+    def test_nan_rows_report_no_pattern(self):
+        nan_rows = self._all(self.gapped).loc[self.gapped.close.isna()]
+        self.assertFalse((nan_rows.fillna(0) != 0).any().any())

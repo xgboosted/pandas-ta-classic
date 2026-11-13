@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
@@ -336,3 +337,175 @@ class TestVolume(TestCase):
         )
         self.assertIsNone(pandas_ta.wad(self.high, None, self.close))
         self.assertIsNone(pandas_ta.wad(self.high, self.low, None))
+
+
+# ---------------------------------------------------------------------------
+# emv divisor defaults to 10000 (tulipy convention)
+# ---------------------------------------------------------------------------
+
+
+class TestEmvDivisorDefault(TestCase):
+    """emv divisor defaults to 10000 (tulipy convention post-fix)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+        cls.volume = cls.df["volume"]
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+
+    def test_emv_default_uses_divisor_10000(self):
+        """ta.emv() must match manual calculation with divisor=10000."""
+        h, low, v = self.high, self.low, self.volume
+        hl_range = (h - low).replace(0, float("nan"))
+        midpoint = 0.5 * (h + low)
+        distance = midpoint - midpoint.shift(1)
+        box_ratio = (v / 10_000) / hl_range
+        expected = distance / box_ratio
+
+        result = pandas_ta.emv(h, low, v)
+        mask = result.notna() & expected.notna()
+        self.assertTrue(mask.any())
+        np.testing.assert_allclose(
+            result[mask].values,
+            expected[mask].values,
+            rtol=1e-4,
+            err_msg="emv() default divisor must be 10000 (tulipy convention)",
+        )
+
+    def test_emv_custom_divisor_differs_from_default(self):
+        """emv(divisor=1) must produce a different result than the default."""
+        h, low, v = self.high, self.low, self.volume
+        default = pandas_ta.emv(h, low, v)
+        custom = pandas_ta.emv(h, low, v, divisor=1)
+
+        mask = default.notna() & custom.notna()
+        diff = (default[mask] - custom[mask]).abs()
+        self.assertTrue(
+            diff.max() > 1e-6,
+            "emv divisor=1 must differ from the default divisor=10000",
+        )
+
+
+# ---------------------------------------------------------------------------
+# ad — required-arg None guard added
+# ---------------------------------------------------------------------------
+
+
+class TestAdNoneGuard(TestCase):
+    """ad() returns None gracefully on invalid inputs instead of crashing."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+        cls.close = cls.df["close"]
+        cls.volume = cls.df["volume"]
+
+    def test_required_arg_none_returns_none(self):
+        """Passing None for required high → None, not AttributeError."""
+        result = pandas_ta.ad(high=None, low=self.low, close=self.close, volume=self.volume)
+        self.assertIsNone(result)
+
+    def test_invalid_open_list_raises(self):
+        """A plain list as open_ is rejected by verify_series (issue #145)."""
+        bad_open = list(self.close.values)
+        with self.assertRaisesRegex(TypeError, r"ad\(\) expected a pandas Series but got list"):
+            pandas_ta.ad(
+                high=self.high,
+                low=self.low,
+                close=self.close,
+                volume=self.volume,
+                open_=bad_open,
+                talib=False,  # force else-branch where open_ is validated
+            )
+
+    def test_valid_call_no_open_returns_series(self):
+        """Normal call without open_ returns a Series named 'AD'."""
+        result = pandas_ta.ad(high=self.high, low=self.low, close=self.close, volume=self.volume)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "AD")
+
+    def test_valid_call_with_open_returns_series(self):
+        """Normal call with valid open_ returns a Series named 'ADo'."""
+        result = pandas_ta.ad(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            volume=self.volume,
+            open_=self.df["open"],
+        )
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "ADo")
+
+
+# ---------------------------------------------------------------------------
+# cmf — invalid optional open_ returns None (not crash)
+# ---------------------------------------------------------------------------
+
+
+class TestCmfNoneGuard(TestCase):
+    """cmf() returns None gracefully on invalid optional open_."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.high = cls.df["high"]
+        cls.low = cls.df["low"]
+        cls.close = cls.df["close"]
+        cls.volume = cls.df["volume"]
+
+    def test_invalid_open_list_raises(self):
+        """A plain list as open_ is rejected by verify_series (issue #145)."""
+        bad_open = list(self.close.values)
+        with self.assertRaisesRegex(TypeError, r"cmf\(\) expected a pandas Series but got list"):
+            pandas_ta.cmf(
+                high=self.high,
+                low=self.low,
+                close=self.close,
+                volume=self.volume,
+                open_=bad_open,
+            )
+
+    def test_valid_call_no_open_returns_series(self):
+        """Normal call without open_ returns a Series."""
+        result = pandas_ta.cmf(high=self.high, low=self.low, close=self.close, volume=self.volume)
+        self.assertIsInstance(result, pd.Series)
+
+
+# ---------------------------------------------------------------------------
+# mfi warmup counted an undefined flow
+# ---------------------------------------------------------------------------
+
+
+class TestMfiWarmup(TestCase):
+    """The first bar has no previous typical price, so its money flow is undefined.
+
+    mfi counted it as zero, so MFI_14 reported a value at bar 13 from 13 real
+    flows; TA-Lib and tulipy start at bar 14.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data().iloc[:200]
+
+    def test_first_value_at_length_plus_drift_minus_one(self):
+        for length, drift in ((14, 1), (5, 1), (5, 3)):
+            with self.subTest(length=length, drift=drift):
+                result = pandas_ta.mfi(self.df.high, self.df.low, self.df.close, self.df.volume, length=length, drift=drift)
+                self.assertEqual(self.df.index.get_loc(result.first_valid_index()), length + drift - 1)
+
+    def test_values_after_warmup_unchanged(self):
+        d = self.df
+        tp = (d.high + d.low + d.close) / 3
+        flow = tp * d.volume
+        up = flow.where(tp.diff() > 0, 0.0).rolling(14).sum()
+        down = flow.where(tp.diff() < 0, 0.0).rolling(14).sum()
+        expected = 100 * up / (up + down)
+        result = pandas_ta.mfi(d.high, d.low, d.close, d.volume)
+        np.testing.assert_allclose(result.iloc[14:], expected.iloc[14:], rtol=1e-12)

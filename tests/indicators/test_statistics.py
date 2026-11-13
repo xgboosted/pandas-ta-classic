@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
@@ -262,3 +263,120 @@ class TestStatistics(TestCase):
         # ddof must leave a positive divisor, so it stays below length.
         with self.assertRaisesRegex(ValueError, r"zscore\(\) ddof must be an integer >= 0 and < 30"):
             pandas_ta.zscore(self.close, length=length, ddof=length)
+
+
+# ---------------------------------------------------------------------------
+# stdev / variance ddof default = 0 (population)
+# ---------------------------------------------------------------------------
+
+
+class TestStdevDdofDefault(TestCase):
+    """stdev default ddof=0 (population std, not sample std)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.close = cls.df["close"]
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+        del cls.close
+
+    def test_default_matches_population_stdev(self):
+        """ta.stdev() without ddof kwarg must equal pandas rolling std(ddof=0)."""
+        length = 30
+        result = pandas_ta.stdev(self.close, length=length, talib=False)
+        expected = self.close.rolling(length).std(ddof=0)
+
+        mask = result.notna() & expected.notna()
+        self.assertTrue(mask.any(), "No overlapping non-NaN values to compare")
+        np.testing.assert_allclose(
+            result[mask].values,
+            expected[mask].values,
+            rtol=1e-4,
+            err_msg="stdev() default ddof must be 0 (population std)",
+        )
+
+    def test_default_differs_from_sample_stdev(self):
+        """ta.stdev() default must NOT equal pandas rolling std(ddof=1)."""
+        length = 30
+        result = pandas_ta.stdev(self.close, length=length, talib=False)
+        sample_std = self.close.rolling(length).std(ddof=1)
+
+        mask = result.notna() & sample_std.notna()
+        diff = np.abs(result[mask].values - sample_std[mask].values)
+        self.assertTrue(
+            diff.max() > 1e-8,
+            "stdev() default must NOT equal sample std (ddof=1); " "ddof=0 (population) is the correct post-fix default",
+        )
+
+    def test_explicit_ddof1_matches_sample_stdev(self):
+        """ta.stdev(ddof=1) must equal pandas rolling std(ddof=1)."""
+        length = 30
+        result = pandas_ta.stdev(self.close, length=length, ddof=1, talib=False)
+        expected = self.close.rolling(length).std(ddof=1)
+
+        mask = result.notna() & expected.notna()
+        self.assertTrue(mask.any())
+        np.testing.assert_allclose(
+            result[mask].values,
+            expected[mask].values,
+            rtol=1e-4,
+            err_msg="stdev(ddof=1) must equal sample standard deviation",
+        )
+
+
+# ---------------------------------------------------------------------------
+# zscore column name changed from Z_{length} to ZS_{length}
+# ---------------------------------------------------------------------------
+
+
+class TestZscoreColumnName(TestCase):
+    """zscore output Series name must be ZS_{length}, not Z_{length}."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+        cls.close = cls.df["close"]
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+        del cls.close
+
+    def test_zscore_column_name_prefix(self):
+        """zscore() result name must start with 'ZS_', not 'Z_'."""
+        length = 30
+        result = pandas_ta.zscore(self.close, length=length)
+        self.assertIsNotNone(result)
+        self.assertTrue(
+            result.name.startswith("ZS_"),
+            f"zscore column name must start with 'ZS_'; got '{result.name}'",
+        )
+
+    def test_zscore_column_name_exact(self):
+        """zscore(length=20) must produce column named 'ZS_20'."""
+        result = pandas_ta.zscore(self.close, length=20)
+        self.assertEqual(result.name, "ZS_20")
+
+    def test_zscore_old_name_not_used(self):
+        """zscore must not use old 'Z_{length}' naming convention."""
+        result = pandas_ta.zscore(self.close, length=14)
+        self.assertNotEqual(
+            result.name,
+            "Z_14",
+            "zscore name 'Z_14' is the old pre-fix name; must be 'ZS_14'",
+        )
+
+
+# ---------------------------------------------------------------------------
+# stdev min_periods
+# ---------------------------------------------------------------------------
+
+
+def test_stdev_forwards_min_periods():
+    x = pd.Series([1.0, 4.0, 2.0, 8.0, 5.0, 7.0, 3.0, 9.0, 6.0, 10.0])
+    got = pandas_ta.stdev(x, 5, min_periods=3)
+    np.testing.assert_allclose(got, x.rolling(5, min_periods=3).std(ddof=0), equal_nan=True)
+    assert np.isfinite(got.iloc[2])

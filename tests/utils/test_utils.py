@@ -9,6 +9,7 @@ from pandas import DataFrame, Series
 import pandas_ta_classic as pandas_ta
 from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
+from tests.contracts import spy as _spy
 
 data = {
     "zero": [0, 0],
@@ -1086,3 +1087,75 @@ class TestNonZeroRangeRemoved(TestCase):
     def test_import_raises(self):
         with self.assertRaises(ImportError):
             from pandas_ta_classic.utils import non_zero_range  # noqa: F401
+
+
+# ---------------------------------------------------------------------------
+# is_datetime_ordered returns bool (no return-in-finally SyntaxWarning)
+# ---------------------------------------------------------------------------
+
+
+class TestIsDatetimeOrdered(TestCase):
+    """is_datetime_ordered must return a plain bool in all code paths."""
+
+    def _fn(self):
+        from pandas_ta_classic.utils import is_datetime_ordered
+
+        return is_datetime_ordered
+
+    def test_ordered_datetime_index_returns_true(self):
+        fn = self._fn()
+        idx = pd.date_range("2020-01-01", periods=5, freq="D")
+        s = pd.Series(range(5), index=idx)
+        result = fn(s)
+        self.assertIsInstance(result, bool)
+        self.assertTrue(result)
+
+    def test_reverse_datetime_index_returns_false(self):
+        fn = self._fn()
+        idx = pd.date_range("2020-01-01", periods=5, freq="D")[::-1]
+        s = pd.Series(range(5), index=idx)
+        result = fn(s)
+        self.assertIsInstance(result, bool)
+        self.assertFalse(result)
+
+    def test_non_datetime_index_returns_false(self):
+        fn = self._fn()
+        s = pd.Series(range(5))  # integer index
+        result = fn(s)
+        self.assertIsInstance(result, bool)
+        self.assertFalse(result)
+
+    def test_single_element_returns_false(self):
+        fn = self._fn()
+        idx = pd.DatetimeIndex(["2020-01-01"])
+        s = pd.Series([1.0], index=idx)
+        result = fn(s)
+        self.assertIsInstance(result, bool)
+        self.assertFalse(result)
+
+
+# ---------------------------------------------------------------------------
+# cross / cross_value decision tables
+# ---------------------------------------------------------------------------
+
+
+_A = pd.Series([np.nan, np.nan, 5, 6, 4, 4, 4, 6, 5, 5, 3], name="a", dtype=float)
+
+
+_B = pd.Series([5.0] * 11, name="b")
+
+
+def test_cross_above_counts_touch_then_cross():
+    assert pandas_ta.cross(_A, _B).tolist() == [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+
+
+def test_cross_below_ignores_nan_and_ties():
+    assert pandas_ta.cross(_A, _B, above=False).tolist() == [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1]
+
+
+def test_cross_value_below_ignores_warmup():
+    rsi = pandas_ta.rsi(_spy().close, 14)
+    got = pandas_ta.cross_value(rsi, 30, above=False)
+    expected = ((rsi < 30) & (rsi.shift() >= 30)).astype(int)
+    assert int(got[rsi.isna()].sum()) == 0
+    assert got.tolist() == expected.tolist()

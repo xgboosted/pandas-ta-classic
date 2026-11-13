@@ -24,13 +24,17 @@ Two tables pin the two outcomes on a 3-row OHLCV frame:
 
 from __future__ import annotations
 
+import importlib
 import inspect
+from unittest import TestCase
 
 import numpy as np
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from tests.assertions import assert_all_nan
+from tests.config import get_sample_data
 from tests.contracts import INDICATORS
 
 _N_SHORT = 3
@@ -436,3 +440,133 @@ def test_leading_nan_run_leaving_too_few_rows_returns_all_nan() -> None:
     assert result.name == "MAXINDEX_30"
     assert result.index.equals(index)
     assert result.isna().all()
+
+
+# ---------------------------------------------------------------------------
+# short-window hardening for rma, linreg and _sliding_weighted_ma
+# ---------------------------------------------------------------------------
+
+
+class TestShortWindowHardening(TestCase):
+    """Three sites that crashed when handed a window longer than the series.
+
+    None of them is reachable through the public API: verify_series' min_length
+    guard blocks every route found while probing (oversized single and multi
+    window arguments, every mamode, the accessor and strategy paths, NaN-prefixed
+    input, and chained calls). They are hardened regardless, because the ema
+    seeding bug (fix 20) was equally unreachable until someone worked out which
+    composition of indicators exposed it -- min_length models a single window,
+    while real lookback is compositional.
+
+    Reaching the guarded branches therefore requires bypassing verify_series,
+    which is what these tests do.
+    """
+
+    @staticmethod
+    def _passthrough(series, min_length=None):
+        """verify_series without the min_length short-circuit."""
+        return series if isinstance(series, pd.Series) else None
+
+    def _without_guard(self, dotted_name):
+        """Swap verify_series in a module for the pass-through, restoring after.
+
+        The module has to be resolved by name: ``pandas_ta_classic.overlap``
+        re-exports each indicator function under the same name as its submodule,
+        so plain attribute access returns the function, not the module.
+        """
+        module = importlib.import_module(dotted_name)
+        original = module.verify_series
+        module.verify_series = self._passthrough
+        self.addCleanup(setattr, module, "verify_series", original)
+        return module
+
+    def test_sliding_weighted_ma_window_longer_than_series(self):
+        """The helper is directly callable and must not build an empty view."""
+        from pandas_ta_classic.utils._core import _sliding_weighted_ma
+
+        close = pd.Series([1.0, 2.0, 3.0])
+        result = _sliding_weighted_ma(close, 10, np.ones(10))
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(len(result), 3)
+        self.assertTrue(result.isna().all())
+
+    def test_sliding_weighted_ma_exact_fit(self):
+        """length == len(series) still produces the single valid window."""
+        from pandas_ta_classic.utils._core import _sliding_weighted_ma
+
+        close = pd.Series([1.0, 2.0, 3.0])
+        result = _sliding_weighted_ma(close, 3, np.ones(3))
+        self.assertEqual(result.iloc[-1], 6.0)
+        self.assertTrue(result.iloc[:2].isna().all())
+
+    def test_rma_without_guard(self):
+        """rma seeded at iloc[length - 1] without checking it exists."""
+        module = self._without_guard("pandas_ta_classic.overlap.rma")
+        result = module.rma(pd.Series([1.0, 2.0, 3.0]), length=10)
+        self.assertIsInstance(result, pd.Series)
+        self.assertTrue(result.isna().all())
+
+    def test_linreg_without_guard(self):
+        """linreg built a sliding window wider than the input array."""
+        module = self._without_guard("pandas_ta_classic.overlap.linreg")
+        result = module.linreg(pd.Series([1.0, 2.0, 3.0]), length=10, talib=False)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(len(result), 3)
+        self.assertTrue(result.isna().all())
+
+    def test_alma_without_guard(self):
+        """alma reaches _sliding_weighted_ma, so it is covered too."""
+        module = self._without_guard("pandas_ta_classic.overlap.alma")
+        result = module.alma(pd.Series([1.0, 2.0, 3.0]), length=10)
+        self.assertIsInstance(result, pd.Series)
+        self.assertTrue(result.isna().all())
+
+    def test_valid_input_unaffected(self):
+        """Ample input keeps its usual lookback in all three."""
+        close = pd.Series(np.arange(1.0, 101.0))
+        self.assertEqual(ta.rma(close, length=10).isna().sum(), 9)
+        self.assertEqual(ta.linreg(close, length=10, talib=False).isna().sum(), 9)
+        self.assertEqual(ta.alma(close, length=10).isna().sum(), 9)
+
+
+# ---------------------------------------------------------------------------
+# short-input crashes where None reached arithmetic (issue #145)
+# ---------------------------------------------------------------------------
+
+
+class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
+    """A helper returned None for short input and the caller multiplied it.
+
+    Found by sweeping every indicator over 1-400 rows with length, drift, fast,
+    slow and signal at 1-5: pvt (drift > rows), rvi (length=1 on < 30 rows,
+    because variance widens length=1 to its default window) and swma
+    (length=1, symmetric_triangle(1) was None) raised TypeError; tos_stdevall
+    on one row raised LinAlgError from a one-point linear fit.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data().iloc[:200]
+
+    def test_pvt_drift_longer_than_input(self):
+        assert_all_nan(self, ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
+
+    def test_rvi_length_one_is_rejected(self):
+        # variance used to widen length=1 to its default window; since 0.9.0
+        # invalid window lengths raise instead of being replaced.
+        d = self.df.iloc[:12]
+        with self.assertRaisesRegex(ValueError, r"rvi\(\) length must be an integer > 1, got 1"):
+            ta.rvi(d.close, d.high, d.low, length=1)
+
+    def test_swma_length_one_is_the_input(self):
+        np.testing.assert_allclose(ta.swma(self.df.close, length=1).to_numpy(), self.df.close.to_numpy())
+
+    def test_symmetric_triangle_of_one(self):
+        from pandas_ta_classic.utils import symmetric_triangle
+
+        self.assertEqual(symmetric_triangle(1), [1])
+        np.testing.assert_array_equal(symmetric_triangle(1, weighted=True), np.array([1.0]))
+
+    def test_tos_stdevall_needs_two_points(self):
+        assert_all_nan(self, ta.tos_stdevall(self.df.close.iloc[:1]))
+        self.assertIsNotNone(ta.tos_stdevall(self.df.close.iloc[:2]))

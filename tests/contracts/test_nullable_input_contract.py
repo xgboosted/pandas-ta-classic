@@ -137,3 +137,24 @@ def test_narrow_float_input_matches_float64(dtype, frames):
     base = narrow.astype("float64")
     for name in INDICATORS:
         pd.testing.assert_frame_equal(_call(name, narrow), _call(name, base), obj=f"{name} {dtype}")
+
+
+# ---------------------------------------------------------------------------
+# flat bars and integer prices
+# ---------------------------------------------------------------------------
+
+
+def test_flat_bars_on_int64_prices_match_float():
+    # non_zero_range (removed in 0.9.0) downcast its epsilon to 0 on int64
+    # input; the modules that used it must read int64 flat bars like float ones.
+    o, h, l, c, v = (pd.Series(x * 5, dtype="int64") for x in ([10, 10, 11, 12, 11], [10, 12, 11, 12, 13], [10, 9, 11, 12, 10], [10, 11, 11, 12, 12], [1, 2, 3, 4, 5]))
+    as_float = [s.astype(float) for s in (o, h, l, c, v)]
+    for call in (
+        lambda o, h, l, c, v: ta.bop(o, h, l, c),
+        lambda o, h, l, c, v: ta.ad(h, l, c, v, open_=o),
+        lambda o, h, l, c, v: ta.cmf(h, l, c, v, open_=o, length=2),
+        lambda o, h, l, c, v: ta.cdl_doji(o, h, l, c, length=2),
+        lambda o, h, l, c, v: ta.stochf(h, l, c, fastk=2, fastd=2),
+        lambda o, h, l, c, v: ta.kama(c, length=2, fast=2, slow=2),
+    ):
+        pd.testing.assert_frame_equal(pd.DataFrame(call(o, h, l, c, v)), pd.DataFrame(call(*as_float)))

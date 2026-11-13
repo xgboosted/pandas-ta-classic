@@ -156,3 +156,80 @@ class TestFluentChaining(TestCase):
         self.assertIn("UP", self.df.columns)
         self.assertIn("BW", self.df.columns)
         self.assertIn("PCT", self.df.columns)
+
+
+# ---------------------------------------------------------------------------
+# Indicator chaining via append=True
+# ---------------------------------------------------------------------------
+
+
+class TestIndicatorChaining(TestCase):
+    """Multiple append=True calls build up the DataFrame incrementally."""
+
+    def setUp(self):
+        self.df = get_sample_data()
+
+    def tearDown(self):
+        del self.df
+
+    def test_single_append_adds_column(self):
+        """Appending one indicator adds at least one new column."""
+        before = len(self.df.columns)
+        self.df.ta.sma(length=10, append=True)
+        self.assertGreater(len(self.df.columns), before)
+        self.assertIn("SMA_10", self.df.columns)
+
+    def test_chain_sma_rsi_macd(self):
+        """Chaining SMA, RSI, and MACD appends all their columns."""
+        self.df.ta.sma(length=20, append=True)
+        self.df.ta.rsi(length=14, append=True)
+        self.df.ta.macd(fast=12, slow=26, signal=9, append=True)
+
+        self.assertIn("SMA_20", self.df.columns)
+        self.assertIn("RSI_14", self.df.columns)
+        macd_cols = [c for c in self.df.columns if c.startswith("MACD")]
+        self.assertGreater(len(macd_cols), 0, "No MACD columns found after append")
+
+    def test_chained_result_types(self):
+        """Each chained indicator returns a Series or DataFrame with non-NaN values."""
+        sma = self.df.ta.sma(length=10)
+        rsi = self.df.ta.rsi(length=14)
+        macd = self.df.ta.macd(fast=12, slow=26, signal=9)
+
+        self.assertIsInstance(sma, pd.Series)
+        self.assertIsInstance(rsi, pd.Series)
+        self.assertIsInstance(macd, pd.DataFrame)
+        self.assertGreater(sma.notna().sum(), 0)
+        self.assertGreater(rsi.notna().sum(), 0)
+        self.assertGreater(macd.notna().sum().sum(), 0)
+
+    def test_chained_columns_are_numeric(self):
+        """Appended indicator columns must be numeric dtype."""
+        self.df.ta.sma(length=10, append=True)
+        self.df.ta.ema(length=10, append=True)
+        for col in ("SMA_10", "EMA_10"):
+            self.assertTrue(
+                pd.api.types.is_numeric_dtype(self.df[col]),
+                f"Column '{col}' must be numeric; got {self.df[col].dtype}",
+            )
+
+    def test_chain_does_not_corrupt_ohlcv(self):
+        """Chaining indicators must not modify original OHLCV data."""
+        ohlcv_before = self.df[["open", "high", "low", "close", "volume"]].copy()
+        self.df.ta.sma(length=10, append=True)
+        self.df.ta.bbands(length=20, append=True)
+        ohlcv_after = self.df[["open", "high", "low", "close", "volume"]]
+        pd.testing.assert_frame_equal(ohlcv_before, ohlcv_after)
+
+    def test_chain_column_count_grows_monotonically(self):
+        """Column count must increase (or stay same) after every append call."""
+        counts = [len(self.df.columns)]
+        for ind_kwargs in [
+            ("sma", {"length": 10}),
+            ("ema", {"length": 20}),
+            ("rsi", {"length": 14}),
+        ]:
+            method, kwargs = ind_kwargs
+            getattr(self.df.ta, method)(**kwargs, append=True)
+            counts.append(len(self.df.columns))
+        self.assertEqual(counts, sorted(counts), "Column count must never decrease")

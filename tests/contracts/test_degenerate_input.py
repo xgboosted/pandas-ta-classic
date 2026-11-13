@@ -1102,3 +1102,10 @@ def test_stochrsi_reads_zero_where_the_rsi_only_wobbles() -> None:
     inside = k.iloc[100 + 1 + length : 140]
     assert not inside.empty
     assert (inside == 0.0).all(), f"STOCHRSIk on a flat block: {sorted(set(inside))[:5]}"
+
+
+@pytest.mark.parametrize("dtype", ["int64", "float64"])
+def test_bop_and_ad_on_flat_bars(dtype):
+    o, h, l, c, v = (pd.Series(x, dtype=dtype) for x in ([10, 10, 11], [10, 12, 11], [10, 9, 11], [10, 11, 11], [100, 200, 300]))
+    assert ta.bop(o, h, l, c).tolist() == pytest.approx([0.0, 1 / 3, 0.0])  # TA-Lib BOP
+    assert ta.ad(h, l, c, v).tolist() == pytest.approx([0.0, 200 / 3, 200 / 3])  # TA-Lib AD

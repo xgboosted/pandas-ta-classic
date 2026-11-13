@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import inspect
 import re
+from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -51,6 +52,7 @@ import pytest
 import pandas_ta_classic as ta
 from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from tests.assertions import output_columns
+from tests.config import get_sample_data
 from tests.contracts import INDICATORS, candidate_calls
 
 _N_ROWS = 250
@@ -832,3 +834,72 @@ def test_result_category_matches_the_registry(name: str, frame: dict[str, pd.Ser
     for part in _results(name, frame):
         category = getattr(part, "category", None)
         assert category == _REGISTERED_CATEGORY[name], f"{name}.category is {category!r}, registered under {_REGISTERED_CATEGORY[name]!r}"
+
+
+# ---------------------------------------------------------------------------
+# apply_fill honoured by indicators that previously ignored fillna kwarg
+# ---------------------------------------------------------------------------
+
+
+class TestApplyFillHonoured(TestCase):
+    """fillna kwarg must be respected by indicators that previously silently ignored it."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = get_sample_data()
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.df
+
+    def _assert_fillna_removes_nans(self, result, indicator_name):
+        self.assertIsNotNone(result, f"{indicator_name} returned None unexpectedly")
+        if isinstance(result, pd.DataFrame):
+            nan_count = int(result.isna().sum().sum())
+        else:
+            nan_count = int(result.isna().sum())
+        self.assertEqual(
+            nan_count,
+            0,
+            f"{indicator_name}(fillna=0) must have 0 NaN values; got {nan_count}",
+        )
+
+    def test_hl2_fillna_removes_nans(self):
+        result = ta.hl2(self.df["high"], self.df["low"], offset=5, fillna=0)
+        self._assert_fillna_removes_nans(result, "hl2")
+
+    def test_hlc3_fillna_removes_nans(self):
+        result = ta.hlc3(
+            self.df["high"],
+            self.df["low"],
+            self.df["close"],
+            talib=False,
+            offset=5,
+            fillna=0,
+        )
+        self._assert_fillna_removes_nans(result, "hlc3")
+
+    def test_avgprice_fillna_removes_nans(self):
+        result = ta.avgprice(
+            self.df["open"],
+            self.df["high"],
+            self.df["low"],
+            self.df["close"],
+            offset=5,
+            fillna=0,
+        )
+        self._assert_fillna_removes_nans(result, "avgprice")
+
+    def test_emv_fillna_removes_nans(self):
+        result = ta.emv(
+            self.df["high"],
+            self.df["low"],
+            self.df["volume"],
+            offset=5,
+            fillna=0,
+        )
+        self._assert_fillna_removes_nans(result, "emv")
+
+    def test_edecay_fillna_removes_nans(self):
+        result = ta.edecay(self.df["close"], offset=5, fillna=0)
+        self._assert_fillna_removes_nans(result, "edecay")
