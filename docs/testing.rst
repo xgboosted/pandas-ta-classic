@@ -118,15 +118,21 @@ by-design exceptions listed with their reason.
 **Run:** ``python -m pytest tests/oracle/test_oracle_registry.py -v``
 
 
-Native Indicator Tests
-----------------------
+Value Invariants
+----------------
 
-**Why:** Cover indicators that have no TA-Lib alternative, validating
-return type, non-NaN row count, value finiteness, and mathematical bounds.
+**Why:** Properties an indicator's values have on SPY_D whatever their exact
+numbers (the snapshot tests below compare those): every registered
+indicator's default call, each boolean option flipped and each optional price
+input left out has a value on the last bar (gaps by design are listed in
+``LAST_BAR_GAPS`` with their reason), an oscillator stays in its range, a
+deviation is never negative, a flag is 0 or 1, ``hl2`` lies between the low
+and the high, and ``ma()`` returns what each moving average it dispatches to
+returns.
 
-**Files:** ``test_native_values.py``.
+**Files:** ``test_value_invariants.py``.
 
-**Run:** ``python -m pytest tests/indicators/test_native_values.py -v``
+**Run:** ``python -m pytest tests/indicators/test_value_invariants.py -v``
 
 
 Regression Tests
