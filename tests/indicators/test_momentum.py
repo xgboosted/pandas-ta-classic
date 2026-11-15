@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
-from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard
+from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
 
 
@@ -62,88 +62,6 @@ class TestMomentum(TestCase):
         self.assertEqual(result.index[-1], original.index[0])
         self.assertEqual(result.index[0], original.index[-1])
 
-    def test_ao(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ao,
-                args=[self.high, self.low],
-                expected_name="AO_5_34",
-            ),
-        )
-
-    def test_apo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.apo,
-                args=[self.close],
-                expected_name="APO_12_26",
-            ),
-        )
-
-    def test_bias(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.bias,
-                args=[self.close],
-                expected_name="BIAS_SMA_26",
-            ),
-        )
-
-    def test_bop(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.bop,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="BOP",
-            ),
-        )
-
-    def test_brar(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.brar,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="BRAR_26",
-                expected_type=DataFrame,
-                expected_columns=["AR_26", "BR_26"],
-            ),
-        )
-
-    def test_cci(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cci,
-                args=[self.high, self.low, self.close],
-                expected_name="CCI_14_0.015",
-            ),
-        )
-
-    def test_cfo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cfo,
-                args=[self.close],
-                expected_name="CFO_9",
-            ),
-        )
-
-    def test_cg(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cg,
-                args=[self.close],
-                expected_name="CG_10",
-            ),
-        )
-
     def test_cmo(self):
         # The default (talib=False) is Chande's rolling sum, which TA-Lib does not implement,
         # so it is checked against that definition; the Wilder path (talib=True) is in
@@ -153,90 +71,6 @@ class TestMomentum(TestCase):
         neg = mom.clip(upper=0).abs().rolling(14).sum()
         chande = 100 * (pos - neg) / (pos + neg)
         np.testing.assert_allclose(pandas_ta.cmo(self.close, talib=False).to_numpy(), chande.to_numpy(), rtol=1e-12, atol=1e-9)
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cmo,
-                args=[self.close],
-                expected_name="CMO_14",
-            ),
-        )
-
-    def test_coppock(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.coppock,
-                args=[self.close],
-                expected_name="COPC_11_14_10",
-            ),
-        )
-
-    def test_cti(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cti,
-                args=[self.close],
-                expected_name="CTI_12",
-            ),
-        )
-
-    def test_er(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.er,
-                args=[self.close],
-                expected_name="ER_10",
-            ),
-        )
-
-    def test_dm(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.dm,
-                args=[self.high, self.low],
-                expected_name="DM_14",
-                expected_type=DataFrame,
-                expected_columns=["PLUS_DM_14", "MINUS_DM_14"],
-            ),
-        )
-
-    def test_eri(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.eri,
-                args=[self.high, self.low, self.close],
-                expected_name="ERI_13",
-                expected_type=DataFrame,
-                expected_columns=["BULLP_13", "BEARP_13"],
-            ),
-        )
-
-    def test_fisher(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.fisher,
-                args=[self.high, self.low],
-                expected_name="FISHERT_9_1",
-                expected_type=DataFrame,
-                expected_columns=["FISHERT_9_1", "FISHERTs_9_1"],
-            ),
-        )
-
-    def test_fosc(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.fosc,
-                args=[self.close],
-                expected_name="FOSC_14",
-            ),
-        )
 
     def test_inertia(self):
         result = pandas_ta.inertia(self.close, self.high, self.low, refined=True)
@@ -259,68 +93,6 @@ class TestMomentum(TestCase):
         with self.assertRaisesRegex(ValueError, "alternative modes"):
             pandas_ta.inertia(self.close, self.high, self.low, refined=True, thirds=True)
 
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.inertia,
-                args=[self.close],
-                expected_name="INERTIA_20_14",
-            ),
-        )
-
-    def test_kdj(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.kdj,
-                args=[self.high, self.low, self.close],
-                expected_name="KDJ_9_3",
-                expected_type=DataFrame,
-                expected_columns=["K_9_3", "D_9_3", "J_9_3"],
-            ),
-        )
-
-    def test_kst(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.kst,
-                args=[self.close],
-                expected_name="KST_10_15_20_30_10_10_10_15_9",
-                expected_type=DataFrame,
-                expected_columns=["KST_10_15_20_30_10_10_10_15", "KSTs_9"],
-            ),
-        )
-
-    def test_macd(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.macd,
-                args=[self.close],
-                expected_name="MACD_12_26_9",
-                expected_type=DataFrame,
-                expected_columns=["MACD_12_26_9", "MACDh_12_26_9", "MACDs_12_26_9"],
-            ),
-        )
-
-    def test_macdas(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.macd,
-                args=[self.close],
-                expected_name="MACDAS_12_26_9",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "MACDAS_12_26_9",
-                    "MACDASh_12_26_9",
-                    "MACDASs_12_26_9",
-                ],
-                kwargs={"asmode": True},
-            ),
-        )
-
     def test_macdext(self):
         # EMA-based should closely match regular MACD
         result = pandas_ta.macdext(self.close, talib=False)
@@ -337,244 +109,12 @@ class TestMomentum(TestCase):
         pandas_ta.macdext(self.close, fillna=0)
         pandas_ta.macdext(self.close, fill_method="ffill")
 
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.macdext,
-                args=[self.close],
-                expected_name="MACDEXT_12_26_9",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "MACDEXT_12_26_9",
-                    "MACDEXTs_12_26_9",
-                    "MACDEXTh_12_26_9",
-                ],
-            ),
-        )
-
     def test_macdext_unsupported_matype_raises(self):
         # KAMA/MAMA have no native path; an EMA used to be computed instead
         with self.assertRaisesRegex(ValueError, r"signalmatype=6 .*needs TA-Lib"):
             pandas_ta.macdext(self.close, signalmatype=6, talib=False)
         with self.assertRaisesRegex(ValueError, r"fastmatype=7 .*needs TA-Lib"):
             pandas_ta.macdext(self.close, fastmatype=7, talib=False)
-
-    def test_mom(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.mom,
-                args=[self.close],
-                expected_name="MOM_10",
-            ),
-        )
-
-    def test_pgo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.pgo,
-                args=[self.high, self.low, self.close],
-                expected_name="PGO_14",
-            ),
-        )
-
-    def test_ppo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ppo,
-                args=[self.close],
-                expected_name="PPO_12_26_9",
-                expected_type=DataFrame,
-                expected_columns=["PPO_12_26_9", "PPOh_12_26_9", "PPOs_12_26_9"],
-            ),
-        )
-
-    def test_psl(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.psl,
-                args=[self.close],
-                expected_name="PSL_12",
-            ),
-        )
-
-    def test_pvo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.pvo,
-                args=[self.volume],
-                expected_name="PVO_12_26_9",
-                expected_type=DataFrame,
-                expected_columns=["PVO_12_26_9", "PVOh_12_26_9", "PVOs_12_26_9"],
-            ),
-        )
-
-    def test_qqe(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.qqe,
-                args=[self.close],
-                expected_name="QQE_14_5_4.236",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "QQE_14_5_4.236",
-                    "QQE_14_5_4.236_RSIMA",
-                    "QQEl_14_5_4.236",
-                    "QQEs_14_5_4.236",
-                    "QQEb_l_14_5_4.236",
-                    "QQEb_s_14_5_4.236",
-                    "QQEd_14_5_4.236",
-                ],
-            ),
-        )
-
-    def test_roc(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.roc,
-                args=[self.close],
-                expected_name="ROC_10",
-            ),
-        )
-
-    def test_rocp(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rocp,
-                args=[self.close],
-                expected_name="ROCP_10",
-            ),
-        )
-
-    def test_rocr(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rocr,
-                args=[self.close],
-                expected_name="ROCR_10",
-            ),
-        )
-
-    def test_rocr100(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rocr100,
-                args=[self.close],
-                expected_name="ROCR100_10",
-            ),
-        )
-
-    def test_rsi(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rsi,
-                args=[self.close],
-                expected_name="RSI_14",
-            ),
-        )
-
-    def test_rsx(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rsx,
-                args=[self.close],
-                expected_name="RSX_14",
-            ),
-        )
-
-    def test_rvgi(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rvgi,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="RVGI_14_4",
-                expected_type=DataFrame,
-                expected_columns=["RVGIh_14_4", "RVGI_14_4", "RVGIs_14_4"],
-            ),
-        )
-
-    def test_slope(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.slope,
-                args=[self.close],
-                expected_name="SLOPE_1",
-            ),
-        )
-
-    def test_slope_as_angle(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.slope,
-                args=[self.close],
-                expected_name="ANGLEr_1",
-                kwargs={"as_angle": True},
-            ),
-        )
-
-    def test_slope_as_angle_to_degrees(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.slope,
-                args=[self.close],
-                expected_name="ANGLEd_1",
-                kwargs={"as_angle": True, "to_degrees": True},
-            ),
-        )
-
-    def test_smc_sweep(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.smc_sweep,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="SMC_SWEEP_15_1.5",
-            ),
-        )
-
-    def test_smi(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.smi,
-                args=[self.close],
-                expected_name="SMI_5_20_5",
-                expected_type=DataFrame,
-                expected_columns=["SMI_5_20_5", "SMIs_5_20_5", "SMIo_5_20_5"],
-            ),
-        )
-
-    def test_smi_scalar(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.smi,
-                args=[self.close],
-                expected_name="SMI_5_20_5_10",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "SMI_5_20_5_10",
-                    "SMIs_5_20_5_10",
-                    "SMIo_5_20_5_10",
-                ],
-                kwargs={"scalar": 10},
-            ),
-        )
 
     def test_squeeze(self):
         result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False)
@@ -588,22 +128,6 @@ class TestMomentum(TestCase):
         result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False, lazybear=True)
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5_LB")
-
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.squeeze,
-                args=[self.high, self.low, self.close],
-                expected_name="SQZ_20_2.0_20_1.5",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "SQZ_20_2.0_20_1.5",
-                    "SQZ_ON",
-                    "SQZ_OFF",
-                    "SQZ_NO",
-                ],
-            ),
-        )
 
     def test_squeeze_detailed(self):
         base = pandas_ta.squeeze(self.high, self.low, self.close)
@@ -656,40 +180,6 @@ class TestMomentum(TestCase):
         self.assertIsInstance(result, DataFrame)
         self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3_2.0_1")
 
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.squeeze_pro,
-                args=[self.high, self.low, self.close],
-                expected_name="SQZPRO_20_2.0_20_2_1.5_1",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "SQZPRO_20_2.0_20_2_1.5_1",
-                    "SQZPRO_ON_WIDE",
-                    "SQZPRO_ON_NORMAL",
-                    "SQZPRO_ON_NARROW",
-                    "SQZPRO_OFF",
-                    "SQZPRO_NO",
-                ],
-            ),
-        )
-
-    def test_stc(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.stc,
-                args=[self.close],
-                expected_name="STC_10_12_26_0.5",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "STC_10_12_26_0.5",
-                    "STCmacd_10_12_26_0.5",
-                    "STCstoch_10_12_26_0.5",
-                ],
-            ),
-        )
-
     def test_stc_reads_nan_until_its_windows_hold_data(self):
         # The recursion seeds 0.0 and held it through the warm-up, so STC read
         # 0.0 from bar 0 while its own MACD column was still NaN. MACD starts at
@@ -739,101 +229,6 @@ class TestMomentum(TestCase):
         with self.assertRaisesRegex(ValueError, r"^stc\(\) needs fast <= slow, got fast=26, slow=12$"):
             pandas_ta.stc(self.close, fast=26, slow=12)
 
-    def test_stoch(self):
-        # TV Correlation
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.stoch,
-                args=[self.high, self.low, self.close],
-                expected_name="STOCH_14_3_3",
-                expected_type=DataFrame,
-                expected_columns=["STOCHk_14_3_3", "STOCHd_14_3_3"],
-            ),
-        )
-
-    def test_stochf(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.stochf,
-                args=[self.high, self.low, self.close],
-                expected_name="STOCHF_5_3",
-                expected_type=DataFrame,
-                expected_columns=["STOCHFk_5_3", "STOCHFd_5_3"],
-            ),
-        )
-
-    def test_stochrsi(self):
-        # TV Correlation
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.stochrsi,
-                args=[self.close],
-                expected_name="STOCHRSI_14_14_3_3",
-                expected_type=DataFrame,
-                expected_columns=["STOCHRSIk_14_14_3_3", "STOCHRSId_14_14_3_3"],
-            ),
-        )
-
-    def test_td_seq(self):
-        """TS Sequential: Working but SLOW implementation"""
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.td_seq,
-                args=[self.close],
-                expected_name="TD_SEQ",
-                expected_type=DataFrame,
-                expected_columns=["TD_SEQ_UPa", "TD_SEQ_DNa"],
-            ),
-        )
-
-    def test_trix(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.trix,
-                args=[self.close],
-                expected_name="TRIX_30_9",
-                expected_type=DataFrame,
-                expected_columns=["TRIX_30_9", "TRIXs_30_9"],
-            ),
-        )
-
-    def test_tsi(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.tsi,
-                args=[self.close],
-                expected_name="TSI_13_25_13",
-                expected_type=DataFrame,
-                expected_columns=["TSI_13_25_13", "TSIs_13_25_13"],
-            ),
-        )
-
-    def test_uo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.uo,
-                args=[self.high, self.low, self.close],
-                expected_name="UO_7_14_28",
-            ),
-        )
-
-    def test_willr(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.willr,
-                args=[self.high, self.low, self.close],
-                expected_name="WILLR_14",
-            ),
-        )
-
     def test_willr_guards_a_zero_range(self):
         """willr was the only rolling-range divider without non_zero_range.
 
@@ -864,61 +259,12 @@ class TestMomentum(TestCase):
                 out = pandas_ta.willr(h, low_, c, length=length)
                 self.assertEqual(int(out.loc[out.first_valid_index() :].isna().sum()), 0)
 
-
     def test_lrsi_has_no_value_on_its_seed_bar(self):
         # Bar 0 seeds every Laguerre filter with the close itself, so it read 0/0 = 0.0
         # on any data; the warm-up contract skips it, as 0 is also LRSI's lower bound.
         result = pandas_ta.lrsi(self.close)
         self.assertTrue(result.isna().iloc[0])
         self.assertFalse(result.iloc[1:].isna().any())
-
-    def test_lrsi(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.lrsi,
-                args=[self.close],
-                expected_name="LRSI_14",
-            ),
-        )
-
-    def test_po(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.po,
-                args=[self.close],
-                expected_name="PO_14",
-            ),
-        )
-
-    def test_trixh(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.trixh,
-                args=[self.close],
-                expected_name="TRIXH_18_9",
-                expected_type=DataFrame,
-                expected_columns=["TRIX_18_9", "TRIXs_18_9", "TRIXh_18_9"],
-            ),
-        )
-
-    def test_vwmacd(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.vwmacd,
-                args=[self.close, self.volume],
-                expected_name="VWMACD_12_26_9",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "VWMACD_12_26_9",
-                    "VWMACDh_12_26_9",
-                    "VWMACDs_12_26_9",
-                ],
-            ),
-        )
 
 
 # ---------------------------------------------------------------------------

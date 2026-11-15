@@ -1,6 +1,4 @@
 import math
-from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import Any
 from unittest import TestCase
 
@@ -41,16 +39,6 @@ def golden_value_close(actual: float, expected: float) -> bool:
     return abs(actual - expected) <= GOLDEN_ATOL + GOLDEN_RTOL * abs(expected)
 
 
-@dataclass
-class IndicatorSpec:
-    func: Callable
-    args: list[Any]
-    expected_name: str
-    expected_type: type = Series
-    expected_columns: list[str] | None = None
-    kwargs: dict = field(default_factory=dict)
-
-
 def assert_all_nan(test_case, result, index=None):
     """Input shorter than the window yields an all-NaN Series/DataFrame, not None (issue #145, case B).
 
@@ -84,24 +72,6 @@ def assert_all_nan(test_case, result, index=None):
 # whose default rtol of 1e-5 was three orders looser than TALIB_RTOL.
 TALIB_ATOL = 1e-9
 TALIB_RTOL = 1e-8
-
-
-def assert_indicator_standard(test_case, spec: IndicatorSpec):
-    """Type, name and columns of one call. Offset, fill, a missing input and the
-    name of a changed parameter are registry-wide contracts (contracts/test_index_contract.py,
-    test_short_input_contract.py, test_parameter_name_contract.py)."""
-    result = spec.func(*spec.args, **spec.kwargs)
-    test_case.assertIsInstance(result, spec.expected_type)
-    test_case.assertEqual(result.name, spec.expected_name)
-    if spec.expected_type is DataFrame:
-        test_case.assertIsNotNone(
-            spec.expected_columns,
-            f"{spec.func.__name__}: expected_columns required for DataFrame results",
-        )
-        test_case.assertListEqual(list(result.columns), spec.expected_columns)
-    elif spec.expected_columns is not None:
-        test_case.assertListEqual(list(result.columns), spec.expected_columns)
-    return result
 
 
 def output_columns(result: Any) -> dict[str, Series]:

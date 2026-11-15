@@ -225,7 +225,7 @@ Additional workflows: `mirror.yml` syncs repository to Codeberg on every push ex
 
 **Note:** when several PRs land on `main` in quick succession, GitHub cancels a `documentation` job that is still waiting in the `pages` concurrency group, because a newer push queued its own. That is expected, not a failure: the run of the last push deploys the docs.
 
-**Note:** CDL candlestick pattern tests (`test_candle.py`, `test_accessor_candle.py`) run in `testing-core`; they need no TA-Lib.
+**Note:** CDL candlestick pattern tests (`test_candle.py`, and the pattern rows of `test_column_names.py`) run in `testing-core`; they need no TA-Lib.
 
 ## Release Process
 
@@ -255,8 +255,7 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 
 1. Create `pandas_ta_classic/<category>/<indicator>.py`
 2. Follow existing indicator template in same category
-3. Add test in appropriate `tests/indicators/test_<category>.py` or `tests/api/test_accessor_<category>.py`
-   (math has no accessor test file)
+3. Add its column names to `EXPECTED_COLUMNS` in `tests/api/test_column_names.py` (`test_every_indicator_has_a_row` fails until you do), tests of what it computes to `tests/indicators/test_<category>.py`, and a `df.ta` value case to the category's `TestExt<Category>Deeper` in `tests/api/test_accessor_<category>.py`
 4. Add entry to `docs/indicators.rst`
 5. Add a changelog fragment `changelog.d/<PR number>.added.md` describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed

@@ -6,11 +6,9 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.cycles.msw import _msw_native
-from tests.assertions import IndicatorSpec, assert_indicator_standard
 from tests.config import get_sample_data
 
 
@@ -28,80 +26,6 @@ class TestCycles(TestCase):
     @classmethod
     def tearDownClass(cls):
         del cls.open, cls.high, cls.low, cls.close, cls.volume, cls.data
-
-    def test_dsp(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.dsp,
-                args=[self.close],
-                expected_name="DSP_14",
-            ),
-        )
-
-    def test_ebsw(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ebsw,
-                args=[self.close],
-                expected_name="EBSW_40_10",
-            ),
-        )
-
-    def test_ht_dcperiod(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_dcperiod,
-                args=[self.close],
-                expected_name="HT_DCPERIOD",
-            ),
-        )
-
-    def test_ht_dcphase(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_dcphase,
-                args=[self.close],
-                expected_name="HT_DCPHASE",
-            ),
-        )
-
-    def test_ht_phasor(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_phasor,
-                args=[self.close],
-                expected_name="HT_PHASOR",
-                expected_type=DataFrame,
-                expected_columns=["HT_PHASOR_INPHASE", "HT_PHASOR_QUAD"],
-            ),
-        )
-
-    def test_ht_sine(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_sine,
-                args=[self.close],
-                expected_name="HT_SINE",
-                expected_type=DataFrame,
-                expected_columns=["HT_SINE", "HT_LEADSINE"],
-            ),
-        )
-
-    def test_ht_trendmode(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_trendmode,
-                args=[self.close],
-                expected_name="HT_TRENDMODE",
-            ),
-        )
 
     def test_ht_indicators_propagate_an_interior_nan(self):
         """TA-Lib requires NaN-free input; the ports emit NaN instead of crashing.
@@ -139,17 +63,6 @@ class TestCycles(TestCase):
     def test_msw(self):
         result = pandas_ta.msw(self.close, period=10)
         self.assertIsNotNone(result)
-
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.msw,
-                args=[self.close],
-                expected_name="MSW_5",
-                expected_type=DataFrame,
-                expected_columns=["MSW_SINE_5", "MSW_LEAD_5"],
-            ),
-        )
 
     def test_msw_window_with_a_missing_bar_is_nan_on_both_paths(self):
         # The DFT sums turn NaN, `abs(rp) > 0.001` reads False and the fallback set a

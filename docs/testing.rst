@@ -23,35 +23,37 @@ Unit Tests
 **Why:** Verify individual indicators produce correct values for known inputs.
 
 **Files:** ``test_candle.py``, ``test_cycles.py``,
-``test_momentum.py``, ``test_overlap.py``,
-``test_performance.py``, ``test_statistics.py``,
+``test_momentum.py``, ``test_overlap.py``, ``test_statistics.py``,
 ``test_trend.py``, ``test_volatility.py``,
 ``test_volume.py``, ``test_math.py``.
 
-Uses ``IndicatorSpec``-based assertions (``assert_indicator_standard``:
-type, name and columns of a call) against real market data from
-``SPY_D.csv``. ``offset``, ``fillna``, a missing input and the name of a
-changed parameter are checked registry-wide by the contracts below.
+What an indicator computes, mostly on ``SPY_D.csv``: its definition, its edge
+cases and the bugs it had. The column names are in ``test_column_names.py``
+(below); ``offset``, ``fillna``, a missing input and the name of a changed
+parameter are checked registry-wide by the contracts below.
 
 **Run:** ``python -m unittest tests.indicators.test_momentum -v``
 
 
-Extension API Tests
--------------------
+Column Names and Extension API Tests
+------------------------------------
 
-**Why:** Confirm indicators work correctly through the ``df.ta`` DataFrame
-accessor with ``append=True``.
+**Why:** A column name is public API, and every indicator must work through
+the ``df.ta`` DataFrame accessor with ``append=True``.
 
-**Files:** ``test_accessor_candle.py``, ``test_accessor_cycles.py``,
+**Files:** ``test_column_names.py`` holds one hardcoded table,
+``EXPECTED_COLUMNS``: the name and columns of each indicator's default call
+and of the options that change them. Each row is checked for the function and
+for ``df.ta``, which must append exactly those columns; a new indicator fails
+``test_every_indicator_has_a_row`` until it has one. ``test_accessor_cycles.py``,
 ``test_accessor_momentum.py``, ``test_accessor_overlap.py``,
 ``test_accessor_performance.py``, ``test_accessor_statistics.py``,
-``test_accessor_trend.py``, ``test_accessor_volatility.py``,
-``test_accessor_volume.py``. Besides the column name, each category's
-``TestExt<Category>Deeper`` class checks that the appended column has valid
-rows and a finite last value (base class ``AccessorValueCase`` in
-``tests/assertions.py``).
+``test_accessor_trend.py``, ``test_accessor_volatility.py`` and
+``test_accessor_volume.py`` keep each category's ``TestExt<Category>Deeper``
+class, which checks that the appended column has valid rows and a finite last
+value (base class ``AccessorValueCase`` in ``tests/assertions.py``).
 
-**Run:** ``python -m pytest tests/api/test_accessor_momentum.py -v``
+**Run:** ``python -m pytest tests/api/test_column_names.py -v``
 
 
 Accessor API Tests

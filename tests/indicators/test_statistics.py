@@ -2,13 +2,11 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas import Series
 
 import pandas_ta_classic as pandas_ta
 from tests.assertions import (
-    IndicatorSpec,
     assert_all_nan,
-    assert_indicator_standard,
 )
 from tests.config import get_sample_data
 
@@ -28,28 +26,6 @@ class TestStatistics(TestCase):
     def tearDownClass(cls):
         del cls.open, cls.high, cls.low, cls.close, cls.volume, cls.data
 
-    def test_beta(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.beta,
-                args=[self.close],
-                expected_name="BETA_30",
-                kwargs={"benchmark": self.high},
-            ),
-        )
-
-    def test_correl(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.correl,
-                args=[self.close],
-                expected_name="CORREL_30",
-                kwargs={"benchmark": self.high},
-            ),
-        )
-
     def test_beta_and_correl_require_a_benchmark(self):
         """Omitting it used to return None, like an ordinary short input.
 
@@ -68,36 +44,6 @@ class TestStatistics(TestCase):
                 self.assertIsInstance(short, Series)
                 self.assertTrue(short.isna().all())
 
-    def test_entropy(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.entropy,
-                args=[self.close],
-                expected_name="ENTP_10",
-            ),
-        )
-
-    def test_kurtosis(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.kurtosis,
-                args=[self.close],
-                expected_name="KURT_30",
-            ),
-        )
-
-    def test_mad(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.mad,
-                args=[self.close],
-                expected_name="MAD_30",
-            ),
-        )
-
     def test_mad_min_periods(self):
         # The min_periods branch uses the mean (not the median): for the partial
         # window [1, 1, 1, 10] the mean is 3.25 and MAD = 3.375, while a median
@@ -107,86 +53,7 @@ class TestStatistics(TestCase):
         result = pandas_ta.mad(close, length=5, min_periods=2)
         self.assertAlmostEqual(result.iloc[3], 3.375)
 
-    def test_md(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.md,
-                args=[self.close],
-                expected_name="MD_30",
-            ),
-        )
-
-    def test_median(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.median,
-                args=[self.close],
-                expected_name="MEDIAN_30",
-            ),
-        )
-
-    def test_quantile(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.quantile,
-                args=[self.close],
-                expected_name="QTL_30_0.5",
-            ),
-        )
-
-    def test_skew(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.skew,
-                args=[self.close],
-                expected_name="SKEW_30",
-            ),
-        )
-
-    def test_stderr(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.stderr,
-                args=[self.close],
-                expected_name="STDERR_14",
-            ),
-        )
-
-    def test_stdev(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.stdev,
-                args=[self.close],
-                expected_name="STDEV_30",
-                kwargs={"talib": False},
-            ),
-        )
-
     def test_tos_stdevall(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.tos_stdevall,
-                args=[self.close],
-                expected_name="TOS_STDEVALL",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "TOS_STDEVALL_LR",
-                    "TOS_STDEVALL_L_1",
-                    "TOS_STDEVALL_U_1",
-                    "TOS_STDEVALL_L_2",
-                    "TOS_STDEVALL_U_2",
-                    "TOS_STDEVALL_L_3",
-                    "TOS_STDEVALL_U_3",
-                ],
-            ),
-        )
         # length defaults to None (the whole series), which test_parameter_name_contract.py does not sweep
         self.assertEqual(pandas_ta.tos_stdevall(self.close, length=30).name, "TOS_STDEVALL_30")
         # stds unsorted → auto-reversed and still computes
@@ -196,27 +63,6 @@ class TestStatistics(TestCase):
             pandas_ta.tos_stdevall(self.close, stds=[0, 1, 2])
         # length larger than data → verify_series returns None → return None
         assert_all_nan(self, pandas_ta.tos_stdevall(self.close.iloc[:5], length=30))
-
-    def test_variance(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.variance,
-                args=[self.close],
-                expected_name="VAR_30",
-                kwargs={"talib": False},
-            ),
-        )
-
-    def test_zscore(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.zscore,
-                args=[self.close],
-                expected_name="ZS_30",
-            ),
-        )
 
     def test_zscore_ddof(self):
         """ddof used to be missing, so cdl_z's forwarded value was dropped.

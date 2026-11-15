@@ -23,80 +23,6 @@ class TestTrendExtension(TestCase):
     def tearDown(self):
         pass
 
-    def test_adx_ext(self):
-        self.data.ta.adx(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-3:]), ["ADX_14", "DMP_14", "DMN_14"])
-
-    def test_amat_ext(self):
-        self.data.ta.amat(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["AMATe_LR_8_21_2", "AMATe_SR_8_21_2"])
-
-    def test_aroon_ext(self):
-        self.data.ta.aroon(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-3:]), ["AROOND_14", "AROONU_14", "AROONOSC_14"])
-
-    def test_chop_ext(self):
-        self.data.ta.chop(append=True, ln=False)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "CHOP_14_1_100")
-
-        self.data.ta.chop(append=True, ln=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "CHOPln_14_1_100")
-
-    def test_cksp_ext(self):
-        self.data.ta.cksp(tvmode=False, append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_3_20", "CKSPs_10_3_20"])
-
-    def test_cksp_tv_ext(self):
-        self.data.ta.cksp(tvmode=True, append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["CKSPl_10_1_9", "CKSPs_10_1_9"])
-
-    def test_cpr_ext(self):
-        # Regression: the generic accessor maps the open_ param to the 'open'
-        # column. A bare 'open' param made df.ta.cpr() silently return the
-        # unchanged input frame instead of computing CPR.
-        result = self.data.ta.cpr()
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_PIVOT", result.columns)
-
-    def test_decay_ext(self):
-        self.data.ta.decay(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "LDECAY_5")
-
-        self.data.ta.decay(mode="exp", append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "EXPDECAY_5")
-
-    def test_decreasing_ext(self):
-        self.data.ta.decreasing(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "DEC_1")
-
-        self.data.ta.decreasing(length=3, strict=True, append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "SDEC_3")
-
-    def test_dpo_ext(self):
-        self.data.ta.dpo(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "DPO_20")
-
-    def test_increasing_ext(self):
-        self.data.ta.increasing(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "INC_1")
-
-        self.data.ta.increasing(length=3, strict=True, append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "SINC_3")
-
     def test_long_run_ext(self):
         # Without fast/slow Series the indicator cannot compute. It used to
         # return None, which named nothing; the accessor now says which
@@ -110,19 +36,6 @@ class TestTrendExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "LR_2")
 
-    def test_psar_ext(self):
-        self.data.ta.psar(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(
-            list(self.data.columns[-4:]),
-            ["PSARl_0.02_0.2", "PSARs_0.02_0.2", "PSARaf_0.02_0.2", "PSARr_0.02_0.2"],
-        )
-
-    def test_qstick_ext(self):
-        self.data.ta.qstick(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "QS_10")
-
     def test_short_run_ext(self):
         # See test_long_run_ext: the accessor names the missing arguments.
         with self.assertRaisesRegex(ValueError, r"df\.ta\.short_run\(\) requires 'fast', 'slow'"):
@@ -134,74 +47,8 @@ class TestTrendExtension(TestCase):
         self.assertIsInstance(self.data, DataFrame)
         self.assertEqual(self.data.columns[-1], "SR_2")
 
-    def test_ttm_trend_ext(self):
-        self.data.ta.ttm_trend(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-1:]), ["TTM_TRND_6"])
-
-    def test_vortext_ext(self):
-        self.data.ta.vortex(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(list(self.data.columns[-2:]), ["VTXP_14", "VTXM_14"])
-
-    def test_pmax_ext(self):
-        self.data.ta.pmax(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "PMAX_E_10_3.0")
-
-    def test_tsignals_ext(self):
-        trend = (self.data.ta.sma(length=10) - self.data.ta.sma(length=20) > 0).astype(int)
-        result = self.data.ta.tsignals(trend)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
-
-    def test_xsignals_ext(self):
-        signal = self.data.ta.rsi()
-        result = self.data.ta.xsignals(signal, xa=70, xb=30)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(list(result.columns), ["TS_Trends", "TS_Trades", "TS_Entries", "TS_Exits"])
-
-    def test_adxr_ext(self):
-        # A frame of its own: on the shared one, test_adx_ext has already appended
-        # DMP_14/DMN_14, so append=True overwrote them in place and ADXR_14 came
-        # last only when the tests ran in file order.
-        data = get_sample_data()
-        data.ta.adxr(append=True)
-        self.assertEqual(list(data.columns[-3:]), ["ADXR_14", "DMP_14", "DMN_14"])
-
-    def test_dx_ext(self):
-        self.data.ta.dx(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "DX_14")
-
-    def test_edecay_ext(self):
-        self.data.ta.edecay(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "EDECAY_5")
-
-    def test_minus_dm_ext(self):
-        self.data.ta.minus_dm(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "MINUS_DM_14")
-
-    def test_plus_dm_ext(self):
-        self.data.ta.plus_dm(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "PLUS_DM_14")
-
-    def test_sarext_ext(self):
-        self.data.ta.sarext(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "SAREXT")
-
-    def test_vhf_ext(self):
-        self.data.ta.vhf(append=True)
-        self.assertIsInstance(self.data, DataFrame)
-        self.assertEqual(self.data.columns[-1], "VHF_28")
-
 
 class TestExtTrendDeeper(AccessorValueCase):
-
     def test_adx_ext(self):
         df = self.fresh()
         df.ta.adx(append=True)

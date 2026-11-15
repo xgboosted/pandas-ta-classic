@@ -8,7 +8,6 @@ import pandas as pd
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
-from tests.assertions import IndicatorSpec, assert_indicator_standard
 from tests.config import get_sample_data
 
 
@@ -39,128 +38,6 @@ class TestOverlap(TestCase):
 
     def tearDown(self):
         pass
-
-    def test_alma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.alma,
-                args=[self.close],
-                expected_name="ALMA_10_6.0_0.85",
-            ),
-        )
-
-    def test_dema(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.dema,
-                args=[self.close],
-                expected_name="DEMA_10",
-            ),
-        )
-
-    def test_ema(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ema,
-                args=[self.close],
-                expected_name="EMA_10",
-            ),
-        )
-
-    def test_fwma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.fwma,
-                args=[self.close],
-                expected_name="FWMA_10",
-            ),
-        )
-
-    def test_hilo(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.hilo,
-                args=[self.high, self.low, self.close],
-                expected_name="HILO_13_21",
-                expected_type=DataFrame,
-                expected_columns=["HILO_13_21", "HILOl_13_21", "HILOs_13_21"],
-            ),
-        )
-
-    def test_hl2(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.hl2,
-                args=[self.high, self.low],
-                expected_name="HL2",
-            ),
-        )
-
-    def test_hlc3(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.hlc3,
-                args=[self.high, self.low, self.close],
-                expected_name="HLC3",
-            ),
-        )
-
-    def test_hma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.hma,
-                args=[self.close],
-                expected_name="HMA_10",
-            ),
-        )
-
-    def test_ht_trendline(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_trendline,
-                args=[self.close],
-                expected_name="HT_TRENDLINE",
-            ),
-        )
-
-    def test_hwma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.hwma,
-                args=[self.close],
-                expected_name="HWMA_0.2_0.1_0.1",
-            ),
-        )
-
-    def test_kama(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.kama,
-                args=[self.close],
-                expected_name="KAMA_10_2_30",
-            ),
-        )
-
-    def test_jma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.jma,
-                args=[self.close],
-                expected_name="JMA_7_0",
-            ),
-        )
 
     def test_ichimoku(self):
         # Default append_span=False: visible period only, no future-dated rows.
@@ -199,60 +76,6 @@ class TestOverlap(TestCase):
             with self.assertRaisesRegex(TypeError, "no longer accepts 'as_dataframe'"):
                 pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=value)
 
-    def test_linreg(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.linreg,
-                args=[self.close],
-                expected_name="LR_14",
-            ),
-        )
-
-    def test_linreg_angle(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.linreg,
-                args=[self.close],
-                expected_name="LRa_14",
-                kwargs={"angle": True},
-            ),
-        )
-
-    def test_linreg_intercept(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.linreg,
-                args=[self.close],
-                expected_name="LRb_14",
-                kwargs={"intercept": True},
-            ),
-        )
-
-    def test_linreg_r(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.linreg,
-                args=[self.close],
-                expected_name="LRr_14",
-                kwargs={"r": True},
-            ),
-        )
-
-    def test_linreg_slope(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.linreg,
-                args=[self.close],
-                expected_name="LRm_14",
-                kwargs={"slope": True},
-            ),
-        )
-
     def test_ma(self):
         result = pandas_ta.ma()
         self.assertIsInstance(result, list)
@@ -266,34 +89,11 @@ class TestOverlap(TestCase):
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "FWMA_15")
 
-    def test_mama(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.mama,
-                args=[self.close],
-                expected_name="MAMA_0.5_0.05",
-                expected_type=DataFrame,
-                expected_columns=["MAMA_0.5_0.05", "FAMA_0.5_0.05"],
-            ),
-        )
-
     def _mavp_periods(self):
         """A per-bar window schedule; mavp has no default for this."""
         cycle = [5, 10, 20]
         values = [cycle[i % len(cycle)] for i in range(len(self.close))]
         return Series(values, index=self.close.index, dtype=float)
-
-    def test_mavp(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.mavp,
-                args=[self.close],
-                kwargs={"periods": self._mavp_periods()},
-                expected_name="MAVP_2_30",
-            ),
-        )
 
     def test_mavp_requires_periods(self):
         """`periods` has no causal default, so it is a required argument."""
@@ -310,86 +110,6 @@ class TestOverlap(TestCase):
         with self.assertRaisesRegex(ValueError, r"mavp\(\) mamode=1 needs TA-Lib"):
             pandas_ta.mavp(self.close, periods=self._mavp_periods(), mamode=1, talib=False)
 
-    def test_mcgd(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.mcgd,
-                args=[self.close],
-                expected_name="MCGD_10",
-            ),
-        )
-
-    def test_midpoint(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.midpoint,
-                args=[self.close],
-                expected_name="MIDPOINT_2",
-            ),
-        )
-
-    def test_midprice(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.midprice,
-                args=[self.high, self.low],
-                expected_name="MIDPRICE_2",
-            ),
-        )
-
-    def test_ohlc4(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ohlc4,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="OHLC4",
-            ),
-        )
-
-    def test_pwma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.pwma,
-                args=[self.close],
-                expected_name="PWMA_10",
-            ),
-        )
-
-    def test_rma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rma,
-                args=[self.close],
-                expected_name="RMA_10",
-            ),
-        )
-
-    def test_sinwma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.sinwma,
-                args=[self.close],
-                expected_name="SINWMA_14",
-            ),
-        )
-
-    def test_sma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.sma,
-                args=[self.close],
-                expected_name="SMA_10",
-            ),
-        )
-
     def test_ssf(self):
         result = pandas_ta.ssf(self.close, poles=2)
         self.assertIsInstance(result, Series)
@@ -397,122 +117,6 @@ class TestOverlap(TestCase):
         result = pandas_ta.ssf(self.close, poles=3)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "SSF_10_3")
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ssf,
-                args=[self.close],
-                expected_name="SSF_10_2",
-                kwargs={"poles": 2},
-            ),
-        )
-
-    def test_swma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.swma,
-                args=[self.close],
-                expected_name="SWMA_10",
-            ),
-        )
-
-    def test_supertrend(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.supertrend,
-                args=[self.high, self.low, self.close],
-                expected_name="SUPERT_7_3.0",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "SUPERT_7_3.0",
-                    "SUPERTd_7_3.0",
-                    "SUPERTl_7_3.0",
-                    "SUPERTs_7_3.0",
-                ],
-            ),
-        )
-
-    def test_t3(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.t3,
-                args=[self.close],
-                expected_name="T3_10_0.7",
-            ),
-        )
-
-    def test_tema(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.tema,
-                args=[self.close],
-                expected_name="TEMA_10",
-            ),
-        )
-
-    def test_trima(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.trima,
-                args=[self.close],
-                expected_name="TRIMA_10",
-            ),
-        )
-
-    def test_tsf(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.tsf,
-                args=[self.close],
-                expected_name="TSF_14",
-            ),
-        )
-
-    def test_vidya(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.vidya,
-                args=[self.close],
-                expected_name="VIDYA_14",
-            ),
-        )
-
-    def test_vwap(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.vwap,
-                args=[self.high, self.low, self.close, self.volume],
-                expected_name="VWAP_D",
-            ),
-        )
-
-    def test_vwma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.vwma,
-                args=[self.close, self.volume],
-                expected_name="VWMA_10",
-            ),
-        )
-
-    def test_wcp(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.wcp,
-                args=[self.high, self.low, self.close],
-                expected_name="WCP",
-            ),
-        )
 
     def test_weighted_ma_asc(self):
         """asc=False was forced back to True, so it returned the ascending result."""
@@ -542,68 +146,6 @@ class TestOverlap(TestCase):
                 self.assertNotIn("asc", inspect.signature(fn).parameters)
                 with self.assertRaisesRegex(TypeError, rf"^{name}\(\) got an unexpected keyword argument 'asc'$"):
                     fn(close, 10, asc=False)
-
-    def test_wma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.wma,
-                args=[self.close],
-                expected_name="WMA_10",
-            ),
-        )
-
-    def test_zlma(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.zlma,
-                args=[self.close],
-                expected_name="ZL_EMA_10",
-            ),
-        )
-
-    def test_mmar(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.mmar,
-                args=[self.close],
-                expected_name="MMAR_10_5_6",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "MMAR_10",
-                    "MMAR_15",
-                    "MMAR_20",
-                    "MMAR_25",
-                    "MMAR_30",
-                    "MMAR_35",
-                ],
-            ),
-        )
-
-    def test_rainbow(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.rainbow,
-                args=[self.close],
-                expected_name="RAINBOW_2_10",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "RAINBOW_1",
-                    "RAINBOW_2",
-                    "RAINBOW_3",
-                    "RAINBOW_4",
-                    "RAINBOW_5",
-                    "RAINBOW_6",
-                    "RAINBOW_7",
-                    "RAINBOW_8",
-                    "RAINBOW_9",
-                    "RAINBOW_10",
-                ],
-            ),
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -923,5 +465,3 @@ class TestWilderSeeding(TestCase):
         tr = pandas_ta.true_range(h, low, c)
         self.assertTrue(tr.iloc[:21].isna().all())
         self.assertTrue(np.isfinite(tr.iloc[21]))
-
-

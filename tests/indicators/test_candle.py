@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.candles._cdl_math import CANDLE_DEFAULTS, CandleArrays, CandleSetting, RangeType, candle_average, candle_avg_period
-from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard
+from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
 
 try:
@@ -57,18 +57,6 @@ class TestCandle(TestCase):
                 with self.subTest(func=func.__name__, **scalar):
                     self.assertEqual(func(self.open, self.high, self.low, self.close, **scalar).dtype, "float64")
 
-    def test_ha(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ha,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="Heikin-Ashi",
-                expected_type=DataFrame,
-                expected_columns=["HA_open", "HA_high", "HA_low", "HA_close"],
-            ),
-        )
-
     def test_cdl_pattern(self):
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
         self.assertIsInstance(result, DataFrame)
@@ -102,48 +90,10 @@ class TestCandle(TestCase):
         self.assertEqual(len(ALL_PATTERNS), len(set(ALL_PATTERNS)))
         self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
 
-    def test_cdl_doji(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cdl_doji,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CDL_DOJI_10_0.1",
-                expected_type=Series,
-            ),
-        )
-
     def test_cdl_inside(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cdl_inside,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CDL_INSIDE",
-                expected_type=Series,
-            ),
-        )
-
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close, asbool=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_INSIDE")
-
-    def test_cdl_z(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cdl_z,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CDL_Z_30_1",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "open_Z_30_1",
-                    "high_Z_30_1",
-                    "low_Z_30_1",
-                    "close_Z_30_1",
-                ],
-            ),
-        )
 
     def test_cdl_z_ddof_changes_the_values(self):
         """ddof was validated and named the columns but had no numeric effect.
