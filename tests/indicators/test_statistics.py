@@ -2,6 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas import Series
 
 import pandas_ta_classic as pandas_ta
@@ -202,3 +203,45 @@ def test_stdev_forwards_min_periods():
     got = pandas_ta.stdev(x, 5, min_periods=3)
     np.testing.assert_allclose(got, x.rolling(5, min_periods=3).std(ddof=0), equal_nan=True)
     assert np.isfinite(got.iloc[2])
+
+
+# ---------------------------------------------------------------------------
+# higuchi_fd: the reference values of Higuchi (1988)
+# ---------------------------------------------------------------------------
+
+
+def test_higuchi_fd_reference_curves():
+    rng = np.random.default_rng(7)
+    line = pandas_ta.higuchi_fd(Series(np.arange(200.0)), length=100, kmax=8)
+    np.testing.assert_allclose(line.dropna(), 1.0, atol=1e-9)
+    walk = pandas_ta.higuchi_fd(Series(np.cumsum(rng.standard_normal(4000))), length=200, kmax=8)
+    assert abs(walk.mean() - 1.5) < 0.03
+    noise = pandas_ta.higuchi_fd(Series(rng.standard_normal(4000)), length=200, kmax=8)
+    assert abs(noise.mean() - 2.0) < 0.03
+
+
+def test_higuchi_fd_ignores_price_level_and_scale():
+    close = get_sample_data()["close"]
+    base = pandas_ta.higuchi_fd(close)
+    np.testing.assert_allclose(pandas_ta.higuchi_fd(close * 3.0 - 500.0), base, rtol=1e-9, equal_nan=True)
+
+
+def test_higuchi_fd_flat_window_is_a_line():
+    close = Series([1.0, 2.0, 1.5, 3.0] + [5.0] * 12)
+    got = pandas_ta.higuchi_fd(close, length=8, kmax=3)
+    assert np.isfinite(got.iloc[7:11]).all()
+    np.testing.assert_array_equal(got.iloc[11:], 1.0)
+
+
+def test_higuchi_fd_zero_length_at_some_delays_reads_nan():
+    # A 2-cycle returns to the same value every second bar: L(2) = 0 while L(1) > 0.
+    got = pandas_ta.higuchi_fd(Series([1.0, 2.0] * 10), length=8, kmax=3)
+    assert got.isna().all()
+
+
+def test_higuchi_fd_needs_two_kmax_bars_per_window():
+    close = Series(np.arange(50.0))
+    with pytest.raises(ValueError, match=r"higuchi_fd\(\) needs length >= 2 \* kmax"):
+        pandas_ta.higuchi_fd(close, length=9, kmax=5)
+    with pytest.raises(ValueError, match="kmax"):
+        pandas_ta.higuchi_fd(close, kmax=1)

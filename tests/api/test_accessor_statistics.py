@@ -10,6 +10,13 @@ class TestExtStatisticsDeeper(AccessorValueCase):
         valid = df["ENTP_10"].dropna()
         self.assertTrue((valid >= 0).all(), "Entropy has negative values")
 
+    def test_higuchi_fd_ext(self):
+        df = self.fresh()
+        df.ta.higuchi_fd(append=True)
+        self._check_appended(df, "HFD_30_5")
+        valid = df["HFD_30_5"].dropna()
+        self.assertTrue(((valid > 0.5) & (valid < 2.5)).all(), "Higuchi dimension far outside [1, 2]")
+
     def test_kurtosis_ext(self):
         df = self.fresh()
         df.ta.kurtosis(append=True)

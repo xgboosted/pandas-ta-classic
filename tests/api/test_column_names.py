@@ -262,6 +262,7 @@ EXPECTED_COLUMNS: list[tuple[str, dict, str, list[str] | None]] = [
     ('beta', {}, 'BETA_30', None),
     ('correl', {}, 'CORREL_30', None),
     ('entropy', {}, 'ENTP_10', None),
+    ('higuchi_fd', {}, 'HFD_30_5', None),
     ('kurtosis', {}, 'KURT_30', None),
     ('mad', {}, 'MAD_30', None),
     ('md', {}, 'MD_30', None),

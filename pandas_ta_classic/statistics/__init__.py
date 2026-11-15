@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .beta import beta as beta
     from .correl import correl as correl
     from .entropy import entropy as entropy
+    from .higuchi_fd import higuchi_fd as higuchi_fd
     from .kurtosis import kurtosis as kurtosis
     from .mad import mad as mad
     from .md import md as md

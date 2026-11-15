@@ -20,7 +20,7 @@
 
 ![Example Chart](https://raw.githubusercontent.com/xgboosted/pandas-ta-classic/main/docs/images/TA_Chart.png)
 
-> **Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **224 indicators and utility functions** and **62 native candlestick patterns** (**284 total unique** — no TA-Lib required). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
+> **Pandas TA Classic** is an easy-to-use library that leverages the Pandas package with **225 indicators and utility functions** and **62 native candlestick patterns** (**285 total unique** — no TA-Lib required). Many commonly used indicators are included, such as: _Simple Moving Average_ (**sma**), _Moving Average Convergence Divergence_ (**macd**), _Hull Exponential Moving Average_ (**hma**), _Bollinger Bands_ (**bbands**), _On-Balance Volume_ (**obv**), _Aroon & Aroon Oscillator_ (**aroon**), _Squeeze_ (**squeeze**) and **many more**.
 
 This is the **classic/community maintained version** of the popular pandas-ta library.
 
@@ -45,7 +45,7 @@ This is the **classic/community maintained version** of the popular pandas-ta li
 
 ### Key Features
 
-- **284 Unique Indicators & Patterns**: 224 Category indicators + 62 CDL patterns via `cdl_pattern()` = 284 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
+- **285 Unique Indicators & Patterns**: 225 Category indicators + 62 CDL patterns via `cdl_pattern()` = 285 unique (doji and inside appear in both counts; all CDL patterns use native Python — no TA-Lib required)
 - **All-Native Candlestick Patterns**: All 62 CDL patterns have native Python implementations — TA-Lib is never used for CDL patterns
 - **Optional TA-Lib Acceleration**: Core indicators (EMA, SMA, RSI, MACD, OBV, ATR, etc.) use native implementations by default; pass `talib=True` to use TA-Lib
 - **Compatibility Scope Is Explicit**: Not every TA-Lib/tulipy function has a pandas-ta-classic counterpart. See the full per-indicator matrix for current coverage: `docs/indicator_support_matrix.rst`
@@ -149,9 +149,9 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 
 ## Features
 
-- **224 Technical Indicators & Utilities** across 10 categories (Candles, Cycles, Math, Momentum, Overlap, Trend, Volume, etc.)
+- **225 Technical Indicators & Utilities** across 10 categories (Candles, Cycles, Math, Momentum, Overlap, Trend, Volume, etc.)
 - **62 Native Candlestick Patterns** — all patterns natively implemented, no TA-Lib required
-- **284 Unique Indicators & Patterns** - 224 category indicators plus 62 CDL patterns via `cdl_pattern()`
+- **285 Unique Indicators & Patterns** - 225 category indicators plus 62 CDL patterns via `cdl_pattern()`
 - **Dynamic Category Discovery** - automatically detects all available indicators from the filesystem
 - **Optional Numba Acceleration** - 6–200× faster recursive indicators on long series via `pip install pandas-ta-classic[performance]`
 - **Strategy System** for bulk indicator processing, with opt-in multiprocessing
@@ -179,7 +179,7 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 **Reference Documentation:**
 - [**Usage Guide**](https://xgboosted.github.io/pandas-ta-classic/usage.html) - Programming conventions and basic usage
 - [**Strategy System**](https://xgboosted.github.io/pandas-ta-classic/strategies.html) - Bulk indicator processing, with opt-in multiprocessing 
-- [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of 224 indicators plus 62 CDL patterns (284 unique total)
+- [**Indicators Reference**](https://xgboosted.github.io/pandas-ta-classic/indicators.html) - Complete list of 225 indicators plus 62 CDL patterns (285 unique total)
 - [**DataFrame API**](https://xgboosted.github.io/pandas-ta-classic/dataframe_api.html) - Properties and methods reference
 - [**Performance Metrics**](https://xgboosted.github.io/pandas-ta-classic/performance.html) - Backtesting and performance analysis
 

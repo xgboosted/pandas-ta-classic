@@ -176,3 +176,11 @@ def test_vfi(spy):
     np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
     _close(got, expected, 1e-9)
     assert np.count_nonzero(got[np.isfinite(got)]) > 4000
+
+
+@pytest.mark.parametrize("length, kmax", [(30, 5), (64, 8)])
+def test_higuchi_fd(spy, length, kmax):
+    got = ta.higuchi_fd(spy.close, length=length, kmax=kmax).to_numpy(float)
+    expected = ref.higuchi_fd(spy.close.to_numpy(float), length=length, kmax=kmax)
+    np.testing.assert_array_equal(np.isnan(got), np.isnan(expected))
+    _close(got, expected, 1e-10)

@@ -117,6 +117,7 @@ RETURNS_ALL_NAN = frozenset(
         "fisher",
         "fosc",
         "fwma",
+        "higuchi_fd",
         "hilo",
         "hma",
         "hvol",

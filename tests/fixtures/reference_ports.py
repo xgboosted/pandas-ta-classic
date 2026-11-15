@@ -284,3 +284,32 @@ def vfi(h, l, c, v, length=130, coef=0.2, vcoef=2.5):
         mf = tp[i] - tp[i - 1]
         vcp[i] = vc if mf > cutoff else -vc if mf < -cutoff else 0.0
     return ema(rolling(vcp, length, np.sum) / vave, 3)
+
+
+def higuchi_fd(c, length=30, kmax=5):
+    """Higuchi fractal dimension (Higuchi 1988, Physica D 31, eq. 1-2) of each window of `length` closes, with
+    1-based offsets m as in the paper; the slope of ln L(k) on ln(1 / k) by the textbook least-squares formula.
+    A flat window (every L(k) = 0) is a straight line, D = 1."""
+    out = np.full(len(c), np.nan)
+    for end in range(length, len(c) + 1):
+        x = c[end - length : end]
+        lk, xs = [], []
+        for k in range(1, kmax + 1):
+            lm = []
+            for m in range(1, k + 1):
+                steps = (length - m) // k
+                total = 0.0
+                for j in range(1, steps + 1):
+                    total += abs(x[m + j * k - 1] - x[m + (j - 1) * k - 1])
+                lm.append(total * (length - 1) / (steps * k) / k)
+            lk.append(np.mean(lm))
+            xs.append(np.log(1.0 / k))
+        if all(v == 0 for v in lk):
+            out[end - 1] = 1.0
+            continue
+        if any(v == 0 for v in lk):
+            continue
+        lk = [np.log(v) for v in lk]
+        mx, my = np.mean(xs), np.mean(lk)
+        out[end - 1] = sum((a - mx) * (b - my) for a, b in zip(xs, lk)) / sum((a - mx) ** 2 for a in xs)
+    return out

@@ -383,6 +383,11 @@ Legend: ``yes`` = indicator has corresponding implementation in that library by 
      - yes
      - no
      - no
+   * - higuchi_fd
+     - statistics
+     - yes
+     - no
+     - no
    * - kurtosis
      - statistics
      - yes
