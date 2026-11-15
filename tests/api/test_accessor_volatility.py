@@ -7,18 +7,18 @@ class TestExtVolatilityDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.atr(append=True)
         atr_cols = [c for c in df.columns if c.startswith("ATR")]
-        self.assertTrue(len(atr_cols) >= 1, "No ATR column appended")
+        assert (len(atr_cols) >= 1), "No ATR column appended"
         self._check_appended(df, atr_cols[0])
         # ATR must be non-negative
         valid = df[atr_cols[0]].dropna()
-        self.assertTrue((valid >= 0).all(), "ATR has negative values")
+        assert (valid >= 0).all(), "ATR has negative values"
 
     def test_chop_ext(self):
         df = self.fresh()
         df.ta.chop(append=True)
         self._check_appended(df, "CHOP_14_1_100")
         valid = df["CHOP_14_1_100"].dropna()
-        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "CHOP out of [0,100]")
+        assert ((valid >= 0).all() and (valid <= 100).all()), "CHOP out of [0,100]"
 
     def test_donchian_ext(self):
         df = self.fresh()
@@ -31,7 +31,7 @@ class TestExtVolatilityDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.kc(append=True)
         kc_cols = [c for c in df.columns if c.startswith("KC")]
-        self.assertTrue(len(kc_cols) >= 1, "No KC columns appended")
+        assert (len(kc_cols) >= 1), "No KC columns appended"
         for col in kc_cols:
             self._check_appended(df, col)
 
@@ -40,13 +40,13 @@ class TestExtVolatilityDeeper(AccessorValueCase):
         df.ta.pdist(append=True)
         self._check_appended(df, "PDIST")
         valid = df["PDIST"].dropna()
-        self.assertTrue((valid >= 0).all(), "PDIST has negative values")
+        assert (valid >= 0).all(), "PDIST has negative values"
 
     def test_squeeze_ext(self):
         df = self.fresh()
         df.ta.squeeze(append=True)
         sqz_cols = [c for c in df.columns if c.startswith("SQZ")]
-        self.assertTrue(len(sqz_cols) >= 1, "No SQZ columns appended")
+        assert (len(sqz_cols) >= 1), "No SQZ columns appended"
         for col in sqz_cols:
             self._check_appended(df, col)
 
@@ -60,4 +60,4 @@ class TestExtVolatilityDeeper(AccessorValueCase):
         df.ta.ui(append=True)
         self._check_appended(df, "UI_14")
         valid = df["UI_14"].dropna()
-        self.assertTrue((valid >= 0).all(), "UI has negative values")
+        assert (valid >= 0).all(), "UI has negative values"

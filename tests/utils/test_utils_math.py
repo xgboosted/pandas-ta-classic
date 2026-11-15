@@ -2,7 +2,6 @@
 
 import warnings
 from fractions import Fraction
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -15,32 +14,32 @@ import pandas_ta_classic as pandas_ta
 from tests.strategies import constant_price_series, price_series
 
 
-class TestMathUtilities(TestCase):
+class TestMathUtilities:
 
-    def setUp(self):
+    def setup_method(self):
         self.utils = pandas_ta.utils
 
-    def tearDown(self):
+    def teardown_method(self):
         del self.utils
 
     def test_combination(self):
-        self.assertIsNotNone(self.utils.combination())
+        assert self.utils.combination() is not None
 
-        self.assertEqual(self.utils.combination(), 1)
-        with self.assertRaisesRegex(ValueError, r"combination\(\) r must be an integer >= 0, got -1"):
+        assert self.utils.combination() == 1
+        with pytest.raises(ValueError, match=r"combination\(\) r must be an integer >= 0, got -1"):
             self.utils.combination(r=-1)
         # choosing 0 of 0 kinds with repetition: one way (math.comb(-1, 0) raised)
-        self.assertEqual(self.utils.combination(n=0, r=0, repetition=True), 1)
+        assert self.utils.combination(n=0, r=0, repetition=True) == 1
 
-        self.assertEqual(self.utils.combination(n=10, r=4, repetition=False), 210)
-        self.assertEqual(self.utils.combination(n=10, r=4, repetition=True), 715)
+        assert self.utils.combination(n=10, r=4, repetition=False) == 210
+        assert self.utils.combination(n=10, r=4, repetition=True) == 715
         # the multichoose alias of repetition was removed in 0.9.0
-        with self.assertRaisesRegex(TypeError, "multichoose"):
+        with pytest.raises(TypeError, match="multichoose"):
             self.utils.combination(n=10, r=4, multichoose=True)
-        with self.assertRaisesRegex(TypeError, r"unexpected keyword argument 'repetiton'"):
+        with pytest.raises(TypeError, match=r"unexpected keyword argument 'repetiton'"):
             self.utils.combination(n=10, r=4, repetiton=True)
 
-    def test_helpers_reject_misspelled_keywords(self):
+    def test_helpers_reject_misspelled_keywords(self, subtests):
         """A misspelled option used to be ignored and the default result returned.
 
         fibonacci(n=3, weigthed=True) came back unweighted, with no error.
@@ -53,11 +52,11 @@ class TestMathUtilities(TestCase):
             "df_error_analysis": lambda: self.utils.df_error_analysis(Series([1.0, 2.0]), Series([1.0, 2.0]), corr_metod="spearman"),
         }
         for name, call in calls.items():
-            with self.subTest(name=name), self.assertRaisesRegex(TypeError, "unexpected keyword argument"):
+            with subtests.test(name=name), pytest.raises(TypeError, match="unexpected keyword argument"):
                 call()
 
     def test_fibonacci(self):
-        self.assertIs(type(self.utils.fibonacci(zero=True, weighted=False)), np.ndarray)
+        assert type(self.utils.fibonacci(zero=True, weighted=False)) is np.ndarray
 
         np.testing.assert_array_equal(self.utils.fibonacci(zero=True), np.array([0, 1, 1]))
         np.testing.assert_array_equal(self.utils.fibonacci(zero=False), np.array([1, 1]))
@@ -75,7 +74,7 @@ class TestMathUtilities(TestCase):
         )
 
     def test_fibonacci_weighted(self):
-        self.assertIs(type(self.utils.fibonacci(zero=True, weighted=True)), np.ndarray)
+        assert type(self.utils.fibonacci(zero=True, weighted=True)) is np.ndarray
         np.testing.assert_array_equal(self.utils.fibonacci(n=0, zero=True, weighted=True), np.array([0]))
         np.testing.assert_array_equal(self.utils.fibonacci(n=0, zero=False, weighted=True), np.array([1]))
 
@@ -88,7 +87,7 @@ class TestMathUtilities(TestCase):
             np.array([1 / 12, 1 / 12, 1 / 6, 1 / 4, 5 / 12]),
         )
 
-    def test_fibonacci_weights_do_not_overflow(self):
+    def test_fibonacci_weights_do_not_overflow(self, subtests):
         """The int64 seed array used to wrap at n=91.
 
         fibonacci(91, weighted=True) summed to -6.2e18, so the weights came out
@@ -96,45 +95,45 @@ class TestMathUtilities(TestCase):
         — between two lengths that both looked fine.
         """
         for n in (10, 88, 89, 90, 91, 92, 93, 200, 1500):
-            with self.subTest(n=n):
+            with subtests.test(n=n):
                 weights = self.utils.fibonacci(n=n, weighted=True)
-                self.assertEqual(weights.size, n)
-                self.assertAlmostEqual(float(weights.sum()), 1.0, places=12)
-                self.assertTrue((weights > 0).all())
+                assert weights.size == n
+                assert round(abs(float(weights.sum()) - 1.0), 12) == 0
+                assert (weights > 0).all()
                 # Fibonacci weights rise monotonically towards the last bar.
-                self.assertTrue((np.diff(weights) >= 0).all())
+                assert (np.diff(weights) >= 0).all()
 
         # Unweighted stays an exact integer sequence past 2**63 instead of
         # wrapping; object dtype is what carries the big terms.
         big = self.utils.fibonacci(n=95)
-        self.assertEqual(int(big[-1]), int(big[-2]) + int(big[-3]))
-        self.assertGreater(int(big[-1]), 2**63)
+        assert int(big[-1]) == int(big[-2]) + int(big[-3])
+        assert int(big[-1]) > 2**63
 
     def test_linear_regression(self):
         x = Series([1, 2, 3, 4, 5])
         y = Series([1.8, 2.1, 2.7, 3.2, 4])
 
         result = self.utils.linear_regression(x, y)
-        self.assertIsInstance(result, dict)
-        self.assertIsInstance(result["a"], float)
-        self.assertIsInstance(result["b"], float)
-        self.assertIsInstance(result["r"], float)
-        self.assertIsInstance(result["t"], float)
-        self.assertIsInstance(result["line"], Series)
+        assert isinstance(result, dict)
+        assert isinstance(result["a"], float)
+        assert isinstance(result["b"], float)
+        assert isinstance(result["r"], float)
+        assert isinstance(result["t"], float)
+        assert isinstance(result["line"], Series)
 
-        with self.assertRaisesRegex(ValueError, r"must have equal length"):
+        with pytest.raises(ValueError, match=r"must have equal length"):
             self.utils.linear_regression(x, y.iloc[:-1])
 
-    def test_linear_regression_slope_survives_a_far_from_zero_x(self):
+    def test_linear_regression_slope_survives_a_far_from_zero_x(self, subtests):
         # m * sum(x * y) - sum(x) * sum(y) cancelled: at x ~ 1e6 with a 1e-3
         # spread the slope was 99% off, at 1e8 its sign flipped.
         rng = np.random.default_rng(0)
         for level, spread in [(1e4, 1e-3), (1e6, 1e-3), (1e8, 1e-2)]:
-            with self.subTest(level=level):
+            with subtests.test(level=level):
                 x = Series(level + rng.normal(0, spread, 300))
                 y = 2.0 * (x - level) / spread + rng.normal(0, 0.1, 300)
                 expected = np.polyfit(x - x.mean(), y, 1)[0]
-                self.assertAlmostEqual(self.utils.linear_regression(x, y)["b"] / expected, 1.0, places=10)
+                assert round(abs((self.utils.linear_regression(x, y)["b"] / expected) - 1.0), 10) == 0
 
     def test_linear_regression_near_flat_x_is_undefined(self):
         # 0.1 + 0.2 and 0.3 differ by one ULP: x.std() is ~4e-17, not 0, so the
@@ -143,21 +142,21 @@ class TestMathUtilities(TestCase):
         y = Series(np.random.default_rng(1).normal(0, 1, 300))
         result = self.utils.linear_regression(x, y)
         for key in ("a", "b", "r", "t"):
-            self.assertTrue(np.isnan(result[key]), f"{key} = {result[key]}")
+            assert np.isnan(result[key]), f"{key} = {result[key]}"
 
-    def test_linear_regression_flat_x_is_undefined_at_any_level(self):
+    def test_linear_regression_flat_x_is_undefined_at_any_level(self, subtests):
         # One ULP apart at 1e6 the deviation is ~8e-11, past an absolute 1e-12
         # tolerance: the slope read -1.8e8 instead of NaN.
         y = Series(np.random.default_rng(1).normal(0, 1, 300))
         for level in (0.3, 1e3, 1e6, 1e9):
-            with self.subTest(level=level):
+            with subtests.test(level=level):
                 x = Series([level] * 150 + [np.nextafter(level, np.inf)] * 150)
-                self.assertTrue(np.isnan(self.utils.linear_regression(x, y)["b"]))
+                assert np.isnan(self.utils.linear_regression(x, y)["b"])
 
     def test_linear_regression_small_scale_x_is_not_flat(self):
         # A real spread below 1e-12 is not a residue when x itself is that small.
         x = Series(np.linspace(0.0, 1e-13, 300))
-        self.assertAlmostEqual(self.utils.linear_regression(x, 2.0 * x / 1e-13)["b"] * 1e-13, 2.0, places=8)
+        assert round(abs((self.utils.linear_regression(x, 2.0 * x / 1e-13)["b"] * 1e-13) - 2.0), 8) == 0
 
     def test_linear_regression_flat_y_has_a_slope_but_no_correlation(self):
         x = Series(np.arange(300.0))
@@ -167,31 +166,31 @@ class TestMathUtilities(TestCase):
             result = self.utils.linear_regression(x, y)
             # A perfect fit has 1 - r * r = 0: t is inf, the answer, not a warning.
             perfect = self.utils.linear_regression(x, 2.0 * x + 1.0)
-        self.assertAlmostEqual(result["b"], 0.0, places=12)
-        self.assertAlmostEqual(result["a"], 5.0, places=12)
-        self.assertTrue(np.isnan(result["r"]) and np.isnan(result["t"]))
-        self.assertAlmostEqual(perfect["b"], 2.0, places=12)
-        self.assertGreater(perfect["t"], 1e6)
+        assert round(abs(result["b"] - 0.0), 12) == 0
+        assert round(abs(result["a"] - 5.0), 12) == 0
+        assert (np.isnan(result["r"]) and np.isnan(result["t"]))
+        assert round(abs(perfect["b"] - 2.0), 12) == 0
+        assert perfect["t"] > 1e6
 
-    def test_linear_regression_rejects_what_it_cannot_fit(self):
+    def test_linear_regression_rejects_what_it_cannot_fit(self, subtests):
         # Two points gave t = 0.0 (no degrees of freedom), one or none gave NaN
         # with numpy warnings, and a NaN gave a wrong slope: the sums skipped it
         # while the point count did not (x = [0, 1, NaN, 3, 4] fitted b = 0.758).
         for size in (0, 1, 2):
-            with self.subTest(size=size), self.assertRaisesRegex(ValueError, rf"needs at least 3 points, got {size}"):
+            with subtests.test(size=size), pytest.raises(ValueError, match=rf"needs at least 3 points, got {size}"):
                 self.utils.linear_regression(Series(range(size), dtype=float), Series(range(size), dtype=float))
         line = Series([1.0, 2.0, 3.0, 4.0, 5.0])
         gappy = Series([0.0, 1.0, np.nan, 3.0, 4.0])
-        with self.assertRaisesRegex(ValueError, r"x has 1 missing value"):
+        with pytest.raises(ValueError, match=r"x has 1 missing value"):
             self.utils.linear_regression(gappy, line)
-        with self.assertRaisesRegex(ValueError, r"y has 1 missing value"):
+        with pytest.raises(ValueError, match=r"y has 1 missing value"):
             self.utils.linear_regression(line, gappy)
         # x * y aligned on two disjoint indexes and fitted y = 2x + 1 as b = -10.5.
-        with self.assertRaisesRegex(ValueError, r"must share the same index"):
+        with pytest.raises(ValueError, match=r"must share the same index"):
             self.utils.linear_regression(line, (2 * line + 1).set_axis(list("abcde")))
 
     def test_pascals_triangle(self):
-        with self.assertRaisesRegex(ValueError, "inverse=True needs weighted=True"):  # used to return None
+        with pytest.raises(ValueError, match="inverse=True needs weighted=True"):  # used to return None
             self.utils.pascals_triangle(inverse=True)
 
         array_1 = np.array([1])
@@ -202,7 +201,7 @@ class TestMathUtilities(TestCase):
         array_5 = self.utils.pascals_triangle(n=5)  # or np.array([1, 5, 10, 10, 5, 1])
         array_5w = array_5 / np.sum(array_5)
         array_5iw = 1 - array_5w
-        with self.assertRaisesRegex(ValueError, r"pascals_triangle\(\) n must be an integer >= 0, got -5"):
+        with pytest.raises(ValueError, match=r"pascals_triangle\(\) n must be an integer >= 0, got -5"):
             self.utils.pascals_triangle(n=-5)
 
         np.testing.assert_array_equal(self.utils.pascals_triangle(n=5), array_5)
@@ -224,21 +223,21 @@ class TestMathUtilities(TestCase):
         np.testing.assert_array_equal(self.utils.symmetric_triangle(n=5, weighted=True), array_5w)
 
     def test_zero(self):
-        self.assertEqual(self.utils.zero(-0.0000000000000001), 0)
-        self.assertEqual(self.utils.zero(0), 0)
-        self.assertEqual(self.utils.zero(0.0), 0)
-        self.assertEqual(self.utils.zero(0.0000000000000001), 0)
+        assert self.utils.zero(-0.0000000000000001) == 0
+        assert self.utils.zero(0) == 0
+        assert self.utils.zero(0.0) == 0
+        assert self.utils.zero(0.0000000000000001) == 0
 
-        self.assertNotEqual(self.utils.zero(-0.000000000000001), 0)
-        self.assertNotEqual(self.utils.zero(0.000000000000001), 0)
-        self.assertNotEqual(self.utils.zero(1), 0)
+        assert self.utils.zero(-0.000000000000001) != 0
+        assert self.utils.zero(0.000000000000001) != 0
+        assert self.utils.zero(1) != 0
 
 
-class TestNpRollingMoments(TestCase):
+class TestNpRollingMoments:
     """Unit tests for the np_rolling_moments helper added in the numpy-
     determinism PR (utils/_math.py)."""
 
-    def setUp(self):
+    def setup_method(self):
         from pandas_ta_classic.utils import np_rolling_moments
 
         self.fn = np_rolling_moments
@@ -251,22 +250,22 @@ class TestNpRollingMoments(TestCase):
 
     def test_returns_tuple_of_arrays(self):
         result = self.fn(self.arr, 3, 2)
-        self.assertIsInstance(result, tuple)
-        self.assertEqual(len(result), 1)
-        self.assertIsInstance(result[0], np.ndarray)
+        assert isinstance(result, tuple)
+        assert len(result) == 1
+        assert isinstance(result[0], np.ndarray)
 
     def test_output_length_matches_input(self):
         (m2,) = self.fn(self.arr, 3, 2)
-        self.assertEqual(len(m2), len(self.arr))
+        assert len(m2) == len(self.arr)
 
     def test_multiple_orders(self):
         m2, m3, m4 = self.fn(self.arr, 3, 2, 3, 4)
         for arr in (m2, m3, m4):
-            self.assertEqual(len(arr), len(self.arr))
+            assert len(arr) == len(self.arr)
 
     def test_output_dtype_is_float64(self):
         (m2,) = self.fn(self.arr, 3, 2)
-        self.assertEqual(m2.dtype, np.float64)
+        assert m2.dtype == np.float64
 
     # ------------------------------------------------------------------
     # Default min_periods == length: first (length-1) slots are NaN
@@ -275,12 +274,12 @@ class TestNpRollingMoments(TestCase):
     def test_default_min_periods_leading_nans(self):
         length = 3
         (m2,) = self.fn(self.arr, length, 2)
-        self.assertTrue(np.all(np.isnan(m2[: length - 1])))
+        assert np.all(np.isnan(m2[: length - 1]))
 
     def test_default_min_periods_no_trailing_nans(self):
         length = 3
         (m2,) = self.fn(self.arr, length, 2)
-        self.assertFalse(np.any(np.isnan(m2[length - 1 :])))
+        assert not np.any(np.isnan(m2[length - 1 :]))
 
     # ------------------------------------------------------------------
     # Correctness of computed sums (order-2 == sum of squared deviations)
@@ -302,7 +301,7 @@ class TestNpRollingMoments(TestCase):
         # Positively skewed window: [1, 2, 10] - third central moment > 0
         arr = np.array([1.0, 2.0, 10.0])
         (m3,) = self.fn(arr, 3, 3)
-        self.assertGreater(m3[2], 0)
+        assert m3[2] > 0
 
     # ------------------------------------------------------------------
     # min_periods < length  (partial-window behaviour)
@@ -312,7 +311,7 @@ class TestNpRollingMoments(TestCase):
         # min_periods=2 -> position 0 (only 1 value) must be NaN
         # length is positional so the order value (2) lands in *orders
         (m2,) = self.fn(self.arr, 4, 2, min_periods=2)
-        self.assertTrue(np.isnan(m2[0]))
+        assert np.isnan(m2[0])
 
     def test_min_periods_first_valid_position(self):
         # min_periods=2 -> position 1 uses window [0, 1]: deviations [-0.5, 0.5]
@@ -338,12 +337,12 @@ class TestNpRollingMoments(TestCase):
     def test_series_shorter_than_length_all_nan(self):
         arr = np.array([1.0, 2.0])
         (m2,) = self.fn(arr, 5, 2)
-        self.assertTrue(np.all(np.isnan(m2)))
+        assert np.all(np.isnan(m2))
 
     def test_empty_array(self):
         arr = np.array([], dtype=float)
         (m2,) = self.fn(arr, 3, 2)
-        self.assertEqual(len(m2), 0)
+        assert len(m2) == 0
 
     def test_single_element_series(self):
         arr = np.array([42.0])
@@ -361,7 +360,7 @@ def _exact_slope(xs: np.ndarray, ys: np.ndarray) -> float:
     return float(sxy / sxx)
 
 
-class TestLinearRegressionProperties(TestCase):
+class TestLinearRegressionProperties:
     """Property tests for ``linear_regression``.
 
     The slope used the one-pass ``m * sum(x * y) - sum(x) * sum(y)``, which

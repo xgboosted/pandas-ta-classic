@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import inspect
 import re
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -849,28 +848,24 @@ def test_result_category_matches_the_registry(name: str, frame: dict[str, pd.Ser
 # ---------------------------------------------------------------------------
 
 
-class TestApplyFillHonoured(TestCase):
+class TestApplyFillHonoured:
     """fillna kwarg must be respected by indicators that previously silently ignored it."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.df
 
     def _assert_fillna_removes_nans(self, result, indicator_name):
-        self.assertIsNotNone(result, f"{indicator_name} returned None unexpectedly")
+        assert result is not None, f"{indicator_name} returned None unexpectedly"
         if isinstance(result, pd.DataFrame):
             nan_count = int(result.isna().sum().sum())
         else:
             nan_count = int(result.isna().sum())
-        self.assertEqual(
-            nan_count,
-            0,
-            f"{indicator_name}(fillna=0) must have 0 NaN values; got {nan_count}",
-        )
+        assert nan_count == 0, f"{indicator_name}(fillna=0) must have 0 NaN values; got {nan_count}"
 
     def test_hl2_fillna_removes_nans(self):
         result = ta.hl2(self.df["high"], self.df["low"], offset=5, fillna=0)

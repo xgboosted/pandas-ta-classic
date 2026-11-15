@@ -1,6 +1,5 @@
 import math
 from typing import Any
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -93,7 +92,7 @@ def output_columns(result: Any) -> dict[str, Series]:
     return columns
 
 
-class AccessorValueCase(TestCase):
+class AccessorValueCase:
     """Base of the accessor value checks: df.ta.<indicator>(append=True) appends
     a column with at least one valid row and a finite last value.
 
@@ -101,11 +100,11 @@ class AccessorValueCase(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls._base = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls._base
 
     def fresh(self) -> pd.DataFrame:
@@ -118,16 +117,12 @@ class AccessorValueCase(TestCase):
 
     def _check_appended(self, df: pd.DataFrame, col_name: str) -> None:
         """Assert *col_name* exists, has valid rows, and a finite last value."""
-        self.assertIn(
-            col_name,
-            df.columns,
-            f"Expected column {col_name!r} not found in DataFrame after append",
-        )
+        assert col_name in df.columns, f"Expected column {col_name!r} not found in DataFrame after append"
         series = df[col_name]
         valid = series.dropna()
-        self.assertFalse(valid.empty, f"Column {col_name!r} is all-NaN after append")
+        assert not valid.empty, f"Column {col_name!r} is all-NaN after append"
         last = float(valid.iloc[-1])
-        self.assertTrue(math.isfinite(last), f"Column {col_name!r} last value is not finite: {last}")
+        assert math.isfinite(last), f"Column {col_name!r} last value is not finite: {last}"
 
     def _check_last_col(self, df: pd.DataFrame) -> None:
         """Check the last column of *df* (for indicators that add a single column)."""

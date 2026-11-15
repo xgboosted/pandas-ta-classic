@@ -1,9 +1,8 @@
 """Tests of pandas_ta_classic/utils/_signals.py: above/below, cross, signal gaps."""
 
-from unittest import TestCase
-
 import numpy as np
 import pandas as pd
+import pytest
 from hypothesis import assume, given, strategies as st
 from pandas import DataFrame, Series
 
@@ -19,114 +18,114 @@ data = {
 }
 
 
-class TestSignalUtilities(TestCase):
+class TestSignalUtilities:
 
-    def setUp(self):
+    def setup_method(self):
         self.crosseddf = DataFrame(data)
         self.utils = pandas_ta.utils
 
-    def tearDown(self):
+    def teardown_method(self):
         del self.crosseddf
         del self.utils
 
     def test__above_below(self):
         result = self.utils.above(self.crosseddf["a"], self.crosseddf["zero"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "a_A_zero")
+        assert isinstance(result, Series)
+        assert result.name == "a_A_zero"
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
         result = self.utils.below(self.crosseddf["a"], self.crosseddf["zero"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "a_B_zero")
+        assert isinstance(result, Series)
+        assert result.name == "a_B_zero"
         np.testing.assert_array_equal(result, self.crosseddf["b"])
 
         result = self.utils.above(self.crosseddf["c"], self.crosseddf["zero"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "c_A_zero")
+        assert isinstance(result, Series)
+        assert result.name == "c_A_zero"
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
         result = self.utils.below(self.crosseddf["c"], self.crosseddf["zero"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "c_B_zero")
+        assert isinstance(result, Series)
+        assert result.name == "c_B_zero"
         np.testing.assert_array_equal(result, self.crosseddf["zero"])
 
     def test_above(self):
         result = self.utils.above(self.crosseddf["a"], self.crosseddf["zero"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "a_A_zero")
+        assert isinstance(result, Series)
+        assert result.name == "a_A_zero"
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
         result = self.utils.above(self.crosseddf["zero"], self.crosseddf["a"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "zero_A_a")
+        assert isinstance(result, Series)
+        assert result.name == "zero_A_a"
         np.testing.assert_array_equal(result, self.crosseddf["b"])
 
     def test_above_value(self):
         result = self.utils.above_value(self.crosseddf["a"], 0)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "a_A_0")
+        assert isinstance(result, Series)
+        assert result.name == "a_A_0"
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
         # a non-number value used to log an error and return None
-        with self.assertRaisesRegex(ValueError, r"above_value\(\) value must be a number"):
+        with pytest.raises(ValueError, match=r"above_value\(\) value must be a number"):
             self.utils.above_value(self.crosseddf["a"], self.crosseddf["zero"])
-        self.assertEqual(self.utils.above_value(self.crosseddf["a"], np.int64(0)).name, "a_A_0")
+        assert self.utils.above_value(self.crosseddf["a"], np.int64(0)).name == "a_A_0"
 
     def test_below(self):
         result = self.utils.below(self.crosseddf["zero"], self.crosseddf["a"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "zero_B_a")
+        assert isinstance(result, Series)
+        assert result.name == "zero_B_a"
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
         result = self.utils.below(self.crosseddf["zero"], self.crosseddf["a"])
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "zero_B_a")
+        assert isinstance(result, Series)
+        assert result.name == "zero_B_a"
         np.testing.assert_array_equal(result, self.crosseddf["c"])
 
     def test_below_value(self):
         result = self.utils.below_value(self.crosseddf["a"], 0)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "a_B_0")
+        assert isinstance(result, Series)
+        assert result.name == "a_B_0"
         np.testing.assert_array_equal(result, self.crosseddf["b"])
 
         # a non-number value used to log an error and return None
-        with self.assertRaisesRegex(ValueError, r"below_value\(\) value must be a number"):
+        with pytest.raises(ValueError, match=r"below_value\(\) value must be a number"):
             self.utils.below_value(self.crosseddf["a"], self.crosseddf["zero"])
 
     def test_cross_above(self):
         result = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"])
-        self.assertIsInstance(result, Series)
+        assert isinstance(result, Series)
         np.testing.assert_array_equal(result, self.crosseddf["crossed"])
 
         result = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"], above=True)
-        self.assertIsInstance(result, Series)
+        assert isinstance(result, Series)
         np.testing.assert_array_equal(result, self.crosseddf["crossed"])
 
     def test_cross_below(self):
         result = self.utils.cross(self.crosseddf["b"], self.crosseddf["a"], above=False)
-        self.assertIsInstance(result, Series)
+        assert isinstance(result, Series)
         np.testing.assert_array_equal(result, self.crosseddf["crossed"])
 
     def test_crossover(self):
         # crossover() is cross(above=True) under a tulipy-compatible name.
         result = self.utils.crossover(self.crosseddf["a"], self.crosseddf["b"])
-        self.assertIsInstance(result, Series)
+        assert isinstance(result, Series)
         np.testing.assert_array_equal(result, self.crosseddf["crossed"])
-        self.assertEqual(result.name, "a_XA_b")
-        self.assertEqual(result.category, "utility")
+        assert result.name == "a_XA_b"
+        assert result.category == "utility"
 
         expected = self.utils.cross(self.crosseddf["a"], self.crosseddf["b"], above=True)
-        self.assertTrue(result.equals(expected))
+        assert result.equals(expected)
 
         raw = self.utils.crossover(self.crosseddf["a"], self.crosseddf["b"], asint=False)
-        self.assertEqual(raw.dtype, bool)
+        assert raw.dtype == bool
 
-        self.assertIsNone(self.utils.crossover(None, self.crosseddf["b"]))
+        assert self.utils.crossover(None, self.crosseddf["b"]) is None
 
     def test_cross_value_rejects_a_non_number(self):
         # It used to reach zero() and fail as "bad operand type for abs()",
         # naming neither the function nor the argument.
-        with self.assertRaisesRegex(ValueError, r"cross_value\(\) value must be a number"):
+        with pytest.raises(ValueError, match=r"cross_value\(\) value must be a number"):
             self.utils.cross_value(self.crosseddf["a"], "x")
 
 
@@ -164,7 +163,7 @@ def _with_gaps(values: list, gaps: list, repeated: bool) -> pd.Series:
     return series
 
 
-class TestSignalGapsProperties(TestCase):
+class TestSignalGapsProperties:
     """A missing trend or signal value makes no trade of its own.
 
     tsignals filled a missing trend with 0, so a gap inside an uptrend gave an

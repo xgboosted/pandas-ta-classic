@@ -23,14 +23,12 @@ What stays here:
     At exactly the rows a window needs, the result has exactly one value.
 """
 
-from unittest import TestCase
-
 import numpy as np
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
-from tests.assertions import assert_all_nan
+from tests.assertions import assert_all_nan, assert_logs
 from tests.contracts import inputs
 
 _N = 60
@@ -108,19 +106,19 @@ def test_warm_up_ends_on_its_bar_and_leaves_no_gap(name, options, first):
 # ---------------------------------------------------------------------------
 
 
-class TestMismatchedLengths(TestCase):
+class TestMismatchedLengths:
     """Inputs of different lengths align on their shared labels; a component shorter than
     the window gives all-NaN. Inputs with no label in common raise ValueError."""
 
     def test_inputs_without_shared_labels_raise(self):
         dates = pd.date_range("2020-01-01", periods=len(_C), freq="D", name="date")
         close, high, low, volume = (x.set_axis(dates) for x in (_C, _H, _L, _V))
-        with self.assertRaisesRegex(ValueError, r"beta\(\) inputs share no index labels: close has DatetimeIndex .* benchmark has RangeIndex"):
+        with pytest.raises(ValueError, match=r"beta\(\) inputs share no index labels: close has DatetimeIndex .* benchmark has RangeIndex"):
             ta.beta(close, _C)
-        with self.assertRaisesRegex(ValueError, r"obv\(\) inputs share no index labels: close has DatetimeIndex .* volume has DatetimeIndex \(UTC\)"):
+        with pytest.raises(ValueError, match=r"obv\(\) inputs share no index labels: close has DatetimeIndex .* volume has DatetimeIndex \(UTC\)"):
             ta.obv(close, volume.tz_localize("UTC"))
         later = high.set_axis(dates + pd.Timedelta(days=len(dates)))
-        with self.assertRaisesRegex(ValueError, r"adx\(\) inputs share no index labels"):
+        with pytest.raises(ValueError, match=r"adx\(\) inputs share no index labels"):
             ta.adx(later, low, close)
 
     def test_partially_overlapping_inputs_still_align(self):
@@ -128,29 +126,29 @@ class TestMismatchedLengths(TestCase):
         close = _C.set_axis(dates)
         benchmark = _L.set_axis(dates).iloc[len(dates) // 4 :]
         result = ta.beta(close, benchmark)
-        self.assertEqual(len(result), len(close))
-        self.assertTrue(result.notna().any())
+        assert len(result) == len(close)
+        assert result.notna().any()
 
-    def test_atr_h_too_short_returns_none(self):
+    def test_atr_h_too_short_returns_none(self, caplog):
         """atr with h shorter than the minimum requirement must return None."""
-        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+        with assert_logs(caplog, "pandas_ta_classic", "WARNING"):
             result = ta.atr(_H.iloc[:5], _L, _C, length=14, talib=False)
-        assert_all_nan(self, result)
+        assert_all_nan(result)
 
-    def test_atr_l_too_short_returns_none(self):
-        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+    def test_atr_l_too_short_returns_none(self, caplog):
+        with assert_logs(caplog, "pandas_ta_classic", "WARNING"):
             result = ta.atr(_H, _L.iloc[:5], _C, length=14, talib=False)
-        assert_all_nan(self, result)
+        assert_all_nan(result)
 
-    def test_atr_c_too_short_returns_none(self):
-        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+    def test_atr_c_too_short_returns_none(self, caplog):
+        with assert_logs(caplog, "pandas_ta_classic", "WARNING"):
             result = ta.atr(_H, _L, _C.iloc[:5], length=14, talib=False)
-        assert_all_nan(self, result)
+        assert_all_nan(result)
 
-    def test_adx_h_too_short_returns_none(self):
-        with self.assertLogs("pandas_ta_classic", level="WARNING"):
+    def test_adx_h_too_short_returns_none(self, caplog):
+        with assert_logs(caplog, "pandas_ta_classic", "WARNING"):
             result = ta.adx(_H.iloc[:5], _L, _C, length=14, talib=False)
-        assert_all_nan(self, result)
+        assert_all_nan(result)
 
     def test_obv_short_volume_limits_output(self):
         """
@@ -159,13 +157,9 @@ class TestMismatchedLengths(TestCase):
         """
         v_short = _V.iloc[:20]
         result = ta.obv(_C, v_short, talib=False)
-        self.assertIsNotNone(result)
+        assert result is not None
         non_nan = int(result.notna().sum())
-        self.assertEqual(
-            non_nan,
-            len(v_short),
-            f"obv with short volume: expected {len(v_short)} non-NaN rows, got {non_nan}",
-        )
+        assert non_nan == len(v_short), f"obv with short volume: expected {len(v_short)} non-NaN rows, got {non_nan}"
 
 
 # ---------------------------------------------------------------------------

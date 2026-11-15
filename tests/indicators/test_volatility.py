@@ -1,12 +1,13 @@
-from unittest import TestCase
+
+import pytest
 
 import pandas_ta_classic as pandas_ta
 from tests.config import get_sample_data
 
 
-class TestVolatility(TestCase):
+class TestVolatility:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
@@ -17,7 +18,7 @@ class TestVolatility(TestCase):
             cls.volume = cls.data["volume"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open
         del cls.high
         del cls.low
@@ -26,30 +27,30 @@ class TestVolatility(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         pass
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
     def test_cvi(self):
-        self.assertIsNone(pandas_ta.cvi(self.high, None))
+        assert pandas_ta.cvi(self.high, None) is None
 
-    def test_rvi_mode_arguments_fail_fast(self):
+    def test_rvi_mode_arguments_fail_fast(self, subtests):
         # refined/thirds used to be bool()-coerced, so rvi(refined="yes") ran
         # the refined branch without a word.
         for kwarg in ("refined", "thirds"):
-            with self.subTest(kwarg=kwarg), self.assertRaisesRegex(ValueError, rf"rvi\(\) {kwarg} must be True or False"):
+            with subtests.test(kwarg=kwarg), pytest.raises(ValueError, match=rf"rvi\(\) {kwarg} must be True or False"):
                 pandas_ta.rvi(self.close, self.high, self.low, **{kwarg: "yes"})
 
         # They are alternative modes; refined used to win silently.
-        with self.assertRaisesRegex(ValueError, "alternative modes"):
+        with pytest.raises(ValueError, match="alternative modes"):
             pandas_ta.rvi(self.close, self.high, self.low, refined=True, thirds=True)
 
         # Both modes are defined over high/low. Omitting them used to return
         # None, which reads as an ordinary short-input result.
         for kwarg in ("refined", "thirds"):
-            with self.subTest(kwarg=kwarg), self.assertRaisesRegex(ValueError, rf"rvi\(\) {kwarg}=True needs both high and low"):
+            with subtests.test(kwarg=kwarg), pytest.raises(ValueError, match=rf"rvi\(\) {kwarg}=True needs both high and low"):
                 pandas_ta.rvi(self.close, **{kwarg: True})
-        with self.assertRaisesRegex(ValueError, "needs both high and low"):
+        with pytest.raises(ValueError, match="needs both high and low"):
             pandas_ta.rvi(self.close, high=self.high, refined=True)

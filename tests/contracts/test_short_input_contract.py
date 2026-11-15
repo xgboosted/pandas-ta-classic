@@ -30,7 +30,6 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -491,7 +490,7 @@ def test_leading_nan_run_leaving_too_few_rows_returns_all_nan() -> None:
 # ---------------------------------------------------------------------------
 
 
-class TestShortWindowHardening(TestCase):
+class TestShortWindowHardening:
     """Three sites that crashed when handed a window longer than the series.
 
     None of them is reachable through the public API: verify_series' min_length
@@ -530,9 +529,9 @@ class TestShortWindowHardening(TestCase):
 
         close = pd.Series([1.0, 2.0, 3.0])
         result = _sliding_weighted_ma(close, 10, np.ones(10))
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(len(result), 3)
-        self.assertTrue(result.isna().all())
+        assert isinstance(result, pd.Series)
+        assert len(result) == 3
+        assert result.isna().all()
 
     def test_sliding_weighted_ma_exact_fit(self):
         """length == len(series) still produces the single valid window."""
@@ -540,37 +539,37 @@ class TestShortWindowHardening(TestCase):
 
         close = pd.Series([1.0, 2.0, 3.0])
         result = _sliding_weighted_ma(close, 3, np.ones(3))
-        self.assertEqual(result.iloc[-1], 6.0)
-        self.assertTrue(result.iloc[:2].isna().all())
+        assert result.iloc[-1] == 6.0
+        assert result.iloc[:2].isna().all()
 
     def test_rma_without_guard(self):
         """rma seeded at iloc[length - 1] without checking it exists."""
         module = self._without_guard("pandas_ta_classic.overlap.rma")
         result = module.rma(pd.Series([1.0, 2.0, 3.0]), length=10)
-        self.assertIsInstance(result, pd.Series)
-        self.assertTrue(result.isna().all())
+        assert isinstance(result, pd.Series)
+        assert result.isna().all()
 
     def test_linreg_without_guard(self):
         """linreg built a sliding window wider than the input array."""
         module = self._without_guard("pandas_ta_classic.overlap.linreg")
         result = module.linreg(pd.Series([1.0, 2.0, 3.0]), length=10, talib=False)
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(len(result), 3)
-        self.assertTrue(result.isna().all())
+        assert isinstance(result, pd.Series)
+        assert len(result) == 3
+        assert result.isna().all()
 
     def test_alma_without_guard(self):
         """alma reaches _sliding_weighted_ma, so it is covered too."""
         module = self._without_guard("pandas_ta_classic.overlap.alma")
         result = module.alma(pd.Series([1.0, 2.0, 3.0]), length=10)
-        self.assertIsInstance(result, pd.Series)
-        self.assertTrue(result.isna().all())
+        assert isinstance(result, pd.Series)
+        assert result.isna().all()
 
     def test_valid_input_unaffected(self):
         """Ample input keeps its usual lookback in all three."""
         close = pd.Series(np.arange(1.0, 101.0))
-        self.assertEqual(ta.rma(close, length=10).isna().sum(), 9)
-        self.assertEqual(ta.linreg(close, length=10, talib=False).isna().sum(), 9)
-        self.assertEqual(ta.alma(close, length=10).isna().sum(), 9)
+        assert ta.rma(close, length=10).isna().sum() == 9
+        assert ta.linreg(close, length=10, talib=False).isna().sum() == 9
+        assert ta.alma(close, length=10).isna().sum() == 9
 
 
 # ---------------------------------------------------------------------------
@@ -578,7 +577,7 @@ class TestShortWindowHardening(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
+class TestShortInputNoneNotPropagatedIntoArithmetic:
     """A helper returned None for short input and the caller multiplied it.
 
     Found by sweeping every indicator over 1-400 rows with length, drift, fast,
@@ -589,17 +588,17 @@ class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data().iloc[:200]
 
     def test_pvt_drift_longer_than_input(self):
-        assert_all_nan(self, ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
+        assert_all_nan(ta.pvt(self.df.close.iloc[:3], self.df.volume.iloc[:3], drift=5))
 
     def test_rvi_length_one_is_rejected(self):
         # variance used to widen length=1 to its default window; since 0.9.0
         # invalid window lengths raise instead of being replaced.
         d = self.df.iloc[:12]
-        with self.assertRaisesRegex(ValueError, r"rvi\(\) length must be an integer > 1, got 1"):
+        with pytest.raises(ValueError, match=r"rvi\(\) length must be an integer > 1, got 1"):
             ta.rvi(d.close, d.high, d.low, length=1)
 
     def test_swma_length_one_is_the_input(self):
@@ -608,9 +607,9 @@ class TestShortInputNoneNotPropagatedIntoArithmetic(TestCase):
     def test_symmetric_triangle_of_one(self):
         from pandas_ta_classic.utils import symmetric_triangle
 
-        self.assertEqual(symmetric_triangle(1), [1])
+        assert symmetric_triangle(1) == [1]
         np.testing.assert_array_equal(symmetric_triangle(1, weighted=True), np.array([1.0]))
 
     def test_tos_stdevall_needs_two_points(self):
-        assert_all_nan(self, ta.tos_stdevall(self.df.close.iloc[:1]))
-        self.assertIsNotNone(ta.tos_stdevall(self.df.close.iloc[:2]))
+        assert_all_nan(ta.tos_stdevall(self.df.close.iloc[:1]))
+        assert ta.tos_stdevall(self.df.close.iloc[:2]) is not None

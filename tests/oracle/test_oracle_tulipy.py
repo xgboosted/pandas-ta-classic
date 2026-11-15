@@ -32,11 +32,11 @@ tulipy installed, then commit the updated ``tulipy_oracle.json``.
 
 import importlib
 import json
-import unittest
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import pandas_ta_classic as ta
 from tests.config import get_sample_data
@@ -47,12 +47,12 @@ _ORACLE_PATH = _HERE / "fixtures" / "tulipy_oracle.json"
 ORACLE_AVAILABLE = _ORACLE_PATH.is_file()
 
 
-@unittest.skipUnless(ORACLE_AVAILABLE, "tulipy_oracle.json fixture missing")
-class TestTulipyOracle(unittest.TestCase):
+@pytest.mark.skipif(not ORACLE_AVAILABLE, reason="tulipy_oracle.json fixture missing")
+class TestTulipyOracle:
     """Compare pandas-ta-classic native output against the frozen tulipy oracle."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         df = get_sample_data()
         cls.idx = df.index
         cls.open = df["open"]
@@ -68,7 +68,7 @@ class TestTulipyOracle(unittest.TestCase):
         cls.oracle = {k: np.asarray(v, dtype=np.float64) for k, v in payload["arrays"].items()}
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.idx, cls.open, cls.high, cls.low, cls.close, cls.vol
         del cls.v0, cls.oracle
 
@@ -90,13 +90,13 @@ class TestTulipyOracle(unittest.TestCase):
         arr = np.asarray(tp_arr)
         tp_s = pd.Series(arr, index=self.idx[-len(arr) :])
         both = pt_series.dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"{name}: too few common non-NaN values ({len(both)})")
+        assert len(both) > 50, f"{name}: too few common non-NaN values ({len(both)})"
         for label in self.idx[list(known)]:
-            self.assertGreater(abs(pt_series.loc[label] - tp_s.loc[label]), tol, f"{name}: known difference at {label} is gone")
+            assert abs(pt_series.loc[label] - tp_s.loc[label]) > tol, f"{name}: known difference at {label} is gone"
         both = both.difference(self.idx[list(known)])
         tail = both[-min(2000, len(both)) :]
         diff = np.abs(pt_series.loc[tail].values - tp_s.loc[tail].values)
-        self.assertLess(diff.max(), tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}")
+        assert diff.max() < tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}"
 
     # ------------------------------------------------------------------
     # Overlap / Moving averages
@@ -254,9 +254,9 @@ class TestTulipyOracle(unittest.TestCase):
         pt = ta.dpo(self.close, length=20).dropna().to_numpy()
         tp = np.asarray(self._oracle("dpo"))
         n = min(len(pt), len(tp))
-        self.assertGreater(n, 50, f"DPO: too few comparable values ({n})")
+        assert n > 50, f"DPO: too few comparable values ({n})"
         diff = np.abs(pt[-n:] - tp[-n:])
-        self.assertLess(diff.max(), 1e-6, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-6")
+        assert diff.max() < 1e-6, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-6"
 
     def test_cmo(self):
         self._compare(
@@ -286,31 +286,19 @@ class TestTulipyOracle(unittest.TestCase):
         oracle = self._oracle("macd")
         tp_s = pd.Series(np.asarray(oracle), index=self.idx[-len(oracle) :])
         both = pt.iloc[:, 0].dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"MACD: too few common values ({len(both)})")
+        assert len(both) > 50, f"MACD: too few common values ({len(both)})"
         diff = np.abs(pt.iloc[:, 0].loc[both].values - tp_s.loc[both].values)
-        self.assertGreater(
-            diff.max(),
-            0.1,
-            f"MACD: expected seeding divergence not observed (max={diff.max():.4e})",
-        )
+        assert diff.max() > 0.1, f"MACD: expected seeding divergence not observed (max={diff.max():.4e})"
 
     def test_obv(self):
         pt = ta.obv(self.close, self.vol)
         tp_arr = self._oracle("obv")
         tp_s = pd.Series(np.asarray(tp_arr), index=self.idx[-len(tp_arr) :])
         both = pt.dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"OBV: too few common values ({len(both)})")
+        assert len(both) > 50, f"OBV: too few common values ({len(both)})"
         offset = pt.loc[both].values - tp_s.loc[both].values
-        self.assertTrue(
-            np.allclose(offset, offset[0]),
-            "OBV: expected constant offset between pandas-ta and tulipy",
-        )
-        self.assertAlmostEqual(
-            offset[0],
-            self.v0,
-            places=6,
-            msg="OBV: unexpected offset magnitude",
-        )
+        assert np.allclose(offset, offset[0]), "OBV: expected constant offset between pandas-ta and tulipy"
+        assert round(abs(offset[0] - self.v0), 6) == 0, "OBV: unexpected offset magnitude"
 
     # ------------------------------------------------------------------
     # Stochastic
@@ -347,10 +335,10 @@ class TestTulipyOracle(unittest.TestCase):
         tp_arr = self._oracle("dx")
         tp_s = pd.Series(tp_arr, index=self.idx[-len(tp_arr) :])
         both = pt.dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"DX: too few common values ({len(both)})")
+        assert len(both) > 50, f"DX: too few common values ({len(both)})"
         tail = both[-min(500, len(both)) :]
         diff = np.abs(pt.loc[tail].values - tp_s.loc[tail].values)
-        self.assertLess(diff.max(), 1e-6, f"DX: max diff {diff.max():.4e} exceeds 1e-6")
+        assert diff.max() < 1e-6, f"DX: max diff {diff.max():.4e} exceeds 1e-6"
 
     # ------------------------------------------------------------------
     # Volatility
@@ -405,14 +393,10 @@ class TestTulipyOracle(unittest.TestCase):
         tp_arr = self._oracle("stderr")
         tp_s = pd.Series(np.asarray(tp_arr), index=self.idx[-len(tp_arr) :])
         both = pt.dropna().index.intersection(tp_s.index)
-        self.assertGreater(len(both), 50, f"STDERR: too few common non-NaN values ({len(both)})")
+        assert len(both) > 50, f"STDERR: too few common non-NaN values ({len(both)})"
         ratio = np.median(pt.loc[both].values / tp_s.loc[both].values)
         expected = np.sqrt((20 - 1) / (20 - 2))
-        self.assertLess(
-            abs(ratio - expected),
-            0.005,
-            f"STDERR: ratio {ratio:.6f} differs from expected {expected:.6f}",
-        )
+        assert abs(ratio - expected) < 0.005, f"STDERR: ratio {ratio:.6f} differs from expected {expected:.6f}"
 
     def test_linreg(self):
         self._compare(
@@ -525,7 +509,3 @@ class TestTulipyOracle(unittest.TestCase):
             self._oracle("typprice"),
             name="TYPPRICE",
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

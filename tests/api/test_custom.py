@@ -5,7 +5,6 @@ import sys
 import tempfile
 import textwrap
 import types
-from unittest import TestCase
 
 import pandas as pd
 import pytest
@@ -22,13 +21,13 @@ from pandas_ta_classic.custom import (
 from tests.config import get_sample_data
 
 
-class TestCustom(TestCase):
+class TestCustom:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.tmpdir = tempfile.mkdtemp(prefix="pta_custom_test_")
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         shutil.rmtree(cls.tmpdir, ignore_errors=True)
 
     # ------------------------------------------------------------------
@@ -38,9 +37,9 @@ class TestCustom(TestCase):
     def test_get_module_functions_returns_dict(self):
         rsi_mod = importlib.import_module("pandas_ta_classic.momentum.rsi")
         result = get_module_functions(rsi_mod)
-        self.assertIsInstance(result, dict)
-        self.assertIn("rsi", result)
-        self.assertTrue(callable(result["rsi"]))
+        assert isinstance(result, dict)
+        assert "rsi" in result
+        assert callable(result["rsi"])
 
     def test_get_module_functions_skips_non_functions(self):
         mod = types.ModuleType("dummy")
@@ -48,18 +47,18 @@ class TestCustom(TestCase):
         mod.MY_CONST = 42
         mod.my_str = "hello"
         result = get_module_functions(mod)
-        self.assertIn("my_func", result)
-        self.assertNotIn("MY_CONST", result)
-        self.assertNotIn("my_str", result)
+        assert "my_func" in result
+        assert "MY_CONST" not in result
+        assert "my_str" not in result
 
     def test_get_module_functions_empty_module(self):
         mod = types.ModuleType("empty")
-        self.assertEqual(get_module_functions(mod), {})
+        assert get_module_functions(mod) == {}
 
     def test_load_indicator_module_is_removed(self):
         """It (re)loaded a module with importlib.reload(); import_dir() stopped
         calling it when it began loading each file as a new module (#334)."""
-        self.assertFalse(hasattr(pandas_ta_classic.custom, "load_indicator_module"))
+        assert not hasattr(pandas_ta_classic.custom, "load_indicator_module")
 
     # ------------------------------------------------------------------
     # create_dir
@@ -67,32 +66,29 @@ class TestCustom(TestCase):
 
     def test_create_dir_creates_new_directory(self):
         path = os.path.join(self.tmpdir, "new_indicator_dir")
-        self.assertFalse(os.path.exists(path))
+        assert not os.path.exists(path)
         create_dir(path, create_categories=False, verbose=False)
-        self.assertTrue(os.path.exists(path))
+        assert os.path.exists(path)
 
     def test_create_dir_is_idempotent(self):
         path = os.path.join(self.tmpdir, "idempotent_dir")
         create_dir(path, create_categories=False, verbose=False)
         create_dir(path, create_categories=False, verbose=False)
-        self.assertTrue(os.path.exists(path))
+        assert os.path.exists(path)
 
     def test_create_dir_creates_category_subdirs(self):
         path = os.path.join(self.tmpdir, "with_categories")
         create_dir(path, create_categories=True, verbose=False)
-        self.assertTrue(os.path.exists(path))
+        assert os.path.exists(path)
         categories = [*pandas_ta_classic.Category]
         for cat in categories:
-            self.assertTrue(
-                os.path.exists(os.path.join(path, cat)),
-                f"Missing category subdir: {cat}",
-            )
+            assert os.path.exists(os.path.join(path, cat)), f"Missing category subdir: {cat}"
 
     def test_create_dir_no_categories(self):
         path = os.path.join(self.tmpdir, "no_categories")
         create_dir(path, create_categories=False, verbose=False)
         subdirs = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-        self.assertEqual(subdirs, [])
+        assert subdirs == []
 
     # ------------------------------------------------------------------
     # bind
@@ -108,9 +104,9 @@ class TestCustom(TestCase):
         func_name = "_test_bind_dummy_"
         try:
             bind(func_name, _dummy_func, _dummy_method)
-            self.assertTrue(hasattr(pandas_ta_classic, func_name))
-            self.assertIs(getattr(pandas_ta_classic, func_name), _dummy_func)
-            self.assertTrue(hasattr(AnalysisIndicators, func_name))
+            assert hasattr(pandas_ta_classic, func_name)
+            assert getattr(pandas_ta_classic, func_name) is _dummy_func
+            assert hasattr(AnalysisIndicators, func_name)
         finally:
             self._unload(func_name)
 
@@ -120,7 +116,7 @@ class TestCustom(TestCase):
 
     def test_import_dir_nonexistent_path(self):
         # used to log an error and import nothing
-        with self.assertRaisesRegex(FileNotFoundError, "xyz_123"):
+        with pytest.raises(FileNotFoundError, match="xyz_123"):
             import_dir("/nonexistent/path/xyz_123", verbose=False)
 
     def test_import_dir_skips_invalid_categories(self):
@@ -146,8 +142,8 @@ class TestCustom(TestCase):
 
         try:
             import_dir(base, verbose=False)
-            self.assertTrue(hasattr(pandas_ta_classic, func_name))
-            self.assertIn(func_name, pandas_ta_classic.Category["momentum"])
+            assert hasattr(pandas_ta_classic, func_name)
+            assert func_name in pandas_ta_classic.Category["momentum"]
         finally:
             self._unload(func_name, cat_dir)
             if func_name in sys.modules:
@@ -164,9 +160,9 @@ class TestCustom(TestCase):
             f.write("def some_other_function(): pass\n")
 
         try:
-            with self.assertRaisesRegex(ImportError, func_name):  # used to be logged and skipped
+            with pytest.raises(ImportError, match=func_name):  # used to be logged and skipped
                 import_dir(base, verbose=False)
-            self.assertFalse(hasattr(pandas_ta_classic, func_name))
+            assert not hasattr(pandas_ta_classic, func_name)
         finally:
             if cat_dir in sys.path:
                 sys.path.remove(cat_dir)
@@ -184,9 +180,9 @@ class TestCustom(TestCase):
 
         try:
             # used to call sys.exit(1), killing the caller's interpreter
-            with self.assertRaisesRegex(ImportError, func_name) as ctx:
+            with pytest.raises(ImportError, match=func_name) as ctx:
                 import_dir(base, verbose=False)
-            self.assertIsInstance(ctx.exception.__cause__, RuntimeError)
+            assert isinstance(ctx.value.__cause__, RuntimeError)
         finally:
             if cat_dir in sys.path:
                 sys.path.remove(cat_dir)
@@ -204,9 +200,9 @@ class TestCustom(TestCase):
             f.write(f"def {func_name}(close, **kwargs):\n" f"    return close\n")
 
         try:
-            with self.assertRaisesRegex(ImportError, f"{func_name}_method"):  # used to be logged and skipped
+            with pytest.raises(ImportError, match=f"{func_name}_method"):  # used to be logged and skipped
                 import_dir(base, verbose=False)
-            self.assertFalse(hasattr(pandas_ta_classic, func_name))
+            assert not hasattr(pandas_ta_classic, func_name)
         finally:
             if cat_dir in sys.path:
                 sys.path.remove(cat_dir)
@@ -238,7 +234,7 @@ class TestCustom(TestCase):
         sys.modules.pop(name, None)
         pandas_ta_classic.custom._BOUND.discard(name)
 
-    def test_import_dir_refuses_a_name_the_package_already_has(self):
+    def test_import_dir_refuses_a_name_the_package_already_has(self, subtests):
         """momentum/rsi.py replaced ta.rsi, df.ta.rsi() and rsi in strategy() without a
         word, while stochrsi kept the built-in; Category.py replaced ta.Category and
         made import_dir() fail halfway (#342)."""
@@ -247,21 +243,21 @@ class TestCustom(TestCase):
             base = tempfile.mkdtemp(dir=self.tmpdir)
             cat_dir = os.path.join(base, "momentum")
             self._write_indicator(cat_dir, name, 2)
-            with self.subTest(name=name), self.assertRaisesRegex(ImportError, rf"cannot be bound as '{name}': that name is already {owner}\. Rename"):
+            with subtests.test(name=name), pytest.raises(ImportError, match=rf"cannot be bound as '{name}': that name is already {owner}\. Rename"):
                 import_dir(base, verbose=False)
-            self.assertNotIn(cat_dir, sys.path)
-        self.assertIs(pandas_ta_classic.rsi, rsi)
-        self.assertIs(pandas_ta_classic.Category, category)
-        self.assertEqual(pandas_ta_classic.Category["momentum"].count("rsi"), 1)
+            assert cat_dir not in sys.path
+        assert pandas_ta_classic.rsi is rsi
+        assert pandas_ta_classic.Category is category
+        assert pandas_ta_classic.Category["momentum"].count("rsi") == 1
 
-    def test_bind_refuses_a_name_the_package_already_has(self):
+    def test_bind_refuses_a_name_the_package_already_has(self, subtests):
         def _dummy(close):
             return close
 
         for name, owner in (("sma", "a built-in indicator"), ("Category", "an attribute of pandas_ta_classic"), ("cores", "an attribute of df.ta")):
-            with self.subTest(name=name), self.assertRaisesRegex(ValueError, rf"^bind\(\) function_name '{name}' is already {owner}"):
+            with subtests.test(name=name), pytest.raises(ValueError, match=rf"^bind\(\) function_name '{name}' is already {owner}"):
                 bind(name, _dummy, _dummy)
-        self.assertIsNot(pandas_ta_classic.sma, _dummy)
+        assert pandas_ta_classic.sma is not _dummy
 
     def test_a_name_bind_bound_can_be_bound_again(self):
         def _first(close):
@@ -274,7 +270,7 @@ class TestCustom(TestCase):
         try:
             bind(name, _first, _first)
             bind(name, _second, _second)
-            self.assertIs(getattr(pandas_ta_classic, name), _second)
+            assert getattr(pandas_ta_classic, name) is _second
         finally:
             self._unload(name)
 
@@ -287,11 +283,11 @@ class TestCustom(TestCase):
         cat_dir = os.path.join(self.tmpdir, "stdlib_name_dir", "trend")
         self._write_indicator(cat_dir, "statistics", 2)
         try:
-            with self.assertRaisesRegex(ImportError, r"cannot be imported as 'statistics': that name already resolves to .*statistics\.py"):
+            with pytest.raises(ImportError, match=r"cannot be imported as 'statistics': that name already resolves to .*statistics\.py"):
                 import_dir(os.path.dirname(cat_dir), verbose=False)
-            self.assertIs(sys.modules["statistics"], statistics)
-            self.assertTrue(all(vars(statistics)[k] is v for k, v in before.items()), "the stdlib module was re-executed")
-            self.assertNotIn("statistics", pandas_ta_classic.Category["trend"])
+            assert sys.modules["statistics"] is statistics
+            assert all(vars(statistics)[k] is v for k, v in before.items()), "the stdlib module was re-executed"
+            assert "statistics" not in pandas_ta_classic.Category["trend"]
         finally:
             if cat_dir in sys.path:
                 sys.path.remove(cat_dir)
@@ -305,11 +301,11 @@ class TestCustom(TestCase):
         for factor, cat_dir in enumerate(cat_dirs, start=2):
             self._write_indicator(cat_dir, name, factor)
         try:
-            with self.assertRaisesRegex(ImportError, rf"cannot be imported as '{name}': that name already resolves to .*{name}\.py"):
+            with pytest.raises(ImportError, match=rf"cannot be imported as '{name}': that name already resolves to .*{name}\.py"):
                 import_dir(base, verbose=False)
             # and import_dir binds neither: it binds only when every file loaded
-            self.assertEqual(sum(name in names for names in pandas_ta_classic.Category.values()), 0)
-            self.assertFalse(hasattr(pandas_ta_classic, name))
+            assert sum(name in names for names in pandas_ta_classic.Category.values()) == 0
+            assert not hasattr(pandas_ta_classic, name)
         finally:
             self._unload(name, *cat_dirs)
 
@@ -326,9 +322,9 @@ class TestCustom(TestCase):
             self._write_indicator(other, name, 300)
             sys.path.insert(0, other)
             importlib.invalidate_caches()
-            with self.assertRaisesRegex(ImportError, rf"cannot be imported as '{name}': that name already resolves to .*shadow_other"):
+            with pytest.raises(ImportError, match=rf"cannot be imported as '{name}': that name already resolves to .*shadow_other"):
                 import_dir(os.path.dirname(cat_dir), verbose=False)
-            self.assertEqual(getattr(pandas_ta_classic, name)(10), 20)
+            assert getattr(pandas_ta_classic, name)(10) == 20
         finally:
             self._unload(name, cat_dir, other)
 
@@ -336,9 +332,9 @@ class TestCustom(TestCase):
         cat_dir = os.path.join(self.tmpdir, "stdlib_path_dir", "trend")
         self._write_indicator(cat_dir, "statistics", 2)
         before = list(sys.path)
-        with self.assertRaises(ImportError):
+        with pytest.raises(ImportError):
             import_dir(os.path.dirname(cat_dir), verbose=False)
-        self.assertEqual(sys.path, before)
+        assert sys.path == before
 
     def test_import_dir_rejects_a_file_name_that_is_not_a_module_name(self):
         # ab.cd.py imported package 'ab' and raised a bare ModuleNotFoundError
@@ -347,7 +343,7 @@ class TestCustom(TestCase):
         with open(os.path.join(cat_dir, "ab.cd.py"), "w") as f:
             f.write("def x(close):\n    return close\n")
         try:
-            with self.assertRaisesRegex(ImportError, r"'ab\.cd' is not a valid module name"):
+            with pytest.raises(ImportError, match=r"'ab\.cd' is not a valid module name"):
                 import_dir(os.path.dirname(cat_dir), verbose=False)
         finally:
             if cat_dir in sys.path:
@@ -359,11 +355,11 @@ class TestCustom(TestCase):
         self._write_indicator(cat_dir, name, 2)
         try:
             import_dir(os.path.dirname(cat_dir), verbose=False)
-            self.assertEqual(getattr(pandas_ta_classic, name)(10), 20)
+            assert getattr(pandas_ta_classic, name)(10) == 20
             self._write_indicator(cat_dir, name, 300)  # a different file size, so a cached .pyc cannot be reused
             importlib.invalidate_caches()
             import_dir(os.path.dirname(cat_dir), verbose=False)
-            self.assertEqual(getattr(pandas_ta_classic, name)(10), 3000)
+            assert getattr(pandas_ta_classic, name)(10) == 3000
         finally:
             self._unload(name, cat_dir)
 
@@ -439,15 +435,15 @@ def test_import_dir_binds_nothing_when_one_file_is_refused(good, bad_category, b
 # ---------------------------------------------------------------------------
 
 
-class TestPluginBindRegistration(TestCase):
+class TestPluginBindRegistration:
     """custom.bind() registers a custom indicator accessible from df.ta."""
 
     _BIND_NAME = "_e2e_test_custom_ind"
 
-    def setUp(self):
+    def setup_method(self):
         self.df = get_sample_data()
 
-    def tearDown(self):
+    def teardown_method(self):
         if hasattr(pandas_ta_classic, self._BIND_NAME):
             delattr(pandas_ta_classic, self._BIND_NAME)
         if hasattr(AnalysisIndicators, self._BIND_NAME):
@@ -473,16 +469,16 @@ class TestPluginBindRegistration(TestCase):
         """After bind(), ta.<name> must be callable."""
         fn, method = self._make_custom_pair()
         custom.bind(self._BIND_NAME, fn, method)
-        self.assertTrue(hasattr(pandas_ta_classic, self._BIND_NAME))
-        self.assertTrue(callable(getattr(pandas_ta_classic, self._BIND_NAME)))
+        assert hasattr(pandas_ta_classic, self._BIND_NAME)
+        assert callable(getattr(pandas_ta_classic, self._BIND_NAME))
 
     def test_bind_accessor_returns_valid_series(self):
         """After bind(), df.ta.<name>() must return a non-empty Series."""
         fn, method = self._make_custom_pair()
         custom.bind(self._BIND_NAME, fn, method)
         result = getattr(self.df.ta, self._BIND_NAME)()
-        self.assertIsInstance(result, pd.Series)
-        self.assertGreater(result.notna().sum(), 0)
+        assert isinstance(result, pd.Series)
+        assert result.notna().sum() > 0
 
     def test_bind_result_equals_direct_call(self):
         """df.ta.<name>() must return the same values as calling the function directly."""
@@ -504,8 +500,8 @@ class TestPluginBindRegistration(TestCase):
 
         before = len(self.df.columns)
         getattr(self.df.ta, self._BIND_NAME)(append=True)
-        self.assertGreater(len(self.df.columns), before)
-        self.assertIn("DOUBLE_CLOSE", self.df.columns)
+        assert len(self.df.columns) > before
+        assert "DOUBLE_CLOSE" in self.df.columns
 
 
 # ---------------------------------------------------------------------------
@@ -513,17 +509,17 @@ class TestPluginBindRegistration(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestImportDirPlugin(TestCase):
+class TestImportDirPlugin:
     """import_dir() discovers and binds a custom indicator module from disk."""
 
     _IND_NAME = "_e2e_import_dir_ind"
 
-    def setUp(self):
+    def setup_method(self):
         self.df = get_sample_data()
         self._tmpdir = tempfile.TemporaryDirectory()
         self._tmppath = self._tmpdir.name
 
-    def tearDown(self):
+    def teardown_method(self):
         # Remove sys.path and global bindings introduced by import_dir
         cat_dir = os.path.join(self._tmppath, "overlap")
         if cat_dir in sys.path:
@@ -563,29 +559,22 @@ class TestImportDirPlugin(TestCase):
         """After import_dir(), ta.<name> must exist and be callable."""
         self._write_module()
         custom.import_dir(self._tmppath, verbose=False)
-        self.assertTrue(
-            hasattr(pandas_ta_classic, self._IND_NAME),
-            f"ta.{self._IND_NAME} must exist after import_dir()",
-        )
-        self.assertTrue(callable(getattr(pandas_ta_classic, self._IND_NAME)))
+        assert hasattr(pandas_ta_classic, self._IND_NAME), f"ta.{self._IND_NAME} must exist after import_dir()"
+        assert callable(getattr(pandas_ta_classic, self._IND_NAME))
 
     def test_import_dir_accessor_method_works(self):
         """After import_dir(), df.ta.<name>() must return a valid Series."""
         self._write_module()
         custom.import_dir(self._tmppath, verbose=False)
         result = getattr(self.df.ta, self._IND_NAME)()
-        self.assertIsInstance(result, pd.Series)
-        self.assertGreater(result.notna().sum(), 0)
+        assert isinstance(result, pd.Series)
+        assert result.notna().sum() > 0
 
     def test_import_dir_registers_in_category(self):
         """After import_dir(), the indicator must appear in Category['overlap']."""
         self._write_module()
         custom.import_dir(self._tmppath, verbose=False)
-        self.assertIn(
-            self._IND_NAME,
-            pandas_ta_classic.Category.get("overlap", []),
-            f"{self._IND_NAME} must be in Category['overlap'] after import_dir()",
-        )
+        assert self._IND_NAME in pandas_ta_classic.Category.get("overlap", []), f"{self._IND_NAME} must be in Category['overlap'] after import_dir()"
 
     def test_import_dir_skips_invalid_category_dir(self):
         """import_dir() must silently skip subdirectories that are not valid categories."""
@@ -596,4 +585,4 @@ class TestImportDirPlugin(TestCase):
         # Must not raise
         custom.import_dir(self._tmppath, verbose=False)
         # The indicator in 'overlap' must still be bound
-        self.assertTrue(hasattr(pandas_ta_classic, self._IND_NAME))
+        assert hasattr(pandas_ta_classic, self._IND_NAME)

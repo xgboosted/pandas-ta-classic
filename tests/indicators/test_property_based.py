@@ -24,7 +24,6 @@ Running
 import math
 import warnings
 from datetime import UTC, datetime
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -39,7 +38,7 @@ from tests.strategies import ohlcv_dataframe, price_series
 _small_positive_int = st.integers(min_value=2, max_value=50)
 
 
-class TestPriceSeriesStrategy(TestCase):
+class TestPriceSeriesStrategy:
     """The ``price_series`` generator does what its arguments say."""
 
     @given(price_series())
@@ -72,7 +71,7 @@ class TestPriceSeriesStrategy(TestCase):
 # ======================================================================
 
 
-class TestIndicatorOutputInvariants(TestCase):
+class TestIndicatorOutputInvariants:
     """Indicators must return correct types, lengths, and naming."""
 
     @given(
@@ -153,7 +152,7 @@ class TestIndicatorOutputInvariants(TestCase):
             assert len(result.columns) == 5  # BBL, BBM, BBU, BBB, BBP
 
 
-class TestDataFrameAccessorInvariants(TestCase):
+class TestDataFrameAccessorInvariants:
     """DataFrame accessor (df.ta) must not crash with random OHLCV."""
 
     @given(ohlcv_dataframe(min_size=30, max_size=150))
@@ -254,7 +253,7 @@ class TestDataFrameAccessorInvariants(TestCase):
         assert list(warnings.filters) == before
 
 
-class TestNoDirectionOnBarZero(TestCase):
+class TestNoDirectionOnBarZero:
     """The first bar has no predecessor, so it has no bar-to-bar direction.
 
     kvo, pvol(signed=True) and vp seeded the direction with +1 (``signed_series(x,
@@ -288,7 +287,7 @@ class TestNoDirectionOnBarZero(TestCase):
 # ======================================================================
 
 
-class TestMathematicalInvariants(TestCase):
+class TestMathematicalInvariants:
     """Mathematical properties that must hold for indicator outputs."""
 
     @given(
@@ -393,7 +392,7 @@ class TestMathematicalInvariants(TestCase):
 # ======================================================================
 
 
-class TestNanPropagation(TestCase):
+class TestNanPropagation:
     """All-NaN input must produce all-NaN output, not crash."""
 
     @given(st.integers(min_value=10, max_value=100), _small_positive_int)
@@ -428,7 +427,7 @@ class TestNanPropagation(TestCase):
         assert result.isna().all()
 
 
-class TestPropertyBasedEdgeCases(TestCase):
+class TestPropertyBasedEdgeCases:
     """Additional edge-case properties discovered via Hypothesis."""
 
     @given(
@@ -484,7 +483,7 @@ class TestPropertyBasedEdgeCases(TestCase):
 # ======================================================================
 
 
-class TestCategoryDiscovery(TestCase):
+class TestCategoryDiscovery:
     """Property tests verifying the indicator category discovery mechanism."""
 
     def test_all_categories_non_empty(self):

@@ -29,7 +29,7 @@ class TestExtMomentumDeeper(AccessorValueCase):
         self._check_appended(df, "CTI_12")
         # CTI in [-1, 1]
         valid = df["CTI_12"].dropna()
-        self.assertTrue((valid >= -1).all() and (valid <= 1).all(), "CTI out of [-1,1]")
+        assert ((valid >= -1).all() and (valid <= 1).all()), "CTI out of [-1,1]"
 
     def test_er_ext(self):
         df = self.fresh()
@@ -37,7 +37,7 @@ class TestExtMomentumDeeper(AccessorValueCase):
         self._check_appended(df, "ER_10")
         # ER in [0, 1]
         valid = df["ER_10"].dropna()
-        self.assertTrue((valid >= 0).all() and (valid <= 1).all(), "ER out of [0,1]")
+        assert ((valid >= 0).all() and (valid <= 1).all()), "ER out of [0,1]"
 
     def test_fisher_ext(self):
         df = self.fresh()
@@ -60,7 +60,7 @@ class TestExtMomentumDeeper(AccessorValueCase):
         df.ta.macd(append=True)
         # MACD appends three columns; check the first (MACD line)
         macd_cols = [c for c in df.columns if c.startswith("MACD")]
-        self.assertTrue(len(macd_cols) >= 1, "No MACD columns appended")
+        assert (len(macd_cols) >= 1), "No MACD columns appended"
         for col in macd_cols:
             self._check_appended(df, col)
 
@@ -74,7 +74,7 @@ class TestExtMomentumDeeper(AccessorValueCase):
         df.ta.rsi(append=True)
         self._check_appended(df, "RSI_14")
         valid = df["RSI_14"].dropna()
-        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "RSI out of [0,100]")
+        assert ((valid >= 0).all() and (valid <= 100).all()), "RSI out of [0,100]"
 
     def test_stochrsi_ext(self):
         df = self.fresh()
@@ -89,7 +89,7 @@ class TestExtMomentumDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.td_seq(append=True)
         td_cols = [c for c in df.columns if c.startswith("TD_SEQ")]
-        self.assertTrue(len(td_cols) >= 1, "No TD_SEQ columns appended")
+        assert (len(td_cols) >= 1), "No TD_SEQ columns appended"
 
     def test_tsi_ext(self):
         df = self.fresh()
@@ -100,5 +100,5 @@ class TestExtMomentumDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.willr(append=True)
         col = [c for c in df.columns if c.startswith("WILLR")]
-        self.assertTrue(len(col) >= 1, "No WILLR column appended")
+        assert (len(col) >= 1), "No WILLR column appended"
         self._check_appended(df, col[0])

@@ -11,29 +11,27 @@ Covers:
   * Chain mode does not leak between DataFrames, nor into copies or slices.
 """
 
-from unittest import TestCase
-
 import pandas as pd
 
 import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
 from tests.config import get_sample_data
 
 
-class TestFluentChaining(TestCase):
+class TestFluentChaining:
     """Fluent API chaining for df.ta (Issue #36)."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         self.df = self.data.copy()
 
-    def tearDown(self):
+    def teardown_method(self):
         del self.df
 
     # ------------------------------------------------------------------
@@ -44,25 +42,25 @@ class TestFluentChaining(TestCase):
         """chain() returns the AnalysisIndicators accessor."""
         result = self.df.ta.chain()
         # chain() returns the accessor, not a DataFrame
-        self.assertTrue(hasattr(result, "sma"))
+        assert hasattr(result, "sma")
 
     def test_unchain_returns_dataframe(self):
         """unchain() returns the DataFrame (so .ta is available for normal calls)."""
         self.df.ta.chain()
         result = self.df.ta.unchain()
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertIs(result, self.df)
+        assert isinstance(result, pd.DataFrame)
+        assert result is self.df
 
     def test_chain_sets_flag(self):
         """chain() stores the flag in df.attrs."""
         self.df.ta.chain()
-        self.assertTrue(self.df.attrs.get("_ta_chain"))
+        assert self.df.attrs.get("_ta_chain")
 
     def test_unchain_clears_flag(self):
         """unchain() removes the flag from df.attrs."""
         self.df.ta.chain()
         self.df.ta.unchain()
-        self.assertNotIn("_ta_chain", self.df.attrs)
+        assert "_ta_chain" not in self.df.attrs
 
     # ------------------------------------------------------------------
     # Fluent chaining
@@ -73,29 +71,29 @@ class TestFluentChaining(TestCase):
         col_count = len(self.df.columns)
         # chain() returns accessor → .sma(10) returns DataFrame
         result = self.df.ta.chain().sma(10)
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
         # Column added
-        self.assertGreater(len(self.df.columns), col_count)
-        self.assertIn("SMA_10", self.df.columns)
+        assert len(self.df.columns) > col_count
+        assert "SMA_10" in self.df.columns
 
     def test_chain_multiple_indicators(self):
         """Chain sma -> rsi -> macd in one expression."""
         col_count = len(self.df.columns)
         # chain().sma() returns df → .ta accesses new chain-aware accessor
         result = self.df.ta.chain().sma(10).ta.rsi(14).ta.macd()
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertGreater(len(self.df.columns), col_count)
+        assert isinstance(result, pd.DataFrame)
+        assert len(self.df.columns) > col_count
         # Verify all indicators were appended
-        self.assertIn("SMA_10", self.df.columns)
-        self.assertIn("RSI_14", self.df.columns)
-        self.assertIn("MACD_12_26_9", self.df.columns)
+        assert "SMA_10" in self.df.columns
+        assert "RSI_14" in self.df.columns
+        assert "MACD_12_26_9" in self.df.columns
 
     def test_chain_with_bbands(self):
         """Chain a multi-column indicator (BBANDS)."""
         result = self.df.ta.chain().bbands(20)
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
         for col in ("BBL_20_2.0", "BBM_20_2.0", "BBU_20_2.0"):
-            self.assertIn(col, self.df.columns, f"{col} not appended")
+            assert col in self.df.columns, f"{col} not appended"
 
     def test_chain_still_computes_correct_values(self):
         """Chained RSI should match non-chained RSI."""
@@ -115,8 +113,8 @@ class TestFluentChaining(TestCase):
         """Chain mode on one df should not affect another."""
         df2 = self.data.copy()
         self.df.ta.chain()
-        self.assertTrue(self.df.attrs.get("_ta_chain"))
-        self.assertNotIn("_ta_chain", df2.attrs)
+        assert self.df.attrs.get("_ta_chain")
+        assert "_ta_chain" not in df2.attrs
 
     def test_chain_does_not_follow_copies_or_slices(self):
         """pandas copies attrs into df.copy() and slices; neither is chained."""
@@ -124,9 +122,9 @@ class TestFluentChaining(TestCase):
         copied, sliced = self.df.copy(), self.df.iloc[-100:]
         for other in (copied, sliced):
             n_columns = other.shape[1]
-            self.assertIsInstance(other.ta.rsi(), pd.Series)
-            self.assertEqual(other.shape[1], n_columns)
-        self.assertIsInstance(self.df.ta.rsi(), pd.DataFrame)  # the chained frame still is
+            assert isinstance(other.ta.rsi(), pd.Series)
+            assert other.shape[1] == n_columns
+        assert isinstance(self.df.ta.rsi(), pd.DataFrame)  # the chained frame still is
 
     # ------------------------------------------------------------------
     # Idempotency
@@ -137,7 +135,7 @@ class TestFluentChaining(TestCase):
         self.df.ta.chain()
         self.df.ta.chain()
         # Still in chain mode
-        self.assertTrue(self.df.attrs.get("_ta_chain"))
+        assert self.df.attrs.get("_ta_chain")
 
     # ------------------------------------------------------------------
     # Chain with explicit kwargs
@@ -146,16 +144,16 @@ class TestFluentChaining(TestCase):
     def test_chain_with_prefix(self):
         """Prefix works in chain mode."""
         self.df.ta.chain().sma(10, prefix="MY")
-        self.assertIn("MY_SMA_10", self.df.columns)
+        assert "MY_SMA_10" in self.df.columns
 
     def test_chain_with_col_names(self):
         """col_names works in chain mode (multi-column result)."""
         self.df.ta.chain().bbands(20, col_names=("LOW", "MID", "UP", "BW", "PCT"))
-        self.assertIn("LOW", self.df.columns)
-        self.assertIn("MID", self.df.columns)
-        self.assertIn("UP", self.df.columns)
-        self.assertIn("BW", self.df.columns)
-        self.assertIn("PCT", self.df.columns)
+        assert "LOW" in self.df.columns
+        assert "MID" in self.df.columns
+        assert "UP" in self.df.columns
+        assert "BW" in self.df.columns
+        assert "PCT" in self.df.columns
 
 
 # ---------------------------------------------------------------------------
@@ -163,21 +161,21 @@ class TestFluentChaining(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestIndicatorChaining(TestCase):
+class TestIndicatorChaining:
     """Multiple append=True calls build up the DataFrame incrementally."""
 
-    def setUp(self):
+    def setup_method(self):
         self.df = get_sample_data()
 
-    def tearDown(self):
+    def teardown_method(self):
         del self.df
 
     def test_single_append_adds_column(self):
         """Appending one indicator adds at least one new column."""
         before = len(self.df.columns)
         self.df.ta.sma(length=10, append=True)
-        self.assertGreater(len(self.df.columns), before)
-        self.assertIn("SMA_10", self.df.columns)
+        assert len(self.df.columns) > before
+        assert "SMA_10" in self.df.columns
 
     def test_chain_sma_rsi_macd(self):
         """Chaining SMA, RSI, and MACD appends all their columns."""
@@ -185,10 +183,10 @@ class TestIndicatorChaining(TestCase):
         self.df.ta.rsi(length=14, append=True)
         self.df.ta.macd(fast=12, slow=26, signal=9, append=True)
 
-        self.assertIn("SMA_20", self.df.columns)
-        self.assertIn("RSI_14", self.df.columns)
+        assert "SMA_20" in self.df.columns
+        assert "RSI_14" in self.df.columns
         macd_cols = [c for c in self.df.columns if c.startswith("MACD")]
-        self.assertGreater(len(macd_cols), 0, "No MACD columns found after append")
+        assert len(macd_cols) > 0, "No MACD columns found after append"
 
     def test_chained_result_types(self):
         """Each chained indicator returns a Series or DataFrame with non-NaN values."""
@@ -196,22 +194,19 @@ class TestIndicatorChaining(TestCase):
         rsi = self.df.ta.rsi(length=14)
         macd = self.df.ta.macd(fast=12, slow=26, signal=9)
 
-        self.assertIsInstance(sma, pd.Series)
-        self.assertIsInstance(rsi, pd.Series)
-        self.assertIsInstance(macd, pd.DataFrame)
-        self.assertGreater(sma.notna().sum(), 0)
-        self.assertGreater(rsi.notna().sum(), 0)
-        self.assertGreater(macd.notna().sum().sum(), 0)
+        assert isinstance(sma, pd.Series)
+        assert isinstance(rsi, pd.Series)
+        assert isinstance(macd, pd.DataFrame)
+        assert sma.notna().sum() > 0
+        assert rsi.notna().sum() > 0
+        assert macd.notna().sum().sum() > 0
 
     def test_chained_columns_are_numeric(self):
         """Appended indicator columns must be numeric dtype."""
         self.df.ta.sma(length=10, append=True)
         self.df.ta.ema(length=10, append=True)
         for col in ("SMA_10", "EMA_10"):
-            self.assertTrue(
-                pd.api.types.is_numeric_dtype(self.df[col]),
-                f"Column '{col}' must be numeric; got {self.df[col].dtype}",
-            )
+            assert pd.api.types.is_numeric_dtype(self.df[col]), f"Column '{col}' must be numeric; got {self.df[col].dtype}"
 
     def test_chain_does_not_corrupt_ohlcv(self):
         """Chaining indicators must not modify original OHLCV data."""
@@ -232,4 +227,4 @@ class TestIndicatorChaining(TestCase):
             method, kwargs = ind_kwargs
             getattr(self.df.ta, method)(**kwargs, append=True)
             counts.append(len(self.df.columns))
-        self.assertEqual(counts, sorted(counts), "Column count must never decrease")
+        assert counts == sorted(counts), "Column count must never decrease"
