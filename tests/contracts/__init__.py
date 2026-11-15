@@ -8,7 +8,7 @@ modules. They share these pieces, kept here so they cannot drift apart:
 * the data: :func:`spy` returns the last *bars* rows of ``SPY_D``;
 * the registry: :data:`INDICATORS`, :data:`OHLCV_INDICATORS`, :func:`inputs`
   and :func:`call`, which feed an indicator the OHLCV columns its signature
-  names, and :func:`candidate_calls`, its keyword variants;
+  names, and :func:`candidate_calls` and :func:`string_choices`, its keyword variants;
 * the groups several contracts exempt for the same reason (:data:`ELEMENTWISE`,
   :data:`CUMULATIVE`, :data:`WHOLE_SERIES`, :data:`LOOKAHEAD`);
 * known exceptions: :func:`params` and :func:`pin` turn a table of
@@ -178,6 +178,25 @@ def code_defaults(source: str) -> dict:
                 pass
         elif name == "get_drift" and call.args and isinstance(call.args[0], ast.Name):
             found.setdefault(call.args[0].id, 1)
+    return found
+
+
+def string_choices(name: str) -> dict[str, list[str] | None]:
+    """{option: sorted choices} of every ``_str_param(..., choices=...)`` in indicator *name*'s module;
+    ``None`` where the choices are computed (``choices=ma()``) rather than written out."""
+    source = inspect.getsource(inspect.getmodule(inspect.unwrap(getattr(ta, name))))
+    found: dict[str, list[str] | None] = {}
+    for node in ast.walk(ast.parse(source)):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_str_param" and node.args):
+            continue
+        choices = [keyword.value for keyword in node.keywords if keyword.arg == "choices"]
+        option = node.args[0].id if isinstance(node.args[0], ast.Name) else _kwargs_read(node.args[0])
+        if not choices or option is None:
+            continue
+        try:
+            found[option] = sorted(ast.literal_eval(choices[0]))
+        except ValueError:
+            found[option] = None
     return found
 
 

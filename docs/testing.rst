@@ -23,33 +23,37 @@ Unit Tests
 **Why:** Verify individual indicators produce correct values for known inputs.
 
 **Files:** ``test_candle.py``, ``test_cycles.py``,
-``test_momentum.py``, ``test_overlap.py``,
-``test_performance.py``, ``test_statistics.py``,
+``test_momentum.py``, ``test_overlap.py``, ``test_statistics.py``,
 ``test_trend.py``, ``test_volatility.py``,
 ``test_volume.py``, ``test_math.py``.
 
-Uses ``IndicatorSpec``-based assertions (``assert_indicator_standard``)
-against real market data from ``SPY_D.csv``.
+What an indicator computes, mostly on ``SPY_D.csv``: its definition, its edge
+cases and the bugs it had. The column names are in ``test_column_names.py``
+(below); ``offset``, ``fillna``, a missing input and the name of a changed
+parameter are checked registry-wide by the contracts below.
 
 **Run:** ``python -m unittest tests.indicators.test_momentum -v``
 
 
-Extension API Tests
--------------------
+Column Names and Extension API Tests
+------------------------------------
 
-**Why:** Confirm indicators work correctly through the ``df.ta`` DataFrame
-accessor with ``append=True``.
+**Why:** A column name is public API, and every indicator must work through
+the ``df.ta`` DataFrame accessor with ``append=True``.
 
-**Files:** ``test_accessor_candle.py``, ``test_accessor_cycles.py``,
+**Files:** ``test_column_names.py`` holds one hardcoded table,
+``EXPECTED_COLUMNS``: the name and columns of each indicator's default call
+and of the options that change them. Each row is checked for the function and
+for ``df.ta``, which must append exactly those columns; a new indicator fails
+``test_every_indicator_has_a_row`` until it has one. ``test_accessor_cycles.py``,
 ``test_accessor_momentum.py``, ``test_accessor_overlap.py``,
 ``test_accessor_performance.py``, ``test_accessor_statistics.py``,
-``test_accessor_trend.py``, ``test_accessor_volatility.py``,
-``test_accessor_volume.py``. Besides the column name, each category's
-``TestExt<Category>Deeper`` class checks that the appended column has valid
-rows and a finite last value (base class ``AccessorValueCase`` in
-``tests/assertions.py``).
+``test_accessor_trend.py``, ``test_accessor_volatility.py`` and
+``test_accessor_volume.py`` keep each category's ``TestExt<Category>Deeper``
+class, which checks that the appended column has valid rows and a finite last
+value (base class ``AccessorValueCase`` in ``tests/assertions.py``).
 
-**Run:** ``python -m pytest tests/api/test_accessor_momentum.py -v``
+**Run:** ``python -m pytest tests/api/test_column_names.py -v``
 
 
 Accessor API Tests
@@ -73,7 +77,8 @@ Oracle / Comparison Tests
 
 **Why:** Compare native (``talib=False``) implementations against
 TA-Lib (C library) and tulipy outputs to catch numerical divergence.
-``test_oracle_talib.py`` needs ``ta-lib`` installed and skips without it;
+``test_oracle_registry.py`` and ``test_talib_parameters.py`` need ``ta-lib``
+installed and skip without it;
 ``test_oracle_tulipy.py`` compares against tulipy values frozen in
 ``tests/fixtures/tulipy_oracle.json``, so tulipy itself is not needed.
 No oracle test lets ``talib=True`` reach TA-Lib: that would compare TA-Lib
@@ -81,16 +86,21 @@ with itself. (``test_oracle_registry.py`` passes it once, for ``cmo``, together
 with a ``scalar`` TA-Lib cannot express, which keeps the call native.)
 
 ``test_oracle_registry.py`` compares every indicator and candle pattern with a
-TA-Lib counterpart from one table, on ``SPY_D`` and on frames that plant the
+TA-Lib counterpart from one table, on the last 400 bars of ``SPY_D``, on all
+5241 of them (where a recursion would drift), and on frames that plant the
 data problems met so far: a fully flat series, a flat block, ``high == low``
 with a moving close, scattered flat and bodiless bars, malformed OHLC,
 zero-volume sessions, prices scaled by ``1e-6`` and ``1e6``, a flash spike and
-crash, and very large volume. It compares the NaN mask as well as the values, from the
-first bar both sides hold a value, so native giving up where TA-Lib answers is
-a failure rather than a bar dropped by ``dropna()``. An indicator listed with
-TA-Lib in ``indicator_support_matrix.rst`` must have a case in the table or a
-reason in ``NO_ORACLE``; known differences are strict xfails in
-``KNOWN_DIFFERENCES``.
+crash, very large volume, and 37 missing bars at the start. It compares the
+NaN mask as well as the values, from the first bar both sides hold a value, so
+native giving up where TA-Lib answers is a failure rather than a bar dropped by
+``dropna()``, and ``test_warmup_matches_talib`` requires the first value on
+TA-Lib's bar, with TA-Lib's own conventions listed in ``WARMUP_DIFFERENCES``.
+An indicator listed with TA-Lib in ``indicator_support_matrix.rst`` must have
+a case in the table or a reason in ``NO_ORACLE``; known differences are strict
+xfails in ``KNOWN_DIFFERENCES``. ``VARIANTS`` adds the other paths TA-Lib
+expresses too (``apo``/``ppo`` with ``mamode="ema"``, ``stochrsi``'s default
+``k=3``, ``sarext``'s options).
 
 For indicators neither library covers, ``test_reference_ports.py`` compares
 against independent ports of the cited definitions (see *Reference ports*
@@ -102,22 +112,27 @@ runs natively and equals ``talib=False`` value for value. It also checks that
 both paths publish each column's first value on the same bar, with TA-Lib's
 by-design exceptions listed with their reason.
 
-**Files:** ``test_oracle_talib.py``, ``test_oracle_registry.py``,
-``test_oracle_tulipy.py``, ``test_reference_ports.py``,
-``test_talib_parameters.py``.
+**Files:** ``test_oracle_registry.py``, ``test_oracle_tulipy.py``,
+``test_reference_ports.py``, ``test_talib_parameters.py``.
 
-**Run:** ``python -m pytest tests/oracle/test_oracle_talib.py -v``
+**Run:** ``python -m pytest tests/oracle/test_oracle_registry.py -v``
 
 
-Native Indicator Tests
-----------------------
+Value Invariants
+----------------
 
-**Why:** Cover indicators that have no TA-Lib alternative, validating
-return type, non-NaN row count, value finiteness, and mathematical bounds.
+**Why:** Properties an indicator's values have on SPY_D whatever their exact
+numbers (the snapshot tests below compare those): every registered
+indicator's default call, each boolean option flipped and each optional price
+input left out has a value on the last bar (gaps by design are listed in
+``LAST_BAR_GAPS`` with their reason), an oscillator stays in its range, a
+deviation is never negative, a flag is 0 or 1, ``hl2`` lies between the low
+and the high, and ``ma()`` returns what each moving average it dispatches to
+returns.
 
-**Files:** ``test_native_values.py``.
+**Files:** ``test_value_invariants.py``.
 
-**Run:** ``python -m pytest tests/indicators/test_native_values.py -v``
+**Run:** ``python -m pytest tests/indicators/test_value_invariants.py -v``
 
 
 Regression Tests
@@ -143,10 +158,11 @@ Edge-Case Tests
 
 **Why:** Verify indicators don't crash on degenerate inputs.
 
-- ``test_edge_cases.py`` — All-NaN series, constant-price series,
-  ±Inf injection at mid-series positions, and mismatched OHLCV lengths.
-- ``test_nan_behaviour.py`` — NaN prefix warmup periods, minimum length
-  requirements, boundary conditions.
+- ``test_edge_cases.py`` — a constant price (every moving average equals it,
+  a difference or deviation reads 0, a constant range gives that ATR), the bar
+  of the first value written out per indicator in a table, inputs of mismatched
+  lengths, and the exact minimum length of a window giving one value. All-NaN
+  input, short input and an infinite value are the contracts' (below).
 - ``test_lookahead.py`` — for every registered indicator, at its defaults
   and with each boolean option flipped, the first ``K`` bars read the same
   over ``K`` bars as over the whole series, on data that plants flat and
@@ -157,8 +173,11 @@ Edge-Case Tests
   ``vp``, which have no causal mode, decline it.
 - ``test_short_input_contract.py`` — for every registered indicator, input
   shorter than its window returns an all-NaN result indexed like the input
-  and shaped like a normal one (it returned ``None`` before 0.9.0); an
-  indicator with no window, or a window the input fits, returns values.
+  and shaped like a normal one (it returned ``None`` before 0.9.0), and logs a
+  warning; an indicator with no window, or a window the input fits, returns
+  values. A required Series passed as ``None`` returns ``None``; an input no
+  OHLCV column stands for (``fast``/``slow``, ``trend``, ``signal``,
+  ``periods``) raises ``ValueError`` naming it.
 - ``test_leading_nan_contract.py`` — for every registered indicator, a
   leading NaN run (chained input) leaves the result on the real bars
   unchanged, the padded bars themselves read NaN, and an all-NaN input reads
@@ -182,7 +201,7 @@ Edge-Case Tests
   series, a flat block, bars with no range, malformed OHLC and zero-volume
   sessions give no all-NaN column, no infinity, no output inflated beyond the
   control frame, no NaN bleeding past the degenerate part and no
-  epsilon-scale value.
+  epsilon-scale value; an infinite close or volume raises nowhere.
 - ``test_data_gaps_contract.py`` — for every registered indicator, a missing
   whole bar, a five-bar outage, a bar missing only its volume or only its
   range, and a missing newest bar leave earlier bars untouched and are
@@ -203,7 +222,8 @@ Edge-Case Tests
   same values as a unique index (with and without a leading NaN run), and
   ``result.category`` names the category the indicator is registered under.
   The ``offset`` and ``fillna`` checks run on every option path: each
-  ``mamode``, ``talib=True`` and each boolean option.
+  choice of a string option (each ``mamode``), ``talib=True`` and each
+  boolean option.
 - ``test_int_parameter_contract.py`` — for every registered indicator, each
   whole-number parameter set to 2, 3 and 5 leaves values in every column the
   default call fills.
@@ -339,7 +359,6 @@ a utility live with its other tests in ``utils/test_utils_<module>.py``
   non-negativity, MOM/ROC relationship.
 * **Core utilities** — ``verify_series``, ``apply_offset``, ``apply_fill``
   (in ``utils/test_utils_core.py``).
-* **None-guard safety** — Indicators return ``None`` for ``None`` input.
 * **NaN propagation** — All-NaN input → all-NaN output, no crash.
 * **Idempotence** — Same args twice → identical result.
 * **Category discovery** — Dynamic discovery stays consistent.
@@ -418,8 +437,6 @@ only in the code a PR touches.
   equals the default the code applies (rule 8).
 - ``test_docstring_params.py`` — every parameter a docstring documents is one
   the indicator reads.
-- ``test_assertions.py`` — the comparison helpers in ``tests/assertions.py``
-  fail on wrong results, so the tests built on them can fail.
 - ``test_no_invisible_characters.py`` — no tracked file holds an invisible or
   confusable character that a diff or a grep would not show.
 - ``test_python_support_docs.py`` — the supported Python range in the docs and

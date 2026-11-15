@@ -140,7 +140,7 @@ jobs:
     - name: Run core tests (exclude oracle suites)
       run: |
         python -m pytest tests/ \
-          --ignore=tests/oracle/test_oracle_talib.py \
+          --ignore=tests/oracle/test_oracle_registry.py \
           --ignore=tests/oracle/test_oracle_tulipy.py -v
 
     - name: Verify package import
@@ -171,10 +171,9 @@ jobs:
         pip install -e ".[test,oracle,performance]"
         python -c "import numba; print('numba', numba.__version__)"
 
-    - name: Run core tests with the JIT path (includes the JIT vs pure-Python parity test)
+    - name: Run core tests with the JIT path (includes the JIT vs pure-Python parity test and the TA-Lib registry)
       run: |
         python -m pytest tests/ \
-          --ignore=tests/oracle/test_oracle_talib.py \
           --ignore=tests/oracle/test_oracle_tulipy.py -v
 
   # Job 5: Oracle Testing - Run talib/tulipy parity tests on all supported Python versions
@@ -214,7 +213,7 @@ jobs:
 
     - name: Run oracle test suites (talib + tulipy)
       run: |
-        python -m pytest tests/oracle/test_oracle_talib.py tests/oracle/test_oracle_tulipy.py -v
+        python -m pytest tests/oracle/test_oracle_registry.py tests/oracle/test_oracle_tulipy.py -v
 
   # Job 6: Documentation - Build and deploy documentation (independent deployment)
   documentation:

@@ -1,16 +1,14 @@
 import importlib
 import sys
 from types import SimpleNamespace
-from unittest import TestCase, skipIf
+from unittest import TestCase
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.cycles.msw import _msw_native
-from tests.assertions import IndicatorSpec, assert_indicator_standard
 from tests.config import get_sample_data
 
 
@@ -28,82 +26,6 @@ class TestCycles(TestCase):
     @classmethod
     def tearDownClass(cls):
         del cls.open, cls.high, cls.low, cls.close, cls.volume, cls.data
-
-    def test_dsp(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.dsp,
-                args=[self.close],
-                expected_name="DSP_14",
-                length_override=20,
-            ),
-        )
-
-    def test_ebsw(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ebsw,
-                args=[self.close],
-                expected_name="EBSW_40_10",
-                length_override=50,
-            ),
-        )
-
-    def test_ht_dcperiod(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_dcperiod,
-                args=[self.close],
-                expected_name="HT_DCPERIOD",
-            ),
-        )
-
-    def test_ht_dcphase(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_dcphase,
-                args=[self.close],
-                expected_name="HT_DCPHASE",
-            ),
-        )
-
-    def test_ht_phasor(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_phasor,
-                args=[self.close],
-                expected_name="HT_PHASOR",
-                expected_type=DataFrame,
-                expected_columns=["HT_PHASOR_INPHASE", "HT_PHASOR_QUAD"],
-            ),
-        )
-
-    def test_ht_sine(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_sine,
-                args=[self.close],
-                expected_name="HT_SINE",
-                expected_type=DataFrame,
-                expected_columns=["HT_SINE", "HT_LEADSINE"],
-            ),
-        )
-
-    def test_ht_trendmode(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ht_trendmode,
-                args=[self.close],
-                expected_name="HT_TRENDMODE",
-            ),
-        )
 
     def test_ht_indicators_propagate_an_interior_nan(self):
         """TA-Lib requires NaN-free input; the ports emit NaN instead of crashing.
@@ -141,17 +63,6 @@ class TestCycles(TestCase):
     def test_msw(self):
         result = pandas_ta.msw(self.close, period=10)
         self.assertIsNotNone(result)
-
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.msw,
-                args=[self.close],
-                expected_name="MSW_5",
-                expected_type=DataFrame,
-                expected_columns=["MSW_SINE_5", "MSW_LEAD_5"],
-            ),
-        )
 
     def test_msw_window_with_a_missing_bar_is_nan_on_both_paths(self):
         # The DFT sums turn NaN, `abs(rp) > 0.001` reads False and the fallback set a
@@ -263,19 +174,6 @@ class TestHilbertNanInput(TestCase):
                 np.testing.assert_array_equal(with_prefix, without)
                 self.assertTrue(np.isfinite(with_prefix).any())
 
-    @skipIf(not pandas_ta.Imports["talib"], "TA-Lib not installed")
-    def test_nan_prefix_matches_talib(self):
-        """TA-Lib skips a leading NaN run; the native path must agree."""
-        import talib
-
-        prefixed = self.clean.copy()
-        prefixed.iloc[:10] = np.nan
-        native = pandas_ta.ht_trendline(prefixed).to_numpy()
-        oracle = talib.HT_TRENDLINE(prefixed.to_numpy())
-        both = np.isfinite(native) & np.isfinite(oracle)
-        self.assertGreater(int(both.sum()), 100)
-        np.testing.assert_allclose(native[both], oracle[both], rtol=1e-9)
-
 
 # ---------------------------------------------------------------------------
 # ht_* lookback and ht_trendmode undefined bars
@@ -289,40 +187,15 @@ class TestHilbertLookbackAndUndefinedBars(TestCase):
     ht_dcperiod returned 0.0 for its first 12 bars and every ht_* emitted
     20-26 values inside TA-Lib's lookback (32 or 63 bars). After a mid-series
     NaN, ht_trendmode converted the NaN it could not compute into 0 -- a
-    valid-looking "cycle mode" for every remaining bar.
+    valid-looking "cycle mode" for every remaining bar. The lookback against
+    TA-Lib is checked in tests/oracle/test_oracle_registry.py: by NaN mask in
+    test_warmup_matches_talib, and for ht_trendmode, whose lookback reads 0, by
+    value in test_native_matches_talib.
     """
-
-    HT_NAMES = ("ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine", "ht_trendmode", "ht_trendline")
 
     @classmethod
     def setUpClass(cls):
         cls.close = get_sample_data()["close"].iloc[:700].reset_index(drop=True)
-
-    @skipIf(not pandas_ta.Imports["talib"], "TA-Lib not installed")
-    def test_nan_positions_match_talib(self):
-        import talib
-
-        refs = {
-            "ht_dcperiod": lambda a: talib.HT_DCPERIOD(a),
-            "ht_dcphase": lambda a: talib.HT_DCPHASE(a),
-            "ht_phasor": lambda a: np.column_stack(talib.HT_PHASOR(a)),
-            "ht_sine": lambda a: np.column_stack(talib.HT_SINE(a)),
-            "ht_trendmode": lambda a: talib.HT_TRENDMODE(a).astype(float),
-            "ht_trendline": lambda a: talib.HT_TRENDLINE(a),
-        }
-        for prefix in (0, 37):
-            series = self.close.copy()
-            series.iloc[:prefix] = np.nan
-            for name in self.HT_NAMES:
-                with self.subTest(indicator=name, prefix=prefix):
-                    native = np.asarray(getattr(pandas_ta, name)(series), dtype=float).reshape(len(series), -1)
-                    oracle = np.asarray(refs[name](series.to_numpy()), dtype=float).reshape(len(series), -1)
-                    # A NaN input row reads NaN; TA-Lib zero-fills it for ht_trendmode's integer output.
-                    real = series.notna().to_numpy()
-                    self.assertTrue(np.isnan(native[~real]).all())
-                    native, oracle = native[real], oracle[real]
-                    np.testing.assert_array_equal(np.isnan(native), np.isnan(oracle))
-                    np.testing.assert_allclose(native[~np.isnan(oracle)], oracle[~np.isnan(oracle)], rtol=1e-9, atol=1e-9)
 
     def test_dcperiod_warmup_is_nan_not_zero(self):
         result = pandas_ta.ht_dcperiod(self.close)

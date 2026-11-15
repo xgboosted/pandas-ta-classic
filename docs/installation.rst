@@ -136,7 +136,7 @@ Both TA-Lib and tulipy are **fully optional**. They serve different roles:
      - Effect when installed
    * - TA-Lib
      - **Acceleration backend + oracle**
-     - Core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_talib.py`` for parity checks
+     - Core indicators — native by default, opt-in via ``talib=True``; also used by ``test_oracle_registry.py`` for parity checks
    * - tulipy
      - **Oracle only**
      - Never used as computation backend; only ``test_oracle_tulipy.py`` uses it to verify native output
@@ -230,7 +230,7 @@ Or install both oracle libraries at once:
     # pip
     pip install pandas-ta-classic[oracle]
 
-``test_oracle_talib.py`` is guarded with ``@unittest.skipUnless`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
+``test_oracle_registry.py`` is guarded with ``pytest.importorskip`` and skips automatically when TA-Lib is not installed. ``test_oracle_tulipy.py`` compares against tulipy values frozen in ``tests/fixtures/tulipy_oracle.json``, so it runs without tulipy installed.
 
 Installing Optional Dependencies
 --------------------------------

@@ -214,9 +214,9 @@ Not greppable, so check in review: **dead code** your change orphaned, and the *
 |---|---|
 | `code-quality` | Black formatting check, `ruff check .` (blocking) + advisory ruff, mypy, core.pyi sync |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
-| `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
-| `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) |
-| `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
+| `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding `test_oracle_registry.py` and `test_oracle_tulipy.py`) |
+| `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) and `test_oracle_registry.py` (the JIT path against TA-Lib) |
+| `testing-oracle` | Runs `test_oracle_registry.py` + `test_oracle_tulipy.py` on all 5 Python versions |
 | `documentation` | Builds Sphinx docs with `-W` (any warning fails) + advisory linkcheck, deploys to GitHub Pages (on push only, so it does not gate PRs) |
 | `pypi-publish` | Builds wheel, twine check, publishes to PyPI (on release published only) |
 
@@ -225,7 +225,7 @@ Additional workflows: `mirror.yml` syncs repository to Codeberg on every push ex
 
 **Note:** when several PRs land on `main` in quick succession, GitHub cancels a `documentation` job that is still waiting in the `pages` concurrency group, because a newer push queued its own. That is expected, not a failure: the run of the last push deploys the docs.
 
-**Note:** CDL candlestick pattern tests (`test_candle.py`, `test_accessor_candle.py`) run in `testing-core`; they need no TA-Lib.
+**Note:** CDL candlestick pattern tests (`test_candle.py`, and the pattern rows of `test_column_names.py`) run in `testing-core`; they need no TA-Lib.
 
 ## Release Process
 
@@ -255,12 +255,11 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 
 1. Create `pandas_ta_classic/<category>/<indicator>.py`
 2. Follow existing indicator template in same category
-3. Add test in appropriate `tests/indicators/test_<category>.py` or `tests/api/test_accessor_<category>.py`
-   (math has no accessor test file)
+3. Add its column names to `EXPECTED_COLUMNS` in `tests/api/test_column_names.py` (`test_every_indicator_has_a_row` fails until you do), tests of what it computes to `tests/indicators/test_<category>.py`, and a `df.ta` value case to the category's `TestExt<Category>Deeper` in `tests/api/test_accessor_<category>.py`
 4. Add entry to `docs/indicators.rst`
 5. Add a changelog fragment `changelog.d/<PR number>.added.md` describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed
-7. The registry-driven contracts cover it automatically and must pass: `test_lookahead.py` (causality), `test_short_input_contract.py`, `test_leading_nan_contract.py` (a leading NaN run changes nothing on the real bars, the padded bars and an all-NaN input read NaN), `test_interior_nan_contract.py` (one missing bar recovers) and `test_warmup_contract.py` (no value before its own warm-up), `test_shift_contract.py` (price level, negative prices), plus the data-problem contracts: `test_degenerate_input.py` (flat, no-range, malformed and zero-volume frames), `test_data_gaps_contract.py` (missing bars, columns and calendar days), `test_scale_contract.py` (price scale) and `test_nullable_input_contract.py` (nullable and integer input); `test_index_contract.py` (index and length kept, `offset` and `fillna` on every option path, a repeated index label, `result.category` against the registry), `test_int_parameter_contract.py` (an int parameter of 2, 3 or 5 blanks no column), `test_option_effect_contract.py` (every MA choice and boolean option changes the result) the explicit-default sweep in `test_parameter_validation.py` (passing a default explicitly keeps the output names) and `test_parameter_name_contract.py` (a non-default parameter that changes the values is in the column name; an exempt one is listed with its reason). If it has a TA-Lib counterpart, mark it in `docs/indicator_support_matrix.rst` and add a case to `ORACLE` in `tests/oracle/test_oracle_registry.py`; the completeness test fails otherwise. A recursive indicator needs `@skip_leading_nan(<series params>, interior=True)` to satisfy `test_interior_nan_contract.py` and `test_warmup_contract.py`. An option it reads from `**kwargs` goes into `_KWARGS_OPTIONS` in `pandas_ta_classic/utils/_keywords.py`; `tests/contracts/test_keyword_table.py` fails until it does. `test_api_consistency.py` covers it too: a new deviation from the majority convention (dtype, column names, defaults, ...) must be added to its table with an `OPEN:` or `KEPT:` reason.
+7. The registry-driven contracts cover it automatically and must pass: `test_lookahead.py` (causality), `test_short_input_contract.py`, `test_leading_nan_contract.py` (a leading NaN run changes nothing on the real bars, the padded bars and an all-NaN input read NaN), `test_interior_nan_contract.py` (one missing bar recovers) and `test_warmup_contract.py` (no value before its own warm-up), `test_shift_contract.py` (price level, negative prices), plus the data-problem contracts: `test_degenerate_input.py` (flat, no-range, malformed and zero-volume frames, an infinite value), `test_data_gaps_contract.py` (missing bars, columns and calendar days), `test_scale_contract.py` (price scale) and `test_nullable_input_contract.py` (nullable and integer input); `test_index_contract.py` (index and length kept, `offset` and `fillna` on every option path, a repeated index label, `result.category` against the registry), `test_int_parameter_contract.py` (an int parameter of 2, 3 or 5 blanks no column), `test_option_effect_contract.py` (every MA choice and boolean option changes the result) the explicit-default sweep in `test_parameter_validation.py` (passing a default explicitly keeps the output names) and `test_parameter_name_contract.py` (a non-default parameter that changes the values is in the column name; an exempt one is listed with its reason). If it has a TA-Lib counterpart, mark it in `docs/indicator_support_matrix.rst` and add a case to `ORACLE` in `tests/oracle/test_oracle_registry.py`; the completeness test fails otherwise. A recursive indicator needs `@skip_leading_nan(<series params>, interior=True)` to satisfy `test_interior_nan_contract.py` and `test_warmup_contract.py`. An option it reads from `**kwargs` goes into `_KWARGS_OPTIONS` in `pandas_ta_classic/utils/_keywords.py`; `tests/contracts/test_keyword_table.py` fails until it does. `test_api_consistency.py` covers it too: a new deviation from the majority convention (dtype, column names, defaults, ...) must be added to its table with an `OPEN:` or `KEPT:` reason.
 8. If neither TA-Lib nor tulipy covers it, add a plain-loop port of the definition it cites to `tests/fixtures/reference_ports.py` and a comparison to `tests/oracle/test_reference_ports.py`; a snapshot of the package's own output proves nothing about correctness.
 
 ### TA-Lib / Numba Integration
@@ -343,7 +342,7 @@ pip install -e ".[oracle]"
 pytest tests/ -v
 
 # Oracle tests only
-pytest tests/oracle/test_oracle_talib.py tests/oracle/test_oracle_tulipy.py -v
+pytest tests/oracle/test_oracle_registry.py tests/oracle/test_oracle_tulipy.py -v
 
 # Single test module (fastest feedback)
 pytest tests/indicators/test_momentum.py -v

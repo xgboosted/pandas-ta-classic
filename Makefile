@@ -61,11 +61,11 @@ install-all:
 # Testing targets
 test: test-utils test-metrics test-ta test-ext test-strats
 
-ACCESSOR_CATS = candle cycles momentum overlap performance statistics trend volatility volume
-INDICATOR_CATS = candle cycles math momentum overlap performance statistics trend volatility volume
+ACCESSOR_CATS = cycles momentum overlap performance statistics trend volatility volume
+INDICATOR_CATS = candle cycles math momentum overlap statistics trend volatility volume
 
 test-ext:
-	$(PYTHON) -m unittest $(addprefix tests.api.test_accessor_,$(ACCESSOR_CATS)) -v
+	$(PYTHON) -m pytest tests/api/test_column_names.py $(addprefix tests/api/test_accessor_,$(addsuffix .py,$(ACCESSOR_CATS))) -v
 
 test-metrics:
 	$(PYTHON) -m unittest tests.utils.test_utils_metrics -v
@@ -74,7 +74,7 @@ test-strats:
 	$(PYTHON) -m unittest tests.api.test_strategy -v
 
 test-ta:
-	$(PYTHON) -m unittest $(addprefix tests.indicators.test_,$(INDICATOR_CATS)) tests.indicators.test_edge_cases tests.snapshots.test_golden_values -v
+	$(PYTHON) -m pytest $(addprefix tests/indicators/test_,$(addsuffix .py,$(INDICATOR_CATS))) tests/indicators/test_edge_cases.py tests/snapshots/test_golden_values.py -v
 
 test-utils:
 	$(PYTHON) -m unittest tests.utils.test_utils_core tests.utils.test_utils_math tests.utils.test_utils_signals tests.utils.test_utils_time -v

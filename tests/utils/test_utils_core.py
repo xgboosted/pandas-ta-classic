@@ -13,7 +13,6 @@ from pandas import DataFrame, Series
 import pandas_ta_classic as ta
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _number, _pos_float, _pos_int, _str_param
-from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
 from tests.strategies import price_series
 
@@ -380,15 +379,8 @@ class TestApplyFill(TestCase):
         self.assertTrue(np.isnan(b.iloc[0]))  # nothing to ffill from
 
 
-class TestNoneGuards(TestCase):
-    """Regression tests for PR #95 - None-guard coverage.
-
-    Each patched indicator must return None (not raise) when given a Series
-    shorter than its minimum required length.  A 4-row Series is used because
-    the smallest default length among the patched indicators is 5 (t3, bbands),
-    so 4 < 5 guarantees verify_series rejects the input for every indicator
-    in this suite.
-    """
+class TestVerifySeries(TestCase):
+    """verify_series() on a 4-row Series: None below min_length, the Series otherwise, and its argument checks."""
 
     @classmethod
     def setUpClass(cls):
@@ -451,115 +443,6 @@ class TestNoneGuards(TestCase):
             self.assertIsNone(ta.utils.verify_series(None))
             self.assertIsNone(ta.utils.verify_series(self.c, 10))
             self.assertIsNotNone(ta.ad(self.h, self.l, self.c, Series([1.0] * len(self.c), index=self.c.index), open_=None))
-
-    # ---- candles ----
-
-    def test_none_guard_cdl_doji(self):
-        assert_all_nan(self, ta.cdl_doji(self.o, self.h, self.l, self.c))
-
-    # ---- cycles ----
-
-    def test_none_guard_dsp(self):
-        assert_all_nan(self, ta.dsp(self.c))
-
-    # ---- momentum ----
-
-    def test_none_guard_ao(self):
-        assert_all_nan(self, ta.ao(self.h, self.l))
-
-    def test_none_guard_cci(self):
-        assert_all_nan(self, ta.cci(self.h, self.l, self.c))
-
-    def test_none_guard_cfo(self):
-        assert_all_nan(self, ta.cfo(self.c))
-
-    def test_none_guard_coppock(self):
-        assert_all_nan(self, ta.coppock(self.c))
-
-    def test_none_guard_cti(self):
-        assert_all_nan(self, ta.cti(self.c))
-
-    def test_none_guard_eri(self):
-        assert_all_nan(self, ta.eri(self.h, self.l, self.c))
-
-    def test_none_guard_inertia(self):
-        assert_all_nan(self, ta.inertia(self.c))
-
-    def test_none_guard_kdj(self):
-        assert_all_nan(self, ta.kdj(self.h, self.l, self.c))
-
-    def test_none_guard_macd(self):
-        assert_all_nan(self, ta.macd(self.c))
-
-    def test_none_guard_po(self):
-        assert_all_nan(self, ta.po(self.c))
-
-    def test_none_guard_qqe(self):
-        assert_all_nan(self, ta.qqe(self.c))
-
-    def test_none_guard_smi(self):
-        assert_all_nan(self, ta.smi(self.c))
-
-    def test_none_guard_squeeze(self):
-        assert_all_nan(self, ta.squeeze(self.h, self.l, self.c))
-
-    def test_none_guard_squeeze_pro(self):
-        assert_all_nan(self, ta.squeeze_pro(self.h, self.l, self.c))
-
-    def test_none_guard_trix(self):
-        assert_all_nan(self, ta.trix(self.c))
-
-    # ---- overlap ----
-
-    def test_none_guard_dema(self):
-        assert_all_nan(self, ta.dema(self.c))
-
-    def test_none_guard_hma(self):
-        assert_all_nan(self, ta.hma(self.c))
-
-    def test_none_guard_mmar(self):
-        assert_all_nan(self, ta.mmar(self.c))
-
-    def test_none_guard_t3(self):
-        # default length=5; 4-row series is shorter than 5
-        assert_all_nan(self, ta.t3(self.c))
-
-    def test_none_guard_tema(self):
-        assert_all_nan(self, ta.tema(self.c))
-
-    def test_none_guard_trima(self):
-        assert_all_nan(self, ta.trima(self.c))
-
-    def test_none_guard_zlma(self):
-        assert_all_nan(self, ta.zlma(self.c))
-
-    # ---- statistics ----
-
-    def test_none_guard_stdev(self):
-        assert_all_nan(self, ta.stdev(self.c))
-
-    def test_none_guard_zscore(self):
-        assert_all_nan(self, ta.zscore(self.c))
-
-    # ---- trend ----
-
-    def test_none_guard_dpo(self):
-        assert_all_nan(self, ta.dpo(self.c))
-
-    def test_none_guard_qstick(self):
-        assert_all_nan(self, ta.qstick(self.o, self.c))
-
-    # ---- volatility ----
-
-    def test_none_guard_bbands(self):
-        # default length=5; 4-row series is shorter than 5
-        assert_all_nan(self, ta.bbands(self.c))
-
-    def test_none_guard_massi(self):
-        assert_all_nan(self, ta.massi(self.h, self.l))
-
-    def test_none_guard_supertrend(self):
-        assert_all_nan(self, ta.supertrend(self.h, self.l, self.c))
 
 
 class TestRequiredUtilityInputs(TestCase):
