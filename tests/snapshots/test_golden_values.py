@@ -61,6 +61,11 @@ class TestIndicatorValues:
     # Internal helper used by every generated test method
     # ------------------------------------------------------------------
 
+    def test_every_tracked_result_has_a_fixture(self):
+        """The tests are generated from expected_values.json, so a result missing there would go unchecked."""
+        missing, stale = set(self.results) - set(_FIXTURES), set(_FIXTURES) - set(self.results)
+        assert not missing and not stale, f"tracked without a fixture: {sorted(missing)}; fixture without a result: {sorted(stale)}"
+
     def _check_fixture(self, fixture_key: str, subtests) -> None:
         """Assert last value and non-NaN count for every column of fixture_key."""
 
