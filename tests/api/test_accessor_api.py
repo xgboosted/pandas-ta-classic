@@ -610,6 +610,14 @@ class TestIsDatetimeOrdered(TestCase):
         self.assertFalse(df.ta.datetime_ordered)
 
 
+def test_reverse_flips_the_row_order():
+    df = pd.DataFrame({"close": [1.0, 2.0, 3.0]}, index=pd.date_range("2020-01-01", periods=3, freq="D"))
+    reversed_ = df.ta.reverse
+    assert list(reversed_.index) == list(df.index[::-1])
+    assert list(reversed_["close"]) == [3.0, 2.0, 1.0]
+    assert not reversed_.ta.datetime_ordered
+
+
 # ---------------------------------------------------------------------------
 # df.ta.adjusted naming a missing column raises instead of silently using
 # close; an explicitly named column still works.

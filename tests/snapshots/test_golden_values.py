@@ -96,7 +96,7 @@ class TestIndicatorValues(TestCase):
 
                 expected_last = expected["last_value"]
                 if expected_last is None:
-                    return  # column was all-NaN when fixtures were generated
+                    continue  # column was all-NaN when fixtures were generated; the next column is still checked
 
                 clean = series.dropna()
                 self.assertFalse(

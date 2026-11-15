@@ -37,31 +37,6 @@ class TestMomentum(TestCase):
     def tearDown(self):
         pass
 
-    def test_datetime_ordered(self):
-        # Test if datetime64 index and ordered
-        result = self.data.ta.datetime_ordered
-        self.assertTrue(result)
-
-        # Test if not ordered
-        original = self.data.copy()
-        reversal = original.ta.reverse
-        result = reversal.ta.datetime_ordered
-        self.assertFalse(result)
-
-        # Test a non-datetime64 index
-        original = self.data.copy()
-        original = original.reset_index()
-        result = original.ta.datetime_ordered
-        self.assertFalse(result)
-
-    def test_reverse(self):
-        original = self.data.copy()
-        result = original.ta.reverse
-
-        # Check if first and last time are reversed
-        self.assertEqual(result.index[-1], original.index[0])
-        self.assertEqual(result.index[0], original.index[-1])
-
     def test_cmo(self):
         # The default (talib=False) is Chande's rolling sum, which TA-Lib does not implement,
         # so it is checked against that definition; the Wilder path (talib=True) is in

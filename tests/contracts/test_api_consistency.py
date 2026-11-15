@@ -163,9 +163,6 @@ UNSORTED_INDEX_RAISES = {"vwap"}
 # Result metadata and naming
 # ---------------------------------------------------------------------------
 
-# result.category names the registry category (#295).
-CATEGORY_ATTRIBUTE_MISMATCH: dict[str, str] = {}
-
 # One output column comes back as a Series for the majority. KEPT: ttm_trend's
 # one-column DataFrame is pandas-ta's API.
 SINGLE_COLUMN_DATAFRAME = {"ttm_trend"}
@@ -483,15 +480,6 @@ def test_index_order_and_uniqueness(label: str, pinned: set, status: str, messag
     _check(raises, pinned, f"{status} raises on a {label} index (majority: computes)")
 
 
-def test_result_category_attribute() -> None:
-    found = {}
-    for name in INDICATORS:
-        attr = getattr(_call(name), "category", None)
-        if attr != REGISTRY[name]:
-            found[name] = f"{attr} (registered under {REGISTRY[name]})"
-    _check(found, CATEGORY_ATTRIBUTE_MISMATCH, "OPEN: result.category differs from the registry")
-
-
 def test_single_output_is_a_series() -> None:
     found = {name for name in INDICATORS if isinstance(_call(name), pd.DataFrame) and _default(name).shape[1] == 1}
     _check(found, SINGLE_COLUMN_DATAFRAME, "KEPT: one column returned as a DataFrame")
@@ -653,7 +641,7 @@ def test_name_shadowing() -> None:
 
 def test_tables_name_registered_indicators() -> None:
     tables = [NOT_FLOAT64, KEEPS_FLOAT32, MIXED_FLOAT32, INVENTS_VALUES_FROM_NAN, COLUMNS_DEPEND_ON_INPUT, DUPLICATE_INDEX_RAISES, UNSORTED_INDEX_RAISES,
-              CATEGORY_ATTRIBUTE_MISMATCH, SINGLE_COLUMN_DATAFRAME, COLUMN_NAME_STYLE, FRAME_NAME_STYLE, SIGNATURE_DEFAULTS, NO_OFFSET,
+              SINGLE_COLUMN_DATAFRAME, COLUMN_NAME_STYLE, FRAME_NAME_STYLE, SIGNATURE_DEFAULTS, NO_OFFSET,
               NO_DOCSTRING, ACCESSOR_DIFFERS, WINDOW_SYNONYMS, CANDLE_STANDALONE_DTYPE]  # fmt: skip
     named = {k for t in tables for k in t} | {n for n, _ in EXPLICIT_DEFAULT_RENAMES} | {k.split(":")[0] for k in FLAG_COLUMNS}
     assert not named - set(REGISTRY), f"not registered: {sorted(named - set(REGISTRY))}"

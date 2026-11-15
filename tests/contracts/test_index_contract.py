@@ -837,7 +837,9 @@ def test_result_category_matches_the_registry(name: str, frame: dict[str, pd.Ser
     ``dm`` (registered under momentum) reported "trend" and ``ttm_trend``
     (registered under trend) reported "momentum".
     """
-    for part in _results(name, frame):
+    parts = _results(name, frame)
+    assert parts, f"{name} returned nothing"
+    for part in parts:
         category = getattr(part, "category", None)
         assert category == _REGISTERED_CATEGORY[name], f"{name}.category is {category!r}, registered under {_REGISTERED_CATEGORY[name]!r}"
 
