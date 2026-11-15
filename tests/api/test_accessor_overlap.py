@@ -23,32 +23,18 @@ class TestOverlapExtension(TestCase):
     def tearDown(self):
         pass
 
-    def test_ichimoku_append_span_ext(self):
-        from tests.config import get_sample_data
-
-        data = get_sample_data()
-        # append_span is a functional flag forwarded to the underlying
-        # function; it emits no warning.
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            data.ta.ichimoku(append=True, append_span=True)
-        self.assertIsInstance(data, DataFrame)
-        # Span columns (ISA_9, ISB_26) should be present
-        self.assertIn("ISA_9", data.columns)
-        self.assertIn("ISB_26", data.columns)
-        # Main ichimoku columns should also be present
-        self.assertIn("ITS_9", data.columns)
-        self.assertIn("IKS_26", data.columns)
-
     def test_ichimoku_accessor_no_warning(self):
         from tests.config import get_sample_data
 
-        data = get_sample_data()
-        # 0.9.0 ships no deprecation: the accessor call emits no warning at all.
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            data.ta.ichimoku(append=True)
-        self.assertIsInstance(data, DataFrame)
+        # 0.9.0 ships no deprecation: the accessor call emits no warning at all,
+        # and append_span is a functional flag forwarded to the function.
+        for kwargs in ({}, {"append_span": True}):
+            with self.subTest(**kwargs):
+                data = get_sample_data()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error")
+                    data.ta.ichimoku(append=True, **kwargs)
+                self.assertIsInstance(data, DataFrame)
 
     def test_ichimoku_prefix_applied_once(self):
         from tests.config import get_sample_data

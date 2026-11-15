@@ -2,7 +2,6 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
 from tests.config import get_sample_data
@@ -59,9 +58,6 @@ class TestVolume(TestCase):
     def test_vp_sort_close(self):
         chronological = pandas_ta.vp(self.close, self.volume_)
         by_price = pandas_ta.vp(self.close, self.volume_, sort_close=True)
-        self.assertIsInstance(by_price, DataFrame)
-        self.assertEqual(list(by_price.columns), list(chronological.columns))
-        self.assertEqual(by_price.name, "VP_10")
 
         # sort_close bins by price, so the bins are ordered and disjoint and the
         # profile differs from the chronological split.
@@ -171,24 +167,6 @@ class TestAdNoneGuard(TestCase):
                 open_=bad_open,
                 talib=False,  # force else-branch where open_ is validated
             )
-
-    def test_valid_call_no_open_returns_series(self):
-        """Normal call without open_ returns a Series named 'AD'."""
-        result = pandas_ta.ad(high=self.high, low=self.low, close=self.close, volume=self.volume)
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "AD")
-
-    def test_valid_call_with_open_returns_series(self):
-        """Normal call with valid open_ returns a Series named 'ADo'."""
-        result = pandas_ta.ad(
-            high=self.high,
-            low=self.low,
-            close=self.close,
-            volume=self.volume,
-            open_=self.df["open"],
-        )
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "ADo")
 
 
 # ---------------------------------------------------------------------------

@@ -40,11 +40,6 @@ class TestTrend(TestCase):
     def tearDown(self):
         pass
 
-    def test_chop(self):
-        result = pandas_ta.chop(self.high, self.low, self.close, ln=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CHOPln_14_1_100")
-
     def test_cpr_virgin_detection(self):
         result = pandas_ta.cpr(self.open, self.high, self.low, self.close, virgin_cpr=True, virgin_lookforward=5)
         virgin_values = result["CPR_VIRGIN"].dropna()
@@ -83,26 +78,6 @@ class TestTrend(TestCase):
         result = pandas_ta.cpr(open_with_nan, self.high, self.low, self.close)
         self.assertIsInstance(result, DataFrame)
         self.assertIn("CPR_TC", result.columns)
-
-    def test_decay(self):
-        result = pandas_ta.decay(self.close, mode="exp")
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "EXPDECAY_5")
-
-    def test_edecay(self):
-        result = pandas_ta.edecay(self.close, length=10)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "EDECAY_10")
-
-    def test_decreasing(self):
-        result = pandas_ta.decreasing(self.close, length=3, strict=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SDEC_3")
-
-    def test_increasing(self):
-        result = pandas_ta.increasing(self.close, length=3, strict=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SINC_3")
 
     def test_long_run(self):
         with self.assertRaisesRegex(ValueError, "long_run\\(\\) requires 'fast' and 'slow' Series"):

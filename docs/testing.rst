@@ -43,7 +43,7 @@ the ``df.ta`` DataFrame accessor with ``append=True``.
 
 **Files:** ``test_column_names.py`` holds one hardcoded table,
 ``EXPECTED_COLUMNS``: the name and columns of each indicator's default call
-and of the options that change them. Each row is checked for the function and
+and of the options that change them or that another test calls with. Each row is checked for the function and
 for ``df.ta``, which must append exactly those columns; a new indicator fails
 ``test_every_indicator_has_a_row`` until it has one. ``test_accessor_cycles.py``,
 ``test_accessor_momentum.py``, ``test_accessor_overlap.py``,

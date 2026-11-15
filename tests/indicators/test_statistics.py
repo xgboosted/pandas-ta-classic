@@ -54,8 +54,6 @@ class TestStatistics(TestCase):
         self.assertAlmostEqual(result.iloc[3], 3.375)
 
     def test_tos_stdevall(self):
-        # length defaults to None (the whole series), which test_parameter_name_contract.py does not sweep
-        self.assertEqual(pandas_ta.tos_stdevall(self.close, length=30).name, "TOS_STDEVALL_30")
         # stds unsorted → auto-reversed and still computes
         self.assertIsNotNone(pandas_ta.tos_stdevall(self.close, stds=[3, 2, 1]))
         # stds contains non-positive value → return None
@@ -78,9 +76,6 @@ class TestStatistics(TestCase):
         self.assertTrue(default.equals(sample), "the default must stay ddof=1")
         ratio = (population / sample).dropna()
         np.testing.assert_allclose(ratio.to_numpy(), np.sqrt(length / (length - 1)), rtol=1e-12)
-        # A non-default ddof changes the values, so it is in the name (#343); the default keeps ZS_30.
-        self.assertEqual(population.name, f"ZS_{length}_ddof0")
-        self.assertEqual(sample.name, f"ZS_{length}")
 
         # ddof must leave a positive divisor, so it stays below length.
         with self.assertRaisesRegex(ValueError, r"zscore\(\) ddof must be an integer >= 0 and < 30"):
@@ -176,11 +171,6 @@ class TestZscoreColumnName(TestCase):
             result.name.startswith("ZS_"),
             f"zscore column name must start with 'ZS_'; got '{result.name}'",
         )
-
-    def test_zscore_column_name_exact(self):
-        """zscore(length=20) must produce column named 'ZS_20'."""
-        result = pandas_ta.zscore(self.close, length=20)
-        self.assertEqual(result.name, "ZS_20")
 
     def test_zscore_old_name_not_used(self):
         """zscore must not use old 'Z_{length}' naming convention."""
