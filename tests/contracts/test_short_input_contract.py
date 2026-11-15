@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import logging
 from unittest import TestCase
 
 import numpy as np
@@ -320,9 +321,13 @@ def _call(name: str, n: int = _N_SHORT):
 
 
 @pytest.mark.parametrize("name", sorted(RETURNS_ALL_NAN))
-def test_short_input_returns_all_nan(name: str) -> None:
-    """Below-minimum input yields an all-NaN result on the input index, shaped like a normal result."""
-    short = _call(name)
+def test_short_input_returns_all_nan(name: str, caplog: pytest.LogCaptureFixture) -> None:
+    """Below-minimum input yields an all-NaN result on the input index, shaped like a normal result,
+    and logs a warning that says so."""
+    with caplog.at_level(logging.WARNING, logger="pandas_ta_classic"):
+        short = _call(name)
+    said_so = [r for r in caplog.records if r.levelno >= logging.WARNING and r.name.startswith("pandas_ta_classic") and "all NaN" in r.getMessage()]
+    assert said_so, f"{name} logged no 'all NaN' warning on {_N_SHORT} rows"
     assert isinstance(short, (pd.Series, pd.DataFrame)), f"{name} returned {type(short).__name__} on {_N_SHORT} rows"
     assert np.isnan(short.to_numpy(dtype=float)).all(), f"{name} returned values on {_N_SHORT} rows"
     full = _call(name, _N_LONG)

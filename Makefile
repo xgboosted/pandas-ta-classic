@@ -74,7 +74,7 @@ test-strats:
 	$(PYTHON) -m unittest tests.api.test_strategy -v
 
 test-ta:
-	$(PYTHON) -m unittest $(addprefix tests.indicators.test_,$(INDICATOR_CATS)) tests.indicators.test_edge_cases tests.snapshots.test_golden_values -v
+	$(PYTHON) -m pytest $(addprefix tests/indicators/test_,$(addsuffix .py,$(INDICATOR_CATS))) tests/indicators/test_edge_cases.py tests/snapshots/test_golden_values.py -v
 
 test-utils:
 	$(PYTHON) -m unittest tests.utils.test_utils_core tests.utils.test_utils_math tests.utils.test_utils_signals tests.utils.test_utils_time -v

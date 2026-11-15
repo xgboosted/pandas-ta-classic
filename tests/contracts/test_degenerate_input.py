@@ -52,7 +52,7 @@ from hypothesis.extra.numpy import arrays
 
 import pandas_ta_classic as ta
 from tests.assertions import output_columns
-from tests.contracts import INDICATORS, candidate_calls, pin
+from tests.contracts import INDICATORS, call, candidate_calls, pin, spy
 
 try:
     import talib
@@ -1109,3 +1109,16 @@ def test_bop_and_ad_on_flat_bars(dtype):
     o, h, l, c, v = (pd.Series(x, dtype=dtype) for x in ([10, 10, 11], [10, 12, 11], [10, 9, 11], [10, 11, 11], [100, 200, 300]))
     assert ta.bop(o, h, l, c).tolist() == pytest.approx([0.0, 1 / 3, 0.0])  # TA-Lib BOP
     assert ta.ad(h, l, c, v).tolist() == pytest.approx([0.0, 200 / 3, 200 / 3])  # TA-Lib AD
+
+
+@pytest.mark.parametrize("name", INDICATORS)
+def test_an_infinite_value_does_not_raise(name: str) -> None:
+    """One infinite close and one infinite volume is bad data, not a crash: the indicator returns a result.
+
+    How the infinity propagates is the indicator's own business (as NaN or inf);
+    a degenerate window is the other sweeps' subject.
+    """
+    df = spy(300)
+    df.iloc[150, df.columns.get_loc("close")] = np.inf
+    df.iloc[160, df.columns.get_loc("volume")] = np.inf
+    assert isinstance(call(name, df), pd.DataFrame)

@@ -158,10 +158,11 @@ Edge-Case Tests
 
 **Why:** Verify indicators don't crash on degenerate inputs.
 
-- ``test_edge_cases.py`` — All-NaN series, constant-price series,
-  ±Inf injection at mid-series positions, and mismatched OHLCV lengths.
-- ``test_nan_behaviour.py`` — NaN prefix warmup periods, minimum length
-  requirements, boundary conditions.
+- ``test_edge_cases.py`` — a constant price (every moving average equals it,
+  a difference or deviation reads 0, a constant range gives that ATR), the bar
+  of the first value written out per indicator in a table, inputs of mismatched
+  lengths, and the exact minimum length of a window giving one value. All-NaN
+  input, short input and an infinite value are the contracts' (below).
 - ``test_lookahead.py`` — for every registered indicator, at its defaults
   and with each boolean option flipped, the first ``K`` bars read the same
   over ``K`` bars as over the whole series, on data that plants flat and
@@ -172,9 +173,9 @@ Edge-Case Tests
   ``vp``, which have no causal mode, decline it.
 - ``test_short_input_contract.py`` — for every registered indicator, input
   shorter than its window returns an all-NaN result indexed like the input
-  and shaped like a normal one (it returned ``None`` before 0.9.0); an
-  indicator with no window, or a window the input fits, returns values. A
-  required Series passed as ``None`` returns ``None``; an input no
+  and shaped like a normal one (it returned ``None`` before 0.9.0), and logs a
+  warning; an indicator with no window, or a window the input fits, returns
+  values. A required Series passed as ``None`` returns ``None``; an input no
   OHLCV column stands for (``fast``/``slow``, ``trend``, ``signal``,
   ``periods``) raises ``ValueError`` naming it.
 - ``test_leading_nan_contract.py`` — for every registered indicator, a
@@ -200,7 +201,7 @@ Edge-Case Tests
   series, a flat block, bars with no range, malformed OHLC and zero-volume
   sessions give no all-NaN column, no infinity, no output inflated beyond the
   control frame, no NaN bleeding past the degenerate part and no
-  epsilon-scale value.
+  epsilon-scale value; an infinite close or volume raises nowhere.
 - ``test_data_gaps_contract.py`` — for every registered indicator, a missing
   whole bar, a five-bar outage, a bar missing only its volume or only its
   range, and a missing newest bar leave earlier bars untouched and are
