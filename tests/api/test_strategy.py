@@ -323,7 +323,7 @@ class TestStrategyMethods:
             no_volume.ta.strategy(verbose=True)
         assert any("Excluded[" in line for line in logs)
 
-        # tearDown measures self.data, so give it something to find.
+        # teardown_method measures self.data, so give it something to find.
         self.data.ta.strategy("Cycles", verbose=verbose, timed=strategy_timed)
 
     # @skipUnless(verbose, "verbose mode only")
@@ -562,9 +562,11 @@ class TestCustomIndicatorsNeedSerialStrategy:
             mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
             mock.patch.dict(pandas_ta.Category, {"trend": [*pandas_ta.Category["trend"], "dbl"]}),
         )
-        self.cleanup = ExitStack()
-        for patch in patches:
-            self.cleanup.enter_context(patch)
+        # pytest skips teardown_method when setup_method raises: the stack unwinds itself then.
+        with ExitStack() as stack:
+            for patch in patches:
+                stack.enter_context(patch)
+            self.cleanup = stack.pop_all()
 
     def teardown_method(self):
         self.cleanup.close()
@@ -651,12 +653,14 @@ class TestImportDirWithWorkers:
                 f"    return self._post_process({self.NAME}(self._get_column('close')), **kwargs)\n"
             )
         # import_dir appends to Category's lists; a fresh list keeps the real one untouched.
-        self.cleanup = ExitStack()
-        self.cleanup.enter_context(mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])}))
-        self.cleanup.callback(self._unload, cat_dir)
-        import_dir(self.tmpdir, verbose=False)
-        self.df = get_sample_data().iloc[:300].copy()
-        self.strategy = pandas_ta.Strategy("custom", [{"kind": self.NAME}])
+        # pytest skips teardown_method when setup_method raises: the stack unwinds itself then.
+        with ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])}))
+            stack.callback(self._unload, cat_dir)
+            import_dir(self.tmpdir, verbose=False)
+            self.df = get_sample_data().iloc[:300].copy()
+            self.strategy = pandas_ta.Strategy("custom", [{"kind": self.NAME}])
+            self.cleanup = stack.pop_all()
 
     def teardown_method(self):
         self.cleanup.close()
@@ -699,9 +703,11 @@ class TestCategoryStrategyWithCustomIndicators:
                 {"trend": [*pandas_ta.Category["trend"], "dbl"], "volume": [*pandas_ta.Category["volume"], "vtw"]},
             ),
         )
-        self.cleanup = ExitStack()
-        for patch in patches:
-            self.cleanup.enter_context(patch)
+        # pytest skips teardown_method when setup_method raises: the stack unwinds itself then.
+        with ExitStack() as stack:
+            for patch in patches:
+                stack.enter_context(patch)
+            self.cleanup = stack.pop_all()
 
     def teardown_method(self):
         self.cleanup.close()
