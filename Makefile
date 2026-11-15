@@ -68,16 +68,16 @@ test-ext:
 	$(PYTHON) -m pytest tests/api/test_column_names.py $(addprefix tests/api/test_accessor_,$(addsuffix .py,$(ACCESSOR_CATS))) -v
 
 test-metrics:
-	$(PYTHON) -m unittest tests.utils.test_utils_metrics -v
+	$(PYTHON) -m pytest tests/utils/test_utils_metrics.py -v
 
 test-strats:
-	$(PYTHON) -m unittest tests.api.test_strategy -v
+	$(PYTHON) -m pytest tests/api/test_strategy.py -v
 
 test-ta:
 	$(PYTHON) -m pytest $(addprefix tests/indicators/test_,$(addsuffix .py,$(INDICATOR_CATS))) tests/indicators/test_edge_cases.py tests/snapshots/test_golden_values.py -v
 
 test-utils:
-	$(PYTHON) -m unittest tests.utils.test_utils_core tests.utils.test_utils_math tests.utils.test_utils_signals tests.utils.test_utils_time -v
+	$(PYTHON) -m pytest tests/utils/test_utils_core.py tests/utils/test_utils_math.py tests/utils/test_utils_signals.py tests/utils/test_utils_time.py -v
 
 # Regenerate JSON fixture files from TA-Lib oracle + native code.
 # Deliberate step only — run after an INTENTIONAL algorithm change and review

@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 from concurrent.futures import Executor, Future, ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import ExitStack
 from datetime import UTC, datetime
 from multiprocessing import cpu_count
 from time import perf_counter
@@ -561,9 +562,12 @@ class TestCustomIndicatorsNeedSerialStrategy:
             mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
             mock.patch.dict(pandas_ta.Category, {"trend": [*pandas_ta.Category["trend"], "dbl"]}),
         )
+        self.cleanup = ExitStack()
         for patch in patches:
-            patch.start()
-            self.addCleanup(patch.stop)
+            self.cleanup.enter_context(patch)
+
+    def teardown_method(self):
+        self.cleanup.close()
 
     def test_cores_raise_before_any_worker_starts(self):
         with pytest.raises(ValueError, match=r"custom indicators \['dbl'\] only serially.*cores=0.*out of the Strategy's 'ta' list"):
@@ -578,13 +582,11 @@ class TestCustomIndicatorsNeedSerialStrategy:
 
     def test_a_category_run_points_to_exclude(self):
         # A category run checks columns against the package function, which import_dir binds too.
-        patch = mock.patch.object(pandas_ta, "dbl", _dbl, create=True)
-        patch.start()
-        self.addCleanup(patch.stop)
-        with pytest.raises(ValueError, match=r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
-            self.df.ta.strategy("trend", cores=2)
-        with pytest.raises(ValueError, match=r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
-            self.df.ta.strategy("all", cores=2)
+        with mock.patch.object(pandas_ta, "dbl", _dbl, create=True):
+            with pytest.raises(ValueError, match=r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
+                self.df.ta.strategy("trend", cores=2)
+            with pytest.raises(ValueError, match=r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
+                self.df.ta.strategy("all", cores=2)
 
     def test_a_process_executor_raises_too(self):
         # Nothing is submitted, so the pool never spawns a worker.
@@ -649,13 +651,15 @@ class TestImportDirWithWorkers:
                 f"    return self._post_process({self.NAME}(self._get_column('close')), **kwargs)\n"
             )
         # import_dir appends to Category's lists; a fresh list keeps the real one untouched.
-        patch = mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])})
-        patch.start()
-        self.addCleanup(patch.stop)
-        self.addCleanup(self._unload, cat_dir)
+        self.cleanup = ExitStack()
+        self.cleanup.enter_context(mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])}))
+        self.cleanup.callback(self._unload, cat_dir)
         import_dir(self.tmpdir, verbose=False)
         self.df = get_sample_data().iloc[:300].copy()
         self.strategy = pandas_ta.Strategy("custom", [{"kind": self.NAME}])
+
+    def teardown_method(self):
+        self.cleanup.close()
 
     def _unload(self, cat_dir):
         for target in (pandas_ta, pandas_ta.AnalysisIndicators):
@@ -695,9 +699,12 @@ class TestCategoryStrategyWithCustomIndicators:
                 {"trend": [*pandas_ta.Category["trend"], "dbl"], "volume": [*pandas_ta.Category["volume"], "vtw"]},
             ),
         )
+        self.cleanup = ExitStack()
         for patch in patches:
-            patch.start()
-            self.addCleanup(patch.stop)
+            self.cleanup.enter_context(patch)
+
+    def teardown_method(self):
+        self.cleanup.close()
 
     def test_category_and_all_run_custom_indicators(self):
         self.df.ta.strategy("trend")

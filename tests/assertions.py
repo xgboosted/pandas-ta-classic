@@ -1,8 +1,12 @@
+import logging
 import math
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas import DataFrame, Series
 
 from tests.config import get_sample_data
@@ -38,16 +42,34 @@ def golden_value_close(actual: float, expected: float) -> bool:
     return abs(actual - expected) <= GOLDEN_ATOL + GOLDEN_RTOL * abs(expected)
 
 
-def assert_all_nan(test_case, result, index=None):
+def assert_all_nan(result, index=None):
     """Input shorter than the window yields an all-NaN Series/DataFrame, not None (issue #145, case B).
 
     When *index* is given, the result must be aligned to it.
     """
-    test_case.assertIsInstance(result, (Series, DataFrame), f"expected an all-NaN result, got {type(result).__name__}")
+    assert isinstance(result, (Series, DataFrame)), f"expected an all-NaN result, got {type(result).__name__}"
     if index is not None:
-        test_case.assertTrue(result.index.equals(index), "all-NaN result must keep the input index")
+        assert result.index.equals(index), "all-NaN result must keep the input index"
     values = result.to_numpy(dtype=float)
-    test_case.assertTrue(values.size == 0 or bool(np.isnan(values).all()), "short-input result must be all NaN")
+    assert values.size == 0 or bool(np.isnan(values).all()), "short-input result must be all NaN"
+
+
+@contextmanager
+def assert_logs(caplog: pytest.LogCaptureFixture, logger: str, level: str) -> Iterator[list[str]]:
+    """Like ``unittest.TestCase.assertLogs``: the block must log at least one record
+    of *level* or above on *logger* or one of its children.
+
+    Yields the list of messages, filled in when the block exits.
+    """
+    levelno = logging.getLevelNamesMapping()[level]
+    messages: list[str] = []
+    start = len(caplog.records)
+    with caplog.at_level(levelno, logger=logger):
+        yield messages
+    for record in caplog.records[start:]:
+        if record.levelno >= levelno and (record.name == logger or record.name.startswith(f"{logger}.")):
+            messages.append(record.getMessage())
+    assert messages, f"no {level} or higher record logged on {logger!r}"
 
 
 # ---------------------------------------------------------------------------

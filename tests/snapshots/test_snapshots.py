@@ -12,13 +12,14 @@ series (e.g. EMA initialisation, window boundary handling) — complementing
 test_golden_values.py which checks only the last value and non-NaN count.
 
 Run the full suite:
-    python -m unittest tests/snapshots/test_snapshots.py
+    pytest tests/snapshots/test_snapshots.py
 """
 
 import json
 import math
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -110,9 +111,9 @@ class TestRegressionSnapshots:
 # ---------------------------------------------------------------------------
 
 
-def _make_snapshot_test(fixture_key: str) -> Callable[[TestRegressionSnapshots], None]:
-    def test(self: TestRegressionSnapshots) -> None:
-        self._check_snapshot(fixture_key)
+def _make_snapshot_test(fixture_key: str) -> Callable[[TestRegressionSnapshots, Any], None]:
+    def test(self: TestRegressionSnapshots, subtests) -> None:
+        self._check_snapshot(fixture_key, subtests)
 
     test.__name__ = f"test_{fixture_key}"
     test.__doc__ = f"Snapshot regression for {fixture_key!r}."

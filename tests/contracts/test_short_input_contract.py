@@ -510,17 +510,15 @@ class TestShortWindowHardening:
         """verify_series without the min_length short-circuit."""
         return series if isinstance(series, pd.Series) else None
 
-    def _without_guard(self, dotted_name):
-        """Swap verify_series in a module for the pass-through, restoring after.
+    def _without_guard(self, monkeypatch, dotted_name):
+        """Swap verify_series in a module for the pass-through; *monkeypatch* restores it.
 
         The module has to be resolved by name: ``pandas_ta_classic.overlap``
         re-exports each indicator function under the same name as its submodule,
         so plain attribute access returns the function, not the module.
         """
         module = importlib.import_module(dotted_name)
-        original = module.verify_series
-        module.verify_series = self._passthrough
-        self.addCleanup(setattr, module, "verify_series", original)
+        monkeypatch.setattr(module, "verify_series", self._passthrough)
         return module
 
     def test_sliding_weighted_ma_window_longer_than_series(self):
@@ -542,24 +540,24 @@ class TestShortWindowHardening:
         assert result.iloc[-1] == 6.0
         assert result.iloc[:2].isna().all()
 
-    def test_rma_without_guard(self):
+    def test_rma_without_guard(self, monkeypatch):
         """rma seeded at iloc[length - 1] without checking it exists."""
-        module = self._without_guard("pandas_ta_classic.overlap.rma")
+        module = self._without_guard(monkeypatch, "pandas_ta_classic.overlap.rma")
         result = module.rma(pd.Series([1.0, 2.0, 3.0]), length=10)
         assert isinstance(result, pd.Series)
         assert result.isna().all()
 
-    def test_linreg_without_guard(self):
+    def test_linreg_without_guard(self, monkeypatch):
         """linreg built a sliding window wider than the input array."""
-        module = self._without_guard("pandas_ta_classic.overlap.linreg")
+        module = self._without_guard(monkeypatch, "pandas_ta_classic.overlap.linreg")
         result = module.linreg(pd.Series([1.0, 2.0, 3.0]), length=10, talib=False)
         assert isinstance(result, pd.Series)
         assert len(result) == 3
         assert result.isna().all()
 
-    def test_alma_without_guard(self):
+    def test_alma_without_guard(self, monkeypatch):
         """alma reaches _sliding_weighted_ma, so it is covered too."""
-        module = self._without_guard("pandas_ta_classic.overlap.alma")
+        module = self._without_guard(monkeypatch, "pandas_ta_classic.overlap.alma")
         result = module.alma(pd.Series([1.0, 2.0, 3.0]), length=10)
         assert isinstance(result, pd.Series)
         assert result.isna().all()

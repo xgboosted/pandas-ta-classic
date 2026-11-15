@@ -509,7 +509,7 @@ class TestCategoryDiscovery:
 
 
 # ======================================================================
-# 5. pytest-style Hypothesis tests (alternative to unittest)
+# 5. Module-level Hypothesis tests
 # ======================================================================
 
 
