@@ -20,6 +20,9 @@ Two tables pin the two outcomes on a 3-row OHLCV frame:
     ``cdl_pattern`` belongs here because its native sub-patterns need only a few
     bars; the ones that need more (``doji``, window 10) are skipped rather than
     returned as columns.
+
+A required Series passed as ``None`` is no input rather than short input: a
+Series gives ``None``, an input in ``_NONE_RAISES`` raises ``ValueError``.
 """
 
 from __future__ import annotations
@@ -36,7 +39,7 @@ import pytest
 import pandas_ta_classic as ta
 from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS
+from tests.contracts import INDICATORS, inputs, spy
 
 _N_SHORT = 3
 _N_LONG = 400
@@ -398,6 +401,42 @@ def test_empty_input_returns_empty_result(name: str) -> None:
         assert list(empty.columns) == list(full.columns)
     if len(full) == _N_LONG:
         assert len(empty) == 0
+
+
+def _required_series() -> list[tuple[str, str]]:
+    """(indicator, parameter) for every Series parameter without a default, over the whole registry."""
+    frame = spy(60)
+    return [
+        (name, param)
+        for name in INDICATORS
+        for param, value in inputs(name, frame).items()
+        if isinstance(value, pd.Series) and inspect.signature(getattr(ta, name)).parameters[param].default is inspect.Parameter.empty
+    ]
+
+
+# Inputs no OHLCV column can stand for (another indicator's output, a window
+# schedule): None for them raises, and the error names the parameter (#276).
+_NONE_RAISES = {
+    ("long_run", "fast"),
+    ("long_run", "slow"),
+    ("short_run", "fast"),
+    ("short_run", "slow"),
+    ("mavp", "periods"),
+    ("tsignals", "trend"),
+    ("xsignals", "signal"),
+}
+
+
+@pytest.mark.parametrize(("name", "param"), _required_series(), ids=lambda value: value)
+def test_a_missing_required_series_returns_none(name: str, param: str) -> None:
+    """``None`` for a required Series is no input at all: the result is ``None``; an input in ``_NONE_RAISES`` raises, naming it."""
+    kwargs = inputs(name, spy(60))
+    kwargs[param] = None
+    if (name, param) in _NONE_RAISES:
+        with pytest.raises(ValueError, match=rf"^{name}\(\) requires .*'{param}'"):
+            getattr(ta, name)(**kwargs)
+    else:
+        assert getattr(ta, name)(**kwargs) is None
 
 
 @pytest.mark.parametrize("length", [60_000, 600_000])

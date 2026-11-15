@@ -389,44 +389,7 @@ class TestMathematicalInvariants(TestCase):
 
 
 # ======================================================================
-# 3. None-guard / null-safety
-# ======================================================================
-
-
-class TestNoneGuards(TestCase):
-    """Passing None for any required argument must return None, not raise."""
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_sma_none_returns_none(self, s):
-        assert ta.sma(None, length=10) is None
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_ema_none_returns_none(self, s):
-        assert ta.ema(None, length=10) is None
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_rsi_none_returns_none(self, s):
-        assert ta.rsi(None, length=14) is None
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_bbands_none_returns_none(self, s):
-        assert ta.bbands(None, length=20) is None
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_stdev_none_returns_none(self, s):
-        assert ta.stdev(None, length=10) is None
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_mom_none_returns_none(self, s):
-        assert ta.mom(None, length=10) is None
-
-    @given(price_series(min_size=30, max_size=100, allow_nan=False))
-    def test_roc_none_returns_none(self, s):
-        assert ta.roc(None, length=10) is None
-
-
-# ======================================================================
-# 4. Edge-case robustness
+# 3. Edge-case robustness
 # ======================================================================
 
 
@@ -517,7 +480,7 @@ class TestPropertyBasedEdgeCases(TestCase):
 
 
 # ======================================================================
-# 5. Category-wide indicator discovery tests
+# 4. Category-wide indicator discovery tests
 # ======================================================================
 
 
@@ -547,7 +510,7 @@ class TestCategoryDiscovery(TestCase):
 
 
 # ======================================================================
-# 6. pytest-style Hypothesis tests (alternative to unittest)
+# 5. pytest-style Hypothesis tests (alternative to unittest)
 # ======================================================================
 
 

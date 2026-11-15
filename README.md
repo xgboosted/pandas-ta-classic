@@ -157,7 +157,7 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 - **Strategy System** for bulk indicator processing, with opt-in multiprocessing
 - **Fluent API Chaining**: ``df.ta.chain().sma(20).ta.rsi(14).ta.macd().ta.bbands(20)`` — chain multiple indicators in a single expression
 - **Pandas DataFrame Extension** for seamless integration (`df.ta.<indicator>()`, e.g. `df.ta.rsi()`)
-- **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_talib.py` verifies parity against TA-Lib
+- **TA-Lib Integration (dual-role)** - **(1) acceleration backend**: core indicators use native implementations by default; pass `talib=True` to use TA-Lib's C implementation. **(2) oracle**: `test_oracle_registry.py` verifies parity against TA-Lib
 - **tulipy Integration (frozen oracle only)** - `test_oracle_tulipy.py` verifies native output against a committed golden snapshot of tulipy's output (`tests/fixtures/tulipy_oracle.json`); tulipy itself is no longer installed at test time, only to regenerate the snapshot; never used as a computation backend
 - **Backtesting.py Integration** — bridge function and runnable SMA crossover example in ``examples/backtesting_py_strategy.py``
 - **backtrader Integration** — precompute-then-feed pattern with dynamic `PandasData` subclass; runnable example in ``examples/backtrader_strategy.py``
@@ -193,7 +193,7 @@ df.ta.strategy(ta.CommonStrategy) # Runs commonly used indicators
 
 | Library | Role | Effect when installed |
 |---------|------|-----------------------|
-| TA-Lib | **Acceleration backend + live oracle** | Core indicators — native by default, opt-in via `talib=True`; also used live in `test_oracle_talib.py` for parity checks |
+| TA-Lib | **Acceleration backend + live oracle** | Core indicators — native by default, opt-in via `talib=True`; also used live in `test_oracle_registry.py` for parity checks |
 | tulipy | **Frozen oracle only** | Not a computation backend and not installed at test time; `test_oracle_tulipy.py` compares against a committed golden snapshot of tulipy's output. tulipy is only needed to *regenerate* that snapshot (CPython <3.12) |
 
 | Area | Behaviour without TA-Lib | Behaviour with TA-Lib |
@@ -223,7 +223,7 @@ pip install "TA-Lib>=0.8.3" # TA-Lib only (also enables acceleration backend)
 pip install tulipy && python -m tests.fixtures.generate_tulipy_oracle
 ```
 
-> **Note:** `test_oracle_talib.py` skips automatically (`@unittest.skipUnless`) when TA-Lib is not installed. `test_oracle_tulipy.py` runs on every Python version against the committed `tulipy_oracle.json` snapshot (skips only if that fixture is missing) — it does **not** require tulipy installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
+> **Note:** `test_oracle_registry.py` skips automatically (`pytest.importorskip`) when TA-Lib is not installed. `test_oracle_tulipy.py` runs on every Python version against the committed `tulipy_oracle.json` snapshot (skips only if that fixture is missing) — it does **not** require tulipy installed. Neither is required for normal use. Installing TA-Lib additionally enables C-library acceleration for core indicators via `talib=True`.
 
 **Performance boost:** Install `numba` to compile the recursive indicators' loops. Measured with `tools/bench_indicators.py`, run with numba and with `NUMBA_DISABLE_JIT=1`: on 100,000 bars RSX is 200× faster, HWMA 67×, MCGD 55×, SSF 53×, Supertrend 32×, PSAR 18× and QQE 6×; on 5,000 bars the same indicators gain 2–80×. Both paths agree to 1e-12 relative (`tests/indicators/test_numba_parity.py`).
 - Using `uv`: `uv pip install pandas-ta-classic[performance]`

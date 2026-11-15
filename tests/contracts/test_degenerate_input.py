@@ -3,8 +3,8 @@
 ``SPY_D`` contains 5241 bars and not one of them is flat -- no bar has
 ``high == low``, and no 14-bar window has a zero range. The whole degenerate
 branch of every indicator is therefore unreached by the oracle suite, and
-``test_oracle_talib.py`` could not have caught it anyway: its ``_compare``
-intersects the two sides *after* ``dropna()``, so "native returns NaN where
+the old ``test_oracle_talib.py`` could not have caught it anyway: its ``_compare``
+intersected the two sides *after* ``dropna()``, so "native returns NaN where
 TA-Lib returns a number" drops out of the comparison by construction.
 
 What the degenerate case is
@@ -266,7 +266,7 @@ def test_flat_window_matches_talib(name: str, frames) -> None:
 
     The comparison runs over the bars where *TA-Lib* produced a number and
     requires a number there from the native path too. Intersecting the two
-    non-NaN sets instead, which is what ``test_oracle_talib.py`` does, is
+    non-NaN sets instead, which is what the old ``test_oracle_talib.py`` did, is
     exactly what hid this: it drops every bar where one side is NaN.
     """
     oracle = pd.Series(np.asarray(_talib_flat(name, frames["flat"]), dtype=float), index=frames["flat"]["close"].index)
@@ -313,7 +313,7 @@ _CONVENTION_CASES = [
     # stochrsi has a TA-Lib counterpart, but its branch folds the %K range and
     # its smoothing into one period and is only taken at k=1, so the two are
     # not the same function. Pinned by value here; the like-for-like oracle
-    # comparison lives in test_oracle_talib.py.
+    # comparison lives in tests/oracle/test_oracle_registry.py (k=1).
     "stochrsi",
     "tsi",
     # TA-Lib's TRANGE agrees bar for bar, but the oracle sweep above looks the

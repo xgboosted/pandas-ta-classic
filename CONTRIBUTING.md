@@ -111,7 +111,7 @@ pytest tests/indicators/test_momentum.py -v
 pytest tests/indicators/test_momentum.py::TestMomentum::test_rsi -v
 
 # Oracle tests (TA-Lib: pip install -e ".[oracle]"; tulipy values are frozen in tests/fixtures/)
-pytest tests/oracle/test_oracle_talib.py tests/oracle/test_oracle_tulipy.py -v
+pytest tests/oracle/test_oracle_registry.py tests/oracle/test_oracle_tulipy.py -v
 
 # Property-based tests (Hypothesis)
 pytest tests/indicators/test_property_based.py -v

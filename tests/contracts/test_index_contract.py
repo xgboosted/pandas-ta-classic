@@ -53,7 +53,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from tests.assertions import output_columns
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS, candidate_calls
+from tests.contracts import INDICATORS, candidate_calls, string_choices
 
 _N_ROWS = 250
 
@@ -452,20 +452,26 @@ def _kwargs_bool_options(name: str) -> list[str]:
     return sorted(found - {"signal_indicators", "lookahead", "talib", "tulipy"})
 
 
+# Options that take effect only together with another one.
+_COMBINED_OPTIONS = {"slope": [{"as_angle": True, "to_degrees": True}]}
+
+
 def _option_paths() -> list:
-    """Every non-default path the fill can take: an offset, each moving average
-    a ``mamode`` accepts, the TA-Lib branch, and each boolean option flipped."""
+    """Every non-default path the fill can take: an offset, each choice of a
+    string option (each moving average a ``mamode`` accepts), the TA-Lib branch,
+    each boolean option flipped, and the options in ``_COMBINED_OPTIONS``."""
     paths = []
     for name in INDICATORS:
         if name in _EXEMPT or not _takes_fill_kwargs(name):
             continue
         if _accepts(name, "offset"):
             paths.append(pytest.param(name, {"offset": _OFFSET}, id=f"{name}-offset"))
-        if _accepts(name, "mamode") and name != "mavp":  # mavp's mamode is TA-Lib's integer enum
-            paths += [pytest.param(name, {"mamode": mode}, id=f"{name}-mamode-{mode}") for mode in sorted(_MA_DISPATCH)]
+        for option, choices in string_choices(name).items():  # computed choices are ma()'s moving averages
+            paths += [pytest.param(name, {option: choice}, id=f"{name}-{option}-{choice}") for choice in choices or sorted(_MA_DISPATCH)]
         if _accepts(name, "talib") and ta.Imports["talib"]:
             paths.append(pytest.param(name, {"talib": True}, id=f"{name}-talib"))
-        paths += [pytest.param(name, call, id="-".join([name, *(f"{k}-{v}" for k, v in call.items())])) for call in candidate_calls(name)[1:]]
+        calls = candidate_calls(name)[1:] + _COMBINED_OPTIONS.get(name, [])
+        paths += [pytest.param(name, call, id="-".join([name, *(f"{k}-{v}" for k, v in call.items())])) for call in calls]
         paths += [pytest.param(name, {key: value}, id=f"{name}-{key}-{value}") for key in _kwargs_bool_options(name) for value in (True, False)]
     return paths
 

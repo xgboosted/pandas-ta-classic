@@ -214,9 +214,9 @@ Not greppable, so check in review: **dead code** your change orphaned, and the *
 |---|---|
 | `code-quality` | Black formatting check, `ruff check .` (blocking) + advisory ruff, mypy, core.pyi sync |
 | `generate-matrix` | Dynamically computes 5 supported Python versions (LATEST-4 through LATEST) |
-| `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding oracle suites) |
-| `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) |
-| `testing-oracle` | Runs `test_oracle_talib.py` + `test_oracle_tulipy.py` on all 5 Python versions |
+| `testing-core` | Runs non-oracle tests on all 5 Python versions (`pytest tests/` excluding `test_oracle_registry.py` and `test_oracle_tulipy.py`) |
+| `testing-numba` | Runs the same tests with numba installed on the second-newest Python, so the `@njit` path is tested; includes `test_numba_parity.py` (JIT vs `NUMBA_DISABLE_JIT=1`) and `test_oracle_registry.py` (the JIT path against TA-Lib) |
+| `testing-oracle` | Runs `test_oracle_registry.py` + `test_oracle_tulipy.py` on all 5 Python versions |
 | `documentation` | Builds Sphinx docs with `-W` (any warning fails) + advisory linkcheck, deploys to GitHub Pages (on push only, so it does not gate PRs) |
 | `pypi-publish` | Builds wheel, twine check, publishes to PyPI (on release published only) |
 
@@ -225,7 +225,7 @@ Additional workflows: `mirror.yml` syncs repository to Codeberg on every push ex
 
 **Note:** when several PRs land on `main` in quick succession, GitHub cancels a `documentation` job that is still waiting in the `pages` concurrency group, because a newer push queued its own. That is expected, not a failure: the run of the last push deploys the docs.
 
-**Note:** CDL candlestick pattern tests (`test_candle.py`, `test_accessor_candle.py`) run in `testing-core`; they need no TA-Lib.
+**Note:** CDL candlestick pattern tests (`test_candle.py`, and the pattern rows of `test_column_names.py`) run in `testing-core`; they need no TA-Lib.
 
 ## Release Process
 
@@ -255,8 +255,7 @@ Each indicator lives in its own module under `pandas_ta_classic/<category>/<indi
 
 1. Create `pandas_ta_classic/<category>/<indicator>.py`
 2. Follow existing indicator template in same category
-3. Add test in appropriate `tests/indicators/test_<category>.py` or `tests/api/test_accessor_<category>.py`
-   (math has no accessor test file)
+3. Add its column names to `EXPECTED_COLUMNS` in `tests/api/test_column_names.py` (`test_every_indicator_has_a_row` fails until you do), tests of what it computes to `tests/indicators/test_<category>.py`, and a `df.ta` value case to the category's `TestExt<Category>Deeper` in `tests/api/test_accessor_<category>.py`
 4. Add entry to `docs/indicators.rst`
 5. Add a changelog fragment `changelog.d/<PR number>.added.md` describing the indicator
 6. Category auto-discovery picks it up via `_meta.py` — no manual registration needed
@@ -343,7 +342,7 @@ pip install -e ".[oracle]"
 pytest tests/ -v
 
 # Oracle tests only
-pytest tests/oracle/test_oracle_talib.py tests/oracle/test_oracle_tulipy.py -v
+pytest tests/oracle/test_oracle_registry.py tests/oracle/test_oracle_tulipy.py -v
 
 # Single test module (fastest feedback)
 pytest tests/indicators/test_momentum.py -v

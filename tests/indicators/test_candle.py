@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.candles._cdl_math import CANDLE_DEFAULTS, CandleArrays, CandleSetting, RangeType, candle_average, candle_avg_period
-from tests.assertions import IndicatorSpec, assert_all_nan, assert_indicator_standard
+from tests.assertions import assert_all_nan
 from tests.config import get_sample_data
 
 try:
@@ -57,19 +57,6 @@ class TestCandle(TestCase):
                 with self.subTest(func=func.__name__, **scalar):
                     self.assertEqual(func(self.open, self.high, self.low, self.close, **scalar).dtype, "float64")
 
-    def test_ha(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.ha,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="Heikin-Ashi",
-                expected_type=DataFrame,
-                expected_columns=["HA_open", "HA_high", "HA_low", "HA_close"],
-                none_arg_idx=0,
-            ),
-        )
-
     def test_cdl_pattern(self):
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
         self.assertIsInstance(result, DataFrame)
@@ -103,54 +90,10 @@ class TestCandle(TestCase):
         self.assertEqual(len(ALL_PATTERNS), len(set(ALL_PATTERNS)))
         self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
 
-    def test_cdl_doji(self):
-        result = pandas_ta.cdl_doji(self.open, self.high, self.low, self.close)
-        if HAS_TALIB:
-            np.testing.assert_array_equal(result.to_numpy(), talib.CDLDOJI(self.open, self.high, self.low, self.close))
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cdl_doji,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CDL_DOJI_10_0.1",
-                expected_type=Series,
-                none_arg_idx=0,
-            ),
-        )
-
     def test_cdl_inside(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cdl_inside,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CDL_INSIDE",
-                expected_type=Series,
-                none_arg_idx=0,
-            ),
-        )
-
         result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close, asbool=True)
         self.assertIsInstance(result, Series)
         self.assertEqual(result.name, "CDL_INSIDE")
-
-    def test_cdl_z(self):
-        assert_indicator_standard(
-            self,
-            IndicatorSpec(
-                func=pandas_ta.cdl_z,
-                args=[self.open, self.high, self.low, self.close],
-                expected_name="CDL_Z_30_1",
-                expected_type=DataFrame,
-                expected_columns=[
-                    "open_Z_30_1",
-                    "high_Z_30_1",
-                    "low_Z_30_1",
-                    "close_Z_30_1",
-                ],
-                none_arg_idx=0,
-            ),
-        )
 
     def test_cdl_z_ddof_changes_the_values(self):
         """ddof was validated and named the columns but had no numeric effect.
@@ -284,8 +227,8 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
     """Fourteen patterns on bars built to satisfy their conditions, plus the six
     two-sided ones mirrored to fire the opposite sign.
 
-    `tests/oracle/test_oracle_talib.py` compares 59 patterns against TA-Lib over the
-    last 2000 bars of SPY_D and they agree on every bar -- but eight of them
+    Compared with TA-Lib over the last 2000 bars of SPY_D, the patterns
+    agree on every bar -- but eight of them
     return 0 for all 2000 rows, so that agreement said nothing about the branch
     that emits the signal, and six more fire between one and four times, resting
     the comparison on a handful of rows. The bars are frozen literals, not a
@@ -300,7 +243,7 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
 
     def _native(self, name):
         # `ta.cdl_kicking` is the submodule; the callable of the same name lives
-        # inside it, as `tests/oracle/test_oracle_talib.py` resolves it too.
+        # inside it.
         return getattr(getattr(pandas_ta, name), name)
 
     def test_each_pattern_fires_on_its_own_bars(self):
