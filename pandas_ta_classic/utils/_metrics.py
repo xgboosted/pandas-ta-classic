@@ -362,7 +362,7 @@ def sortino_ratio(close: Series, benchmark_rate: float = 0.0, log: bool = False)
     >>> result = ta.sortino_ratio(close, benchmark_rate=0.0, log=False)
     """
     log = _bool_param(log, False, "log")
-    benchmark_rate = _number(benchmark_rate, 0.0, "benchmark_rate")
+    benchmark_rate = _number(benchmark_rate, 0.0, "benchmark_rate", gt=-1)
     _require_input(close, "sortino_ratio", "close")
     close = verify_series(close)
     # Checked here so the error names the function the caller used.
@@ -372,7 +372,7 @@ def sortino_ratio(close: Series, benchmark_rate: float = 0.0, log: bool = False)
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     result = cagr(close) - benchmark_rate
-    result /= downside_deviation(returns)
+    result /= downside_deviation(returns, benchmark_rate=benchmark_rate)
     return result
 
 

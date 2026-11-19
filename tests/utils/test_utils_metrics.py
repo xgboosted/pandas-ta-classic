@@ -199,6 +199,14 @@ class TestUtilityMetrics:
         assert isinstance(result, float)
         assert result >= 0
 
+    def test_sortino_ratio_uses_benchmark_rate_in_the_denominator(self):
+        # The denominator must measure downside below the same target the
+        # numerator subtracts; it used to always measure below 0.0.
+        rate = 0.05
+        numerator = pandas_ta.utils.cagr(self.close) - rate
+        denominator = pandas_ta.downside_deviation(self.pctret, benchmark_rate=rate)
+        assert pandas_ta.sortino_ratio(self.close, benchmark_rate=rate) == pytest.approx(numerator / denominator)
+
     def test_volatility(self, subtests):
         returns_ = pandas_ta.percent_return(self.close)
         result = pandas_ta.utils.volatility(returns_, returns=True)
@@ -247,7 +255,7 @@ class TestUtilityMetrics:
         cases = {
             "optimal_leverage": (self.close, {"period": (-5, 0, np.nan, True, "x"), "benchmark_rate": (np.nan, np.inf, "x"), "capital": (0, -1, np.nan)}),
             "sharpe_ratio": (self.close, {"period": (-5, 0, np.nan, True, "x"), "benchmark_rate": (np.nan, np.inf, "x")}),
-            "sortino_ratio": (self.close, {"benchmark_rate": (np.nan, np.inf, "x")}),
+            "sortino_ratio": (self.close, {"benchmark_rate": (np.nan, np.inf, "x", -1, -2)}),
             # (1 + rate) ** (1 / n) has no real value for a rate at or below -1
             "downside_deviation": (returns, {"benchmark_rate": (np.nan, np.inf, "x", -1, -2)}),
         }  # fmt: skip
