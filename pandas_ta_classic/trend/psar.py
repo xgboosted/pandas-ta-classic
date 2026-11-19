@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import _name_tokens, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -24,7 +24,7 @@ def _psar_falling(high: Series, low: Series, drift: int = 1) -> bool:
 
 
 @njit(cache=True)
-def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
+def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, step, max_af):
     long_arr = np.full(m, np.nan)
     short_arr = np.full(m, np.nan)
     af_arr = np.full(m, np.nan)
@@ -41,7 +41,7 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
             _sar = sar + af * (ep - sar)
             if l_ < ep:
                 ep = l_
-                af = min(af + af0, max_af)
+                af = min(af + step, max_af)
             # The guarded SAR (not the raw projected value) determines the
             # reversal, and touching it reverses, as in TA-Lib's SAR.
             _sar = max(h_arr[row - 1], h_arr[prev2], _sar)
@@ -50,7 +50,7 @@ def _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af):
             _sar = sar + af * (ep - sar)
             if h_ > ep:
                 ep = h_
-                af = min(af + af0, max_af)
+                af = min(af + step, max_af)
             _sar = min(l_arr[row - 1], l_arr[prev2], _sar)
             reverse = l_ <= _sar
         if reverse:
@@ -85,7 +85,7 @@ def psar(
     high = verify_series(high)
     low = verify_series(low)
     af = _pos_float(af, 0.02, "af")
-    af0 = _pos_float(af0, af, "af0")
+    af0 = _pos_float(af0, 0.02, "af0")
     max_af = _pos_float(max_af, 0.2, "max_af")
     offset = get_offset(offset)
 
@@ -111,7 +111,7 @@ def psar(
     m = high.shape[0]
     h_arr = high.to_numpy(dtype=float)
     l_arr = low.to_numpy(dtype=float)
-    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, max_af)
+    long_arr, short_arr, af_arr, reversal_arr = _psar_loop(h_arr, l_arr, m, falling, sar, ep, af0, af, max_af)
 
     # Combine to a single SAR series then reclassify using close when available.
     # This matches TA-Lib's convention (SAR < close → long, SAR >= close → short)
@@ -136,7 +136,7 @@ def psar(
     _af, long, short, reversal = apply_fill([_af, long, short, reversal], **kwargs)
 
     # Prepare DataFrame to return
-    _params = f"_{af0}_{max_af}"
+    _params = f"_{af0}_{max_af}" + _name_tokens(("af", af, 0.02))
     data = {
         f"PSARl{_params}": long,
         f"PSARs{_params}": short,

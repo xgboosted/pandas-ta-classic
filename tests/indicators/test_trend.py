@@ -89,6 +89,25 @@ class TestTrend:
             with pytest.raises(TypeError, match="talib"):
                 pandas_ta.psar(self.high, self.low, self.close, talib=value)
 
+    def test_psar_af_is_the_step_and_af0_the_start(self):
+        # af was never read: psar(af0=0.02, af=0.05) equalled psar(af0=0.02). af is
+        # now the step and af0 the start value, so each changes the stop on its own.
+        base = pandas_ta.psar(self.high, self.low, self.close)
+        stepped = pandas_ta.psar(self.high, self.low, self.close, af=0.05)
+        started = pandas_ta.psar(self.high, self.low, self.close, af0=0.05)
+        assert stepped.columns[0] == "PSARl_0.02_0.2_af0.05"
+        assert started.columns[0] == "PSARl_0.05_0.2"
+        assert not np.allclose(
+            base["PSARl_0.02_0.2"].to_numpy(float),
+            stepped["PSARl_0.02_0.2_af0.05"].to_numpy(float),
+            equal_nan=True,
+        )
+        assert not np.allclose(
+            base["PSARl_0.02_0.2"].to_numpy(float),
+            started["PSARl_0.05_0.2"].to_numpy(float),
+            equal_nan=True,
+        )
+
     def test_short_run(self):
         with pytest.raises(ValueError, match="short_run\\(\\) requires 'fast' and 'slow' Series"):
             pandas_ta.short_run(None, self.open)
