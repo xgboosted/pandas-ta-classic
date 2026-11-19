@@ -302,6 +302,10 @@ def test_strategy_params_must_be_a_tuple():
             lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_analysis=False, width_wide="x"),
             r"cpr\(\) width_wide must be a number >= 0, got 'x'",
         ),
+        (
+            lambda: ta.cpr(_F.open, _F.high, _F.low, _F.close, width_narrow=2.0, width_wide=1.0),
+            r"cpr\(\) needs width_narrow <= width_wide, got width_narrow=2.0, width_wide=1.0",
+        ),
     ],
 )
 def test_unvalidated_kwargs_raise(call, message):
