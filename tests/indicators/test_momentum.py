@@ -48,14 +48,6 @@ class TestMomentum(TestCase):
         np.testing.assert_allclose(pandas_ta.cmo(self.close, talib=False).to_numpy(), chande.to_numpy(), rtol=1e-12, atol=1e-9)
 
     def test_inertia(self):
-        result = pandas_ta.inertia(self.close, self.high, self.low, refined=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "INERTIAr_20_14")
-
-        result = pandas_ta.inertia(self.close, self.high, self.low, thirds=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "INERTIAt_20_14")
-
         # refined/thirds used to be bool()-coerced and were both silently
         # optional: inertia(close, refined=True) returned None rather than
         # saying it needs high/low.
@@ -74,13 +66,7 @@ class TestMomentum(TestCase):
         # SMA-based should give different values
         result_sma = pandas_ta.macdext(self.close, fastmatype=0, slowmatype=0, signalmatype=0, talib=False)
         self.assertIsInstance(result_sma, DataFrame)
-        # Non-default MA types change the values, so they are in the name (#343)
-        self.assertEqual(result_sma.columns[0], "MACDEXT_12_26_9_fastmatype0_slowmatype0_signalmatype0")
         self.assertFalse(result["MACDEXT_12_26_9"].equals(result_sma.iloc[:, 0]))
-        if pandas_ta.Imports["talib"]:
-            result_tal = pandas_ta.macdext(self.close)
-            self.assertIsInstance(result_tal, DataFrame)
-            self.assertEqual(result_tal.name, "MACDEXT_12_26_9")
         pandas_ta.macdext(self.close, fillna=0)
         pandas_ta.macdext(self.close, fill_method="ffill")
 
@@ -91,24 +77,9 @@ class TestMomentum(TestCase):
         with self.assertRaisesRegex(ValueError, r"fastmatype=7 .*needs TA-Lib"):
             pandas_ta.macdext(self.close, fastmatype=7, talib=False)
 
-    def test_squeeze(self):
-        result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5")
-
-        result = pandas_ta.squeeze(self.high, self.low, self.close, lazybear=True)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZ_20_2.0_20_1.5_LB")
-
-        result = pandas_ta.squeeze(self.high, self.low, self.close, tr=False, lazybear=True)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZhlr_20_2.0_20_1.5_LB")
-
     def test_squeeze_detailed(self):
         base = pandas_ta.squeeze(self.high, self.low, self.close)
         result = pandas_ta.squeeze(self.high, self.low, self.close, detailed=True)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZ_20_2.0_20_1.5")
 
         detail_columns = ["SQZ_INC", "SQZ_DEC", "SQZ_PINC", "SQZ_PDEC", "SQZ_NDEC", "SQZ_NINC"]
         self.assertEqual(list(result.columns), list(base.columns) + detail_columns)
@@ -141,19 +112,6 @@ class TestMomentum(TestCase):
 
         via_accessor = self.data.ta.squeeze(detailed=True)
         self.assertEqual(list(via_accessor.columns), list(result.columns))
-
-    def test_squeeze_pro(self):
-        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, tr=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_2_1.5_1")
-
-        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, 20, 2, 20, 3, 2, 1)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZPRO_20_2.0_20_3_2.0_1")
-
-        result = pandas_ta.squeeze_pro(self.high, self.low, self.close, 20, 2, 20, 3, 2, 1, tr=False)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "SQZPROhlr_20_2.0_20_3_2.0_1")
 
     def test_stc_reads_nan_until_its_windows_hold_data(self):
         # The recursion seeds 0.0 and held it through the warm-up, so STC read

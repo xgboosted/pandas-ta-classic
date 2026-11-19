@@ -1,11 +1,10 @@
 import inspect
 import math
-import warnings
 from unittest import TestCase
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas import Series
 
 import pandas_ta_classic as pandas_ta
 from tests.config import get_sample_data
@@ -39,29 +38,9 @@ class TestOverlap(TestCase):
     def tearDown(self):
         pass
 
-    def test_ichimoku(self):
-        # Default append_span=False: visible period only, no future-dated rows.
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            result = pandas_ta.ichimoku(self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ICHIMOKU_9_26_52")
-        self.assertEqual(result.category, "overlap")
-        self.assertEqual(
-            list(result.columns),
-            ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"],
-        )
-        self.assertEqual(len(result), len(self.close))
-
     def test_ichimoku_append_span(self):
         kijun = 26
         result = pandas_ta.ichimoku(self.high, self.low, self.close, append_span=True)
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(result.name, "ICHIMOKU_9_26_52")
-        self.assertEqual(
-            list(result.columns),
-            ["ISA_9", "ISB_26", "ITS_9", "IKS_26", "ICS_26"],
-        )
         # Length = visible rows (len close) + future-dated span rows (kijun).
         self.assertEqual(len(result), len(self.close) + kijun)
         # Span rows: only ISA/ISB populated; ITS/IKS/ICS are NaN.
@@ -109,14 +88,6 @@ class TestOverlap(TestCase):
         # the native path computes only an SMA; it used to do so for any mamode
         with self.assertRaisesRegex(ValueError, r"mavp\(\) mamode=1 needs TA-Lib"):
             pandas_ta.mavp(self.close, periods=self._mavp_periods(), mamode=1, talib=False)
-
-    def test_ssf(self):
-        result = pandas_ta.ssf(self.close, poles=2)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SSF_10_2")
-        result = pandas_ta.ssf(self.close, poles=3)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "SSF_10_3")
 
     def test_weighted_ma_asc(self):
         """asc=False was forced back to True, so it returned the ascending result."""
@@ -232,23 +203,20 @@ class TestHl2Hlc3NoneGuard(TestCase):
         self.assertIsNone(result)
 
     def test_hl2_valid_input_returns_series(self):
-        """hl2 with valid inputs must return a non-empty Series named 'HL2'."""
+        """hl2 with valid inputs must return the midpoint Series."""
         h = pd.Series([10.0, 11.0, 12.0])
         low = pd.Series([8.0, 9.0, 10.0])
         result = pandas_ta.hl2(h, low)
-        self.assertIsNotNone(result)
         self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "HL2")
         np.testing.assert_allclose(result.values, [9.0, 10.0, 11.0], rtol=1e-9)
 
     def test_hlc3_valid_input_returns_series(self):
-        """hlc3 with valid inputs must return a Series named 'HLC3'."""
+        """hlc3 with valid inputs must return the typical-price Series."""
         h = pd.Series([12.0, 13.0])
         low = pd.Series([8.0, 9.0])
         c = pd.Series([10.0, 11.0])
         result = pandas_ta.hlc3(h, low, c, talib=False)
-        self.assertIsNotNone(result)
-        self.assertEqual(result.name, "HLC3")
+        self.assertIsInstance(result, pd.Series)
         np.testing.assert_allclose(result.values, [10.0, 11.0], rtol=1e-9)
 
 

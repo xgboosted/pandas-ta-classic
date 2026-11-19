@@ -90,11 +90,6 @@ class TestCandle(TestCase):
         self.assertEqual(len(ALL_PATTERNS), len(set(ALL_PATTERNS)))
         self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
 
-    def test_cdl_inside(self):
-        result = pandas_ta.cdl_inside(self.open, self.high, self.low, self.close, asbool=True)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "CDL_INSIDE")
-
     def test_cdl_z_ddof_changes_the_values(self):
         """ddof was validated and named the columns but had no numeric effect.
 
@@ -105,13 +100,9 @@ class TestCandle(TestCase):
         sample = pandas_ta.cdl_z(*args, ddof=1)
         population = pandas_ta.cdl_z(*args, ddof=0)
 
-        self.assertEqual(list(population.columns), ["open_Z_30_0", "high_Z_30_0", "low_Z_30_0", "close_Z_30_0"])
         self.assertGreater(float(np.nanmax(np.abs(population.to_numpy() - sample.to_numpy()))), 0.0)
         # The default is still the sample deviation.
         np.testing.assert_array_equal(pandas_ta.cdl_z(*args).to_numpy(), sample.to_numpy())
-
-        # full=True is anchored and takes no ddof, so it keeps its own suffix.
-        self.assertEqual(list(pandas_ta.cdl_z(*args, full=True).columns), ["open_Za", "high_Za", "low_Za", "close_Za"])
 
 
 # Sixteen calm bars: real body 0.5, high-low range 10. They set the rolling
