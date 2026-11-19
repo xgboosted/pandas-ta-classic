@@ -32,7 +32,9 @@ tulipy installed, then commit the updated ``tulipy_oracle.json``.
 
 import importlib
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -45,6 +47,11 @@ _HERE = Path(__file__).parents[1]
 _ORACLE_PATH = _HERE / "fixtures" / "tulipy_oracle.json"
 
 ORACLE_AVAILABLE = _ORACLE_PATH.is_file()
+
+# Tulip decides the phase with `abs(rp) > 0.001`, in price units, and falls
+# back to +-pi; native msw uses the limit of arctan(ip / rp) instead (#346).
+# On SPY_D, |rp| <= 0.001 on these two bars only (rp = -4.5e-4 and -2.8e-4).
+_MSW_THRESHOLD_BARS = (3793, 4208)
 
 
 @pytest.mark.skipif(not ORACLE_AVAILABLE, reason="tulipy_oracle.json fixture missing")
@@ -99,154 +106,8 @@ class TestTulipyOracle:
         assert diff.max() < tol, f"{name}: max abs diff {diff.max():.4e} exceeds {tol:.1e}"
 
     # ------------------------------------------------------------------
-    # Overlap / Moving averages
+    # Comparisons that do not fit the _compare table below
     # ------------------------------------------------------------------
-
-    def test_sma(self):
-        self._compare(ta.sma(self.close, length=20), self._oracle("sma"), name="SMA")
-
-    def test_ema(self):
-        self._compare(
-            ta.ema(self.close, length=20, talib=False),
-            self._oracle("ema"),
-            name="EMA",
-        )
-
-    def test_wma(self):
-        self._compare(ta.wma(self.close, length=20), self._oracle("wma"), name="WMA")
-
-    def test_hma(self):
-        self._compare(ta.hma(self.close, length=9), self._oracle("hma"), name="HMA")
-
-    def test_zlma(self):
-        # tulipy name: zlema
-        self._compare(ta.zlma(self.close, length=20), self._oracle("zlema"), name="ZLMA")
-
-    def test_rma(self):
-        # tulipy name: wilders (Wilder's Moving Average)
-        self._compare(ta.rma(self.close, length=14), self._oracle("wilders"), name="RMA")
-
-    def test_dema(self):
-        self._compare(
-            ta.dema(self.close, length=20, talib=False),
-            self._oracle("dema"),
-            name="DEMA",
-        )
-
-    def test_tema(self):
-        self._compare(
-            ta.tema(self.close, length=20, talib=False),
-            self._oracle("tema"),
-            name="TEMA",
-        )
-
-    def test_kama(self):
-        self._compare(
-            ta.kama(self.close, length=10, talib=False),
-            self._oracle("kama"),
-            name="KAMA",
-        )
-
-    def test_vwma(self):
-        self._compare(
-            ta.vwma(self.close, self.vol, length=20),
-            self._oracle("vwma"),
-            name="VWMA",
-        )
-
-    def test_wcp(self):
-        # tulipy name: wcprice (Weighted Close Price)
-        self._compare(
-            ta.wcp(self.high, self.low, self.close),
-            self._oracle("wcprice"),
-            name="WCP",
-        )
-
-    def test_qstick(self):
-        self._compare(
-            ta.qstick(self.open, self.close, length=10),
-            self._oracle("qstick"),
-            name="QSTICK",
-        )
-
-    def test_trima(self):
-        # The native path (SMA(SMA(close, n/2 + 1), n/2) for even n) matches tulipy.
-        self._compare(
-            ta.trima(self.close, length=20, talib=False),
-            self._oracle("trima"),
-            name="TRIMA",
-        )
-
-    # ------------------------------------------------------------------
-    # Oscillators / Momentum
-    # ------------------------------------------------------------------
-
-    def test_rsi(self):
-        self._compare(
-            ta.rsi(self.close, length=14, talib=False),
-            self._oracle("rsi"),
-            name="RSI",
-        )
-
-    def test_mom(self):
-        self._compare(ta.mom(self.close, length=10), self._oracle("mom"), name="MOM")
-
-    def test_roc(self):
-        # tulipy roc returns a decimal fraction; ta.roc returns percentage.
-        # Scale the oracle by 100 to match.
-        self._compare(ta.roc(self.close, length=10), self._oracle("roc") * 100, name="ROC")
-
-    def test_rocr(self):
-        self._compare(ta.rocr(self.close, length=10), self._oracle("rocr"), name="ROCR")
-
-    def test_willr(self):
-        self._compare(
-            ta.willr(self.high, self.low, self.close, length=14),
-            self._oracle("willr"),
-            name="WILLR",
-        )
-
-    def test_cci(self):
-        self._compare(
-            ta.cci(self.high, self.low, self.close, length=14),
-            self._oracle("cci"),
-            name="CCI",
-        )
-
-    def test_bop(self):
-        self._compare(
-            ta.bop(self.open, self.high, self.low, self.close),
-            self._oracle("bop"),
-            name="BOP",
-        )
-
-    def test_mfi(self):
-        self._compare(
-            ta.mfi(self.high, self.low, self.close, self.vol, length=14),
-            self._oracle("mfi"),
-            name="MFI",
-        )
-
-    def test_cvi(self):
-        self._compare(
-            ta.cvi(self.high, self.low, length=10),
-            self._oracle("cvi"),
-            name="CVI",
-        )
-
-    def test_ao(self):
-        # Awesome Oscillator
-        self._compare(ta.ao(self.high, self.low), self._oracle("ao"), name="AO")
-
-    def test_vhf(self):
-        self._compare(ta.vhf(self.close, length=28), self._oracle("vhf"), name="VHF")
-
-    def test_wad(self):
-        self._compare(
-            ta.wad(self.high, self.low, self.close),
-            self._oracle("wad"),
-            name="WAD",
-        )
 
     def test_dpo(self):
         # DPO formulas match; compare non-NaN values directly to avoid index-shift
@@ -257,29 +118,6 @@ class TestTulipyOracle:
         assert n > 50, f"DPO: too few comparable values ({n})"
         diff = np.abs(pt[-n:] - tp[-n:])
         assert diff.max() < 1e-6, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-6"
-
-    def test_cmo(self):
-        self._compare(
-            ta.cmo(self.close, length=14, talib=False),
-            self._oracle("cmo"),
-            name="CMO",
-        )
-
-    def test_fosc(self):
-        # Tulip forecasts this bar with the previous bar's TSF, as TA-Lib does; fosc
-        # used the same bar's TSF, which made it equal cfo, until #344.
-        self._compare(ta.fosc(self.close, length=14), self._oracle("fosc"), name="FOSC")
-
-    def test_trix(self):
-        # EMA-seed divergence results in ~6.2e-3 diff; converges over the full
-        # series.  tol=0.01 is sufficient for a 5241-bar dataset.
-        pt = ta.trix(self.close, length=18)
-        self._compare(pt.iloc[:, 0], self._oracle("trix"), tol=0.01, name="TRIX")
-
-    def test_stochrsi(self):
-        # The native unsmoothed %K (k=1) matches tulipy's single-period formula.
-        pt = ta.stochrsi(self.close, length=14, k=1, talib=False)
-        self._compare(pt.iloc[:, 0], self._oracle("stochrsi") * 100, name="STOCHRSI")
 
     def test_macd(self):
         pt = ta.macd(self.close)
@@ -300,34 +138,6 @@ class TestTulipyOracle:
         assert np.allclose(offset, offset[0]), "OBV: expected constant offset between pandas-ta and tulipy"
         assert round(abs(offset[0] - self.v0), 6) == 0, "OBV: unexpected offset magnitude"
 
-    # ------------------------------------------------------------------
-    # Stochastic
-    # ------------------------------------------------------------------
-
-    def test_stoch_k(self):
-        pt = ta.stoch(self.high, self.low, self.close, k=14, d=3, smooth_k=3)
-        self._compare(pt.iloc[:, 0], self._oracle("stoch_k"), name="STOCH_k")
-
-    def test_stoch_d(self):
-        pt = ta.stoch(self.high, self.low, self.close, k=14, d=3, smooth_k=3)
-        self._compare(pt.iloc[:, 1], self._oracle("stoch_d"), name="STOCH_d")
-
-    # ------------------------------------------------------------------
-    # Trend / Directional
-    # ------------------------------------------------------------------
-
-    def test_aroon_down(self):
-        pt = ta.aroon(self.high, self.low, length=14, talib=False)
-        self._compare(pt.iloc[:, 0], self._oracle("aroon_down"), name="AROON_down")
-
-    def test_aroon_up(self):
-        pt = ta.aroon(self.high, self.low, length=14, talib=False)
-        self._compare(pt.iloc[:, 1], self._oracle("aroon_up"), name="AROON_up")
-
-    def test_aroonosc(self):
-        pt = ta.aroon(self.high, self.low, length=14, talib=False)
-        self._compare(pt.iloc[:, 2], self._oracle("aroonosc"), name="AROONOSC")
-
     def test_dx(self):
         # A single outlier bar appears in the 1001-2000 tail window; the final
         # 500 bars are clean (diff 3.55e-14).  Use a custom 500-bar comparison.
@@ -340,54 +150,6 @@ class TestTulipyOracle:
         diff = np.abs(pt.loc[tail].values - tp_s.loc[tail].values)
         assert diff.max() < 1e-6, f"DX: max diff {diff.max():.4e} exceeds 1e-6"
 
-    # ------------------------------------------------------------------
-    # Volatility
-    # ------------------------------------------------------------------
-
-    def test_atr(self):
-        self._compare(
-            ta.atr(self.high, self.low, self.close, length=14, talib=False),
-            self._oracle("atr"),
-            name="ATR",
-        )
-
-    def test_natr(self):
-        # tulipy NATR uses Wilder's smoothing (RMA) for ATR internally.
-        # Our pure-Python path must be invoked with mamode="rma" to match.
-        self._compare(
-            ta.natr(self.high, self.low, self.close, length=14, mamode="rma", talib=False),
-            self._oracle("natr"),
-            name="NATR",
-        )
-
-    def test_bbands_lower(self):
-        pt = ta.bbands(self.close, length=20)
-        self._compare(pt.filter(regex=r"^BBL").iloc[:, 0], self._oracle("bbands_lower"), name="BBANDS_lower")
-
-    def test_bbands_upper(self):
-        pt = ta.bbands(self.close, length=20)
-        self._compare(pt.filter(regex=r"^BBU").iloc[:, 0], self._oracle("bbands_upper"), name="BBANDS_upper")
-
-    # ------------------------------------------------------------------
-    # Statistics
-    # ------------------------------------------------------------------
-
-    def test_stdev(self):
-        # tulipy name: stddev
-        self._compare(
-            ta.stdev(self.close, length=20, talib=False),
-            self._oracle("stddev"),
-            name="STDEV",
-        )
-
-    def test_variance(self):
-        # tulipy name: var
-        self._compare(
-            ta.variance(self.close, length=20, talib=False),
-            self._oracle("var"),
-            name="VARIANCE",
-        )
-
     def test_stderr(self):
         pt = ta.stderr(self.close, length=20)
         tp_arr = self._oracle("stderr")
@@ -398,114 +160,147 @@ class TestTulipyOracle:
         expected = np.sqrt((20 - 1) / (20 - 2))
         assert abs(ratio - expected) < 0.005, f"STDERR: ratio {ratio:.6f} differs from expected {expected:.6f}"
 
-    def test_linreg(self):
-        self._compare(
-            ta.linreg(self.close, length=14, talib=False),
-            self._oracle("linreg"),
-            name="LINREG",
-        )
-
-    def test_tsf(self):
-        self._compare(
-            ta.tsf(self.close, length=14, talib=False),
-            self._oracle("tsf"),
-            name="TSF",
-        )
-
-    def test_fosc_stat(self):
-        # The same comparison as test_fosc; separate test kept for grouping.
-        self.test_fosc()
-
-    # ------------------------------------------------------------------
-    # Fisher Transform
-    # ------------------------------------------------------------------
-
-    def test_fisher_val(self):
-        pt = ta.fisher(self.high, self.low, length=9)
-        self._compare(pt.iloc[:, 0], self._oracle("fisher_val"), name="FISHER_val")
-
-    def test_fisher_sig(self):
-        pt = ta.fisher(self.high, self.low, length=9)
-        self._compare(pt.iloc[:, 1], self._oracle("fisher_sig"), name="FISHER_sig")
-
-    # ------------------------------------------------------------------
-    # Market Swing Wave (MSW / Mesa Sine Wave)
-    # ------------------------------------------------------------------
-
-    # Tulip decides the phase with `abs(rp) > 0.001`, in price units, and falls
-    # back to +-pi; native msw uses the limit of arctan(ip / rp) instead (#346).
-    # On SPY_D, |rp| <= 0.001 on these two bars only (rp = -4.5e-4 and -2.8e-4).
-    _MSW_THRESHOLD_BARS = (3793, 4208)
-
-    def test_msw_sine(self):
-        # tulipy truncates pi to 3.1415926, so the exact native formula differs from the
-        # oracle by up to ~3e-4 (not numpy drift, as this comment used to say).
-        pt = ta.msw(self.close, period=5)
-        self._compare(pt.iloc[:, 0], self._oracle("msw_sine"), tol=1e-3, name="MSW_sine", known=self._MSW_THRESHOLD_BARS)
-
-    def test_msw_lead(self):
-        pt = ta.msw(self.close, period=5)
-        self._compare(pt.iloc[:, 1], self._oracle("msw_lead"), tol=1e-3, name="MSW_lead", known=self._MSW_THRESHOLD_BARS)
-
     def test_msw_divergence_is_tulipys_pi(self):
         """With tulipy's pi constant the native loop reproduces the oracle exactly,
         except where Tulip's absolute threshold decides the phase."""
         msw_module = importlib.import_module("pandas_ta_classic.cycles.msw")
         sine, lead = msw_module._msw_native(self.close.to_numpy(dtype=float), 5, pi=3.1415926)
-        known = self._MSW_THRESHOLD_BARS
+        known = _MSW_THRESHOLD_BARS
         self._compare(pd.Series(sine, index=self.close.index), self._oracle("msw_sine"), tol=1e-12, name="MSW_sine_tulipy_pi", known=known)
         self._compare(pd.Series(lead, index=self.close.index), self._oracle("msw_lead"), tol=1e-12, name="MSW_lead_tulipy_pi", known=known)
 
-    # ------------------------------------------------------------------
-    # New indicators (added with tulipy wrapper layer)
-    # ------------------------------------------------------------------
 
-    def test_edecay(self):
-        self._compare(
-            ta.edecay(self.close, length=5),
-            self._oracle("edecay"),
-            name="EDECAY",
-        )
+# ---------------------------------------------------------------------------
+# Plain comparisons: one generated test_<key> per row.
+#
+# compute gets the test instance (its open/high/low/close/vol Series) and returns
+# the native Series; oracle names the frozen tulipy array, which is multiplied by
+# scale; tol and known go to _compare; note keeps what the row needs explaining
+# (often the tulipy name) and becomes the test's docstring.
+# ---------------------------------------------------------------------------
 
-    def test_emv(self):
-        # tulipy emv takes no period argument; computes a single-bar EMV value
-        self._compare(
-            ta.emv(self.high, self.low, self.vol),
-            self._oracle("emv"),
-            name="EMV",
-        )
 
-    def test_md(self):
-        self._compare(
-            ta.md(self.close, length=5),
-            self._oracle("md"),
-            name="MD",
-        )
+class _Row(NamedTuple):
+    compute: Callable[[Any], pd.Series]
+    oracle: str
+    note: str = ""
+    tol: float = 1e-6
+    scale: float = 1
+    known: tuple[int, ...] = ()
 
-    def test_lag(self):
-        self._compare(
-            ta.lag(self.close, period=3),
-            self._oracle("lag"),
-            name="LAG",
-        )
 
-    def test_avgprice(self):
-        self._compare(
-            ta.avgprice(self.open, self.high, self.low, self.close),
-            self._oracle("avgprice"),
-            name="AVGPRICE",
-        )
+_ROWS: dict[str, _Row] = {
+    # Overlap / Moving averages
+    "sma": _Row(lambda s: ta.sma(s.close, length=20), "sma"),
+    "ema": _Row(lambda s: ta.ema(s.close, length=20, talib=False), "ema"),
+    "wma": _Row(lambda s: ta.wma(s.close, length=20), "wma"),
+    "hma": _Row(lambda s: ta.hma(s.close, length=9), "hma"),
+    "zlma": _Row(lambda s: ta.zlma(s.close, length=20), "zlema", note="tulipy name: zlema"),
+    "rma": _Row(lambda s: ta.rma(s.close, length=14), "wilders", note="tulipy name: wilders (Wilder's Moving Average)"),
+    "dema": _Row(lambda s: ta.dema(s.close, length=20, talib=False), "dema"),
+    "tema": _Row(lambda s: ta.tema(s.close, length=20, talib=False), "tema"),
+    "kama": _Row(lambda s: ta.kama(s.close, length=10, talib=False), "kama"),
+    "vwma": _Row(lambda s: ta.vwma(s.close, s.vol, length=20), "vwma"),
+    "wcp": _Row(lambda s: ta.wcp(s.high, s.low, s.close), "wcprice", note="tulipy name: wcprice (Weighted Close Price)"),
+    "qstick": _Row(lambda s: ta.qstick(s.open, s.close, length=10), "qstick"),
+    "trima": _Row(
+        lambda s: ta.trima(s.close, length=20, talib=False),
+        "trima",
+        note="The native path (SMA(SMA(close, n/2 + 1), n/2) for even n) matches tulipy.",
+    ),
+    # Oscillators / Momentum
+    "rsi": _Row(lambda s: ta.rsi(s.close, length=14, talib=False), "rsi"),
+    "mom": _Row(lambda s: ta.mom(s.close, length=10), "mom"),
+    "roc": _Row(
+        lambda s: ta.roc(s.close, length=10),
+        "roc",
+        note="tulipy roc returns a decimal fraction; ta.roc returns percentage, so the oracle is scaled by 100.",
+        scale=100,
+    ),
+    "rocr": _Row(lambda s: ta.rocr(s.close, length=10), "rocr"),
+    "willr": _Row(lambda s: ta.willr(s.high, s.low, s.close, length=14), "willr"),
+    "cci": _Row(lambda s: ta.cci(s.high, s.low, s.close, length=14), "cci"),
+    "bop": _Row(lambda s: ta.bop(s.open, s.high, s.low, s.close), "bop"),
+    "mfi": _Row(lambda s: ta.mfi(s.high, s.low, s.close, s.vol, length=14), "mfi"),
+    "cvi": _Row(lambda s: ta.cvi(s.high, s.low, length=10), "cvi"),
+    "ao": _Row(lambda s: ta.ao(s.high, s.low), "ao", note="Awesome Oscillator"),
+    "vhf": _Row(lambda s: ta.vhf(s.close, length=28), "vhf"),
+    "wad": _Row(lambda s: ta.wad(s.high, s.low, s.close), "wad"),
+    "cmo": _Row(lambda s: ta.cmo(s.close, length=14, talib=False), "cmo"),
+    "fosc": _Row(
+        lambda s: ta.fosc(s.close, length=14),
+        "fosc",
+        note="Tulip forecasts this bar with the previous bar's TSF, as TA-Lib does; fosc used the same bar's TSF, which made it equal cfo, until #344.",
+    ),
+    "trix": _Row(
+        lambda s: ta.trix(s.close, length=18).iloc[:, 0],
+        "trix",
+        note="EMA-seed divergence results in ~6.2e-3 diff; converges over the full series. tol=0.01 is sufficient for a 5241-bar dataset.",
+        tol=0.01,
+    ),
+    "stochrsi": _Row(
+        lambda s: ta.stochrsi(s.close, length=14, k=1, talib=False).iloc[:, 0],
+        "stochrsi",
+        note="The native unsmoothed %K (k=1) matches tulipy's single-period formula.",
+        scale=100,
+    ),
+    # Stochastic
+    "stoch_k": _Row(lambda s: ta.stoch(s.high, s.low, s.close, k=14, d=3, smooth_k=3).iloc[:, 0], "stoch_k"),
+    "stoch_d": _Row(lambda s: ta.stoch(s.high, s.low, s.close, k=14, d=3, smooth_k=3).iloc[:, 1], "stoch_d"),
+    # Trend / Directional
+    "aroon_down": _Row(lambda s: ta.aroon(s.high, s.low, length=14, talib=False).iloc[:, 0], "aroon_down"),
+    "aroon_up": _Row(lambda s: ta.aroon(s.high, s.low, length=14, talib=False).iloc[:, 1], "aroon_up"),
+    "aroonosc": _Row(lambda s: ta.aroon(s.high, s.low, length=14, talib=False).iloc[:, 2], "aroonosc"),
+    # Volatility
+    "atr": _Row(lambda s: ta.atr(s.high, s.low, s.close, length=14, talib=False), "atr"),
+    "natr": _Row(
+        lambda s: ta.natr(s.high, s.low, s.close, length=14, mamode="rma", talib=False),
+        "natr",
+        note="tulipy NATR uses Wilder's smoothing (RMA) for ATR internally; the native path must be invoked with mamode='rma' to match.",
+    ),
+    "bbands_lower": _Row(lambda s: ta.bbands(s.close, length=20).filter(regex=r"^BBL").iloc[:, 0], "bbands_lower"),
+    "bbands_upper": _Row(lambda s: ta.bbands(s.close, length=20).filter(regex=r"^BBU").iloc[:, 0], "bbands_upper"),
+    # Statistics
+    "stdev": _Row(lambda s: ta.stdev(s.close, length=20, talib=False), "stddev", note="tulipy name: stddev"),
+    "variance": _Row(lambda s: ta.variance(s.close, length=20, talib=False), "var", note="tulipy name: var"),
+    "linreg": _Row(lambda s: ta.linreg(s.close, length=14, talib=False), "linreg"),
+    "tsf": _Row(lambda s: ta.tsf(s.close, length=14, talib=False), "tsf"),
+    "fosc_stat": _Row(lambda s: ta.fosc(s.close, length=14), "fosc", note="The same comparison as test_fosc; separate test kept for grouping."),
+    # Fisher Transform
+    "fisher_val": _Row(lambda s: ta.fisher(s.high, s.low, length=9).iloc[:, 0], "fisher_val"),
+    "fisher_sig": _Row(lambda s: ta.fisher(s.high, s.low, length=9).iloc[:, 1], "fisher_sig"),
+    # Market Swing Wave (MSW / Mesa Sine Wave)
+    "msw_sine": _Row(
+        lambda s: ta.msw(s.close, period=5).iloc[:, 0],
+        "msw_sine",
+        note="tulipy truncates pi to 3.1415926, so the exact native formula differs from the oracle by up to ~3e-4 (not numpy drift).",
+        tol=1e-3,
+        known=_MSW_THRESHOLD_BARS,
+    ),
+    "msw_lead": _Row(lambda s: ta.msw(s.close, period=5).iloc[:, 1], "msw_lead", tol=1e-3, known=_MSW_THRESHOLD_BARS),
+    # Added with the tulipy wrapper layer
+    "edecay": _Row(lambda s: ta.edecay(s.close, length=5), "edecay"),
+    "emv": _Row(lambda s: ta.emv(s.high, s.low, s.vol), "emv", note="tulipy emv takes no period argument; computes a single-bar EMV value"),
+    "md": _Row(lambda s: ta.md(s.close, length=5), "md"),
+    "lag": _Row(lambda s: ta.lag(s.close, period=3), "lag"),
+    "avgprice": _Row(lambda s: ta.avgprice(s.open, s.high, s.low, s.close), "avgprice"),
+    "medprice": _Row(lambda s: ta.medprice(s.high, s.low), "medprice"),
+    "typprice": _Row(lambda s: ta.typprice(s.high, s.low, s.close), "typprice"),
+}
 
-    def test_medprice(self):
-        self._compare(
-            ta.medprice(self.high, self.low),
-            self._oracle("medprice"),
-            name="MEDPRICE",
-        )
 
-    def test_typprice(self):
-        self._compare(
-            ta.typprice(self.high, self.low, self.close),
-            self._oracle("typprice"),
-            name="TYPPRICE",
-        )
+def _make_row_test(key: str, row: _Row) -> Callable[[TestTulipyOracle], None]:
+    def test(self: TestTulipyOracle) -> None:
+        self._compare(row.compute(self), self._oracle(row.oracle) * row.scale, tol=row.tol, name=key, known=row.known)
+
+    test.__name__ = f"test_{key}"
+    test.__doc__ = row.note or f"{key} against the frozen tulipy {row.oracle!r} array."
+    return test
+
+
+def _attach_row_tests() -> None:
+    for key, row in _ROWS.items():
+        setattr(TestTulipyOracle, f"test_{key}", _make_row_test(key, row))
+
+
+_attach_row_tests()

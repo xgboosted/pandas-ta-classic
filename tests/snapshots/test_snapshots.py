@@ -61,6 +61,11 @@ class TestRegressionSnapshots:
         del cls.df
         del cls.results
 
+    def test_every_tracked_result_has_a_snapshot(self):
+        """The tests are generated from regression_snapshots.json, so a result missing there would go unchecked."""
+        missing, stale = set(self.results) - set(_SNAPSHOTS), set(_SNAPSHOTS) - set(self.results)
+        assert not missing and not stale, f"tracked without a snapshot: {sorted(missing)}; snapshot without a result: {sorted(stale)}"
+
     def _check_snapshot(self, fixture_key: str, subtests) -> None:
         assert fixture_key in self.results, f"No result computed for {fixture_key!r}"
         result = self.results[fixture_key]
