@@ -1,9 +1,12 @@
+import logging
 import math
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas import DataFrame, Series
 
 from tests.config import get_sample_data
@@ -39,16 +42,34 @@ def golden_value_close(actual: float, expected: float) -> bool:
     return abs(actual - expected) <= GOLDEN_ATOL + GOLDEN_RTOL * abs(expected)
 
 
-def assert_all_nan(test_case, result, index=None):
+def assert_all_nan(result, index=None):
     """Input shorter than the window yields an all-NaN Series/DataFrame, not None (issue #145, case B).
 
     When *index* is given, the result must be aligned to it.
     """
-    test_case.assertIsInstance(result, (Series, DataFrame), f"expected an all-NaN result, got {type(result).__name__}")
+    assert isinstance(result, (Series, DataFrame)), f"expected an all-NaN result, got {type(result).__name__}"
     if index is not None:
-        test_case.assertTrue(result.index.equals(index), "all-NaN result must keep the input index")
+        assert result.index.equals(index), "all-NaN result must keep the input index"
     values = result.to_numpy(dtype=float)
-    test_case.assertTrue(values.size == 0 or bool(np.isnan(values).all()), "short-input result must be all NaN")
+    assert values.size == 0 or bool(np.isnan(values).all()), "short-input result must be all NaN"
+
+
+@contextmanager
+def assert_logs(caplog: pytest.LogCaptureFixture, logger: str, level: str) -> Iterator[list[str]]:
+    """Like ``unittest.TestCase.assertLogs``: the block must log at least one record
+    of *level* or above on *logger* or one of its children.
+
+    Yields the list of messages, filled in when the block exits.
+    """
+    levelno = logging.getLevelNamesMapping()[level]
+    messages: list[str] = []
+    start = len(caplog.records)
+    with caplog.at_level(levelno, logger=logger):
+        yield messages
+    for record in caplog.records[start:]:
+        if record.levelno >= levelno and (record.name == logger or record.name.startswith(f"{logger}.")):
+            messages.append(record.getMessage())
+    assert messages, f"no {level} or higher record logged on {logger!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +114,7 @@ def output_columns(result: Any) -> dict[str, Series]:
     return columns
 
 
-class AccessorValueCase(TestCase):
+class AccessorValueCase:
     """Base of the accessor value checks: df.ta.<indicator>(append=True) appends
     a column with at least one valid row and a finite last value.
 
@@ -101,11 +122,11 @@ class AccessorValueCase(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls._base = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls._base
 
     def fresh(self) -> pd.DataFrame:
@@ -118,16 +139,12 @@ class AccessorValueCase(TestCase):
 
     def _check_appended(self, df: pd.DataFrame, col_name: str) -> None:
         """Assert *col_name* exists, has valid rows, and a finite last value."""
-        self.assertIn(
-            col_name,
-            df.columns,
-            f"Expected column {col_name!r} not found in DataFrame after append",
-        )
+        assert col_name in df.columns, f"Expected column {col_name!r} not found in DataFrame after append"
         series = df[col_name]
         valid = series.dropna()
-        self.assertFalse(valid.empty, f"Column {col_name!r} is all-NaN after append")
+        assert not valid.empty, f"Column {col_name!r} is all-NaN after append"
         last = float(valid.iloc[-1])
-        self.assertTrue(math.isfinite(last), f"Column {col_name!r} last value is not finite: {last}")
+        assert math.isfinite(last), f"Column {col_name!r} last value is not finite: {last}"
 
     def _check_last_col(self, df: pd.DataFrame) -> None:
         """Check the last column of *df* (for indicators that add a single column)."""

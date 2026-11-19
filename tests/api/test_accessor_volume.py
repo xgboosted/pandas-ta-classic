@@ -7,7 +7,7 @@ class TestExtVolumeDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.ad(append=True)
         ad_cols = [c for c in df.columns if c.startswith("AD")]
-        self.assertTrue(len(ad_cols) >= 1, "No AD column appended")
+        assert (len(ad_cols) >= 1), "No AD column appended"
         self._check_appended(df, ad_cols[0])
 
     def test_aobv_ext(self):
@@ -29,17 +29,17 @@ class TestExtVolumeDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.mfi(append=True)
         mfi_cols = [c for c in df.columns if c.startswith("MFI")]
-        self.assertTrue(len(mfi_cols) >= 1, "No MFI column appended")
+        assert (len(mfi_cols) >= 1), "No MFI column appended"
         self._check_appended(df, mfi_cols[0])
         # MFI in [0, 100]
         valid = df[mfi_cols[0]].dropna()
-        self.assertTrue((valid >= 0).all() and (valid <= 100).all(), "MFI out of [0,100]")
+        assert ((valid >= 0).all() and (valid <= 100).all()), "MFI out of [0,100]"
 
     def test_obv_ext(self):
         df = self.fresh()
         df.ta.obv(append=True)
         obv_cols = [c for c in df.columns if c.startswith("OBV")]
-        self.assertTrue(len(obv_cols) >= 1, "No OBV column appended")
+        assert (len(obv_cols) >= 1), "No OBV column appended"
         self._check_appended(df, obv_cols[0])
 
     def test_pvol_ext(self):
@@ -47,7 +47,7 @@ class TestExtVolumeDeeper(AccessorValueCase):
         df.ta.pvol(append=True)
         self._check_appended(df, "PVOL")
         valid = df["PVOL"].dropna()
-        self.assertTrue((valid >= 0).all(), "PVOL has negative values")
+        assert (valid >= 0).all(), "PVOL has negative values"
 
     def test_pvt_ext(self):
         df = self.fresh()
@@ -58,6 +58,6 @@ class TestExtVolumeDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.vwmacd(append=True)
         vwm_cols = [c for c in df.columns if c.startswith("VWMACD")]
-        self.assertTrue(len(vwm_cols) >= 1, "No VWMACD columns appended")
+        assert (len(vwm_cols) >= 1), "No VWMACD columns appended"
         for col in vwm_cols:
             self._check_appended(df, col)

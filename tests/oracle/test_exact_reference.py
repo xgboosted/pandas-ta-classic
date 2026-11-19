@@ -24,8 +24,6 @@ Two kinds of assertion here:
   into an equality check.
 """
 
-from unittest import TestCase
-
 import numpy as np
 from pandas import Series
 
@@ -58,16 +56,16 @@ def _pandas_entropy(close: Series, length: int) -> Series:
     return close.rolling(length).apply(_ent, raw=True)
 
 
-class TestExactReference(TestCase):
+class TestExactReference:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         data = get_sample_data()
         data.columns = data.columns.str.lower()
         cls.open_ = data["open"]
         cls.close = data["close"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open_
         del cls.close
 
@@ -75,29 +73,17 @@ class TestExactReference(TestCase):
         exact_ok = np.asarray(exact.notna())
         ref_ok = np.asarray(reference.notna())
 
-        self.assertEqual(
-            int(np.argmax(exact_ok)),
-            int(np.argmax(ref_ok)),
-            f"{name}: first defined index differs from pandas rolling",
-        )
-        self.assertEqual(
-            int(exact_ok.sum()),
-            int(ref_ok.sum()),
-            f"{name}: non-NaN count differs from pandas rolling",
-        )
+        assert int(np.argmax(exact_ok)) == int(np.argmax(ref_ok)), f"{name}: first defined index differs from pandas rolling"
+        assert int(exact_ok.sum()) == int(ref_ok.sum()), f"{name}: non-NaN count differs from pandas rolling"
 
         both = exact_ok & ref_ok
-        self.assertTrue(both.any(), f"{name}: no overlapping defined values")
+        assert both.any(), f"{name}: no overlapping defined values"
         e = np.asarray(exact, dtype=float)[both]
         r = np.asarray(reference, dtype=float)[both]
         budget = SMOKE_ATOL + SMOKE_RTOL * np.abs(r)
         overrun = np.abs(e - r) / budget
         worst = int(np.argmax(overrun))
-        self.assertLessEqual(
-            float(overrun[worst]),
-            1.0,
-            f"{name}: exact={e[worst]!r} vs pandas={r[worst]!r} exceeds the smoke tolerance",
-        )
+        assert float(overrun[worst]) <= 1.0, f"{name}: exact={e[worst]!r} vs pandas={r[worst]!r} exceeds the smoke tolerance"
 
     def test_zscore(self):
         c = self.close
@@ -152,9 +138,5 @@ class TestExactReference(TestCase):
         c = self.close
         exact_err = abs(float(rolling_kurtosis(c, 20).iloc[-1]) - truth)
         pandas_err = abs(float(c.rolling(20).kurt().iloc[-1]) - truth)
-        self.assertLess(exact_err, 1e-15, f"exact reference drifted from the true value by {exact_err:.3e}")
-        self.assertGreater(
-            pandas_err,
-            exact_err,
-            "pandas rolling matched the true value better than exact arithmetic — check the test data",
-        )
+        assert exact_err < 1e-15, f"exact reference drifted from the true value by {exact_err:.3e}"
+        assert pandas_err > exact_err, "pandas rolling matched the true value better than exact arithmetic — check the test data"

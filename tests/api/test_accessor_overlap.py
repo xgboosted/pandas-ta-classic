@@ -1,5 +1,4 @@
 import warnings
-from unittest import TestCase
 
 from pandas import DataFrame
 
@@ -8,33 +7,33 @@ from tests.assertions import AccessorValueCase
 from tests.config import get_sample_data
 
 
-class TestOverlapExtension(TestCase):
+class TestOverlapExtension:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         pass
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
-    def test_ichimoku_accessor_no_warning(self):
+    def test_ichimoku_accessor_no_warning(self, subtests):
         from tests.config import get_sample_data
 
         # 0.9.0 ships no deprecation: the accessor call emits no warning at all,
         # and append_span is a functional flag forwarded to the function.
         for kwargs in ({}, {"append_span": True}):
-            with self.subTest(**kwargs):
+            with subtests.test(**kwargs):
                 data = get_sample_data()
                 with warnings.catch_warnings():
                     warnings.simplefilter("error")
                     data.ta.ichimoku(append=True, **kwargs)
-                self.assertIsInstance(data, DataFrame)
+                assert isinstance(data, DataFrame)
 
     def test_ichimoku_prefix_applied_once(self):
         from tests.config import get_sample_data
@@ -43,8 +42,8 @@ class TestOverlapExtension(TestCase):
         base = list(data.columns)
         result = data.ta.ichimoku(prefix="P", suffix="S", append=True)
         expected = ["P_ISA_9_S", "P_ISB_26_S", "P_ITS_9_S", "P_IKS_26_S", "P_ICS_26_S"]
-        self.assertEqual(list(result.columns), expected)
-        self.assertEqual(list(data.columns), base + expected)
+        assert list(result.columns) == expected
+        assert list(data.columns) == base + expected
 
 
 class TestExtOverlapDeeper(AccessorValueCase):
@@ -120,6 +119,6 @@ class TestExtOverlapDeeper(AccessorValueCase):
         df = self.fresh()
         df.ta.bbands(append=True)
         bb_cols = [c for c in df.columns if c.startswith("BB")]
-        self.assertTrue(len(bb_cols) >= 3, "Expected at least 3 BBands columns")
+        assert (len(bb_cols) >= 3), "Expected at least 3 BBands columns"
         for col in bb_cols:
             self._check_appended(df, col)

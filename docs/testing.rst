@@ -32,7 +32,7 @@ cases and the bugs it had. The column names are in ``test_column_names.py``
 (below); ``offset``, ``fillna``, a missing input and the name of a changed
 parameter are checked registry-wide by the contracts below.
 
-**Run:** ``python -m unittest tests.indicators.test_momentum -v``
+**Run:** ``python -m pytest tests/indicators/test_momentum.py -v``
 
 
 Column Names and Extension API Tests
@@ -467,9 +467,6 @@ Running All Tests
    # Regenerate fixture JSONs (requires TA-Lib; only after an intentional
    # algorithm change — review the diff before committing)
    make fixtures
-
-   # Do not use `python -m unittest discover`: it skips the pytest-style
-   # tests (lookahead, NaN contracts, numba parity, reference ports).
 
    # With coverage
    python -m pytest --cov=pandas_ta_classic --cov-report=html tests/

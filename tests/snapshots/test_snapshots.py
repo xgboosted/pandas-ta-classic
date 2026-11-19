@@ -12,14 +12,14 @@ series (e.g. EMA initialisation, window boundary handling) — complementing
 test_golden_values.py which checks only the last value and non-NaN count.
 
 Run the full suite:
-    python -m unittest tests/snapshots/test_snapshots.py
+    pytest tests/snapshots/test_snapshots.py
 """
 
 import json
 import math
 from collections.abc import Callable
 from pathlib import Path
-from unittest import TestCase
+from typing import Any
 
 import pandas as pd
 
@@ -48,23 +48,23 @@ with open(_SNAP_PATH) as _fh:
 # ---------------------------------------------------------------------------
 
 
-class TestRegressionSnapshots(TestCase):
+class TestRegressionSnapshots:
     """Spot-check indicator values at 24 fixed positions across SPY_D.csv."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.results = _compute_all(cls.df)
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.df
         del cls.results
 
-    def _check_snapshot(self, fixture_key: str) -> None:
-        self.assertIn(fixture_key, self.results, f"No result computed for {fixture_key!r}")
+    def _check_snapshot(self, fixture_key: str, subtests) -> None:
+        assert fixture_key in self.results, f"No result computed for {fixture_key!r}"
         result = self.results[fixture_key]
-        self.assertIsNotNone(result, f"{fixture_key!r} returned None")
+        assert result is not None, f"{fixture_key!r} returned None"
 
         if isinstance(result, pd.Series):
             result = result.to_frame(name=result.name)
@@ -72,13 +72,13 @@ class TestRegressionSnapshots(TestCase):
         col_snaps = _SNAPSHOTS[fixture_key]
 
         for col, checkpoints in col_snaps.items():
-            with self.subTest(col=col):
-                self.assertIn(col, result.columns, f"Column {col!r} missing from {fixture_key!r}")
+            with subtests.test(col=col):
+                assert col in result.columns, f"Column {col!r} missing from {fixture_key!r}"
                 series = result[col]
 
                 for idx_str, expected_val in checkpoints.items():
                     idx = int(idx_str)
-                    with self.subTest(idx=idx):
+                    with subtests.test(idx=idx):
                         if idx >= len(series):
                             # The generator stores null for out-of-range
                             # positions.  A few indicators return a series
@@ -86,32 +86,17 @@ class TestRegressionSnapshots(TestCase):
                             # bins, tos_stdevall into 30), so every checkpoint
                             # falls past the end.  Requiring null here turns
                             # the mismatch into a length-regression check.
-                            self.assertIsNone(
-                                expected_val,
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: result has only " f"{len(series)} rows but snapshot holds {expected_val}",
-                            )
+                            assert expected_val is None, f"{fixture_key!r}[{col!r}] at idx={idx}: result has only " f"{len(series)} rows but snapshot holds {expected_val}"
                         elif expected_val is None:
                             # Snapshot was NaN — actual must also be NaN
                             actual = series.iloc[idx]
-                            self.assertTrue(
-                                pd.isna(actual),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: " f"snapshot was NaN but got {actual}",
-                            )
+                            assert pd.isna(actual), f"{fixture_key!r}[{col!r}] at idx={idx}: " f"snapshot was NaN but got {actual}"
                         else:
                             actual_raw = series.iloc[idx]
-                            self.assertFalse(
-                                pd.isna(actual_raw),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: " f"got NaN but snapshot has value {expected_val}",
-                            )
+                            assert not pd.isna(actual_raw), f"{fixture_key!r}[{col!r}] at idx={idx}: " f"got NaN but snapshot has value {expected_val}"
                             actual = float(actual_raw)
-                            self.assertFalse(
-                                math.isnan(actual) or math.isinf(actual),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: value is NaN/Inf",
-                            )
-                            self.assertTrue(
-                                _approx_equal(actual, expected_val),
-                                f"{fixture_key!r}[{col!r}] at idx={idx}: " f"actual={actual:.8f} != snapshot={expected_val:.8f}",
-                            )
+                            assert not (math.isnan(actual) or math.isinf(actual)), f"{fixture_key!r}[{col!r}] at idx={idx}: value is NaN/Inf"
+                            assert _approx_equal(actual, expected_val), f"{fixture_key!r}[{col!r}] at idx={idx}: " f"actual={actual:.8f} != snapshot={expected_val:.8f}"
 
 
 # ---------------------------------------------------------------------------
@@ -126,9 +111,9 @@ class TestRegressionSnapshots(TestCase):
 # ---------------------------------------------------------------------------
 
 
-def _make_snapshot_test(fixture_key: str) -> Callable[[TestRegressionSnapshots], None]:
-    def test(self: TestRegressionSnapshots) -> None:
-        self._check_snapshot(fixture_key)
+def _make_snapshot_test(fixture_key: str) -> Callable[[TestRegressionSnapshots, Any], None]:
+    def test(self: TestRegressionSnapshots, subtests) -> None:
+        self._check_snapshot(fixture_key, subtests)
 
     test.__name__ = f"test_{fixture_key}"
     test.__doc__ = f"Snapshot regression for {fixture_key!r}."

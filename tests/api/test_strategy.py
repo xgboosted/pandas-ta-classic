@@ -4,17 +4,20 @@ import os
 import sys
 import tempfile
 from concurrent.futures import Executor, Future, ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import ExitStack
 from datetime import UTC, datetime
 from multiprocessing import cpu_count
 from time import perf_counter
-from unittest import TestCase, mock
+from unittest import mock
 
 import pandas as pd
+import pytest
 from pandas import DataFrame
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.core import _custom_kinds
 from pandas_ta_classic.custom import import_dir
+from tests.assertions import assert_logs
 from tests.config import get_sample_data
 
 # Strategy Testing Parameters
@@ -26,15 +29,15 @@ timed = False
 verbose = False
 
 
-class TestStrategyMethods(TestCase):
+class TestStrategyMethods:
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.speed_test = DataFrame()
         cls.data = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         cls.speed_test = cls.speed_test.T
         cls.speed_test.index.name = "Test"
         if cls.speed_test.shape[1] == 2:
@@ -62,7 +65,7 @@ class TestStrategyMethods(TestCase):
             # print(tmp)
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         # Always start with a fresh DataFrame for each test
         self.data = get_sample_data()
         self.added_cols = 0
@@ -75,14 +78,14 @@ class TestStrategyMethods(TestCase):
         if timed:
             self.stime = perf_counter()
 
-    def tearDown(self):
+    def teardown_method(self):
         if timed:
             self.time_diff = perf_counter() - self.stime
         self.added_cols = len(self.data.columns) - self.init_cols
-        self.assertGreaterEqual(self.added_cols, 1)
+        assert self.added_cols >= 1
 
         self.result = self.data[self.data.columns[-self.added_cols :]]
-        self.assertIsInstance(self.result, DataFrame)
+        assert isinstance(self.result, DataFrame)
         self.data = self.data.drop(columns=self.result.columns)
 
         self.speed_test[self.category] = [self.added_cols, self.time_diff]
@@ -125,12 +128,12 @@ class TestStrategyMethods(TestCase):
         self.data["unrelated"] = 1.0
 
         self.data.ta.strategy(self.category, length=10, verbose=verbose, timed=strategy_timed)
-        self.assertGreater(len(self.data.columns), len(ohlcv) + 1)
+        assert len(self.data.columns) > len(ohlcv) + 1
 
         # Neither the first run's output nor an unreferenced user column.
-        self.assertEqual(self.data.ta._worker_columns([{}]), ohlcv)
+        assert self.data.ta._worker_columns([{}]) == ohlcv
         # Unless an indicator is explicitly pointed at it.
-        self.assertEqual(self.data.ta._worker_columns([{"close": "unrelated"}]), ohlcv + ["unrelated"])
+        assert self.data.ta._worker_columns([{"close": "unrelated"}]) == ohlcv + ["unrelated"]
 
     # @skip
     def test_candles_category(self):
@@ -167,7 +170,7 @@ class TestStrategyMethods(TestCase):
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         # Verify columns were appended (exact count varies by BBANDS version)
-        self.assertGreater(len(self.data.columns), 5)
+        assert len(self.data.columns) > 5
         for col in (
             "CDL_TRISTAR",
             "RSI_14",
@@ -181,7 +184,7 @@ class TestStrategyMethods(TestCase):
             # this check did not cover it.
             "EMA_5_CLR",
         ):
-            self.assertIn(col, self.data.columns)
+            assert col in self.data.columns
 
     # @skip
     def test_custom_args_tuple(self):
@@ -241,7 +244,7 @@ class TestStrategyMethods(TestCase):
         )
         self.data.ta.strategy(custom, verbose=verbose, timed=strategy_timed)
         self.data.ta.tsignals(trend=self.data["AMATe_LR_20_50_2"], append=True)
-        self.assertEqual(len(self.data.columns), 13)
+        assert len(self.data.columns) == 13
 
     # @skip
     def test_momentum_category(self):
@@ -287,7 +290,7 @@ class TestStrategyMethods(TestCase):
         self.data.ta.strategy(verbose=verbose, timed=strategy_timed)
         self.data.ta.cores = cores
 
-    def test_verbose_and_timed_logging(self):
+    def test_verbose_and_timed_logging(self, caplog):
         """verbose/timed only log; nothing else pins those branches.
 
         The module-level ``verbose``/``strategy_timed`` switches are False, so
@@ -298,29 +301,29 @@ class TestStrategyMethods(TestCase):
         cores = self.data.ta.cores
         self.data.ta.cores = 0
         try:
-            with self.assertLogs("pandas_ta_classic.core", level="INFO") as logs:
+            with assert_logs(caplog, "pandas_ta_classic.core", "INFO") as logs:
                 self.data.ta.strategy(self.category, verbose=True, timed=True)
         finally:
             self.data.ta.cores = cores
 
-        output = "\n".join(logs.output)
-        self.assertIn(f"Strategy: {self.category}", output)
-        self.assertIn("Total indicators:", output)
-        self.assertIn("Columns added:", output)
-        self.assertIn("Last Run:", output)
-        self.assertIn("Runtime:", output)
+        output = "\n".join(logs)
+        assert f"Strategy: {self.category}" in output
+        assert "Total indicators:" in output
+        assert "Columns added:" in output
+        assert "Last Run:" in output
+        assert "Runtime:" in output
 
-    def test_verbose_reports_excluded_indicators(self):
+    def test_verbose_reports_excluded_indicators(self, caplog):
         """A category run over OHLC-only data drops the volume indicators."""
         self.category = "All"
 
         no_volume = self.data.drop(columns=["volume"])
         no_volume.ta.cores = 0
-        with self.assertLogs("pandas_ta_classic.core", level="INFO") as logs:
+        with assert_logs(caplog, "pandas_ta_classic.core", "INFO") as logs:
             no_volume.ta.strategy(verbose=True)
-        self.assertTrue(any("Excluded[" in line for line in logs.output))
+        assert any("Excluded[" in line for line in logs)
 
-        # tearDown measures self.data, so give it something to find.
+        # teardown_method measures self.data, so give it something to find.
         self.data.ta.strategy("Cycles", verbose=verbose, timed=strategy_timed)
 
     # @skipUnless(verbose, "verbose mode only")
@@ -350,36 +353,36 @@ class TestStrategyMethods(TestCase):
         self.data.ta.cores = cores
 
 
-class TestStrategyDataclass(TestCase):
+class TestStrategyDataclass:
     """Unit tests for Strategy dataclass construction and validation."""
 
     def test_valid_name_and_ta_list(self):
         s = pandas_ta.Strategy("MyStrat", ta=[{"kind": "sma", "length": 10}])
-        self.assertEqual(s.name, "MyStrat")
-        self.assertIsInstance(s.ta, list)
-        self.assertEqual(s.total_ta(), 1)
+        assert s.name == "MyStrat"
+        assert isinstance(s.ta, list)
+        assert s.total_ta() == 1
 
     def test_empty_ta_list_accepted(self):
         """Strategy(ta=[]) must be accepted (PR #96 behavior change)."""
         s = pandas_ta.Strategy("EmptyStrat", ta=[])
-        self.assertEqual(s.name, "EmptyStrat")
-        self.assertIsInstance(s.ta, list)
-        self.assertEqual(s.total_ta(), 0)
+        assert s.name == "EmptyStrat"
+        assert isinstance(s.ta, list)
+        assert s.total_ta() == 0
 
     def test_ta_none_accepted(self):
         """ta=None is valid; used by AllStrategy to mean 'run all'."""
         s = pandas_ta.Strategy("AllStrat", ta=None)
-        self.assertIsNone(s.ta)
-        self.assertEqual(s.total_ta(), 0)
+        assert s.ta is None
+        assert s.total_ta() == 0
 
     def test_invalid_name_raises_value_error(self):
         """Strategy(name=123) must raise ValueError (PR #96 breaking change)."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             pandas_ta.Strategy(name=123)
 
     def test_invalid_ta_type_raises_value_error(self):
         """Non-list ta must raise ValueError."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             pandas_ta.Strategy(name="MyStrat", ta="not_a_list")
 
     def test_created_uses_default_factory(self):
@@ -387,54 +390,54 @@ class TestStrategyDataclass(TestCase):
         import dataclasses
 
         field_info = pandas_ta.Strategy.__dataclass_fields__["created"]
-        self.assertIsNot(field_info.default_factory, dataclasses.MISSING)
-        self.assertIs(field_info.default, dataclasses.MISSING)
+        assert field_info.default_factory is not dataclasses.MISSING
+        assert field_info.default is dataclasses.MISSING
 
     def test_created_is_utc_timestamp(self):
         before = datetime.now(UTC)
         s = pandas_ta.Strategy("TestStrat", ta=[])
-        self.assertIs(type(s.created), datetime)  # stdlib, not pd.Timestamp (a subclass)
-        self.assertIs(s.created.tzinfo, UTC)
-        self.assertTrue(before <= s.created <= datetime.now(UTC))
+        assert type(s.created) is datetime  # stdlib, not pd.Timestamp (a subclass)
+        assert s.created.tzinfo is UTC
+        assert (before <= s.created <= datetime.now(UTC))
 
 
-class TestStrategyNameDoesNotSelect(TestCase):
+class TestStrategyNameDoesNotSelect:
     """A Strategy's ta list runs whatever its name; only ta=None means every indicator.
 
     A name equal to a category ("momentum") or to "all" used to discard the
     list and run that whole category, or every indicator, without a word.
     """
 
-    def setUp(self):
+    def setup_method(self):
         self.data = get_sample_data().iloc[:300]
 
     def assert_runs_only_its_list(self, name):
         df = self.data.copy()
         df.ta.strategy(pandas_ta.Strategy(name, ta=[{"kind": "rsi"}]))
-        self.assertEqual(list(df.columns[len(self.data.columns) :]), ["RSI_14"])
+        assert list(df.columns[len(self.data.columns) :]) == ["RSI_14"]
 
-    def test_category_name(self):
+    def test_category_name(self, subtests):
         for name in ("momentum", "Overlap"):
-            with self.subTest(name=name):
+            with subtests.test(name=name):
                 self.assert_runs_only_its_list(name)
 
-    def test_all_name(self):
+    def test_all_name(self, subtests):
         for name in ("all", "All"):
-            with self.subTest(name=name):
+            with subtests.test(name=name):
                 self.assert_runs_only_its_list(name)
 
     def test_empty_list_runs_nothing(self):
         # Strategy("All", ta=[]) used to run every indicator (403 columns on these rows)
         df = self.data.copy()
         df.ta.strategy(pandas_ta.Strategy("All", ta=[]))
-        self.assertEqual(list(df.columns), list(self.data.columns))
+        assert list(df.columns) == list(self.data.columns)
 
     def test_missing_input_column_raises_for_a_list(self):
         # all/category mode skips an indicator whose column is missing and reports it;
         # an explicit list asked for that indicator, so the run raises instead. A
         # Strategy named after a category used to take the skipping path.
         df = self.data.drop(columns=["volume"])
-        with self.assertRaisesRegex(KeyError, "volume"):
+        with pytest.raises(KeyError, match="volume"):
             df.ta.strategy(pandas_ta.Strategy("momentum", ta=[{"kind": "obv"}]))
 
     def test_ta_none_still_runs_every_indicator(self):
@@ -442,10 +445,10 @@ class TestStrategyNameDoesNotSelect(TestCase):
         expected.ta.strategy("all")
         df = self.data.copy()
         df.ta.strategy(pandas_ta.Strategy("momentum", ta=None))
-        self.assertEqual(list(df.columns), list(expected.columns))
+        assert list(df.columns) == list(expected.columns)
 
 
-class TestStrategyWorkerPayload(TestCase):
+class TestStrategyWorkerPayload:
     """Guards the multiprocessing call site, not just the helper."""
 
     def test_multiprocessing_ships_the_worker_slice(self):
@@ -463,10 +466,10 @@ class TestStrategyWorkerPayload(TestCase):
             data.ta.strategy("Volatility")
         spy.assert_called()
         shipped = spy.side_effect(data.ta, [{}])
-        self.assertNotIn("unrelated", shipped)
+        assert "unrelated" not in shipped
 
 
-class TestStrategyDoesNotMutateInputs(TestCase):
+class TestStrategyDoesNotMutateInputs:
     """strategy() must not edit shared or caller-owned lists.
 
     Category mode removed its exclusions from the global ``Category`` list in
@@ -476,7 +479,7 @@ class TestStrategyDoesNotMutateInputs(TestCase):
     the caller's ``Strategy.ta``.
     """
 
-    def setUp(self):
+    def setup_method(self):
         self.data = get_sample_data().iloc[:300].copy()
         self.data.ta.cores = 0
 
@@ -487,19 +490,19 @@ class TestStrategyDoesNotMutateInputs(TestCase):
         from pandas_ta_classic._meta import _build_category_dict
 
         self.data.ta.strategy("trend")
-        self.assertEqual(pandas_ta.Category, _build_category_dict())
+        assert pandas_ta.Category == _build_category_dict()
 
     def test_custom_strategy_leaves_strategy_ta_intact(self):
         ta = [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}]
         strategy = pandas_ta.Strategy(name="c", ta=ta)
         self.data.ta.strategy(strategy)
-        self.assertEqual(strategy.ta, [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}])
-        self.assertIn("SMA_10", self.data.columns)
+        assert strategy.ta == [{"kind": "sma", "length": 10}, {"kind": "sma", "length": 5000}]
+        assert "SMA_10" in self.data.columns
         # A window longer than the frame gives an all-NaN column, as a direct call does.
-        self.assertTrue(self.data["SMA_5000"].isna().all())
+        assert self.data["SMA_5000"].isna().all()
 
 
-class TestCustomStrategyLength(TestCase):
+class TestCustomStrategyLength:
     """Custom mode compared ``kwds["length"] > len(df)`` before running anything.
 
     ``length=None`` (the library-wide way to ask for the default) raised
@@ -508,23 +511,23 @@ class TestCustomStrategyLength(TestCase):
     category mode and direct calls return an all-NaN column.
     """
 
-    def setUp(self):
+    def setup_method(self):
         self.data = get_sample_data().iloc[:50].copy()
         self.data.ta.cores = 0
 
     def test_length_none_uses_the_default(self):
         self.data.ta.strategy(pandas_ta.Strategy(name="n", ta=[{"kind": "sma", "length": None}]))
-        self.assertIn("SMA_10", self.data.columns)
+        assert "SMA_10" in self.data.columns
 
     def test_invalid_length_raises_from_the_indicator(self):
-        with self.assertRaisesRegex(ValueError, r"sma\(\) length must be an integer > 0, got '500'"):
+        with pytest.raises(ValueError, match=r"sma\(\) length must be an integer > 0, got '500'"):
             self.data.ta.strategy(pandas_ta.Strategy(name="s", ta=[{"kind": "sma", "length": "500"}]))
 
     def test_long_window_matches_category_mode_and_direct_call(self):
         self.data.ta.strategy(pandas_ta.Strategy(name="l", ta=[{"kind": "sma", "length": 500}]))
         direct = self.data.ta.sma(length=500)
-        self.assertTrue(self.data["SMA_500"].equals(direct))
-        self.assertTrue(self.data["SMA_500"].isna().all())
+        assert self.data["SMA_500"].equals(direct)
+        assert self.data["SMA_500"].isna().all()
 
 
 def _dbl(close, **kwargs):
@@ -547,46 +550,49 @@ def _vtw_method(self, **kwargs):
     return self._post_process(_vtw(self._get_column("close"), self._get_column("volume")), **kwargs)
 
 
-class TestCustomIndicatorsNeedSerialStrategy(TestCase):
+class TestCustomIndicatorsNeedSerialStrategy:
     """A worker process is a fresh interpreter that never ran custom.import_dir():
     every worker raised AttributeError for a custom indicator the parent had
     accepted, and a custom module reusing a built-in name ran the built-in."""
 
-    def setUp(self):
+    def setup_method(self):
         self.df = get_sample_data().iloc[:300].copy()
         self.strategy = pandas_ta.Strategy("custom", [{"kind": "sma"}, {"kind": "dbl"}])
         patches = (
             mock.patch.object(pandas_ta.AnalysisIndicators, "dbl", _dbl_method, create=True),
             mock.patch.dict(pandas_ta.Category, {"trend": [*pandas_ta.Category["trend"], "dbl"]}),
         )
-        for patch in patches:
-            patch.start()
-            self.addCleanup(patch.stop)
+        # pytest skips teardown_method when setup_method raises: the stack unwinds itself then.
+        with ExitStack() as stack:
+            for patch in patches:
+                stack.enter_context(patch)
+            self.cleanup = stack.pop_all()
+
+    def teardown_method(self):
+        self.cleanup.close()
 
     def test_cores_raise_before_any_worker_starts(self):
-        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\] only serially.*cores=0.*out of the Strategy's 'ta' list"):
+        with pytest.raises(ValueError, match=r"custom indicators \['dbl'\] only serially.*cores=0.*out of the Strategy's 'ta' list"):
             self.df.ta.strategy(self.strategy, cores=2)
-        self.assertNotIn("SMA_10", self.df.columns)
+        assert "SMA_10" not in self.df.columns
 
     def test_cores_set_on_the_frame_raise_too(self):
         self.df.ta.cores = 2
-        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+        with pytest.raises(ValueError, match=r"custom indicators \['dbl'\]"):
             self.df.ta.strategy(self.strategy)
-        self.assertNotIn("SMA_10", self.df.columns)
+        assert "SMA_10" not in self.df.columns
 
     def test_a_category_run_points_to_exclude(self):
         # A category run checks columns against the package function, which import_dir binds too.
-        patch = mock.patch.object(pandas_ta, "dbl", _dbl, create=True)
-        patch.start()
-        self.addCleanup(patch.stop)
-        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
-            self.df.ta.strategy("trend", cores=2)
-        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
-            self.df.ta.strategy("all", cores=2)
+        with mock.patch.object(pandas_ta, "dbl", _dbl, create=True):
+            with pytest.raises(ValueError, match=r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
+                self.df.ta.strategy("trend", cores=2)
+            with pytest.raises(ValueError, match=r"custom indicators \['dbl'\].*exclude=\[\.\.\.\]"):
+                self.df.ta.strategy("all", cores=2)
 
     def test_a_process_executor_raises_too(self):
         # Nothing is submitted, so the pool never spawns a worker.
-        with ProcessPoolExecutor(2) as executor, self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+        with ProcessPoolExecutor(2) as executor, pytest.raises(ValueError, match=r"custom indicators \['dbl'\]"):
             self.df.ta.strategy(self.strategy, executor=executor)
 
     def test_any_executor_but_a_thread_pool_raises(self):
@@ -597,20 +603,20 @@ class TestCustomIndicatorsNeedSerialStrategy(TestCase):
                 return future
 
         # Whether an executor's workers have the custom methods cannot be checked.
-        with self.assertRaisesRegex(ValueError, r"custom indicators \['dbl'\]"):
+        with pytest.raises(ValueError, match=r"custom indicators \['dbl'\]"):
             self.df.ta.strategy(self.strategy, executor=Inline())
 
     def test_a_thread_executor_runs_them(self):
         # Threads share this interpreter, custom methods included; this worked before the refusal and still does.
         with ThreadPoolExecutor(2) as executor:
             self.df.ta.strategy(self.strategy, executor=executor)
-        self.assertIn("DBL", self.df.columns)
-        self.assertTrue(self.df["DBL"].equals(self.df["close"] * 2))
+        assert "DBL" in self.df.columns
+        assert self.df["DBL"].equals(self.df["close"] * 2)
 
     def test_a_custom_override_of_a_built_in_name_raises(self):
         with (
             mock.patch.object(pandas_ta.AnalysisIndicators, "sma", _dbl_method, create=True),
-            self.assertRaisesRegex(ValueError, r"custom indicators \['sma', 'dbl'\]"),
+            pytest.raises(ValueError, match=r"custom indicators \['sma', 'dbl'\]"),
         ):
             self.df.ta.strategy(self.strategy, cores=2)
 
@@ -620,20 +626,20 @@ class TestCustomIndicatorsNeedSerialStrategy(TestCase):
 
         ext_method.__module__ = "pandas_ta_classic_ext"
         with mock.patch.object(pandas_ta.AnalysisIndicators, "ext", ext_method, create=True):
-            self.assertEqual(_custom_kinds(["ext", "sma"]), ["ext"])
+            assert _custom_kinds(["ext", "sma"]) == ["ext"]
 
     def test_serial_strategy_still_runs_them(self):
         self.df.ta.strategy(self.strategy, cores=0)
-        self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
+        assert (self.df["DBL"] == self.df["close"] * 2).all()
 
 
-class TestImportDirWithWorkers(TestCase):
+class TestImportDirWithWorkers:
     """The same refusal for an indicator loaded the documented way, through
     custom.import_dir() rather than a patched method."""
 
     NAME = "_strategy_custom_triple_"
 
-    def setUp(self):
+    def setup_method(self):
         self.tmpdir = tempfile.mkdtemp()
         cat_dir = os.path.join(self.tmpdir, "trend")
         os.makedirs(cat_dir)
@@ -647,13 +653,17 @@ class TestImportDirWithWorkers(TestCase):
                 f"    return self._post_process({self.NAME}(self._get_column('close')), **kwargs)\n"
             )
         # import_dir appends to Category's lists; a fresh list keeps the real one untouched.
-        patch = mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])})
-        patch.start()
-        self.addCleanup(patch.stop)
-        self.addCleanup(self._unload, cat_dir)
-        import_dir(self.tmpdir, verbose=False)
-        self.df = get_sample_data().iloc[:300].copy()
-        self.strategy = pandas_ta.Strategy("custom", [{"kind": self.NAME}])
+        # pytest skips teardown_method when setup_method raises: the stack unwinds itself then.
+        with ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(pandas_ta.Category, {"trend": list(pandas_ta.Category["trend"])}))
+            stack.callback(self._unload, cat_dir)
+            import_dir(self.tmpdir, verbose=False)
+            self.df = get_sample_data().iloc[:300].copy()
+            self.strategy = pandas_ta.Strategy("custom", [{"kind": self.NAME}])
+            self.cleanup = stack.pop_all()
+
+    def teardown_method(self):
+        self.cleanup.close()
 
     def _unload(self, cat_dir):
         for target in (pandas_ta, pandas_ta.AnalysisIndicators):
@@ -668,19 +678,19 @@ class TestImportDirWithWorkers(TestCase):
         pandas_ta.custom._BOUND.discard(self.NAME)
 
     def test_workers_raise_and_a_serial_run_computes_it(self):
-        with self.assertRaisesRegex(ValueError, rf"custom indicators \['{self.NAME}'\]"):
+        with pytest.raises(ValueError, match=rf"custom indicators \['{self.NAME}'\]"):
             self.df.ta.strategy(self.strategy, cores=2)
         self.df.ta.strategy(self.strategy, cores=0)
-        self.assertTrue((self.df["TRIPLE"] == self.df["close"] * 3).all())
+        assert (self.df["TRIPLE"] == self.df["close"] * 3).all()
 
 
-class TestCategoryStrategyWithCustomIndicators(TestCase):
+class TestCategoryStrategyWithCustomIndicators:
     """custom.import_dir() lists a custom indicator in Category and binds its
     function onto the package, but the column check only asked the package's
     own loader, so strategy("all") and strategy("<category>") raised
     "unknown indicator" as soon as one custom indicator was loaded."""
 
-    def setUp(self):
+    def setup_method(self):
         self.df = get_sample_data().iloc[:300].copy()
         self.df.ta.cores = 0
         patches = (
@@ -693,24 +703,29 @@ class TestCategoryStrategyWithCustomIndicators(TestCase):
                 {"trend": [*pandas_ta.Category["trend"], "dbl"], "volume": [*pandas_ta.Category["volume"], "vtw"]},
             ),
         )
-        for patch in patches:
-            patch.start()
-            self.addCleanup(patch.stop)
+        # pytest skips teardown_method when setup_method raises: the stack unwinds itself then.
+        with ExitStack() as stack:
+            for patch in patches:
+                stack.enter_context(patch)
+            self.cleanup = stack.pop_all()
+
+    def teardown_method(self):
+        self.cleanup.close()
 
     def test_category_and_all_run_custom_indicators(self):
         self.df.ta.strategy("trend")
-        self.assertTrue((self.df["DBL"] == self.df["close"] * 2).all())
+        assert (self.df["DBL"] == self.df["close"] * 2).all()
         df = get_sample_data().iloc[:300].copy()
         df.ta.cores = 0
         df.ta.strategy("all")
-        self.assertIn("DBL", df.columns)
-        self.assertIn("VTW", df.columns)
+        assert "DBL" in df.columns
+        assert "VTW" in df.columns
 
     def test_custom_indicator_missing_a_column_is_skipped(self):
         ohlc = self.df[["open", "high", "low", "close"]].copy()
         ohlc.ta.cores = 0
         ohlc.ta.strategy("volume")
-        self.assertNotIn("VTW", ohlc.columns)
+        assert "VTW" not in ohlc.columns
 
     def test_a_custom_override_is_checked_with_its_own_signature(self):
         # the built-in sma needs only close; this replacement needs volume too
@@ -718,7 +733,7 @@ class TestCategoryStrategyWithCustomIndicators(TestCase):
             ohlc = self.df[["open", "high", "low", "close"]].copy()
             ohlc.ta.cores = 0
             ohlc.ta.strategy("overlap")
-        self.assertNotIn("SMA_10", ohlc.columns)
+        assert "SMA_10" not in ohlc.columns
 
 
 # ---------------------------------------------------------------------------
@@ -726,13 +741,13 @@ class TestCategoryStrategyWithCustomIndicators(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCustomStrategyWorkflow(TestCase):
+class TestCustomStrategyWorkflow:
     """End-to-end Strategy workflow using the Strategy dataclass."""
 
-    def setUp(self):
+    def setup_method(self):
         self.df = get_sample_data()
 
-    def tearDown(self):
+    def teardown_method(self):
         del self.df
 
     def test_custom_strategy_appends_columns(self):
@@ -746,20 +761,16 @@ class TestCustomStrategyWorkflow(TestCase):
             ],
         )
         self.df.ta.strategy(strategy)
-        self.assertIn("SMA_10", self.df.columns)
-        self.assertIn("EMA_10", self.df.columns)
-        self.assertIn("RSI_14", self.df.columns)
+        assert "SMA_10" in self.df.columns
+        assert "EMA_10" in self.df.columns
+        assert "RSI_14" in self.df.columns
 
     def test_category_strategy_momentum_appends_columns(self):
         """Running the 'momentum' category strategy appends multiple columns."""
         before = len(self.df.columns)
         self.df.ta.cores = 0  # serial execution — stable in test environment
         self.df.ta.strategy("momentum")
-        self.assertGreater(
-            len(self.df.columns),
-            before,
-            "momentum strategy must add at least one column",
-        )
+        assert len(self.df.columns) > before, "momentum strategy must add at least one column"
 
     def test_strategy_with_prefix_kwarg(self):
         """prefix kwarg in a strategy indicator entry is honoured."""
@@ -769,20 +780,20 @@ class TestCustomStrategyWorkflow(TestCase):
         )
         self.df.ta.strategy(strategy)
         prefixed = [c for c in self.df.columns if c.startswith("E2E_")]
-        self.assertGreater(len(prefixed), 0, "Prefix kwarg must produce E2E_ columns")
+        assert len(prefixed) > 0, "Prefix kwarg must produce E2E_ columns"
 
     def test_kind_dispatch_via_call(self):
         """df.ta(kind='sma') dispatches to sma and returns a Series."""
         result = self.df.ta(kind="sma", length=20)
-        self.assertIsInstance(result, pd.Series)
-        self.assertGreater(result.notna().sum(), 0)
+        assert isinstance(result, pd.Series)
+        assert result.notna().sum() > 0
 
     def test_kind_dispatch_case_insensitive(self):
         """df.ta(kind=...) is case-insensitive (e.g. 'SMA' == 'sma')."""
         lower = self.df.ta(kind="sma", length=10)
         upper = self.df.ta(kind="SMA", length=10)
-        self.assertIsNotNone(lower)
-        self.assertIsNotNone(upper)
+        assert lower is not None
+        assert upper is not None
         pd.testing.assert_series_equal(lower, upper)
 
     def test_strategy_returns_dataframe_when_requested(self):
@@ -792,5 +803,5 @@ class TestCustomStrategyWorkflow(TestCase):
             ta=[{"kind": "sma", "length": 10}],
         )
         result = self.df.ta.strategy(strategy, returns=True)
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertIn("SMA_10", result.columns)
+        assert isinstance(result, pd.DataFrame)
+        assert "SMA_10" in result.columns

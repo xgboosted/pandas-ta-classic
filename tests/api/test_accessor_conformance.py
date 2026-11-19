@@ -1,5 +1,5 @@
-from unittest import TestCase
 
+import pytest
 from pandas import DataFrame, Series
 
 import pandas_ta_classic  # noqa: F401  (registers the df.ta accessor)
@@ -11,19 +11,19 @@ from tests.config import get_sample_data
 _NULLABLE = frozenset({"beta", "correl", "long_run", "short_run", "tsignals", "xsignals"})
 
 
-class TestAccessorConformance(TestCase):
+class TestAccessorConformance:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         pass
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
     # Called with no arguments these cannot produce a column: they need an input
@@ -50,9 +50,9 @@ class TestAccessorConformance(TestCase):
             if not isinstance(result, (Series, DataFrame)):
                 failures.append(f"{name}: got {type(result).__name__}")
 
-        self.assertEqual(failures, [], f"Indicators returning wrong type: {failures}")
+        assert failures == [], f"Indicators returning wrong type: {failures}"
 
-    def test_indicators_without_their_required_input_raise(self):
+    def test_indicators_without_their_required_input_raise(self, subtests):
         """First the source DataFrame, then a bare None, now a named ValueError.
 
         Returning the frame made "nothing was produced" indistinguishable from
@@ -60,6 +60,6 @@ class TestAccessorConformance(TestCase):
         argument the DataFrame cannot supply.
         """
         for name in sorted(self.NEEDS_AN_EXTRA_ARGUMENT):
-            with self.subTest(indicator=name), self.assertRaises(ValueError) as ctx:
+            with subtests.test(indicator=name), pytest.raises(ValueError) as ctx:
                 getattr(self.data.ta, name)()
-            self.assertIn(name, str(ctx.exception))
+            assert name in str(ctx.value)

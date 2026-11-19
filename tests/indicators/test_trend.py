@@ -1,4 +1,3 @@
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -7,14 +6,14 @@ from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.utils._cpr import get_previous_period_ohlcv
-from tests.assertions import assert_all_nan
+from tests.assertions import assert_all_nan, assert_logs
 from tests.config import get_sample_data
 from tests.contracts import spy as _spy
 
 
-class TestTrend(TestCase):
+class TestTrend:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
@@ -25,7 +24,7 @@ class TestTrend(TestCase):
             cls.volume = cls.data["volume"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open
         del cls.high
         del cls.low
@@ -34,55 +33,52 @@ class TestTrend(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         pass
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
     def test_cpr_virgin_detection(self):
         result = pandas_ta.cpr(self.open, self.high, self.low, self.close, virgin_cpr=True, virgin_lookforward=5)
         virgin_values = result["CPR_VIRGIN"].dropna()
         if len(virgin_values) > 0:
-            self.assertTrue(virgin_values.dtype == bool)
+            assert (virgin_values.dtype == bool)
 
     def test_cpr_invalid_method(self):
         # An unknown choice used to fall back to the default silently.
-        with self.assertRaisesRegex(ValueError, r"cpr\(\) method must be one of"):
+        with pytest.raises(ValueError, match=r"cpr\(\) method must be one of"):
             pandas_ta.cpr(self.open, self.high, self.low, self.close, method="invalid_method")
 
     def test_cpr_invalid_timeframe(self):
         # An unknown choice used to fall back to the default silently.
-        with self.assertRaisesRegex(ValueError, r"cpr\(\) timeframe must be one of"):
+        with pytest.raises(ValueError, match=r"cpr\(\) timeframe must be one of"):
             pandas_ta.cpr(self.open, self.high, self.low, self.close, timeframe="invalid_timeframe")
 
     def test_cpr_invalid_levels(self):
         # An unknown choice used to fall back to the default silently.
-        with self.assertRaisesRegex(ValueError, r"cpr\(\) levels must be one of"):
+        with pytest.raises(ValueError, match=r"cpr\(\) levels must be one of"):
             pandas_ta.cpr(self.open, self.high, self.low, self.close, levels="invalid_levels")
 
-    def test_cpr_empty_series(self):
+    def test_cpr_empty_series(self, caplog):
         empty_series = Series(dtype=float)
-        with self.assertLogs("pandas_ta_classic.utils._core", level="WARNING") as cm:
+        with assert_logs(caplog, "pandas_ta_classic.utils._core", "WARNING") as cm:
             result = pandas_ta.cpr(empty_series, empty_series, empty_series, empty_series)
-        self.assertGreaterEqual(len(cm.output), 1)
-        self.assertTrue(
-            any("Series has 0 rows" in message for message in cm.output),
-            f"Expected empty-series validation warning in logs: {cm.output}",
-        )
-        assert_all_nan(self, result)
+        assert len(cm) >= 1
+        assert any("Series has 0 rows" in message for message in cm), f"Expected empty-series validation warning in logs: {cm}"
+        assert_all_nan(result)
 
     def test_cpr_with_nans(self):
         open_with_nan = self.open.copy()
         open_with_nan.iloc[0:5] = np.nan
         result = pandas_ta.cpr(open_with_nan, self.high, self.low, self.close)
-        self.assertIsInstance(result, DataFrame)
-        self.assertIn("CPR_TC", result.columns)
+        assert isinstance(result, DataFrame)
+        assert "CPR_TC" in result.columns
 
     def test_long_run(self):
-        with self.assertRaisesRegex(ValueError, "long_run\\(\\) requires 'fast' and 'slow' Series"):
+        with pytest.raises(ValueError, match="long_run\\(\\) requires 'fast' and 'slow' Series"):
             pandas_ta.long_run(None, self.open)
-        with self.assertRaisesRegex(ValueError, "long_run\\(\\) requires 'fast' and 'slow' Series"):
+        with pytest.raises(ValueError, match="long_run\\(\\) requires 'fast' and 'slow' Series"):
             pandas_ta.long_run(self.close, None)
 
     def test_psar_rejects_talib(self):
@@ -90,13 +86,13 @@ class TestTrend(TestCase):
         every bar and PSARr as 0.0, which hid 521 reversals on SPY_D. The native stop
         equals SAR bar for bar, so psar has no talib parameter, and passing one raises."""
         for value in (True, False):
-            with self.assertRaisesRegex(TypeError, "talib"):
+            with pytest.raises(TypeError, match="talib"):
                 pandas_ta.psar(self.high, self.low, self.close, talib=value)
 
     def test_short_run(self):
-        with self.assertRaisesRegex(ValueError, "short_run\\(\\) requires 'fast' and 'slow' Series"):
+        with pytest.raises(ValueError, match="short_run\\(\\) requires 'fast' and 'slow' Series"):
             pandas_ta.short_run(None, self.open)
-        with self.assertRaisesRegex(ValueError, "short_run\\(\\) requires 'fast' and 'slow' Series"):
+        with pytest.raises(ValueError, match="short_run\\(\\) requires 'fast' and 'slow' Series"):
             pandas_ta.short_run(self.close, None)
 
     def test_ttm_trend_missing_close_is_nan(self):
@@ -111,27 +107,27 @@ class TestTrend(TestCase):
         assert np.isnan(result.iloc[12])
 
     def test_tsignals(self):
-        with self.assertRaisesRegex(ValueError, "tsignals\\(\\) requires a 'trend' Series"):
+        with pytest.raises(ValueError, match="tsignals\\(\\) requires a 'trend' Series"):
             pandas_ta.tsignals(None)
 
     def test_xsignals(self):
-        with self.assertRaisesRegex(ValueError, "xsignals\\(\\) requires a 'signal' Series"):
+        with pytest.raises(ValueError, match="xsignals\\(\\) requires a 'signal' Series"):
             pandas_ta.xsignals(None, 70, 30)
 
     def test_tsignals_gap_in_the_trend_makes_no_trade(self):
         # The gap read as "no trend": an exit at bar 3 and a re-entry at bar 4.
         result = pandas_ta.tsignals(Series([0, 1, 1, np.nan, 1, 0.0]))
-        self.assertEqual(result["TS_Trends"].tolist(), [0, 1, 1, 1, 1, 0])
-        self.assertEqual(result["TS_Trades"].tolist(), [0, 1, 0, 0, 0, -1])
+        assert result["TS_Trends"].tolist() == [0, 1, 1, 1, 1, 0]
+        assert result["TS_Trades"].tolist() == [0, 1, 0, 0, 0, -1]
 
     def test_xsignals_crossing_on_a_gap_is_kept(self):
         # The up-cross through 20 fell on the missing bar, so the whole trade
         # (entry at bar 2, exit at bar 5) was lost and bars 3-4 read no trend.
         signal = Series([10, 15, np.nan, 30, 25, 15, 10.0])
         result = pandas_ta.xsignals(signal, 20, 20)
-        self.assertEqual(result["TS_Trends"].tolist(), [0, 0, 0, 1, 1, 0, 0])
-        self.assertEqual(result["TS_Entries"].tolist(), [0, 0, 0, 1, 0, 0, 0])
-        self.assertEqual(result["TS_Exits"].tolist(), [0, 0, 0, 0, 0, 1, 0])
+        assert result["TS_Trends"].tolist() == [0, 0, 0, 1, 1, 0, 0]
+        assert result["TS_Entries"].tolist() == [0, 0, 0, 1, 0, 0, 0]
+        assert result["TS_Exits"].tolist() == [0, 0, 0, 0, 0, 1, 0]
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +135,7 @@ class TestTrend(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestEdecayFormula(TestCase):
+class TestEdecayFormula:
     """edecay uses multiplicative exp decay: result[i] = max(close[i], prev * exp(-1/n))."""
 
     def test_edecay_decays_after_spike(self):
@@ -148,18 +144,12 @@ class TestEdecayFormula(TestCase):
         # Flat series then a spike: value should decay after the spike
         close = pd.Series([100.0] * 10 + [200.0] + [100.0] * 10)
         result = pandas_ta.edecay(close, length=length)
-        self.assertIsNotNone(result)
+        assert result is not None
 
         # Indices 11-13: decay path still > 100 floor (floor takes over at ~14)
         post_spike = result.iloc[11:14].values
-        self.assertTrue(
-            (post_spike > 100.0).all(),
-            "edecay must stay above floor (close) right after spike",
-        )
-        self.assertTrue(
-            (post_spike < 200.0).all(),
-            "edecay must decay below spike peak",
-        )
+        assert (post_spike > 100.0).all(), "edecay must stay above floor (close) right after spike"
+        assert (post_spike < 200.0).all(), "edecay must decay below spike peak"
 
     def test_edecay_decay_rate_matches_formula(self):
         """Decay rate must match exp(-1/length) when close is below decay path."""
@@ -176,33 +166,17 @@ class TestEdecayFormula(TestCase):
         i = 6  # first bar after spike where decay path > close
         j = 7
         # Assert preconditions explicitly so a broken edecay can't silently pass
-        self.assertGreater(
-            result.iloc[i],
-            10.0,
-            f"Precondition failed: result[{i}]={result.iloc[i]:.4f} must be > 10.0 " "(decay path not yet floored at close)",
-        )
-        self.assertGreater(
-            result.iloc[j],
-            10.0,
-            f"Precondition failed: result[{j}]={result.iloc[j]:.4f} must be > 10.0 " "(decay path not yet floored at close)",
-        )
+        assert result.iloc[i] > 10.0, f"Precondition failed: result[{i}]={result.iloc[i]:.4f} must be > 10.0 " "(decay path not yet floored at close)"
+        assert result.iloc[j] > 10.0, f"Precondition failed: result[{j}]={result.iloc[j]:.4f} must be > 10.0 " "(decay path not yet floored at close)"
         ratio = result.iloc[j] / result.iloc[i]
-        self.assertAlmostEqual(
-            ratio,
-            factor,
-            places=6,
-            msg=f"edecay ratio {ratio:.6f} must equal exp(-1/{length})={factor:.6f}",
-        )
+        assert round(abs(ratio - factor), 6) == 0, f"edecay ratio {ratio:.6f} must equal exp(-1/{length})={factor:.6f}"
 
     def test_edecay_never_below_close(self):
         """edecay result must always be >= close (floored at close)."""
         close = pd.Series([50.0 + i % 20 for i in range(50)], dtype=float)
         result = pandas_ta.edecay(close, length=5)
         mask = result.notna()
-        self.assertTrue(
-            (result[mask].values >= close[mask].values - 1e-9).all(),
-            "edecay must never fall below close (floor at close)",
-        )
+        assert (result[mask].values >= close[mask].values - 1e-9).all(), "edecay must never fall below close (floor at close)"
 
 
 # ---------------------------------------------------------------------------
@@ -210,11 +184,11 @@ class TestEdecayFormula(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestPsarCloseNoneGuard(TestCase):
+class TestPsarCloseNoneGuard:
     """psar() rejects an invalid optional close with TypeError, not AttributeError."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.high = cls.df["high"]
         cls.low = cls.df["low"]
@@ -222,13 +196,13 @@ class TestPsarCloseNoneGuard(TestCase):
     def test_invalid_close_list_raises(self):
         """A plain list as close is rejected by verify_series (issue #145)."""
         bad_close = list(self.high.values)
-        with self.assertRaisesRegex(TypeError, r"psar\(\) expected a pandas Series but got list"):
+        with pytest.raises(TypeError, match=r"psar\(\) expected a pandas Series but got list"):
             pandas_ta.psar(high=self.high, low=self.low, close=bad_close)
 
     def test_valid_call_without_close_returns_dataframe(self):
         """Normal call without close returns a DataFrame."""
         result = pandas_ta.psar(high=self.high, low=self.low)
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
 
 
 # ---------------------------------------------------------------------------

@@ -1,20 +1,20 @@
 import importlib
 import sys
 from types import SimpleNamespace
-from unittest import TestCase
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import pandas_ta_classic as pandas_ta
 from pandas_ta_classic.cycles.msw import _msw_native
 from tests.config import get_sample_data
 
 
-class TestCycles(TestCase):
+class TestCycles:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
@@ -24,10 +24,10 @@ class TestCycles(TestCase):
         cls.volume = cls.data["volume"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open, cls.high, cls.low, cls.close, cls.volume, cls.data
 
-    def test_ht_indicators_propagate_an_interior_nan(self):
+    def test_ht_indicators_propagate_an_interior_nan(self, subtests):
         """TA-Lib requires NaN-free input; the ports emit NaN instead of crashing.
 
         The smoothed period feeds its own recursion, so one missing bar makes
@@ -45,24 +45,24 @@ class TestCycles(TestCase):
             "ht_trendmode": pandas_ta.ht_trendmode,
         }
         for name, func in funcs.items():
-            with self.subTest(name=name):
+            with subtests.test(name=name):
                 clean, poisoned = func(self.close), func(gap)
-                self.assertEqual(poisoned.shape, clean.shape)
+                assert poisoned.shape == clean.shape
                 # Bars before the gap are untouched. astype(float) because
                 # ht_trendmode is int64 without a NaN and float64 with one.
-                self.assertTrue(poisoned.iloc[:200].astype(float).equals(clean.iloc[:200].astype(float)))
+                assert poisoned.iloc[:200].astype(float).equals(clean.iloc[:200].astype(float))
                 # The gap is NaN rather than a crash in int(nan) ...
-                self.assertTrue(poisoned.iloc[200].isna().all() if poisoned.ndim > 1 else poisoned.isna().iloc[200])
+                assert (poisoned.iloc[200].isna().all() if poisoned.ndim > 1 else poisoned.isna().iloc[200])
                 # ... and it is the only extra NaN: the recursion carries the
                 # previous state forward, so values resume on the next bar.
-                self.assertTrue(poisoned.iloc[201:].notna().all().all())
+                assert poisoned.iloc[201:].notna().all().all()
                 # They no longer match the clean run, though: the gap perturbed
                 # the state the recursion carries.
-                self.assertFalse(poisoned.iloc[201:].equals(clean.iloc[201:]))
+                assert not poisoned.iloc[201:].equals(clean.iloc[201:])
 
     def test_msw(self):
         result = pandas_ta.msw(self.close, period=10)
-        self.assertIsNotNone(result)
+        assert result is not None
 
     def test_msw_window_with_a_missing_bar_is_nan_on_both_paths(self):
         # The DFT sums turn NaN, `abs(rp) > 0.001` reads False and the fallback set a
@@ -78,8 +78,8 @@ class TestCycles(TestCase):
         with patch.dict(pandas_ta.Imports, {"tulipy": True}), patch.dict(sys.modules, {"tulipy": SimpleNamespace(msw=fake_msw)}):
             tulip = pandas_ta.msw(close, tulipy=True)
         for result in (pandas_ta.msw(close), tulip):
-            self.assertTrue(result.iloc[100:105].isna().all().all())
-            self.assertTrue(result.iloc[[99, 105]].notna().all().all())
+            assert result.iloc[100:105].isna().all().all()
+            assert result.iloc[[99, 105]].notna().all().all()
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +87,7 @@ class TestCycles(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestHilbertNanInput(TestCase):
+class TestHilbertNanInput:
     """The Hilbert Transform loop crashed in int(nan) on any NaN input.
 
     `dc_period_int = max(int(sp + 0.5), 1)` raised "ValueError: cannot convert
@@ -106,31 +106,31 @@ class TestHilbertNanInput(TestCase):
     )
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.clean = pd.Series(100 + np.cumsum(np.random.default_rng(7).normal(0, 1, 200)))
         cls.with_nan = cls.clean.copy()
         cls.with_nan.iloc[50] = np.nan
 
-    def test_single_nan_does_not_raise(self):
+    def test_single_nan_does_not_raise(self, subtests):
         """One NaN mid-series returns a result for every ht_* indicator."""
         for name in self.HT_NAMES:
-            with self.subTest(indicator=name):
+            with subtests.test(indicator=name):
                 result = getattr(pandas_ta, name)(self.with_nan)
-                self.assertIsNotNone(result)
-                self.assertIsInstance(result, (pd.Series, pd.DataFrame))
+                assert result is not None
+                assert isinstance(result, (pd.Series, pd.DataFrame))
 
-    def test_missing_bar_is_skipped(self):
+    def test_missing_bar_is_skipped(self, subtests):
         """The NaN bar reads NaN; every other bar equals the series without it.
 
         It used to poison the recursion, so every later bar was NaN.
         """
         for name in self.HT_NAMES:
-            with self.subTest(indicator=name):
+            with subtests.test(indicator=name):
                 result = getattr(pandas_ta, name)(self.with_nan)
                 result = result.to_frame() if isinstance(result, pd.Series) else result
                 without = getattr(pandas_ta, name)(self.with_nan.drop(index=50))
                 without = without.to_frame() if isinstance(without, pd.Series) else without
-                self.assertTrue(result.iloc[50].isna().all())
+                assert result.iloc[50].isna().all()
                 pd.testing.assert_frame_equal(result.drop(index=50), without, check_dtype=False)
 
     def test_values_before_the_gap_are_unaffected(self):
@@ -144,20 +144,20 @@ class TestHilbertNanInput(TestCase):
             rtol=1e-12,
         )
 
-    def test_inf_does_not_raise(self):
+    def test_inf_does_not_raise(self, subtests):
         """±Inf is the other half of the documented edge-case contract."""
         with_inf = self.clean.copy()
         with_inf.iloc[50] = np.inf
         for name in self.HT_NAMES:
-            with self.subTest(indicator=name):
-                self.assertIsNotNone(getattr(pandas_ta, name)(with_inf))
+            with subtests.test(indicator=name):
+                assert getattr(pandas_ta, name)(with_inf) is not None
 
     def test_clean_input_still_produces_values(self):
         """No NaN anywhere: the guard must not fire."""
         result = pandas_ta.ht_trendline(self.clean)
-        self.assertGreater(int(np.isfinite(result).sum()), 100)
+        assert int(np.isfinite(result).sum()) > 100
 
-    def test_nan_prefix_is_skipped(self):
+    def test_nan_prefix_is_skipped(self, subtests):
         """A leading NaN run (chained input) starts the transform after it.
 
         Without the skip the prefix poisoned the recursion and every ht_*
@@ -168,11 +168,11 @@ class TestHilbertNanInput(TestCase):
         prefixed.iloc[:10] = np.nan
         trimmed = self.clean.iloc[10:].reset_index(drop=True)
         for name in self.HT_NAMES:
-            with self.subTest(indicator=name):
+            with subtests.test(indicator=name):
                 with_prefix = np.asarray(getattr(pandas_ta, name)(prefixed), dtype=float)[10:]
                 without = np.asarray(getattr(pandas_ta, name)(trimmed), dtype=float)
                 np.testing.assert_array_equal(with_prefix, without)
-                self.assertTrue(np.isfinite(with_prefix).any())
+                assert np.isfinite(with_prefix).any()
 
 
 # ---------------------------------------------------------------------------
@@ -180,7 +180,7 @@ class TestHilbertNanInput(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestHilbertLookbackAndUndefinedBars(TestCase):
+class TestHilbertLookbackAndUndefinedBars:
     """ht_* reported unconverged values TA-Lib does not, and ht_trendmode
     turned undefined bars into 0.
 
@@ -194,32 +194,32 @@ class TestHilbertLookbackAndUndefinedBars(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.close = get_sample_data()["close"].iloc[:700].reset_index(drop=True)
 
     def test_dcperiod_warmup_is_nan_not_zero(self):
         result = pandas_ta.ht_dcperiod(self.close)
-        self.assertTrue(result.iloc[:32].isna().all())
-        self.assertFalse((result == 0).any())
+        assert result.iloc[:32].isna().all()
+        assert not (result == 0).any()
 
     def test_trendmode_skips_missing_bar(self):
         """The missing bar reads NaN, not a "cycle mode" 0; later bars keep their values."""
         gapped = self.close.copy()
         gapped.iloc[300] = np.nan
         result = pandas_ta.ht_trendmode(gapped)
-        self.assertTrue(np.isnan(result.iloc[300]))
+        assert np.isnan(result.iloc[300])
         np.testing.assert_array_equal(result.drop(index=300).to_numpy(float), pandas_ta.ht_trendmode(gapped.drop(index=300)).to_numpy(float))
-        self.assertTrue(result.iloc[:300].notna().all())
+        assert result.iloc[:300].notna().all()
 
     def test_trendmode_clean_input_keeps_int_dtype(self):
-        self.assertTrue(str(pandas_ta.ht_trendmode(self.close).dtype).startswith("int"))
+        assert str(pandas_ta.ht_trendmode(self.close).dtype).startswith("int")
 
 
 # msw values depended on whether tulipy was installed
 # ---------------------------------------------------------------------------
 
 
-class TestMswDoesNotDependOnTulipy(TestCase):
+class TestMswDoesNotDependOnTulipy:
     """tulipy's msw truncates pi to 3.1415926; the native loop uses np.pi.
 
     msw switched to tulipy whenever it was importable, so the same call gave
@@ -236,5 +236,5 @@ class TestMswDoesNotDependOnTulipy(TestCase):
         np.testing.assert_array_equal(result.iloc[:, 1].to_numpy(), lead)
 
     def test_tulipy_flag_is_validated(self):
-        with self.assertRaisesRegex(ValueError, r"msw\(\) tulipy must be True or False"):
+        with pytest.raises(ValueError, match=r"msw\(\) tulipy must be True or False"):
             pandas_ta.msw(get_sample_data().close.iloc[:100], tulipy="yes")

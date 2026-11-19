@@ -1,18 +1,18 @@
 import inspect
 import math
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas import Series
 
 import pandas_ta_classic as pandas_ta
 from tests.config import get_sample_data
 
 
-class TestOverlap(TestCase):
+class TestOverlap:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
@@ -23,7 +23,7 @@ class TestOverlap(TestCase):
             cls.volume = cls.data["volume"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open
         del cls.high
         del cls.low
@@ -32,41 +32,41 @@ class TestOverlap(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         pass
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
     def test_ichimoku_append_span(self):
         kijun = 26
         result = pandas_ta.ichimoku(self.high, self.low, self.close, append_span=True)
         # Length = visible rows (len close) + future-dated span rows (kijun).
-        self.assertEqual(len(result), len(self.close) + kijun)
+        assert len(result) == len(self.close) + kijun
         # Span rows: only ISA/ISB populated; ITS/IKS/ICS are NaN.
         span_rows = result.iloc[-kijun:]
-        self.assertTrue(span_rows[["ITS_9", "IKS_26", "ICS_26"]].isna().all().all())
-        self.assertTrue(span_rows["ISA_9"].notna().any())
+        assert span_rows[["ITS_9", "IKS_26", "ICS_26"]].isna().all().all()
+        assert span_rows["ISA_9"].notna().any()
 
     def test_ichimoku_as_dataframe_removed(self):
         # The (visible, span) tuple and its selector were removed in 0.9.0;
         # **kwargs would otherwise swallow the old keyword silently.
         for value in (True, False):
-            with self.assertRaisesRegex(TypeError, "no longer accepts 'as_dataframe'"):
+            with pytest.raises(TypeError, match="no longer accepts 'as_dataframe'"):
                 pandas_ta.ichimoku(self.high, self.low, self.close, as_dataframe=value)
 
     def test_ma(self):
         result = pandas_ta.ma()
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        assert isinstance(result, list)
+        assert len(result) > 0
 
         result = pandas_ta.ma("ema", self.close)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "EMA_10")
+        assert isinstance(result, Series)
+        assert result.name == "EMA_10"
 
         result = pandas_ta.ma("fwma", self.close, length=15)
-        self.assertIsInstance(result, Series)
-        self.assertEqual(result.name, "FWMA_15")
+        assert isinstance(result, Series)
+        assert result.name == "FWMA_15"
 
     def _mavp_periods(self):
         """A per-bar window schedule; mavp has no default for this."""
@@ -76,20 +76,20 @@ class TestOverlap(TestCase):
 
     def test_mavp_requires_periods(self):
         """`periods` has no causal default, so it is a required argument."""
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             pandas_ta.mavp(self.close)
 
     def test_mavp_accessor_without_periods_raises(self):
         """The accessor fills missing required args with None; that must not pass silently."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.data.ta.mavp()
 
     def test_mavp_unsupported_mamode_raises(self):
         # the native path computes only an SMA; it used to do so for any mamode
-        with self.assertRaisesRegex(ValueError, r"mavp\(\) mamode=1 needs TA-Lib"):
+        with pytest.raises(ValueError, match=r"mavp\(\) mamode=1 needs TA-Lib"):
             pandas_ta.mavp(self.close, periods=self._mavp_periods(), mamode=1, talib=False)
 
-    def test_weighted_ma_asc(self):
+    def test_weighted_ma_asc(self, subtests):
         """asc=False was forced back to True, so it returned the ascending result."""
         from pandas_ta_classic.utils import fibonacci
 
@@ -108,14 +108,14 @@ class TestOverlap(TestCase):
         fibs = fibonacci(n=10, weighted=True)[::-1]
         np.testing.assert_allclose(pandas_ta.fwma(close, 10, asc=False).to_numpy(), expected(fibs), rtol=1e-12)
         for name in ("wma", "fwma"):
-            with self.subTest(name=name):
+            with subtests.test(name=name):
                 fn = getattr(pandas_ta, name)
-                self.assertFalse(fn(close, 10, asc=False).equals(fn(close, 10)))
+                assert not fn(close, 10, asc=False).equals(fn(close, 10))
         for name in ("pwma", "swma"):  # symmetric weights: asc was removed; strategy() hands it only to wma and fwma
-            with self.subTest(name=name):
+            with subtests.test(name=name):
                 fn = getattr(pandas_ta, name)
-                self.assertNotIn("asc", inspect.signature(fn).parameters)
-                with self.assertRaisesRegex(TypeError, rf"^{name}\(\) got an unexpected keyword argument 'asc'$"):
+                assert "asc" not in inspect.signature(fn).parameters
+                with pytest.raises(TypeError, match=rf"^{name}\(\) got an unexpected keyword argument 'asc'$"):
                     fn(close, 10, asc=False)
 
 
@@ -124,16 +124,16 @@ class TestOverlap(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestLinregDegreesDefault(TestCase):
+class TestLinregDegreesDefault:
     """linreg degrees kwarg defaults to True: angle=True returns degrees."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.close = cls.df["close"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.df
         del cls.close
 
@@ -146,29 +146,22 @@ class TestLinregDegreesDefault(TestCase):
         """
         length = 14
         result = pandas_ta.linreg(self.close, length=length, angle=True, talib=False)
-        self.assertIsNotNone(result)
+        assert result is not None
         vals = result.dropna()
-        self.assertGreater(len(vals), 0)
+        assert len(vals) > 0
 
         max_abs = float(vals.abs().max())
-        self.assertGreater(
-            max_abs,
-            math.pi / 2,
-            f"linreg(angle=True) max|value|={max_abs:.4f} must exceed " "pi/2 ({:.4f}), confirming values are in degrees".format(math.pi / 2),
-        )
+        assert max_abs > math.pi / 2, f"linreg(angle=True) max|value|={max_abs:.4f} must exceed " "pi/2 ({:.4f}), confirming values are in degrees".format(math.pi / 2)
 
     def test_explicit_degrees_false_returns_radians(self):
         """linreg(angle=True, degrees=False) must return radian values in (-pi/2, pi/2)."""
         length = 14
         result = pandas_ta.linreg(self.close, length=length, angle=True, degrees=False, talib=False)
-        self.assertIsNotNone(result)
+        assert result is not None
         vals = result.dropna()
-        self.assertGreater(len(vals), 0)
+        assert len(vals) > 0
 
-        self.assertTrue(
-            (vals.abs() <= (math.pi / 2 + 1e-9)).all(),
-            "linreg(angle=True, degrees=False) must return radians in (-pi/2, pi/2)",
-        )
+        assert (vals.abs() <= (math.pi / 2 + 1e-9)).all(), "linreg(angle=True, degrees=False) must return radians in (-pi/2, pi/2)"
 
     def test_degrees_and_radians_produce_different_values(self):
         """degrees=True and degrees=False must produce numerically different results."""
@@ -177,10 +170,7 @@ class TestLinregDegreesDefault(TestCase):
         rad = pandas_ta.linreg(self.close, length=length, angle=True, degrees=False, talib=False)
         mask = deg.notna() & rad.notna()
         diff = (deg[mask] - rad[mask]).abs()
-        self.assertTrue(
-            diff.max() > 1e-6,
-            "degrees=True and degrees=False must produce different angle values",
-        )
+        assert (diff.max() > 1e-6), "degrees=True and degrees=False must produce different angle values"
 
 
 # ---------------------------------------------------------------------------
@@ -188,26 +178,26 @@ class TestLinregDegreesDefault(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestHl2Hlc3NoneGuard(TestCase):
+class TestHl2Hlc3NoneGuard:
     """hl2 and hlc3 must return None when given an invalid/empty series."""
 
     def test_hl2_returns_none_on_none_high(self):
         """hl2(None, valid) must return None, not raise."""
         result = pandas_ta.hl2(None, pd.Series([1.0, 2.0], dtype=float))
-        self.assertIsNone(result)
+        assert result is None
 
     def test_hlc3_returns_none_on_none_high(self):
         """hlc3(None, valid, valid) must return None, not raise."""
         v = pd.Series([1.0, 2.0], dtype=float)
         result = pandas_ta.hlc3(None, v, v, talib=False)
-        self.assertIsNone(result)
+        assert result is None
 
     def test_hl2_valid_input_returns_series(self):
         """hl2 with valid inputs must return the midpoint Series."""
         h = pd.Series([10.0, 11.0, 12.0])
         low = pd.Series([8.0, 9.0, 10.0])
         result = pandas_ta.hl2(h, low)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
         np.testing.assert_allclose(result.values, [9.0, 10.0, 11.0], rtol=1e-9)
 
     def test_hlc3_valid_input_returns_series(self):
@@ -216,7 +206,7 @@ class TestHl2Hlc3NoneGuard(TestCase):
         low = pd.Series([8.0, 9.0])
         c = pd.Series([10.0, 11.0])
         result = pandas_ta.hlc3(h, low, c, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
         np.testing.assert_allclose(result.values, [10.0, 11.0], rtol=1e-9)
 
 
@@ -226,7 +216,7 @@ class TestHl2Hlc3NoneGuard(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestTalibFalsePropagation(TestCase):
+class TestTalibFalsePropagation:
     """talib=False is now forwarded to all sub-indicator calls.
 
     Each indicator is tested with talib=False to confirm:
@@ -235,7 +225,7 @@ class TestTalibFalsePropagation(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.close = cls.df["close"]
         cls.high = cls.df["high"]
@@ -244,7 +234,7 @@ class TestTalibFalsePropagation(TestCase):
     def test_dema_talib_false_returns_series(self):
         """dema(talib=False) returns a Series."""
         result = pandas_ta.dema(self.close, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
     def test_dema_talib_false_matches_manual_calculation(self):
         """dema(talib=False) == 2*ema(talib=False) - ema(ema(talib=False)).
@@ -266,17 +256,17 @@ class TestTalibFalsePropagation(TestCase):
     def test_tema_talib_false_returns_series(self):
         """tema(talib=False) returns a Series."""
         result = pandas_ta.tema(self.close, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
     def test_t3_talib_false_returns_series(self):
         """t3(talib=False) returns a Series."""
         result = pandas_ta.t3(self.close, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
     def test_trima_talib_false_returns_series(self):
         """trima(talib=False) returns a Series."""
         result = pandas_ta.trima(self.close, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
     def test_trima_talib_false_matches_manual_calculation(self):
         """trima(talib=False) == sma(sma(close, len1), len2) matching TA-Lib windows."""
@@ -294,12 +284,12 @@ class TestTalibFalsePropagation(TestCase):
     def test_cci_talib_false_returns_series(self):
         """cci(talib=False) returns a Series."""
         result = pandas_ta.cci(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
     def test_natr_talib_false_returns_series(self):
         """natr(talib=False) returns a Series."""
         result = pandas_ta.natr(self.high, self.low, self.close, talib=False)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +297,7 @@ class TestTalibFalsePropagation(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestEmaSeedBounds(TestCase):
+class TestEmaSeedBounds:
     """ema() seeded at `fv_pos + length - 1` without checking that it exists.
 
     verify_series' min_length models a single window, but chained indicators
@@ -320,16 +310,16 @@ class TestEmaSeedBounds(TestCase):
     def test_trix_on_thirty_clean_rows(self):
         """The minimal user-facing reproducer: 30 rows, defaults, no NaN."""
         result = pandas_ta.trix(pd.Series(range(1, 31), dtype=float))
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
 
     def test_chained_ema_over_nan_prefix(self):
         """A NaN prefix from an inner call no longer pushes the seed off the end."""
         close = pd.Series(np.arange(1.0, 201.0))
         result = pandas_ta.ema(pandas_ta.sma(close, length=190), length=20)
-        self.assertIsInstance(result, pd.Series)
-        self.assertTrue(result.isna().all(), "undefined EMA must be all-NaN")
+        assert isinstance(result, pd.Series)
+        assert result.isna().all(), "undefined EMA must be all-NaN"
 
-    def test_affected_indicators_no_longer_raise(self):
+    def test_affected_indicators_no_longer_raise(self, subtests):
         """Each indicator, at a row count that previously raised."""
         cases = {
             "efi": 13, "inertia": 20, "kc": 20, "pgo": 14, "ppo": 26,
@@ -338,7 +328,7 @@ class TestEmaSeedBounds(TestCase):
         }
         rng = np.random.default_rng(0)
         for name, rows in cases.items():
-            with self.subTest(indicator=name, rows=rows):
+            with subtests.test(indicator=name, rows=rows):
                 base = 100 + np.cumsum(rng.normal(0, 1, rows))
                 index = pd.date_range("2020-01-01", periods=rows, freq="D")
                 func = getattr(pandas_ta, name)
@@ -379,13 +369,13 @@ class TestEmaSeedBounds(TestCase):
         """Normal-length input keeps the TA-Lib lookback: length-1 leading NaN."""
         close = pd.Series(np.arange(1.0, 201.0))
         result = pandas_ta.ema(close, length=20)
-        self.assertEqual(result.isna().sum(), 19)
-        self.assertTrue(np.isfinite(result.iloc[19:]).all())
+        assert result.isna().sum() == 19
+        assert np.isfinite(result.iloc[19:]).all()
 
     def test_bbands_with_zlma_mamode(self):
         """bbands(mamode="zlma") on 5 rows previously raised through ema."""
         result = pandas_ta.bbands(pd.Series([1.0, 2.0, 3.0, 4.0, 5.0]), mamode="zlma")
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
 
 
 # ---------------------------------------------------------------------------
@@ -393,7 +383,7 @@ class TestEmaSeedBounds(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestWilderSeeding(TestCase):
+class TestWilderSeeding:
     """rma seeded on iloc[0:length] even when that window started with NaN.
 
     Chained input (dx, the DM series, true range) always starts with NaN, so
@@ -404,7 +394,7 @@ class TestWilderSeeding(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data().iloc[:2000]
 
     def test_rma_prefix_result_equals_trimmed_result(self):
@@ -431,5 +421,5 @@ class TestWilderSeeding(TestCase):
         for s in (h, low, c):
             s.iloc[:20] = np.nan
         tr = pandas_ta.true_range(h, low, c)
-        self.assertTrue(tr.iloc[:21].isna().all())
-        self.assertTrue(np.isfinite(tr.iloc[21]))
+        assert tr.iloc[:21].isna().all()
+        assert np.isfinite(tr.iloc[21])

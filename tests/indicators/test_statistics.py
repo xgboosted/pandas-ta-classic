@@ -1,7 +1,7 @@
-from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas import Series
 
 import pandas_ta_classic as pandas_ta
@@ -11,9 +11,9 @@ from tests.assertions import (
 from tests.config import get_sample_data
 
 
-class TestStatistics(TestCase):
+class TestStatistics:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
@@ -23,26 +23,26 @@ class TestStatistics(TestCase):
         cls.volume = cls.data["volume"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open, cls.high, cls.low, cls.close, cls.volume, cls.data
 
-    def test_beta_and_correl_require_a_benchmark(self):
+    def test_beta_and_correl_require_a_benchmark(self, subtests):
         """Omitting it used to return None, like an ordinary short input.
 
         strategy("all") leaves both out unless a benchmark= is broadcast, so
         nothing depends on the silent None any more.
         """
         for func, name in ((pandas_ta.beta, "beta"), (pandas_ta.correl, "correl")):
-            with self.subTest(name=name):
-                with self.assertRaisesRegex(ValueError, rf"{name}\(\) requires a 'benchmark' Series"):
+            with subtests.test(name=name):
+                with pytest.raises(ValueError, match=rf"{name}\(\) requires a 'benchmark' Series"):
                     func(self.close)
-                with self.assertRaisesRegex(ValueError, rf"{name}\(\) requires a 'benchmark' Series"):
+                with pytest.raises(ValueError, match=rf"{name}\(\) requires a 'benchmark' Series"):
                     func(self.close, benchmark=None)
                 # A benchmark that is merely too short is data, not a mistake,
                 # so the short-input contract still applies.
                 short = func(self.close, benchmark=self.high.iloc[:5])
-                self.assertIsInstance(short, Series)
-                self.assertTrue(short.isna().all())
+                assert isinstance(short, Series)
+                assert short.isna().all()
 
     def test_mad_min_periods(self):
         # The min_periods branch uses the mean (not the median): for the partial
@@ -51,16 +51,16 @@ class TestStatistics(TestCase):
         # silently swapped for a median.
         close = Series([1.0, 1.0, 1.0, 10.0, 10.0])
         result = pandas_ta.mad(close, length=5, min_periods=2)
-        self.assertAlmostEqual(result.iloc[3], 3.375)
+        assert round(abs(result.iloc[3] - 3.375), 7) == 0
 
     def test_tos_stdevall(self):
         # stds unsorted → auto-reversed and still computes
-        self.assertIsNotNone(pandas_ta.tos_stdevall(self.close, stds=[3, 2, 1]))
+        assert pandas_ta.tos_stdevall(self.close, stds=[3, 2, 1]) is not None
         # stds contains non-positive value → return None
-        with self.assertRaisesRegex(ValueError, r"stds must all be > 0"):  # invalid argument, not short input
+        with pytest.raises(ValueError, match=r"stds must all be > 0"):  # invalid argument, not short input
             pandas_ta.tos_stdevall(self.close, stds=[0, 1, 2])
         # length larger than data → verify_series returns None → return None
-        assert_all_nan(self, pandas_ta.tos_stdevall(self.close.iloc[:5], length=30))
+        assert_all_nan(pandas_ta.tos_stdevall(self.close.iloc[:5], length=30))
 
     def test_zscore_ddof(self):
         """ddof used to be missing, so cdl_z's forwarded value was dropped.
@@ -73,12 +73,12 @@ class TestStatistics(TestCase):
         sample = pandas_ta.zscore(self.close, length=length, ddof=1)
         population = pandas_ta.zscore(self.close, length=length, ddof=0)
 
-        self.assertTrue(default.equals(sample), "the default must stay ddof=1")
+        assert default.equals(sample), "the default must stay ddof=1"
         ratio = (population / sample).dropna()
         np.testing.assert_allclose(ratio.to_numpy(), np.sqrt(length / (length - 1)), rtol=1e-12)
 
         # ddof must leave a positive divisor, so it stays below length.
-        with self.assertRaisesRegex(ValueError, r"zscore\(\) ddof must be an integer >= 0 and < 30"):
+        with pytest.raises(ValueError, match=r"zscore\(\) ddof must be an integer >= 0 and < 30"):
             pandas_ta.zscore(self.close, length=length, ddof=length)
 
 
@@ -87,16 +87,16 @@ class TestStatistics(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestStdevDdofDefault(TestCase):
+class TestStdevDdofDefault:
     """stdev default ddof=0 (population std, not sample std)."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.close = cls.df["close"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.df
         del cls.close
 
@@ -107,7 +107,7 @@ class TestStdevDdofDefault(TestCase):
         expected = self.close.rolling(length).std(ddof=0)
 
         mask = result.notna() & expected.notna()
-        self.assertTrue(mask.any(), "No overlapping non-NaN values to compare")
+        assert mask.any(), "No overlapping non-NaN values to compare"
         np.testing.assert_allclose(
             result[mask].values,
             expected[mask].values,
@@ -123,10 +123,7 @@ class TestStdevDdofDefault(TestCase):
 
         mask = result.notna() & sample_std.notna()
         diff = np.abs(result[mask].values - sample_std[mask].values)
-        self.assertTrue(
-            diff.max() > 1e-8,
-            "stdev() default must NOT equal sample std (ddof=1); " "ddof=0 (population) is the correct post-fix default",
-        )
+        assert (diff.max() > 1e-8), "stdev() default must NOT equal sample std (ddof=1); " "ddof=0 (population) is the correct post-fix default"
 
     def test_explicit_ddof1_matches_sample_stdev(self):
         """ta.stdev(ddof=1) must equal pandas rolling std(ddof=1)."""
@@ -135,7 +132,7 @@ class TestStdevDdofDefault(TestCase):
         expected = self.close.rolling(length).std(ddof=1)
 
         mask = result.notna() & expected.notna()
-        self.assertTrue(mask.any())
+        assert mask.any()
         np.testing.assert_allclose(
             result[mask].values,
             expected[mask].values,
@@ -149,16 +146,16 @@ class TestStdevDdofDefault(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestZscoreColumnName(TestCase):
+class TestZscoreColumnName:
     """zscore output Series name must be ZS_{length}, not Z_{length}."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.close = cls.df["close"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.df
         del cls.close
 
@@ -166,20 +163,13 @@ class TestZscoreColumnName(TestCase):
         """zscore() result name must start with 'ZS_', not 'Z_'."""
         length = 30
         result = pandas_ta.zscore(self.close, length=length)
-        self.assertIsNotNone(result)
-        self.assertTrue(
-            result.name.startswith("ZS_"),
-            f"zscore column name must start with 'ZS_'; got '{result.name}'",
-        )
+        assert result is not None
+        assert result.name.startswith("ZS_"), f"zscore column name must start with 'ZS_'; got '{result.name}'"
 
     def test_zscore_old_name_not_used(self):
         """zscore must not use old 'Z_{length}' naming convention."""
         result = pandas_ta.zscore(self.close, length=14)
-        self.assertNotEqual(
-            result.name,
-            "Z_14",
-            "zscore name 'Z_14' is the old pre-fix name; must be 'ZS_14'",
-        )
+        assert result.name != "Z_14", "zscore name 'Z_14' is the old pre-fix name; must be 'ZS_14'"
 
 
 # ---------------------------------------------------------------------------

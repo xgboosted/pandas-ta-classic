@@ -8,7 +8,7 @@ class TestExtStatisticsDeeper(AccessorValueCase):
         df.ta.entropy(append=True)
         self._check_appended(df, "ENTP_10")
         valid = df["ENTP_10"].dropna()
-        self.assertTrue((valid >= 0).all(), "Entropy has negative values")
+        assert (valid >= 0).all(), "Entropy has negative values"
 
     def test_kurtosis_ext(self):
         df = self.fresh()
@@ -20,7 +20,7 @@ class TestExtStatisticsDeeper(AccessorValueCase):
         df.ta.mad(append=True)
         self._check_appended(df, "MAD_30")
         valid = df["MAD_30"].dropna()
-        self.assertTrue((valid >= 0).all(), "MAD has negative values")
+        assert (valid >= 0).all(), "MAD has negative values"
 
     def test_skew_ext(self):
         df = self.fresh()
@@ -34,7 +34,7 @@ class TestExtStatisticsDeeper(AccessorValueCase):
         # Variance must be non-negative
         col = df.columns[-1]
         valid = df[col].dropna()
-        self.assertTrue((valid >= 0).all(), "Variance has negative values")
+        assert (valid >= 0).all(), "Variance has negative values"
 
     def test_zscore_ext(self):
         df = self.fresh()

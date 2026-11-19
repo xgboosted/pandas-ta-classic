@@ -1,8 +1,8 @@
 import warnings
-from unittest import TestCase, skipIf, skipUnless
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas import DataFrame, Series
 
 import pandas_ta_classic as pandas_ta
@@ -18,9 +18,9 @@ except ImportError:
     HAS_TALIB = False
 
 
-class TestCandle(TestCase):
+class TestCandle:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.data = get_sample_data()
         cls.data.columns = cls.data.columns.str.lower()
         cls.open = cls.data["open"]
@@ -31,7 +31,7 @@ class TestCandle(TestCase):
             cls.volume = cls.data["volume"]
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.open
         del cls.high
         del cls.low
@@ -40,36 +40,36 @@ class TestCandle(TestCase):
             del cls.volume
         del cls.data
 
-    def setUp(self):
+    def setup_method(self):
         pass
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
-    def test_every_pattern_column_is_float64(self):
+    def test_every_pattern_column_is_float64(self, subtests):
         # cdl_doji and cdl_inside returned int64 while the native patterns return
         # float64, so cdl_pattern(name="all") mixed dtypes; doji's column turned
         # int64 there once an int scalar stayed an int.
         frame = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
-        self.assertEqual({str(t) for t in frame.dtypes}, {"float64"})
+        assert {str(t) for t in frame.dtypes} == {"float64"}
         for func in (pandas_ta.cdl_doji, pandas_ta.cdl_inside):
             for scalar in ({}, {"scalar": 100}, {"scalar": 100.0}) if func is pandas_ta.cdl_doji else ({},):
-                with self.subTest(func=func.__name__, **scalar):
-                    self.assertEqual(func(self.open, self.high, self.low, self.close, **scalar).dtype, "float64")
+                with subtests.test(func=func.__name__, **scalar):
+                    assert func(self.open, self.high, self.low, self.close, **scalar).dtype == "float64"
 
     def test_cdl_pattern(self):
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="all")
-        self.assertIsInstance(result, DataFrame)
-        self.assertEqual(len(result.columns), len(pandas_ta.ALL_PATTERNS))
+        assert isinstance(result, DataFrame)
+        assert len(result.columns) == len(pandas_ta.ALL_PATTERNS)
 
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name="doji")
-        self.assertIsInstance(result, DataFrame)
+        assert isinstance(result, DataFrame)
 
         result = pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=["doji", "inside"])
-        self.assertIsInstance(result, DataFrame)
+        assert isinstance(result, DataFrame)
 
         # An empty selection has nothing to build a frame from.
-        self.assertIsNone(pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=[]))
+        assert pandas_ta.cdl_pattern(self.open, self.high, self.low, self.close, name=[]) is None
 
     def test_every_listed_pattern_has_an_implementation(self):
         """ALL_PATTERNS is hand-maintained; the modules are discovered.
@@ -86,9 +86,9 @@ class TestCandle(TestCase):
         )
 
         implemented = set(_NATIVE_PATTERNS) | {"doji", "inside"}
-        self.assertEqual(set(ALL_PATTERNS), implemented)
-        self.assertEqual(len(ALL_PATTERNS), len(set(ALL_PATTERNS)))
-        self.assertTrue(callable(cdl_doji) and callable(cdl_inside))
+        assert set(ALL_PATTERNS) == implemented
+        assert len(ALL_PATTERNS) == len(set(ALL_PATTERNS))
+        assert (callable(cdl_doji) and callable(cdl_inside))
 
     def test_cdl_z_ddof_changes_the_values(self):
         """ddof was validated and named the columns but had no numeric effect.
@@ -100,7 +100,7 @@ class TestCandle(TestCase):
         sample = pandas_ta.cdl_z(*args, ddof=1)
         population = pandas_ta.cdl_z(*args, ddof=0)
 
-        self.assertGreater(float(np.nanmax(np.abs(population.to_numpy() - sample.to_numpy()))), 0.0)
+        assert float(np.nanmax(np.abs(population.to_numpy() - sample.to_numpy()))) > 0.0
         # The default is still the sample deviation.
         np.testing.assert_array_equal(pandas_ta.cdl_z(*args).to_numpy(), sample.to_numpy())
 
@@ -214,7 +214,7 @@ _PATTERN_CASES = [
 ]
 
 
-class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
+class TestCandlePatternsOnBarsThatTriggerThem:
     """Fourteen patterns on bars built to satisfy their conditions, plus the six
     two-sided ones mirrored to fire the opposite sign.
 
@@ -237,33 +237,33 @@ class TestCandlePatternsOnBarsThatTriggerThem(TestCase):
         # inside it.
         return getattr(getattr(pandas_ta, name), name)
 
-    def test_each_pattern_fires_on_its_own_bars(self):
+    def test_each_pattern_fires_on_its_own_bars(self, subtests):
         """The native implementation reports the signal on the last bar."""
         for name, _talib_name, kwargs, bars, expected in _PATTERN_CASES:
-            with self.subTest(pattern=name):
+            with subtests.test(pattern=name):
                 result = self._native(name)(*self._frame(bars), **kwargs)
-                self.assertIsInstance(result, Series)
-                self.assertEqual(int(result.iloc[-1]), expected)
+                assert isinstance(result, Series)
+                assert int(result.iloc[-1]) == expected
                 # Nothing else in the frame may fire, or the case would not pin
                 # down which bars produced the signal.
-                self.assertEqual(int(result.iloc[:-1].abs().sum()), 0)
+                assert int(result.iloc[:-1].abs().sum()) == 0
 
-    @skipUnless(HAS_TALIB, "TA-Lib is not installed")
-    def test_each_pattern_matches_talib_on_its_own_bars(self):
+    @pytest.mark.skipif(not HAS_TALIB, reason="TA-Lib is not installed")
+    def test_each_pattern_matches_talib_on_its_own_bars(self, subtests):
         """Bar for bar, including the signal itself.
 
         The comparison calls `talib.<name>` directly, which needs TA-Lib
         installed; the `cdl_*` functions have no `talib` parameter to fall back.
         """
         for name, talib_name, kwargs, bars, _expected in _PATTERN_CASES:
-            with self.subTest(pattern=name):
+            with subtests.test(pattern=name):
                 open_, high, low, close = self._frame(bars)
                 native = self._native(name)(open_, high, low, close, **kwargs)
                 expected = getattr(talib, talib_name)(open_, high, low, close, **kwargs)
                 np.testing.assert_array_equal(native.to_numpy(dtype=float), np.asarray(expected, dtype=float), err_msg=f"{name} differs from TA-Lib")
 
 
-class TestCandleAverage(TestCase):
+class TestCandleAverage:
     """`candle_average` against a plain port of TA-Lib's candle-average macros.
 
     TA-Lib seeds ``PeriodTotal`` left to right from 0, compares each candle with
@@ -274,7 +274,7 @@ class TestCandleAverage(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         # Bodies and shadows spread over many orders of magnitude, with opens
         # near zero so the ranges keep their full mantissa. On price-like bars
         # the ranges sit on one grid, sums are exact and a helper that adds in
@@ -302,16 +302,16 @@ class TestCandleAverage(TestCase):
             trail += 1
         return out
 
-    def test_bit_identical_to_talib_macros(self):
+    def test_bit_identical_to_talib_macros(self, subtests):
         for setting in CandleSetting:
             period = candle_avg_period(setting)
             for lag in range(5):
                 for extra in (0, 3, 7):
-                    with self.subTest(setting=setting.name, lag=lag, extra=extra):
+                    with subtests.test(setting=setting.name, lag=lag, extra=extra):
                         start_idx = period + lag + extra
                         got = candle_average(self.ca, setting, lag, start_idx)
                         want = self._talib_macros(self.ca._ranges[setting], setting, lag, start_idx)
-                        self.assertTrue(np.isnan(got[:start_idx]).all())
+                        assert np.isnan(got[:start_idx]).all()
                         np.testing.assert_array_equal(got[start_idx:].view(np.int64), want[start_idx:].view(np.int64))
 
     def test_the_data_tells_each_part_of_the_arithmetic_apart(self):
@@ -332,14 +332,14 @@ class TestCandleAverage(TestCase):
                 want = factor * (sequential / period) / divisor
                 seed_differs += int(factor * (float(window.sum()) / period) / divisor != want)
                 formula_differs += int(factor / (period * divisor) * sequential != want)
-        self.assertGreater(seed_differs, 0)
-        self.assertGreater(formula_differs, 0)
+        assert seed_differs > 0
+        assert formula_differs > 0
 
     def test_start_before_the_first_window_raises(self):
         period = candle_avg_period(CandleSetting.BodyLong)
-        with self.assertRaisesRegex(ValueError, r"candle_average\(\) start_idx must be >= lag \+ period"):
+        with pytest.raises(ValueError, match=r"candle_average\(\) start_idx must be >= lag \+ period"):
             candle_average(self.ca, CandleSetting.BodyLong, 2, period + 1)
-        with self.assertRaisesRegex(ValueError, "start_idx"):
+        with pytest.raises(ValueError, match="start_idx"):
             candle_average(self.ca, CandleSetting.ShadowLong, 3, 2)
 
 
@@ -370,22 +370,22 @@ _THRESHOLD_CASES = [
 ]
 
 
-class TestCandleAtTheExactThreshold(TestCase):
-    def test_native_decides_as_talib(self):
+class TestCandleAtTheExactThreshold:
+    def test_native_decides_as_talib(self, subtests):
         for name, _talib_name, open_, high, low, close, expected in _THRESHOLD_CASES:
-            with self.subTest(pattern=name):
+            with subtests.test(pattern=name):
                 result = getattr(getattr(pandas_ta, name), name)(*(Series(x) for x in (open_, high, low, close)))
-                self.assertEqual(int(result.iloc[-1]), expected)
+                assert int(result.iloc[-1]) == expected
 
-    @skipUnless(HAS_TALIB, "TA-Lib is not installed")
-    def test_expected_values_are_talibs(self):
+    @pytest.mark.skipif(not HAS_TALIB, reason="TA-Lib is not installed")
+    def test_expected_values_are_talibs(self, subtests):
         for name, talib_name, open_, high, low, close, expected in _THRESHOLD_CASES:
-            with self.subTest(pattern=name):
+            with subtests.test(pattern=name):
                 got = getattr(talib, talib_name)(*(np.array(x) for x in (open_, high, low, close)))
-                self.assertEqual(int(got[-1]), expected)
+                assert int(got[-1]) == expected
 
 
-class TestCdlDojiAtTheEdges(TestCase):
+class TestCdlDojiAtTheEdges:
     """`cdl_doji` follows CDLDOJI at exact ties, flat bars, malformed bars and short windows."""
 
     @staticmethod
@@ -400,7 +400,7 @@ class TestCdlDojiAtTheEdges(TestCase):
     def test_zero_body_is_doji_at_factor_zero(self):
         # body 0 <= 0 * average, as in TA-Lib.
         result = self._doji([1.0] * 11, [2.0] * 11, [0.0] * 11, [1.0] * 11, factor=0)
-        self.assertEqual(result[-1], 100)
+        assert result[-1] == 100
 
     def test_body_exactly_on_the_threshold(self):
         # body == 0.1 * (sum / 10) with TA-Lib's left-to-right sum: a doji (<=).
@@ -410,18 +410,18 @@ class TestCdlDojiAtTheEdges(TestCase):
         low = [0.0] * 10 + [-1.0]
         close = [0.0] * 10 + [0.15130000000000002]
         result = self._doji([0.0] * 11, high, low, close)
-        self.assertEqual(result[-1], 100)
+        assert result[-1] == 100
         if HAS_TALIB:
-            self.assertEqual(talib.CDLDOJI(*(np.array(x) for x in ([0.0] * 11, high, low, close)))[-1], 100)
+            assert talib.CDLDOJI(*(np.array(x) for x in ([0.0] * 11, high, low, close)))[-1] == 100
 
     def test_malformed_bars_keep_a_negative_range(self):
         # Ten bars with high < low have range -1 in TA-Lib, so bar 10's threshold
         # is -0.1 and its body 0.05 is no doji. abs(high - low) made it +0.1 and
         # reported 100.
         args = ([0.0] * 11, [0.0] * 10 + [1.0], [1.0] * 10 + [0.0], [0.0] * 10 + [0.05])
-        self.assertEqual(self._doji(*args)[-1], 0)
+        assert self._doji(*args)[-1] == 0
         if HAS_TALIB:
-            self.assertEqual(talib.CDLDOJI(*(np.array(x) for x in args))[-1], 0)
+            assert talib.CDLDOJI(*(np.array(x) for x in args))[-1] == 0
 
     def test_all_nan_input_reads_zero(self):
         # Every row is a NaN row, and a NaN row reports 0.
@@ -461,7 +461,7 @@ class TestCdlDojiAtTheEdges(TestCase):
             warnings.simplefilter("error", RuntimeWarning)
             np.testing.assert_array_equal(self._doji(*args, naive=True)[10:], self._doji(*args)[10:])
 
-    def test_inf_row_is_dropped_like_a_nan_row(self):
+    def test_inf_row_is_dropped_like_a_nan_row(self, subtests):
         # An inf high made sma() of the range NaN for every window holding it,
         # so the next length bars read 0 whatever their body. It is now skipped,
         # as run_pattern() skips it, and reports 0 like a NaN row.
@@ -470,20 +470,20 @@ class TestCdlDojiAtTheEdges(TestCase):
             return self._doji([1.0] * 30, high, [0.0] * 30, [1.05] * 30, **kwargs)
 
         for kwargs in ({}, {"naive": True}):
-            with self.subTest(**kwargs):
+            with subtests.test(**kwargs):
                 for value in (np.inf, -np.inf):
                     np.testing.assert_array_equal(doji_with(value, **kwargs), doji_with(np.nan, **kwargs))
-                self.assertEqual(doji_with(np.inf, **kwargs)[12], 0)
-                self.assertEqual(doji_with(np.inf, **kwargs)[-1], 100)
+                assert doji_with(np.inf, **kwargs)[12] == 0
+                assert doji_with(np.inf, **kwargs)[-1] == 100
 
-    def test_inf_open_or_close_row_leaves_the_average(self):
+    def test_inf_open_or_close_row_leaves_the_average(self, subtests):
         # Bar 20 has an inf open or close but a finite range of 100. It is left
         # out of the average like a NaN row, so bars 21+ average ranges of 2
         # (threshold 0.2) and body 0.5 is no doji. TA-Lib keeps the range of 100
         # in its average (threshold 1.18) and reports 100 there; the old code
         # did the same.
         for column in (0, 3):
-            with self.subTest(column=column):
+            with subtests.test(column=column):
                 ohlc = [[10.0] * 25, [11.0] * 25, [9.0] * 25, [10.5] * 25]
                 ohlc[1][20], ohlc[2][20] = 60.0, -40.0
                 ohlc[column][20] = np.inf
@@ -506,11 +506,11 @@ class TestCdlDojiAtTheEdges(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCdlZAnchored(TestCase):
+class TestCdlZAnchored:
     """cdl_z(full=True) must be an anchored Z Score, not a back-filled constant."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.df = get_sample_data()
         cls.full = pandas_ta.cdl_z(
             cls.df["open"],
@@ -522,21 +522,21 @@ class TestCdlZAnchored(TestCase):
         cls.open_col = next(c for c in cls.full.columns if "open" in c.lower())
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         del cls.df
         del cls.full
 
     def test_cdlz_full_true_returns_dataframe(self):
-        self.assertIsInstance(self.full, pd.DataFrame)
+        assert isinstance(self.full, pd.DataFrame)
 
     def test_cdlz_full_true_only_first_bar_is_nan(self):
         """One bar cannot have a standard deviation; every later bar must."""
-        self.assertEqual(1, self.full[self.open_col].isna().sum())
-        self.assertTrue(np.isnan(self.full[self.open_col].iloc[0]))
+        assert 1 == self.full[self.open_col].isna().sum()
+        assert np.isnan(self.full[self.open_col].iloc[0])
 
     def test_cdlz_full_true_is_not_constant(self):
         """The bfill bug produced one repeated value for the whole column."""
-        self.assertGreater(self.full[self.open_col].dropna().nunique(), 1)
+        assert self.full[self.open_col].dropna().nunique() > 1
 
     def test_cdlz_full_true_matches_expanding_zscore(self):
         open_ = self.df["open"]
@@ -566,14 +566,10 @@ class TestCdlZAnchored(TestCase):
             full=False,
             length=length,
         )
-        self.assertIsNotNone(result)
+        assert result is not None
         open_col = next(c for c in result.columns if "open" in c.lower())
         nan_count = result[open_col].isna().sum()
-        self.assertGreater(
-            nan_count,
-            0,
-            "cdl_z(full=False) must have leading NaN values in warmup period",
-        )
+        assert nan_count > 0, "cdl_z(full=False) must have leading NaN values in warmup period"
 
 
 # ---------------------------------------------------------------------------
@@ -581,7 +577,7 @@ class TestCdlZAnchored(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCdlPatternShortInput(TestCase):
+class TestCdlPatternShortInput:
     """cdl_pattern() dereferenced `.name` on a sub-pattern result without checking it.
 
     `cdl_doji` has a default length of 10, so on a short frame it returns None
@@ -590,7 +586,7 @@ class TestCdlPatternShortInput(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         df = get_sample_data()
         cls.open_ = df["open"].iloc[:3]
         cls.high = df["high"].iloc[:3]
@@ -600,18 +596,18 @@ class TestCdlPatternShortInput(TestCase):
     def test_short_input_does_not_raise(self):
         """Short input returns a result instead of raising."""
         result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close)
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
 
     def test_uncomputable_subpattern_is_skipped(self):
         """doji needs 10 rows, so its column is absent rather than fatal."""
         result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close)
-        self.assertNotIn("CDL_DOJI_10", result.columns)
-        self.assertIn("CDL_INSIDE", result.columns)
+        assert "CDL_DOJI_10" not in result.columns
+        assert "CDL_INSIDE" in result.columns
 
     def test_named_uncomputable_pattern_returns_none(self):
         """Asking only for a pattern that cannot be computed yields None."""
         result = pandas_ta.cdl_pattern(self.open_, self.high, self.low, self.close, name="doji")
-        assert_all_nan(self, result)
+        assert_all_nan(result)
 
     def test_accessor_path_does_not_raise(self):
         """The same call through df.ta.cdl_pattern() is fixed as well."""
@@ -624,7 +620,7 @@ class TestCdlPatternShortInput(TestCase):
             }
         )
         result = df.ta.cdl_pattern()
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
 
 
 # ---------------------------------------------------------------------------
@@ -632,7 +628,7 @@ class TestCdlPatternShortInput(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCandleColorNanInput(TestCase):
+class TestCandleColorNanInput:
     """candle_color() did `close.copy().astype(int)`, which raises on NaN.
 
     pandas cannot cast NaN to int, so `IntCastingNaNError` propagated out of
@@ -645,37 +641,37 @@ class TestCandleColorNanInput(TestCase):
         open_ = pd.Series([1.0, 2.0, 3.0])
         close = pd.Series([2.0, 1.0, 3.0])
         result = pandas_ta.candle_color(open_, close)
-        self.assertEqual(result.dtype, np.dtype("int64"))
-        self.assertEqual(result.tolist(), [1, -1, 1])
+        assert result.dtype == np.dtype("int64")
+        assert result.tolist() == [1, -1, 1]
 
     def test_nan_yields_nan_not_a_colour(self):
         """An undefined candle is NaN, not silently classified as bearish."""
         open_ = pd.Series([1.0, 2.0, 3.0])
         close = pd.Series([2.0, np.nan, 3.0])
         result = pandas_ta.candle_color(open_, close)
-        self.assertTrue(np.isnan(result.iloc[1]))
-        self.assertEqual(result.iloc[0], 1.0)
-        self.assertEqual(result.iloc[2], 1.0)
+        assert np.isnan(result.iloc[1])
+        assert result.iloc[0] == 1.0
+        assert result.iloc[2] == 1.0
 
     def test_cdl_inside_with_nan_does_not_raise(self):
         """cdl_inside previously raised IntCastingNaNError."""
         close = pd.Series(np.arange(1.0, 201.0))
         close.iloc[50] = np.nan
         result = pandas_ta.cdl_inside(close, close + 1, close - 1, close)
-        self.assertIsInstance(result, pd.Series)
+        assert isinstance(result, pd.Series)
 
     def test_cdl_pattern_with_nan_does_not_raise(self):
         """The aggregation path is fixed as well."""
         close = pd.Series(np.arange(1.0, 201.0))
         close.iloc[50] = np.nan
         result = pandas_ta.cdl_pattern(close - 0.5, close + 1, close - 1, close)
-        self.assertIsInstance(result, pd.DataFrame)
+        assert isinstance(result, pd.DataFrame)
 
     def test_asbool_path_unaffected(self):
         """asbool=True never calls candle_color."""
         close = pd.Series(np.arange(1.0, 51.0))
         result = pandas_ta.cdl_inside(close - 0.5, close + 1, close - 1, close, asbool=True)
-        self.assertEqual(result.dtype, np.dtype("bool"))
+        assert result.dtype == np.dtype("bool")
 
 
 # ---------------------------------------------------------------------------
@@ -683,7 +679,7 @@ class TestCandleColorNanInput(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCandlePatternNanPrefix(TestCase):
+class TestCandlePatternNanPrefix:
     """Native candle patterns reported 0 everywhere after a NaN prefix.
 
     run_pattern built its running body/shadow averages from index 0, so a
@@ -696,7 +692,7 @@ class TestCandlePatternNanPrefix(TestCase):
     PREFIX = 30
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         data = get_sample_data().iloc[:600].reset_index(drop=True)
         cls.prefixed = data.copy()
         cls.prefixed.iloc[: cls.PREFIX] = np.nan
@@ -705,28 +701,28 @@ class TestCandlePatternNanPrefix(TestCase):
     def _patterns(self, frame):
         return pandas_ta.cdl_pattern(frame["open"], frame["high"], frame["low"], frame["close"])
 
-    def test_prefix_result_equals_trimmed_result(self):
+    def test_prefix_result_equals_trimmed_result(self, subtests):
         """Past the prefix, every pattern matches the run on the trimmed series."""
         with_prefix = self._patterns(self.prefixed).iloc[self.PREFIX :].reset_index(drop=True)
         without = self._patterns(self.trimmed)
         for col in without.columns:
-            with self.subTest(pattern=col):
+            with subtests.test(pattern=col):
                 np.testing.assert_array_equal(with_prefix[col].to_numpy(), without[col].to_numpy())
 
     def test_prefix_does_not_silence_patterns(self):
         """A pattern that fires on the trimmed series still fires with the prefix."""
         with_prefix = self._patterns(self.prefixed)
-        self.assertGreater(int((with_prefix["CDL_3INSIDE"] != 0).sum()), 0)
+        assert int((with_prefix["CDL_3INSIDE"] != 0).sum()) > 0
 
-    @skipIf(not pandas_ta.Imports["talib"], "TA-Lib not installed")
-    def test_prefix_matches_talib(self):
+    @pytest.mark.skipif(not pandas_ta.Imports["talib"], reason="TA-Lib not installed")
+    def test_prefix_matches_talib(self, subtests):
         """TA-Lib skips the NaN prefix; the native patterns must agree bar for bar."""
         import talib
 
         ohlc = [self.prefixed[k].to_numpy() for k in ("open", "high", "low", "close")]
         native = self._patterns(self.prefixed)
         for name in ("3INSIDE", "BELTHOLD", "CLOSINGMARUBOZU", "ENGULFING", "HAMMER"):
-            with self.subTest(pattern=name):
+            with subtests.test(pattern=name):
                 np.testing.assert_array_equal(native[f"CDL_{name}"].to_numpy(), getattr(talib, f"CDL{name}")(*ohlc).astype(float))
 
 
@@ -735,7 +731,7 @@ class TestCandlePatternNanPrefix(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestCandlePatternsSkipNanRows(TestCase):
+class TestCandlePatternsSkipNanRows:
     """A NaN row inside the series poisoned the running body/shadow averages.
 
     On a weekday feed resampled to calendar days, 41 of 62 patterns never fired
@@ -744,7 +740,7 @@ class TestCandlePatternsSkipNanRows(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         daily = get_sample_data().iloc[-400:]
         cls.gapped = daily.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last"})
         cls.dropped = cls.gapped.dropna()
@@ -752,14 +748,14 @@ class TestCandlePatternsSkipNanRows(TestCase):
     def _all(self, df):
         return pandas_ta.cdl_pattern(df.open, df.high, df.low, df.close, name="all")
 
-    def test_gapped_equals_dropna_on_finite_rows(self):
-        self.assertGreater(len(self.gapped), len(self.dropped))
+    def test_gapped_equals_dropna_on_finite_rows(self, subtests):
+        assert len(self.gapped) > len(self.dropped)
         gapped, dropped = self._all(self.gapped), self._all(self.dropped)
-        self.assertEqual(list(gapped.columns), list(dropped.columns))
+        assert list(gapped.columns) == list(dropped.columns)
         for col in dropped.columns:
-            with self.subTest(pattern=col):
+            with subtests.test(pattern=col):
                 np.testing.assert_array_equal(gapped.loc[self.dropped.index, col].to_numpy(float), dropped[col].to_numpy(float))
 
     def test_nan_rows_report_no_pattern(self):
         nan_rows = self._all(self.gapped).loc[self.gapped.close.isna()]
-        self.assertFalse((nan_rows.fillna(0) != 0).any().any())
+        assert not (nan_rows.fillna(0) != 0).any().any()
