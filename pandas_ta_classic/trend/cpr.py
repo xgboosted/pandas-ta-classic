@@ -99,6 +99,9 @@ def cpr(
     # Validated whether or not their feature is on: a bad value is a caller error either way (#393)
     width_narrow = _number(kwargs.pop("width_narrow", None), 0.5, "width_narrow", ge=0)
     width_wide = _number(kwargs.pop("width_wide", None), 1.5, "width_wide", ge=0)
+    if width_narrow > width_wide:
+        # The medium class (between the two) cannot occur when they overlap.
+        raise ValueError(f"cpr() needs width_narrow <= width_wide, got width_narrow={width_narrow}, width_wide={width_wide}")
     virgin_lookforward = _pos_int(kwargs.pop("virgin_lookforward", None), 5, "virgin_lookforward")
     if "interval" in kwargs:
         # Removed without a deprecation step because it never had an effect
