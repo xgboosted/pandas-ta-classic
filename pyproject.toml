@@ -151,6 +151,9 @@ filterwarnings = [
     # No deprecation warnings (a removal raises at once): a deprecated pandas/numpy call made from our code fails the suite
     "error::DeprecationWarning:pandas_ta_classic",
     "error::FutureWarning:pandas_ta_classic",
+    # A 0/0 or overflow in our code fails the suite: a case the formula cannot compute is rejected
+    # at the boundary or handled under a local np.errstate, never left to warn
+    "error::RuntimeWarning:pandas_ta_classic",
     # pandas 4 removes what this warns about; the tests too must not depend on it
     "error::pandas.errors.Pandas4Warning",
 ]
