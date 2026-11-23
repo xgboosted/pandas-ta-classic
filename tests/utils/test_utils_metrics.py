@@ -106,7 +106,7 @@ class TestUtilityMetrics:
     def test_annualisation_counts_the_intervals_between_returns(self, subtests):
         # n returns span n - 1 intervals, but the periods per year counted n:
         # two daily returns were annualised by 730.5 instead of 365.25, so the
-        # result was sqrt(2) too large (SPY_D: 0.198783 instead of 0.198770).
+        # result was sqrt(2) too large (SPY_D: 0.198783 instead of 0.198764).
         returns = pd.Series([0.01, -0.02], index=pd.date_range("2021-01-04", periods=2, freq="D"))
         with subtests.test("volatility"):
             assert pandas_ta.utils.volatility(returns, returns=True) == pytest.approx(returns.std() * math.sqrt(365.25))
@@ -372,7 +372,7 @@ class TestDownsideDeviationProperties:
     def test_matches_the_definition(self, values, rate):
         returns = _daily(values)
         years = (returns.index[-1] - returns.index[0]).total_seconds() / (365.25 * 86400)
-        periods = values.size / years
+        periods = (values.size - 1) / years
         target = (1 + rate) ** (1 / periods) - 1
         expected = math.sqrt(np.sum(np.minimum(values - target, 0.0) ** 2) / values.size) * math.sqrt(periods)
         assert pandas_ta.downside_deviation(returns, benchmark_rate=rate) == pytest.approx(expected, rel=1e-9, abs=1e-12)

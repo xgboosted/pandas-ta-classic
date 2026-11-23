@@ -113,8 +113,10 @@ def downside_deviation(returns: Series, benchmark_rate: float = 0.0, tf: str = "
         raise ValueError(f"downside_deviation() returns has {gaps} missing value(s) inside the series; fill or drop them first")
     n = returns.shape[0]
 
-    # For both de-annualizing the benchmark rate and annualizing result
-    days_per_year = n / _span(returns, tf, "downside_deviation")
+    # For both de-annualizing the benchmark rate and annualizing result.
+    # n returns span n - 1 intervals; counting n annualised two daily returns
+    # by 730.5 instead of 365.25.
+    days_per_year = (n - 1) / _span(returns, tf, "downside_deviation")
 
     adjusted_benchmark_rate = ((1 + benchmark_rate) ** (1 / days_per_year)) - 1
 
@@ -428,7 +430,8 @@ def volatility(
     if gaps:
         raise ValueError(f"volatility() returns has {gaps} missing value(s) inside the series; fill or drop them first")
 
-    factor = _returns.shape[0] / _span(_returns, tf, "volatility")
+    # n returns span n - 1 intervals; counting n gave sqrt(n / (n - 1)) too much.
+    factor = (_returns.shape[0] - 1) / _span(_returns, tf, "volatility")
     if _bool_param(kwargs.pop("nearest_day", None), False, "nearest_day") and tf.lower() == "years":
         factor = int(factor + 1)
     return float(np.sqrt(factor) * _returns.std())
