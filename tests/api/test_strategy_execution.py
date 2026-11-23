@@ -85,7 +85,7 @@ def executor():
 def assert_same_frame(serial: pd.DataFrame, parallel: pd.DataFrame) -> None:
     assert list(serial.columns) == list(parallel.columns)
     for column in serial.columns:
-        pd.testing.assert_series_equal(serial[column], parallel[column])
+        pd.testing.assert_series_equal(serial[column], parallel[column], check_exact=True)
 
 
 @pytest.mark.parametrize(

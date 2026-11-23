@@ -664,9 +664,9 @@ class TestVerifySeriesProperties:
         before = nullable.copy()
         result = verify_series(nullable, min_length=1)
         assert result.dtype == np.float64
-        pd.testing.assert_series_equal(result, nullable.astype(float))
+        pd.testing.assert_series_equal(result, nullable.astype(float), check_exact=True)
         assert result.index is nullable.index
-        pd.testing.assert_series_equal(nullable, before)
+        pd.testing.assert_series_equal(nullable, before, check_exact=True)
 
 
 _offset_int = st.integers(min_value=0, max_value=20)
@@ -683,7 +683,7 @@ class TestApplyOffsetProperties:
     @given(price_series(min_size=10, max_size=100, allow_nan=False))
     def test_apply_offset_zero_is_identity(self, s):
         result = apply_offset(s, 0)
-        pd.testing.assert_series_equal(result, s)
+        pd.testing.assert_series_equal(result, s, check_exact=True)
 
     @given(price_series(min_size=10, max_size=100, allow_nan=False), _offset_int)
     def test_apply_offset_shift_direction(self, s, offset):

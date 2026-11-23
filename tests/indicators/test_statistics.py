@@ -111,7 +111,7 @@ class TestStdevDdofDefault:
         np.testing.assert_allclose(
             result[mask].values,
             expected[mask].values,
-            rtol=1e-4,
+            rtol=1e-9,
             err_msg="stdev() default ddof must be 0 (population std)",
         )
 
@@ -136,7 +136,7 @@ class TestStdevDdofDefault:
         np.testing.assert_allclose(
             result[mask].values,
             expected[mask].values,
-            rtol=1e-4,
+            rtol=1e-9,
             err_msg="stdev(ddof=1) must equal sample standard deviation",
         )
 

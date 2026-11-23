@@ -302,7 +302,7 @@ class TestMathematicalInvariants:
         result = ta.sma(const_s, length=length, talib=False)
         valid = result.dropna()
         if not valid.empty:
-            assert np.allclose(valid.values, const_val)
+            assert (valid.values == const_val).all(), valid.values
 
     @given(
         price_series(min_size=50, max_size=200, allow_nan=False),
@@ -524,7 +524,7 @@ def test_hypothesis_sma_idempotent(s, length):
     assume(len(s) >= length)
     r1 = ta.sma(s, length=length, talib=False)
     r2 = ta.sma(s, length=length, talib=False)
-    pd.testing.assert_series_equal(r1, r2)
+    pd.testing.assert_series_equal(r1, r2, check_exact=True)
 
 
 @pytest.mark.hypothesis

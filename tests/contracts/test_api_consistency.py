@@ -598,7 +598,7 @@ def test_rate_units() -> None:
     for key, (value, plain) in measured.items():
         ratio = (value / plain).replace([np.inf, -np.inf], np.nan).dropna()
         units[key] = round(float(ratio.median()))
-        assert np.allclose(ratio, units[key], rtol=1e-6), f"{key}: not a constant multiple of its plain ratio"
+        assert np.allclose(ratio, units[key], rtol=5e-11, atol=0), f"{key}: not a constant multiple of its plain ratio"
     _check(units, RATE_UNITS, "KEPT: percent (100) vs fraction (1)")
 
 

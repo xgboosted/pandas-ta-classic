@@ -290,10 +290,9 @@ class TestRvgiHistogram:
         sig_col = next(c for c in result.columns if c.startswith("RVGIs"))
         hist_col = next(c for c in result.columns if c.startswith("RVGIh"))
         mask = result[rvgi_col].notna() & result[sig_col].notna() & result[hist_col].notna()
-        np.testing.assert_allclose(
+        np.testing.assert_array_equal(
             result.loc[mask, hist_col].values,
             (result.loc[mask, rvgi_col] - result.loc[mask, sig_col]).values,
-            rtol=1e-6,
             err_msg="RVGIh must equal RVGI - RVGIs",
         )
 
