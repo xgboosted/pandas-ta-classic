@@ -71,15 +71,18 @@ def _linreg_output(
             theta *= 180 / np.pi
         return theta
     if r:
-        y2_sums = (windows * windows).sum(axis=1)
-        rn = length * xy_sums - x_sum * y_sums
-        # length*y2_sums - y_sums**2 is a variance: it comes out slightly
-        # negative for a flat 100.1 (so the sqrt warns and gives NaN) and
-        # leaves a ~1e-15 residue for a flat 0.3. Clamp to >= 0, then mask on
-        # the variance, not on rd -- rd is its square root (~1e-6), too large
-        # for the tolerance. A degenerate window reads 0.0, TA-Lib's marker;
-        # see tests/contracts/test_degenerate_input.py. cti() is a wrapper for this path.
-        disc = np.maximum(length * y2_sums - y_sums**2, 0.0)
+        # The sums run over the window less its mean: length*sum(y**2) - sum(y)**2
+        # on raw prices cancelled the digits a price of 100 carries over a small
+        # move, 6.7e-9 relative off the exact correlation where TA-Lib is 4.6e-11.
+        # Centred, both terms lose nothing; x is centred too, so the rounding of
+        # the window's mean, the same shift on every y_c, drops out of the sum
+        # with x_c. disc is still a variance: clamp to >= 0, then mask on it, not
+        # on rd -- rd is its square root, too large for the tolerance. A
+        # degenerate window reads 0.0, TA-Lib's marker; see
+        # tests/contracts/test_degenerate_input.py. cti() is a wrapper for this path.
+        centred = windows - windows.mean(axis=1, keepdims=True)
+        rn = length * (centred * (x_arr - x_sum / length)).sum(axis=1)
+        disc = np.maximum(length * (centred * centred).sum(axis=1), 0.0)
         rd = (divisor * disc) ** 0.5
         with np.errstate(divide="ignore", invalid="ignore"):
             return np.where(degenerate_zero(disc), 0.0, rn / rd)
