@@ -219,12 +219,10 @@ class Case:
     native: Callable[[Bars], Columns]
     oracle: Callable[[Bars], Columns]
     # Bars before which the two seed differently and only converge. The
-    # largest is 200 (the MACD family, which reads only close); every problem
-    # frame still reaches it after bar 200: the spike at 200, the planted run
+    # largest is 250 (the MACD family, which reads only close); every problem
+    # frame still reaches it after bar 250: the spike at 200, the planted run
     # at 260, and the halted closes at 170-180, which the recursion carries on.
     settle: int = 0
-    # Relative tolerance, TALIB_RTOL unless TA-Lib's own arithmetic needs more.
-    rtol: float = TALIB_RTOL
 
 
 def _cols(result, *prefixes: str) -> Columns:
@@ -284,15 +282,15 @@ ORACLE: dict[str, Case] = {
     # cannot express a scalar), so this compares our rma path, not TA-Lib to itself.
     "cmo": Case(lambda b: [ta.cmo(b.close, 14, scalar=50, talib=True)], lambda b: [T.CMO(b.close, 14) / 2]),
     # The MACD family seeds its EMAs differently from TA-Lib; the difference has
-    # decayed below the tolerance by bar 200 (still 2.5e-7 relative at bar 154),
-    # so the comparison starts there.
+    # decayed to about 2e-12 relative by bar 250 (still 2.5e-7 at bar 154), so
+    # the comparison starts there.
     # macdfix is MACD(12, 26) natively, not TA-Lib's fixed-alpha MACDFIX.
-    "macd": Case(lambda b: _cols(ta.macd(b.close, 12, 26, 9), "MACD_", "MACDs_", "MACDh_"), lambda b: list(T.MACD(b.close, 12, 26, 9)), settle=200),
+    "macd": Case(lambda b: _cols(ta.macd(b.close, 12, 26, 9), "MACD_", "MACDs_", "MACDh_"), lambda b: list(T.MACD(b.close, 12, 26, 9)), settle=250),
     "macdext": Case(
-        lambda b: _cols(ta.macdext(b.close), "MACDEXT_", "MACDEXTs_", "MACDEXTh_"), lambda b: list(T.MACDEXT(b.close, 12, 1, 26, 1, 9, 1)), settle=200
+        lambda b: _cols(ta.macdext(b.close), "MACDEXT_", "MACDEXTs_", "MACDEXTh_"), lambda b: list(T.MACDEXT(b.close, 12, 1, 26, 1, 9, 1)), settle=250
     ),
     "macdfix": Case(
-        lambda b: _cols(ta.macdfix(b.close, signal=9), "MACDFIX_", "MACDFIXs_", "MACDFIXh_"), lambda b: list(T.MACD(b.close, 12, 26, 9)), settle=200
+        lambda b: _cols(ta.macdfix(b.close, signal=9), "MACDFIX_", "MACDFIXs_", "MACDFIXh_"), lambda b: list(T.MACD(b.close, 12, 26, 9)), settle=250
     ),
     "mom": Case(lambda b: [ta.mom(b.close, 10)], lambda b: [T.MOM(b.close, 10)]),
     # The previous bar's TSF is the forecast for this bar, as in TA-Lib and Tulip (#344).
@@ -342,11 +340,8 @@ ORACLE: dict[str, Case] = {
     "true_range": Case(lambda b: [ta.true_range(b.high, b.low, b.close)], lambda b: [T.TRANGE(b.high, b.low, b.close)]),
     "bbands": Case(lambda b: _cols(ta.bbands(b.close, 20, 2), "BBL_", "BBM_", "BBU_"), lambda b: list(T.BBANDS(b.close, 20, 2, 2, 0))[::-1]),
     # statistics
-    # TA-Lib keeps running sums of x and x**2 and cancels digits in
-    # sum(x**2) - sum(x)**2 / n: 3e-8 relative off the exact deviation on the
-    # planted frame, where native is exact; 1e-7 leaves room for other builds.
-    "stdev": Case(lambda b: [ta.stdev(b.close, 20)], lambda b: [T.STDDEV(b.close, 20, 1)], rtol=1e-7),
-    "variance": Case(lambda b: [ta.variance(b.close, 20)], lambda b: [T.VAR(b.close, 20, 1)], rtol=1e-7),  # as stdev
+    "stdev": Case(lambda b: [ta.stdev(b.close, 20)], lambda b: [T.STDDEV(b.close, 20, 1)]),
+    "variance": Case(lambda b: [ta.variance(b.close, 20)], lambda b: [T.VAR(b.close, 20, 1)]),
     "beta": Case(lambda b: [ta.beta(b.close, b.open, 5)], lambda b: [T.BETA(b.open, b.close, 5)]),
     "correl": Case(lambda b: [ta.correl(b.close, b.open, 30)], lambda b: [T.CORREL(b.close, b.open, 30)]),
     # volume
@@ -436,8 +431,10 @@ def _first_common_valid(native: np.ndarray, oracle: np.ndarray) -> int | None:
     return None if both.size == 0 else int(both[0])
 
 
-def _disagreement(native, oracle, settle: int = 0, rtol: float = TALIB_RTOL) -> str | None:
+def _disagreement(native, oracle, settle: int = 0, tol: float = 1.0) -> str | None:
     """Describe the first disagreement, or None when the two agree.
+
+    *tol* multiplies TALIB_ATOL and TALIB_RTOL (TOLERANCE says where and why).
 
     Compared from the first bar on which both sides hold a finite value, so a
     warm-up that differs by a bar is not a finding, but NaN on one side and a
@@ -460,12 +457,12 @@ def _disagreement(native, oracle, settle: int = 0, rtol: float = TALIB_RTOL) -> 
         return f"bar {start + i}: native {n[i]!r}, TA-Lib {o[i]!r} ({nan_mismatch.size} NaN-mask mismatches)"
     with np.errstate(invalid="ignore"):
         # TALIB_ATOL + TALIB_RTOL * |expected|, element by element, with the absolute term
-        # scaled down to columns smaller than 1: at prices of 1e-4 a fixed 1e-9
-        # would pass a 1e-6 relative error, and a variance of 1e-11 any error. A
-        # column TA-Lib reads as all zero has no scale and keeps the plain 1e-9.
+        # scaled down to columns smaller than 1: at prices of 1e-4 a fixed 1e-11
+        # would pass a 1e-8 relative error, and a variance of 1e-13 any error. A
+        # column TA-Lib reads as all zero has no scale and keeps the plain TALIB_ATOL.
         scale = float(np.nanmax(np.abs(o[np.isfinite(o)]))) if np.isfinite(o).any() else 0.0
         scale = scale or 1.0
-        off = ~((n == o) | (np.isnan(n) & np.isnan(o)) | (np.abs(n - o) <= TALIB_ATOL * min(1.0, scale) + rtol * np.abs(o)))
+        off = ~((n == o) | (np.isnan(n) & np.isnan(o)) | (np.abs(n - o) <= tol * (TALIB_ATOL * min(1.0, scale) + TALIB_RTOL * np.abs(o))))
     if off.any():
         i = int(np.flatnonzero(off)[0])
         return f"bar {start + i}: native {n[i]!r}, TA-Lib {o[i]!r}, max abs diff {np.nanmax(np.abs(n - o)):.3e} on {int(off.sum())} bars"
@@ -497,6 +494,38 @@ _HILBERT_ON_A_CONSTANT = (
 # library of another version than the Python wrapper (wrapper 0.8.2 ships C 0.8.1).
 _TA_C_VERSION = talib.__ta_version__.decode().split()[0]
 _TALIB_08 = tuple(int(part) for part in _TA_C_VERSION.split(".")[:2]) >= (0, 8)
+
+# Cases whose arithmetic needs more than TALIB_ATOL + TALIB_RTOL * |expected|: the
+# factor on both terms, and the worst bar measured on Windows and Linux, Python 3.11 to
+# 3.15, numba on and off (TA-Lib 0.8.3; every variant reads the same worst bar). Each
+# factor is the 1-2-5 step that leaves at least 10x margin; a case cancels digits
+# where its value is small against the rest of its column.
+# test_every_tolerance_is_needed fails an entry that the case no longer needs.
+TOLERANCE: dict[str, tuple[float, str]] = {
+    "adosc": (5000, "a difference of two EMAs of AD, which reaches 2.7e8: 2.5e-9 relative at 194 (flat_block, bar 209)"),
+    "beta": (2000, "the regression over the window that holds the spike: 5e-9 relative at -0.52 (spike, bar 227)"),
+    "linregangle": (200, "the arctan of a slope that cancels to 0.005 degrees: 3.8e-8 relative (nan_prefix, bar 251)"),
+    "ad": (50, "a cumulative sum that reaches 3.8e10: 9e-7 absolute at 19627 (spy_full, bar 76)"),
+    "fosc": (50, "close less its forecast, 0.24 percent: 1.9e-10 relative (spy_full, bar 2252)"),
+    "ht_dcphase": (50, "the Hilbert transform's long recursion: 1.7e-10 at -5.05 degrees (spy_full, bar 3940)"),
+    "ht_sine": (20, "the Hilbert transform's long recursion: 1.6e-11 at 0.166 (spy_full, bar 2546)"),
+    "variance": (
+        20,
+        "TA-Lib's running sums of x and x**2 cancel digits in sum(x**2) - sum(x)**2 / n: 6.1e-11 at 3.98 in a column up to 3.7e5 (spike, bar 220)",
+    ),
+    "cci": (10, "a mean deviation near 0: 6e-11 relative at -0.198 (planted, bar 109)"),
+    "ht_phasor": (10, "the Hilbert transform's long recursion: 2.2e-10 at 22.0 (flat_block, bar 214)"),
+    "correl": (10, "TA-Lib's running sums: 2.3e-11 relative at 0.58 (spy_full, bar 4452)"),
+    "linregslope": (10, "a slope that cancels to -0.038: 1.9e-10 relative (flat_block, bar 360)"),
+    "ht_dcperiod": (10, "the Hilbert transform's long recursion: 1.5e-10 at 25.0 (flat_block, bar 217)"),
+    "stdev": (10, "TA-Lib's running sums, as variance: 7.7e-12 relative at 1.99 in a column up to 607 (spike, bar 220)"),
+    "apo-mamode-ema": (5, "the EMA seeds converging, at prices of 1e6: 2.3e-12 relative (x1e6, bar 71)"),
+    "macd": (2, "the histogram, a difference near 0, after the EMA seeds: 1.9e-12 relative at -28096 (x1e6, bar 267)"),
+    "macdext": (2, "as macd"),
+    "macdfix": (2, "as macd"),
+    "linreg": (2, "2e-12 relative at -4.8 in a column up to 1030 (spike, bar 213)"),
+    "tsf": (2, "1.2e-12 relative at 8.74 in a column up to 1110 (spike, bar 212)"),
+}
 
 KNOWN_DIFFERENCES: dict[tuple[str, str], str] = {
     ("ht_dcperiod", "flat"): _HILBERT_ON_A_CONSTANT,
@@ -543,7 +572,7 @@ def test_native_matches_talib(name: str, frame: str, frames) -> None:
     bars = frames[frame]
     native, oracle = case.native(bars), case.oracle(bars)
     assert len(native) == len(oracle), f"{len(native)} native columns vs {len(oracle)} TA-Lib outputs"
-    problems = [f"column {i}: {d}" for i, (n, o) in enumerate(zip(native, oracle)) if (d := _disagreement(n, o, case.settle, case.rtol))]
+    problems = [f"column {i}: {d}" for i, (n, o) in enumerate(zip(native, oracle)) if (d := _disagreement(n, o, case.settle, TOLERANCE.get(name, (1.0, ""))[0]))]
     assert not problems, f"{name} on {frame}: " + "; ".join(problems)
 
 
@@ -599,6 +628,19 @@ def test_warmup_mismatch_rejects_a_shifted_start() -> None:
     assert _warmup_mismatch(np.r_[np.nan * np.ones(6), np.arange(9.0)], oracle, real) == "first value at bar 6, TA-Lib at 5 (1 bars differ)"
 
 
+@pytest.mark.parametrize("name", sorted(TOLERANCE))
+def test_every_tolerance_is_needed(name: str, frames) -> None:
+    """A TOLERANCE factor is at most 25x what the case needs (10x margin, rounded up to 1-2-5): at a 25th of it, some frame fails."""
+    case, factor = _CASES[name], TOLERANCE[name][0]
+    tight = [
+        frame
+        for frame in FRAMES
+        if (name, frame) not in KNOWN_DIFFERENCES
+        and any(_disagreement(n, o, case.settle, factor / 25) for n, o in zip(case.native(frames[frame]), case.oracle(frames[frame])))
+    ]
+    assert tight, f"{name} passes every frame at {factor / 25:g}x the default: lower its TOLERANCE factor"
+
+
 def test_disagreement_rejects_a_wrong_result() -> None:
     """The comparison must fail on wrong results: a helper that accepts everything turns every case into a no-op."""
     index = pd.date_range("2020-01-01", periods=50, freq="D")
@@ -606,6 +648,7 @@ def test_disagreement_rejects_a_wrong_result() -> None:
     values[:5] = np.nan
     expected = pd.Series(values, index=index)
     assert _disagreement(expected * (1 + 1e-12), expected) is None
+    assert _disagreement(expected * (1 + 1e-9), expected) is not None
     assert _disagreement(expected * (1 + 1e-6), expected) is not None
     assert _disagreement(expected + 1e-6, expected) is not None
     holed = expected.copy()
