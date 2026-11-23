@@ -103,6 +103,16 @@ class TestUtilityMetrics:
         assert with_nan == pandas_ta.utils.volatility(self.pctret.iloc[1:], returns=True)
         assert with_nan == pandas_ta.utils.volatility(self.close)
 
+    def test_annualisation_counts_the_intervals_between_returns(self, subtests):
+        # n returns span n - 1 intervals, but the periods per year counted n:
+        # two daily returns were annualised by 730.5 instead of 365.25, so the
+        # result was sqrt(2) too large (SPY_D: 0.198783 instead of 0.198770).
+        returns = pd.Series([0.01, -0.02], index=pd.date_range("2021-01-04", periods=2, freq="D"))
+        with subtests.test("volatility"):
+            assert pandas_ta.utils.volatility(returns, returns=True) == pytest.approx(returns.std() * math.sqrt(365.25))
+        with subtests.test("downside_deviation"):
+            assert pandas_ta.downside_deviation(returns) == pytest.approx(math.sqrt(0.02**2 / 2) * math.sqrt(365.25))
+
     def test_drawdown(self):
         # A return series is not a price: its percent and log drawdown read NaN
         # where it is at or below zero, with one warning (#345).
@@ -422,6 +432,31 @@ class TestMetricsOnCloseProperties:
         close = _daily(values)
         returns = pandas_ta.log_return(close) if log else pandas_ta.percent_return(close)
         assert pandas_ta.utils.volatility(close, log=log) == pytest.approx(pandas_ta.utils.volatility(returns, returns=True), rel=1e-12)
+
+
+_YEAR = pd.Timedelta(days=365.25)
+
+
+class TestAnnualisationProperties:
+    """Bars spaced evenly by *step* number one year / *step* per year, however many there are.
+
+    The periods per year divided the number of returns by their span, which
+    covers one interval fewer, so a short series was annualised by too much.
+    """
+
+    @given(_returns, st.sampled_from(["15min", "1h", "1D", "7D"]))
+    def test_volatility_annualises_by_the_bar_spacing(self, values, step):
+        returns = pd.Series(values, index=pd.date_range("2021-01-04", periods=values.size, freq=step))
+        expected = returns.std() * math.sqrt(_YEAR / pd.Timedelta(step))
+        assert pandas_ta.utils.volatility(returns, returns=True) == pytest.approx(expected, rel=1e-9, abs=1e-12)
+
+    @given(_returns, st.sampled_from(["15min", "1h", "1D", "7D"]), st.floats(min_value=-0.1, max_value=0.2, width=64))
+    def test_downside_deviation_annualises_by_the_bar_spacing(self, values, step, rate):
+        returns = pd.Series(values, index=pd.date_range("2021-01-04", periods=values.size, freq=step))
+        periods = _YEAR / pd.Timedelta(step)
+        target = (1 + rate) ** (1 / periods) - 1
+        expected = math.sqrt(np.sum(np.minimum(values - target, 0.0) ** 2) / values.size) * math.sqrt(periods)
+        assert pandas_ta.downside_deviation(returns, benchmark_rate=rate) == pytest.approx(expected, rel=1e-9, abs=1e-12)
 
 
 class TestMetricsSpanProperties:
