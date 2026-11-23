@@ -95,9 +95,6 @@ OPTIONS = {name: _options(name) for name in INDICATORS if name not in NOT_OHLCV}
 PATHS = {name: paths for name, (ints, paths) in OPTIONS.items() if ints}
 CASES = [(name, param, path) for name, (ints, paths) in OPTIONS.items() for param in ints for path in paths if (name, path) not in NO_RESULT]
 KNOWN = {
-    ("stderr", "length"): "OPEN: length=1 with the default ddof=1 is an empty column without a warning; ddof < length is checked only when ddof is given",
-    ("hvol", "length"): "OPEN: length=1 takes the standard deviation of one return, an empty column without a warning",
-    ("chop", "length"): "OPEN: length=1 divides by log10(1) = 0: +inf or NaN on every bar, without a warning",
     ("brar", "length"): "KEPT: x/0 with a positive numerator is +inf on purpose (brar.py): in a short window BR is +inf where every low is at or"
     " above the previous close (length 1, 2, 3), AR where open == low (length 1)",
     ("vp", "width"): "KEPT: width=1 is one price bin, a one-row result, not an empty column",

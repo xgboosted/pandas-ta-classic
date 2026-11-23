@@ -28,7 +28,7 @@ def chop(
 ) -> Series | None:
     """Indicator: Choppiness Index (CHOP)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
+    length = _pos_int(length, 14, "length", gt=1)
     atr_length = _pos_int(atr_length, 1, "atr_length")
     ln = _bool_param(ln, False, "ln")
     scalar = _number(scalar, 100, "scalar")
@@ -97,7 +97,7 @@ Args:
     high (pd.Series): Series of 'high's
     low (pd.Series): Series of 'low's
     close (pd.Series): Series of 'close's
-    length (int): It's period. Default: 14
+    length (int): It's period, at least 2. Default: 14
     atr_length (int): Length for ATR. Default: 1
     ln (bool): If True, uses ln otherwise log10. Default: False
     scalar (float): How much to magnify. Default: 100
