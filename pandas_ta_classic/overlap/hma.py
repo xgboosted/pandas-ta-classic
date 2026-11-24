@@ -1,11 +1,11 @@
 # Hull Moving Average (HMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 from .wma import wma
 
@@ -13,13 +13,12 @@ from .wma import wma
 @nan_on_short_input
 def hma(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=1)] = 10,  # the half-length WMA needs length >= 2
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Hull Moving Average (HMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length", gt=1)  # the half-length WMA needs length >= 2
     close = verify_series(close, length)
     offset = get_offset(offset)
 

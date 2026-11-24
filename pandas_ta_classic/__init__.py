@@ -11,6 +11,7 @@ from pandas_ta_classic._meta import (
     Imports,
     version,
 )
+from pandas_ta_classic._params import defaults
 from pandas_ta_classic.core import (
     AllStrategy,
     AnalysisIndicators,
@@ -99,6 +100,7 @@ __all__ = [
     "cross",
     "cross_value",
     "crossover",
+    "defaults",
     "df_error_analysis",
     "df_year_to_date",
     "downside_deviation",

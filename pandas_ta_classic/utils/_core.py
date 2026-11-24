@@ -7,8 +7,9 @@ import math
 import sys
 import warnings
 from collections.abc import Callable
+from dataclasses import dataclass
 from numbers import Real
-from typing import Any
+from typing import Annotated, Any, get_args, get_origin
 
 import numpy as np
 from pandas import DataFrame, DatetimeIndex, Index, RangeIndex, Series, date_range
@@ -20,13 +21,110 @@ from pandas_ta_classic.utils._keywords import _is_package_indicator, check_keywo
 logger = logging.getLogger(__name__)
 
 
-def _validate_number(val: Any, default: Any, name: str, *, integer: bool, gt: float | None, ge: float | None, lt: float | None) -> Any:
+_UNSET: Any = object()
+
+
+@dataclass(frozen=True)
+class Bound:
+    """Marker of a number: ``length: Annotated[int, Bound(gt=1)] = 10``.
+
+    The wrapper of :func:`nan_on_short_input` validates the value against the
+    bounds and resolves ``None`` to the default. ``Bound()`` is any finite
+    number; an ``int`` annotation also requires a whole number. *default_from*
+    names the parameter whose value a ``None`` takes (adx: ``lensig`` is ``length``).
+    In :class:`Options`, *default* and *integer* are given here, since there is no signature.
+    """
+
+    gt: float | None = None
+    ge: float | None = None
+    lt: float | None = None
+    default_from: str | None = None
+    default: Any = _UNSET
+    integer: bool = False
+
+
+@dataclass(frozen=True)
+class OneOf:
+    """Marker of a string option: ``mamode: Annotated[str, OneOf(...)] = "sma"``."""
+
+    choices: tuple[str, ...]
+    default: Any = _UNSET
+
+
+@dataclass(frozen=True)
+class Flag:
+    """Marker of a True/False option: ``talib: Annotated[bool, Flag()] = False``."""
+
+    default: Any = _UNSET
+
+
+Marker = Bound | OneOf | Flag
+
+
+class Options:
+    """Marker of the options an indicator reads from ``**kwargs``:
+    ``**kwargs: Annotated[Any, Options(lazybear=Flag(False), asint=Flag(True))]``.
+
+    The wrapper validates each one and puts its resolved value into ``kwargs``,
+    so the body reads ``kwargs.pop("lazybear")``.
+    """
+
+    def __init__(self, **markers: Marker) -> None:
+        missing = [name for name, marker in markers.items() if marker.default is _UNSET]
+        if missing:
+            raise TypeError(f"Options() needs a default for {missing}")
+        self.markers = markers
+
+    def __repr__(self) -> str:
+        return f"Options({', '.join(f'{k}={v!r}' for k, v in self.markers.items())})"
+
+
+@dataclass(frozen=True)
+class Declared:
+    """One declared parameter: its marker, default, whether it must be whole, and
+    whether it is read from ``**kwargs`` rather than the signature."""
+
+    marker: Marker
+    default: Any
+    integer: bool
+    in_kwargs: bool = False
+
+
+def declared_params(fn: Callable) -> dict[str, Declared]:
+    """{parameter: Declared} of *fn*'s marked parameters and ``**kwargs`` options, in signature order."""
+    found = {}
+    for name, param in inspect.signature(fn).parameters.items():
+        if get_origin(param.annotation) is not Annotated:
+            continue
+        base, *meta = get_args(param.annotation)
+        for marker in meta:
+            if isinstance(marker, Options):
+                for option, inner in marker.markers.items():
+                    found[option] = Declared(inner, inner.default, isinstance(inner, Bound) and inner.integer, in_kwargs=True)
+            elif isinstance(marker, Marker):
+                found[name] = Declared(marker, param.default, base is int or int in get_args(base))
+    return found
+
+
+def _resolve_param(name: str, declared: Declared, val: Any, default: Any) -> Any:
+    marker = declared.marker
+    if isinstance(marker, Bound):
+        return _validate_number(val, default, name, integer=declared.integer, gt=marker.gt, ge=marker.ge, lt=marker.lt)
+    if isinstance(marker, OneOf):
+        return _str_param(val, default, name, choices=marker.choices)
+    return _bool_param(val, default, name)
+
+
+def _validate_number(
+    val: Any, default: Any, name: str, *, integer: bool, gt: float | None, ge: float | None, lt: float | None, note: str = ""
+) -> Any:
     """Shared body of :func:`_pos_int` and :func:`_pos_float`.
 
     ``None`` means "not given" and returns *default*. Anything else must be a
     finite real number (not a bool) inside the bounds, and a whole number when
     *integer* is set; otherwise ``ValueError`` names the indicator, the
     parameter and the value instead of silently substituting the default.
+    *note* says why the bound applies (``" with mamode='hma'"``).
     """
     if val is None:
         return default
@@ -40,7 +138,7 @@ def _validate_number(val: Any, default: Any, name: str, *, integer: bool, gt: fl
         bounds = " and ".join(f"{op} {bound}" for op, bound in ((">", gt), (">=", ge), ("<", lt)) if bound is not None)
         kind = "an integer" if integer else "a number"
         requirement = f"{kind} {bounds}" if bounds else kind
-        raise ValueError(f"{indicator}() {name} must be {requirement}, got {val!r}")
+        raise ValueError(f"{indicator}() {name} must be {requirement}{note}, got {val!r}")
     # A whole number keeps the type of an int default, so kc(scalar=2) and
     # kc(scalar=2.0) name their columns KCLe_20_2 like kc() instead of KCLe_20_2.0.
     if integer or (isinstance(default, int) and not isinstance(default, bool) and float(val).is_integer()):
@@ -436,15 +534,35 @@ def nan_on_short_input(fn: Callable) -> Callable:
     # The keyword check runs here because this is the one place that knows a call is
     # the caller's own and not an inner call; a custom indicator is not checked.
     static = static_keywords(fn) if _is_package_indicator(fn) else None
+    declared = declared_params(fn)
+
+    var_keyword = next((p.name for p in sig.parameters.values() if p.kind is inspect.Parameter.VAR_KEYWORD), None)
+
+    def resolve(args: tuple, kwargs: dict) -> tuple[tuple, dict]:
+        # every call, inner ones too: the body reads the resolved values, never None
+        if not declared:
+            return args, kwargs
+        bound = sig.bind(*args, **kwargs)
+        arguments = bound.arguments
+        bag = arguments.setdefault(var_keyword, {}) if var_keyword else {}
+        for name, spec in declared.items():
+            where = bag if spec.in_kwargs else arguments
+            default = spec.default
+            if isinstance(spec.marker, Bound) and spec.marker.default_from is not None and where.get(name) is None:
+                default = arguments[spec.marker.default_from]
+            where[name] = _resolve_param(name, spec, where.get(name), default)
+        return bound.args, bound.kwargs
 
     @functools.wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         if _OUTER_INDICATOR.get() is not None:
+            args, kwargs = resolve(args, kwargs)
             return fn(*args, **kwargs)
         if static is not None:
             check_keywords(fn, static, sig, args, kwargs)
         token = _OUTER_INDICATOR.set(fn.__name__)
         try:
+            args, kwargs = resolve(args, kwargs)
             # An empty Series is shorter than any window, but indicators that read
             # bar 0 (obv, psar, hwma, ...) raised IndexError on it instead of
             # returning None, so go straight to the all-NaN result.

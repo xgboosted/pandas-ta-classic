@@ -69,6 +69,12 @@ def _format_annotation(ann) -> str:
     origin = typing.get_origin(ann)
     args = typing.get_args(ann)
 
+    # Annotated[int, Bound(gt=1)] -> int | None: the marker is for the runtime check, and a
+    # caller may pass None for the default (the body never sees it, so the source says int)
+    if origin is typing.Annotated:
+        base = _format_annotation(args[0])
+        return base if base == "Any" or base.endswith("| None") else f"{base} | None"
+
     # Union / PEP 604 X | Y
     if origin is typing.Union or origin is types.UnionType:
         non_none = [a for a in args if a is not type(None)]
