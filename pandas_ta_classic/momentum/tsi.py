@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -40,6 +40,7 @@ def tsi(
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, signal=signal)
 
     if close is None:
         return None

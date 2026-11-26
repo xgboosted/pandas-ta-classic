@@ -3,7 +3,7 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _pos_int, _str_param, _windows_in_order, nan_on_short_input
 
@@ -28,6 +28,7 @@ def amat(
     _windows_in_order("amat", fast=fast, slow=slow)
     lookback = _pos_int(lookback, 2, "lookback")
     mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast)
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values

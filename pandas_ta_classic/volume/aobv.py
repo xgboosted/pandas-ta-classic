@@ -3,7 +3,7 @@ from typing import Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
@@ -33,6 +33,7 @@ def aobv(
     min_lookback = _pos_int(min_lookback, 2, "min_lookback")
     _windows_in_order("aobv", fast=fast, slow=slow)
     mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast)
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)

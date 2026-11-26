@@ -6,7 +6,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simplify_columns, _squeeze_use_tr
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
 from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
@@ -60,6 +60,7 @@ def squeeze_pro(
     asint = _bool_param(kwargs.pop("asint", None), True, "asint")
     detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, kc_length=kc_length, mom_smooth=mom_smooth)
 
     # Calculate Result
     # Only the bands are read here; bbands' warning about a non-positive middle

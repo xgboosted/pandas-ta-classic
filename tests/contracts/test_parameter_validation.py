@@ -753,6 +753,28 @@ def test_a_one_bar_window_handed_to_linreg_raises_naming_the_indicator_called():
         ta.qstick(df.open, df.close, ma="linreg", length=1)
 
 
+# The windows an indicator hands to ma(mamode, ...): hma and linreg need them > 1, the other MAs > 0.
+_MA_WINDOWS = [
+    ("adx", "length"), ("adx", "lensig"), ("adxr", "lensig"), ("amat", "fast"), ("aobv", "fast"), ("apo", "fast"),
+    ("hilo", "high_length"), ("hilo", "low_length"), ("kvo", "fast"), ("kvo", "signal"), ("ppo", "fast"), ("qqe", "smooth"),
+    ("squeeze", "kc_length"), ("squeeze", "mom_smooth"), ("squeeze_pro", "kc_length"), ("squeeze_pro", "mom_smooth"),
+    ("stoch", "d"), ("stoch", "smooth_k"), ("stochf", "fastd"), ("stochrsi", "d"), ("stochrsi", "k"), ("tsi", "signal"),
+]  # fmt: skip
+
+
+@pytest.mark.parametrize("mamode", ["hma", "linreg"])
+@pytest.mark.parametrize(("name", "param"), _MA_WINDOWS, ids=[f"{name}-{param}" for name, param in _MA_WINDOWS])
+def test_a_window_below_the_chosen_ma_bound_names_the_parameter_passed(name, param, mamode):
+    """stoch(d=1, mamode="hma") raised `stoch() length must be ...`, naming hma's parameter, which stoch does not have (#397).
+
+    The bound holds only for the MA that needs it: with the default mamode a window of 1 stays valid.
+    """
+    df = spy(300)
+    with pytest.raises(ValueError, match=rf"^{name}\(\) {param} must be an integer > 1 with mamode='{mamode}', got 1$"):
+        getattr(ta, name)(**inputs(name, df), mamode=mamode, **{param: 1})
+    getattr(ta, name)(**inputs(name, df), **{param: 1})
+
+
 class TestDriftParameterRemoved:
     """Issue #138: drift is removed, not just ignored.
 
