@@ -87,7 +87,7 @@ class TestTulipyOracle:
         """Return the frozen tulipy array for *name*."""
         return self.oracle[name]
 
-    def _compare(self, pt_series, tp_arr, tol=1e-6, name="", known=()):
+    def _compare(self, pt_series, tp_arr, tol=1e-11, name="", known=()):
         """Assert max abs diff <= tol on the last 2000 common bars.
 
         The frozen oracle array is tail-trimmed; align it to the tail of the
@@ -117,7 +117,7 @@ class TestTulipyOracle:
         n = min(len(pt), len(tp))
         assert n > 50, f"DPO: too few comparable values ({n})"
         diff = np.abs(pt[-n:] - tp[-n:])
-        assert diff.max() < 1e-6, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-6"
+        assert diff.max() < 1e-11, f"DPO: max abs diff {diff.max():.4e} exceeds 1e-11"
 
     def test_macd(self):
         pt = ta.macd(self.close)
@@ -148,17 +148,15 @@ class TestTulipyOracle:
         assert len(both) > 50, f"DX: too few common values ({len(both)})"
         tail = both[-min(500, len(both)) :]
         diff = np.abs(pt.loc[tail].values - tp_s.loc[tail].values)
-        assert diff.max() < 1e-6, f"DX: max diff {diff.max():.4e} exceeds 1e-6"
+        assert diff.max() < 5e-13, f"DX: max diff {diff.max():.4e} exceeds 5e-13"
 
     def test_stderr(self):
-        pt = ta.stderr(self.close, length=20)
-        tp_arr = self._oracle("stderr")
-        tp_s = pd.Series(np.asarray(tp_arr), index=self.idx[-len(tp_arr) :])
-        both = pt.dropna().index.intersection(tp_s.index)
-        assert len(both) > 50, f"STDERR: too few common non-NaN values ({len(both)})"
-        ratio = np.median(pt.loc[both].values / tp_s.loc[both].values)
-        expected = np.sqrt((20 - 1) / (20 - 2))
-        assert abs(ratio - expected) < 0.005, f"STDERR: ratio {ratio:.6f} differs from expected {expected:.6f}"
+        """Tulip's STDERR divides the population deviation by sqrt(period): stderr with ddof=0.
+
+        The default ddof=1 reads sqrt(20 / 19) higher. This test used to compare the median ratio
+        with sqrt(19 / 18) to 0.005, which the sample deviation passed.
+        """
+        self._compare(ta.stderr(self.close, length=20, ddof=0), self._oracle("stderr"), tol=5e-10, name="STDERR")
 
     def test_msw_divergence_is_tulipys_pi(self):
         """With tulipy's pi constant the native loop reproduces the oracle exactly,
@@ -184,7 +182,10 @@ class _Row(NamedTuple):
     compute: Callable[[Any], pd.Series]
     oracle: str
     note: str = ""
-    tol: float = 1e-6
+    # Absolute. The default is 10x the largest difference of the rows that read tulipy to
+    # 1e-12; the others set the 1-2-5 step above 10x theirs (Windows and Linux, Python
+    # 3.11 to 3.15, numba on and off).
+    tol: float = 1e-11
     scale: float = 1
     known: tuple[int, ...] = ()
 
@@ -193,20 +194,21 @@ _ROWS: dict[str, _Row] = {
     # Overlap / Moving averages
     "sma": _Row(lambda s: ta.sma(s.close, length=20), "sma"),
     "ema": _Row(lambda s: ta.ema(s.close, length=20, talib=False), "ema"),
-    "wma": _Row(lambda s: ta.wma(s.close, length=20), "wma"),
-    "hma": _Row(lambda s: ta.hma(s.close, length=9), "hma"),
+    "wma": _Row(lambda s: ta.wma(s.close, length=20), "wma", tol=5e-10),
+    "hma": _Row(lambda s: ta.hma(s.close, length=9), "hma", tol=5e-8),
     "zlma": _Row(lambda s: ta.zlma(s.close, length=20), "zlema", note="tulipy name: zlema"),
     "rma": _Row(lambda s: ta.rma(s.close, length=14), "wilders", note="tulipy name: wilders (Wilder's Moving Average)"),
     "dema": _Row(lambda s: ta.dema(s.close, length=20, talib=False), "dema"),
     "tema": _Row(lambda s: ta.tema(s.close, length=20, talib=False), "tema"),
     "kama": _Row(lambda s: ta.kama(s.close, length=10, talib=False), "kama"),
-    "vwma": _Row(lambda s: ta.vwma(s.close, s.vol, length=20), "vwma"),
+    "vwma": _Row(lambda s: ta.vwma(s.close, s.vol, length=20), "vwma", tol=2e-11),
     "wcp": _Row(lambda s: ta.wcp(s.high, s.low, s.close), "wcprice", note="tulipy name: wcprice (Weighted Close Price)"),
     "qstick": _Row(lambda s: ta.qstick(s.open, s.close, length=10), "qstick"),
     "trima": _Row(
         lambda s: ta.trima(s.close, length=20, talib=False),
         "trima",
         note="The native path (SMA(SMA(close, n/2 + 1), n/2) for even n) matches tulipy.",
+        tol=5e-9,
     ),
     # Oscillators / Momentum
     "rsi": _Row(lambda s: ta.rsi(s.close, length=14, talib=False), "rsi"),
@@ -219,11 +221,11 @@ _ROWS: dict[str, _Row] = {
     ),
     "rocr": _Row(lambda s: ta.rocr(s.close, length=10), "rocr"),
     "willr": _Row(lambda s: ta.willr(s.high, s.low, s.close, length=14), "willr"),
-    "cci": _Row(lambda s: ta.cci(s.high, s.low, s.close, length=14), "cci"),
+    "cci": _Row(lambda s: ta.cci(s.high, s.low, s.close, length=14), "cci", tol=5e-9),
     "bop": _Row(lambda s: ta.bop(s.open, s.high, s.low, s.close), "bop"),
     "mfi": _Row(lambda s: ta.mfi(s.high, s.low, s.close, s.vol, length=14), "mfi"),
     "cvi": _Row(lambda s: ta.cvi(s.high, s.low, length=10), "cvi"),
-    "ao": _Row(lambda s: ta.ao(s.high, s.low), "ao", note="Awesome Oscillator"),
+    "ao": _Row(lambda s: ta.ao(s.high, s.low), "ao", note="Awesome Oscillator", tol=2e-11),
     "vhf": _Row(lambda s: ta.vhf(s.close, length=28), "vhf"),
     "wad": _Row(lambda s: ta.wad(s.high, s.low, s.close), "wad"),
     "cmo": _Row(lambda s: ta.cmo(s.close, length=14, talib=False), "cmo"),
@@ -231,6 +233,7 @@ _ROWS: dict[str, _Row] = {
         lambda s: ta.fosc(s.close, length=14),
         "fosc",
         note="Tulip forecasts this bar with the previous bar's TSF, as TA-Lib does; fosc used the same bar's TSF, which made it equal cfo, until #344.",
+        tol=2e-9,
     ),
     "trix": _Row(
         lambda s: ta.trix(s.close, length=18).iloc[:, 0],
@@ -246,7 +249,7 @@ _ROWS: dict[str, _Row] = {
     ),
     # Stochastic
     "stoch_k": _Row(lambda s: ta.stoch(s.high, s.low, s.close, k=14, d=3, smooth_k=3).iloc[:, 0], "stoch_k"),
-    "stoch_d": _Row(lambda s: ta.stoch(s.high, s.low, s.close, k=14, d=3, smooth_k=3).iloc[:, 1], "stoch_d"),
+    "stoch_d": _Row(lambda s: ta.stoch(s.high, s.low, s.close, k=14, d=3, smooth_k=3).iloc[:, 1], "stoch_d", tol=2e-11),
     # Trend / Directional
     "aroon_down": _Row(lambda s: ta.aroon(s.high, s.low, length=14, talib=False).iloc[:, 0], "aroon_down"),
     "aroon_up": _Row(lambda s: ta.aroon(s.high, s.low, length=14, talib=False).iloc[:, 1], "aroon_up"),
@@ -258,14 +261,14 @@ _ROWS: dict[str, _Row] = {
         "natr",
         note="tulipy NATR uses Wilder's smoothing (RMA) for ATR internally; the native path must be invoked with mamode='rma' to match.",
     ),
-    "bbands_lower": _Row(lambda s: ta.bbands(s.close, length=20).filter(regex=r"^BBL").iloc[:, 0], "bbands_lower"),
-    "bbands_upper": _Row(lambda s: ta.bbands(s.close, length=20).filter(regex=r"^BBU").iloc[:, 0], "bbands_upper"),
+    "bbands_lower": _Row(lambda s: ta.bbands(s.close, length=20).filter(regex=r"^BBL").iloc[:, 0], "bbands_lower", tol=2e-9),
+    "bbands_upper": _Row(lambda s: ta.bbands(s.close, length=20).filter(regex=r"^BBU").iloc[:, 0], "bbands_upper", tol=2e-9),
     # Statistics
-    "stdev": _Row(lambda s: ta.stdev(s.close, length=20, talib=False), "stddev", note="tulipy name: stddev"),
-    "variance": _Row(lambda s: ta.variance(s.close, length=20, talib=False), "var", note="tulipy name: var"),
-    "linreg": _Row(lambda s: ta.linreg(s.close, length=14, talib=False), "linreg"),
-    "tsf": _Row(lambda s: ta.tsf(s.close, length=14, talib=False), "tsf"),
-    "fosc_stat": _Row(lambda s: ta.fosc(s.close, length=14), "fosc", note="The same comparison as test_fosc; separate test kept for grouping."),
+    "stdev": _Row(lambda s: ta.stdev(s.close, length=20, talib=False), "stddev", note="tulipy name: stddev", tol=1e-9),
+    "variance": _Row(lambda s: ta.variance(s.close, length=20, talib=False), "var", note="tulipy name: var", tol=5e-9),
+    "linreg": _Row(lambda s: ta.linreg(s.close, length=14, talib=False), "linreg", tol=5e-9),
+    "tsf": _Row(lambda s: ta.tsf(s.close, length=14, talib=False), "tsf", tol=5e-9),
+    "fosc_stat": _Row(lambda s: ta.fosc(s.close, length=14), "fosc", note="The same comparison as test_fosc; separate test kept for grouping.", tol=2e-9),
     # Fisher Transform
     "fisher_val": _Row(lambda s: ta.fisher(s.high, s.low, length=9).iloc[:, 0], "fisher_val"),
     "fisher_sig": _Row(lambda s: ta.fisher(s.high, s.low, length=9).iloc[:, 1], "fisher_sig"),

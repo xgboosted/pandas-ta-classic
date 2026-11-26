@@ -73,7 +73,7 @@ def test_an_interior_gap_is_forgotten(name: str, gap: str, clean: pd.DataFrame) 
     np.testing.assert_array_equal(np.isnan(tail_after), np.isnan(tail_before), err_msg=f"{name}: NaN long after the gap")
     if name in CUMULATIVE | WHOLE_SERIES:
         return
-    np.testing.assert_allclose(tail_after, tail_before, rtol=1e-6, atol=1e-9, equal_nan=True, err_msg=f"{name}: did not recover from the gap")
+    np.testing.assert_allclose(tail_after, tail_before, rtol=1e-8, atol=0, equal_nan=True, err_msg=f"{name}: did not recover from the gap")
 
 
 @pytest.mark.parametrize(("name", "gap"), _params(["last_bar"]))
