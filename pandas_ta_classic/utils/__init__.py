@@ -9,7 +9,6 @@ from ._core import (
     get_drift,
     get_offset,
     is_datetime_ordered,
-    is_percent,
     recent_maximum_index,
     recent_minimum_index,
     signed_series,
@@ -81,7 +80,6 @@ __all__ = [
     "get_drift",
     "get_offset",
     "is_datetime_ordered",
-    "is_percent",
     "jensens_alpha",
     "lag",
     "linear_regression",
@@ -124,6 +122,11 @@ _REMOVED_MESSAGES = {
         "which turned a degenerate window into an epsilon-scale or epsilon-inflated value. "
         "Take the exact difference (high - low) and mask the divisor instead: (num / den).mask(den == 0, 0.0)"
     ),
+    "is_percent": (
+        "is_percent() was removed in 0.10.0: it answered False for anything it could not use instead of "
+        "raising, which invited the silent-default guard. Write the check directly (0 <= x <= 100), or validate "
+        "a parameter with _number(x, default, name, ge=0, le=100)"
+    ),
     "get_time": (
         "get_time() was removed in 0.9.0: it added a fixed exchange offset to the host's local time, so it was right "
         "only on a UTC host and ignored daylight saving. Use datetime.now(timezone.utc) and convert it with "
@@ -143,7 +146,7 @@ _REMOVED_MESSAGES = {
     "av": f"ta.av() {_DATA_FETCHING_REMOVED}",
     "ticker": f"df.ta.ticker() {_DATA_FETCHING_REMOVED}",
 }
-_REMOVED = {name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "data", "yf", "av")}
+_REMOVED = {name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "data", "yf", "av", "is_percent")}
 
 
 def __getattr__(name: str) -> NoReturn:
