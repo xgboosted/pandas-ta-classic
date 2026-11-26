@@ -18,7 +18,7 @@ def stderr(
 ) -> Series | None:
     """Indicator: Standard Error (STDERR)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
+    length = _pos_int(length, 14, "length", gt=1)
     ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
@@ -54,7 +54,7 @@ Sources:
 
 Args:
     close (pd.Series): Price series.
-    length (int): Rolling window period. Default: 14
+    length (int): Rolling window period, at least 2. Default: 14
     ddof (int): Degrees of freedom for std. Default: 1
     offset (int): Result offset. Default: 0
 

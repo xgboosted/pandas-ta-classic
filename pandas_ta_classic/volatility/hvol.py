@@ -19,7 +19,7 @@ def hvol(
 ) -> Series | None:
     """Indicator: Historical Volatility (HVOL)"""
     # Validate Arguments
-    length = _pos_int(length, 20, "length")
+    length = _pos_int(length, 20, "length", gt=1)
     # Annualization factor: 252 for daily, 52 for weekly, 12 for monthly
     annualization = _pos_float(annualization, 252, "annualization")
     close = verify_series(close, length + 1)
@@ -58,7 +58,7 @@ Sources:
 
 Args:
     close (pd.Series): Close price series.
-    length (int): Lookback period for std dev. Default: 20
+    length (int): Lookback period for std dev, at least 2. Default: 20
     annualization (float): Annualization factor. Default: 252 (trading days/year)
     offset (int): Result offset. Default: 0
 
