@@ -539,7 +539,7 @@ Trend identification and direction indicators:
 * *Choppiness Index*: **chop**
 * *Chande Kroll Stop*: **cksp** (default is TradingView's ``p=10, x=1, q=9`` with a Wilder ATR; ``tvmode=False`` gives the book's ``10, 3, 20`` with an SMA ATR)
 * *Central Pivot Range*: **cpr** (pivot methods ``classic``, ``camarilla``, ``fibonacci``, ``woodie``; ``timeframe`` ``daily`` uses the previous bar, ``intraday``/``weekly``/``monthly`` the last completed calendar day, week or month)
-* *Decay*: **decay** (Formally: **linear_decay**)
+* *Decay*: **decay** (Formerly: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering; the uncentered line equals TA-Lib ``DPO``, the price ``length // 2 + 1`` bars ago less the SMA)
 * *Directional Index*: **dx**

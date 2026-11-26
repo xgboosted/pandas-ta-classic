@@ -41,6 +41,7 @@ We welcome contributions from the community! This document provides guidelines a
  Using `uv` (faster):
  ```bash
  # Install package in development mode with all dependencies
+ # (excludes backtest — install it explicitly, see below)
  uv pip install -e ".[all]"
  
  # Or install specific dependency groups as needed:

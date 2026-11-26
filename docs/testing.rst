@@ -243,8 +243,9 @@ Edge-Case Tests
   options for each ``mamode`` included), set to an invalid value, raises an
   error that names the indicator the user called, not the inner function
   the value was handed to; an error for an int parameter of 0 or 1 names
-  that parameter; and every ``*min_periods`` option above its ``length`` raises naming the
-  indicator.
+  that parameter, also where the window reaches ``ma(mamode, ...)`` and the
+  chosen MA (``hma``, ``linreg``) needs it above 1; and every
+  ``*min_periods`` option above its ``length`` raises naming the indicator.
 - ``test_parameter_name_contract.py`` — for every registered indicator, each
   parameter that changes the values, set off its default, changes the column
   names too, so two such calls never share a column; the parameters left out
@@ -521,7 +522,7 @@ error) still passed ``test_snapshots.py``, and a 7 % error injected into
 rewritten first.
 
 *Independence from dependency versions.*  ``expected_values.json`` derives
-166 of its 223 entries from an external reference.  Recomputing at test time
+167 of its 223 entries from an external reference.  Recomputing at test time
 imports that reference's floating-point behaviour, and one of those
 references used to be ``pandas`` rolling: ``pandas`` 3.x and 2.x disagree on
 ``rolling().kurt()`` in the 8th decimal, because ``roll_kurt`` accumulates
@@ -570,7 +571,9 @@ rounding.
 Measured across all 423 tracked columns the worst native-vs-golden
 disagreement needs a relative term of 3.6e-15, so ``GOLDEN_RTOL`` keeps nine
 orders of margin for platform and BLAS differences across the Python versions
-of the CI matrix.  Snapshot checkpoints use at most 29 % of the budget.
+of the CI matrix.  Snapshot checkpoints use at most 41 % of the budget
+(``log_return`` and ``drawdown``, whose small values sit near the storage
+rounding).
 
 This replaced a flat ``REL_TOL = 1e-4``, which was ~10 orders looser than the
 data required.  Concretely: perturbing the kurtosis excess-adjustment constant

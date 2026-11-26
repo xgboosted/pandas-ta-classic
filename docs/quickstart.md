@@ -419,8 +419,8 @@ if len(df) >= 20:
 **Cause:** A gap *inside* the series, rather than too little data. `df.resample('D')` on a
 feed that only trades on weekdays inserts a NaN row for every weekend, and many indicators
 cannot see past those rows. On a 300-row daily frame with weekend gaps, more than 80 of 224 indicators
-return all-NaN — among them `sma`, `stoch`, `macd`, `linreg`, `willr` and `stdev` — while
-`ema`, `rma` and `atr` still produce values.
+return all-NaN — among them `sma`, `stoch`, `linreg`, `willr` and `stdev` — while
+`ema`, `rma`, `atr` and `macd` still produce values.
 
 Which side an indicator falls on depends on its internals: a `rolling(length)` window needs
 `length` consecutive non-NaN bars, an `ewm` recursion does not. So two indicators called with

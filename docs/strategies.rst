@@ -177,8 +177,9 @@ script. Without the ``if __name__ == "__main__":`` guard, a script that calls
     import os
 
     # Before numpy is imported, so the workers inherit it. Each interpreter
-    # otherwise reserves roughly 750 MB for OpenBLAS thread buffers that the
-    # indicators never use: measured per worker, 786 MB against 47 MB.
+    # otherwise reserves memory for OpenBLAS thread buffers that the indicators
+    # never use: measured per worker on Windows, 786 MB against 47 MB committed;
+    # on Linux it is address space (899 MB against 365 MB), not resident memory.
     os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
     from concurrent.futures import ProcessPoolExecutor
@@ -197,8 +198,9 @@ script. Without the ``if __name__ == "__main__":`` guard, a script that calls
     executor runs the initializer, so the buffers are already reserved.
 
 Parallelising over symbols usually wins by more than parallelising one frame:
-16 frames of 10,000 rows take 22.9 s one after another, and 6.45 s when the
-caller spreads the frames over its own pool and each ``strategy()`` runs serially.
+16 frames of 10,000 rows take 5.8 s one after another, and 1.2 s when the
+caller spreads the frames over its own pool of 8 workers and each ``strategy()``
+runs serially (14 cores, numba installed).
 
 ``strategy()`` inside a *daemonic* worker -- a ``multiprocessing.Pool`` one --
 ignores ``cores`` and ``executor`` and runs serially, because such a worker
