@@ -210,6 +210,8 @@ class TestModuleGetattr:
                 raise ModuleNotFoundError("No module named 'not_installed'", name="not_installed")
             return real_import(name, package)
 
+        # Load it first: run on its own, nothing has bound it to the package yet.
+        _ = pandas_ta_classic.cdl_2crows
         delattr(pandas_ta_classic, "cdl_2crows")
         try:
             with mock.patch.object(importlib, "import_module", fake_import), pytest.raises(ModuleNotFoundError):
