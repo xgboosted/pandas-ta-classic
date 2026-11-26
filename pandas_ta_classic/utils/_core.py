@@ -8,7 +8,7 @@ import sys
 import warnings
 from collections.abc import Callable
 from numbers import Real
-from typing import Any, TypeGuard
+from typing import Any
 
 import numpy as np
 from pandas import DataFrame, DatetimeIndex, Index, RangeIndex, Series, date_range
@@ -225,12 +225,6 @@ def is_datetime_ordered(df: DataFrame | Series) -> bool:
     if not index_is_datetime or len(df.index) < 2:
         return False
     return bool(df.index.is_monotonic_increasing and df.index[0] < df.index[-1])
-
-
-def is_percent(x: float | None) -> TypeGuard[float]:
-    if isinstance(x, (int, float)) and not isinstance(x, bool):
-        return x >= 0 and x <= 100
-    return False
 
 
 def leading_nan_rows(*series: Series) -> int:

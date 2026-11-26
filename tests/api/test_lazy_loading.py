@@ -241,6 +241,8 @@ class TestModuleGetattr:
             (pandas_ta_classic, "EXCHANGE_TZ", r"EXCHANGE_TZ was removed in 0\.9\.0.*zoneinfo\.ZoneInfo"),
             (pandas_ta_classic, "CDL_PATTERN_NAMES", r"CDL_PATTERN_NAMES was removed in 0\.9\.0.*ta\.ALL_PATTERNS"),
             (pandas_ta_classic.candles, "CDL_PATTERN_NAMES", r"CDL_PATTERN_NAMES was removed in 0\.9\.0.*ta\.ALL_PATTERNS"),
+            (pandas_ta_classic, "is_percent", r"is_percent\(\) was removed in 0\.10\.0.*0 <= x <= 100"),
+            (pandas_ta_classic.utils, "is_percent", r"is_percent\(\) was removed in 0\.10\.0.*0 <= x <= 100"),
             (pandas_ta_classic, "yf", r"ta\.yf\(\) " + fetching),
             (pandas_ta_classic, "av", r"ta\.av\(\) " + fetching),
             (pandas_ta_classic.utils, "yf", r"ta\.yf\(\) " + fetching),
