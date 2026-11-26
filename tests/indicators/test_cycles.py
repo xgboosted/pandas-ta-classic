@@ -12,6 +12,25 @@ from pandas_ta_classic.cycles.msw import _msw_native
 from tests.config import get_sample_data
 
 
+def _msw_plain_loop(arr, period):
+    """Tulip Indicators' msw loop (tulipindicators.org/msw), one bar at a time, with an exact pi and phase limit at rp == 0."""
+    tpi = 2.0 * np.pi
+    sine, lead = np.full(arr.size, np.nan), np.full(arr.size, np.nan)
+    for i in range(period, arr.size):
+        rp = sum(np.cos(tpi * j / period) * arr[i - j] for j in range(period))
+        ip = sum(np.sin(tpi * j / period) * arr[i - j] for j in range(period))
+        phase = np.arctan(ip / rp) if rp != 0.0 else np.copysign(np.pi / 2.0, 1.0 if ip >= 0 else -1.0)
+        if rp < 0.0:
+            phase += np.pi
+        phase += np.pi / 2.0
+        if phase < 0.0:
+            phase += tpi
+        if phase > tpi:
+            phase -= tpi
+        sine[i], lead[i] = np.sin(phase), np.sin(phase + np.pi / 4.0)
+    return sine, lead
+
+
 class TestCycles:
     @classmethod
     def setup_class(cls):
@@ -64,11 +83,25 @@ class TestCycles:
         result = pandas_ta.msw(self.close, period=10)
         assert result is not None
 
+    @pytest.mark.parametrize("period", [2, 13, 30])
+    def test_msw_is_tulips_loop_at_any_period(self, period):
+        """The DFT over all bars at once gives what Tulip's per-bar loop gives, here with an exact pi."""
+        arr = self.close.to_numpy(dtype=float)
+        expected = _msw_plain_loop(arr, period)
+        for got, want in zip(_msw_native(arr, period), expected):
+            np.testing.assert_allclose(got, want, rtol=0, atol=1e-12)
+
+    def test_msw_on_an_all_zero_window_takes_the_limit_of_the_phase(self):
+        """rp == 0: the phase is arctan's limit +pi/2 (ip is 0, not negative), then the half turn: sin(pi) and sin(5pi/4)."""
+        result = pandas_ta.msw(pd.Series(np.zeros(20)), period=5)
+        np.testing.assert_allclose(result["MSW_SINE_5"].iloc[5:], np.sin(np.pi), rtol=0, atol=1e-15)
+        np.testing.assert_allclose(result["MSW_LEAD_5"].iloc[5:], np.sin(np.pi + np.pi / 4), rtol=0, atol=1e-15)
+
     def test_msw_window_with_a_missing_bar_is_nan_on_both_paths(self):
         # The DFT sums turn NaN, `abs(rp) > 0.001` reads False and the fallback set a
         # phase of +-pi: sine -1.0 for every window holding the gap. Tulip Indicators
         # runs the same loop, so the opt-in tulipy path is faked with the native loop
-        # at tulipy's pi, which reproduces it bit for bit.
+        # at tulipy's pi, which reproduces it bit for bit away from Tulip's 0.001 test.
         def fake_msw(arr, period):
             sine, lead = _msw_native(arr, period, pi=3.1415926)
             return sine[period:], lead[period:]

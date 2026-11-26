@@ -76,44 +76,43 @@ def msw(
 
 
 def _msw_native(arr: np.ndarray, period: int, pi: float = np.pi):
-    """Pure numpy Mesa Sine Wave — Tulip Indicators' algorithm with an exact pi.
+    """Mesa Sine Wave — Tulip Indicators' algorithm with an exact pi.
 
-    Passing ``pi=3.1415926`` (tulipy's constant) reproduces tulipy bit for bit.
+    Passing ``pi=3.1415926`` (tulipy's constant) reproduces tulipy bit for bit,
+    except on the bars where Tulip's ``abs(rp) > 0.001`` test decides the phase.
+
+    The DFT sums run over all bars at once, one term at a time, newest bar
+    first, as Tulip's loop adds them; ``np.dot`` per bar handed the order of
+    the additions to the BLAS kernel the CPU selects.
     """
     tpi = 2.0 * pi
     size = len(arr)
-    sine = np.full(size, np.nan)
-    lead = np.full(size, np.nan)
-
     j_arr = np.arange(period, dtype=float)
     cos_arr = np.cos(tpi * j_arr / period)
     sin_arr = np.sin(tpi * j_arr / period)
 
-    for i in range(period, size):
-        window = arr[i - period + 1 : i + 1][::-1]  # newest first → j=0 is arr[i]
-        rp = float(np.dot(window, cos_arr))
-        ip = float(np.dot(window, sin_arr))
+    # rp[t] and ip[t] belong to bar i = period + t; term j weighs arr[i - j].
+    rp = np.zeros(size - period)
+    ip = np.zeros(size - period)
+    for j in range(period):
+        window = arr[period - j : size - j]
+        rp += window * cos_arr[j]
+        ip += window * sin_arr[j]
 
-        # Tulip's `abs(rp) > 0.001` test decided the phase in price units, so at
-        # small prices it bound on most bars, and its fallback of +-pi is a
-        # quarter-turn off the limit of arctan(ip / rp), +-pi/2 (#346). Only an
-        # exact zero needs the limit; every other rp keeps Tulip's arithmetic.
-        if rp != 0.0:
-            phase = np.arctan(ip / rp)
-        else:
-            phase = (pi / 2.0) * (-1.0 if ip < 0 else 1.0)
+    # Tulip's `abs(rp) > 0.001` test decided the phase in price units, so at
+    # small prices it bound on most bars, and its fallback of +-pi is a
+    # quarter-turn off the limit of arctan(ip / rp), +-pi/2 (#346). Only an
+    # exact zero needs the limit; every other rp keeps Tulip's arithmetic.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        phase = np.where(rp != 0.0, np.arctan(ip / rp), (pi / 2.0) * np.where(ip < 0, -1.0, 1.0))
+    phase = phase + np.where(rp < 0.0, pi, 0.0) + pi / 2.0
+    phase = np.where(phase < 0.0, phase + tpi, phase)
+    phase = np.where(phase > tpi, phase - tpi, phase)
 
-        if rp < 0.0:
-            phase += pi
-        phase += pi / 2.0
-        if phase < 0.0:
-            phase += tpi
-        if phase > tpi:
-            phase -= tpi
-
-        sine[i] = np.sin(phase)
-        lead[i] = np.sin(phase + pi / 4.0)
-
+    sine = np.full(size, np.nan)
+    lead = np.full(size, np.nan)
+    sine[period:] = np.sin(phase)
+    lead[period:] = np.sin(phase + pi / 4.0)
     return sine, lead
 
 
