@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hlc3 import hlc3
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -36,6 +36,7 @@ def kvo(
     _windows_in_order("kvo", fast=fast, slow=slow)
     signal = _pos_int(signal, 13, "signal")
     mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast, signal=signal)
     _length = max(fast, slow, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

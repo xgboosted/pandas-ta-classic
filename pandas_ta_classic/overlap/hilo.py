@@ -8,7 +8,7 @@ from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify
 from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
-from .ma import ma
+from .ma import _ma_windows, ma
 
 
 @njit(cache=True)
@@ -52,6 +52,7 @@ def hilo(
     high_length = _pos_int(high_length, 13, "high_length")
     low_length = _pos_int(low_length, 21, "low_length")
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, high_length=high_length, low_length=low_length)
     _length = max(high_length, low_length)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

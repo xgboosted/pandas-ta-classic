@@ -98,16 +98,6 @@ KNOWN = {
     ("brar", "length"): "KEPT: x/0 with a positive numerator is +inf on purpose (brar.py): in a short window BR is +inf where every low is at or"
     " above the previous close (length 1, 2, 3), AR where open == low (length 1)",
     ("vp", "width"): "KEPT: width=1 is one price bin, a one-row result, not an empty column",
-    **{
-        (name, param, f"mamode={mamode}"): f"OPEN: {param}=1 reaches {mamode}(), whose error names its own length, not {param} (AGENTS rule 2)"
-        for name, param in (
-            ("adx", "lensig"), ("adxr", "lensig"), ("amat", "fast"), ("aobv", "fast"), ("apo", "fast"), ("hilo", "high_length"),
-            ("hilo", "low_length"), ("kvo", "fast"), ("kvo", "signal"), ("ppo", "fast"), ("qqe", "smooth"), ("squeeze", "kc_length"),
-            ("squeeze", "mom_smooth"), ("squeeze_pro", "kc_length"), ("squeeze_pro", "mom_smooth"), ("stoch", "d"), ("stoch", "smooth_k"),
-            ("stochf", "fastd"), ("stochrsi", "d"), ("stochrsi", "k"), ("tsi", "signal"),
-        )
-        for mamode in ("hma", "linreg")
-    },
 }
 
 

@@ -3,7 +3,7 @@ from typing import Any
 
 from pandas import Series
 
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import _OUTER_INDICATOR, nan_on_short_input
 
 from .dema import dema
 from .ema import ema
@@ -45,6 +45,24 @@ _MA_DISPATCH = {
     "wma": wma,
     "zlma": zlma,
 }
+
+# The ma() choices whose window must be > 1; every other choice takes any window > 0.
+# test_ma_windows_matches_every_ma (tests/indicators/test_overlap.py) checks it against each choice.
+_WINDOW_GT_1 = frozenset({"hma", "linreg"})
+
+
+def _ma_windows(mamode: str, **windows: int) -> None:
+    """Raise if a window an indicator hands to ``ma(mamode, ...)`` is below that MA's bound.
+
+    The MA's own check would name its own parameter (``length``); this names the
+    indicator's, so ``stoch(d=1, mamode="hma")`` reports ``d`` (AGENTS.md rule 2).
+    """
+    if mamode not in _WINDOW_GT_1:
+        return
+    for name, value in windows.items():
+        if value <= 1:
+            indicator = _OUTER_INDICATOR.get() or "ma"
+            raise ValueError(f"{indicator}() {name} must be an integer > 1 with mamode={mamode!r}, got {value!r}")
 
 
 @nan_on_short_input

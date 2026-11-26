@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -38,6 +38,7 @@ def stoch(
     close = verify_series(close, _length)
     offset = get_offset(offset)
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, d=d, smooth_k=smooth_k)
     mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:

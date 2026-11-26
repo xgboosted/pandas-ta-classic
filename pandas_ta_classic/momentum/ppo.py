@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -75,6 +75,7 @@ def ppo(
     signal = _pos_int(signal, 9, "signal")
     scalar = _number(scalar, 100, "scalar")
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast)
     _windows_in_order("ppo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)

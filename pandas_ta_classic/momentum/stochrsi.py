@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -66,6 +66,7 @@ def stochrsi(
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, k=k, d=d)
     mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:

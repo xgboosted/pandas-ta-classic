@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.overlap.linreg import linreg
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.trend.decreasing import decreasing
 from pandas_ta_classic.trend.increasing import increasing
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, unsigned_differences, verify_series
@@ -141,6 +141,7 @@ def squeeze(
     asint = _bool_param(kwargs.pop("asint", None), True, "asint")
     detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")
     mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, kc_length=kc_length, mom_smooth=mom_smooth)
 
     # Calculate Result
     # Only the bands are read here; bbands' warning about a non-positive middle
