@@ -56,6 +56,7 @@ def test_leading_nan_run_does_not_change_the_result(name, pad, clean):
 # change either way is noticed.
 _NO_DATA_EXCEPTIONS = {
     "cdl_doji": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
+    "cdl_inside": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
     "cdl_pattern": "KEPT: a candle pattern reads 0 where it cannot match, as TA-Lib's does (#282)",
 }
 

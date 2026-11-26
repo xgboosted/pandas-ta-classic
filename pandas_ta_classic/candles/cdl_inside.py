@@ -41,7 +41,8 @@ def cdl_inside(
     if not asbool:
         # +-scalar (100), float64, as every pattern reads; it read +-1 and ignored scalar.
         # + 0.0 keeps a negative scalar from writing -0.0 on the other bars.
-        inside = (inside * candle_color(open_, close)).astype(float) * scalar + 0.0
+        # A bar with no colour (a missing open or close) is not inside: 0, as every pattern reads there.
+        inside = (inside * candle_color(open_, close).where(finite, 0)).astype(float) * scalar + 0.0
 
     # Offset
     inside = apply_offset(inside, offset)
