@@ -22,7 +22,7 @@ Reference strategy
 ------------------
 Fixtures are split into two categories:
 
-REFERENCE (168 indicators)
+REFERENCE (167 indicators)
     Expected values are computed from the TA-Lib C library (``import talib``)
     or from direct arithmetic — both are entirely independent of the
     pandas-ta-classic code under test.  A test failure here means the native
@@ -37,7 +37,7 @@ REFERENCE (168 indicators)
     dependent here.  correl uses talib.CORREL; slope uses
     talib.LINEARREG_SLOPE.
 
-REGRESSION (55 indicators)
+REGRESSION (56 indicators)
     No independent reference implementation exists for these purely-native
     indicators.  Their expected values ARE computed from pandas-ta-classic
     itself.  These tests detect *unintended changes* between releases, but
