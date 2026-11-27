@@ -68,11 +68,15 @@ def _columns_with_values(result: pd.DataFrame) -> list[str]:
 @pytest.mark.parametrize("name", INDICATORS)
 def test_the_leading_nan_run_itself_reads_nan(name, clean, request):
     """No value over the padded bars: mfi read 0.0 there, nvi and pvi 1000, wad and decay 0.0."""
-    exceptions = _NO_DATA_EXCEPTIONS | {"ichimoku": "KEPT: the Chikou span is close.shift(-kijun) and looks forward"}
-    if name in exceptions:
-        request.applymarker(pytest.mark.xfail(strict=True, reason=exceptions[name]))
+    if name in _NO_DATA_EXCEPTIONS:
+        request.applymarker(pytest.mark.xfail(strict=True, reason=_NO_DATA_EXCEPTIONS[name]))
     pad = PADS[-1]
     head = _call(name, _padded(clean, pad)).iloc[:pad]
+    if name == "ichimoku":
+        # KEPT: the Chikou span is close.shift(-kijun) and looks forward; every other column is checked.
+        chikou = [c for c in head.columns if str(c).startswith("ICS_")]
+        assert chikou and head[chikou].notna().any().all(), f"ichimoku: the Chikou span {chikou} no longer holds the closes after the run"
+        head = head.drop(columns=chikou)
     assert not _columns_with_values(head), f"{name}: values over {pad} bars of no data in {_columns_with_values(head)[:3]}"
 
 
