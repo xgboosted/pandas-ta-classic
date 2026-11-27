@@ -1,11 +1,11 @@
 # Cross Signals (XSIGNALS)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, _name_tokens, nan_on_short_input
 from pandas_ta_classic.utils._signals import _require_number, cross_value
 
 from .tsignals import _reject_trend_reset, tsignals
@@ -16,8 +16,8 @@ def xsignals(
     signal: Series,
     xa: float,
     xb: float,
-    above: bool | None = None,
-    long: bool | None = None,
+    above: Annotated[bool, Flag()] = True,
+    long: Annotated[bool, Flag()] = True,
     asbool: bool | None = None,
     *,
     trade_offset: int | None = None,
@@ -32,8 +32,6 @@ def xsignals(
     if signal is None:
         return None
     offset = get_offset(offset)
-    above = _bool_param(above, True, "above")
-    long = _bool_param(long, True, "long")
     _reject_trend_reset("xsignals", kwargs)
     # Validate the thresholds here so an invalid value names xsignals and the
     # argument, not cross_value (rule 2).

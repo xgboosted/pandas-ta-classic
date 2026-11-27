@@ -1,5 +1,5 @@
 # Ease of Movement (EOM)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
@@ -21,16 +21,14 @@ def eom(
     low: Series,
     close: Series,
     volume: Series,
-    length: int | None = None,
-    divisor: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    divisor: Annotated[float, Bound(gt=0)] = 100000000,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Ease of Movement (EOM)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
-    divisor = _pos_float(divisor, 100000000, "divisor")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

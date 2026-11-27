@@ -1,5 +1,5 @@
 # Ultimate Oscillator (UO)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _name_tokens, _windows_in_order, nan_on_short_input
 
 
 def _uo_native(high, low, close, fast, medium, slow, fast_w, medium_w, slow_w, drift):
@@ -64,33 +64,27 @@ def uo(
     high: Series,
     low: Series,
     close: Series,
-    fast: int | None = None,
-    medium: int | None = None,
-    slow: int | None = None,
-    fast_w: float | None = None,
-    medium_w: float | None = None,
-    slow_w: float | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 7,
+    medium: Annotated[int, Bound(gt=0)] = 14,
+    slow: Annotated[int, Bound(gt=0)] = 28,
+    fast_w: Annotated[float, Bound(gt=0)] = 4.0,
+    medium_w: Annotated[float, Bound(gt=0)] = 2.0,
+    slow_w: Annotated[float, Bound(gt=0)] = 1.0,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Ultimate Oscillator (UO)"""
     # Validate arguments
-    fast = _pos_int(fast, 7, "fast")
-    fast_w = _pos_float(fast_w, 4.0, "fast_w")
-    medium = _pos_int(medium, 14, "medium")
-    medium_w = _pos_float(medium_w, 2.0, "medium_w")
-    slow = _pos_int(slow, 28, "slow")
     _windows_in_order("uo", fast=fast, medium=medium, slow=slow)
-    slow_w = _pos_float(slow_w, 1.0, "slow_w")
     _length = max(fast, medium, slow)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None

@@ -1,11 +1,11 @@
 # Smart Money Concept Liquidity Sweep (SMC_SWEEP)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series, concat
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
@@ -14,15 +14,13 @@ def smc_sweep(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    wick_mult: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 15,
+    wick_mult: Annotated[float, Bound(gt=0)] = 1.5,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Smart Money Concept Liquidity Sweep"""
     # Validate Arguments
-    length = _pos_int(length, 15, "length")
-    wick_mult = _pos_float(wick_mult, 1.5, "wick_mult")
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)

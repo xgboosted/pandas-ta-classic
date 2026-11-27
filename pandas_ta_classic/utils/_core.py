@@ -537,8 +537,8 @@ def nan_on_short_input(fn: Callable) -> Callable:
     sig = inspect.signature(fn)
     # The keyword check runs here because this is the one place that knows a call is
     # the caller's own and not an inner call; a custom indicator is not checked.
-    static = static_keywords(fn) if _is_package_indicator(fn) else None
     declared = declared_params(fn)
+    static = static_keywords(fn, frozenset(n for n, d in declared.items() if d.in_kwargs)) if _is_package_indicator(fn) else None
     # resolve() takes a default_from value from the parameter resolved before it, so that
     # parameter must be declared and come earlier; checked here, once, not at the first call
     for name, spec in declared.items():

@@ -1,20 +1,20 @@
 # Volume Profile (VP)
 import warnings
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series, concat, cut
 
 from pandas_ta_classic.utils import apply_fill, signed_series, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, _bool_param, nan_on_short_input
 
 
 @nan_on_short_input
 def vp(
     close: Series,
     volume: Series,
-    width: int | None = None,
-    **kwargs: Any,
+    width: Annotated[int, Bound(gt=0)] = 10,
+    **kwargs: Annotated[Any, Options(sort_close=Flag(False))],
 ) -> DataFrame | None:
     """Indicator: Volume Profile (VP)"""
     # Validate arguments
@@ -31,10 +31,9 @@ def vp(
         )
         return None
 
-    width = _pos_int(width, 10, "width")
     close = verify_series(close, width)
     volume = verify_series(volume, width)
-    sort_close = _bool_param(kwargs.pop("sort_close", None), False, "sort_close")
+    sort_close = kwargs.pop("sort_close")
 
     if close is None or volume is None:
         return None

@@ -1,10 +1,10 @@
 # Short Run (SHORT_RUN)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 from .decreasing import decreasing
 from .increasing import increasing
@@ -14,13 +14,12 @@ from .increasing import increasing
 def short_run(
     fast: Series,
     slow: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 2,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Short Run"""
     # Validate Arguments
-    length = _pos_int(length, 2, "length")
     if fast is None or slow is None:
         raise ValueError("short_run() requires 'fast' and 'slow' Series; they have no default")
     fast = verify_series(fast, length)

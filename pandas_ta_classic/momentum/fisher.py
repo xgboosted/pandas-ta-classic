@@ -1,5 +1,5 @@
 # Fisher Transform (FISHER)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -36,15 +36,13 @@ def _fisher_loop(pos_arr, m, length):
 def fisher(
     high: Series,
     low: Series,
-    length: int | None = None,
-    signal: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 9,
+    signal: Annotated[int, Bound(gt=0)] = 1,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Fisher Transform (FISHT)"""
     # Validate Arguments
-    length = _pos_int(length, 9, "length")
-    signal = _pos_int(signal, 1, "signal")
     _length = max(length, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

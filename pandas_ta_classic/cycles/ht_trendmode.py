@@ -1,12 +1,12 @@
 # Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.cycles._hilbert import hilbert_result
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Flag, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -14,7 +14,7 @@ from pandas_ta_classic.utils._core import _bool_param, _positive_inputs, nan_on_
 @skip_leading_nan("close", interior=True)
 def ht_trendmode(
     close: Series,
-    talib: bool | None = None,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -22,7 +22,7 @@ def ht_trendmode(
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None

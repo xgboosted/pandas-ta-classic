@@ -1,11 +1,11 @@
 # McGinley Dynamic (MCGD)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _positive_inputs, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -30,15 +30,13 @@ def _mcgd_loop(c_arr, n, c, length):
 @skip_leading_nan("close", interior=True)
 def mcgd(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
-    c: float | None = None,
+    c: Annotated[float, Bound(gt=0)] = 1,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: McGinley Dynamic Indicator"""
     # Validate arguments
-    length = _pos_int(length, 10, "length")
-    c = _pos_float(c, 1, "c")
     if c > 1:
         raise ValueError(f"mcgd() c must be a number > 0 and <= 1, got {c!r}")
     close = verify_series(close, length)

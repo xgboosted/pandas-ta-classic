@@ -80,7 +80,7 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
-- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/oracle/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options in `_KWARGS_OPTIONS`, and a reason for any new deviation in `test_api_consistency.py`'s table
+- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/oracle/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options declared with `Options(...)` (or, for one it only hands on, listed in `_KWARGS_OPTIONS`), and a reason for any new deviation in `test_api_consistency.py`'s table
 - If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/oracle/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 

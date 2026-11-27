@@ -1,11 +1,11 @@
 # Rate of Change (ROC)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _positive_inputs, nan_on_short_input
 
 from .mom import mom
 
@@ -14,19 +14,17 @@ from .mom import mom
 @_positive_inputs("close")
 def roc(
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    scalar: Annotated[float, Bound(gt=0)] = 100,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Rate of Change (ROC)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None

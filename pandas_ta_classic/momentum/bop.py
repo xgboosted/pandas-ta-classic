@@ -1,5 +1,5 @@
 # Balance of Power (BOP)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 
 
 @nan_on_short_input
@@ -19,8 +19,8 @@ def bop(
     high: Series,
     low: Series,
     close: Series,
-    scalar: float | None = None,
-    talib: bool | None = None,
+    scalar: Annotated[float, Bound()] = 1,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -30,9 +30,8 @@ def bop(
     high = verify_series(high)
     low = verify_series(low)
     close = verify_series(close)
-    scalar = _number(scalar, 1, "scalar")
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if open_ is None or high is None or low is None or close is None:
         return None

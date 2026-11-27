@@ -1,5 +1,5 @@
 # Vortex Indicator (VORTEX)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _pos_int, nan_on_short_input
 from pandas_ta_classic.volatility.true_range import true_range
 
 
@@ -20,14 +20,13 @@ def vortex(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Vortex"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0, lt=length + 1)
     _length = max(length, min_periods)
     high = verify_series(high, _length)

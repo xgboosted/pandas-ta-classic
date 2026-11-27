@@ -1,25 +1,23 @@
 # Detrend Price Oscillator (DPO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _bool_param, _name_tokens, nan_on_short_input
 
 
 @nan_on_short_input
 def dpo(
     close: Series,
-    length: int | None = None,
-    centered: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 20,
+    centered: Annotated[bool, Flag()] = True,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Detrend Price Oscillator (DPO)"""
     # Validate Arguments
-    length = _pos_int(length, 20, "length")
-    centered = _bool_param(centered, True, "centered")
     close = verify_series(close, length)
     offset = get_offset(offset)
     if not _bool_param(kwargs.get("lookahead"), True, "lookahead"):

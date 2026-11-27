@@ -1,23 +1,22 @@
 # Mean Absolute Deviation (MAD)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def mad(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 30,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Mean Absolute Deviation"""
     # Validate Arguments
-    length = _pos_int(length, 30, "length")
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=1, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)

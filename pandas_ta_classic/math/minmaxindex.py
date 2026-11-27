@@ -1,22 +1,21 @@
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _sliding_argextreme, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _sliding_argextreme, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
 @skip_leading_nan("close")
 def minmaxindex(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 30,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Window-relative Min and Max indices over *length* periods."""
-    length = _pos_int(length, 30, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     if close is None:

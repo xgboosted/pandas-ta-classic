@@ -1,27 +1,24 @@
 # Arnaud Legoux Moving Average (ALMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _sliding_weighted_ma, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _sliding_weighted_ma, nan_on_short_input
 
 
 @nan_on_short_input
 def alma(
     close: Series,
-    length: int | None = None,
-    sigma: float | None = None,
-    distribution_offset: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    sigma: Annotated[float, Bound(gt=0)] = 6.0,
+    distribution_offset: Annotated[float, Bound(gt=0)] = 0.85,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Arnaud Legoux Moving Average (ALMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    sigma = _pos_float(sigma, 6.0, "sigma")
-    distribution_offset = _pos_float(distribution_offset, 0.85, "distribution_offset")
     close = verify_series(close, length)
     offset = get_offset(offset)
 
