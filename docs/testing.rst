@@ -181,8 +181,9 @@ Edge-Case Tests
 - ``test_leading_nan_contract.py`` — for every registered indicator, a
   leading NaN run (chained input) leaves the result on the real bars
   unchanged, the padded bars themselves read NaN, and an all-NaN input reads
-  NaN throughout; candle patterns, which read 0 there as TA-Lib's do, are
-  pinned as decided.
+  NaN throughout; candle patterns, which read 0 there as TA-Lib's do, and
+  ``ichimoku``'s forward-looking Chikou span, which holds values on the padded
+  bars, are pinned as decided.
 - ``test_interior_nan_contract.py`` — for every registered indicator, one
   missing bar inside the series recovers, or differs persistently only for
   cumulative indicators and whole-series fits (see "Missing Values" in the
