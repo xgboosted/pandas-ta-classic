@@ -1,26 +1,24 @@
 # Quantile (QUANTILE)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def quantile(
     close: Series,
-    length: int | None = None,
-    q: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 30,
+    q: Annotated[float, Bound(gt=0, lt=1)] = 0.5,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Quantile"""
     # Validate Arguments
-    length = _pos_int(length, 30, "length")
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=1, lt=length + 1)
-    q = _pos_float(q, 0.5, "q", lt=1)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
 

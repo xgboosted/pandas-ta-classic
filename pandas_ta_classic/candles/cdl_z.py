@@ -1,11 +1,11 @@
 # Candle Z (CDL_Z)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.statistics.zscore import zscore
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, degenerate_div, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _pos_int, degenerate_div, nan_on_short_input
 
 
 def _anchored_zscore(series: Series) -> Series:
@@ -32,22 +32,21 @@ def cdl_z(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    full: bool | None = None,
+    length: Annotated[int, Bound(gt=1)] = 30,
+    full: Annotated[bool, Flag()] = False,
     ddof: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Candle Type - Z Score"""
     # Validate Arguments
-    length = _pos_int(length, 30, "length", gt=1)  # zscore needs at least two rows
+    # zscore needs at least two rows
     ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    full = _bool_param(full, False, "full")
 
     if open_ is None or high is None or low is None or close is None:
         return None

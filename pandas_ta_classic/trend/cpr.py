@@ -1,10 +1,18 @@
 # Central Pivot Range (CPR)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _nan_where_not_positive, _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import (
+    Bound,
+    Flag,
+    OneOf,
+    Options,
+    _bool_param,
+    _nan_where_not_positive,
+    nan_on_short_input,
+)
 from pandas_ta_classic.utils._cpr import (
     calculate_cpr_width,
     calculate_price_position,
@@ -79,30 +87,27 @@ def cpr(
     low: Series,
     close: Series,
     volume: Series | None = None,
-    method: str | None = None,
-    timeframe: str | None = None,
-    levels: str | None = None,
-    width_analysis: bool | None = None,
-    price_position: bool | None = None,
-    virgin_cpr: bool | None = None,
+    method: Annotated[str, OneOf(tuple({'classic', 'camarilla', 'fibonacci', 'woodie'}))] = 'classic',
+    timeframe: Annotated[str, OneOf(tuple({'intraday', 'daily', 'weekly', 'monthly'}))] = 'daily',
+    levels: Annotated[str, OneOf(tuple({'basic', 'standard', 'extended', 'all'}))] = 'standard',
+    width_analysis: Annotated[bool, Flag()] = True,
+    price_position: Annotated[bool, Flag()] = True,
+    virgin_cpr: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[
+        Any,
+        Options(width_narrow=Bound(ge=0, default=0.5), width_wide=Bound(ge=0, default=1.5), virgin_lookforward=Bound(gt=0, default=5, integer=True)),
+    ],
 ) -> DataFrame | None:
     """Indicator: CPR (Central Pivot Range)"""
     # Validate arguments
-    method = _str_param(method, "classic", "method", choices={"classic", "camarilla", "fibonacci", "woodie"})
-    timeframe = _str_param(timeframe, "daily", "timeframe", choices={"intraday", "daily", "weekly", "monthly"})
-    levels = _str_param(levels, "standard", "levels", choices={"basic", "standard", "extended", "all"})
-    width_analysis = _bool_param(width_analysis, True, "width_analysis")
-    price_position = _bool_param(price_position, True, "price_position")
-    virgin_cpr = _bool_param(virgin_cpr, False, "virgin_cpr")
     # Validated whether or not their feature is on: a bad value is a caller error either way (#393)
-    width_narrow = _number(kwargs.pop("width_narrow", None), 0.5, "width_narrow", ge=0)
-    width_wide = _number(kwargs.pop("width_wide", None), 1.5, "width_wide", ge=0)
+    width_narrow = kwargs.pop("width_narrow")
+    width_wide = kwargs.pop("width_wide")
     if width_narrow > width_wide:
         # The medium class (between the two) cannot occur when they overlap.
         raise ValueError(f"cpr() needs width_narrow <= width_wide, got width_narrow={width_narrow}, width_wide={width_wide}")
-    virgin_lookforward = _pos_int(kwargs.pop("virgin_lookforward", None), 5, "virgin_lookforward")
+    virgin_lookforward = kwargs.pop("virgin_lookforward")
     if "interval" in kwargs:
         # Removed without a deprecation step because it never had an effect
         # (AGENTS.md rule 11). **kwargs would otherwise swallow it silently.

@@ -38,10 +38,9 @@ union of both indexes.
 Parameter Defaults
 ------------------
 
-``None`` selects a parameter's default everywhere. The moving averages and the
-indicators that take ``mamode`` (all 31 of them) also declare their defaults and
-constant bounds in the signature, so they can be read without calling the
-indicator:
+``None`` selects a parameter's default everywhere. Every indicator also declares
+its defaults and constant bounds in the signature, so they can be read without
+calling the indicator:
 
 .. code-block:: python
 
@@ -56,10 +55,12 @@ indicator:
 ``float``, ``bool``, ``str``), its default, its bounds or choices, whether it is
 read from ``**kwargs`` (``in_kwargs``), and ``default_from`` where the default is
 another parameter's value (``adx``'s ``lensig`` takes ``length``). It raises
-``ValueError`` for an indicator that declares nothing yet; the other indicators
-follow in a later release. A bound that depends on another parameter
-(``min_periods`` at most ``length``) is checked when the indicator runs and is
-not listed.
+``ValueError`` for an indicator with nothing to declare: one that takes no
+parameter besides ``offset`` and ``drift`` (``ha``, the math transforms), or only
+parameters of the kind below. A bound that depends on another parameter
+(``min_periods`` at most ``length``, ``ddof`` below ``length``) and a free-form
+string (``vwap``'s ``anchor``) are checked when the indicator runs and are not
+listed.
 
 A window handed to the chosen moving average is checked against that average's
 own bound, so the error names the parameter you passed:

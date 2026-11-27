@@ -23,7 +23,7 @@ from pandas_ta_classic.utils._core import declared_params
 from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS, _MA_OPTIONS, accepted_keywords
 from pandas_ta_classic.utils._signals import attach_signals
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS, code_defaults, declared_bounds, declared_kwargs_flags, inputs, plain_annotation, spy
+from tests.contracts import INDICATORS, code_defaults, declared_bounds, declared_kwargs_flags, inputs, kwargs_options, plain_annotation, spy
 from tests.contracts.test_degenerate_input import _call
 from tests.meta.test_docstring_defaults import _MODULES
 
@@ -662,7 +662,7 @@ def _option_cases():
         params = inspect.signature(getattr(ta, name)).parameters
         series = set(inputs(name, spy(50)))
         options = {p for p in params if p not in series and params[p].kind is not inspect.Parameter.VAR_KEYWORD}
-        options |= set(_KWARGS_OPTIONS.get(name, ())) - {"fillna", "fill_method"}
+        options |= set(kwargs_options(name)) - {"fillna", "fill_method"}
         cases += [(name, {}, option) for option in sorted(options)]
         # the xserie options are read only when the signals are on
         cases += [(name, {"signal_indicators": True}, option) for option in sorted(options) if option.startswith("xserie")]

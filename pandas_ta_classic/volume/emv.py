@@ -1,5 +1,5 @@
 # Ease of Movement (EMV)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Options, nan_on_short_input
 
 
 @nan_on_short_input
@@ -20,7 +20,7 @@ def emv(
     volume: Series,
     drift: int | None = None,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(divisor=Bound(gt=0, default=10000))],
 ) -> Series | None:
     """Indicator: Ease of Movement (EMV)
 
@@ -39,7 +39,7 @@ def emv(
         return None
 
     # divisor=10000 matches tulipy's EMV scaling convention
-    divisor = _pos_float(kwargs.pop("divisor", None), 10000, "divisor")
+    divisor = kwargs.pop("divisor")
     # The range is a numerator factor -- EMV reduces to
     # distance * range * divisor / volume -- so a bar that traded at one price
     # moved nothing and reads 0.0 outright; that is the value, not a marker.

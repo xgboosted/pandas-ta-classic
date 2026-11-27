@@ -1,25 +1,23 @@
 # Volume Oscillator (VOSC)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
 def vosc(
     volume: Series,
-    fast: int | None = None,
-    slow: int | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 14,
+    slow: Annotated[int, Bound(gt=0)] = 28,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Volume Oscillator (VOSC)"""
     # Validate Arguments
-    fast = _pos_int(fast, 14, "fast")
-    slow = _pos_int(slow, 28, "slow")
     _windows_in_order("vosc", fast=fast, slow=slow)
     volume = verify_series(volume, slow)
     offset = get_offset(offset)

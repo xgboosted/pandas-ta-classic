@@ -1,10 +1,10 @@
 # Candle Inside (CDL_INSIDE)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, candle_color, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _number, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 
 
 @nan_on_short_input
@@ -13,15 +13,13 @@ def cdl_inside(
     high: Series,
     low: Series,
     close: Series,
-    asbool: bool | None = None,
-    scalar: float | None = None,
+    asbool: Annotated[bool, Flag()] = False,
+    scalar: Annotated[float, Bound()] = 100,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Candle Type - Inside Bar"""
     # Validate arguments
-    asbool = _bool_param(asbool, False, "asbool")
-    scalar = _number(scalar, 100, "scalar")
     open_ = verify_series(open_)
     high = verify_series(high)
     low = verify_series(low)

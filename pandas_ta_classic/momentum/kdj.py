@@ -1,5 +1,5 @@
 # KDJ (KDJ)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
@@ -18,15 +18,13 @@ def kdj(
     high: Series | None = None,
     low: Series | None = None,
     close: Series | None = None,
-    length: int | None = None,
-    signal: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 9,
+    signal: Annotated[int, Bound(gt=0)] = 3,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: KDJ (KDJ)"""
     # Validate Arguments
-    length = _pos_int(length, 9, "length")
-    signal = _pos_int(signal, 3, "signal")
     _length = max(length, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

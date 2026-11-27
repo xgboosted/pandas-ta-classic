@@ -1,5 +1,5 @@
 # Price Volume (PVOL)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, Options, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
@@ -19,7 +19,7 @@ def pvol(
     close: Series,
     volume: Series,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(signed=Flag(False))],
 ) -> Series | None:
     """Indicator: Price-Volume (PVOL)"""
     # Validate arguments
@@ -28,7 +28,7 @@ def pvol(
     if close is None or volume is None:
         return None
     offset = get_offset(offset)
-    signed = _bool_param(kwargs.pop("signed", None), False, "signed")
+    signed = kwargs.pop("signed")
 
     # Calculate Result
     pvol = close * volume

@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 
 import pandas_ta_classic
-from pandas_ta_classic.utils._keywords import _EMA as _EMA_KEYWORDS, _KWARGS_OPTIONS
-from tests.contracts import code_defaults as _code_defaults
+from pandas_ta_classic.utils._keywords import _EMA as _EMA_KEYWORDS
+from tests.contracts import code_defaults as _code_defaults, kwargs_options
 
 _PACKAGE = Path(pandas_ta_classic.__file__).parent
 _MODULES = sorted(p for p in _PACKAGE.glob("*/*.py") if not p.name.startswith("_") and p.parent.name != "utils")
@@ -50,7 +50,7 @@ def test_sweep_compares_a_meaningful_number_of_defaults():
 _EMA = _PACKAGE / "overlap" / "ema.py"
 # The keyword table lists every indicator that hands ema's options on through
 # **kwargs (tests/contracts/test_keyword_table.py keeps it in step with the code).
-_EMA_FORWARDERS = [m for m in _MODULES if m != _EMA and _KWARGS_OPTIONS.get(m.stem, frozenset()) >= _EMA_KEYWORDS]
+_EMA_FORWARDERS = [m for m in _MODULES if m != _EMA and kwargs_options(m.stem) >= _EMA_KEYWORDS]
 
 
 def test_ema_forwarders_found():

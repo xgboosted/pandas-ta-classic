@@ -1,5 +1,5 @@
 # BRAR (Bull and Bear Ratio)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
@@ -20,16 +20,14 @@ def brar(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 26,
+    scalar: Annotated[float, Bound()] = 100,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: BRAR (BRAR)"""
     # Validate Arguments
-    length = _pos_int(length, 26, "length")
-    scalar = _number(scalar, 100, "scalar")
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)

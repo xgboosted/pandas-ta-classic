@@ -1,5 +1,5 @@
 # Choppiness Index (CHOP)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 from pandas_ta_classic.volatility.atr import atr
 
 
@@ -19,19 +19,15 @@ def chop(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    atr_length: int | None = None,
-    ln: bool | None = None,
-    scalar: float | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
+    atr_length: Annotated[int, Bound(gt=0)] = 1,
+    ln: Annotated[bool, Flag()] = False,
+    scalar: Annotated[float, Bound()] = 100,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Choppiness Index (CHOP)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length", gt=1)
-    atr_length = _pos_int(atr_length, 1, "atr_length")
-    ln = _bool_param(ln, False, "ln")
-    scalar = _number(scalar, 100, "scalar")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

@@ -37,7 +37,9 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.utils._core import Bound, Declared, Flag, OneOf, declared_params
+from pandas_ta_classic.utils._keywords import kwargs_options as _kwargs_options
 from tests.config import get_sample_data
 
 COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
@@ -146,9 +148,20 @@ def declared(name: str) -> dict[str, Declared]:
     return declared_params(getattr(ta, name))
 
 
+def kwargs_options(indicator: str | typing.Callable) -> frozenset[str]:
+    """The options *indicator* (a name or the function) reads from ``**kwargs`` or hands on:
+    the ones it declares with ``Options(...)`` and the ones ``_KWARGS_OPTIONS`` lists."""
+    func = _find_indicator_func(indicator) if isinstance(indicator, str) else indicator
+    if not callable(func):
+        return frozenset()
+    func = inspect.unwrap(func)
+    return _kwargs_options(func, frozenset(p for p, d in declared_params(func).items() if d.in_kwargs))
+
+
 def declared_bounds(name: str) -> set[str]:
-    """Declared signature parameters with a lower bound (``Bound(gt=0)``)."""
-    return {p for p, d in declared(name).items() if not d.in_kwargs and isinstance(d.marker, Bound) and d.marker.gt is not None}
+    """Declared signature parameters with a lower bound (``Bound(gt=0)``, ``Bound(ge=0)``), the
+    ones ``_pos_int``/``_pos_float`` checked in the body: a negative value is rejected."""
+    return {p for p, d in declared(name).items() if not d.in_kwargs and isinstance(d.marker, Bound) and (d.marker.gt is not None or d.marker.ge is not None)}
 
 
 def declared_kwargs_flags(name: str) -> set[str]:

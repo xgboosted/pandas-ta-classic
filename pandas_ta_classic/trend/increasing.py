@@ -1,5 +1,5 @@
 # Increasing (INCREASING)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,29 +10,25 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 
 
 @nan_on_short_input
 def increasing(
     close: Series,
-    length: int | None = None,
-    strict: bool | None = None,
-    asint: bool | None = None,
-    percent: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 1,
+    strict: Annotated[bool, Flag()] = False,
+    asint: Annotated[bool, Flag()] = True,
+    percent: Annotated[float | None, Bound(ge=0)] = None,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Increasing"""
     # Validate Arguments
-    length = _pos_int(length, 1, "length")
-    strict = _bool_param(strict, False, "strict")
-    asint = _bool_param(asint, True, "asint")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    percent = _number(percent, None, "percent", ge=0)
 
     if close is None:
         return None

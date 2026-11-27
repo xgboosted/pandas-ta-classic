@@ -1,5 +1,5 @@
 # Relative Vigor Index (RVGI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
@@ -19,15 +19,13 @@ def rvgi(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    swma_length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    swma_length: Annotated[int, Bound(gt=0)] = 4,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Relative Vigor Index (RVGI)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
-    swma_length = _pos_int(swma_length, 4, "swma_length")
     _length = max(length, swma_length)
     open_ = verify_series(open_, _length)
     high = verify_series(high, _length)

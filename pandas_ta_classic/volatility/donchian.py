@@ -1,25 +1,23 @@
 # Donchian Channels (DONCHIAN)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def donchian(
     high: Series,
     low: Series,
-    lower_length: int | None = None,
-    upper_length: int | None = None,
+    lower_length: Annotated[int, Bound(gt=0)] = 20,
+    upper_length: Annotated[int, Bound(gt=0)] = 20,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Donchian Channels (DC)"""
     # Validate arguments
-    lower_length = _pos_int(lower_length, 20, "lower_length")
-    upper_length = _pos_int(upper_length, 20, "upper_length")
     lower_min_periods = _pos_int(kwargs.get("lower_min_periods"), lower_length, "lower_min_periods", gt=None, ge=0, lt=lower_length + 1)
     upper_min_periods = _pos_int(kwargs.get("upper_min_periods"), upper_length, "upper_min_periods", gt=None, ge=0, lt=upper_length + 1)
     _length = max(lower_length, lower_min_periods, upper_length, upper_min_periods)

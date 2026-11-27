@@ -1,5 +1,5 @@
 # Parabolic SAR (PSAR)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _name_tokens, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -74,9 +74,9 @@ def psar(
     high: Series,
     low: Series,
     close: Series | None = None,
-    af0: float | None = None,
-    af: float | None = None,
-    max_af: float | None = None,
+    af0: Annotated[float, Bound(gt=0)] = 0.02,
+    af: Annotated[float, Bound(gt=0)] = 0.02,
+    max_af: Annotated[float, Bound(gt=0)] = 0.2,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
@@ -84,9 +84,6 @@ def psar(
     # Validate Arguments
     high = verify_series(high)
     low = verify_series(low)
-    af = _pos_float(af, 0.02, "af")
-    af0 = _pos_float(af0, 0.02, "af0")
-    max_af = _pos_float(max_af, 0.2, "max_af")
     offset = get_offset(offset)
 
     if high is None or low is None:

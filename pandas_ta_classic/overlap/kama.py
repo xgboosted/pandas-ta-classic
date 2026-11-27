@@ -1,5 +1,5 @@
 # Kaufman Adaptive Moving Average (KAMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _windows_in_order, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, Flag, _windows_in_order, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -40,24 +40,21 @@ def _kama_nb(sc, close, length):
 @skip_leading_nan("close", interior=True)
 def kama(
     close: Series,
-    length: int | None = None,
-    fast: int | None = None,
-    slow: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    fast: Annotated[int, Bound(gt=0)] = 2,
+    slow: Annotated[int, Bound(gt=0)] = 30,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Kaufman's Adaptive Moving Average (KAMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    fast = _pos_int(fast, 2, "fast")
-    slow = _pos_int(slow, 30, "slow")
     _windows_in_order("kama", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, length))
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None

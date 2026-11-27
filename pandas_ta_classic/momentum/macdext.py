@@ -1,12 +1,12 @@
 # MACD Extended (MACDEXT)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _name_tokens, _windows_in_order, nan_on_short_input
 
 # TA-Lib MA type integer → string kind for the native path. KAMA (6) and
 # MAMA (7) have no native equivalent here; they need TA-Lib.
@@ -24,13 +24,13 @@ _MATYPE_TO_KIND = {
 @nan_on_short_input
 def macdext(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    fastmatype: int | None = None,
-    slowmatype: int | None = None,
-    signalmatype: int | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    fastmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,
+    slowmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,
+    signalmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
@@ -41,16 +41,13 @@ def macdext(
     0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3.
     """
     # Validate Arguments
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
-    signal = _pos_int(signal, 9, "signal")
-    fastmatype = _pos_int(fastmatype, 1, "fastmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
-    slowmatype = _pos_int(slowmatype, 1, "slowmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
-    signalmatype = _pos_int(signalmatype, 1, "signalmatype", gt=None, ge=0, lt=9)  # TA-Lib MA_Type 0..8
+    # TA-Lib MA_Type 0..8
+    # TA-Lib MA_Type 0..8
+    # TA-Lib MA_Type 0..8
     _windows_in_order("macdext", fast=fast, slow=slow)
     close = verify_series(close, slow + signal)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None

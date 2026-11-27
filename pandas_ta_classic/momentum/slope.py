@@ -1,28 +1,25 @@
 # Slope (SLOPE)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 
 
 @nan_on_short_input
 def slope(
     close: Series,
-    length: int | None = None,
-    as_angle: bool | None = None,
-    to_degrees: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 1,
+    as_angle: Annotated[bool, Flag()] = False,
+    to_degrees: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Slope"""
     # Validate arguments
-    length = _pos_int(length, 1, "length")
     # was bool(isinstance(x, bool)), which turned as_angle=False into True
-    as_angle = _bool_param(as_angle, False, "as_angle")
-    to_degrees = _bool_param(to_degrees, False, "to_degrees")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

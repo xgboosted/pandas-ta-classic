@@ -1,5 +1,5 @@
 # Vertical Horizontal Filter (VHF)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -11,20 +11,19 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def vhf(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 28,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Vertical Horizontal Filter (VHF)"""
     # Validate arguments
-    length = _pos_int(length, 28, "length")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

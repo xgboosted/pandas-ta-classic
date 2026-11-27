@@ -1,12 +1,12 @@
 # Accumulation/Distribution Oscillator (ADOSC)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _windows_in_order, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, Flag, _windows_in_order, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 from .ad import ad
@@ -34,16 +34,14 @@ def adosc(
     close: Series,
     volume: Series,
     open_: Series | None = None,
-    fast: int | None = None,
-    slow: int | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 3,
+    slow: Annotated[int, Bound(gt=0)] = 10,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Accumulation/Distribution Oscillator"""
     # Validate Arguments
-    fast = _pos_int(fast, 3, "fast")
-    slow = _pos_int(slow, 10, "slow")
     _windows_in_order("adosc", fast=fast, slow=slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)
@@ -51,7 +49,7 @@ def adosc(
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if high is None or low is None or close is None or volume is None:
         return None

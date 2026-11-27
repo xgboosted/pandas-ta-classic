@@ -1,10 +1,10 @@
 # Stochastic Momentum Index (SMI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _windows_in_order, nan_on_short_input
 
 from .tsi import tsi
 
@@ -12,20 +12,16 @@ from .tsi import tsi
 @nan_on_short_input
 def smi(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 5,
+    slow: Annotated[int, Bound(gt=0)] = 20,
+    signal: Annotated[int, Bound(gt=0)] = 5,
+    scalar: Annotated[float, Bound()] = 1,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: SMI Ergodic Indicator (SMIIO)"""
     # Validate arguments
-    fast = _pos_int(fast, 5, "fast")
-    slow = _pos_int(slow, 20, "slow")
-    signal = _pos_int(signal, 5, "signal")
     _windows_in_order("smi", fast=fast, slow=slow)
-    scalar = _number(scalar, 1, "scalar")
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
 

@@ -1,17 +1,17 @@
 # Mean Deviation (MD)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.statistics.mad import mad
 from pandas_ta_classic.utils import get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def md(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 30,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -20,7 +20,6 @@ def md(
     Rolling mean of absolute deviations from the rolling mean.
     Equivalent to ta.mad.  tulipy name: MD.
     """
-    length = _pos_int(length, 30, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

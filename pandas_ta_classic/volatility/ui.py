@@ -1,27 +1,25 @@
 # Ulcer Index (UI)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def ui(
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    scalar: Annotated[float, Bound(gt=0)] = 100,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(everget=Flag(False))],
 ) -> Series | None:
     """Indicator: Ulcer Index (UI)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
-    scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -34,7 +32,7 @@ def ui(
     downside /= highest_close
     d2 = downside * downside
 
-    everget = _bool_param(kwargs.pop("everget", None), False, "everget")
+    everget = kwargs.pop("everget")
     if everget:
         # Everget uses SMA instead of SUM for calculation
         ui = (sma(d2, length) / length).apply(np.sqrt)

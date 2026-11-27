@@ -1,24 +1,23 @@
 # Standard Error (STDERR)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def stderr(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
     ddof: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Standard Error (STDERR)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length", gt=1)
     ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)

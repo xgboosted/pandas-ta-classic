@@ -1,21 +1,21 @@
 # Mesa Sine Wave (MSW)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
 @skip_leading_nan("close")
 def msw(
     close: Series,
-    period: int | None = None,
+    period: Annotated[int, Bound(gt=1)] = 5,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(tulipy=Flag(False))],
 ) -> DataFrame | None:
     """Indicator: Mesa Sine Wave (MSW)
 
@@ -23,7 +23,6 @@ def msw(
     Returns two oscillator series: sine and lead (sine + 45°).
     """
     # Validate Arguments
-    period = _pos_int(period, 5, "period", gt=1)
     close = verify_series(close, period + 1)
     offset = get_offset(offset)
 
@@ -33,7 +32,7 @@ def msw(
     # Tulipy passthrough, opt-in: tulipy truncates pi to 3.1415926, so its values differ from
     # the exact formula by up to 3e-4. It used to be the default whenever tulipy was installed,
     # which made the result depend on the environment.
-    mode_tu = _bool_param(kwargs.get("tulipy"), False, "tulipy")
+    mode_tu = kwargs.get("tulipy")
     if Imports["tulipy"] and mode_tu:
         import tulipy as tu
 

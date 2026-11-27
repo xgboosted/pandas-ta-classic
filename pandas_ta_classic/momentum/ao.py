@@ -1,26 +1,24 @@
 # Awesome Oscillator (AO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
 def ao(
     high: Series,
     low: Series,
-    fast: int | None = None,
-    slow: int | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 5,
+    slow: Annotated[int, Bound(gt=0)] = 34,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Awesome Oscillator (AO)"""
     # Validate Arguments
-    fast = _pos_int(fast, 5, "fast")
-    slow = _pos_int(slow, 34, "slow")
     _windows_in_order("ao", fast=fast, slow=slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)

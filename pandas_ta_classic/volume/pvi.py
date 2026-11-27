@@ -1,5 +1,5 @@
 # Positive Volume Index (PVI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -20,15 +20,13 @@ from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _positive_inpu
 def pvi(
     close: Series,
     volume: Series,
-    length: int | None = None,
-    initial: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 1,
+    initial: Annotated[int, Bound(gt=0)] = 1000,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Positive Volume Index (PVI)"""
     # Validate arguments
-    length = _pos_int(length, 1, "length")
-    initial = _pos_int(initial, 1000, "initial")
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     offset = get_offset(offset)

@@ -1,5 +1,5 @@
 # Parabolic SAR Extended (SAREXT)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -12,7 +12,14 @@ from pandas_ta_classic.utils import (
     verify_series,
     zero,
 )
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _number, _pos_float, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import (
+    Bound,
+    Flag,
+    _name_tokens,
+    _positive_inputs,
+    nan_on_short_input,
+    skip_leading_nan,
+)
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -157,15 +164,15 @@ def _sarext_native_result(
 def sarext(
     high: Series,
     low: Series,
-    startvalue: float | None = None,
-    offsetonreverse: float | None = None,
-    accelerationinitlong: float | None = None,
-    accelerationlong: float | None = None,
-    accelerationmaxlong: float | None = None,
-    accelerationinitshort: float | None = None,
-    accelerationshort: float | None = None,
-    accelerationmaxshort: float | None = None,
-    talib: bool | None = None,
+    startvalue: Annotated[float, Bound()] = 0.0,
+    offsetonreverse: Annotated[float, Bound(ge=0)] = 0.0,
+    accelerationinitlong: Annotated[float, Bound(gt=0)] = 0.02,
+    accelerationlong: Annotated[float, Bound(gt=0)] = 0.02,
+    accelerationmaxlong: Annotated[float, Bound(gt=0)] = 0.2,
+    accelerationinitshort: Annotated[float, Bound(gt=0)] = 0.02,
+    accelerationshort: Annotated[float, Bound(gt=0)] = 0.02,
+    accelerationmaxshort: Annotated[float, Bound(gt=0)] = 0.2,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -173,16 +180,14 @@ def sarext(
     # Validate Arguments
     high = verify_series(high, 2)
     low = verify_series(low, 2)
-    startvalue = _number(startvalue, 0.0, "startvalue")
-    offsetonreverse = _number(offsetonreverse, 0.0, "offsetonreverse", ge=0)
-    af0_long = _pos_float(accelerationinitlong, 0.02, "accelerationinitlong")
-    af_long = _pos_float(accelerationlong, 0.02, "accelerationlong")
-    max_af_long = _pos_float(accelerationmaxlong, 0.2, "accelerationmaxlong")
-    af0_short = _pos_float(accelerationinitshort, 0.02, "accelerationinitshort")
-    af_short = _pos_float(accelerationshort, 0.02, "accelerationshort")
-    max_af_short = _pos_float(accelerationmaxshort, 0.2, "accelerationmaxshort")
+    af0_long = accelerationinitlong
+    af_long = accelerationlong
+    max_af_long = accelerationmaxlong
+    af0_short = accelerationinitshort
+    af_short = accelerationshort
+    max_af_short = accelerationmaxshort
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if high is None or low is None:
         return None

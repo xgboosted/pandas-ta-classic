@@ -36,8 +36,7 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
-from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS
-from tests.contracts import INDICATORS, NOT_OHLCV, SKIP_BOOL_KWARGS, boolean_kwargs, inputs, params, plain_annotation, spy
+from tests.contracts import INDICATORS, NOT_OHLCV, SKIP_BOOL_KWARGS, boolean_kwargs, inputs, kwargs_options, params, plain_annotation, spy
 
 VALUES = (0, 1, 2, 3, 5)
 _CHOICES = re.compile(r" must be one of (\[.*\]), got 'bogus'$")
@@ -71,7 +70,7 @@ def _options(name: str) -> tuple[list[str], dict[str, dict]]:
     ints = [p for p in _annotated(name, int) if p != "offset"]
     flags = boolean_kwargs(name)
     strings = {param: _rejection(name, param, frame) for param in _annotated(name, str)}
-    for option in sorted(_KWARGS_OPTIONS.get(name, set()) - set(signature) - SKIP_BOOL_KWARGS):
+    for option in sorted(kwargs_options(name) - set(signature) - SKIP_BOOL_KWARGS):
         message = _rejection(name, option, frame)
         if "must be True or False" in message:
             flags.append(option)

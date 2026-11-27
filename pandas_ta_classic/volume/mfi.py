@@ -1,5 +1,5 @@
 # Money Flow Index (MFI)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -13,7 +13,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, Flag, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -24,22 +24,21 @@ def mfi(
     low: Series,
     close: Series,
     volume: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Money Flow Index (MFI)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if high is None or low is None or close is None or volume is None:
         return None

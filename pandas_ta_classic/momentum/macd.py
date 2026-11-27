@@ -1,5 +1,5 @@
 # Moving Average Convergence Divergence (MACD)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series, concat
@@ -13,7 +13,16 @@ from pandas_ta_classic.utils import (
     signals,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _windows_in_order, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import (
+    Bound,
+    Flag,
+    Options,
+    _bool_param,
+    _on_valid_rows,
+    _windows_in_order,
+    nan_on_short_input,
+    skip_leading_nan,
+)
 from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._signals import _require_number
 
@@ -55,27 +64,24 @@ def _ema_loop(arr, result, seed_end, k):
 @skip_leading_nan("close", interior=True)
 def macd(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(asmode=Flag(False), signal_indicators=Flag(False))],
 ) -> DataFrame | None:
     """Indicator: Moving Average, Convergence/Divergence (MACD)"""
     # Validate arguments
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
-    signal = _pos_int(signal, 9, "signal")
     _windows_in_order("macd", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None
 
-    as_mode = _bool_param(kwargs.pop("asmode", None), False, "asmode")
+    as_mode = kwargs.pop("asmode")
 
     # Calculate Result
     if Imports["talib"] and mode_talib:
@@ -117,7 +123,7 @@ def macd(
 
     # The signals read the unoffset, unfilled lines and are offset once, inside
     # signals(). Reading the shifted lines shifted them a second time.
-    signal_indicators = _bool_param(kwargs.pop("signal_indicators", None), False, "signal_indicators")
+    signal_indicators = kwargs.pop("signal_indicators")
     # Read each option once and give it to both signal sets. Popping it inside
     # the first signals() call left the MACD-line signals with the defaults.
     # Every option is validated whether or not the signals are wanted, as

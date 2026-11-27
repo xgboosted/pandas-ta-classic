@@ -1,28 +1,25 @@
 # Linear Decay (DECAY)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
 @skip_leading_nan("close")
 def decay(
     close: Series,
-    kind: str | None = None,
-    length: int | None = None,
-    mode: str | None = None,
+    kind: Annotated[str, OneOf(tuple({'linear', 'exp', 'exponential'}))] = 'linear',
+    length: Annotated[int, Bound(gt=0)] = 5,
+    mode: Annotated[str, OneOf(tuple({'linear', 'exp', 'exponential'}))] = 'linear',
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Decay"""
     # Validate Arguments
-    length = _pos_int(length, 5, "length")
-    mode = _str_param(mode, "linear", "mode", choices={"linear", "exp", "exponential"})
-    kind = _str_param(kind, "linear", "kind", choices={"linear", "exp", "exponential"})
     close = verify_series(close, length)
     offset = get_offset(offset)
 
