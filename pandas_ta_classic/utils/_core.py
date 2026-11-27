@@ -541,10 +541,12 @@ def nan_on_short_input(fn: Callable) -> Callable:
     static = static_keywords(fn, frozenset(n for n, d in declared.items() if d.in_kwargs)) if _is_package_indicator(fn) else None
     # resolve() takes a default_from value from the parameter resolved before it, so that
     # parameter must be declared and come earlier; checked here, once, not at the first call
+    steps = []  # (name, Declared, default_from) in signature order
     for name, spec in declared.items():
         source = spec.marker.default_from if isinstance(spec.marker, Bound) else None
         if source is not None and (source not in declared or list(declared).index(source) > list(declared).index(name)):
             raise TypeError(f"{fn.__name__}() {name}: default_from={source!r} must name a declared parameter before it")
+        steps.append((name, spec, source))
 
     var_keyword = next((p.name for p in sig.parameters.values() if p.kind is inspect.Parameter.VAR_KEYWORD), None)
     # Indicators take no positional-only parameters and no *args, so a call maps onto the
@@ -571,12 +573,13 @@ def nan_on_short_input(fn: Callable) -> Callable:
             bound = sig.bind(*args, **kwargs)
             arguments = dict(bound.arguments)
             bag = dict(arguments.pop(var_keyword, {})) if var_keyword else {}
-        for name, spec in declared.items():
+        for name, spec, source in steps:
             where = bag if spec.in_kwargs else arguments
-            default = spec.default
-            if isinstance(spec.marker, Bound) and spec.marker.default_from is not None and where.get(name) is None:
-                default = arguments[spec.marker.default_from]
-            where[name] = _resolve_param(name, spec, where.get(name), default)
+            val = where.get(name)
+            if val is None:  # every checker returns the default for None; skip the call
+                where[name] = spec.default if source is None else arguments[source]
+            else:
+                where[name] = _resolve_param(name, spec, val, spec.default)
         return (), {**arguments, **bag}
 
     @functools.wraps(fn)
