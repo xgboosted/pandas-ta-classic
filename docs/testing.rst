@@ -266,7 +266,12 @@ Edge-Case Tests
   (``Annotated[int, Bound(gt=1)] = 10``) are seen by every sweep that reads
   defaults and choices; each int parameter of each ``mamode`` indicator, set
   to the smallest value ``hma`` or ``linreg`` rejects, raises naming that
-  parameter; ``ta.defaults()`` reports the declaration.
+  parameter; ``ta.defaults()`` reports the declaration. An option declared
+  with ``Options(...)`` is validated and resolved before the body reads it,
+  an explicit ``None`` for every declared parameter gives the default call's
+  result, a ``default_from`` that cannot resolve or a declaration left as a
+  string annotation fails when the indicator is defined, and ``OneOf``
+  choices keep their order across processes.
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
@@ -621,9 +626,15 @@ They cover ``kst``, ``smi``, ``stc``, ``qqe``, ``squeeze_pro``,
 their sources when first ported (``kst``, ``stc``, ``cksp``, ``ttm_trend``,
 ``vfi``, ``ebsw``).
 
+``cti`` is checked against its definition in exact arithmetic instead: the
+Pearson correlation of each window with its bar numbers, computed in
+fractions, on 300 SPY closes and on the same closes shifted up by 1e4, to
+1e-12 (``test_cti_is_the_exact_correlation_to_rounding`` in
+``tests/indicators/test_momentum.py``).
+
 Still regression-only, with no independent check of their values:
 ``aberration``, ``amat``, ``aobv``, ``brar``, ``cdl_inside``, ``cdl_z``,
-``ce``, ``cti``, ``decay``, ``dsp``, ``hilo``, ``hwc``, ``hwma``,
+``ce``, ``decay``, ``dsp``, ``hilo``, ``hwc``, ``hwma``,
 ``inertia``, ``jma``, ``kdj``, ``long_run``, ``lrsi``, ``mcgd``, ``mmar``,
 ``pmax``, ``psl``, ``rainbow``, ``rsx``, ``rvgi``, ``rvi_vol``,
 ``short_run``, ``ssf``, ``td_seq``, ``thermo``, ``tos_stdevall``, ``trixh``,

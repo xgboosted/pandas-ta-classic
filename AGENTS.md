@@ -190,16 +190,18 @@ command grep -rnE "^\s+(\w+) = ((int|float)\()?\1\)? if (\1 and \1 [<>]|\1 else|
 #    coercion, int(kwargs[...]) (any "x = <x transformed> if <test on x> else <default>")
 command grep -rnE "^\s+(\w+) = .*\b\1\b.* if .*\b\1\b.* else |int\(kwargs\[|= int\(abs\(" pandas_ta_classic/ --include=*.py
 
-# 7. Numeric options read from **kwargs without validation (wrap them: _pos_int(kwargs.pop("x", None), 5, "x")).
+# 7. Numeric options read from **kwargs without validation (declare them, Options(x=Bound(gt=0, default=5, integer=True)),
+#    or wrap them: _pos_int(kwargs.pop("x", None), 5, "x")).
 #    Signal thresholds xa/xb are validated by the indicator whether or not its signals are on
 #    (utils/_signals.py attach_signals(), macd). -o prints each read on its own, so the filter drops
 #    only the xa/xb reads and never hides a second read on the same line.
 grep -rnoE 'kwargs\.(pop|get)\("\w+", -?[0-9.]+\)' pandas_ta_classic/ --include=*.py | grep -vE '\("x[ab]",'
 
-# 8. True/False options read from **kwargs by truthiness (wrap them: _bool_param(kwargs.pop("x", None), False, "x")).
+# 8. True/False options read from **kwargs by truthiness (declare them, Options(x=Flag(False)),
+#    or wrap them: _bool_param(kwargs.pop("x", None), False, "x")).
 #    setdefault counts too: kwargs.setdefault("asmode", False) returned "no" as given (macd, td_seq).
-#    stc's ma1/ma2/osc default to False but take Series; msw's tulipy flag is handled in its own module.
-grep -rnE 'kwargs\.(pop|get|setdefault)\("\w+", (True|False)\)' pandas_ta_classic/ --include=*.py | grep -vE '"(ma1|ma2|osc|tulipy)"'
+#    stc's ma1/ma2/osc default to False but take Series.
+grep -rnE 'kwargs\.(pop|get|setdefault)\("\w+", (True|False)\)' pandas_ta_classic/ --include=*.py | grep -vE '"(ma1|ma2|osc)"'
 
 # 9. A bare coercion of a declared parameter (`refined = bool(refined)`), which greps 5 and 6
 #    miss because there is no `if`. It turned refined="yes" into True and refined=[] into the
@@ -249,7 +251,7 @@ Additional workflows: `mirror.yml` syncs repository to Codeberg on every push ex
 
 Each indicator lives in its own module under `pandas_ta_classic/<category>/<indicator>.py`:
 - One public function matching the indicator name (e.g., `def rsi(...)`)
-- Standard signature: `(close, length=None, ..., offset=None, **kwargs)`
+- Standard signature: `(close, length: Annotated[int, Bound(gt=0)] = 14, ..., offset: int | None = None, **kwargs)`, with each literal default and constant bound declared (**Import Conventions**, #397); `drift`, `offset` and a default that depends on another parameter stay `None`
 - Returns: pandas Series or DataFrame
 
 ### Adding a New Indicator
