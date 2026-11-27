@@ -41,7 +41,9 @@ Missing Values
 **A leading NaN run is not data.** Chained input (one indicator's output fed
 into another) starts with a NaN warm-up run. Every indicator returns the same
 values on the real bars as it would on the series without that run, and NaN on
-the run itself. ``tests/contracts/test_leading_nan_contract.py`` checks every registered
+the run itself. Candle patterns read 0 there, as TA-Lib's do, and the Chikou
+span of ``ichimoku`` (``ICS_*``, the close shifted back) holds the closes that
+follow the run unless ``lookahead=False``. ``tests/contracts/test_leading_nan_contract.py`` checks every registered
 indicator.
 
 **A missing bar inside the series** (a NaN in any input) is handled in one of
