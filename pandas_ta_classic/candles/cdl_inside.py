@@ -63,7 +63,9 @@ previous bar. In other words, the current bar is smaller than it's previous bar.
 Set asbool=True if you want to know if it is an Inside Bar. Note by default
 asbool=False so this returns 0 if it is not an Inside Bar, scalar (100) if it is
 an Inside Bar and close > open, and -scalar (-100) if it is an Inside Bar but
-close < open, as the other candle patterns read.
+close < open, as the other candle patterns read. A bar with a missing open,
+high, low or close is not an Inside Bar: it reads 0 (False with asbool=True),
+and the next bar is compared with the last complete bar before it.
 
 Sources:
     https://www.tradingview.com/script/IyIGN1WO-Inside-Bar/
