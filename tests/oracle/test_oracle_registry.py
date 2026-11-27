@@ -407,8 +407,8 @@ ORACLE: dict[str, Case] = {
     "er": Case(lambda b: [ta.er(b.close, 10)], lambda b: [T.ER(b.close, 10)]),
     "eri": Case(lambda b: _cols(ta.eri(b.high, b.low, b.close, 13), "BULLP_", "BEARP_"), lambda b: list(T.ERI(b.high, b.low, b.close, 13))),
     # The two seed the first value differently; they agree from bar 74 on every frame
-    # but nan_prefix, whose 37 NaN bars come first (3.7e-11 apart at bar 110, equal
-    # from 111); settle 150 leaves margin.
+    # but nan_prefix, whose 37 NaN bars come first (3.7e-11 apart at bar 109, within
+    # the default tolerance from 110); settle 150 leaves margin.
     "fisher": Case(
         lambda b: _cols(ta.fisher(b.high, b.low, 10, 1), "FISHERT_", "FISHERTs_"), lambda b: list(T.FISHER(b.high, b.low, 10)), settle=150
     ),
@@ -483,15 +483,15 @@ for _name, _fn in _TRANSFORMS.items():
 NO_ORACLE = {
     "ma": "a dispatcher; every MA it reaches has its own case",
     "alma": "OPEN: native's weights are mirrored: its offset 0.85 puts the peak on the oldest bars of the window, TA-Lib's ALMA "
-    "on the newest (and floors the centre to a bar); expected_values.json freezes the native values",
+    "two bars before the newest (it floors the centre to a bar); expected_values.json freezes the native values",
     "kc": "KC is EMA(typical price, 20) +- 2 * ATR(10); native uses one length for the basis of close and the band of the true range",
     "kvo": "KVO's volume force uses Klinger's trend and cumulative measurement; native signs the volume by the change of hlc3",
     "rvi": "RVI takes the deviation (10) and its smoothing (14) over two windows; native uses one length for both, "
-    "and with equal windows the two still differ (up to 16.8 on SPY_D at 14, 14)",
+    "and with equal windows the two still differ (up to 19.5 on SPY_D at 14, 14, bar 3470)",
     "smi": "a different indicator: TA-Lib's SMI is Blau's Stochastic Momentum Index, native smi is the SMI Ergodic of the TSI",
     "vidya": "TALIB: TA-Lib seeds VIDYA one bar later (bar 14, native 13); with the CMO period equal to length the seeds "
-    "meet to 1e-8 only after 160 to 410 bars and to 1e-13 after 800, longer than the 400-bar frames; test_vidya_converges_to_talib "
-    "compares SPY_D",
+    "meet to 1e-8 relative from bar 269 to 341 on the 400-bar frames, but to the default 1e-11 only past their end (bar 628 "
+    "on SPY_D, 1e-13 from bar 752); test_vidya_converges_to_talib compares SPY_D",
     "vwap": "VWAP is cumulative from the first bar; native anchors to a calendar period and needs a DatetimeIndex",
 }
 
@@ -632,7 +632,7 @@ TOLERANCE: dict[str, tuple[float, str]] = {
     "tsf": (2, "1.2e-12 relative at 8.74 in a column up to 1110 (spike, bar 212)"),
     "cti": (20, "a correlation that cancels to -0.38 over the planted run: 4.6e-11 relative (planted, bar 118)"),
     "eri": (1000, "the bear power, low less an EMA at prices of 1e6: 5.8e-10 relative at 308 (x1e6, bar 376)"),
-    "stc": (100, "its MACD's seed difference, amplified by two stochastic stages, still 1.8e-10 relative (nan_prefix, bar 359)"),
+    "stc": (100, "its MACD's seed difference, amplified by two stochastic stages, still 1.9e-10 relative (nan_prefix, bar 359)"),
 }
 
 KNOWN_DIFFERENCES: dict[tuple[str, str], str] = {
@@ -671,7 +671,7 @@ KNOWN_DIFFERENCES: dict[tuple[str, str], str] = {
     ),
     ("mcgd", "spike"): (
         "TALIB: MCGD divides by (close / previous MCGD) ** 4, which a flash crash to 0.1x drives towards zero: TA-Lib "
-        "swings to -1.9e5 and then 1e64, native follows the price"
+        "swings to -1.9e5, 1.3e15 and then -2.3e64, native follows the price"
     ),
 }
 if _TALIB_08:
