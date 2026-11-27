@@ -1,6 +1,6 @@
 # Squeeze Pro (SQUEEZE_PRO)
 import warnings
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -8,7 +8,7 @@ from pandas_ta_classic.momentum.mom import mom
 from pandas_ta_classic.momentum.squeeze import _squeeze_detailed, _squeeze_simplify_columns, _squeeze_use_tr
 from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, Options, _name_tokens, nan_on_short_input
 from pandas_ta_classic.volatility.bbands import bbands
 from pandas_ta_classic.volatility.kc import kc
 
@@ -18,30 +18,21 @@ def squeeze_pro(
     high: Series,
     low: Series,
     close: Series,
-    bb_length: int | None = None,
-    bb_std: float | None = None,
-    kc_length: int | None = None,
-    kc_scalar_wide: float | None = None,
-    kc_scalar_normal: float | None = None,
-    kc_scalar_narrow: float | None = None,
-    mom_length: int | None = None,
-    mom_smooth: int | None = None,
+    bb_length: Annotated[int, Bound(gt=1)] = 20,  # bbands() needs length > 1
+    bb_std: Annotated[float, Bound(gt=0)] = 2.0,
+    kc_length: Annotated[int, Bound(gt=0)] = 20,
+    kc_scalar_wide: Annotated[float, Bound(gt=0)] = 2,
+    kc_scalar_normal: Annotated[float, Bound(gt=0)] = 1.5,
+    kc_scalar_narrow: Annotated[float, Bound(gt=0)] = 1,
+    mom_length: Annotated[int, Bound(gt=0)] = 12,
+    mom_smooth: Annotated[int, Bound(gt=0)] = 6,
     use_tr: bool | None = None,
-    mamode: str | None = None,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(asint=Flag(True), detailed=Flag(False))],
 ) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ) PRO"""
     # Validate arguments
-    bb_length = _pos_int(bb_length, 20, "bb_length", gt=1)  # bbands() needs length > 1
-    bb_std = _pos_float(bb_std, 2.0, "bb_std")
-    kc_length = _pos_int(kc_length, 20, "kc_length")
-    kc_scalar_wide = _pos_float(kc_scalar_wide, 2, "kc_scalar_wide")
-    kc_scalar_normal = _pos_float(kc_scalar_normal, 1.5, "kc_scalar_normal")
-    kc_scalar_narrow = _pos_float(kc_scalar_narrow, 1, "kc_scalar_narrow")
-    mom_length = _pos_int(mom_length, 12, "mom_length")
-    mom_smooth = _pos_int(mom_smooth, 6, "mom_smooth")
-
     _length = max(bb_length, kc_length, mom_length, mom_smooth)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
@@ -57,9 +48,8 @@ def squeeze_pro(
         return None
 
     use_tr = _squeeze_use_tr(use_tr, kwargs, "squeeze_pro")
-    asint = _bool_param(kwargs.pop("asint", None), True, "asint")
-    detailed = _bool_param(kwargs.pop("detailed", None), False, "detailed")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    asint = kwargs.pop("asint")
+    detailed = kwargs.pop("detailed")
     _ma_windows(mamode, kc_length=kc_length, mom_smooth=mom_smooth)
 
     # Calculate Result

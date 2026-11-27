@@ -1,5 +1,5 @@
 # Pascal Weighted Moving Average (PWMA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,19 +10,18 @@ from pandas_ta_classic.utils import (
     pascals_triangle,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _sliding_weighted_ma, nan_on_short_input
 
 
 @nan_on_short_input
 def pwma(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Pascals Weighted Moving Average (PWMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

@@ -262,6 +262,11 @@ Edge-Case Tests
   indicator and the parameter, not an inner function such as ``ma()``;
   ``downside_deviation()`` and ``volatility()`` name themselves for an
   unknown ``tf``.
+- ``test_declared_params.py`` — the parameters declared in a signature
+  (``Annotated[int, Bound(gt=1)] = 10``) are seen by every sweep that reads
+  defaults and choices; each int parameter of each ``mamode`` indicator, set
+  to the smallest value ``hma`` or ``linreg`` rejects, raises naming that
+  parameter; ``ta.defaults()`` reports the declaration.
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.

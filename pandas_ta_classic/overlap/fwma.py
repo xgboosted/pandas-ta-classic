@@ -1,5 +1,5 @@
 # Fibonacci Weighted Moving Average (FWMA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,21 +10,19 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, _sliding_weighted_ma, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _name_tokens, _sliding_weighted_ma, nan_on_short_input
 
 
 @nan_on_short_input
 def fwma(
     close: Series,
-    length: int | None = None,
-    asc: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    asc: Annotated[bool, Flag()] = True,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Fibonacci's Weighted Moving Average (FWMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    asc = _bool_param(asc, True, "asc")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

@@ -37,6 +37,7 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from pandas_ta_classic.utils._core import Bound, Declared, Flag, OneOf, declared_params
 from tests.config import get_sample_data
 
 COLUMNS = {"open_": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
@@ -124,7 +125,7 @@ def boolean_kwargs(name: str) -> list[str]:
     for parameter_name, parameter in signature.parameters.items():
         if parameter_name in SKIP_BOOL_KWARGS:
             continue
-        annotation = parameter.annotation
+        annotation = plain_annotation(parameter.annotation)
         if annotation is inspect.Parameter.empty:
             continue
         optional_of = typing.get_args(annotation)
@@ -136,6 +137,28 @@ def boolean_kwargs(name: str) -> list[str]:
 def candidate_calls(name: str) -> list[dict]:
     """The default call plus each boolean keyword of *name* flipped on its own."""
     return [{}] + [{keyword: value} for keyword in boolean_kwargs(name) for value in (True, False)]
+
+
+def declared(name: str) -> dict[str, Declared]:
+    """The parameters and ``**kwargs`` options indicator *name* declares with a marker.
+    Every sweep that scrapes the body for validation calls also reads these, so a
+    parameter moved from the body into the signature stays in the sweep."""
+    return declared_params(getattr(ta, name))
+
+
+def declared_bounds(name: str) -> set[str]:
+    """Declared signature parameters with a lower bound (``Bound(gt=0)``)."""
+    return {p for p, d in declared(name).items() if not d.in_kwargs and isinstance(d.marker, Bound) and d.marker.gt is not None}
+
+
+def declared_kwargs_flags(name: str) -> set[str]:
+    """True/False options *name* declares for ``**kwargs`` (``Options(lazybear=Flag(False))``)."""
+    return {p for p, d in declared(name).items() if d.in_kwargs and isinstance(d.marker, Flag)}
+
+
+def plain_annotation(annotation: Any) -> Any:
+    """*annotation* without an ``Annotated`` marker: ``Annotated[int, Bound(gt=1)]`` gives ``int``."""
+    return typing.get_args(annotation)[0] if typing.get_origin(annotation) is typing.Annotated else annotation
 
 
 _DEFAULT_HELPERS = {"_pos_int", "_pos_float", "_number", "_bool_param", "_str_param"}
@@ -161,6 +184,27 @@ def code_defaults(source: str) -> dict:
     (``length = _pos_int(length, 10, "length")`` gives ``{"length": 10}``)."""
     found = {}
     for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.FunctionDef):
+            # a declared parameter: length: Annotated[int, Bound(gt=1)] = 10
+            arguments = node.args.args + node.args.kwonlyargs
+            defaults = [None] * (len(node.args.args) - len(node.args.defaults)) + node.args.defaults + node.args.kw_defaults
+            for arg, default in zip(arguments, defaults):
+                annotation = arg.annotation
+                if default is not None and isinstance(annotation, ast.Subscript) and getattr(annotation.value, "id", None) == "Annotated":
+                    value = ast.literal_eval(default)
+                    if value is not None:  # None: computed (adx lensig = length)
+                        found.setdefault(arg.arg, value)
+            # declared **kwargs options: **kwargs: Annotated[Any, Options(lazybear=Flag(False))]
+            kwarg = node.args.kwarg
+            if kwarg is not None and isinstance(kwarg.annotation, ast.Subscript):
+                for item in ast.walk(kwarg.annotation):
+                    if isinstance(item, ast.Call) and getattr(item.func, "id", None) == "Options":
+                        for keyword in item.keywords:
+                            marker = keyword.value
+                            given = [k.value for k in getattr(marker, "keywords", []) if k.arg == "default"]
+                            if isinstance(marker, ast.Call) and (marker.args or given):
+                                found.setdefault(keyword.arg, ast.literal_eval(given[0] if given else marker.args[0]))
+            continue
         if not (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)):
             continue
         call = node.value
@@ -185,7 +229,7 @@ def string_choices(name: str) -> dict[str, list[str] | None]:
     """{option: sorted choices} of every ``_str_param(..., choices=...)`` in indicator *name*'s module;
     ``None`` where the choices are computed (``choices=ma()``) rather than written out."""
     source = inspect.getsource(inspect.getmodule(inspect.unwrap(getattr(ta, name))))
-    found: dict[str, list[str] | None] = {}
+    found: dict[str, list[str] | None] = {p: sorted(d.marker.choices) for p, d in declared(name).items() if isinstance(d.marker, OneOf)}
     for node in ast.walk(ast.parse(source)):
         if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_str_param" and node.args):
             continue

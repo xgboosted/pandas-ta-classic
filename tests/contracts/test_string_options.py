@@ -11,14 +11,14 @@ import typing
 import pytest
 
 import pandas_ta_classic as ta
-from tests.contracts import INDICATORS, NOT_OHLCV, inputs, params, spy
+from tests.contracts import INDICATORS, NOT_OHLCV, inputs, params, plain_annotation, spy
 
 CASES = [
     (name, param)
     for name in INDICATORS
     if name not in NOT_OHLCV and name != "ma"  # ma's name is checked in test_parameter_validation
     for param, spec in inspect.signature(getattr(ta, name)).parameters.items()
-    if spec.annotation is str or str in typing.get_args(spec.annotation)
+    if plain_annotation(spec.annotation) is str or str in typing.get_args(plain_annotation(spec.annotation))
 ]
 KNOWN: dict = {}
 

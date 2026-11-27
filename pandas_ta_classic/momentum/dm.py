@@ -1,5 +1,5 @@
 # Directional Movement (DM)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, nan_on_short_input
 from pandas_ta_classic.utils._math import _zero_small
 
 
@@ -20,22 +20,20 @@ from pandas_ta_classic.utils._math import _zero_small
 def dm(
     high: Series,
     low: Series,
-    length: int | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'rma',
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: DM"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
-    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if high is None or low is None:
         return None

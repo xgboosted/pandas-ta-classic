@@ -1,5 +1,5 @@
 # Percentage Price Oscillator (PPO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -14,11 +14,10 @@ from pandas_ta_classic.utils import (
 )
 from pandas_ta_classic.utils._core import (
     _TAL_MA_TYPES,
-    _bool_param,
-    _number,
-    _pos_int,
+    Bound,
+    Flag,
+    OneOf,
     _positive_inputs,
-    _str_param,
     _windows_in_order,
     nan_on_short_input,
 )
@@ -59,27 +58,22 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwarg
 @_positive_inputs("close")
 def ppo(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    scalar: Annotated[float, Bound()] = 100,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Percentage Price Oscillator (PPO)"""
     # Validate Arguments
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
-    signal = _pos_int(signal, 9, "signal")
-    scalar = _number(scalar, 100, "scalar")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     _ma_windows(mamode, fast=fast)
     _windows_in_order("ppo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None

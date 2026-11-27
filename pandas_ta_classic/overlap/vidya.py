@@ -1,5 +1,5 @@
 # Variable Index Dynamic Average (VIDYA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -26,14 +26,13 @@ def _vidya_loop(c_arr, cmo_arr, out, start, alpha):
 @skip_leading_nan("close", interior=True)
 def vidya(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Variable Index Dynamic Average (VIDYA)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
     drift = get_drift(drift)
     close = verify_series(close, length + drift - 1)
     offset = get_offset(offset)

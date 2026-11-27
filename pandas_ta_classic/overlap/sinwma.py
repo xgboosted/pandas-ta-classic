@@ -1,23 +1,22 @@
 # Sine Weighted Moving Average (SINWMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _sliding_weighted_ma, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _sliding_weighted_ma, nan_on_short_input
 
 
 @nan_on_short_input
 def sinwma(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Sine Weighted Moving Average (SINWMA) by Everget of TradingView"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

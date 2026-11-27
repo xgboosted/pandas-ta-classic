@@ -1,5 +1,5 @@
 # Directional Index (DX)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, nan_on_short_input
 from pandas_ta_classic.utils._math import _zero_small
 
 
@@ -21,25 +21,22 @@ def dx(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    scalar: Annotated[float, Bound(gt=0)] = 100,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'rma',
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Directional Index (DX)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
-    scalar = _pos_float(scalar, 100, "scalar")
-    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None

@@ -1,11 +1,11 @@
 # Chandelier Exit (CE)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input
 
 from .atr import atr
 
@@ -15,17 +15,14 @@ def ce(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    multiplier: float | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 22,
+    multiplier: Annotated[float, Bound(gt=0)] = 3.0,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'rma',
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Chandelier Exit (CE)"""
     # Validate arguments
-    length = _pos_int(length, 22, "length")
-    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
-    multiplier = _pos_float(multiplier, 3.0, "multiplier")
 
     high = verify_series(high, length)
     low = verify_series(low, length)

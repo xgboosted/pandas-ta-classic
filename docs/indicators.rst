@@ -35,6 +35,37 @@ expected. Inputs with no label in common (a ``RangeIndex`` next to a
 overlap) raise ``ValueError``: they could only produce an all-NaN result on the
 union of both indexes.
 
+Parameter Defaults
+------------------
+
+``None`` selects a parameter's default everywhere. The moving averages and the
+indicators that take ``mamode`` (all 31 of them) also declare their defaults and
+constant bounds in the signature, so they can be read without calling the
+indicator:
+
+.. code-block:: python
+
+    import inspect
+    import pandas_ta_classic as ta
+
+    inspect.signature(ta.hma).parameters["length"].default   # 10
+    ta.defaults("hma")
+    # {'length': {'kind': 'int', 'default': 10, 'gt': 1, 'ge': None, 'lt': None, 'in_kwargs': False}}
+
+``ta.defaults(name)`` lists each declared parameter: its kind (``int``,
+``float``, ``bool``, ``str``), its default, its bounds or choices, whether it is
+read from ``**kwargs`` (``in_kwargs``), and ``default_from`` where the default is
+another parameter's value (``adx``'s ``lensig`` takes ``length``). It raises
+``ValueError`` for an indicator that declares nothing yet; the other indicators
+follow in a later release. A bound that depends on another parameter
+(``min_periods`` at most ``length``) is checked when the indicator runs and is
+not listed.
+
+A window handed to the chosen moving average is checked against that average's
+own bound, so the error names the parameter you passed:
+``stoch(d=1, mamode="hma")`` raises ``stoch() d must be an integer > 1 with
+mamode='hma', got 1``.
+
 Missing Values
 --------------
 

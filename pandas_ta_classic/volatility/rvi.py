@@ -1,12 +1,12 @@
 # Relative Volatility Index (RVI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.statistics.stdev import stdev
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_drift, get_offset, unsigned_differences, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, nan_on_short_input
 
 
 def _rvi_compute(source: Series, length: int, scalar: float, mode: str, drift: int) -> Series | None:
@@ -62,24 +62,20 @@ def rvi(
     close: Series,
     high: Series | None = None,
     low: Series | None = None,
-    length: int | None = None,
-    scalar: float | None = None,
-    refined: bool | None = None,
-    thirds: bool | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
+    scalar: Annotated[float, Bound(gt=0)] = 100,
+    refined: Annotated[bool, Flag()] = False,
+    thirds: Annotated[bool, Flag()] = False,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Relative Volatility Index (RVI)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length", gt=1)  # stdev needs at least two rows
-    scalar = _pos_float(scalar, 100, "scalar")
-    refined = _bool_param(refined, False, "refined")
-    thirds = _bool_param(thirds, False, "thirds")
+    # stdev needs at least two rows
     if refined and thirds:
         raise ValueError("rvi() refined and thirds are alternative modes; pass at most one")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

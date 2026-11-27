@@ -1,5 +1,5 @@
 # Archer On Balance Volume (AOBV)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -7,7 +7,15 @@ from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.trend.long_run import long_run
 from pandas_ta_classic.trend.short_run import short_run
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _str_param, _windows_in_order, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import (
+    Bound,
+    OneOf,
+    Options,
+    _name_tokens,
+    _windows_in_order,
+    nan_on_short_input,
+    skip_leading_nan,
+)
 
 from .obv import obv
 
@@ -17,22 +25,17 @@ from .obv import obv
 def aobv(
     close: Series,
     volume: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    max_lookback: int | None = None,
-    min_lookback: int | None = None,
-    mamode: str | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 4,
+    slow: Annotated[int, Bound(gt=0)] = 12,
+    max_lookback: Annotated[int, Bound(gt=0)] = 2,
+    min_lookback: Annotated[int, Bound(gt=0)] = 2,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(run_length=Bound(gt=0, default=2, integer=True))],
 ) -> DataFrame | None:
     """Indicator: Archer On Balance Volume (AOBV)"""
     # Validate arguments
-    fast = _pos_int(fast, 4, "fast")
-    slow = _pos_int(slow, 12, "slow")
-    max_lookback = _pos_int(max_lookback, 2, "max_lookback")
-    min_lookback = _pos_int(min_lookback, 2, "min_lookback")
     _windows_in_order("aobv", fast=fast, slow=slow)
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _ma_windows(mamode, fast=fast)
     _length = max(fast, slow, max_lookback, min_lookback)
     close = verify_series(close, _length)
@@ -40,7 +43,7 @@ def aobv(
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    run_length = _pos_int(kwargs.pop("run_length", None), 2, "run_length")
+    run_length = kwargs.pop("run_length")
 
     if close is None or volume is None:
         return None

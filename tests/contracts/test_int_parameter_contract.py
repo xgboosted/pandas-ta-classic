@@ -37,14 +37,15 @@ import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic.utils._keywords import _KWARGS_OPTIONS
-from tests.contracts import INDICATORS, NOT_OHLCV, SKIP_BOOL_KWARGS, boolean_kwargs, inputs, params, spy
+from tests.contracts import INDICATORS, NOT_OHLCV, SKIP_BOOL_KWARGS, boolean_kwargs, inputs, params, plain_annotation, spy
 
 VALUES = (0, 1, 2, 3, 5)
 _CHOICES = re.compile(r" must be one of (\[.*\]), got 'bogus'$")
 
 
 def _annotated(name: str, kind: type) -> list[str]:
-    return [p for p, spec in inspect.signature(getattr(ta, name)).parameters.items() if spec.annotation is kind or kind in typing.get_args(spec.annotation)]
+    # plain_annotation: a declared parameter is Annotated[int, Bound(...)]; its type is the first argument
+    return [p for p, spec in inspect.signature(getattr(ta, name)).parameters.items() if (a := plain_annotation(spec.annotation)) is kind or kind in typing.get_args(a)]
 
 
 def _rejection(name: str, option: str, frame: pd.DataFrame) -> str:

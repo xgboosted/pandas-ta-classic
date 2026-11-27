@@ -1,12 +1,12 @@
 # Linear Regression (LINREG)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_zero, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input
 
 # TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
 _TALIB_DISPATCH = {
@@ -94,23 +94,24 @@ def _linreg_output(
 @nan_on_short_input
 def linreg(
     close: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[
+        Any, Options(angle=Flag(False), intercept=Flag(False), degrees=Flag(True), r=Flag(False), slope=Flag(False), tsf=Flag(False))
+    ],
 ) -> Series | None:
     """Indicator: Linear Regression"""
     # Validate arguments
-    length = _pos_int(length, 14, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    angle = _bool_param(kwargs.pop("angle", None), False, "angle")
-    intercept = _bool_param(kwargs.pop("intercept", None), False, "intercept")
-    degrees = _bool_param(kwargs.pop("degrees", None), True, "degrees")
-    r = _bool_param(kwargs.pop("r", None), False, "r")
-    slope = _bool_param(kwargs.pop("slope", None), False, "slope")
-    tsf = _bool_param(kwargs.pop("tsf", None), False, "tsf")
-    mode_talib = _bool_param(talib, False, "talib")
+    angle = kwargs.pop("angle")
+    intercept = kwargs.pop("intercept")
+    degrees = kwargs.pop("degrees")
+    r = kwargs.pop("r")
+    slope = kwargs.pop("slope")
+    tsf = kwargs.pop("tsf")
+    mode_talib = talib
 
     if close is None:
         return None

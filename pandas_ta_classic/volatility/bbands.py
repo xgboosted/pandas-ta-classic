@@ -1,5 +1,5 @@
 # Bollinger Bands (BBANDS)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -16,12 +16,12 @@ from pandas_ta_classic.utils import (
 )
 from pandas_ta_classic.utils._core import (
     _TAL_MA_TYPES,
-    _bool_param,
+    Bound,
+    Flag,
+    OneOf,
     _name_tokens,
     _nan_where_not_positive,
-    _pos_float,
     _pos_int,
-    _str_param,
     nan_on_short_input,
 )
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
@@ -57,23 +57,20 @@ def _bbands_native(close, length, std, ddof, mamode, kwargs):
 @nan_on_short_input
 def bbands(
     close: Series,
-    length: int | None = None,
-    std: float | None = None,
+    length: Annotated[int, Bound(gt=1)] = 5,
+    std: Annotated[float, Bound(gt=0)] = 2.0,
     ddof: int | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Bollinger Bands (BBANDS)"""
     # Validate arguments
-    length = _pos_int(length, 5, "length", gt=1)
-    std = _pos_float(std, 2.0, "std")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None
