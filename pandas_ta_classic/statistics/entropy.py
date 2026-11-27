@@ -1,11 +1,11 @@
 # Entropy (ENTROPY)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _positive_inputs, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _positive_inputs, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -13,15 +13,13 @@ from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _p
 @skip_leading_nan("close")
 def entropy(
     close: Series,
-    length: int | None = None,
-    base: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    base: Annotated[float, Bound(gt=0)] = 2.0,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Entropy (ENTP)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    base = _pos_float(base, 2.0, "base")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

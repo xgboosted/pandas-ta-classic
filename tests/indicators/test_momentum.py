@@ -1,4 +1,7 @@
 
+from decimal import Decimal, localcontext
+from fractions import Fraction
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -411,3 +414,25 @@ class TestMacdSignalOptionsApplyToBothLines:
     def test_flags_are_validated(self):
         with pytest.raises(ValueError, match=r"macd\(\) cross_values must be True or False"):
             pandas_ta.macd(self.close, signal_indicators=True, cross_values="no")
+
+
+def _exact_cti(window) -> float:
+    """Pearson correlation of *window* with 0..n-1, in exact fractions up to a 50-digit square root."""
+    y = [Fraction(v) for v in window]
+    n = len(y)
+    mean_x, mean_y = Fraction(n - 1, 2), sum(y) / n
+    sxy = sum((i - mean_x) * (v - mean_y) for i, v in enumerate(y))
+    sxx = sum((i - mean_x) ** 2 for i in range(n))
+    syy = sum((v - mean_y) ** 2 for v in y)
+    with localcontext() as ctx:
+        ctx.prec = 50
+        return float(Decimal(sxy.numerator) / Decimal(sxy.denominator) / (Decimal((sxx * syy).numerator) / Decimal((sxx * syy).denominator)).sqrt())
+
+
+@pytest.mark.parametrize("level", [0.0, 1e4])
+def test_cti_is_the_exact_correlation_to_rounding(level):
+    """cti summed raw prices and cancelled the digits a high level carries: 8.4e-9 off the exact value here at level 1e4."""
+    close = get_sample_data()["close"].iloc[-300:].reset_index(drop=True) + level
+    result = pandas_ta.cti(close, 20).to_numpy()
+    worst = max(abs(result[i] - _exact_cti(close.iloc[i - 19 : i + 1])) / abs(_exact_cti(close.iloc[i - 19 : i + 1])) for i in range(19, len(close)))
+    assert worst < 1e-12, worst

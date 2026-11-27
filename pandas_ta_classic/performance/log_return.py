@@ -1,26 +1,24 @@
 # Log Return (LOG_RETURN)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def log_return(
     close: Series,
-    length: int | None = None,
-    cumulative: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 1,
+    cumulative: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Log Return"""
     # Validate Arguments
-    length = _pos_int(length, 1, "length")
-    cumulative = _bool_param(cumulative, False, "cumulative")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

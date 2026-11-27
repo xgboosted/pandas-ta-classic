@@ -1,10 +1,10 @@
 # Chande Kroll Stop (CKSP)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _pos_float, _pos_int, nan_on_short_input
 from pandas_ta_classic.volatility.atr import atr
 
 
@@ -13,18 +13,16 @@ def cksp(
     high: Series,
     low: Series,
     close: Series,
-    p: int | None = None,
+    p: Annotated[int, Bound(gt=0)] = 10,
     x: float | None = None,
     q: int | None = None,
-    tvmode: bool | None = None,
+    tvmode: Annotated[bool, Flag()] = True,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Chande Kroll Stop (CKSP)"""
     # Validate Arguments
     # TV defaults=(10,1,9), book defaults = (10,3,20); tvmode decides which, so validate it first
-    tvmode = _bool_param(tvmode, True, "tvmode")
-    p = _pos_int(p, 10, "p")
     x = _pos_float(x, 1 if tvmode is True else 3, "x")
     q = _pos_int(q, 9 if tvmode is True else 20, "q")
     _length = max(p, q, x)

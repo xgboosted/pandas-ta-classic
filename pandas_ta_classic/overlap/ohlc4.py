@@ -1,11 +1,11 @@
 # OHLC4 (OHLC4)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, nan_on_short_input
 
 
 @nan_on_short_input
@@ -14,7 +14,7 @@ def ohlc4(
     high: Series,
     low: Series,
     close: Series,
-    talib: bool | None = None,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -25,13 +25,12 @@ def ohlc4(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if open_ is None or high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import AVGPRICE
 
         ohlc4 = Series(AVGPRICE(open_, high, low, close), index=close.index)

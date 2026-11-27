@@ -1,5 +1,5 @@
 # Kurtosis (KURTOSIS)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -12,13 +12,13 @@ from pandas_ta_classic.utils import (
     np_rolling_moments,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def kurtosis(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=3)] = 30,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -26,7 +26,6 @@ def kurtosis(
     # Validate Arguments
     # Excess kurtosis divides by (n - 2)(n - 3), so it is undefined below four
     # points; length <= 3 used to return an all-NaN column.
-    length = _pos_int(length, 30, "length", gt=3)
     # min_periods below 1 read the loop start as -1 and made the last bar NaN;
     # above length it was silently ignored. Both are caller errors.
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=1, lt=length + 1)

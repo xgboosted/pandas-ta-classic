@@ -1,5 +1,5 @@
 # True Range (TRUE_RANGE)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, nan_on_short_input
 
 
 @nan_on_short_input
@@ -20,7 +20,7 @@ def true_range(
     high: Series,
     low: Series,
     close: Series,
-    talib: bool | None = None,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -34,10 +34,9 @@ def true_range(
         return None
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and drift == 1:
+    if Imports["talib"] and talib and drift == 1:
         from talib import TRANGE
 
         true_range = TRANGE(high, low, close)

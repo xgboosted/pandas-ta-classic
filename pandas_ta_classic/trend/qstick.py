@@ -1,5 +1,5 @@
 # Q Stick (QSTICK)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,21 +10,20 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, Options, nan_on_short_input
 
 
 @nan_on_short_input
 def qstick(
     open_: Series,
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(ma=OneOf(tuple(ma()), default='sma'))],
 ) -> Series | None:
     """Indicator: Q Stick"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    mamode = _str_param(kwargs.pop("ma", None), "sma", "ma", choices=ma())
+    mamode = kwargs.pop("ma")
     # The fill applies to the result only; the other options go to the chosen MA (ema's adjust, talib)
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
     open_ = verify_series(open_, length)

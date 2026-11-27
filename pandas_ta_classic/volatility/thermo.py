@@ -1,5 +1,5 @@
 # Elder Thermometer (THERMO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -11,27 +11,23 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input
 
 
 @nan_on_short_input
 def thermo(
     high: Series,
     low: Series,
-    length: int | None = None,
-    long: float | None = None,
-    short: float | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 20,
+    long: Annotated[float, Bound(gt=0)] = 2,
+    short: Annotated[float, Bound(gt=0)] = 0.5,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Elders Thermometer (THERMO)"""
     # Validate arguments
-    length = _pos_int(length, 20, "length")
-    long = _pos_float(long, 2, "long")
-    short = _pos_float(short, 0.5, "short")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     drift = get_drift(drift)

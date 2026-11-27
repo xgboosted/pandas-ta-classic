@@ -1,26 +1,24 @@
 # Z Score (ZSCORE)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_zero, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def zscore(
     close: Series,
-    length: int | None = None,
-    std: float | None = None,
+    length: Annotated[int, Bound(gt=1)] = 30,
+    std: Annotated[float, Bound(gt=0)] = 1,
     offset: int | None = None,
     ddof: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Z Score"""
     # Validate Arguments
-    length = _pos_int(length, 30, "length", gt=1)
-    std = _pos_float(std, 1, "std", gt=0)
     # ddof sits after offset so an existing positional offset keeps its meaning.
     # cdl_z has always forwarded it; without this parameter it landed in
     # **kwargs and was dropped, so cdl_z(ddof=0) and cdl_z(ddof=1) returned

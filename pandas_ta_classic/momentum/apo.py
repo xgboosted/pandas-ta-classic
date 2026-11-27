@@ -1,10 +1,10 @@
 # Absolute Price Oscillator (APO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,29 +12,26 @@ from pandas_ta_classic.utils import (
     tal_ma,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _TAL_MA_TYPES, _bool_param, _pos_int, _str_param, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import _TAL_MA_TYPES, Bound, Flag, OneOf, _windows_in_order, nan_on_short_input
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
 @nan_on_short_input
 def apo(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Absolute Price Oscillator (APO)"""
     # Validate Arguments
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
     _windows_in_order("apo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow))
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
@@ -43,7 +40,7 @@ def apo(
     # TA-Lib has no hma, rma, zlma, ..., nor an option the chosen MA reads (ema's
     # adjust, ...); run natively instead of failing in tal_ma() or ignoring it
     ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
-    if Imports["talib"] and mode_talib and mamode in _TAL_MA_TYPES and not ma_kwargs:
+    if Imports["talib"] and talib and mamode in _TAL_MA_TYPES and not ma_kwargs:
         from talib import APO
 
         apo = APO(close, fast, slow, tal_ma(mamode))

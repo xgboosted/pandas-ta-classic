@@ -1,5 +1,5 @@
 # Know Sure Thing (KST)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -9,7 +9,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _name_tokens, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _positive_inputs, nan_on_short_input
 
 from .roc import roc
 
@@ -18,31 +18,21 @@ from .roc import roc
 @_positive_inputs("close")
 def kst(
     close: Series,
-    roc1: int | None = None,
-    roc2: int | None = None,
-    roc3: int | None = None,
-    roc4: int | None = None,
-    sma1: int | None = None,
-    sma2: int | None = None,
-    sma3: int | None = None,
-    sma4: int | None = None,
-    signal: int | None = None,
+    roc1: Annotated[int, Bound(gt=0)] = 10,
+    roc2: Annotated[int, Bound(gt=0)] = 15,
+    roc3: Annotated[int, Bound(gt=0)] = 20,
+    roc4: Annotated[int, Bound(gt=0)] = 30,
+    sma1: Annotated[int, Bound(gt=0)] = 10,
+    sma2: Annotated[int, Bound(gt=0)] = 10,
+    sma3: Annotated[int, Bound(gt=0)] = 10,
+    sma4: Annotated[int, Bound(gt=0)] = 15,
+    signal: Annotated[int, Bound(gt=0)] = 9,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: 'Know Sure Thing' (KST)"""
     # Validate arguments
-    roc1 = _pos_int(roc1, 10, "roc1")
-    roc2 = _pos_int(roc2, 15, "roc2")
-    roc3 = _pos_int(roc3, 20, "roc3")
-    roc4 = _pos_int(roc4, 30, "roc4")
 
-    sma1 = _pos_int(sma1, 10, "sma1")
-    sma2 = _pos_int(sma2, 10, "sma2")
-    sma3 = _pos_int(sma3, 10, "sma3")
-    sma4 = _pos_int(sma4, 15, "sma4")
-
-    signal = _pos_int(signal, 9, "signal")
     _length = max(roc1, roc2, roc3, roc4, sma1, sma2, sma3, sma4, signal)
     close = verify_series(close, _length)
     offset = get_offset(offset)

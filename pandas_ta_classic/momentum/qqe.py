@@ -1,10 +1,10 @@
 # Quantitative Qualitative Estimation (QQE)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 from .rsi import rsi
@@ -70,21 +70,18 @@ def _qqe_loop(rsi_arr, ub_arr, lb_arr, m):
 @skip_leading_nan("close")
 def qqe(
     close: Series,
-    length: int | None = None,
-    smooth: int | None = None,
-    factor: float | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    smooth: Annotated[int, Bound(gt=0)] = 5,
+    factor: Annotated[float, Bound()] = 4.236,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Quantitative Qualitative Estimation (QQE)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
-    smooth = _pos_int(smooth, 5, "smooth")
-    factor = _number(factor, 4.236, "factor")
     wilders_length = 2 * length - 1
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, smooth=smooth)
     close = verify_series(close, max(length, smooth, wilders_length))
     drift = get_drift(drift)
     offset = get_offset(offset)

@@ -1,17 +1,17 @@
 # Stochastic Oscillator (STOCH)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, _on_valid_rows, nan_on_short_input
 
 
 @nan_on_short_input
@@ -19,33 +19,29 @@ def stoch(
     high: Series,
     low: Series,
     close: Series,
-    k: int | None = None,
-    d: int | None = None,
-    smooth_k: int | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    k: Annotated[int, Bound(gt=0)] = 14,
+    d: Annotated[int, Bound(gt=0)] = 3,
+    smooth_k: Annotated[int, Bound(gt=0)] = 3,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = "sma",
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Stochastic Oscillator (STOCH)"""
     # Validate arguments
-    k = _pos_int(k, 14, "k")
-    d = _pos_int(d, 3, "d")
-    smooth_k = _pos_int(smooth_k, 3, "smooth_k")
+    _ma_windows(mamode, d=d, smooth_k=smooth_k)
     _length = max(k, d, smooth_k)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and mamode == "sma":
+    if Imports["talib"] and talib and mamode == "sma":
         from talib import STOCH
 
         _k, _d = STOCH(

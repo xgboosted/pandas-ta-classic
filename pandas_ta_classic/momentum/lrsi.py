@@ -1,11 +1,11 @@
 # Laguerre Relative Strength Index (Laguerre RSI)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _name_tokens, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -28,15 +28,13 @@ def _lrsi_loop(c_arr, n, gamma):
 @skip_leading_nan("close", interior=True)
 def lrsi(
     close: Series,
-    length: int | None = None,
-    gamma: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    gamma: Annotated[float, Bound(gt=0, lt=1)] = 0.5,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Laguerre RSI (LRSI)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
-    gamma = _pos_float(gamma, 0.5, "gamma", lt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

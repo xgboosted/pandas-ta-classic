@@ -1,26 +1,24 @@
 # Bias (BIAS)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def bias(
     close: Series,
-    length: int | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 26,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Bias (BIAS)"""
     # Validate Arguments
-    length = _pos_int(length, 26, "length")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     close = verify_series(close, length)
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values

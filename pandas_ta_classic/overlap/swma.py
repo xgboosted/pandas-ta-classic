@@ -1,5 +1,5 @@
 # Symmetric Weighted Moving Average (SWMA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -11,19 +11,18 @@ from pandas_ta_classic.utils import (
     verify_series,
     weights,
 )
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def swma(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Symmetric Weighted Moving Average (SWMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

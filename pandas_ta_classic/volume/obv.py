@@ -1,5 +1,5 @@
 # On Balance Volume (OBV)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Flag, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -19,7 +19,7 @@ from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input, skip_
 def obv(
     close: Series,
     volume: Series,
-    talib: bool | None = None,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -30,10 +30,9 @@ def obv(
     if close is None or volume is None:
         return None
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import OBV
 
         obv = OBV(close, volume)

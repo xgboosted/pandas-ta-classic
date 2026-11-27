@@ -3,12 +3,12 @@ import importlib
 import os
 import pkgutil
 from collections.abc import Sequence
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 from . import cdl_doji, cdl_inside
 
@@ -124,7 +124,7 @@ def cdl_pattern(
     low: Series,
     close: Series,
     name: str | Sequence[str] | None = None,
-    scalar: float | None = None,
+    scalar: Annotated[float, Bound()] = 100,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
@@ -139,7 +139,6 @@ def cdl_pattern(
         return None
 
     offset = get_offset(offset)
-    scalar = _number(scalar, 100, "scalar")
 
     # Patterns with custom implementations (non-standard signatures)
     pta_patterns = {

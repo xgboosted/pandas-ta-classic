@@ -1,5 +1,5 @@
 # Trend Signals (TSIGNALS)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -9,7 +9,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _name_tokens, nan_on_short_input
 
 
 def _reject_trend_reset(indicator: str, kwargs: dict) -> None:
@@ -24,9 +24,9 @@ def _reject_trend_reset(indicator: str, kwargs: dict) -> None:
 @nan_on_short_input
 def tsignals(
     trend: Series,
-    asbool: bool | None = None,
+    asbool: Annotated[bool, Flag()] = False,
     *,
-    trade_offset: int | None = None,
+    trade_offset: Annotated[int, Bound(ge=0)] = 0,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
@@ -38,10 +38,8 @@ def tsignals(
     if trend is None:
         return None
 
-    asbool = _bool_param(asbool, False, "asbool")
     _reject_trend_reset("tsignals", kwargs)
     # a negative shift would move entries/exits onto earlier bars (look-ahead)
-    trade_offset = _pos_int(trade_offset, 0, "trade_offset", gt=None, ge=0)
     offset = get_offset(offset)
 
     # Calculate Result. A missing trend value holds the last known trend: filled

@@ -1,12 +1,12 @@
 # Linear Regression (LINREG)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_zero, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input
 
 # TA-Lib dispatch map: (angle, intercept, slope, tsf) → (module, function)
 _TALIB_DISPATCH = {
@@ -71,15 +71,18 @@ def _linreg_output(
             theta *= 180 / np.pi
         return theta
     if r:
-        y2_sums = (windows * windows).sum(axis=1)
-        rn = length * xy_sums - x_sum * y_sums
-        # length*y2_sums - y_sums**2 is a variance: it comes out slightly
-        # negative for a flat 100.1 (so the sqrt warns and gives NaN) and
-        # leaves a ~1e-15 residue for a flat 0.3. Clamp to >= 0, then mask on
-        # the variance, not on rd -- rd is its square root (~1e-6), too large
-        # for the tolerance. A degenerate window reads 0.0, TA-Lib's marker;
-        # see tests/contracts/test_degenerate_input.py. cti() is a wrapper for this path.
-        disc = np.maximum(length * y2_sums - y_sums**2, 0.0)
+        # The sums run over the window less its mean: length*sum(y**2) - sum(y)**2
+        # on raw prices cancelled the digits a price of 100 carries over a small
+        # move, 6.7e-9 relative off the exact correlation where TA-Lib is 4.6e-11.
+        # Centred, both terms lose nothing; x is centred too, so the rounding of
+        # the window's mean, the same shift on every y_c, drops out of the sum
+        # with x_c. disc is still a variance: clamp to >= 0, then mask on it, not
+        # on rd -- rd is its square root, too large for the tolerance. A
+        # degenerate window reads 0.0, TA-Lib's marker; see
+        # tests/contracts/test_degenerate_input.py. cti() is a wrapper for this path.
+        centred = windows - windows.mean(axis=1, keepdims=True)
+        rn = length * (centred * (x_arr - x_sum / length)).sum(axis=1)
+        disc = np.maximum(length * (centred * centred).sum(axis=1), 0.0)
         rd = (divisor * disc) ** 0.5
         with np.errstate(divide="ignore", invalid="ignore"):
             return np.where(degenerate_zero(disc), 0.0, rn / rd)
@@ -91,29 +94,29 @@ def _linreg_output(
 @nan_on_short_input
 def linreg(
     close: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[
+        Any, Options(angle=Flag(False), intercept=Flag(False), degrees=Flag(True), r=Flag(False), slope=Flag(False), tsf=Flag(False))
+    ],
 ) -> Series | None:
     """Indicator: Linear Regression"""
     # Validate arguments
-    length = _pos_int(length, 14, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    angle = _bool_param(kwargs.pop("angle", None), False, "angle")
-    intercept = _bool_param(kwargs.pop("intercept", None), False, "intercept")
-    degrees = _bool_param(kwargs.pop("degrees", None), True, "degrees")
-    r = _bool_param(kwargs.pop("r", None), False, "r")
-    slope = _bool_param(kwargs.pop("slope", None), False, "slope")
-    tsf = _bool_param(kwargs.pop("tsf", None), False, "tsf")
-    mode_talib = _bool_param(talib, False, "talib")
+    angle = kwargs.pop("angle")
+    intercept = kwargs.pop("intercept")
+    degrees = kwargs.pop("degrees")
+    r = kwargs.pop("r")
+    slope = kwargs.pop("slope")
+    tsf = kwargs.pop("tsf")
 
     if close is None:
         return None
 
     # TA-Lib dispatch (not available for `r` or angle-in-radians).
-    _use_talib = Imports["talib"] and mode_talib and not r and not (angle and not degrees)
+    _use_talib = Imports["talib"] and talib and not r and not (angle and not degrees)
     if _use_talib:
         _close_arr = np.array(close, dtype=float)
         _talib_fn = _TALIB_DISPATCH.get((angle, intercept, slope, tsf))

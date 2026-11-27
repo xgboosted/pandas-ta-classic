@@ -1,5 +1,5 @@
 # Plus Directional Movement (PLUS_DM)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 from pandas_ta_classic.utils._math import _zero_small
 
 
@@ -19,8 +19,8 @@ from pandas_ta_classic.utils._math import _zero_small
 def plus_dm(
     high: Series,
     low: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -30,18 +30,16 @@ def plus_dm(
     Raw Wilder-smoothed positive directional movement.
     TA-Lib name: PLUS_DM.
     """
-    length = _pos_int(length, 14, "length")
     high = verify_series(high, length)
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None
 
     # TA-Lib cannot express a non-default drift; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and drift == 1:
+    if Imports["talib"] and talib and drift == 1:
         from talib import PLUS_DM as _PLUS_DM
 
         result = _PLUS_DM(high, low, timeperiod=length)

@@ -1,10 +1,10 @@
 # True Strength Index (TSI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ema import ema
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,34 +12,30 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, _str_param, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
 def tsi(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
-    mamode: str | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 13,
+    slow: Annotated[int, Bound(gt=0)] = 25,
+    signal: Annotated[int, Bound(gt=0)] = 13,
+    scalar: Annotated[float, Bound()] = 100,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: True Strength Index (TSI)"""
     # Validate Arguments
-    fast = _pos_int(fast, 13, "fast")
-    slow = _pos_int(slow, 25, "slow")
     _windows_in_order("tsi", fast=fast, slow=slow)
-    signal = _pos_int(signal, 13, "signal")
-    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, max(fast, slow))
     drift = get_drift(drift)
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, signal=signal)
 
     if close is None:
         return None

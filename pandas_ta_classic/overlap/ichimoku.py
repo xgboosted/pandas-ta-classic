@@ -1,10 +1,10 @@
 # Ichimoku Kinko Hyo (ICHIMOKU)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, RangeIndex, Series, Timedelta, concat, date_range
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _bool_param, _name_tokens, nan_on_short_input
 
 from .midprice import midprice
 
@@ -14,23 +14,18 @@ def ichimoku(
     high: Series,
     low: Series,
     close: Series,
-    tenkan: int | None = None,
-    kijun: int | None = None,
-    senkou: int | None = None,
-    include_chikou: bool | None = None,
+    tenkan: Annotated[int, Bound(gt=0)] = 9,
+    kijun: Annotated[int, Bound(gt=0)] = 26,
+    senkou: Annotated[int, Bound(gt=0)] = 52,
+    include_chikou: Annotated[bool, Flag()] = True,
     offset: int | None = None,
-    append_span: bool | None = None,
+    append_span: Annotated[bool, Flag()] = False,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Ichimoku Kinkō Hyō (Ichimoku)"""
-    tenkan = _pos_int(tenkan, 9, "tenkan")
-    kijun = _pos_int(kijun, 26, "kijun")
-    senkou = _pos_int(senkou, 52, "senkou")
-    include_chikou = _bool_param(include_chikou, True, "include_chikou")
     if "as_dataframe" in kwargs:
         # the (visible, span) tuple was removed in 0.9.0; **kwargs would swallow the old keyword
         raise TypeError("ichimoku() no longer accepts 'as_dataframe': it always returns one DataFrame; pass append_span=True for the span rows")
-    append_span = _bool_param(append_span, False, "append_span")
     _length = max(tenkan, kijun, senkou)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

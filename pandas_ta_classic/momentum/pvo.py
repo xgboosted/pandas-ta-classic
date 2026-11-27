@@ -1,29 +1,25 @@
 # Percentage Volume Oscillator (PVO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
 def pvo(
     volume: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    scalar: Annotated[float, Bound()] = 100,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Percentage Volume Oscillator (PVO)"""
     # Validate Arguments
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
-    signal = _pos_int(signal, 9, "signal")
-    scalar = _number(scalar, 100, "scalar")
     _windows_in_order("pvo", fast=fast, slow=slow)
     volume = verify_series(volume, max(fast, slow, signal))
     offset = get_offset(offset)

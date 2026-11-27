@@ -1,11 +1,11 @@
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 from .atr import atr
 
@@ -15,15 +15,13 @@ def aberration(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    atr_length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 5,
+    atr_length: Annotated[int, Bound(gt=0)] = 15,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Aberration (ABER)"""
     # Validate arguments
-    length = _pos_int(length, 5, "length")
-    atr_length = _pos_int(atr_length, 15, "atr_length")
     _length = max(atr_length, length)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

@@ -1,12 +1,12 @@
 # MESA Adaptive Moving Average (MAMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -247,26 +247,23 @@ def _mama_loop(
 @skip_leading_nan("close", interior=True)
 def mama(
     close: Series,
-    fastlimit: float | None = None,
-    slowlimit: float | None = None,
-    talib: bool | None = None,
+    fastlimit: Annotated[float, Bound(gt=0, lt=1)] = 0.5,
+    slowlimit: Annotated[float, Bound(gt=0, lt=1)] = 0.05,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: MESA Adaptive Moving Average (MAMA)"""
     # Validate Arguments
     # Same range TA-Lib enforces (TA_BAD_PARAM otherwise), so both paths accept the same values
-    fastlimit = _pos_float(fastlimit, 0.5, "fastlimit", lt=1)
-    slowlimit = _pos_float(slowlimit, 0.05, "slowlimit", lt=1)
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MAMA
 
         mama_s, fama_s = MAMA(close, fastlimit, slowlimit)

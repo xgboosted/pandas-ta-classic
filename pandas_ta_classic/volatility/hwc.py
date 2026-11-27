@@ -1,11 +1,11 @@
 # Holt-Winter Channel (HWC)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, Flag, _name_tokens, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -75,23 +75,17 @@ def _hwc_build_df(hwc_s, upper_s, lower_s, width_s, pctwidth_s, channel_eval, _p
 @skip_leading_nan("close", interior=True)
 def hwc(
     close: Series,
-    na: float | None = None,
-    nb: float | None = None,
-    nc: float | None = None,
-    nd: float | None = None,
-    scalar: float | None = None,
-    channel_eval: bool | None = None,
+    na: Annotated[float, Bound(gt=0)] = 0.2,
+    nb: Annotated[float, Bound(gt=0)] = 0.1,
+    nc: Annotated[float, Bound(gt=0)] = 0.1,
+    nd: Annotated[float, Bound(gt=0)] = 0.1,
+    scalar: Annotated[float, Bound(gt=0)] = 1,
+    channel_eval: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Holt-Winter Channel"""
     # Validate Arguments
-    na = _pos_float(na, 0.2, "na")
-    nb = _pos_float(nb, 0.1, "nb")
-    nc = _pos_float(nc, 0.1, "nc")
-    nd = _pos_float(nd, 0.1, "nd")
-    scalar = _pos_float(scalar, 1, "scalar")
-    channel_eval = _bool_param(channel_eval, False, "channel_eval")
     close = verify_series(close)
     if close is None:
         return None

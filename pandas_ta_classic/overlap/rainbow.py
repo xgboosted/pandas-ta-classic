@@ -1,24 +1,23 @@
 # Rainbow Charts
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Options, _name_tokens, nan_on_short_input
 
 
 @nan_on_short_input
 def rainbow(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 2,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(num_ribbons=Bound(gt=0, default=10, integer=True))],
 ) -> DataFrame | None:
     """Indicator: Rainbow Charts"""
     # Validate arguments
-    length = _pos_int(length, 2, "length")
-    num_ribbons = _pos_int(kwargs.pop("num_ribbons", None), 10, "num_ribbons")
+    num_ribbons = kwargs.pop("num_ribbons")
     close = verify_series(close, length * num_ribbons)
     offset = get_offset(offset)
 

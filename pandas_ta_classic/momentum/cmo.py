@@ -1,5 +1,5 @@
 # Chande Momentum Oscillator (CMO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -12,34 +12,31 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 
 
 @nan_on_short_input
 def cmo(
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    scalar: Annotated[float, Bound()] = 100,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Chande Momentum Oscillator (CMO)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
-    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default drift, scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100 and drift == 1:
+    if Imports["talib"] and talib and scalar == 100 and drift == 1:
         from talib import CMO
 
         cmo = CMO(close, length)
@@ -48,7 +45,7 @@ def cmo(
         positive = mom.copy().clip(lower=0)
         negative = mom.copy().clip(upper=0).abs()
 
-        if mode_talib:
+        if talib:
             pos_ = rma(positive, length)
             neg_ = rma(negative, length)
             if pos_ is None or neg_ is None:

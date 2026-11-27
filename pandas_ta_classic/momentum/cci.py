@@ -1,5 +1,5 @@
 # Commodity Channel Index (CCI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -8,7 +8,7 @@ from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.sma import sma
 from pandas_ta_classic.statistics.mad import mad
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, nan_on_short_input
 
 
 @nan_on_short_input
@@ -16,27 +16,24 @@ def cci(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    c: float | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    c: Annotated[float, Bound(gt=0)] = 0.015,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Commodity Channel Index (CCI)"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
-    c = _pos_float(c, 0.015, "c")
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and c == 0.015:
+    if Imports["talib"] and talib and c == 0.015:
         from talib import CCI
 
         cci = CCI(high, low, close, length)

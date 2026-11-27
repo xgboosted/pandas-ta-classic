@@ -35,13 +35,49 @@ expected. Inputs with no label in common (a ``RangeIndex`` next to a
 overlap) raise ``ValueError``: they could only produce an all-NaN result on the
 union of both indexes.
 
+Parameter Defaults
+------------------
+
+``None`` selects a parameter's default everywhere. Every indicator also declares
+its defaults and constant bounds in the signature, so they can be read without
+calling the indicator:
+
+.. code-block:: python
+
+    import inspect
+    import pandas_ta_classic as ta
+
+    inspect.signature(ta.hma).parameters["length"].default   # 10
+    ta.defaults("hma")
+    # {'length': {'kind': 'int', 'default': 10, 'gt': 1, 'ge': None, 'lt': None, 'in_kwargs': False}}
+
+``ta.defaults(name)`` lists each declared parameter: its kind (``int``,
+``float``, ``bool``, ``str``), its default, its bounds or choices, whether it is
+read from ``**kwargs`` (``in_kwargs``), and ``default_from`` where the default is
+another parameter's value (``adx``'s ``lensig`` takes ``length``). It raises
+``ValueError`` for an indicator with nothing to declare: one that takes no
+parameter besides ``offset`` and ``drift`` (``ha``, the math transforms), or only
+parameters of the kinds below. These are checked when the indicator runs and are
+not listed: a bound that depends on another parameter (``min_periods`` at most
+``length``, ``ddof`` below ``length``), a ``None`` default that means something
+(``tos_stdevall``'s ``length`` takes the whole series), a list (its ``stds``), a
+free-form string (``vwap``'s ``anchor``), and ``ma()``'s own ``name`` and
+``source``.
+
+A window handed to the chosen moving average is checked against that average's
+own bound, so the error names the parameter you passed:
+``stoch(d=1, mamode="hma")`` raises ``stoch() d must be an integer > 1 with
+mamode='hma', got 1``.
+
 Missing Values
 --------------
 
 **A leading NaN run is not data.** Chained input (one indicator's output fed
 into another) starts with a NaN warm-up run. Every indicator returns the same
 values on the real bars as it would on the series without that run, and NaN on
-the run itself. ``tests/contracts/test_leading_nan_contract.py`` checks every registered
+the run itself. Candle patterns read 0 there, as TA-Lib's do, and the Chikou
+span of ``ichimoku`` (``ICS_*``, the close shifted back) holds the closes that
+follow the run unless ``lookahead=False``. ``tests/contracts/test_leading_nan_contract.py`` checks every registered
 indicator.
 
 **A missing bar inside the series** (a NaN in any input) is handled in one of
@@ -539,7 +575,7 @@ Trend identification and direction indicators:
 * *Choppiness Index*: **chop**
 * *Chande Kroll Stop*: **cksp** (default is TradingView's ``p=10, x=1, q=9`` with a Wilder ATR; ``tvmode=False`` gives the book's ``10, 3, 20`` with an SMA ATR)
 * *Central Pivot Range*: **cpr** (pivot methods ``classic``, ``camarilla``, ``fibonacci``, ``woodie``; ``timeframe`` ``daily`` uses the previous bar, ``intraday``/``weekly``/``monthly`` the last completed calendar day, week or month)
-* *Decay*: **decay** (Formally: **linear_decay**)
+* *Decay*: **decay** (Formerly: **linear_decay**)
 * *Decreasing*: **decreasing**
 * *Detrended Price Oscillator*: **dpo** (Set ``lookahead=False`` to disable centering; the uncentered line equals TA-Lib ``DPO``, the price ``length // 2 + 1`` bars ago less the SMA)
 * *Directional Index*: **dx**

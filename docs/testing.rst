@@ -140,8 +140,8 @@ Regression Tests
 
 **Why:** Prevent reintroduction of known bugs and catch silent value drift.
 
-- ``test_snapshots.py`` — Spot-checks all 223 tracked indicators at 24 fixed
-  indices spanning 50 to 5221 (the final bar) against stored snapshot data.
+- ``test_snapshots.py`` — Spot-checks all 223 tracked indicators at 25 fixed
+  indices spanning 50 to 5240 (the final bar) against stored snapshot data.
   Test methods are generated from ``regression_snapshots.json`` itself, so the
   asserted set cannot drift from the stored set.
 - A fixed defect is pinned by a test in the module of the indicator, contract
@@ -181,8 +181,9 @@ Edge-Case Tests
 - ``test_leading_nan_contract.py`` — for every registered indicator, a
   leading NaN run (chained input) leaves the result on the real bars
   unchanged, the padded bars themselves read NaN, and an all-NaN input reads
-  NaN throughout; candle patterns, which read 0 there as TA-Lib's do, are
-  pinned as decided.
+  NaN throughout. Candle patterns, which read 0 there as TA-Lib's do, are
+  pinned as decided, and on the padded bars so is ``ichimoku``'s
+  forward-looking Chikou span (``ICS_*``, dropped by ``lookahead=False``).
 - ``test_interior_nan_contract.py`` — for every registered indicator, one
   missing bar inside the series recovers, or differs persistently only for
   cumulative indicators and whole-series fits (see "Missing Values" in the
@@ -225,8 +226,13 @@ Edge-Case Tests
   choice of a string option (each ``mamode``), ``talib=True`` and each
   boolean option.
 - ``test_int_parameter_contract.py`` — for every registered indicator, each
-  whole-number parameter set to 2, 3 and 5 leaves values in every column the
-  default call fills.
+  whole-number parameter and option (``min_periods`` from ``**kwargs`` too)
+  set to 0, 1, 2, 3 and 5 is either rejected by a ``ValueError``, or, compared
+  with the call without it, leaves values in every column, opens no gap in a
+  gap-free column, adds no infinity, raises nothing else and warns no
+  ``RuntimeWarning``. Each value is tried on the default call and on every
+  option path: each flag flipped and each choice of a string option
+  (``mamode="linreg"``, ...), from the signature or ``**kwargs``.
 - ``test_option_effect_contract.py`` — for every registered indicator, each
   MA choice changes every column it smooths, and each boolean parameter
   changes the values or the column names when flipped, so an option that is
@@ -238,8 +244,9 @@ Edge-Case Tests
   options for each ``mamode`` included), set to an invalid value, raises an
   error that names the indicator the user called, not the inner function
   the value was handed to; an error for an int parameter of 0 or 1 names
-  that parameter; and every ``*min_periods`` option above its ``length`` raises naming the
-  indicator.
+  that parameter, also where the window reaches ``ma(mamode, ...)`` and the
+  chosen MA (``hma``, ``linreg``) needs it above 1; and every
+  ``*min_periods`` option above its ``length`` raises naming the indicator.
 - ``test_parameter_name_contract.py`` — for every registered indicator, each
   parameter that changes the values, set off its default, changes the column
   names too, so two such calls never share a column; the parameters left out
@@ -255,6 +262,16 @@ Edge-Case Tests
   indicator and the parameter, not an inner function such as ``ma()``;
   ``downside_deviation()`` and ``volatility()`` name themselves for an
   unknown ``tf``.
+- ``test_declared_params.py`` — the parameters declared in a signature
+  (``Annotated[int, Bound(gt=1)] = 10``) are seen by every sweep that reads
+  defaults and choices; each int parameter of each ``mamode`` indicator, set
+  to the smallest value ``hma`` or ``linreg`` rejects, raises naming that
+  parameter; ``ta.defaults()`` reports the declaration. An option declared
+  with ``Options(...)`` is validated and resolved before the body reads it,
+  an explicit ``None`` for every declared parameter gives the default call's
+  result, a ``default_from`` that cannot resolve or a declaration left as a
+  string annotation fails when the indicator is defined, and ``OneOf``
+  choices keep their order across processes.
 
 The data-problem modules keep their known exceptions in a table of strict xfails with the
 reason, so an entry that starts passing fails until it is removed.
@@ -472,12 +489,15 @@ Running All Tests
    python -m pytest --cov=pandas_ta_classic --cov-report=html tests/
 
 **Warnings are errors.** ``[tool.pytest.ini_options] filterwarnings`` in
-``pyproject.toml`` turns any ``UserWarning``, ``DeprecationWarning`` or
-``FutureWarning`` raised from ``pandas_ta_classic`` into a test failure. The
+``pyproject.toml`` turns any ``UserWarning``, ``DeprecationWarning``, ``FutureWarning`` or
+``RuntimeWarning`` raised from ``pandas_ta_classic`` into a test failure. The
 package ships no deprecation warnings (a removal raises at once), and a
 deprecated pandas or numpy call made from the
 package (such as pandas 3's ``Pandas4Warning``) fails CI instead of reaching
-users. A test that expects a warning asserts it with ``pytest.warns``.
+users. A ``RuntimeWarning`` (a 0/0 or an overflow) means a case the formula
+cannot compute: a parameter that causes it is rejected at the boundary, and a
+data case (a flat window) is handled under a local ``np.errstate``. A test
+that expects a warning asserts it with ``pytest.warns``.
 
 
 Fixture Files
@@ -513,7 +533,7 @@ error) still passed ``test_snapshots.py``, and a 7 % error injected into
 rewritten first.
 
 *Independence from dependency versions.*  ``expected_values.json`` derives
-166 of its 223 entries from an external reference.  Recomputing at test time
+167 of its 223 entries from an external reference.  Recomputing at test time
 imports that reference's floating-point behaviour, and one of those
 references used to be ``pandas`` rolling: ``pandas`` 3.x and 2.x disagree on
 ``rolling().kurt()`` in the 8th decimal, because ``roll_kurt`` accumulates
@@ -562,7 +582,9 @@ rounding.
 Measured across all 423 tracked columns the worst native-vs-golden
 disagreement needs a relative term of 3.6e-15, so ``GOLDEN_RTOL`` keeps nine
 orders of margin for platform and BLAS differences across the Python versions
-of the CI matrix.  Snapshot checkpoints use at most 29 % of the budget.
+of the CI matrix.  Snapshot checkpoints use at most 41 % of the budget
+(``log_return`` and ``drawdown``, whose small values sit near the storage
+rounding).
 
 This replaced a flat ``REL_TOL = 1e-4``, which was ~10 orders looser than the
 data required.  Concretely: perturbing the kurtosis excess-adjustment constant
@@ -604,9 +626,15 @@ They cover ``kst``, ``smi``, ``stc``, ``qqe``, ``squeeze_pro``,
 their sources when first ported (``kst``, ``stc``, ``cksp``, ``ttm_trend``,
 ``vfi``, ``ebsw``).
 
+``cti`` is checked against its definition in exact arithmetic instead: the
+Pearson correlation of each window with its bar numbers, computed in
+fractions, on 300 SPY closes and on the same closes shifted up by 1e4, to
+1e-12 (``test_cti_is_the_exact_correlation_to_rounding`` in
+``tests/indicators/test_momentum.py``).
+
 Still regression-only, with no independent check of their values:
 ``aberration``, ``amat``, ``aobv``, ``brar``, ``cdl_inside``, ``cdl_z``,
-``ce``, ``cti``, ``decay``, ``dsp``, ``hilo``, ``hwc``, ``hwma``,
+``ce``, ``decay``, ``dsp``, ``hilo``, ``hwc``, ``hwma``,
 ``inertia``, ``jma``, ``kdj``, ``long_run``, ``lrsi``, ``mcgd``, ``mmar``,
 ``pmax``, ``psl``, ``rainbow``, ``rsx``, ``rvgi``, ``rvi_vol``,
 ``short_run``, ``ssf``, ``td_seq``, ``thermo``, ``tos_stdevall``, ``trixh``,

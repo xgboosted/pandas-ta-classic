@@ -1,18 +1,18 @@
 # Median Price (MEDPRICE)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, nan_on_short_input
 
 
 @nan_on_short_input
 def medprice(
     high: Series,
     low: Series,
-    talib: bool | None = None,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -26,12 +26,11 @@ def medprice(
     high = verify_series(high)
     low = verify_series(low)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None:
         return None
 
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MEDPRICE
 
         result = Series(MEDPRICE(high, low), index=high.index)

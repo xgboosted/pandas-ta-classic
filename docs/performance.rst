@@ -140,6 +140,8 @@ script.
     df['sma_slow'] = ta.sma(df['Close'], length=20)
     df = df.dropna()
 
+    # SMACrossover: the bt.Strategy in examples/backtrader_strategy.py, which
+    # reads self.data.sma_fast and self.data.sma_slow (not the backtesting.py class above)
     cerebro = bt.Cerebro()
     cerebro.adddata(make_feed(df, 'sma_fast', 'sma_slow')(dataname=df))
     cerebro.addstrategy(SMACrossover)

@@ -1,23 +1,22 @@
 # Wilder's Moving Average (RMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def rma(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: wildeR's Moving Average (RMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
     alpha = (1.0 / length) if length > 0 else 0.5
     close = verify_series(close, length)
     offset = get_offset(offset)

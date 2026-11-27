@@ -1,10 +1,10 @@
 # Average Directional Movement Index (ADX)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, nan_on_short_input
 from pandas_ta_classic.utils._math import _zero_small
 from pandas_ta_classic.utils._wilder import wilder_di
 from pandas_ta_classic.volatility.atr import atr
@@ -24,34 +24,31 @@ def adx(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    lensig: int | None = None,
-    scalar: float | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    lensig: Annotated[int | None, Bound(gt=0, default_from="length")] = None,
+    scalar: Annotated[float, Bound()] = 100,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = "rma",
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: ADX"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length")
-    lensig = _pos_int(lensig, length, "lensig")
-    mamode = _str_param(mamode, "rma", "mamode", choices=ma())
-    scalar = _number(scalar, 100, "scalar")
+    assert lensig is not None  # resolved to length by default_from; narrows the type for mypy
+    _ma_windows(mamode, length=length, lensig=lensig)
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default drift, mamode, scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100 and mamode == "rma" and drift == 1 and lensig == length:
+    if Imports["talib"] and talib and scalar == 100 and mamode == "rma" and drift == 1 and lensig == length:
         from talib import ADX, MINUS_DI, PLUS_DI
 
         adx_arr = Series(ADX(high, low, close, length), index=close.index)

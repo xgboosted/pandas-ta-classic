@@ -52,6 +52,7 @@ import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
+from pandas_ta_classic.utils._core import declared_params
 from tests.config import get_sample_data
 from tests.contracts import code_defaults as _code_defaults
 
@@ -142,7 +143,8 @@ MIXED_FLOAT32: set[str] = set()
 # volume to 0.
 INVENTS_VALUES_FROM_NAN = {
     "cdl_doji": "CDL_DOJI_10_0.1=0",
-    "cdl_pattern": "61 columns, values 0",
+    "cdl_inside": "CDL_INSIDE=0",
+    "cdl_pattern": "62 columns, values 0",
     "tsignals": "TS_Entries=0, TS_Exits=0, TS_Trades=0, TS_Trends=0",
     "vp": "neg_volume=0, pos_volume=0, total_volume=0",
     "xsignals": "TS_Entries=0, TS_Exits=0, TS_Trades=0, TS_Trends=0",
@@ -523,7 +525,10 @@ def test_signature_shape() -> None:
     no_offset = set()
     for name in INDICATORS:
         params = inspect.signature(getattr(ta, name)).parameters
-        explicit = [f"{p}={v.default!r}" for p, v in params.items() if v.default is not inspect.Parameter.empty and v.default is not None]
+        declared = declared_params(getattr(ta, name))  # Annotated[..., Bound()] = 10 is the declared form
+        explicit = [
+            f"{p}={v.default!r}" for p, v in params.items() if v.default is not inspect.Parameter.empty and v.default is not None and p not in declared
+        ]
         if explicit:
             defaults[name] = ", ".join(explicit)
         if "offset" not in params:

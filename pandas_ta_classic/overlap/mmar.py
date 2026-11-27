@@ -1,23 +1,22 @@
 # Madrid Moving Average Ribbon (MMAR)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Options, nan_on_short_input
 
 
 @nan_on_short_input
 def mmar(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(step=Bound(gt=0, default=5, integer=True), num_ribbons=Bound(gt=0, default=6, integer=True))],
 ) -> DataFrame | None:
     """Indicator: Madrid Moving Average Ribbon (MMAR)"""
     # Validate arguments
-    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 
@@ -26,8 +25,8 @@ def mmar(
 
     # Calculate Result
     # Create ribbon of EMAs with incremental periods
-    step = _pos_int(kwargs.pop("step", None), 5, "step")
-    num_ribbons = _pos_int(kwargs.pop("num_ribbons", None), 6, "num_ribbons")
+    step = kwargs.pop("step")
+    num_ribbons = kwargs.pop("num_ribbons")
 
     ribbons = {}
     for i in range(num_ribbons):

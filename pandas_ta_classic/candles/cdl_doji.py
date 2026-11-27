@@ -1,5 +1,5 @@
 # Candle Doji (CDL_DOJI)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input
 
 
 @nan_on_short_input
@@ -20,25 +20,21 @@ def cdl_doji(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    factor: float | None = None,
-    scalar: float | None = None,
-    asint: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    factor: Annotated[float, Bound(ge=0)] = 10,
+    scalar: Annotated[float, Bound()] = 100,
+    asint: Annotated[bool, Flag()] = True,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(naive=Flag(False))],
 ) -> Series | None:
     """Indicator: Candle Type - Doji"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    asint = _bool_param(asint, True, "asint")
-    factor = _number(factor, 10, "factor", ge=0)
-    scalar = _number(scalar, 100, "scalar")
     open_ = verify_series(open_, length)
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    naive = _bool_param(kwargs.pop("naive", None), False, "naive")
+    naive = kwargs.pop("naive")
 
     if open_ is None or high is None or low is None or close is None:
         return None

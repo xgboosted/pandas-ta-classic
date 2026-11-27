@@ -1,5 +1,5 @@
 # Accumulation/Distribution (AD)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, nan_on_short_input
 
 
 @nan_on_short_input
@@ -20,7 +20,7 @@ def ad(
     close: Series,
     volume: Series,
     open_: Series | None = None,
-    talib: bool | None = None,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
@@ -31,13 +31,12 @@ def ad(
     close = verify_series(close)
     volume = verify_series(volume)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if high is None or low is None or close is None or volume is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and open_ is None:
+    if Imports["talib"] and talib and open_ is None:
         from talib import AD
 
         ad = AD(high, low, close, volume)

@@ -1,36 +1,33 @@
 # Weighted Moving Average (WMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series, weights
-from pandas_ta_classic.utils._core import _bool_param, _name_tokens, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _name_tokens, nan_on_short_input
 
 
 @nan_on_short_input
 def wma(
     close: Series,
-    length: int | None = None,
-    asc: bool | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    asc: Annotated[bool, Flag()] = True,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Weighted Moving Average (WMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    asc = _bool_param(asc, True, "asc")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and asc:  # TA-Lib WMA has no descending weights
+    if Imports["talib"] and talib and asc:  # TA-Lib WMA has no descending weights
         from talib import WMA
 
         wma = WMA(close, length)

@@ -1,11 +1,11 @@
 # Coppock Curve (COPC)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.wma import wma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _positive_inputs, _windows_in_order, nan_on_short_input
 
 from .roc import roc
 
@@ -14,17 +14,14 @@ from .roc import roc
 @_positive_inputs("close")
 def coppock(
     close: Series,
-    length: int | None = None,
-    fast: int | None = None,
-    slow: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    fast: Annotated[int, Bound(gt=0)] = 11,
+    slow: Annotated[int, Bound(gt=0)] = 14,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Coppock Curve (COPC)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    fast = _pos_int(fast, 11, "fast")
-    slow = _pos_int(slow, 14, "slow")
     _windows_in_order("coppock", fast=fast, slow=slow)
     close = verify_series(close, max(length, fast, slow))
     offset = get_offset(offset)

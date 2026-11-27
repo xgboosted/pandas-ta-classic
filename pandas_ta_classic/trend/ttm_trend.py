@@ -1,11 +1,11 @@
 # TTM Trend (TTM_TREND)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hl2 import hl2
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
@@ -13,13 +13,12 @@ def ttm_trend(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 6,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: TTM Trend (TTM_TRND)"""
     # Validate arguments
-    length = _pos_int(length, 6, "length")
     high = verify_series(high, length + 1)
     low = verify_series(low, length + 1)
     close = verify_series(close, length + 1)

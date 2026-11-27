@@ -1,10 +1,10 @@
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Flag, Options, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 # TD Sequential caps the consecutive run at the 13-bar setup/countdown window.
@@ -30,9 +30,9 @@ def _td_run_capped(td_bool: np.ndarray) -> np.ndarray:
 @nan_on_short_input
 def td_seq(
     close: Series,
-    asint: bool | None = None,
+    asint: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(show_all=Flag(True))],
 ) -> DataFrame | None:
     """Indicator: Tom Demark Sequential (TD_SEQ)"""
     # Validate arguments
@@ -40,8 +40,7 @@ def td_seq(
     if close is None:
         return None
     offset = get_offset(offset)
-    asint = _bool_param(asint, False, "asint")
-    show_all = _bool_param(kwargs.pop("show_all", None), True, "show_all")
+    show_all = kwargs.pop("show_all")
 
     def calc_td(series: Series, direction: str, show_all: bool):
         td_bool = series.diff(4) > 0 if direction == "up" else series.diff(4) < 0

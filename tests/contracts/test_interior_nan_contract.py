@@ -65,7 +65,7 @@ FROM_EARLIER_BARS = {"cpr", "ichimoku"}
 # TA-Lib's do (#282). Every other indicator reads NaN there: the 48 that published
 # a carried or stale-state value (ema, rma and Wilder smoothing, the cumulative
 # volume indices, the SAR and supertrend state machines, ...) were fixed together.
-PUBLISHES_AT_THE_GAP = {"cdl_doji", "cdl_pattern"}
+PUBLISHES_AT_THE_GAP = {"cdl_doji", "cdl_inside", "cdl_pattern"}
 AT_THE_GAP = {
     **{name: "KEPT: takes its value from earlier bars by definition" for name in FROM_EARLIER_BARS},
     **{name: "KEPT: a candle pattern reads 0 on a bar it cannot match, as TA-Lib's do (#282)" for name in PUBLISHES_AT_THE_GAP},

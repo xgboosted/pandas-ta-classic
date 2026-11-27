@@ -11,6 +11,7 @@ from pandas_ta_classic._meta import (
     Imports,
     version,
 )
+from pandas_ta_classic._params import defaults
 from pandas_ta_classic.core import (
     AllStrategy,
     AnalysisIndicators,
@@ -40,7 +41,6 @@ from pandas_ta_classic.utils import (
     get_drift,
     get_offset,
     is_datetime_ordered,
-    is_percent,
     jensens_alpha,
     lag,
     linear_regression,
@@ -100,6 +100,7 @@ __all__ = [
     "cross",
     "cross_value",
     "crossover",
+    "defaults",
     "df_error_analysis",
     "df_year_to_date",
     "downside_deviation",
@@ -108,7 +109,6 @@ __all__ = [
     "get_drift",
     "get_offset",
     "is_datetime_ordered",
-    "is_percent",
     "jensens_alpha",
     "lag",
     "linear_regression",
@@ -154,7 +154,9 @@ def __dir__() -> list[str]:
 
 
 # The removed names that lived at the top level (texts in utils._REMOVED_MESSAGES).
-_TOP_LEVEL_REMOVED = {name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "EXCHANGE_TZ", "CDL_PATTERN_NAMES", "yf", "av")}
+_TOP_LEVEL_REMOVED = {
+    name: _REMOVED_MESSAGES[name] for name in ("non_zero_range", "get_time", "EXCHANGE_TZ", "CDL_PATTERN_NAMES", "yf", "av", "is_percent")
+}
 
 
 def __getattr__(name: str) -> Any:
