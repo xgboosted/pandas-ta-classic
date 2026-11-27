@@ -178,8 +178,9 @@ script. Without the ``if __name__ == "__main__":`` guard, a script that calls
 
     # Before numpy is imported, so the workers inherit it. Each interpreter
     # otherwise reserves memory for OpenBLAS thread buffers that the indicators
-    # never use: measured per worker on Windows, 786 MB against 47 MB committed;
-    # on Linux it is address space (899 MB against 365 MB), not resident memory.
+    # never use: measured per worker on one 32-core Windows machine, 786 MB
+    # against 47 MB committed (the default grows with the core count); on Linux
+    # it is address space (899 MB against 365 MB), not resident memory.
     os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
     from concurrent.futures import ProcessPoolExecutor
