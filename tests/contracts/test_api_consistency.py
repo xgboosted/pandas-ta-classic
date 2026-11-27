@@ -142,7 +142,8 @@ MIXED_FLOAT32: set[str] = set()
 # volume to 0.
 INVENTS_VALUES_FROM_NAN = {
     "cdl_doji": "CDL_DOJI_10_0.1=0",
-    "cdl_pattern": "61 columns, values 0",
+    "cdl_inside": "CDL_INSIDE=0",
+    "cdl_pattern": "62 columns, values 0",
     "tsignals": "TS_Entries=0, TS_Exits=0, TS_Trades=0, TS_Trends=0",
     "vp": "neg_volume=0, pos_volume=0, total_volume=0",
     "xsignals": "TS_Entries=0, TS_Exits=0, TS_Trades=0, TS_Trends=0",

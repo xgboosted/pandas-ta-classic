@@ -673,6 +673,17 @@ class TestCandleColorNanInput:
         result = pandas_ta.cdl_inside(close - 0.5, close + 1, close - 1, close, asbool=True)
         assert result.dtype == np.dtype("bool")
 
+    def test_cdl_inside_reads_0_on_a_missing_bar(self):
+        """A missing bar read NaN (False times candle_color's NaN), not 0 as asbool and every other pattern do."""
+        close = pd.Series(np.arange(1.0, 51.0))
+        open_ = close - 0.5
+        for s in (open_, close):
+            s.iloc[[0, 20]] = np.nan
+        high, low = close + 1, close - 1
+        for result in (pandas_ta.cdl_inside(open_, high, low, close), pandas_ta.cdl_pattern(open_, high, low, close, name="inside")["CDL_INSIDE"]):
+            assert result.iloc[[0, 20]].tolist() == [0.0, 0.0]
+            assert result.notna().all()
+
 
 # ---------------------------------------------------------------------------
 # run_pattern skips a leading NaN run
