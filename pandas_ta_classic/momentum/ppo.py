@@ -1,10 +1,10 @@
 # Percentage Price Oscillator (PPO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -14,18 +14,17 @@ from pandas_ta_classic.utils import (
 )
 from pandas_ta_classic.utils._core import (
     _TAL_MA_TYPES,
-    _bool_param,
-    _number,
-    _pos_int,
+    Bound,
+    Flag,
+    OneOf,
     _positive_inputs,
-    _str_param,
     _windows_in_order,
     nan_on_short_input,
 )
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
-def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwargs):
+def _ppo_compute(close, fast, slow, signal, scalar, mamode, talib, ma_kwargs):
     """Compute PPO, histogram and signal line.
 
     Returns:
@@ -34,7 +33,7 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwarg
     """
     # TA-Lib cannot express a non-default scalar, hma, rma, zlma, ..., nor an option
     # the chosen MA reads (ema's adjust, ...); run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100 and mamode in _TAL_MA_TYPES and not ma_kwargs:
+    if Imports["talib"] and talib and scalar == 100 and mamode in _TAL_MA_TYPES and not ma_kwargs:
         from talib import PPO
 
         ppo_s = PPO(close, fast, slow, tal_ma(mamode))
@@ -59,26 +58,21 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwarg
 @_positive_inputs("close")
 def ppo(
     close: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    scalar: Annotated[float, Bound()] = 100,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Percentage Price Oscillator (PPO)"""
     # Validate Arguments
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
-    signal = _pos_int(signal, 9, "signal")
-    scalar = _number(scalar, 100, "scalar")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast)
     _windows_in_order("ppo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
@@ -87,7 +81,7 @@ def ppo(
     # The options the chosen MA reads go to its fast and slow MA, as in bbands;
     # ppo accepted and ignored them (#340). The signal line stays TA-Lib's EMA.
     ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
-    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwargs)
+    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, talib, ma_kwargs)
     if result is None:
         return None
     ppo_s, histogram, signalma = result

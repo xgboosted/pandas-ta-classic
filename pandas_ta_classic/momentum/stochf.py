@@ -1,17 +1,17 @@
 # Stochastic Fast (STOCHF)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _on_valid_rows, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, _on_valid_rows, nan_on_short_input
 
 
 def _stochf_native(high, low, close, fastk, fastd, mamode):
@@ -45,31 +45,28 @@ def stochf(
     high: Series,
     low: Series,
     close: Series,
-    fastk: int | None = None,
-    fastd: int | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    fastk: Annotated[int, Bound(gt=0)] = 5,
+    fastd: Annotated[int, Bound(gt=0)] = 3,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Stochastic Fast (STOCHF)"""
     # Validate Arguments
-    fastk = _pos_int(fastk, 5, "fastk")
-    fastd = _pos_int(fastd, 3, "fastd")
     _length = max(fastk, fastd)
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
-    mode_talib = _bool_param(talib, False, "talib")
+    _ma_windows(mamode, fastd=fastd)
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and mamode == "sma":
+    if Imports["talib"] and talib and mamode == "sma":
         from talib import STOCHF as TASTOCHF
 
         fastk_, fastd_ = TASTOCHF(high, low, close, fastk, fastd)

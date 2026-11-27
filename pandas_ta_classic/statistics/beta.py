@@ -1,10 +1,10 @@
 # Beta (BETA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _pos_int, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
@@ -12,13 +12,12 @@ from pandas_ta_classic.utils._core import _pos_int, _positive_inputs, nan_on_sho
 def beta(
     close: Series,
     benchmark: Series | None = None,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=1)] = 30,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Beta"""
     # Validate Arguments
-    length = _pos_int(length, 30, "length", gt=1)
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     # Not given at all is a caller error, like mavp's 'periods': returning None

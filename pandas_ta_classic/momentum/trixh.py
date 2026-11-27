@@ -1,29 +1,26 @@
 # TRIX Histogram (TRIXH)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.momentum.trix import trix
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def trixh(
     close: Series,
-    length: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 18,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    scalar: Annotated[float, Bound()] = 100,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: TRIX Histogram (TRIXH)"""
     # Validate arguments
-    length = _pos_int(length, 18, "length")
-    signal = _pos_int(signal, 9, "signal")
-    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

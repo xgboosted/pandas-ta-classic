@@ -147,20 +147,6 @@ class TestCoreUtilities:
             with subtests.test(bad=bad), pytest.raises(ValueError, match="signed_series\\(\\) initial must be a number"):
                 self.utils.signed_series(series, initial=bad)
 
-    def test_is_percent(self, subtests):
-        for value in (0, 50, 100, 99.5):
-            with subtests.test(value=value):
-                assert self.utils.is_percent(value)
-        for value in (-1, 100.1, 101):
-            with subtests.test(value=value):
-                assert not self.utils.is_percent(value)
-        # A non-number is not a percent rather than a TypeError.
-        assert not self.utils.is_percent("50")
-        assert not self.utils.is_percent(None)
-        # bool is an int subclass: True used to read as 1, a percent.
-        assert not self.utils.is_percent(True)
-        assert not self.utils.is_percent(False)
-
     def test_unsigned_differences_default(self):
         # the docstring's example; without asint the flags stay float, even for an int series
         series = Series([3, 2, 2, 1, 1, 5, 6, 6, 7, 5, 3])
@@ -524,8 +510,6 @@ class TestRequiredUtilityInputs:
             "signals",
             # None selects the default.
             "get_drift", "get_offset",
-            # A predicate: None is not a percent.
-            "is_percent",
             # Raises TypeError naming the function for any non-str, None included.
             "tal_ma",
             # Series.apply runs it once per element (adx, dm, psar, cross); a guard there costs every bar.
@@ -664,9 +648,9 @@ class TestVerifySeriesProperties:
         before = nullable.copy()
         result = verify_series(nullable, min_length=1)
         assert result.dtype == np.float64
-        pd.testing.assert_series_equal(result, nullable.astype(float))
+        pd.testing.assert_series_equal(result, nullable.astype(float), check_exact=True)
         assert result.index is nullable.index
-        pd.testing.assert_series_equal(nullable, before)
+        pd.testing.assert_series_equal(nullable, before, check_exact=True)
 
 
 _offset_int = st.integers(min_value=0, max_value=20)
@@ -683,7 +667,7 @@ class TestApplyOffsetProperties:
     @given(price_series(min_size=10, max_size=100, allow_nan=False))
     def test_apply_offset_zero_is_identity(self, s):
         result = apply_offset(s, 0)
-        pd.testing.assert_series_equal(result, s)
+        pd.testing.assert_series_equal(result, s, check_exact=True)
 
     @given(price_series(min_size=10, max_size=100, allow_nan=False), _offset_int)
     def test_apply_offset_shift_direction(self, s, offset):

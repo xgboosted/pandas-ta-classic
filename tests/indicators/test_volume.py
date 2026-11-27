@@ -109,10 +109,9 @@ class TestEmvDivisorDefault:
         result = pandas_ta.emv(h, low, v)
         mask = result.notna() & expected.notna()
         assert mask.any()
-        np.testing.assert_allclose(
+        np.testing.assert_array_equal(
             result[mask].values,
             expected[mask].values,
-            rtol=1e-4,
             err_msg="emv() default divisor must be 10000 (tulipy convention)",
         )
 

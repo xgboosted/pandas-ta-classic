@@ -1,27 +1,25 @@
 # Historical Volatility (HVOL)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _pos_float, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _name_tokens, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def hvol(
     close: Series,
-    length: int | None = None,
-    annualization: float | None = None,
+    length: Annotated[int, Bound(gt=1)] = 20,
+    annualization: Annotated[float, Bound(gt=0)] = 252,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Historical Volatility (HVOL)"""
     # Validate Arguments
-    length = _pos_int(length, 20, "length")
     # Annualization factor: 252 for daily, 52 for weekly, 12 for monthly
-    annualization = _pos_float(annualization, 252, "annualization")
     close = verify_series(close, length + 1)
     offset = get_offset(offset)
 
@@ -58,7 +56,7 @@ Sources:
 
 Args:
     close (pd.Series): Close price series.
-    length (int): Lookback period for std dev. Default: 20
+    length (int): Lookback period for std dev, at least 2. Default: 20
     annualization (float): Annualization factor. Default: 252 (trading days/year)
     offset (int): Result offset. Default: 0
 

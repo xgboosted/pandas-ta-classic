@@ -1,5 +1,5 @@
 # Mass Index (MASSI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,22 +10,20 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _windows_in_order, nan_on_short_input
 
 
 @nan_on_short_input
 def massi(
     high: Series,
     low: Series,
-    fast: int | None = None,
-    slow: int | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 9,
+    slow: Annotated[int, Bound(gt=0)] = 25,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Mass Index (MASSI)"""
     # Validate arguments
-    fast = _pos_int(fast, 9, "fast")
-    slow = _pos_int(slow, 25, "slow")
     _windows_in_order("massi", fast=fast, slow=slow)
     _length = max(fast, slow)
     high = verify_series(high, _length)

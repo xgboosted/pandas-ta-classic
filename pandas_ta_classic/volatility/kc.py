@@ -1,5 +1,5 @@
 # Keltner Channels (KC)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, Options, nan_on_short_input
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 from .true_range import true_range
@@ -21,17 +21,14 @@ def kc(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 20,
+    scalar: Annotated[float, Bound(gt=0)] = 2,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(tr=Flag(True))],
 ) -> DataFrame | None:
     """Indicator: Keltner Channels (KC)"""
     # Validate arguments
-    length = _pos_int(length, 20, "length")
-    scalar = _pos_float(scalar, 2, "scalar")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)
@@ -41,7 +38,7 @@ def kc(
         return None
 
     # Calculate Result
-    use_tr = _bool_param(kwargs.pop("tr", None), True, "tr")
+    use_tr = kwargs.pop("tr")
     # The band is a smoothed range, added to and subtracted from the basis and
     # never a divisor, so a flat bar contributes 0.0 here exactly as it does
     # through true_range(). non_zero_range() reported an epsilon-wide channel.

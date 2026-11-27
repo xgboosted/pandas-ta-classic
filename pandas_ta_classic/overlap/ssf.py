@@ -1,11 +1,11 @@
 # Super Smoother Filter (SSF)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -27,15 +27,13 @@ def _ssf3_loop(c_arr, ssf_arr, m, c1, c2, c3, c4):
 @skip_leading_nan("close", interior=True)
 def ssf(
     close: Series,
-    length: int | None = None,
-    poles: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    poles: Annotated[int, Bound(gt=0)] = 2,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Ehlers' Super Smoother Filter (SSF)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    poles = _pos_int(poles, 2, "poles")
     if poles not in (2, 3):
         raise ValueError(f"ssf() poles must be 2 or 3, got {poles!r}")
     close = verify_series(close, length)

@@ -1,11 +1,11 @@
 # Even Better Sine Wave (EBSW)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 # ProRealCode's listing starts at barindex > 10.
@@ -62,15 +62,13 @@ def _ebsw_nb(close, length, bars):
 @skip_leading_nan("close", interior=True)
 def ebsw(
     close: Series,
-    length: int | None = None,
-    bars: int | None = None,
+    length: Annotated[int, Bound(gt=38)] = 40,
+    bars: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Even Better SineWave (EBSW)"""
     # Validate arguments
-    length = _pos_int(length, 40, "length", gt=38)
-    bars = _pos_int(bars, 10, "bars")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

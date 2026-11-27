@@ -1,5 +1,5 @@
 # TRIX (TRIX)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -11,40 +11,36 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _number, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def trix(
     close: Series,
-    length: int | None = None,
-    signal: int | None = None,
-    scalar: float | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 30,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    scalar: Annotated[float, Bound()] = 100,
+    talib: Annotated[bool, Flag()] = False,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Trix (TRIX)"""
     # Validate Arguments
-    length = _pos_int(length, 30, "length")
-    signal = _pos_int(signal, 9, "signal")
-    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, max(length, signal))
     drift = get_drift(drift)
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
 
     # Calculate Result — propagate talib to EMA so all three stages use same backend
-    ema1 = ema(close=close, length=length, talib=mode_talib, **kwargs)
-    ema2 = ema(close=ema1, length=length, talib=mode_talib, **kwargs)
-    ema3 = ema(close=ema2, length=length, talib=mode_talib, **kwargs)
+    ema1 = ema(close=close, length=length, talib=talib, **kwargs)
+    ema2 = ema(close=ema1, length=length, talib=talib, **kwargs)
+    ema3 = ema(close=ema2, length=length, talib=talib, **kwargs)
     if ema1 is None or ema2 is None or ema3 is None:
         return None
     trix = scalar * (ema3 / ema3.shift(drift) - 1)

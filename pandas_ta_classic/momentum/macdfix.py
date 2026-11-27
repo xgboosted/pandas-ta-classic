@@ -1,31 +1,29 @@
 # MACD with Fixed Periods (MACDFIX)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.momentum.macd import macd
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input
 
 
 @nan_on_short_input
 def macdfix(
     close: Series,
-    signal: int | None = None,
-    talib: bool | None = None,
+    signal: Annotated[int, Bound(gt=0)] = 9,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(signal_indicators=Flag(False), asmode=Flag(False))],
 ) -> DataFrame | None:
     """Indicator: MACD with Fixed Periods (MACDFIX)
 
     MACD with fixed fast=12, slow=26, variable signal period.
     TA-Lib name: MACDFIX.
     """
-    signal = _pos_int(signal, 9, "signal")
     close = verify_series(close, 26 + signal)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
@@ -36,12 +34,12 @@ def macdfix(
 
     # Read without popping: the native branch forwards it to macd(), which owns
     # the signal columns and the options that go with them.
-    signal_indicators = _bool_param(kwargs.get("signal_indicators", None), False, "signal_indicators")
-    asmode = _bool_param(kwargs.get("asmode", None), False, "asmode")
+    signal_indicators = kwargs.get("signal_indicators")
+    asmode = kwargs.get("asmode")
 
     # TA-Lib's MACDFIX returns the three lines only; run natively instead of
     # dropping the signal columns or the AS variant it cannot produce
-    if Imports["talib"] and mode_talib and not signal_indicators and not asmode:
+    if Imports["talib"] and talib and not signal_indicators and not asmode:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)

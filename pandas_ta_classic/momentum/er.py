@@ -1,24 +1,23 @@
 # Efficiency Ratio (ER)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import degenerate_div, get_drift, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 from pandas_ta_classic.utils._signals import attach_signals
 
 
 @nan_on_short_input
 def er(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | DataFrame | None:
     """Indicator: Efficiency Ratio (ER)"""
     # Validate arguments
-    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     drift = get_drift(drift)

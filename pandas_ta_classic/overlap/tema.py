@@ -1,11 +1,11 @@
 # Triple Exponential Moving Average (TEMA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input
 
 from .ema import _ema_chain
 
@@ -13,28 +13,26 @@ from .ema import _ema_chain
 @nan_on_short_input
 def tema(
     close: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(adjust=Flag(False), sma=Flag(True))],
 ) -> Series | None:
     """Indicator: Triple Exponential Moving Average (TEMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mode_talib = _bool_param(talib, False, "talib")
     # ema's options, forwarded to every ema() of the chain; TA-Lib cannot express them
-    adjust = _bool_param(kwargs.get("adjust"), False, "adjust")
-    seed_sma = _bool_param(kwargs.get("sma"), True, "sma")
+    adjust = kwargs.get("adjust")
+    seed_sma = kwargs.get("sma")
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and not adjust and seed_sma:
+    if Imports["talib"] and talib and not adjust and seed_sma:
         from talib import TEMA
 
         tema = TEMA(close, length)

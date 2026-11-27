@@ -342,7 +342,7 @@ def sharpe_ratio(
     returns = percent_return(close=close) if not log else log_return(close=close)
 
     if use_cagr:
-        return cagr(close) / volatility(close, log=log)
+        return (cagr(close) - benchmark_rate) / volatility(close, log=log)
     period_mu = period * returns.mean()
     period_std = np.sqrt(period) * returns.std()
     return (period_mu - benchmark_rate) / period_std

@@ -1,5 +1,5 @@
 # Schaff Trend Cycle (STC)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _describe_index, _pos_float, _pos_int, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _describe_index, _windows_in_order, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -112,19 +112,15 @@ def _stc_compute_xmacd(close, fast, slow, _length, ma1, ma2, osc):
 @nan_on_short_input
 def stc(
     close: Series,
-    tclength: int | None = None,
-    fast: int | None = None,
-    slow: int | None = None,
-    factor: float | None = None,
+    tclength: Annotated[int, Bound(gt=0)] = 10,
+    fast: Annotated[int, Bound(gt=0)] = 12,
+    slow: Annotated[int, Bound(gt=0)] = 26,
+    factor: Annotated[float, Bound(gt=0)] = 0.5,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Schaff Trend Cycle (STC)"""
     # Validate arguments
-    tclength = _pos_int(tclength, 10, "tclength")
-    fast = _pos_int(fast, 12, "fast")
-    slow = _pos_int(slow, 26, "slow")
-    factor = _pos_float(factor, 0.5, "factor")
     _windows_in_order("stc", fast=fast, slow=slow)
     _length = max(tclength, fast, slow)
     close = verify_series(close, _length)

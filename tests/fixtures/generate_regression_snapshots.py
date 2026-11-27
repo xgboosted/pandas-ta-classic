@@ -21,9 +21,10 @@ handling) rather than just the endpoint.
 The first checkpoint sits past the warmup period of every tracked indicator;
 positions where an indicator is still NaN serialise as null and are skipped
 by the test.  Spacing is tighter near the warmup edge, where initialisation
-bugs live, and then even across the rest of the series.  SPY_D.csv has 5222
-rows, so the last checkpoint is its final bar — the previous set stopped at
-3000 and left the final 2221 rows checked only by the endpoint assertion in
+bugs live, and then even across the rest of the series.  SPY_D.csv has 5241
+rows, so the last checkpoint, 5240, is its final bar; 5221 stays from the set
+that took that bar to be the last one.  An earlier set stopped at 3000 and
+left the final rows checked only by the endpoint assertion in
 test_golden_values.py.
 """
 
@@ -69,6 +70,7 @@ _CHECKPOINTS = [
     5100,
     5200,
     5221,
+    5240,
 ]
 _OUT_PATH = Path(__file__).parent / "regression_snapshots.json"
 

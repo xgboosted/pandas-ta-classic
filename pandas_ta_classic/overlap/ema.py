@@ -1,36 +1,34 @@
 # Exponential Moving Average (EMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input, pad_positions
+from pandas_ta_classic.utils._core import Bound, Flag, Options, nan_on_short_input, pad_positions
 
 
 @nan_on_short_input
 def ema(
     close: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
-    **kwargs: Any,
+    **kwargs: Annotated[Any, Options(adjust=Flag(False), sma=Flag(True))],
 ) -> Series | None:
     """Indicator: Exponential Moving Average (EMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    adjust = _bool_param(kwargs.pop("adjust", None), False, "adjust")
-    sma = _bool_param(kwargs.pop("sma", None), True, "sma")
+    adjust = kwargs.pop("adjust")
+    sma = kwargs.pop("sma")
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and not adjust and sma:
+    if Imports["talib"] and talib and not adjust and sma:
         from talib import EMA
 
         ema = EMA(close, length)

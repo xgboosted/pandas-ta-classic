@@ -52,7 +52,7 @@ import pandas_ta_classic as ta
 from pandas_ta_classic.overlap.ma import _MA_DISPATCH
 from tests.assertions import output_columns
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS, candidate_calls, string_choices
+from tests.contracts import INDICATORS, candidate_calls, declared_kwargs_flags, string_choices
 
 _N_ROWS = 250
 
@@ -447,7 +447,7 @@ def _kwargs_bool_options(name: str) -> list[str]:
     """Boolean options *name* reads from ``**kwargs``; signal_indicators and
     lookahead have sweeps of their own (above, and test_lookahead.py)."""
     source = inspect.getsource(inspect.getmodule(inspect.unwrap(getattr(ta, name))))
-    found = {a or b for a, b in _KWARGS_BOOL.findall(source)}
+    found = {a or b for a, b in _KWARGS_BOOL.findall(source)} | declared_kwargs_flags(name)
     return sorted(found - {"signal_indicators", "lookahead", "talib", "tulipy"})
 
 

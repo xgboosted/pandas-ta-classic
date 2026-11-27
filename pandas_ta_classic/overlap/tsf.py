@@ -1,24 +1,23 @@
 # Time Series Forecast (TSF)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def tsf(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
     talib: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Time Series Forecast"""
     # Validate Arguments
-    length = _pos_int(length, 14, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

@@ -1,11 +1,11 @@
 # Archer Moving Averages Trends (AMAT)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, _windows_in_order, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, _windows_in_order, nan_on_short_input
 
 from .long_run import long_run
 from .short_run import short_run
@@ -14,20 +14,17 @@ from .short_run import short_run
 @nan_on_short_input
 def amat(
     close: Series | None = None,
-    fast: int | None = None,
-    slow: int | None = None,
-    lookback: int | None = None,
-    mamode: str | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 8,
+    slow: Annotated[int, Bound(gt=0)] = 21,
+    lookback: Annotated[int, Bound(gt=0)] = 2,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Archer Moving Averages Trends (AMAT)"""
     # Validate Arguments
-    fast = _pos_int(fast, 8, "fast")
-    slow = _pos_int(slow, 21, "slow")
     _windows_in_order("amat", fast=fast, slow=slow)
-    lookback = _pos_int(lookback, 2, "lookback")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast)
     close = verify_series(close, max(fast, slow, lookback))
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values

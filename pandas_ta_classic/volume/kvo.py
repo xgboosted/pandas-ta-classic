@@ -1,10 +1,10 @@
 # Klinger Volume Oscillator (KVO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.overlap.hlc3 import hlc3
-from pandas_ta_classic.overlap.ma import ma
+from pandas_ta_classic.overlap.ma import _ma_windows, ma
 from pandas_ta_classic.utils import (
     apply_fill,
     apply_offset,
@@ -12,7 +12,7 @@ from pandas_ta_classic.utils import (
     signed_series,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _on_valid_rows, _pos_int, _str_param, _windows_in_order, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, OneOf, _on_valid_rows, _windows_in_order, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -22,20 +22,17 @@ def kvo(
     low: Series,
     close: Series,
     volume: Series,
-    fast: int | None = None,
-    slow: int | None = None,
-    signal: int | None = None,
-    mamode: str | None = None,
+    fast: Annotated[int, Bound(gt=0)] = 34,
+    slow: Annotated[int, Bound(gt=0)] = 55,
+    signal: Annotated[int, Bound(gt=0)] = 13,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Klinger Volume Oscillator (KVO)"""
     # Validate arguments
-    fast = _pos_int(fast, 34, "fast")
-    slow = _pos_int(slow, 55, "slow")
     _windows_in_order("kvo", fast=fast, slow=slow)
-    signal = _pos_int(signal, 13, "signal")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
+    _ma_windows(mamode, fast=fast, signal=signal)
     _length = max(fast, slow, signal)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

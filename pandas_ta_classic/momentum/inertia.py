@@ -1,5 +1,5 @@
 # Inertia (INERTIA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, nan_on_short_input
 from pandas_ta_classic.volatility.rvi import rvi
 
 
@@ -63,25 +63,20 @@ def inertia(
     close: Series | None = None,
     high: Series | None = None,
     low: Series | None = None,
-    length: int | None = None,
-    rvi_length: int | None = None,
-    scalar: float | None = None,
-    refined: bool | None = None,
-    thirds: bool | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=1)] = 20,
+    rvi_length: Annotated[int, Bound(gt=1)] = 14,
+    scalar: Annotated[float, Bound(gt=0)] = 100,
+    refined: Annotated[bool, Flag()] = False,
+    thirds: Annotated[bool, Flag()] = False,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Inertia (INERTIA)"""
     # Validate Arguments
-    length = _pos_int(length, 20, "length", gt=1)
-    rvi_length = _pos_int(rvi_length, 14, "rvi_length", gt=1)  # rvi() needs length > 1
-    scalar = _pos_float(scalar, 100, "scalar")
-    refined = _bool_param(refined, False, "refined")
-    thirds = _bool_param(thirds, False, "thirds")
+    # rvi() needs length > 1
     if refined and thirds:
         raise ValueError("inertia() refined and thirds are alternative modes; pass at most one")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _length = max(length, rvi_length)
     close = verify_series(close, _length)
     offset = get_offset(offset)

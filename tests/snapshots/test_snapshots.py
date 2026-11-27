@@ -2,8 +2,8 @@
 Priority 4 — Snapshot regression tests.
 
 Each test re-computes an indicator on SPY_D.csv and compares spot-check
-values at 24 fixed positional indices against stored golden snapshots,
-spanning index 50 through the final bar at 5221.  Spacing is tighter near the
+values at 25 fixed positional indices against stored golden snapshots,
+spanning index 50 through the final bar at 5240.  Spacing is tighter near the
 warmup edge, where initialisation bugs live.  Checkpoints where an indicator
 is still NaN are stored as null and skipped.
 
@@ -49,7 +49,7 @@ with open(_SNAP_PATH) as _fh:
 
 
 class TestRegressionSnapshots:
-    """Spot-check indicator values at 24 fixed positions across SPY_D.csv."""
+    """Spot-check indicator values at 25 fixed positions across SPY_D.csv."""
 
     @classmethod
     def setup_class(cls):

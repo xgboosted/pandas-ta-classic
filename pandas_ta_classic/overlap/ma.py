@@ -1,9 +1,10 @@
 # Moving Average (MA)
+import functools
 from typing import Any
 
 from pandas import Series
 
-from pandas_ta_classic.utils._core import nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _validate_number, declared_params, nan_on_short_input
 
 from .dema import dema
 from .ema import ema
@@ -45,6 +46,29 @@ _MA_DISPATCH = {
     "wma": wma,
     "zlma": zlma,
 }
+
+
+@functools.cache
+def _ma_length_bound(mamode: str) -> Bound:
+    # read once per MA: inspect.signature() cost about 7 us on every call of an indicator with a mamode
+    declared = declared_params(_MA_DISPATCH[mamode]).get("length")
+    if declared is None or not isinstance(declared.marker, Bound):
+        raise TypeError(f"ma({mamode!r}) declares no Bound for length")
+    return declared.marker
+
+
+def _ma_windows(mamode: str, **windows: int) -> None:
+    """Raise if a window an indicator hands to ``ma(mamode, ...)`` is below the bound
+    the chosen MA declares for its ``length``.
+
+    The MA's own check would name its own parameter (``length``); this names the
+    indicator's, so ``stoch(d=1, mamode="hma")`` reports ``d`` (AGENTS.md rule 2).
+    The bound is read from the MA's signature, its only copy; every ``ma()`` choice
+    declares one (``test_every_ma_declares_its_length``).
+    """
+    bound = _ma_length_bound(mamode)
+    for name, value in windows.items():
+        _validate_number(value, value, name, integer=True, gt=bound.gt, ge=bound.ge, lt=bound.lt, note=f" with mamode={mamode!r}")
 
 
 @nan_on_short_input

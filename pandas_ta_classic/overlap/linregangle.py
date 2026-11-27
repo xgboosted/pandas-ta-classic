@@ -1,17 +1,17 @@
 # Linear Regression Angle (LINEARREG_ANGLE)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.linreg import linreg
 from pandas_ta_classic.utils import get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def linregangle(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=1)] = 14,
     talib: bool | None = None,
     offset: int | None = None,
     **kwargs: Any,
@@ -21,7 +21,6 @@ def linregangle(
     The angle (in degrees) of the linear regression slope.
     TA-Lib name: LINEARREG_ANGLE.
     """
-    length = _pos_int(length, 14, "length", gt=1)
     close = verify_series(close, length)
     offset = get_offset(offset)
 

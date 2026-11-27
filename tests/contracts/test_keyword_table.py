@@ -21,9 +21,10 @@ import pandas_ta_classic as ta
 from pandas_ta_classic._indicator_loader import _find_indicator_func
 from pandas_ta_classic.candles.cdl_pattern import _NATIVE_PATTERNS, ALL_PATTERNS
 from pandas_ta_classic.overlap.ma import _MA_DISPATCH, ma as _ma
+from pandas_ta_classic.utils._core import declared_params
 from pandas_ta_classic.utils._keywords import _FILL, _KWARGS_OPTIONS, _MA_CHOICE, _MA_OPTIONS, _MA_TALIB, _PATTERN_OPTIONS, choice_keywords
 from tests.config import get_sample_data
-from tests.contracts import INDICATORS, inputs
+from tests.contracts import INDICATORS, inputs, kwargs_options
 from tests.meta.test_docstring_params import _KWARG_READ, _is_kwargs, _resolve
 
 
@@ -81,7 +82,17 @@ def test_the_table_lists_what_the_code_reads(name):
         assert _extra(func) <= frozenset().union(*_PATTERN_OPTIONS.values())
         assert func.__name__ not in _KWARGS_OPTIONS
         return
-    assert _extra(func) == _KWARGS_OPTIONS.get(func.__name__, frozenset()), f"{name}: update _KWARGS_OPTIONS"
+    assert _extra(func) == kwargs_options(func), f"{name}: declare the option with Options(...), or list it in _KWARGS_OPTIONS"
+
+
+def test_the_table_lists_no_declared_option():
+    """kwargs_options() adds the options an indicator declares with Options(...); written in
+    _KWARGS_OPTIONS too, the copy would drift from the declaration (#397)."""
+    for name in INDICATORS:
+        func = _find_indicator_func(name)
+        declared_options = {p for p, d in declared_params(func).items() if d.in_kwargs}
+        repeated = declared_options & _KWARGS_OPTIONS.get(func.__name__, frozenset())
+        assert not repeated, f"{name}: {sorted(repeated)} are declared; remove them from _KWARGS_OPTIONS"
 
 
 def test_the_table_names_only_registered_indicators():
@@ -119,7 +130,7 @@ def test_the_pattern_table_matches_the_patterns():
     for pattern in ALL_PATTERNS:
         func = {"doji": ta.cdl_doji, "inside": ta.cdl_inside}.get(pattern) or _NATIVE_PATTERNS[pattern]
         own = set(inspect.signature(func).parameters) - {"open_", "high", "low", "close", "scalar", "offset", "kwargs"}
-        options = own | _KWARGS_OPTIONS.get(func.__name__, frozenset())
+        options = own | kwargs_options(func)
         if options:
             found[pattern] = options
     assert found == _PATTERN_OPTIONS

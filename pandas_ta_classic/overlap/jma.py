@@ -1,11 +1,11 @@
 # Jurik Moving Average (JMA)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _number, _pos_float, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, _pos_float, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 
 
@@ -98,14 +98,13 @@ def _jma_phase_ratio(phase):
 def jma(
     close: Series,
     length: float | None = None,
-    phase: float | None = None,
+    phase: Annotated[float, Bound()] = 0,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Jurik Moving Average (JMA)"""
     # Validate Arguments
     _length = int(_pos_float(length, 7, "length"))  # float lengths are truncated, as before
-    phase = _number(phase, 0, "phase")
     if phase == 0:
         phase = 0  # keep the JMA_7_0 column name for an explicit 0.0
     close = verify_series(close, _length)

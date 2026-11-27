@@ -49,7 +49,7 @@ def test_one_missing_bar(name, frames):
     np.testing.assert_array_equal(np.isnan(tail_gapped), np.isnan(tail_clean), err_msg=f"{name}: NaN after the gap has passed")
     if name in CUMULATIVE | WHOLE_SERIES:
         return
-    np.testing.assert_allclose(tail_gapped, tail_clean, rtol=1e-6, atol=1e-9, equal_nan=True, err_msg=f"{name}: did not recover")
+    np.testing.assert_allclose(tail_gapped, tail_clean, rtol=1e-9, atol=0, equal_nan=True, err_msg=f"{name}: did not recover")
 
 
 # "Recovers" says the missing bar itself reads NaN (docs/indicators.rst, "Missing
@@ -65,7 +65,7 @@ FROM_EARLIER_BARS = {"cpr", "ichimoku"}
 # TA-Lib's do (#282). Every other indicator reads NaN there: the 48 that published
 # a carried or stale-state value (ema, rma and Wilder smoothing, the cumulative
 # volume indices, the SAR and supertrend state machines, ...) were fixed together.
-PUBLISHES_AT_THE_GAP = {"cdl_doji", "cdl_pattern"}
+PUBLISHES_AT_THE_GAP = {"cdl_doji", "cdl_inside", "cdl_pattern"}
 AT_THE_GAP = {
     **{name: "KEPT: takes its value from earlier bars by definition" for name in FROM_EARLIER_BARS},
     **{name: "KEPT: a candle pattern reads 0 on a bar it cannot match, as TA-Lib's do (#282)" for name in PUBLISHES_AT_THE_GAP},

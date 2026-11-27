@@ -1,24 +1,23 @@
 # Chaikins Volatility (CVI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.overlap.ema import ema
 from pandas_ta_classic.utils import apply_fill, apply_offset, degenerate_div, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input
 
 
 @nan_on_short_input
 def cvi(
     high: Series,
     low: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Chaikins Volatility (CVI)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
     high = verify_series(high, length)
     low = verify_series(low, length)
     offset = get_offset(offset)

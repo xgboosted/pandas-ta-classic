@@ -1,11 +1,11 @@
 # Relative Strength Xtra (RSX)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input, skip_leading_nan
 from pandas_ta_classic.utils._njit import njit
 from pandas_ta_classic.utils._signals import attach_signals
 
@@ -68,13 +68,12 @@ def _rsx_loop(c_arr, length, m):
 @skip_leading_nan("close", interior=True)
 def rsx(
     close: Series,
-    length: int | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | DataFrame | None:
     """Indicator: Relative Strength Xtra (inspired by Jurik RSX)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

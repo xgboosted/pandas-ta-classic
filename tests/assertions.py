@@ -77,22 +77,21 @@ def assert_logs(caplog: pytest.LogCaptureFixture, logger: str, level: str) -> It
 # ---------------------------------------------------------------------------
 #
 # Used by tests/oracle/test_oracle_registry.py. Native and TA-Lib results agree
-# to rounding: measured over the 71 assert_talib calls on SPY_D that preceded it
-# (TA-Lib 0.8.2 and 0.7.1), the worst column (`adosc`, whose values reach
-# 6e8) needs |actual - expected| <= 2e-10 * (1 + |expected|) with TA-Lib 0.8.2
-# (1.1e-10 with 0.7.1), 1.9% of TALIB_ATOL + TALIB_RTOL * |expected|.  That
-# leaves ~50x margin for other TA-Lib releases and BLAS builds in the CI matrix.
-# The absolute term carries the columns that cross zero, where a relative error
-# alone is unbounded. The most it has to cover beyond TALIB_RTOL * |expected| is
-# 8.2e-11 with TA-Lib 0.8.2 (`linreg_angle`, degrees near 0) and 2.4e-13 with
-# 0.7.1 (`stochrsi`), so TALIB_ATOL = 1e-9 keeps ~12x margin without letting a
-# column of small values (`macd`, `apo`) pass on its relative error alone.
+# to rounding. Measured over its ORACLE and VARIANTS cases on every frame (TA-Lib
+# 0.8.3; Windows and Linux, Python 3.11 to 3.15, numba on and off), 87 of 107
+# cases stay within a tenth of TALIB_ATOL * min(1, scale) + TALIB_RTOL * |expected|;
+# the median case reads TA-Lib's value exactly. The other 20 cancel digits where
+# a value is small against its column, and TOLERANCE in that module gives each a
+# factor with the bar that needs it. The absolute term carries the columns that
+# cross zero, where a relative error alone is unbounded; it is scaled down for
+# columns smaller than 1, so a column of small values cannot pass on it alone.
 #
 # This replaces a correlation fallback (threshold 0.85-0.99) that a scaled,
-# offset or partly wrong result passed, and a `pdt.assert_*_equal` first try
-# whose default rtol of 1e-5 was three orders looser than TALIB_RTOL.
-TALIB_ATOL = 1e-9
-TALIB_RTOL = 1e-8
+# offset or partly wrong result passed, a `pdt.assert_*_equal` first try whose
+# default rtol of 1e-5 was six orders looser than TALIB_RTOL, and TALIB_ATOL = 1e-9,
+# TALIB_RTOL = 1e-8, which most cases used to a fiftieth or less.
+TALIB_ATOL = 1e-11
+TALIB_RTOL = 1e-11
 
 
 def output_columns(result: Any) -> dict[str, Series]:

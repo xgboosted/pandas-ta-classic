@@ -41,6 +41,7 @@ We welcome contributions from the community! This document provides guidelines a
  Using `uv` (faster):
  ```bash
  # Install package in development mode with all dependencies
+ # (excludes backtest — install it explicitly, see below)
  uv pip install -e ".[all]"
  
  # Or install specific dependency groups as needed:
@@ -79,7 +80,7 @@ We welcome contributions from the community! This document provides guidelines a
 - Include comprehensive docstrings with examples
 - Add type hints for all parameters and return types
 - Include unit tests with edge cases
-- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/oracle/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options in `_KWARGS_OPTIONS`, and a reason for any new deviation in `test_api_consistency.py`'s table
+- The registry-driven contract tests run on every new indicator automatically and must pass. AGENTS.md ("Adding a New Indicator", step 7) lists them, says what each checks, and names what a new indicator adds for them: a case in `tests/oracle/test_oracle_registry.py` for a TA-Lib counterpart, `@skip_leading_nan(<series params>, interior=True)` for a recursive one, its `**kwargs` options declared with `Options(...)` (or, for one it only hands on, listed in `_KWARGS_OPTIONS`), and a reason for any new deviation in `test_api_consistency.py`'s table
 - If neither TA-Lib nor tulipy covers the indicator, add a port of its cited definition to `tests/fixtures/reference_ports.py` with a comparison in `tests/oracle/test_reference_ports.py`
 - **No need to manually update the Category dictionary** - indicators are automatically discovered from the filesystem
 
@@ -169,7 +170,7 @@ See ``tests/strategies.py`` for the full strategy catalog, ``tests/indicators/te
 
 #### Docstring Format
 ```python
-def indicator_name(close: pd.Series, length: int | None = None) -> pd.Series:
+def indicator_name(close: pd.Series, length: Annotated[int, Bound(gt=0)] = 20, offset: int | None = None, **kwargs: Any) -> pd.Series:
     """
     Brief description of the indicator.
  
@@ -178,7 +179,7 @@ def indicator_name(close: pd.Series, length: int | None = None) -> pd.Series:
  
     Args:
     close (pd.Series): Series of closing prices
-    length (int | None): Lookback period. Defaults to None (resolved internally, typically 20).
+    length (int): Lookback period. Default: 20
  
     Returns:
     pd.Series: Calculated indicator values
@@ -232,7 +233,7 @@ from pandas_ta_classic.utils import verify_series
 
 The full list, with what enforces each rule, is in the "Correctness Rules" section of [AGENTS.md](AGENTS.md). The ones contributors hit most:
 
-- **No silent fallbacks.** Validate arguments with `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `_windows_in_order` (a `fast`/`slow` pair), `get_drift` and `get_offset`; `None` means the default and anything invalid raises `ValueError`. Applies to utility functions too (`utils/_metrics.py`, `utils/_math.py`): raise rather than return a sentinel (`np.nan`, `{}`).
+- **No silent fallbacks.** Declare a parameter whose default is a literal and whose bound is a constant in the signature (`length: Annotated[int, Bound(gt=0)] = 20`; `Flag`, `OneOf` and `Options` for flags, choices and `**kwargs` options); `nan_on_short_input` validates it. Validate the rest, bounds that depend on another parameter, with `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `_windows_in_order` (a `fast`/`slow` pair), `get_drift` and `get_offset`; `None` means the default and anything invalid raises `ValueError`. Applies to utility functions too (`utils/_metrics.py`, `utils/_math.py`): raise rather than return a sentinel (`np.nan`, `{}`).
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
 - **Docstring `Default:` values match the code** (`tests/meta/test_docstring_defaults.py` checks this).

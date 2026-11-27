@@ -32,7 +32,15 @@ signals = pd.DataFrame(
 ).dropna()
 
 # Step 2 - the engine needs a bar store; a DataFrame can be imported directly
-store = mbt.import_dataframe(df, symbol='SYNTH', symbol_id=1, interval='1d', exchange='dataframe')
+store = mbt.import_dataframe(
+    df,
+    symbol='SYNTH',
+    symbol_id=1,
+    interval='1d',
+    data_root='mbt_store/data',
+    metadata_db='mbt_store/metadata.sqlite',
+    exchange='dataframe',
+)
 
 # Step 3 - hand the indicators over as an exogenous series
 mbt.register_exo('pandas_ta', signals, store=store)
@@ -42,7 +50,7 @@ position = when(exo('pandas_ta', 'sma_fast') > exo('pandas_ta', 'sma_slow'), lit
 strategy = mbt.Strategy.create('sma-crossover').signal('pos', position).size(col('pos'))
 ```
 
-The bar DataFrame passed to `import_dataframe()` needs lowercase `timestamp,open,high,low,close,volume` columns, and the timestamps must be timezone-aware.
+The bar DataFrame passed to `import_dataframe()` needs lowercase `timestamp,open,high,low,close,volume` columns. Use timezone-aware timestamps (UTC), as the example does: naive ones are accepted too, and nothing in the frame says which zone they mean. `data_root` and `metadata_db` say where the store is written; without them it goes to `data/` and `metadata/` in the working directory.
 
 > **Why register instead of feeding a column?** The engine loads its bars from its own store, so an extra column on the input DataFrame is not visible to expressions. An exogenous series is the supported channel for values computed elsewhere. It is ASOF-joined and forward-filled onto bar timestamps, which is also what makes it safe to register a frame that is shorter than the bar history.
 
@@ -81,15 +89,17 @@ signals = pd.DataFrame(
     }
 ).dropna()
 
+mbt.register_exo('pandas_ta', signals, store=store)
 position = when(exo('pandas_ta', 'macd') > exo('pandas_ta', 'macd_signal'), lit(1.0), lit(0.0))
 ```
 
 ### Pattern C: OHLCV-Dependent Indicators (ATR)
 
-Indicators that need more than the close take the other Series as usual. Nothing changes on the engine side: the result is one more exo column.
+Indicators that need more than the close take the other Series as usual. Nothing changes on the engine side: the result is one more exo column, registered again with the rest of the frame.
 
 ```python
 signals['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
+mbt.register_exo('pandas_ta', signals, store=store)
 ```
 
 Engine expressions compose on top of an exo column like any other series, so a volatility filter can be written against it directly:
@@ -104,6 +114,7 @@ position = when(trend, when(wide, lit(0.5), lit(1.0)), lit(0.0))
 
 ## 3. Things That Bite
 
+- **Register again after changing the frame.** `register_exo()` stores a copy of the frame as it is at the call. A column added afterwards, or a new frame built for another pattern, is unknown to the engine until it is registered again: the run raises `StrategyError: expression error: unknown input column 'exo.pandas_ta.<column>'`.
 - **Declare the series in the config.** `BacktestConfig(exo_data=['pandas_ta'])` is what makes the columns resolvable; without it the expression refers to a column the engine never loaded.
 - **Drop the warmup rows before registering.** A leading `NaN` block is forward-filled from nothing, so the first bars would compare against missing values. `dropna()` on the exo frame, and `warmup_bars` at least as long as the longest indicator window.
 - **Name the columns in the exo frame, not in the expression.** `exo('pandas_ta', 'macd')` reads better than the parameter-encoded `MACD_12_26_9`, and it does not change when you retune the indicator.
@@ -113,7 +124,7 @@ position = when(trend, when(wide, lit(0.5), lit(1.0)), lit(0.0))
 
 ## 4. Runnable Example
 
-`examples/manifoldbt_strategy.py` runs the same SMA crossover as the backtesting.py and backtrader examples, on the same synthetic series, and prints total return, Sharpe, max drawdown and the round-trip count.
+`examples/manifoldbt_strategy.py` runs the same 10/20 SMA crossover as the backtesting.py and backtrader examples, on the backtrader example's synthetic series (the backtesting.py example uses that library's bundled `GOOG` data), and prints total return, Sharpe, max drawdown and the round-trip count.
 
 ```bash
 pip install manifoldbt

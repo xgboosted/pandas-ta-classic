@@ -204,6 +204,17 @@ class TestUtilityMetrics:
         assert result_log >= 0
         assert math.isfinite(result_log)
 
+    def test_sharpe_ratio_use_cagr_subtracts_benchmark_rate(self, subtests):
+        # use_cagr=True divides cagr - benchmark_rate by the volatility; it used
+        # to drop the rate, so every benchmark_rate returned the rate-0 value.
+        rate = 0.05
+        for log in (False, True):
+            with subtests.test(log=log):
+                expected = (pandas_ta.utils.cagr(self.close) - rate) / pandas_ta.utils.volatility(self.close, log=log)
+                result = pandas_ta.sharpe_ratio(self.close, benchmark_rate=rate, use_cagr=True, log=log)
+                assert result == pytest.approx(expected)
+                assert result < pandas_ta.sharpe_ratio(self.close, use_cagr=True, log=log)
+
     def test_sortino_ratio(self):
         result = pandas_ta.sortino_ratio(self.close)
         assert isinstance(result, float)

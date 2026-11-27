@@ -1,5 +1,5 @@
 # Chande Forecast Oscillator (CFO)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -10,22 +10,20 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _number, _pos_int, _positive_inputs, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, _positive_inputs, nan_on_short_input
 
 
 @nan_on_short_input
 @_positive_inputs("close")
 def cfo(
     close: Series,
-    length: int | None = None,
-    scalar: float | None = None,
+    length: Annotated[int, Bound(gt=1)] = 9,
+    scalar: Annotated[float, Bound()] = 100,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Chande Forecast Oscillator (CFO)"""
     # Validate Arguments
-    length = _pos_int(length, 9, "length", gt=1)
-    scalar = _number(scalar, 100, "scalar")
     close = verify_series(close, length)
     offset = get_offset(offset)
 

@@ -60,8 +60,9 @@ def _strategy_in_worker(_ignored) -> int:
 def lean_workers():
     """Spawned children inherit this, as docs/strategies.rst recommends.
 
-    Every fresh interpreter commits about 750 MB for OpenBLAS thread buffers
-    that the indicators never use. This module starts most of the suite's
+    Every fresh interpreter commits memory for OpenBLAS thread buffers that the
+    indicators never use (786 MB per worker on a 32-core Windows machine;
+    docs/strategies.rst has the figures). This module starts most of the suite's
     processes (a few other tests set df.ta.cores = 2), and under "pytest -n auto"
     each xdist worker starts its own: without this, peak system commit went
     from 85% to 97% on a 32-core machine.
@@ -85,7 +86,7 @@ def executor():
 def assert_same_frame(serial: pd.DataFrame, parallel: pd.DataFrame) -> None:
     assert list(serial.columns) == list(parallel.columns)
     for column in serial.columns:
-        pd.testing.assert_series_equal(serial[column], parallel[column])
+        pd.testing.assert_series_equal(serial[column], parallel[column], check_exact=True)
 
 
 @pytest.mark.parametrize(

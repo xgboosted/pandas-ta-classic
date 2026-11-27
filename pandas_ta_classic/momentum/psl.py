@@ -1,5 +1,5 @@
 # Psychological Line (PSL)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_input, skip_leading_nan
+from pandas_ta_classic.utils._core import Bound, nan_on_short_input, skip_leading_nan
 
 
 @nan_on_short_input
@@ -19,16 +19,14 @@ from pandas_ta_classic.utils._core import _pos_float, _pos_int, nan_on_short_inp
 def psl(
     close: Series,
     open_: Series | None = None,
-    length: int | None = None,
-    scalar: float | None = None,
+    length: Annotated[int, Bound(gt=0)] = 12,
+    scalar: Annotated[float, Bound(gt=0)] = 100,
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Psychological Line (PSL)"""
     # Validate Arguments
-    length = _pos_int(length, 12, "length")
-    scalar = _pos_float(scalar, 100, "scalar")
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)

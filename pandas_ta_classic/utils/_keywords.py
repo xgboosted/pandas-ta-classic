@@ -25,60 +25,45 @@ _MIN_PERIODS = frozenset({"min_periods"})
 _SIGNALS = frozenset({"signal_indicators", "xa", "xb", "xserie", "xserie_a", "xserie_b", "cross_values", "cross_series"})
 
 # The options an indicator reads from **kwargs, or hands on to an inner function
-# through them, besides its signature and fillna/fill_method. Keyed by function
+# through them, besides its signature, fillna/fill_method and the options it declares
+# with Options(...), which kwargs_options() adds from the declaration (#397). Keyed by function
 # name (df.ta.max runs rolling_max). as_dataframe, interval and trend_reset were
 # removed: they stay listed so the indicator raises its own TypeError naming the
 # replacement.
 _KWARGS_OPTIONS: dict[str, frozenset[str]] = {
-    "aobv": frozenset({"run_length", "talib"}),
-    "atr": frozenset({"percent"}),
+    "aobv": frozenset({"talib"}),
     "beta": _MIN_PERIODS,
-    "cdl_doji": frozenset({"naive"}),
     "cmf": _MIN_PERIODS,
     "correl": _MIN_PERIODS,
-    "cpr": frozenset({"interval", "lookahead", "virgin_lookforward", "width_narrow", "width_wide"}),
-    "dema": _EMA,
+    "cpr": frozenset({"interval", "lookahead"}),
     "donchian": frozenset({"lower_min_periods", "upper_min_periods"}),
     "dpo": frozenset({"lookahead"}),
-    "ema": _EMA,
-    "emv": frozenset({"divisor"}),
     "er": _SIGNALS,
     "ichimoku": frozenset({"as_dataframe", "lookahead"}),
-    "kc": frozenset({"tr"}),
     "kurtosis": _MIN_PERIODS,
-    "linreg": frozenset({"angle", "degrees", "intercept", "r", "slope", "tsf"}),
-    "macd": _SIGNALS | {"asmode"},
-    "macdfix": _SIGNALS | {"asmode"},
+    "macd": frozenset({"cross_series", "cross_values", "xa", "xb", "xserie", "xserie_a", "xserie_b"}),
+    "macdfix": frozenset({"cross_series", "cross_values", "xa", "xb", "xserie", "xserie_a", "xserie_b"}),
     "mad": _MIN_PERIODS,
     "massi": _EMA | {"talib"},
     "median": _MIN_PERIODS,
     "midpoint": _MIN_PERIODS,
     "midprice": _MIN_PERIODS,
-    "mmar": frozenset({"num_ribbons", "step"}),
-    "msw": frozenset({"tulipy"}),
-    "pvol": frozenset({"signed"}),
-    "qstick": frozenset({"ma"}),
     "quantile": _MIN_PERIODS,
-    "rainbow": frozenset({"num_ribbons"}),
     "rsi": _SIGNALS,
     "rsx": _SIGNALS,
     "skew": _MIN_PERIODS,
     "sma": _MIN_PERIODS,
-    "squeeze": frozenset({"asint", "detailed", "lazybear", "tr"}),
-    "squeeze_pro": frozenset({"asint", "detailed", "tr"}),
+    "squeeze": frozenset({"tr"}),
+    "squeeze_pro": frozenset({"tr"}),
     "stc": frozenset({"ma1", "ma2", "osc"}),
     "stdev": _MIN_PERIODS,
-    "t3": _EMA,
-    "td_seq": frozenset({"show_all"}),
-    "tema": _EMA,
     "tos_stdevall": frozenset({"lookahead"}),
     "trix": _EMA,
     "tsi": _EMA | {"talib"},
     "tsignals": frozenset({"trend_reset"}),
-    "ui": frozenset({"everget"}),
     "variance": _MIN_PERIODS,
     "vortex": _MIN_PERIODS,
-    "vp": frozenset({"lookahead", "sort_close"}),
+    "vp": frozenset({"lookahead"}),
     "willr": _MIN_PERIODS,
     "xsignals": frozenset({"trend_reset"}),
 }
@@ -133,10 +118,21 @@ def _is_package_indicator(fn: Callable) -> bool:
     return fn.__module__.startswith("pandas_ta_classic.")
 
 
-def static_keywords(fn: Callable) -> frozenset[str]:
-    """The keywords a package indicator accepts whatever moving average or pattern it runs."""
+def kwargs_options(fn: Callable, declared: frozenset[str] = frozenset()) -> frozenset[str]:
+    """The options *fn* reads from ``**kwargs`` or hands on: *declared*, the ones it declares
+    with ``Options(...)`` (``declared_params``), and the others ``_KWARGS_OPTIONS`` lists.
+
+    A declared option is never written in the table too, so the two cannot drift
+    (``test_the_table_lists_no_declared_option``).
+    """
+    return _KWARGS_OPTIONS.get(fn.__name__, frozenset()) | declared
+
+
+def static_keywords(fn: Callable, declared: frozenset[str] = frozenset()) -> frozenset[str]:
+    """The keywords a package indicator accepts whatever moving average or pattern it runs;
+    *declared* are the ``**kwargs`` options it declares with ``Options(...)``."""
     names = frozenset(inspect.signature(fn).parameters) - {"kwargs"}
-    return names | _FILL | _KWARGS_OPTIONS.get(fn.__name__, frozenset())
+    return names | _FILL | kwargs_options(fn, declared)
 
 
 def _ma_keywords(choice: Any, forwards_talib: bool) -> frozenset[str]:
