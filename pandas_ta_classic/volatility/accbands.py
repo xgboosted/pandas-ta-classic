@@ -1,5 +1,5 @@
 # Acceleration Bands (ACCBANDS)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -10,7 +10,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _name_tokens, _nan_where_not_positive, _pos_float, _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, _name_tokens, _nan_where_not_positive, nan_on_short_input
 
 
 @nan_on_short_input
@@ -18,17 +18,14 @@ def accbands(
     high: Series,
     low: Series,
     close: Series,
-    length: int | None = None,
-    c: float | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 20,
+    c: Annotated[float, Bound(gt=0)] = 4,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Acceleration Bands (ACCBANDS)"""
     # Validate arguments
-    length = _pos_int(length, 20, "length")
-    c = _pos_float(c, 4, "c")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     high = verify_series(high, length)
     low = verify_series(low, length)
     close = verify_series(close, length)

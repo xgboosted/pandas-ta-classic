@@ -1,5 +1,5 @@
 # Elder Force Index (EFI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
@@ -11,23 +11,21 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input
 
 
 @nan_on_short_input
 def efi(
     close: Series,
     volume: Series,
-    length: int | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 13,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     drift: int | None = None,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Elder's Force Index (EFI)"""
     # Validate arguments
-    length = _pos_int(length, 13, "length")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     close = verify_series(close, length)
     volume = verify_series(volume, length)
     drift = get_drift(drift)

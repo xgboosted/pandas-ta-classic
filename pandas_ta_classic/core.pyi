@@ -73,14 +73,14 @@ class AnalysisIndicators:
     def ao(self, fast: int | None = None, slow: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def apo(
         self,
-        fast: int | None = None,
-        slow: int | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        fast: int | None = 12,
+        slow: int | None = 26,
+        mamode: str | None = 'sma',
+        talib: bool | None = False,
         offset: int | None = None,
         **kwargs: Any,
     ) -> Series | None: ...
-    def bias(self, length: int | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def bias(self, length: int | None = 26, mamode: str | None = 'sma', offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def bop(self, scalar: float | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def brar(
         self, length: int | None = None, scalar: float | None = None, drift: int | None = None, offset: int | None = None, **kwargs: Any
@@ -105,9 +105,9 @@ class AnalysisIndicators:
     def cti(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def dm(
         self,
-        length: int | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        length: int | None = 14,
+        mamode: str | None = 'rma',
+        talib: bool | None = False,
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -170,12 +170,12 @@ class AnalysisIndicators:
     def po(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def ppo(
         self,
-        fast: int | None = None,
-        slow: int | None = None,
-        signal: int | None = None,
-        scalar: float | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        fast: int | None = 12,
+        slow: int | None = 26,
+        signal: int | None = 9,
+        scalar: float | None = 100,
+        mamode: str | None = 'sma',
+        talib: bool | None = False,
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -193,10 +193,10 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def qqe(
         self,
-        length: int | None = None,
-        smooth: int | None = None,
-        factor: float | None = None,
-        mamode: str | None = None,
+        length: int | None = 14,
+        smooth: int | None = 5,
+        factor: float | None = 4.236,
+        mamode: str | None = 'ema',
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -246,16 +246,16 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def squeeze_pro(
         self,
-        bb_length: int | None = None,
-        bb_std: float | None = None,
-        kc_length: int | None = None,
-        kc_scalar_wide: float | None = None,
-        kc_scalar_normal: float | None = None,
-        kc_scalar_narrow: float | None = None,
-        mom_length: int | None = None,
-        mom_smooth: int | None = None,
+        bb_length: int | None = 20,
+        bb_std: float | None = 2.0,
+        kc_length: int | None = 20,
+        kc_scalar_wide: float | None = 2,
+        kc_scalar_normal: float | None = 1.5,
+        kc_scalar_narrow: float | None = 1,
+        mom_length: int | None = 12,
+        mom_smooth: int | None = 6,
         use_tr: bool | None = None,
-        mamode: str | None = None,
+        mamode: str | None = 'sma',
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -280,21 +280,21 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def stochf(
         self,
-        fastk: int | None = None,
-        fastd: int | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        fastk: int | None = 5,
+        fastd: int | None = 3,
+        mamode: str | None = 'sma',
+        talib: bool | None = False,
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
     def stochrsi(
         self,
-        length: int | None = None,
-        rsi_length: int | None = None,
-        k: int | None = None,
-        d: int | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        length: int | None = 14,
+        rsi_length: int | None = 14,
+        k: int | None = 3,
+        d: int | None = 3,
+        mamode: str | None = 'sma',
+        talib: bool | None = False,
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -320,11 +320,11 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def tsi(
         self,
-        fast: int | None = None,
-        slow: int | None = None,
-        signal: int | None = None,
-        scalar: float | None = None,
-        mamode: str | None = None,
+        fast: int | None = 13,
+        slow: int | None = 25,
+        signal: int | None = 13,
+        scalar: float | None = 100,
+        mamode: str | None = 'ema',
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -357,11 +357,11 @@ class AnalysisIndicators:
         **kwargs: Any,
     ) -> Series | None: ...
     def avgprice(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def dema(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def ema(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def fwma(self, length: int | None = None, asc: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def dema(self, length: int | None = 10, talib: bool | None = False, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def ema(self, length: int | None = 10, talib: bool | None = False, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def fwma(self, length: int | None = 10, asc: bool | None = True, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def hilo(
-        self, high_length: int | None = None, low_length: int | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any
+        self, high_length: int | None = 13, low_length: int | None = 21, mamode: str | None = 'sma', offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def hl2(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def hlc3(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
@@ -411,35 +411,35 @@ class AnalysisIndicators:
     ) -> Series | None: ...
     def mcgd(self, length: int | None = None, offset: int | None = None, c: float | None = None, **kwargs: Any) -> Series | None: ...
     def medprice(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def midpoint(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def midpoint(self, length: int | None = 2, talib: bool | None = False, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def midprice(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def mmar(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> DataFrame | None: ...
     def ohlc4(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def pwma(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def pwma(self, length: int | None = 10, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def rainbow(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> DataFrame | None: ...
-    def rma(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def sinwma(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def rma(self, length: int | None = 10, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def sinwma(self, length: int | None = 14, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def sma(self, length: int | None = 10, talib: bool | None = False, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def ssf(self, length: int | None = None, poles: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def supertrend(
         self, length: int | None = None, multiplier: float | None = None, offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
-    def swma(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def swma(self, length: int | None = 10, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def t3(
-        self, length: int | None = None, a: float | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 10, a: float | None = 0.7, talib: bool | None = False, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
-    def tema(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def trima(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def tema(self, length: int | None = 10, talib: bool | None = False, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def trima(self, length: int | None = 10, talib: bool | None = False, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def tsf(self, length: int | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def typprice(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
-    def vidya(self, length: int | None = None, drift: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def vidya(self, length: int | None = 14, drift: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def vwap(self, anchor: str | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def vwma(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def wcp(self, talib: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def wma(
-        self, length: int | None = None, asc: bool | None = None, talib: bool | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 10, asc: bool | None = True, talib: bool | None = False, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
-    def zlma(self, length: int | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def zlma(self, length: int | None = 10, mamode: str | None = 'ema', offset: int | None = None, **kwargs: Any) -> Series | None: ...
 
     # performance
     def drawdown(self, offset: int | None = None, **kwargs: Any) -> DataFrame | None: ...
@@ -497,10 +497,10 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def amat(
         self,
-        fast: int | None = None,
-        slow: int | None = None,
-        lookback: int | None = None,
-        mamode: str | None = None,
+        fast: int | None = 8,
+        slow: int | None = 21,
+        lookback: int | None = 2,
+        mamode: str | None = 'ema',
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -546,10 +546,10 @@ class AnalysisIndicators:
     def dpo(self, length: int | None = None, centered: bool | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def dx(
         self,
-        length: int | None = None,
-        scalar: float | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        length: int | None = 14,
+        scalar: float | None = 100,
+        mamode: str | None = 'rma',
+        talib: bool | None = False,
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -573,12 +573,12 @@ class AnalysisIndicators:
         self, length: int | None = None, talib: bool | None = None, drift: int | None = None, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
     def pmax(
-        self, length: int | None = None, multiplier: float | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 10, multiplier: float | None = 3.0, mamode: str | None = 'ema', offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
     def psar(
         self, af0: float | None = None, af: float | None = None, max_af: float | None = None, offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
-    def qstick(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
+    def qstick(self, length: int | None = 10, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def sarext(
         self,
         startvalue: float | None = None,
@@ -616,13 +616,13 @@ class AnalysisIndicators:
     # volatility
     def aberration(self, length: int | None = None, atr_length: int | None = None, offset: int | None = None, **kwargs: Any) -> DataFrame | None: ...
     def accbands(
-        self, length: int | None = None, c: float | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 20, c: float | None = 4, mamode: str | None = 'sma', offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def atr(
         self,
-        length: int | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        length: int | None = 14,
+        mamode: str | None = 'rma',
+        talib: bool | None = False,
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -630,11 +630,11 @@ class AnalysisIndicators:
     def avolume(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def bbands(
         self,
-        length: int | None = None,
-        std: float | None = None,
+        length: int | None = 5,
+        std: float | None = 2.0,
         ddof: int | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        mamode: str | None = 'sma',
+        talib: bool | None = False,
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -658,7 +658,7 @@ class AnalysisIndicators:
         **kwargs: Any,
     ) -> DataFrame | None: ...
     def kc(
-        self, length: int | None = None, scalar: float | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 20, scalar: float | None = 2, mamode: str | None = 'ema', offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def massi(self, fast: int | None = None, slow: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def natr(
@@ -685,10 +685,10 @@ class AnalysisIndicators:
     ) -> Series | None: ...
     def thermo(
         self,
-        length: int | None = None,
-        long: float | None = None,
-        short: float | None = None,
-        mamode: str | None = None,
+        length: int | None = 20,
+        long: float | None = 2,
+        short: float | None = 0.5,
+        mamode: str | None = 'ema',
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -703,17 +703,17 @@ class AnalysisIndicators:
     ) -> Series | None: ...
     def aobv(
         self,
-        fast: int | None = None,
-        slow: int | None = None,
-        max_lookback: int | None = None,
-        min_lookback: int | None = None,
-        mamode: str | None = None,
+        fast: int | None = 4,
+        slow: int | None = 12,
+        max_lookback: int | None = 2,
+        min_lookback: int | None = 2,
+        mamode: str | None = 'ema',
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
     def cmf(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def efi(
-        self, length: int | None = None, mamode: str | None = None, drift: int | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 13, mamode: str | None = 'ema', drift: int | None = None, offset: int | None = None, **kwargs: Any
     ) -> Series | None: ...
     def emv(self, drift: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def eom(
@@ -721,10 +721,10 @@ class AnalysisIndicators:
     ) -> Series | None: ...
     def kvo(
         self,
-        fast: int | None = None,
-        slow: int | None = None,
-        signal: int | None = None,
-        mamode: str | None = None,
+        fast: int | None = 34,
+        slow: int | None = 55,
+        signal: int | None = 13,
+        mamode: str | None = 'ema',
         offset: int | None = None,
         **kwargs: Any,
     ) -> DataFrame | None: ...
@@ -740,10 +740,10 @@ class AnalysisIndicators:
     def pvt(self, drift: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def vfi(
         self,
-        length: int | None = None,
-        coef: float | None = None,
-        vcoef: float | None = None,
-        mamode: str | None = None,
+        length: int | None = 130,
+        coef: float | None = 0.2,
+        vcoef: float | None = 2.5,
+        mamode: str | None = 'ema',
         offset: int | None = None,
         **kwargs: Any,
     ) -> Series | None: ...

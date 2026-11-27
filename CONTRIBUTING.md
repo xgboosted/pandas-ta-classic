@@ -170,7 +170,7 @@ See ``tests/strategies.py`` for the full strategy catalog, ``tests/indicators/te
 
 #### Docstring Format
 ```python
-def indicator_name(close: pd.Series, length: int | None = None) -> pd.Series:
+def indicator_name(close: pd.Series, length: Annotated[int, Bound(gt=0)] = 20, offset: int | None = None, **kwargs: Any) -> pd.Series:
     """
     Brief description of the indicator.
  
@@ -179,7 +179,7 @@ def indicator_name(close: pd.Series, length: int | None = None) -> pd.Series:
  
     Args:
     close (pd.Series): Series of closing prices
-    length (int | None): Lookback period. Defaults to None (resolved internally, typically 20).
+    length (int): Lookback period. Default: 20
  
     Returns:
     pd.Series: Calculated indicator values
@@ -233,7 +233,7 @@ from pandas_ta_classic.utils import verify_series
 
 The full list, with what enforces each rule, is in the "Correctness Rules" section of [AGENTS.md](AGENTS.md). The ones contributors hit most:
 
-- **No silent fallbacks.** Validate arguments with `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `_windows_in_order` (a `fast`/`slow` pair), `get_drift` and `get_offset`; `None` means the default and anything invalid raises `ValueError`. Applies to utility functions too (`utils/_metrics.py`, `utils/_math.py`): raise rather than return a sentinel (`np.nan`, `{}`).
+- **No silent fallbacks.** Declare a parameter whose default is a literal and whose bound is a constant in the signature (`length: Annotated[int, Bound(gt=0)] = 20`; `Flag`, `OneOf` and `Options` for flags, choices and `**kwargs` options); `nan_on_short_input` validates it. Validate the rest, bounds that depend on another parameter, with `_pos_int`, `_pos_float`, `_number`, `_bool_param`, `_str_param`, `_windows_in_order` (a `fast`/`slow` pair), `get_drift` and `get_offset`; `None` means the default and anything invalid raises `ValueError`. Applies to utility functions too (`utils/_metrics.py`, `utils/_math.py`): raise rather than return a sentinel (`np.nan`, `{}`).
 - **Never mutate caller-owned state.** Work on copies of shared registries and of any DataFrame/Series a utility receives (`to_utc` returns a `df.copy()`, never reindexes in place).
 - **`talib=True` must honour every parameter.** Use TA-Lib only when parameters it cannot express are at their defaults; otherwise compute natively.
 - **Docstring `Default:` values match the code** (`tests/meta/test_docstring_defaults.py` checks this).

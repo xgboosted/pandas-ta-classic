@@ -7,7 +7,8 @@ import pytest
 from pandas import Series
 
 import pandas_ta_classic as pandas_ta
-from pandas_ta_classic.overlap.ma import _WINDOW_GT_1
+from pandas_ta_classic.overlap.ma import _MA_DISPATCH
+from pandas_ta_classic.utils._core import Bound, declared_params
 from tests.config import get_sample_data
 
 
@@ -426,15 +427,14 @@ class TestWilderSeeding:
         assert np.isfinite(tr.iloc[21])
 
 
-def test_ma_windows_matches_every_ma():
-    """_WINDOW_GT_1 repeats each MA's own bound for _ma_windows (#397): every ma() choice that
-    rejects length=1 is in it and takes length=2, and every other choice takes length=1."""
+def test_every_ma_declares_its_length():
+    """_ma_windows reads each MA's length bound from its signature (#397): every ma() choice
+    declares one, and the MA rejects the bound's edge value and takes the next one."""
     close = get_sample_data()["close"].iloc[:100]
-    needs_two = set()
     for name in pandas_ta.ma():
-        try:
-            pandas_ta.ma(name, close, length=1)
-        except ValueError:
-            needs_two.add(name)
-            pandas_ta.ma(name, close, length=2)
-    assert needs_two == _WINDOW_GT_1
+        declared = declared_params(_MA_DISPATCH[name]).get("length")
+        assert declared is not None and isinstance(declared.marker, Bound), name
+        edge = int(declared.marker.gt)
+        with pytest.raises(ValueError):
+            pandas_ta.ma(name, close, length=edge)
+        pandas_ta.ma(name, close, length=edge + 1)

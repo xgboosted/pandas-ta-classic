@@ -1,28 +1,27 @@
 # Midpoint (MIDPOINT)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic import Imports
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, _pos_int, nan_on_short_input
 
 
 @nan_on_short_input
 def midpoint(
     close: Series,
-    length: int | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 2,
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Midpoint"""
     # Validate arguments
-    length = _pos_int(length, 2, "length")
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=0, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None

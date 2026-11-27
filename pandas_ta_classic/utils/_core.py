@@ -537,21 +537,37 @@ def nan_on_short_input(fn: Callable) -> Callable:
     declared = declared_params(fn)
 
     var_keyword = next((p.name for p in sig.parameters.values() if p.kind is inspect.Parameter.VAR_KEYWORD), None)
+    # Indicators take no positional-only parameters and no *args, so a call maps onto the
+    # signature by name: positional arguments to the leading parameters, keywords to their
+    # own names, the rest to **kwargs. sig.bind() did the same at about 10 us a call, paid
+    # again by every inner indicator; it stays the fallback that raises for a malformed call.
+    plain = all(
+        p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.VAR_KEYWORD)
+        for p in sig.parameters.values()
+    )
+    positional = [p.name for p in sig.parameters.values() if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD]
+    named = {p.name for p in sig.parameters.values() if p.kind is not inspect.Parameter.VAR_KEYWORD}
 
     def resolve(args: tuple, kwargs: dict) -> tuple[tuple, dict]:
         # every call, inner ones too: the body reads the resolved values, never None
         if not declared:
             return args, kwargs
-        bound = sig.bind(*args, **kwargs)
-        arguments = bound.arguments
-        bag = arguments.setdefault(var_keyword, {}) if var_keyword else {}
+        if plain and len(args) <= len(positional) and not any(name in kwargs for name in positional[: len(args)]):
+            arguments = dict(zip(positional, args))
+            bag: dict[str, Any] = {}
+            for key, value in kwargs.items():
+                (arguments if key in named else bag)[key] = value
+        else:  # a call sig.bind() rejects: let it raise as before
+            bound = sig.bind(*args, **kwargs)
+            arguments = dict(bound.arguments)
+            bag = dict(arguments.pop(var_keyword, {})) if var_keyword else {}
         for name, spec in declared.items():
             where = bag if spec.in_kwargs else arguments
             default = spec.default
             if isinstance(spec.marker, Bound) and spec.marker.default_from is not None and where.get(name) is None:
                 default = arguments[spec.marker.default_from]
             where[name] = _resolve_param(name, spec, where.get(name), default)
-        return bound.args, bound.kwargs
+        return (), {**arguments, **bag}
 
     @functools.wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:

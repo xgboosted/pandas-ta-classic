@@ -16,6 +16,7 @@ import inspect
 import typing
 import warnings
 
+import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
@@ -103,7 +104,7 @@ def test_defaults_reports_the_declaration():
     [
         (None, r"defaults\(\) requires 'indicator', got None"),
         ("nope", r"defaults\(\) indicator must be the name"),
-        ("ema", r"declares no parameters"),
+        ("ha", r"declares no parameters"),  # no parameter but offset: stays undeclared after step 2
     ],
 )
 def test_defaults_rejects_what_it_cannot_describe(indicator, message):
@@ -117,3 +118,19 @@ def test_a_declared_option_is_validated_and_resolved():
         ta.linreg(close, slope=1)
     assert ta.linreg(close, slope=None).equals(ta.linreg(close))
     assert ta.adx(spy()["high"], spy()["low"], close, length=7).columns.tolist() == ["ADX_7", "DMP_7", "DMN_7"]
+
+
+@pytest.mark.parametrize("name", DECLARING)
+def test_an_explicit_none_selects_the_declared_default(name):
+    """#305's rule still holds for callers: passing None for every declared parameter
+    gives exactly the default call, so df.ta, strategy() and user code keep working."""
+    frame = spy()
+    nones = {param: None for param in declared(name)}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        default = getattr(ta, name)(**inputs(name, frame))
+        explicit = getattr(ta, name)(**inputs(name, frame), **nones)
+    if isinstance(default, pd.Series):
+        pd.testing.assert_series_equal(explicit, default)
+    else:
+        pd.testing.assert_frame_equal(explicit, default)

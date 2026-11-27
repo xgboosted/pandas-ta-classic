@@ -1,5 +1,5 @@
 # Volume Flow Indicator (VFI)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import Series
@@ -7,7 +7,14 @@ from pandas import Series
 from pandas_ta_classic.overlap.hlc3 import hlc3
 from pandas_ta_classic.overlap.ma import ma
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _name_tokens, _number, _pos_int, _positive_inputs, _str_param, degenerate_div, nan_on_short_input
+from pandas_ta_classic.utils._core import (
+    Bound,
+    OneOf,
+    _name_tokens,
+    _positive_inputs,
+    degenerate_div,
+    nan_on_short_input,
+)
 
 # The source fixes the volatility window at 30 bars, independent of `length`.
 _VINTER_LENGTH = 30
@@ -20,19 +27,15 @@ def vfi(
     low: Series,
     close: Series,
     volume: Series,
-    length: int | None = None,
-    coef: float | None = None,
-    vcoef: float | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 130,
+    coef: Annotated[float, Bound()] = 0.2,
+    vcoef: Annotated[float, Bound()] = 2.5,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'ema',
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Volume Flow Indicator (VFI)"""
     # Validate arguments
-    length = _pos_int(length, 130, "length")
-    coef = _number(coef, 0.2, "coef")
-    vcoef = _number(vcoef, 2.5, "vcoef")
-    mamode = _str_param(mamode, "ema", "mamode", choices=ma())
     _length = max(length, _VINTER_LENGTH) + 1
     high = verify_series(high, _length)
     low = verify_series(low, _length)

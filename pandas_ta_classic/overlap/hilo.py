@@ -1,11 +1,11 @@
 # Gann High-Low Activator (HILO)
-from typing import Any
+from typing import Annotated, Any
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input
 from pandas_ta_classic.utils._njit import njit
 
 from .ma import _ma_windows, ma
@@ -41,17 +41,14 @@ def hilo(
     high: Series,
     low: Series,
     close: Series,
-    high_length: int | None = None,
-    low_length: int | None = None,
-    mamode: str | None = None,
+    high_length: Annotated[int, Bound(gt=0)] = 13,
+    low_length: Annotated[int, Bound(gt=0)] = 21,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Gann HiLo (HiLo)"""
     # Validate Arguments
-    high_length = _pos_int(high_length, 13, "high_length")
-    low_length = _pos_int(low_length, 21, "low_length")
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     _ma_windows(mamode, high_length=high_length, low_length=low_length)
     _length = max(high_length, low_length)
     high = verify_series(high, _length)

@@ -1,10 +1,10 @@
 # Zero Lag Moving Average (ZLMA)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import Series
 
 from pandas_ta_classic.utils import apply_fill, apply_offset, get_offset, verify_series
-from pandas_ta_classic.utils._core import _pos_int, _str_param, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input
 
 from .dema import dema
 from .ema import ema
@@ -39,15 +39,13 @@ _ZLMA_DISPATCH = {
 @nan_on_short_input
 def zlma(
     close: Series,
-    length: int | None = None,
-    mamode: str | None = None,
+    length: Annotated[int, Bound(gt=0)] = 10,
+    mamode: Annotated[str, OneOf(tuple(_ZLMA_DISPATCH.keys()))] = 'ema',
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:
     """Indicator: Zero Lag Moving Average (ZLMA)"""
     # Validate Arguments
-    length = _pos_int(length, 10, "length")
-    mamode = _str_param(mamode, "ema", "mamode", choices=_ZLMA_DISPATCH.keys())
     close = verify_series(close, length)
     offset = get_offset(offset)
 

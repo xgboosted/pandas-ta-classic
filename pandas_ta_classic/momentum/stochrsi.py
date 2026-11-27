@@ -1,5 +1,5 @@
 # Stochastic RSI (STOCHRSI)
-from typing import Any
+from typing import Annotated, Any
 
 from pandas import DataFrame, Series
 
@@ -11,7 +11,7 @@ from pandas_ta_classic.utils import (
     get_offset,
     verify_series,
 )
-from pandas_ta_classic.utils._core import _bool_param, _pos_int, _str_param, degenerate_zero, nan_on_short_input
+from pandas_ta_classic.utils._core import Bound, Flag, OneOf, degenerate_zero, nan_on_short_input
 
 from .rsi import rsi
 
@@ -48,26 +48,21 @@ def _stochrsi_result_df(k_series, d_series, length, rsi_length, k, d):
 @nan_on_short_input
 def stochrsi(
     close: Series,
-    length: int | None = None,
-    rsi_length: int | None = None,
-    k: int | None = None,
-    d: int | None = None,
-    mamode: str | None = None,
-    talib: bool | None = None,
+    length: Annotated[int, Bound(gt=0)] = 14,
+    rsi_length: Annotated[int, Bound(gt=0)] = 14,
+    k: Annotated[int, Bound(gt=0)] = 3,
+    d: Annotated[int, Bound(gt=0)] = 3,
+    mamode: Annotated[str, OneOf(tuple(ma()))] = 'sma',
+    talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
 ) -> DataFrame | None:
     """Indicator: Stochastic RSI Oscillator (STOCHRSI)"""
     # Validate arguments
-    length = _pos_int(length, 14, "length")
-    rsi_length = _pos_int(rsi_length, 14, "rsi_length")
-    k = _pos_int(k, 3, "k")
-    d = _pos_int(d, 3, "d")
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
-    mamode = _str_param(mamode, "sma", "mamode", choices=ma())
     _ma_windows(mamode, k=k, d=d)
-    mode_talib = _bool_param(talib, False, "talib")
+    mode_talib = talib
 
     if close is None:
         return None
