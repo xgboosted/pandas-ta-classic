@@ -1,4 +1,5 @@
 # Moving Average (MA)
+import functools
 from typing import Any
 
 from pandas import Series
@@ -47,6 +48,15 @@ _MA_DISPATCH = {
 }
 
 
+@functools.cache
+def _ma_length_bound(mamode: str) -> Bound:
+    # read once per MA: inspect.signature() cost about 15 us on every call of an indicator with a mamode
+    declared = declared_params(_MA_DISPATCH[mamode]).get("length")
+    if declared is None or not isinstance(declared.marker, Bound):
+        raise TypeError(f"ma({mamode!r}) declares no Bound for length")
+    return declared.marker
+
+
 def _ma_windows(mamode: str, **windows: int) -> None:
     """Raise if a window an indicator hands to ``ma(mamode, ...)`` is below the bound
     the chosen MA declares for its ``length``.
@@ -56,10 +66,7 @@ def _ma_windows(mamode: str, **windows: int) -> None:
     The bound is read from the MA's signature, its only copy; every ``ma()`` choice
     declares one (``test_every_ma_declares_its_length``).
     """
-    declared = declared_params(_MA_DISPATCH[mamode]).get("length")
-    if declared is None or not isinstance(declared.marker, Bound):
-        raise TypeError(f"ma({mamode!r}) declares no Bound for length")
-    bound = declared.marker
+    bound = _ma_length_bound(mamode)
     for name, value in windows.items():
         _validate_number(value, value, name, integer=True, gt=bound.gt, ge=bound.ge, lt=bound.lt, note=f" with mamode={mamode!r}")
 
