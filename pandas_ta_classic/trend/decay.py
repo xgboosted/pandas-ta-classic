@@ -12,9 +12,9 @@ from pandas_ta_classic.utils._core import Bound, OneOf, nan_on_short_input, skip
 @skip_leading_nan("close")
 def decay(
     close: Series,
-    kind: Annotated[str, OneOf(tuple({'linear', 'exp', 'exponential'}))] = 'linear',
+    kind: Annotated[str, OneOf(tuple(sorted({'linear', 'exp', 'exponential'})))] = 'linear',
     length: Annotated[int, Bound(gt=0)] = 5,
-    mode: Annotated[str, OneOf(tuple({'linear', 'exp', 'exponential'}))] = 'linear',
+    mode: Annotated[str, OneOf(tuple(sorted({'linear', 'exp', 'exponential'})))] = 'linear',
     offset: int | None = None,
     **kwargs: Any,
 ) -> Series | None:

@@ -57,10 +57,12 @@ read from ``**kwargs`` (``in_kwargs``), and ``default_from`` where the default i
 another parameter's value (``adx``'s ``lensig`` takes ``length``). It raises
 ``ValueError`` for an indicator with nothing to declare: one that takes no
 parameter besides ``offset`` and ``drift`` (``ha``, the math transforms), or only
-parameters of the kind below. A bound that depends on another parameter
-(``min_periods`` at most ``length``, ``ddof`` below ``length``) and a free-form
-string (``vwap``'s ``anchor``) are checked when the indicator runs and are not
-listed.
+parameters of the kinds below. These are checked when the indicator runs and are
+not listed: a bound that depends on another parameter (``min_periods`` at most
+``length``, ``ddof`` below ``length``), a ``None`` default that means something
+(``tos_stdevall``'s ``length`` takes the whole series), a list (its ``stds``), a
+free-form string (``vwap``'s ``anchor``), and ``ma()``'s own ``name`` and
+``source``.
 
 A window handed to the chosen moving average is checked against that average's
 own bound, so the error names the parameter you passed:

@@ -14,7 +14,7 @@ from .variance import variance
 @nan_on_short_input
 def stdev(
     close: Series,
-    length: Annotated[int, Bound(gt=1)] = 30,
+    length: Annotated[int, Bound(gt=1)] = 30,  # variance needs at least two rows
     ddof: int | None = None,
     talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
@@ -22,7 +22,6 @@ def stdev(
 ) -> Series | None:
     """Indicator: Standard Deviation"""
     # Validate Arguments
-    # variance needs at least two rows
     ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     # Same bound as variance(): the error must name stdev, the function called.
     min_periods = _pos_int(kwargs.pop("min_periods", None), length, "min_periods", gt=None, ge=1, lt=length + 1)

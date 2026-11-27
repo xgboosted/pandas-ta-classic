@@ -32,7 +32,7 @@ def cdl_z(
     high: Series,
     low: Series,
     close: Series,
-    length: Annotated[int, Bound(gt=1)] = 30,
+    length: Annotated[int, Bound(gt=1)] = 30,  # zscore needs at least two rows
     full: Annotated[bool, Flag()] = False,
     ddof: int | None = None,
     offset: int | None = None,
@@ -40,7 +40,6 @@ def cdl_z(
 ) -> DataFrame | None:
     """Indicator: Candle Type - Z Score"""
     # Validate Arguments
-    # zscore needs at least two rows
     ddof = _pos_int(ddof, 1, "ddof", gt=None, ge=0, lt=length)
     open_ = verify_series(open_, length)
     high = verify_series(high, length)

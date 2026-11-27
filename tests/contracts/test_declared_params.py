@@ -13,6 +13,9 @@ Three contracts:
 """
 
 import inspect
+import os
+import subprocess
+import sys
 import typing
 import warnings
 from typing import Annotated, Any
@@ -148,7 +151,9 @@ def test_a_declaration_that_cannot_resolve_fails_when_the_indicator_is_defined()
     with pytest.raises(TypeError, match=r"lensig: default_from='length' must name a declared parameter before it"):
 
         @nan_on_short_input
-        def later(close, lensig: Annotated[int | None, Bound(gt=0, default_from="length")] = None, length: Annotated[int, Bound(gt=0)] = 3, **kwargs: Any):
+        def later(
+            close, lensig: Annotated[int | None, Bound(gt=0, default_from="length")] = None, length: Annotated[int, Bound(gt=0)] = 3, **kwargs: Any
+        ):
             return close
 
     def stringly(close, length: "Annotated[int, Bound(gt=0)]" = 3):
@@ -156,3 +161,24 @@ def test_a_declaration_that_cannot_resolve_fails_when_the_indicator_is_defined()
 
     with pytest.raises(TypeError, match=r"declares length as a string annotation"):
         declared_params(stringly)
+
+
+def test_declared_choices_keep_their_order_across_processes():
+    """OneOf(tuple({...})) took the order of a set, which string hash randomization changes
+    in every process, so ta.defaults() listed cpr's choices differently run to run."""
+    script = (
+        "import json, pandas_ta_classic as ta\n"
+        "from tests.contracts import INDICATORS\n"
+        "out = {}\n"
+        "for name in INDICATORS:\n"
+        "    try:\n"
+        "        out[name] = {p: d.get('choices') for p, d in ta.defaults(name).items() if 'choices' in d}\n"
+        "    except ValueError:\n"
+        "        pass\n"
+        "print(json.dumps(out, sort_keys=True))\n"
+    )
+    runs = [
+        subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, check=True, env={**os.environ, "PYTHONHASHSEED": seed}).stdout
+        for seed in ("1", "2")
+    ]
+    assert runs[0] == runs[1]

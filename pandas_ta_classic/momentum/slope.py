@@ -19,7 +19,6 @@ def slope(
 ) -> Series | None:
     """Indicator: Slope"""
     # Validate arguments
-    # was bool(isinstance(x, bool)), which turned as_angle=False into True
     close = verify_series(close, length)
     offset = get_offset(offset)
 

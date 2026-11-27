@@ -27,9 +27,9 @@ def macdext(
     fast: Annotated[int, Bound(gt=0)] = 12,
     slow: Annotated[int, Bound(gt=0)] = 26,
     signal: Annotated[int, Bound(gt=0)] = 9,
-    fastmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,
-    slowmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,
-    signalmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,
+    fastmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,  # TA-Lib MA_Type 0..8
+    slowmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,  # TA-Lib MA_Type 0..8
+    signalmatype: Annotated[int, Bound(ge=0, lt=9)] = 1,  # TA-Lib MA_Type 0..8
     talib: Annotated[bool, Flag()] = False,
     offset: int | None = None,
     **kwargs: Any,
@@ -41,9 +41,6 @@ def macdext(
     0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3.
     """
     # Validate Arguments
-    # TA-Lib MA_Type 0..8
-    # TA-Lib MA_Type 0..8
-    # TA-Lib MA_Type 0..8
     _windows_in_order("macdext", fast=fast, slow=slow)
     close = verify_series(close, slow + signal)
     offset = get_offset(offset)
