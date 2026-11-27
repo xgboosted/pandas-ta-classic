@@ -630,7 +630,7 @@ TOLERANCE: dict[str, tuple[float, str]] = {
     "macdfix": (2, "as macd"),
     "linreg": (2, "2e-12 relative at -4.8 in a column up to 1030 (spike, bar 213)"),
     "tsf": (2, "1.2e-12 relative at 8.74 in a column up to 1110 (spike, bar 212)"),
-    "cti": (2000, "a correlation that cancels to -0.38 over the planted run: 6.8e-9 relative (planted, bar 118)"),
+    "cti": (20, "a correlation that cancels to -0.38 over the planted run: 4.6e-11 relative (planted, bar 118)"),
     "eri": (1000, "the bear power, low less an EMA at prices of 1e6: 5.8e-10 relative at 308 (x1e6, bar 376)"),
     "stc": (100, "its MACD's seed difference, amplified by two stochastic stages, still 1.8e-10 relative (nan_prefix, bar 359)"),
 }
