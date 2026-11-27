@@ -1,7 +1,7 @@
 """What an indicator's values must satisfy on SPY_D, whatever their exact numbers.
 
 ``tests/snapshots`` compares the tracked calls with stored values (the last
-value and valid count of each column, and 24 checkpoints); these are the
+value and valid count of each column, and 25 checkpoints); these are the
 properties that hold by definition, for every registered indicator where they
 apply: each call has a value on the last bar apart from the gaps listed (its
 default call, each boolean option flipped, each optional price input left

@@ -140,8 +140,8 @@ Regression Tests
 
 **Why:** Prevent reintroduction of known bugs and catch silent value drift.
 
-- ``test_snapshots.py`` — Spot-checks all 223 tracked indicators at 24 fixed
-  indices spanning 50 to 5221 (the final bar) against stored snapshot data.
+- ``test_snapshots.py`` — Spot-checks all 223 tracked indicators at 25 fixed
+  indices spanning 50 to 5240 (the final bar) against stored snapshot data.
   Test methods are generated from ``regression_snapshots.json`` itself, so the
   asserted set cannot drift from the stored set.
 - A fixed defect is pinned by a test in the module of the indicator, contract
