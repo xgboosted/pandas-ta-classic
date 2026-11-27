@@ -24,14 +24,13 @@ def roc(
     # Validate Arguments
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100:
+    if Imports["talib"] and talib and scalar == 100:
         from talib import ROC
 
         roc = ROC(close, length)

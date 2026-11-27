@@ -34,10 +34,9 @@ def true_range(
         return None
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = talib
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and drift == 1:
+    if Imports["talib"] and talib and drift == 1:
         from talib import TRANGE
 
         true_range = TRANGE(high, low, close)

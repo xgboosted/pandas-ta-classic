@@ -76,7 +76,6 @@ def macd(
     _windows_in_order("macd", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
@@ -84,7 +83,7 @@ def macd(
     as_mode = kwargs.pop("asmode")
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MACD
 
         macd, signalma, histogram = MACD(close, fast, slow, signal)

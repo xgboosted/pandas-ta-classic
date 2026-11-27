@@ -30,10 +30,9 @@ def obv(
     if close is None or volume is None:
         return None
     offset = get_offset(offset)
-    mode_talib = talib
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import OBV
 
         obv = OBV(close, volume)

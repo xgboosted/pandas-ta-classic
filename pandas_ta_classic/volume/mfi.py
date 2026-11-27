@@ -38,14 +38,13 @@ def mfi(
     volume = verify_series(volume, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None or volume is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default drift; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and drift == 1:
+    if Imports["talib"] and talib and drift == 1:
         from talib import MFI
 
         mfi = MFI(high, low, close, volume, length)

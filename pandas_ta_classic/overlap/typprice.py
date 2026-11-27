@@ -26,12 +26,11 @@ def typprice(
     low = verify_series(low)
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None
 
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import TYPPRICE
 
         result = Series(TYPPRICE(high, low, close), index=close.index)

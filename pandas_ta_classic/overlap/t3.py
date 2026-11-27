@@ -25,7 +25,6 @@ def t3(
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mode_talib = talib
     # ema's options, forwarded to every ema() of the chain; TA-Lib cannot express them
     adjust = kwargs.get("adjust")
     seed_sma = kwargs.get("sma")
@@ -34,7 +33,7 @@ def t3(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and not adjust and seed_sma:
+    if Imports["talib"] and talib and not adjust and seed_sma:
         from talib import T3
 
         t3 = T3(close, length, a)

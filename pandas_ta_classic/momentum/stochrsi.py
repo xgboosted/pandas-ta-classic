@@ -62,7 +62,6 @@ def stochrsi(
     close = verify_series(close, max(length, rsi_length, k, d))
     offset = get_offset(offset)
     _ma_windows(mamode, k=k, d=d)
-    mode_talib = talib
 
     if close is None:
         return None
@@ -72,7 +71,7 @@ def stochrsi(
     # %K smoothing).  Its timeperiod is the RSI period (rsi_length), its
     # fastk_period the stochastic range (length), and fastd_period the %D
     # smoothing (d).  Any other k or mamode runs natively.
-    if Imports["talib"] and mode_talib and mamode == "sma" and k == 1:
+    if Imports["talib"] and talib and mamode == "sma" and k == 1:
         from talib import STOCHRSI as _STOCHRSI
 
         fastk, fastd = _STOCHRSI(close, timeperiod=rsi_length, fastk_period=length, fastd_period=d)

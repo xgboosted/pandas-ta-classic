@@ -35,14 +35,13 @@ def stoch(
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and mamode == "sma":
+    if Imports["talib"] and talib and mamode == "sma":
         from talib import STOCH
 
         _k, _d = STOCH(

@@ -283,7 +283,7 @@ General rules taken from #142 (lint modernization, import conventions, silent-fa
 
 ### TA-Lib paths
 
-6. **`talib=True` honours every parameter or does not run.** The TA-Lib branch requires every parameter TA-Lib cannot express to be at its default (`if Imports["talib"] and mode_talib and scalar == 100 and drift == 1:`); any other value computes natively. Both paths accept the same value ranges (`mama` limits `< 1`). *Enforced:* `tests/oracle/test_talib_parameters.py`.
+6. **`talib=True` honours every parameter or does not run.** The TA-Lib branch requires every parameter TA-Lib cannot express to be at its default (`if Imports["talib"] and talib and scalar == 100 and drift == 1:`); any other value computes natively. Both paths accept the same value ranges (`mama` limits `< 1`). *Enforced:* `tests/oracle/test_talib_parameters.py`.
 7. **Tests that need TA-Lib skip without it.** `talib=True` silently falls back to the native formula when TA-Lib is absent, so an oracle comparison that calls it must be guarded with `skipUnless(ta.Imports["talib"])`. *Review.*
 
 ### Documentation

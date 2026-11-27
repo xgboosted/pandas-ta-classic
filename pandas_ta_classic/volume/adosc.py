@@ -49,13 +49,12 @@ def adosc(
     close = verify_series(close, _length)
     volume = verify_series(volume, _length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None or volume is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and open_ is None:
+    if Imports["talib"] and talib and open_ is None:
         from talib import ADOSC
 
         adosc = ADOSC(high, low, close, volume, fast, slow)

@@ -24,7 +24,7 @@ from pandas_ta_classic.utils._core import (
 from pandas_ta_classic.utils._keywords import _MA_OPTIONS
 
 
-def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwargs):
+def _ppo_compute(close, fast, slow, signal, scalar, mamode, talib, ma_kwargs):
     """Compute PPO, histogram and signal line.
 
     Returns:
@@ -33,7 +33,7 @@ def _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwarg
     """
     # TA-Lib cannot express a non-default scalar, hma, rma, zlma, ..., nor an option
     # the chosen MA reads (ema's adjust, ...); run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100 and mamode in _TAL_MA_TYPES and not ma_kwargs:
+    if Imports["talib"] and talib and scalar == 100 and mamode in _TAL_MA_TYPES and not ma_kwargs:
         from talib import PPO
 
         ppo_s = PPO(close, fast, slow, tal_ma(mamode))
@@ -73,7 +73,6 @@ def ppo(
     _windows_in_order("ppo", fast=fast, slow=slow)
     close = verify_series(close, max(fast, slow, signal))
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
@@ -82,7 +81,7 @@ def ppo(
     # The options the chosen MA reads go to its fast and slow MA, as in bbands;
     # ppo accepted and ignored them (#340). The signal line stays TA-Lib's EMA.
     ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
-    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, mode_talib, ma_kwargs)
+    result = _ppo_compute(close, fast, slow, signal, scalar, mamode, talib, ma_kwargs)
     if result is None:
         return None
     ppo_s, histogram, signalma = result

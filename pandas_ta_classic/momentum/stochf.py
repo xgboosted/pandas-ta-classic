@@ -60,14 +60,13 @@ def stochf(
     close = verify_series(close, _length)
     offset = get_offset(offset)
     _ma_windows(mamode, fastd=fastd)
-    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default mamode; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and mamode == "sma":
+    if Imports["talib"] and talib and mamode == "sma":
         from talib import STOCHF as TASTOCHF
 
         fastk_, fastd_ = TASTOCHF(high, low, close, fastk, fastd)

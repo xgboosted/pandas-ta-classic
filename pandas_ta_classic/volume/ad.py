@@ -31,13 +31,12 @@ def ad(
     close = verify_series(close)
     volume = verify_series(volume)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None or volume is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and open_ is None:
+    if Imports["talib"] and talib and open_ is None:
         from talib import AD
 
         ad = AD(high, low, close, volume)

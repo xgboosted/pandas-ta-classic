@@ -33,15 +33,14 @@ def trix(
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mode_talib = talib
 
     if close is None:
         return None
 
     # Calculate Result — propagate talib to EMA so all three stages use same backend
-    ema1 = ema(close=close, length=length, talib=mode_talib, **kwargs)
-    ema2 = ema(close=ema1, length=length, talib=mode_talib, **kwargs)
-    ema3 = ema(close=ema2, length=length, talib=mode_talib, **kwargs)
+    ema1 = ema(close=close, length=length, talib=talib, **kwargs)
+    ema2 = ema(close=ema1, length=length, talib=talib, **kwargs)
+    ema3 = ema(close=ema2, length=length, talib=talib, **kwargs)
     if ema1 is None or ema2 is None or ema3 is None:
         return None
     trix = scalar * (ema3 / ema3.shift(drift) - 1)

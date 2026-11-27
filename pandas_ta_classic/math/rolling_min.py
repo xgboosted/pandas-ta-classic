@@ -18,10 +18,9 @@ def rolling_min(
     """Rolling Minimum over *length* periods (TA-Lib: MIN)."""
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = talib
     if close is None:
         return None
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MIN
 
         result = MIN(close, length)

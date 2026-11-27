@@ -44,13 +44,12 @@ def macdext(
     _windows_in_order("macdext", fast=fast, slow=slow)
     close = verify_series(close, slow + signal)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MACDEXT as _MACDEXT
 
         macd_line, signal_line, histogram = _MACDEXT(
