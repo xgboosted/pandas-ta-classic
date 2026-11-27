@@ -50,7 +50,7 @@ _MA_DISPATCH = {
 
 @functools.cache
 def _ma_length_bound(mamode: str) -> Bound:
-    # read once per MA: inspect.signature() cost about 15 us on every call of an indicator with a mamode
+    # read once per MA: inspect.signature() cost about 7 us on every call of an indicator with a mamode
     declared = declared_params(_MA_DISPATCH[mamode]).get("length")
     if declared is None or not isinstance(declared.marker, Bound):
         raise TypeError(f"ma({mamode!r}) declares no Bound for length")
