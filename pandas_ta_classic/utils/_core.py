@@ -94,6 +94,10 @@ def declared_params(fn: Callable) -> dict[str, Declared]:
     """{parameter: Declared} of *fn*'s marked parameters and ``**kwargs`` options, in signature order."""
     found = {}
     for name, param in inspect.signature(fn).parameters.items():
+        if isinstance(param.annotation, str) and "Annotated[" in param.annotation:
+            # `from __future__ import annotations` leaves the marker a string: without this the
+            # declaration would be skipped, and the body would get unvalidated, unresolved values
+            raise TypeError(f"{getattr(fn, '__name__', fn)}() declares {name} as a string annotation; remove `from __future__ import annotations`")
         if get_origin(param.annotation) is not Annotated:
             continue
         base, *meta = get_args(param.annotation)
@@ -535,6 +539,12 @@ def nan_on_short_input(fn: Callable) -> Callable:
     # the caller's own and not an inner call; a custom indicator is not checked.
     static = static_keywords(fn) if _is_package_indicator(fn) else None
     declared = declared_params(fn)
+    # resolve() takes a default_from value from the parameter resolved before it, so that
+    # parameter must be declared and come earlier; checked here, once, not at the first call
+    for name, spec in declared.items():
+        source = spec.marker.default_from if isinstance(spec.marker, Bound) else None
+        if source is not None and (source not in declared or list(declared).index(source) > list(declared).index(name)):
+            raise TypeError(f"{fn.__name__}() {name}: default_from={source!r} must name a declared parameter before it")
 
     var_keyword = next((p.name for p in sig.parameters.values() if p.kind is inspect.Parameter.VAR_KEYWORD), None)
     # Indicators take no positional-only parameters and no *args, so a call maps onto the

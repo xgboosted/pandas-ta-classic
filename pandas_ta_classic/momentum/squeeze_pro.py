@@ -18,7 +18,7 @@ def squeeze_pro(
     high: Series,
     low: Series,
     close: Series,
-    bb_length: Annotated[int, Bound(gt=1)] = 20,
+    bb_length: Annotated[int, Bound(gt=1)] = 20,  # bbands() needs length > 1
     bb_std: Annotated[float, Bound(gt=0)] = 2.0,
     kc_length: Annotated[int, Bound(gt=0)] = 20,
     kc_scalar_wide: Annotated[float, Bound(gt=0)] = 2,
@@ -33,8 +33,6 @@ def squeeze_pro(
 ) -> DataFrame | None:
     """Indicator: Squeeze Momentum (SQZ) PRO"""
     # Validate arguments
-    # bbands() needs length > 1
-
     _length = max(bb_length, kc_length, mom_length, mom_smooth)
     high = verify_series(high, _length)
     low = verify_series(low, _length)

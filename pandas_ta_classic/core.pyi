@@ -118,12 +118,12 @@ class AnalysisIndicators:
     def fosc(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def inertia(
         self,
-        length: int | None = None,
-        rvi_length: int | None = None,
-        scalar: float | None = None,
-        refined: bool | None = None,
-        thirds: bool | None = None,
-        mamode: str | None = None,
+        length: int | None = 20,
+        rvi_length: int | None = 14,
+        scalar: float | None = 100,
+        refined: bool | None = False,
+        thirds: bool | None = False,
+        mamode: str | None = 'ema',
         offset: int | None = None,
         **kwargs: Any,
     ) -> Series | None: ...
@@ -486,11 +486,11 @@ class AnalysisIndicators:
     ) -> DataFrame | None: ...
     def adxr(
         self,
-        length: int | None = None,
+        length: int | None = 14,
         lensig: int | None = None,
-        scalar: float | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        scalar: float | None = 100,
+        mamode: str | None = 'rma',
+        talib: bool | None = False,
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -639,7 +639,7 @@ class AnalysisIndicators:
         **kwargs: Any,
     ) -> DataFrame | None: ...
     def ce(
-        self, length: int | None = None, multiplier: float | None = None, mamode: str | None = None, offset: int | None = None, **kwargs: Any
+        self, length: int | None = 22, multiplier: float | None = 3.0, mamode: str | None = 'rma', offset: int | None = None, **kwargs: Any
     ) -> DataFrame | None: ...
     def cvi(self, length: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def donchian(
@@ -663,10 +663,10 @@ class AnalysisIndicators:
     def massi(self, fast: int | None = None, slow: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def natr(
         self,
-        length: int | None = None,
-        scalar: float | None = None,
-        mamode: str | None = None,
-        talib: bool | None = None,
+        length: int | None = 14,
+        scalar: float | None = 100,
+        mamode: str | None = 'rma',
+        talib: bool | None = False,
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,
@@ -674,11 +674,11 @@ class AnalysisIndicators:
     def pdist(self, drift: int | None = None, offset: int | None = None, **kwargs: Any) -> Series | None: ...
     def rvi(
         self,
-        length: int | None = None,
-        scalar: float | None = None,
-        refined: bool | None = None,
-        thirds: bool | None = None,
-        mamode: str | None = None,
+        length: int | None = 14,
+        scalar: float | None = 100,
+        refined: bool | None = False,
+        thirds: bool | None = False,
+        mamode: str | None = 'ema',
         drift: int | None = None,
         offset: int | None = None,
         **kwargs: Any,

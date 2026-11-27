@@ -15,13 +15,14 @@ Three contracts:
 import inspect
 import typing
 import warnings
+from typing import Annotated, Any
 
 import pandas as pd
 import pytest
 
 import pandas_ta_classic as ta
 from pandas_ta_classic.overlap.ma import _MA_DISPATCH
-from pandas_ta_classic.utils._core import Bound, OneOf, declared_params
+from pandas_ta_classic.utils._core import Bound, OneOf, declared_params, nan_on_short_input
 from tests.contracts import INDICATORS, code_defaults, declared, inputs, plain_annotation, spy, string_choices
 
 DECLARING = [name for name in INDICATORS if declared(name)]
@@ -134,3 +135,24 @@ def test_an_explicit_none_selects_the_declared_default(name):
         pd.testing.assert_series_equal(explicit, default)
     else:
         pd.testing.assert_frame_equal(explicit, default)
+
+
+def test_defaults_rejects_a_value_that_is_no_indicator():
+    with pytest.raises(TypeError, match=r"defaults\(\) indicator must be the name of an indicator or an indicator function, got 42"):
+        ta.defaults(42)
+
+
+def test_a_declaration_that_cannot_resolve_fails_when_the_indicator_is_defined():
+    """A default_from that names an undeclared or later parameter, and a marker hidden in a
+    string annotation, would be skipped or fail only at a call: both raise at definition."""
+    with pytest.raises(TypeError, match=r"lensig: default_from='length' must name a declared parameter before it"):
+
+        @nan_on_short_input
+        def later(close, lensig: Annotated[int | None, Bound(gt=0, default_from="length")] = None, length: Annotated[int, Bound(gt=0)] = 3, **kwargs: Any):
+            return close
+
+    def stringly(close, length: "Annotated[int, Bound(gt=0)]" = 3):
+        return close
+
+    with pytest.raises(TypeError, match=r"declares length as a string annotation"):
+        declared_params(stringly)

@@ -38,6 +38,8 @@ def defaults(indicator: str | Callable) -> dict[str, dict[str, Any]]:
     ``lazybear``) is checked in the body and not listed.
     """
     _require_input(indicator, "defaults", "indicator")
+    if not isinstance(indicator, str) and not callable(indicator):
+        raise TypeError(f"defaults() indicator must be the name of an indicator or an indicator function, got {indicator!r}")
     fn = _find_indicator_func(indicator) if isinstance(indicator, str) else indicator
     if fn is None:
         raise ValueError(f"defaults() indicator must be the name of an indicator, got {indicator!r}")

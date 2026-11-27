@@ -39,8 +39,9 @@ Parameter Defaults
 ------------------
 
 ``None`` selects a parameter's default everywhere. The moving averages and the
-indicators that take ``mamode`` also declare their defaults and constant bounds
-in the signature, so they can be read without calling the indicator:
+indicators that take ``mamode`` (all 31 of them) also declare their defaults and
+constant bounds in the signature, so they can be read without calling the
+indicator:
 
 .. code-block:: python
 
