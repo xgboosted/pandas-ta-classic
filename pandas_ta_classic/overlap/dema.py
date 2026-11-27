@@ -24,7 +24,6 @@ def dema(
     offset = get_offset(offset)
     # The fill applies to the result only: forwarded, it filled the inner warm-up and changed real values
     fill_kwargs = {key: kwargs.pop(key) for key in ("fillna", "fill_method") if key in kwargs}
-    mode_talib = talib
     # ema's options, forwarded to both ema() of the chain, as tema does; TA-Lib
     # cannot express them. dema accepted and ignored them (#340).
     adjust = kwargs.get("adjust")
@@ -34,7 +33,7 @@ def dema(
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and not adjust and seed_sma:
+    if Imports["talib"] and talib and not adjust and seed_sma:
         from talib import DEMA
 
         dema = DEMA(close, length)

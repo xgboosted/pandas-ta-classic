@@ -38,14 +38,13 @@ def natr(
     close = verify_series(close, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default drift, mamode, scalar; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and scalar == 100 and mamode == "rma" and drift == 1:
+    if Imports["talib"] and talib and scalar == 100 and mamode == "rma" and drift == 1:
         from talib import NATR
 
         natr = NATR(high, low, close, length)

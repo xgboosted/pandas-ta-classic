@@ -22,13 +22,12 @@ def wma(
     # Validate Arguments
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and asc:  # TA-Lib WMA has no descending weights
+    if Imports["talib"] and talib and asc:  # TA-Lib WMA has no descending weights
         from talib import WMA
 
         wma = WMA(close, length)

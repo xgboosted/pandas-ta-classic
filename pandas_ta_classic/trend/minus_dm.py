@@ -34,13 +34,12 @@ def minus_dm(
     low = verify_series(low, length)
     drift = get_drift(drift)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None:
         return None
 
     # TA-Lib cannot express a non-default drift; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and drift == 1:
+    if Imports["talib"] and talib and drift == 1:
         from talib import MINUS_DM as _MINUS_DM
 
         result = _MINUS_DM(high, low, timeperiod=length)

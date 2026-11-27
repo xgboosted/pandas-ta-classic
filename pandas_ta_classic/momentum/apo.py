@@ -32,7 +32,6 @@ def apo(
     close = verify_series(close, max(fast, slow))
     _ma_windows(mamode, fast=fast)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
@@ -41,7 +40,7 @@ def apo(
     # TA-Lib has no hma, rma, zlma, ..., nor an option the chosen MA reads (ema's
     # adjust, ...); run natively instead of failing in tal_ma() or ignoring it
     ma_kwargs = {key: kwargs[key] for key in _MA_OPTIONS.get(mamode, ()) if key in kwargs}
-    if Imports["talib"] and mode_talib and mamode in _TAL_MA_TYPES and not ma_kwargs:
+    if Imports["talib"] and talib and mamode in _TAL_MA_TYPES and not ma_kwargs:
         from talib import APO
 
         apo = APO(close, fast, slow, tal_ma(mamode))

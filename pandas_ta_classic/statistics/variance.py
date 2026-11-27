@@ -56,14 +56,13 @@ def variance(
     min_periods = _pos_int(kwargs.get("min_periods"), length, "min_periods", gt=None, ge=1, lt=length + 1)
     close = verify_series(close, max(length, min_periods))
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
 
     # Calculate Result
     # TA-Lib cannot express a non-default ddof; run natively instead of ignoring it
-    if Imports["talib"] and mode_talib and ddof == 0 and min_periods == length:
+    if Imports["talib"] and talib and ddof == 0 and min_periods == length:
         from talib import VAR
 
         variance = VAR(close, length)

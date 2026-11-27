@@ -28,13 +28,12 @@ def cci(
     low = verify_series(low, length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and c == 0.015:
+    if Imports["talib"] and talib and c == 0.015:
         from talib import CCI
 
         cci = CCI(high, low, close, length)

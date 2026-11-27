@@ -24,13 +24,12 @@ def midprice(
     high = verify_series(high, _length)
     low = verify_series(low, _length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MIDPRICE
 
         midprice = MIDPRICE(high, low, length)

@@ -26,13 +26,12 @@ def willr(
     low = verify_series(low, _length)
     close = verify_series(close, _length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None or close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib and min_periods == length:
+    if Imports["talib"] and talib and min_periods == length:
         from talib import WILLR
 
         willr = WILLR(high, low, close, length)

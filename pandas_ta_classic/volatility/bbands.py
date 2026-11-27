@@ -70,7 +70,6 @@ def bbands(
     ddof = _pos_int(ddof, 0, "ddof", gt=None, ge=0, lt=length)
     close = verify_series(close, length)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
@@ -84,7 +83,7 @@ def bbands(
     # run natively instead of ignoring it or failing in tal_ma().
     # The accessor's own options (append, col_names, prefix) are not for the MA.
     ma_options = set(kwargs) & _MA_OPTIONS.get(mamode, frozenset())
-    if Imports["talib"] and mode_talib and ddof == 0 and not ma_options and mamode in _TAL_MA_TYPES:
+    if Imports["talib"] and talib and ddof == 0 and not ma_options and mamode in _TAL_MA_TYPES:
         from talib import BBANDS
 
         upper, mid, lower = BBANDS(close, length, std, std, tal_ma(mamode))

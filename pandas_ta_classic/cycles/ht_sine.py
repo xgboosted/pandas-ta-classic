@@ -21,13 +21,12 @@ def ht_sine(
     # Validate Arguments
     close = verify_series(close)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import HT_SINE
 
         sine, lead_sine = HT_SINE(close)

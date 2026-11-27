@@ -65,13 +65,12 @@ def mavp(
     close = verify_series(close, maxperiod)
     periods = verify_series(periods)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None or periods is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import MAVP as TAMAVP
 
         mavp_ = TAMAVP(

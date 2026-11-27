@@ -187,13 +187,12 @@ def sarext(
     af_short = accelerationshort
     max_af_short = accelerationmaxshort
     offset = get_offset(offset)
-    mode_talib = talib
 
     if high is None or low is None:
         return None
 
     # Calculate Result
-    if Imports["talib"] and mode_talib:
+    if Imports["talib"] and talib:
         from talib import SAREXT as TASAREXT
 
         sarext_ = TASAREXT(

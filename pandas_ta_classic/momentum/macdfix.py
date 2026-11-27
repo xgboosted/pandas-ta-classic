@@ -24,7 +24,6 @@ def macdfix(
     """
     close = verify_series(close, 26 + signal)
     offset = get_offset(offset)
-    mode_talib = talib
 
     if close is None:
         return None
@@ -40,7 +39,7 @@ def macdfix(
 
     # TA-Lib's MACDFIX returns the three lines only; run natively instead of
     # dropping the signal columns or the AS variant it cannot produce
-    if Imports["talib"] and mode_talib and not signal_indicators and not asmode:
+    if Imports["talib"] and talib and not signal_indicators and not asmode:
         from talib import MACDFIX as _MACDFIX
 
         macd_line, signal_line, hist = _MACDFIX(close, signalperiod=signal)
